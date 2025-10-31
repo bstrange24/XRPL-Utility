@@ -1,0 +1,561 @@
+<div id="navbar-container">
+     <app-navbar></app-navbar>
+</div>
+<form id="theForm">
+     <app-app-wallet-dynamic-input (walletListChange)="onWalletListChange($event)" (transactionResult)="handleTransactionResult($event)"></app-app-wallet-dynamic-input>
+
+     <fieldset>
+          <legend style="color: white">Transaction Information</legend>
+
+          <div class="transaction-layout">
+               <div class="top-section-left">
+                    <div class="top-sections-wrapper">
+                         <div class="top-section-left">
+                              <table id="accountSelection">
+                                   <th></th>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Select the account to use for the transaction.">
+                                                  <label for="selectedWalletField">Select Account</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <select id="selectedWalletField" class="dropdownWallet" [(ngModel)]="selectedWalletIndex" (ngModelChange)="onAccountChange()" name="selectedWalletField">
+                                                  <option *ngFor="let wallet of wallets; let i = index" [value]="i">{{wallet.name || 'Wallet ' + (i+1)}} ({{wallet.address | slice:0:6}}...{{wallet.address | slice:-4}})</option>
+                                             </select>
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Name of the currently selected account.">
+                                                  <label for="accountNameField">Name</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="accountNameField" [(ngModel)]="currentWallet.name" name="accountNameField" readonly />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Address of the currently selected account.">
+                                                  <label for="accountAddressField">Address</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="accountAddressField" [(ngModel)]="currentWallet.address" name="accountAddressField" readonly />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Seed of the currently selected account.">
+                                                  <label for="accountSeedField">Seed</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="accountSeedField" [(ngModel)]="currentWallet.seed" name="accountSeedField" readonly />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="XRP balance for the currently selected account.">
+                                                  <label for="xrpBalanceField">Spendable XRP Balance</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="xrpBalanceField" [(ngModel)]="currentWallet.balance" readonly name="xrpBalanceField" />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Total account objects that require an XRP reserve.">
+                                                  <label for="ownerCountField">Owner Count</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="ownerCountField" [(ngModel)]="ownerCount" readonly name="ownerCountField" />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Total number of XRP reserves. This includes the base reserve and any account objects that require a reserve.">
+                                                  <label for="totalXrpReservesField">Total XRP Reserves</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="totalXrpReservesField" [(ngModel)]="totalXrpReserves" readonly name="totalXrpReservesField" />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Total Execution time in milli seconds.">
+                                                  <label for="totalExecutionTime">Total Execution Time</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="totalExecutionTime" [(ngModel)]="executionTime" readonly name="totalExecutionTime" />
+                                        </td>
+                                   </tr>
+                              </table>
+                         </div>
+
+                         <div class="top-section-right">
+                              <table id="xrpDetails">
+                                   <th></th>
+                                   <tr *ngIf="['create', 'renew', 'fund', 'claim'].includes(channelAction)">
+                                        <td>
+                                             <label for="amountField">XRP Amount</label>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="amountField" [(ngModel)]="amountField" name="amountField" placeholder="Amount in XRP (not drops)" />
+                                        </td>
+                                   </tr>
+                                   <tr *ngIf="['create', 'renew', 'fund'].includes(channelAction)">
+                                        <td><label for="destinationFields">Destination</label></td>
+                                        <td>
+                                             <select class="timeUnit" id="destinationFields" [(ngModel)]="destinationFields" name="destinationFields">
+                                                  <option *ngFor="let dest of destinations; let i = index" [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{dest.name || 'Wallet ' + (i + 1)}} ({{dest.address | slice:0:6}}...{{dest.address | slice:-4}})</option>
+                                             </select>
+                                        </td>
+                                   </tr>
+                                   <tr *ngIf="['create', 'renew', 'fund'].includes(channelAction)">
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Destination tag to be used when sending to an exchange (i.e. Coinbase).">
+                                                  <label for="destinationTagField">Destination Tag</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="destinationTagField" [(ngModel)]="destinationTagField" name="destinationTagField" />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <label for="channelIDField">Channel ID</label>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="channelIDField" [(ngModel)]="channelIDField" name="channelIDField" />
+                                        </td>
+                                   </tr>
+                                   <tr *ngIf="['create', 'renew', 'fund', 'claim'].includes(channelAction)">
+                                        <td>
+                                             <label for="publicKeyField">Sender Public Key</label>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="publicKeyField" [(ngModel)]="publicKeyField" name="publicKeyField" />
+                                        </td>
+                                   </tr>
+                                   <tr *ngIf="['create', 'renew', 'fund', 'claim'].includes(channelAction)">
+                                        <td>
+                                             <label for="channelClaimSignatureField">Claim Signature</label>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="channelClaimSignatureField" [(ngModel)]="channelClaimSignatureField" name="channelClaimSignatureField" />
+                                        </td>
+                                   </tr>
+                                   <tr *ngIf="channelAction === 'claim'">
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Select the authorized wallet for the payment channel.">
+                                                  <label for="authorizedWalletField">Authorized Wallet</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <select id="authorizedWalletField" class="timeUnit" [(ngModel)]="authorizedWalletAddress" name="authorizedWalletField">
+                                                  <option *ngFor="let auth of authorizedWallets; let i = index" [value]="auth.address">{{auth.name || 'Wallet ' + (i + 1)}} ({{auth.address | slice:0:6}}...{{auth.address | slice:-4}})</option>
+                                             </select>
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td style="text-align: right; padding-top: 14px">
+                                             <label>Action</label>
+                                        </td>
+                                        <td>
+                                             <div class="action-slider">
+                                                  <div class="slider-container">
+                                                       <div class="slider-track">
+                                                            <div class="slider-selection" [style.width]="getSelectionWidth()" [style.left]="getSelectionLeft()"></div>
+                                                            <div class="slider-option" *ngFor="let action of actions; let i = index" [class.selected]="channelAction === action.value" (click)="selectAction(action.value)">{{ action.label }}</div>
+                                                       </div>
+                                                  </div>
+                                             </div>
+                                        </td>
+                                   </tr>
+                              </table>
+                         </div>
+                    </div>
+
+                    <div class="spinner-container">
+                         <div id="spinner" [ngStyle]="{ display: spinner ? 'block' : 'none' }" class="spinner"></div>
+                         <div *ngIf="spinner" class="spinner-text">{{ spinnerMessage || 'Loading...' }}</div>
+                    </div>
+
+                    <div class="button-container">
+                         <table style="text-align: left; width: 100%">
+                              <th></th>
+                              <tr>
+                                   <td colspan="2">
+                                        <button type="button" (click)="getPaymentChannels()">Get Payment Channels</button>
+                                        <button type="button" (click)="handlePaymentChannelAction()">Execute Payment Channel Action</button>
+                                        <button type="button" (click)="generateCreatorClaimSignature()">Generate Claim Signature</button>
+                                        <button type="button" (click)="clearFields(true)">Clear Fields</button>
+                                   </td>
+                              </tr>
+                              <tr style="vertical-align: top">
+                                   <td colspan="2">
+                                        <div #resultField id="resultField" [attr.contenteditable]="isEditable" [ngClass]="{ error: isError, success: isSuccess }" class="result-container" [innerHTML]="result | sanitizeHtml"></div>
+                                   </td>
+                              </tr>
+                         </table>
+                         <!-- <details class="paymentChannel-info">
+                              <summary>Payment Channel Info</summary>
+                              <fieldset class="paymentChannel-fieldset">
+                                   <details class="paymentChannel-subdetails">
+                                        <summary>Payment Channel Constraints</summary>
+                                        <div class="paymentChannel-table">
+                                             <div class="paymentChannel-row paymentChannel-header">
+                                                  <div class="paymentChannel-cell">Payment Channel Constraints</div>
+                                                  <div class="paymentChannel-cell">Description</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Channel Creator Locks Funds</div>
+                                                  <div class="paymentChannel-cell">The sender (creator) funds the channel upfront with an Amount of XRP that is locked until claimed or returned.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">One Receiver Only</div>
+                                                  <div class="paymentChannel-cell">Each channel has a fixed `Destination` (receiver). Only they can claim funds from it.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Receiver Must Submit Claims</div>
+                                                  <div class="paymentChannel-cell">The receiver presents **signed claims** from the sender to receive funds using `PaymentChannelClaim`</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Only the Receiver Can Claim XRP</div>
+                                                  <div class="paymentChannel-cell">Only the `Destination` account may redeem claims — sender cannot reclaim incrementally.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Claims Must Be Signed By Sender</div>
+                                                  <div class="paymentChannel-cell">Claims must include a **valid signature from the sender** of the channel (proof of authorization).</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Claims Must Increase</div>
+                                                  <div class="paymentChannel-cell">Each claim must specify an `amount` that is **greater than any previous** claimed amount — no partial duplicate claims.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Channel Expires (Optionally)</div>
+                                                  <div class="paymentChannel-cell">`CancelAfter` can be set. After that time, the sender can **close the channel** if there are unclaimed funds.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Close After Expiry or Fully Claimed</div>
+                                                  <div class="paymentChannel-cell">The sender or receiver can **close the channel** (via `PaymentChannelClaim` with `close=true`) once it's **expired or depleted</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Renewable Before Expiry</div>
+                                                  <div class="paymentChannel-cell">If `CancelAfter` hasn't passed, the sender can top up the channel with `PaymentChannelFund` and extend its lifespan (with `Expiration`).</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Signature Must Be Exact Format</div>
+                                                  <div class="paymentChannel-cell">The claim's signature must use the expected format with correct message digest structure (e.g., `channel_id`, `amount`, and canonical signature).</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Amount in Claims is Cumulative</div>
+                                                  <div class="paymentChannel-cell">The `amount` in a claim is the **total authorized amount to date** — not an incremental delta.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">No IOUs, XRP only</div>
+                                                  <div class="paymentChannel-cell">Payment Channels work with **XRP only** — not with issued tokens (IOUs).</div>
+                                             </div>
+                                        </div>
+                                   </details>
+                                   <details class="paymentChannel-subdetails">
+                                        <summary>PaymentChannelCreate</summary>
+                                        <div class="paymentChannel-table">
+                                             <div class="paymentChannel-row paymentChannel-header">
+                                                  <div class="paymentChannel-cell">PaymentChannelCreate</div>
+                                                  <div class="paymentChannel-cell">Purpose</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">XRP Amount <code>Amount</code></div>
+                                                  <div class="paymentChannel-cell">Initial XRP locked in the channel.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Settle Delay <code>SettleDelay</code></div>
+                                                  <div class="paymentChannel-cell">Minimum time (in seconds) before channel can close.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell"><code>CancelAfter</code></div>
+                                                  <div class="paymentChannel-cell">Absolute expiration time (in ledger close time)</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell"><code>`Fee`, `Memos`, `Destination Tag`, etc.</code></div>
+                                                  <div class="paymentChannel-cell">Standard optional fields.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell"><code>Sequence</code></div>
+                                                  <div class="paymentChannel-cell">Required unless using `TicketSequence`. This will be used in autofill</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell"><code>TicketSequence</code></div>
+                                                  <div class="paymentChannel-cell">Optional if using a [Ticket](https://xrpl.org/tickets.html) instead of a direct `Sequence`.</div>
+                                             </div>
+                                        </div>
+                                   </details>
+                                   <details class="paymentChannel-subdetails">
+                                        <summary>PaymentChannelFund</summary>
+                                        <div class="paymentChannel-table">
+                                             <div class="paymentChannel-row paymentChannel-header">
+                                                  <div class="paymentChannel-cell">PaymentChannelFund</div>
+                                                  <div class="paymentChannel-cell">Purpose</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">XRP Amount <code>Amount</code></div>
+                                                  <div class="paymentChannel-cell">Additional XRP to add to the channel. Required if extending expiration or adding funds.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Settle Delay <code>Expiration</code></div>
+                                                  <div class="paymentChannel-cell">Sets/updates expiration timestamp (in ledger time) — must be ≥ current `CancelAfter`, if already set.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell"><code>`Fee`, `Memos`, `Destination Tag`, etc.</code></div>
+                                                  <div class="paymentChannel-cell">Standard optional fields.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell"><code>Sequence</code></div>
+                                                  <div class="paymentChannel-cell">Required unless using `TicketSequence`. This will be used in autofill</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell"><code>TicketSequence</code></div>
+                                                  <div class="paymentChannel-cell">Optional if using a [Ticket](https://xrpl.org/tickets.html) instead of a direct `Sequence`.</div>
+                                             </div>
+                                        </div>
+                                   </details>
+
+                                   <details class="paymentChannel-subdetails">
+                                        <summary>PaymentChannelClaim</summary>
+                                        <div class="paymentChannel-table">
+                                             <div class="paymentChannel-row paymentChannel-header">
+                                                  <div class="paymentChannel-cell">PaymentChannelClaim</div>
+                                                  <div class="paymentChannel-cell">Purpose</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">XRP Amount <code>Amount</code></div>
+                                                  <div class="paymentChannel-cell">The total amount of XRP, in drops, that the receiver is authorized to claim so far. This value must be greater than any previous claim.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">Signature</div>
+                                                  <div class="paymentChannel-cell">A valid signature from the channel sender authorizing the claim.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell">PublicKey</div>
+                                                  <div class="paymentChannel-cell">The public key that corresponds to the sender’s account and was used to sign the claim.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell"><code>`Fee`, `Memos`, `Destination Tag`, etc.</code></div>
+                                                  <div class="paymentChannel-cell">Standard optional fields.</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell"><code>Sequence</code></div>
+                                                  <div class="paymentChannel-cell">Required unless using `TicketSequence`. This will be used in autofill</div>
+                                             </div>
+                                             <div class="paymentChannel-row">
+                                                  <div class="paymentChannel-cell"><code>TicketSequence</code></div>
+                                                  <div class="paymentChannel-cell">Optional if using a [Ticket](https://xrpl.org/tickets.html) instead of a direct `Sequence`.</div>
+                                             </div>
+                                        </div>
+                                   </details>
+                              </fieldset>
+                         </details> -->
+                    </div>
+               </div>
+
+               <div class="right-section">
+                    <table id="flags">
+                         <th></th>
+                         <tr>
+                              <td>
+                                   <label for="settleDelayField">Settle Delay</label>
+                              </td>
+                              <td>
+                                   <input type="text" id="settleDelayField" style="width: 120px" placeholder="Time in seconds" [(ngModel)]="settleDelayField" name="settleDelayField" />
+                              </td>
+                         </tr>
+                         <tr>
+                              <td>
+                                   <label for="paymentChannelCancelAfterTimeField">Cancel After Time</label>
+                              </td>
+                              <td>
+                                   <input type="text" id="paymentChannelCancelAfterTimeField" style="width: 120px" placeholder="Enter time" [(ngModel)]="paymentChannelCancelAfterTimeField" name="paymentChannelCancelAfterTimeField" />
+                                   <select class="timeUnit" style="width: 120px" id="paymentChannelCancelAfterTimeUnit" [(ngModel)]="paymentChannelCancelAfterTimeUnit" name="paymentChannelCancelAfterTimeUnit">
+                                        <option value="seconds">Seconds</option>
+                                        <option value="minutes">Minutes</option>
+                                        <option value="hours">Hours</option>
+                                        <option value="days">Days</option>
+                                   </select>
+                              </td>
+                         </tr>
+                         <tr>
+                              <td>
+                                   <span class="tooltip" tooltip-data="Add memo to transaction.">
+                                        <label>Memo</label>
+                                   </span>
+                              </td>
+                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                   <label class="switch">
+                                        <input type="checkbox" id="isMemoEnabled" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
+                                        <span class="slider round"></span>
+                                   </label>
+                                   <label for="isMemoEnabled"></label>
+                              </td>
+                         </tr>
+                         <tr class="" *ngIf="isMemoEnabled">
+                              <td>
+                                   <label for="memoField"></label>
+                              </td>
+                              <td>
+                                   <textarea class="memoField" style="width: 300px; height: 100px" id="memoField" placeholder="Seperate multiple memos by a comma." [(ngModel)]="memoField" name="memoField"></textarea>
+                              </td>
+                         </tr>
+                         <tr>
+                              <td></td>
+                              <td *ngIf="masterKeyDisabled">
+                                   <span [style.color]="'red'">Master Key is disabled. Use multi-sign or regular key to sign transactions.</span>
+                              </td>
+                         </tr>
+                         <tr>
+                              <td>
+                                   <span class="tooltip" tooltip-data="Check this to update add Multi-Sign Address">
+                                        <span [ngStyle]="{'color': multiSigningEnabled ? '#4CAF50' : 'white'}">Use Multi-Sign Address</span>
+                                   </span>
+                              </td>
+                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                   <label class="switch">
+                                        <input type="checkbox" id="isMultiSignAddressData" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="isMultiSignAddressData" />
+                                        <span class="slider round"></span>
+                                   </label>
+                                   <label for="isMultiSignAddressData"></label>
+                              </td>
+                         </tr>
+                         <tr *ngIf="useMultiSign">
+                              <td></td>
+                              <td>
+                                   <fieldset style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; width: fit-content">
+                                        <table style="border-collapse: collapse">
+                                             <tr class="multisignAddressClass" *ngIf="useMultiSign">
+                                                  <td>
+                                                       <span class="tooltip" tooltip-data="Comma-separated list of signer addresses (must be in the account's SignerList)">
+                                                            <label for="multiSignAddress">Signers</label>
+                                                       </span>
+                                                  </td>
+                                                  <td>
+                                                       <textarea class="memoField" style="width: 280px; height: 100px" id="multiSignAddress" placeholder="Comma-separated list of signer addresses" [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
+                                                  </td>
+                                             </tr>
+                                             <tr class="multisignAddressClass" *ngIf="useMultiSign">
+                                                  <td>
+                                                       <span class="tooltip" tooltip-data="Comma-separated list of signer seeds (must correspond to signer addresses)">
+                                                            <label for="multiSignSeeds">Seeds</label>
+                                                       </span>
+                                                  </td>
+                                                  <td>
+                                                       <textarea class="memoField" style="width: 280px; height: 100px" id="multiSignSeeds" placeholder="Comma-separated list of signer seeds" [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
+                                                  </td>
+                                             </tr>
+                                             <tr class="multisignAddressClass" *ngIf="useMultiSign">
+                                                  <td>
+                                                       <span class="tooltip" tooltip-data="Quorum amount for multi sign.">
+                                                            <label for="quorum">Quorum</label>
+                                                       </span>
+                                                  </td>
+                                                  <td>
+                                                       <input type="text" id="signerQuorumField" style="width: 50px; height: 28px" [(ngModel)]="signerQuorum" (ngModelChange)="validateQuorum()" name="signerQuorumField" readonly />
+                                                  </td>
+                                             </tr>
+                                        </table>
+                                   </fieldset>
+                              </td>
+                         </tr>
+                         <tr>
+                              <td>
+                                   <span class="tooltip" tooltip-data="Check this to use Regular Key Address">
+                                        <label [ngStyle]="{'color': regularKeySigningEnabled ? '#4CAF50' : 'white'}">Use Regular Key</label>
+                                   </span>
+                              </td>
+                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                   <label class="switch">
+                                        <input type="checkbox" id="isRegularKeyAddressData" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddressData" />
+                                        <span class="slider round"></span>
+                                   </label>
+                                   <label for="isRegularKeyAddressData"></label>
+                              </td>
+                         </tr>
+                         <tr class="" *ngIf="isRegularKeyAddress">
+                              <td>
+                                   <span class="tooltip" tooltip-data="Regular Key Address to sign the transaction">
+                                        <label for="regularKeyAddress"></label>
+                                   </span>
+                              </td>
+                              <td>
+                                   <input type="text" id="regularKeyAddress" size="41" id="regularKeyAddress" placeholder="Enter Regular Key Address" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                              </td>
+                         </tr>
+                         <tr class="" *ngIf="isRegularKeyAddress">
+                              <td>
+                                   <span class="tooltip" tooltip-data="Regular Key Seed to sign the transaction">
+                                        <label for="regularKeySeed"></label>
+                                   </span>
+                              </td>
+                              <td>
+                                   <input type="text" id="regularKeySeed" size="41" id="regularKeySeed" placeholder="Enter Regular Key Seed" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
+                              </td>
+                         </tr>
+                         <tr>
+                              <td>
+                                   <span class="tooltip" tooltip-data="Check this to use a ticket sequence">
+                                        <label>Use Ticket Sequence</label>
+                                   </span>
+                              </td>
+                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                   <label class="switch">
+                                        <input type="checkbox" id="isTicketEnabled" [(ngModel)]="isTicket" (ngModelChange)="toggleTicketSequence()" name="isTicketEnabled" />
+                                        <span class="slider round"></span>
+                                   </label>
+                                   <label for="isTicketEnabled"></label>
+                              </td>
+                         </tr>
+                         <tr class="" *ngIf="isTicket">
+                              <td>
+                                   <span class="tooltip" tooltip-data="Enter ticket sequence to use for currently selected account">
+                                        <label for="ticketSequence"></label>
+                                   </span>
+                              </td>
+                              <td>
+                                   <div *ngIf="multiSelectMode; else singleSelect">
+                                        <select class="timeUnit" [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
+                                             <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
+                                        </select>
+                                   </div>
+
+                                   <ng-template #singleSelect>
+                                        <select class="timeUnit" [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
+                                             <option value="" disabled>Select a ticket</option>
+                                             <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
+                                        </select>
+                                   </ng-template>
+                              </td>
+                         </tr>
+                         <tr>
+                              <td>
+                                   <span class="tooltip" tooltip-data="Check this to simulate a send xrp transaction">
+                                        <label>Simulate Transaction</label>
+                                   </span>
+                              </td>
+                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                   <label class="switch">
+                                        <input type="checkbox" id="isSimulateEnabled" [(ngModel)]="isSimulateEnabled" (ngModelChange)="toggleTicketSequence()" name="isSimulateEnabled" />
+                                        <span class="slider round"></span>
+                                   </label>
+                                   <label for="isSimulateEnabled"></label>
+                              </td>
+                         </tr>
+                    </table>
+               </div>
+          </div>
+     </fieldset>
+</form>

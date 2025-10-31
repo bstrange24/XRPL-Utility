@@ -1,0 +1,322 @@
+<div id="navbar-container">
+     <app-navbar></app-navbar>
+</div>
+<form id="theForm">
+     <app-app-wallet-dynamic-input (walletListChange)="onWalletListChange($any($event))" (transactionResult)="handleTransactionResult($event, null)"></app-app-wallet-dynamic-input>
+
+     <fieldset>
+          <legend style="color: white">Transaction Information</legend>
+
+          <div class="transaction-layout">
+               <div class="top-section-left">
+                    <div class="top-sections-wrapper">
+                         <div class="top-section-left">
+                              <table id="accountSelection">
+                                   <th></th>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Select the account to use for the transaction.">
+                                                  <label for="selectedWalletField">Select Account</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <select id="selectedWalletField" class="dropdownWallet" [(ngModel)]="selectedWalletIndex" (ngModelChange)="onAccountChange()" name="selectedWalletField">
+                                                  <option *ngFor="let wallet of wallets; let i = index" [value]="i">{{ wallet.name || 'Wallet ' + (i + 1) }} ({{ wallet.address | slice : 0 : 6 }}...{{ wallet.address | slice : -4 }})</option>
+                                             </select>
+                                        </td>
+                                   </tr>
+                                   <!-- <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Name of the currently selected account.">
+                                                  <label for="accountNameField">Name</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="accountNameField" [(ngModel)]="currentWallet.name" name="accountNameField" readonly />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Address of the currently selected account.">
+                                                  <label for="accountAddressField">Address</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="accountAddressField" [(ngModel)]="currentWallet.address" name="accountAddressField" readonly />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Seed of the currently selected account.">
+                                                  <label for="accountSeedField">Seed</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="accountSeedField" [(ngModel)]="currentWallet.seed" name="accountSeedField" readonly />
+                                        </td>
+                                   </tr> -->
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="XRP balance for the currently selected account.">
+                                                  <label for="xrpBalanceField">Spendable XRP Balance</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="xrpBalanceField" [(ngModel)]="currentWallet.balance" readonly name="xrpBalanceField" />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Total account objects that require an XRP reserve.">
+                                                  <label for="ownerCountField">Owner Count</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="ownerCountField" [(ngModel)]="ownerCount" readonly name="ownerCountField" />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Total number of XRP reserves. This includes the base reserve and any account objects that require a reserve.">
+                                                  <label for="totalXrpReservesField">Total XRP Reserves</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="totalXrpReservesField" [(ngModel)]="totalXrpReserves" readonly name="totalXrpReservesField" />
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Total Execution time in milli seconds.">
+                                                  <label for="totalExecutionTime">Total Execution Time</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="totalExecutionTime" [(ngModel)]="executionTime" readonly name="totalExecutionTime" />
+                                        </td>
+                                   </tr>
+                              </table>
+                         </div>
+
+                         <!-- ======================  TRANSACTION SELECTOR  ====================== -->
+                         <div class="top-section-right">
+                              <table id="xrpDetails">
+                                   <th></th>
+                                   <tbody>
+                                        <tr>
+                                             <td><label>Transaction Type</label></td>
+                                             <td>
+                                                  <!-- ONE dropdown – all transaction types grouped -->
+                                                  <select class="dropdownTransactionTypes" id="transactionSelect" [(ngModel)]="selectedTransaction" (ngModelChange)="onTransactionChange()" name="transactionSelect">
+                                                       <optgroup label="Basic">
+                                                            <option value="batch">Batch</option>
+                                                            <option value="sendXrp">Send XRP</option>
+                                                       </optgroup>
+
+                                                       <optgroup label="Trustline">
+                                                            <option value="setTrustline">Set Trustline</option>
+                                                            <option value="removeTrustline">Remove Trustline</option>
+                                                            <option value="issueCurrency">Issue Currency</option>
+                                                       </optgroup>
+
+                                                       <optgroup label="Account Flags">
+                                                            <option value="accountFlagSet">Account Flag Set</option>
+                                                            <option value="accountFlagClear">Account Flag Clear</option>
+                                                       </optgroup>
+
+                                                       <optgroup label="Escrow">
+                                                            <option value="createTimeEscrow">Create Time Escrow</option>
+                                                            <option value="finishTimeEscrow">Finish Time Escrow</option>
+                                                            <option value="createConditionEscrow">Create Condition Escrow</option>
+                                                            <option value="finishConditionEscrow">Finish Condition Escrow</option>
+                                                            <option value="cancelEscrow">Cancel Escrow</option>
+                                                       </optgroup>
+
+                                                       <optgroup label="Token Escrow">
+                                                            <option value="createTimeEscrowToken">Create Token Time Escrow</option>
+                                                            <option value="finishTimeEscrowToken">Finish Token Time Escrow</option>
+                                                            <option value="createConditionEscrowToken">Create Token Condition Escrow</option>
+                                                            <option value="finishConditionEscrowToken">Finish Token Condition Escrow</option>
+                                                            <option value="cancelEscrow">Cancel Token Escrow</option>
+                                                       </optgroup>
+
+                                                       <optgroup label="Check">
+                                                            <option value="createCheck">Check Create</option>
+                                                            <option value="cashCheck">Check Cash</option>
+                                                            <option value="cancelCheck">Check Cancel</option>
+                                                       </optgroup>
+
+                                                       <optgroup label="Token Check">
+                                                            <option value="createCheckToken">Check Token Create</option>
+                                                            <option value="cashCheckToken">Check Token Cash</option>
+                                                            <option value="cancelCheck">Check Token Cancel</option>
+                                                       </optgroup>
+
+                                                       <optgroup label="MPT">
+                                                            <option value="createMPT">MPT Create</option>
+                                                            <option value="authorizeMPT">Authorize MPT</option>
+                                                            <option value="unauthorizeMPT">Unauthorize MPT</option>
+                                                            <option value="sendMPT">Send MPT</option>
+                                                            <option value="lockMPT">Lock MPT</option>
+                                                            <option value="unlockMPT">Unlock MPT</option>
+                                                            <option value="destroyMPT">Destroy MPT</option>
+                                                       </optgroup>
+                                                  </select>
+                                             </td>
+                                        </tr>
+                                   </tbody>
+                              </table>
+                         </div>
+                    </div>
+
+                    <div class="spinner-container">
+                         <div id="spinner" [ngStyle]="{ display: spinner ? 'block' : 'none' }" class="spinner"></div>
+                         <div *ngIf="spinner" class="spinner-text">{{ spinnerMessage || 'Loading...' }}</div>
+                    </div>
+
+                    <div class="button-container">
+                         <table style="text-align: left; width: 100%">
+                              <th></th>
+                              <tr style="vertical-align: top">
+                                   <td colspan="2">
+                                        <button type="button" (click)="getTransactionJSON()">Get Transaction JSON</button>
+                                        <!-- <button type="button" (click)="unsignedTransaction()">Unsigned Transaction</button> -->
+                                        <button type="button" (click)="signedTransaction()">Signed Transaction</button>
+                                        <button type="button" (click)="submitTransaction()">Submit Transaction</button>
+                                        <!-- <button type="button" (click)="signedTransaction()">Sign for Multi-Sign</button> -->
+                                        <button type="button" (click)="clearFields()">Clear Fields</button>
+                                   </td>
+                              </tr>
+
+                              <td>
+                                   <div class="results-container">
+                                        <div class="transaction-results">
+                                             <div class="transaction-column">
+                                                  <h4>Transaction JSON</h4>
+                                                  <div #resultField id="resultField" *ngIf="(selectedTransaction && txJson) || isError" spellcheck="false" contenteditable="true" [ngClass]="{ error: isError, success: isSuccess }" class="result-container result-equal" (blur)="syncTxJsonFromField()">
+                                                       <div *ngIf="isError && errorMessage" class="error-message">ERROR: {{ errorMessage }}</div>
+                                                       <div *ngIf="txJson" [innerHTML]="highlightJson(txJson) | sanitizeHtml"></div>
+                                                  </div>
+                                             </div>
+
+                                             <div class="transaction-column">
+                                                  <h4>Signed</h4>
+                                                  <div #hashField id="hashField" spellcheck="false" contenteditable="true" [ngClass]="{ error: isError, success: isSuccess }" class="result-container result-equal" [textContent]="outputField" (blur)="populateTxDetails()"></div>
+                                             </div>
+                                        </div>
+                                   </div>
+                              </td>
+                         </table>
+                    </div>
+               </div>
+
+               <div class="right-section">
+                    <table id="flags">
+                         <th></th>
+                         <tr>
+                              <td>
+                                   <span class="tooltip" tooltip-data="Check this to use a ticket sequence">
+                                        <label>Use Multi Sign</label>
+                                   </span>
+                              </td>
+                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                   <label class="switch">
+                                        <input type="checkbox" id="useMultiSign" [(ngModel)]="useMultiSign" name="useMultiSign" />
+                                        <span class="slider round"></span>
+                                   </label>
+                              </td>
+                         </tr>
+                         <tr *ngIf="useMultiSign">
+                              <td>
+                                   <span class="tooltip" tooltip-data="Check this to simulate a send xrp transaction">
+                                        <label></label>
+                                   </span>
+                              </td>
+                              <td>
+                                   <div *ngIf="currentWallet && availableSigners.length === 0">No signers configured for {{ currentWallet.name || currentWallet.address }}.</div>
+
+                                   <div *ngFor="let wallet of availableSigners; let i = index">
+                                        <label>
+                                             <input type="checkbox" [(ngModel)]="wallet.isSelectedSigner" (change)="updateSelectedQuorum()" name="multiSigner{{i}}" />
+                                             {{ wallet.name || 'Wallet ' + (i + 1) }} ({{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-4 }})
+                                             <span *ngIf="wallet.quorum !== null" style="padding-left: 13px">Quorum {{ wallet.quorum }}</span>
+                                        </label>
+                                   </div>
+
+                                   <div *ngIf="requiredQuorum" class="quorum-progress">Required quorum: {{ requiredQuorum }}</div>
+
+                                   <div *ngIf="currentWallet && availableSigners.length !== 0" class="quorum-container">
+                                        <div class="quorum-header">
+                                             <span>Quorum Progress:</span>
+                                             <span class="quorum-value">{{ selectedQuorum }} / {{ requiredQuorum }}</span>
+                                        </div>
+
+                                        <div class="progress-bar-container">
+                                             <div class="progress-bar" [style.width.%]="(selectedQuorum / requiredQuorum) * 100" [style.background-color]="selectedQuorum >= requiredQuorum ? 'green' : 'gray'"></div>
+                                        </div>
+                                   </div>
+
+                                   <button type="button" (click)="signForMultiSign()" *ngIf="availableSigners.length > 0">Sign for Multi-Sign</button>
+                                   <button type="button" (click)="submitTransaction()" *ngIf="availableSigners.length > 0">Submit Multi-Signed TX</button>
+                              </td>
+                         </tr>
+                         <tr>
+                              <td>
+                                   <span class="tooltip" tooltip-data="Check this to use a ticket sequence">
+                                        <label>Use Ticket Sequence</label>
+                                   </span>
+                              </td>
+                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                   <label class="switch">
+                                        <input type="checkbox" id="isTicketEnabled" [(ngModel)]="isTicket" (ngModelChange)="toggleTicketSequence()" name="isTicketEnabled" />
+                                        <span class="slider round"></span>
+                                   </label>
+                                   <label for="isTicketEnabled"></label>
+                              </td>
+                         </tr>
+                         <tr class="" *ngIf="isTicket">
+                              <td>
+                                   <span class="tooltip" tooltip-data="Enter ticket sequence to use for currently selected account">
+                                        <label for="ticketSequence"></label>
+                                   </span>
+                              </td>
+                              <td>
+                                   <!-- Multi Select -->
+                                   <!-- <div class="selection-mode">
+                                        <label>
+                                             <input type="checkbox" [(ngModel)]="multiSelectMode" [ngModelOptions]="{standalone: true}" />
+                                             Multiple Selection
+                                        </label>
+                                   </div> -->
+
+                                   <!-- Single Select -->
+                                   <select class="timeUnit" [(ngModel)]="selectedSingleTicket" (ngModelChange)="onTicketChange($event)" [ngModelOptions]="{standalone: true}">
+                                        <option value="" disabled>Select a ticket</option>
+                                        <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
+                                   </select>
+
+                                   <!-- Multi Select -->
+                                   <select *ngIf="multiSelectMode" class="timeUnit" [(ngModel)]="selectedTickets" (ngModelChange)="onTicketChange($event)" multiple [ngModelOptions]="{standalone: true}">
+                                        <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
+                                   </select>
+                              </td>
+                         </tr>
+                         <tr>
+                              <td>
+                                   <span class="tooltip" tooltip-data="Check this to simulate a send xrp transaction">
+                                        <label>Simulate Transaction</label>
+                                   </span>
+                              </td>
+                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                   <label class="switch">
+                                        <input type="checkbox" id="isSimulateEnabled" [(ngModel)]="isSimulateEnabled" (ngModelChange)="toggleTicketSequence()" name="isSimulateEnabled" />
+                                        <span class="slider round"></span>
+                                   </label>
+                                   <label for="isSimulateEnabled"></label>
+                              </td>
+                         </tr>
+                    </table>
+               </div>
+          </div>
+     </fieldset>
+</form>

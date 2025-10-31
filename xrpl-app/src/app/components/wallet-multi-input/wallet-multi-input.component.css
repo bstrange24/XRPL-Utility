@@ -1,0 +1,15 @@
+.transaction-layout {
+     display: grid;
+     grid-template-columns: 2fr 1fr;
+     gap: 20px;
+     align-items: start;
+}
+
+#flags,
+#meta td:first-child {
+     white-space: nowrap;
+     width: 150px;
+     padding-right: 10px;
+     text-align: right;
+     vertical-align: middle;
+}
