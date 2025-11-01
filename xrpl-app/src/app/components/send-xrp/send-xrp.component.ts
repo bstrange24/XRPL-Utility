@@ -457,7 +457,6 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                let response: any;
 
                if (this.isSimulateEnabled) {
-                    this.utilsService.logObjects('paymentTx', paymentTx);
                     response = await this.xrplTransactions.simulateTransaction(client, paymentTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -468,7 +467,6 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                          return this.setError('ERROR: Failed to sign Payment transaction.');
                     }
 
-                    this.utilsService.logObjects('paymentTx', paymentTx);
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
