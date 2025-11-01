@@ -254,14 +254,15 @@ body {
      display: flex;
      flex-wrap: nowrap;
      /* one line */
-     gap: 1rem;
+     /* gap: 1rem; */
      /* ← was 2rem, now 1rem */
      align-items: center;
      justify-content: flex-start;
-     margin: 1.5rem 0;
+     /* margin: 1.0rem 0; */
+     margin-top: 0.5rem;
      overflow-x: auto;
      /* scroll if needed */
-     padding-bottom: 0.5rem;
+     padding-bottom: 0.1rem;
      min-width: 0;
      /* allows flex children to shrink */
 }
@@ -303,15 +304,15 @@ body {
      transition: transform 0.3s ease;
 }
 
-input:checked + .slider {
+input:checked+.slider {
      background: #4caf50;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
      transform: translateX(20px);
 }
 
-input:focus + .slider {
+input:focus+.slider {
      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
 }
 
@@ -365,6 +366,8 @@ input:focus + .slider {
      align-items: center;
      gap: 0.5rem;
      color: #6366f1;
+     padding: 10px 14px;
+     margin-bottom: 12px;
 }
 
 .spinner {
@@ -758,14 +761,14 @@ input:focus + .slider {
 }
 
 /* Top row: avatar + (address/balance/icons) side by side */
-.wallet-item > .wallet-avatar,
-.wallet-item > .wallet-top-row {
+.wallet-item>.wallet-avatar,
+.wallet-item>.wallet-top-row {
      display: flex;
      align-items: flex-start;
      gap: 0.75rem;
 }
 
-.wallet-item > .wallet-top-row {
+.wallet-item>.wallet-top-row {
      flex: 1;
      justify-content: space-between;
      min-width: 0;
@@ -866,37 +869,49 @@ input:focus + .slider {
 /* -------------------------------------------------
    MPT MENU BAR – EXACT MATCH
    ------------------------------------------------- */
+/* ===== TAB MENU BAR (Create, Send, Authorize, etc.) ===== */
 .menu-bar {
      display: flex;
-     /* flex-wrap: wrap; */
      gap: 0.5rem;
-     padding: 0.75rem 1rem;
-     background: #f8f9fa;
-     border-bottom: 1px solid #e2e8f0;
+     /* padding: 0.75rem 1rem; */
+     /* background: #f8f9fa; */
+     border-radius: 8px;
      margin-bottom: 1.5rem;
      overflow-x: auto;
      white-space: nowrap;
+     -ms-overflow-style: none;
+     /* IE/Edge */
+     scrollbar-width: none;
+     /* Firefox */
+}
+
+/* Hide scrollbar in Chrome/Safari */
+.menu-bar::-webkit-scrollbar {
+     display: none;
 }
 
 .menu-btn {
+     position: relative;
      display: flex;
      align-items: center;
-     gap: 0.4rem;
-     padding: 0.5rem 0.75rem;
-     background: transparent;
+     justify-content: center;
+     gap: 0.5rem;
+     /* padding: 0.5rem 0.75rem; */
      border: 1px solid transparent;
      border-radius: 8px;
+     background: transparent;
+     color: #4b5563;
      font-size: 0.875rem;
      font-weight: 500;
-     color: #4b5563;
      cursor: pointer;
-     transition: all 0.2s;
+     min-width: 100px;
+     transition: all 0.2s ease;
 }
 
 .menu-btn svg {
      width: 16px;
      height: 16px;
-     stroke: currentColor;
+     flex-shrink: 0;
 }
 
 .menu-btn:hover {
@@ -905,10 +920,37 @@ input:focus + .slider {
 }
 
 .menu-btn.active {
-     background: #dbeafe;
-     border-color: #93c5fd;
+     /* background: #dbeafe; */
+     /* border-color: #93c5fd; */
      color: #1e40af;
      font-weight: 600;
+     /* box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); */
+}
+
+/* Optional: Add a subtle underline like in your desired design */
+/* .menu-btn.active::after {
+     content: '';
+     position: absolute;
+     bottom: 4px;
+     left: 50%;
+     transform: translateX(-50%);
+     width: 30%;
+     height: 2px;
+     background: #3b82f6;
+     border-radius: 2px;
+} */
+
+.menu-btn.active::after {
+     content: '';
+     position: absolute;
+     bottom: -4px;
+     /* places line just below the button */
+     left: 0;
+     right: 0;
+     height: 2px;
+     background: #3b82f6;
+     /* same as active border color */
+     border-radius: 2px;
 }
 
 /* -------------------------------------------------
@@ -1049,8 +1091,10 @@ input:focus + .slider {
    ------------------------------------------------- */
 .tx-preview-container {
      max-width: 100%;
-     overflow-x: auto; /* fallback if someone wants to scroll horizontally */
+     overflow-x: auto;
+     /* fallback if someone wants to scroll horizontally */
 }
+
 /* .tx-preview-container {
      margin: 1.5rem 0;
      background: #f8fafc;
@@ -1129,16 +1173,21 @@ input:focus + .slider {
    SYNTAX HIGHLIGHTING (Prism)
    ------------------------------------------------- */
 .tx-json code span.token.property {
-     color: #9cdcfe; /* key color */
+     color: #9cdcfe;
+     /* key color */
      margin-right: 4px;
 }
 
 .tx-json {
-     white-space: pre-wrap !important; /* allow wrapping within <pre> */
-     word-break: break-word !important; /* wrap long hashes or signatures */
-     overflow-wrap: anywhere; /* break very long tokens anywhere */
+     white-space: pre-wrap !important;
+     /* allow wrapping within <pre> */
+     word-break: break-word !important;
+     /* wrap long hashes or signatures */
+     overflow-wrap: anywhere;
+     /* break very long tokens anywhere */
      max-width: 100%;
-     background-color: #1e1e1e; /* optional for dark theme */
+     background-color: #1e1e1e;
+     /* optional for dark theme */
      color: #dcdcdc;
      padding: 1em;
      border-radius: 6px;
@@ -1189,7 +1238,7 @@ input:focus + .slider {
      border: 1px solid #a5d6a7;
      border-radius: 6px;
      padding: 10px 14px;
-     margin-bottom: 2px;
+     margin-bottom: 12px;
      font-weight: 500;
      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
      animation: fadeIn 0.4s ease-in;
@@ -1205,6 +1254,7 @@ input:focus + .slider {
           opacity: 0;
           transform: translateY(-5px);
      }
+
      to {
           opacity: 1;
           transform: translateY(0);
@@ -1266,4 +1316,11 @@ input:focus + .slider {
 .tx-text span {
      display: block;
      word-break: break-word;
+}
+
+.tab-content-container {
+     position: relative;
+     min-height: 200px;
+     /* adjust based on tallest tab */
+     overflow: hidden;
 }

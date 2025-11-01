@@ -1,4 +1,5 @@
 import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef, ViewEncapsulation, EventEmitter, Output } from '@angular/core';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { XrplService } from '../../services/xrpl.service';
@@ -6,7 +7,6 @@ import { UtilsService } from '../../services/utils.service';
 import { StorageService } from '../../services/storage.service';
 import * as xrpl from 'xrpl';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { SanitizeHtmlPipe } from '../../pipes/sanitize-html.pipe';
 import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
@@ -41,6 +41,21 @@ declare var Prism: any;
      selector: 'app-send-xrp',
      standalone: true,
      imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent],
+     // animations: [trigger('fadeInOut', [transition(':enter', [style({ opacity: 0, transform: 'translateY(6px)' }), animate('1400ms cubic-bezier(0.16, 1, 0.3, 1)')]), transition(':leave', [animate('1000ms cubic-bezier(0.6, 0, 1, 0.4)', style({ opacity: 0, transform: 'translateY(6px)' }))])])],
+     // animations: [
+     //      trigger('fadeInFromBottom', [
+     //           transition(':enter', [
+     //                style({ opacity: 0, transform: 'translateY(20px)' }), // start below
+     //                animate(
+     //                     '1080ms cubic-bezier(0.16, 1, 0.3, 1)', // smooth & fast
+     //                     style({ opacity: 1, transform: 'translateY(0)' })
+     //                ), // end in place
+     //           ]),
+     //           transition(':leave', [
+     //                animate('1200ms cubic-bezier(0.6, 0, 1, 0.4)', style({ opacity: 0, transform: 'translateY(20px)' })), // slide down while fading out
+     //           ]),
+     //      ]),
+     // ],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
 })
@@ -96,34 +111,17 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      paymentTx: any = null; // Will hold the transaction object
      txResult: any = null; // Will hold the transaction object
      private needsHighlight = false;
-     // define how "recent" an update must be to skip (e.g. 60 seconds)
      txHash: string = '';
+     activeTab = 'send'; // default
+     successMessage: string = '';
 
      constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly xrplTransactions: XrplTransactionService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly clickToCopyService: ClickToCopyService) {}
-
-     activeTab = 'send'; // default
 
      ngOnInit() {
           this.environment = this.xrplService.getNet().environment;
      }
 
-     async ngAfterViewInit() {}
-
-     // ngAfterViewChecked() {
-     //      if (this.needsHighlight && this.jsonCode) {
-     //           const json = JSON.stringify(this.paymentTx, null, 2);
-     //           this.jsonCode.nativeElement.textContent = json;
-     //           Prism.highlightElement(this.jsonCode.nativeElement);
-     //           this.needsHighlight = false;
-     //      }
-
-     //      if (this.needsHighlight && this.jsonCode) {
-     //           const json = JSON.stringify(this.txResult, null, 2);
-     //           this.jsonCode.nativeElement.textContent = json;
-     //           Prism.highlightElement(this.jsonCode.nativeElement);
-     //           this.needsHighlight = false;
-     //      }
-     // }
+     ngAfterViewInit() {}
 
      ngAfterViewChecked() {
           if (this.needsHighlight) {
@@ -387,8 +385,6 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      async sendXrp() {
           console.log('Entering sendXrp');
           const startTime = Date.now();
-
-          // this.setSuccessProperties();
           this.clearMessages();
           this.updateSpinnerMessage(``);
 
@@ -466,7 +462,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                }
 
                this.utilsService.logObjects('response', response);
-               this.utilsService.logObjects('response.result.hash', response.result.hash);
+               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.txResult = response.result;
                this.updateTxResult(this.txResult);
@@ -479,12 +475,13 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                     console.error(`Transaction ${this.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                } else {
-                    this.txHash = response.result.hash;
+                    this.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
                }
 
                this.setSuccess(this.result);
 
                if (!this.isSimulateEnabled) {
+                    this.successMessage = 'XRP payment sent successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
@@ -529,6 +526,8 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                               console.error('Error in post-tx cleanup:', err);
                          }
                     }, 0);
+               } else {
+                    this.successMessage = 'Simulated XRP payment successfully!';
                }
           } catch (error: any) {
                console.error('Error in sendXrp:', error);
@@ -776,7 +775,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                // Skip number validation if value is empty — required() will handle it
                if (shouldSkipNumericValidation(value) || (allowEmpty && value === '')) return null;
 
-               // ✅ Type-safe parse
+               // Type-safe parse
                const num = parseFloat(value as string);
 
                if (isNaN(num) || !isFinite(num)) {
@@ -836,7 +835,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                return null;
           };
 
-          // --- Async validator: check if destination account requires a destination tag ---
+          // Action-specific config: required fields and custom rules
           const checkDestinationTagRequirement = async (): Promise<string | null> => {
                if (!inputs.destination) return null; // Skip if no destination provided
                try {
@@ -988,7 +987,6 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           this.cdr.detectChanges();
      }
 
-     // COPY TO CLIPBOARD
      copyTx() {
           const json = JSON.stringify(this.paymentTx, null, 2);
           navigator.clipboard.writeText(json).then(() => {
@@ -1046,15 +1044,13 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
 
      private clearMessages() {
           const fadeDuration = 400; // ms
-          this.result = ''; // optional, keep text empty after fade
+          this.result = '';
           this.isError = false;
           this.isSuccess = false;
           this.txHash = '';
           this.txResult = null;
           this.paymentTx = null;
           this.cdr.detectChanges();
-
-          // If using CSS fade-out with a class, you could add/remove a flag for .hidden
      }
 
      async showSpinnerWithDelay(message: string, delayMs: number = 200) {

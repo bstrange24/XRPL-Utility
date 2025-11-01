@@ -128,7 +128,7 @@
                          </svg>
                          Destroy
                     </button>
-                    <button class="menu-btn active" [class.active]="activeTab === 'send'">
+                    <button class="menu-btn active" [class.active]="activeTab === 'send'" (click)="setTab('send')">
                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                          </svg>
@@ -156,215 +156,223 @@
                <h2 class="panel-title">Send XRP</h2>
 
                <form #theForm="ngForm" (ngSubmit)="sendXrp()" class="send-form">
-                    <!-- Amount + Destination -->
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label>XRP Amount</label>
-                              <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
+                    <div class="tab-content-container">
+                         <!-- Amount + Destination -->
+                         <!-- <div *ngIf="activeTab === 'send'" @fadeInFromBottom> -->
+                         <div *ngIf="activeTab === 'send'">
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>XRP Amount</label>
+                                        <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
+                                   </div>
+                                   <div class="form-group">
+                                        <label>Destination</label>
+                                        <select [(ngModel)]="destinationFields" name="destinationFields">
+                                             <option *ngFor="let d of destinations" [value]="d.address" [disabled]="d.address===currentWallet.address">{{ d.name || 'Wallet' }} ({{ d.address | slice:0:6 }}...{{ d.address | slice:-4 }})</option>
+                                        </select>
+                                   </div>
+                              </div>
                          </div>
-                         <div class="form-group">
-                              <label>Destination</label>
-                              <select [(ngModel)]="destinationFields" name="destinationFields">
-                                   <option *ngFor="let d of destinations" [value]="d.address" [disabled]="d.address===currentWallet.address">{{ d.name || 'Wallet' }} ({{ d.address | slice:0:6 }}...{{ d.address | slice:-4 }})</option>
-                              </select>
+
+                         <!-- Optional fields -->
+                         <!-- <div *ngIf="activeTab === 'send'" @fadeInFromBottom> -->
+                         <div *ngIf="activeTab === 'send'">
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Destination Tag (opt)</label>
+                                        <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
+                                   </div>
+                                   <div class="form-group">
+                                        <label>Source Tag (opt)</label>
+                                        <input type="text" [(ngModel)]="sourceTagField" name="sourceTagField" />
+                                   </div>
+                              </div>
                          </div>
-                    </div>
 
-                    <!-- Optional fields -->
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label>Destination Tag (opt)</label>
-                              <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
+                         <!-- <div *ngIf="activeTab === 'send'" @fadeInFromBottom> -->
+                         <div *ngIf="activeTab === 'send'">
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Invoice ID (opt)</label>
+                                        <input type="text" [(ngModel)]="invoiceIdField" name="invoiceIdField" />
+                                   </div>
+                              </div>
                          </div>
-                         <div class="form-group">
-                              <label>Source Tag (opt)</label>
-                              <input type="text" [(ngModel)]="sourceTagField" name="sourceTagField" />
+
+                         <!-- Switches -->
+                         <div class="switch-group">
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
+                                   <span class="slider"></span>
+                                   Add Memo
+                              </label>
+
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
+                                   <span class="slider"></span>
+                                   Use Multi-Sign
+                              </label>
+
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
+                                   <span class="slider"></span>
+                                   Use Regular Key
+                              </label>
+
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="isTicket" (ngModelChange)="toggleTicketSequence()" name="isTicket" />
+                                   <span class="slider"></span>
+                                   Use Ticket
+                              </label>
+
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="isSimulateEnabled" name="isSimulateEnabled" />
+                                   <span class="slider"></span>
+                                   Simulate
+                              </label>
                          </div>
-                    </div>
 
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label>Invoice ID (opt)</label>
-                              <input type="text" [(ngModel)]="invoiceIdField" name="invoiceIdField" />
+                         <!-- Memo textarea -->
+                         <textarea *ngIf="isMemoEnabled" [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
+
+                         <!-- Multi-Sign Fields -->
+                         <div *ngIf="useMultiSign" class="multisign-fields">
+                              <fieldset>
+                                   <table>
+                                        <tr>
+                                             <td><label>Signers</label></td>
+                                             <td><textarea [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea></td>
+                                        </tr>
+                                        <tr>
+                                             <td><label>Seeds</label></td>
+                                             <td><textarea [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea></td>
+                                        </tr>
+                                        <tr>
+                                             <td><label>Quorum</label></td>
+                                             <td><input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly /></td>
+                                        </tr>
+                                   </table>
+                              </fieldset>
                          </div>
-                    </div>
 
-                    <!-- Switches -->
-                    <div class="switch-group">
-                         <label class="switch">
-                              <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                              <span class="slider"></span>
-                              Add Memo
-                         </label>
+                         <!-- Regular Key Fields -->
+                         <div *ngIf="isRegularKeyAddress" class="regular-key-fields">
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Regular Key Address</label>
+                                        <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                                   </div>
+                              </div>
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Regular Key Seed</label>
+                                        <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
+                                   </div>
+                              </div>
+                         </div>
 
-                         <label class="switch">
-                              <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                              <span class="slider"></span>
-                              Use Multi-Sign
-                         </label>
-
-                         <label class="switch">
-                              <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                              <span class="slider"></span>
-                              Use Regular Key
-                         </label>
-
-                         <label class="switch">
-                              <input type="checkbox" [(ngModel)]="isTicket" (ngModelChange)="toggleTicketSequence()" name="isTicket" />
-                              <span class="slider"></span>
-                              Use Ticket
-                         </label>
-
-                         <label class="switch">
-                              <input type="checkbox" [(ngModel)]="isSimulateEnabled" name="isSimulateEnabled" />
-                              <span class="slider"></span>
-                              Simulate
-                         </label>
-                    </div>
-
-                    <!-- Memo textarea -->
-                    <textarea *ngIf="isMemoEnabled" [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-
-                    <!-- Multi-Sign Fields -->
-                    <div *ngIf="useMultiSign" class="multisign-fields">
-                         <fieldset>
-                              <table>
-                                   <tr>
-                                        <td><label>Signers</label></td>
-                                        <td><textarea [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea></td>
-                                   </tr>
-                                   <tr>
-                                        <td><label>Seeds</label></td>
-                                        <td><textarea [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea></td>
-                                   </tr>
-                                   <tr>
-                                        <td><label>Quorum</label></td>
-                                        <td><input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly /></td>
-                                   </tr>
-                              </table>
-                         </fieldset>
-                    </div>
-
-                    <!-- Regular Key Fields -->
-                    <div *ngIf="isRegularKeyAddress" class="regular-key-fields">
-                         <div class="form-row">
+                         <!-- Ticket Selection -->
+                         <div *ngIf="isTicket" class="ticket-fields">
                               <div class="form-group">
-                                   <label>Regular Key Address</label>
-                                   <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                              </div>
-                         </div>
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label>Regular Key Seed</label>
-                                   <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                              </div>
-                         </div>
-                    </div>
-
-                    <!-- Ticket Selection -->
-                    <div *ngIf="isTicket" class="ticket-fields">
-                         <div class="form-group">
-                              <label>Ticket Sequence</label>
-                              <div *ngIf="multiSelectMode; else singleSelect">
-                                   <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}" class="timeUnit">
-                                        <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
-                                   </select>
-                              </div>
-                              <ng-template #singleSelect>
-                                   <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}" class="timeUnit">
-                                        <option value="" disabled>Select a ticket</option>
-                                        <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
-                                   </select>
-                              </ng-template>
-                         </div>
-                    </div>
-
-                    <!-- Action buttons -->
-                    <div class="button-row">
-                         <button type="submit" class="btn-primary">Send XRP</button>
-                         <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
-                    </div>
-
-                    <!-- Spinner -->
-                    <div *ngIf="spinner" class="spinner-row">
-                         <div class="spinner"></div>
-                         <span>{{ spinnerMessage || 'Loading...' }}</span>
-                    </div>
-
-                    <!-- ✅ SUCCESS MESSAGE -->
-                    <div *ngIf="isSuccess && !isError" class="success-message">
-                         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="success-icon">
-                              <path d="M9 16.17l-3.88-3.88L4 13.41 9 18.41l12-12-1.41-1.41z" />
-                         </svg>
-                         <div class="success-text">
-                              <span>XRP payment sent successfully!</span><br />
-                              <span *ngIf="txHash">
-                                   Here is the transaction hash:
-                                   <a [href]="'https://devnet.xrpl.org/transactions/' + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>
-                              </span>
-                         </div>
-                    </div>
-
-                    <!-- ❌ ERROR MESSAGE -->
-                    <div class="tx-message error" *ngIf="isError && result">
-                         <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" class="tx-icon error-icon">
-                              <path
-                                   d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 
-      10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
-                              />
-                         </svg>
-                         <div class="tx-text">
-                              <span>{{ result }}</span>
-                         </div>
-                    </div>
-
-                    <!-- ==== PAYMENT TX PREVIEW ==== -->
-                    <div class="tx-preview-container" *ngIf="paymentTx">
-                         <div class="tx-header">
-                              <h3 class="tx-title">Payment Transaction</h3>
-                              <div class="tx-actions">
-                                   <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
-                                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                             <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
-                                        </svg>
-                                        Copy
-                                   </button>
-                                   <button class="download-btn" (click)="downloadTx()" title="Download JSON">
-                                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                             <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
-                                        </svg>
-                                        Download
-                                   </button>
+                                   <label>Ticket Sequence</label>
+                                   <div *ngIf="multiSelectMode; else singleSelect">
+                                        <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}" class="timeUnit">
+                                             <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
+                                        </select>
+                                   </div>
+                                   <ng-template #singleSelect>
+                                        <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}" class="timeUnit">
+                                             <option value="" disabled>Select a ticket</option>
+                                             <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
+                                        </select>
+                                   </ng-template>
                               </div>
                          </div>
 
-                         <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
-                    </div>
+                         <!-- Action buttons -->
+                         <div class="button-row">
+                              <button type="submit" class="btn-primary">Send XRP</button>
+                              <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                         </div>
 
-                    <!-- Result -->
-                    <!-- <div #resultField id="resultField" [innerHTML]="result | sanitizeHtml" [ngClass]="{ 'error': isError, 'success': isSuccess }" class="result-box" [attr.contenteditable]="isEditable"></div> -->
+                         <!-- Spinner -->
+                         <div *ngIf="spinner" class="spinner-row">
+                              <div class="spinner"></div>
+                              <span>{{ spinnerMessage || 'Loading...' }}</span>
+                         </div>
 
-                    <!-- ==== PAYMENT TX PREVIEW ==== -->
-                    <div class="tx-preview-container" *ngIf="txResult">
-                         <div class="tx-header">
-                              <h3 class="tx-title">Transaction Result</h3>
-                              <div class="tx-actions">
-                                   <button class="copy-btn" (click)="copyTxResult()" title="Copy JSON">
-                                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                             <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
-                                        </svg>
-                                        Copy
-                                   </button>
-                                   <button class="download-btn" (click)="downloadTxResult()" title="Download JSON">
-                                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                             <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
-                                        </svg>
-                                        Download
-                                   </button>
+                         <!-- ✅ SUCCESS MESSAGE -->
+                         <div *ngIf="isSuccess && !isError" class="success-message">
+                              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="success-icon">
+                                   <path d="M9 16.17l-3.88-3.88L4 13.41 9 18.41l12-12-1.41-1.41z" />
+                              </svg>
+                              <div class="success-text">
+                                   <span>{{successMessage}}</span><br />
+                                   <span *ngIf="txHash && !isSimulateEnabled">
+                                        Transaction hash:
+                                        <a [href]="'https://devnet.xrpl.org/transactions/' + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>
+                                   </span>
                               </div>
                          </div>
 
-                         <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
+                         <!-- ❌ ERROR MESSAGE -->
+                         <div class="tx-message error" *ngIf="isError && result">
+                              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" class="tx-icon error-icon">
+                                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                              </svg>
+                              <div class="tx-text">
+                                   <span>{{ result }}</span>
+                              </div>
+                         </div>
+
+                         <!-- ==== PAYMENT TX PREVIEW ==== -->
+                         <div class="tx-preview-container" *ngIf="paymentTx">
+                              <div class="tx-header">
+                                   <h3 class="tx-title">Payment Transaction</h3>
+                                   <div class="tx-actions">
+                                        <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
+                                             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                                  <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
+                                             </svg>
+                                             Copy
+                                        </button>
+                                        <button class="download-btn" (click)="downloadTx()" title="Download JSON">
+                                             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                                  <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
+                                             </svg>
+                                             Download
+                                        </button>
+                                   </div>
+                              </div>
+
+                              <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
+                         </div>
+
+                         <!-- Result -->
+                         <!-- <div #resultField id="resultField" [innerHTML]="result | sanitizeHtml" [ngClass]="{ 'error': isError, 'success': isSuccess }" class="result-box" [attr.contenteditable]="isEditable"></div> -->
+
+                         <!-- ==== PAYMENT TX PREVIEW ==== -->
+                         <div class="tx-preview-container" *ngIf="txResult">
+                              <div class="tx-header">
+                                   <h3 class="tx-title">Transaction Result</h3>
+                                   <div class="tx-actions">
+                                        <button class="copy-btn" (click)="copyTxResult()" title="Copy JSON">
+                                             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                                  <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
+                                             </svg>
+                                             Copy
+                                        </button>
+                                        <button class="download-btn" (click)="downloadTxResult()" title="Download JSON">
+                                             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                                  <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
+                                             </svg>
+                                             Download
+                                        </button>
+                                   </div>
+                              </div>
+
+                              <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
+                         </div>
                     </div>
                </form>
           </div>

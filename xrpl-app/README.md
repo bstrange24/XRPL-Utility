@@ -63,6 +63,7 @@ For more information on using the Angular CLI, including detailed command refere
 Run test on Ubuntu
 export CHROME_BIN=$(which chromium)
 npx karma start
+npm install @angular/animations@19.2.14
 
 ## NFT URLs
 
