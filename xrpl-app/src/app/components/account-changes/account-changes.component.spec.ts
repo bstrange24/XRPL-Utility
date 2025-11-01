@@ -2,11 +2,11 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatTableDataSource } from '@angular/material/table';
 import { AccountChangesComponent } from './account-changes.component';
-import { XrplService } from '../../services/xrpl.service';
+import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
-import { StorageService } from '../../services/storage.service';
-import { UtilsService } from '../../services/utils.service';
+import { StorageService } from '../../services/local-storage/storage.service';
+import { UtilsService } from '../../services/util-service/utils.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { AppConstants } from '../../core/app.constants';
 

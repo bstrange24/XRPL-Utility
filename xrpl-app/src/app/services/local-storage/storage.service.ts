@@ -1,6 +1,6 @@
 // src/app/services/storage.service.ts
 import { Injectable, EventEmitter } from '@angular/core';
-import { AppConstants } from '../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 
 @Injectable({
      providedIn: 'root',

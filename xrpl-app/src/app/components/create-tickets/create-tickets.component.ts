@@ -2,17 +2,18 @@ import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewCheck
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { XrplService } from '../../services/xrpl.service';
-import { UtilsService } from '../../services/utils.service';
-import { StorageService } from '../../services/storage.service';
+import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { TransactionMetadataBase, TicketCreate } from 'xrpl';
 import * as xrpl from 'xrpl';
-import { NavbarComponent } from '../navbar/navbar.component';
 import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
-import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
 import { ClickToCopyService } from '../../services/click-to-copy/click-to-copy.service';
+import { UtilsService } from '../../services/util-service/utils.service';
+import { StorageService } from '../../services/local-storage/storage.service';
+import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
+import { NavbarComponent } from '../navbar/navbar.component';
+import { InfoMessageConstants } from '../../core/info-message.constants';
 
 interface ValidationInputs {
      seed?: string;
@@ -119,7 +120,7 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
      activeTab = 'create'; // default
      successMessage: string = '';
 
-     constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private renderUiComponentsService: RenderUiComponentsService, private xrplTransactions: XrplTransactionService, private readonly clickToCopyService: ClickToCopyService) {}
+     constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly xrplTransactions: XrplTransactionService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly clickToCopyService: ClickToCopyService) {}
 
      ngOnInit() {
           this.environment = this.xrplService.getNet().environment;
@@ -215,11 +216,14 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
           const wallet = this.wallets[index];
           try {
                const client = await this.xrplService.getClient();
-               const balance = await client.getXrpBalance(wallet.address);
-               this.wallets[index].balance = balance.toString();
-               if (this.selectedWalletIndex === index) {
-                    this.currentWallet.balance = balance.toString();
-               }
+               // const balance = await client.getXrpBalance(wallet.address);
+               // this.wallets[index].balance = balance.toString();
+               // if (this.selectedWalletIndex === index) {
+               //      this.currentWallet.balance = balance.toString();
+               // }
+               const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
+               const accountInfo = await this.xrplService.getAccountInfo(client, walletAddress, 'validated', '');
+               await this.updateXrpBalance(client, accountInfo, wallet, index);
 
                this.cdr.detectChanges();
           } catch (err) {
@@ -267,7 +271,7 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
           // encryptionAlgorithm = AppConstants.ENCRYPTION.ED25519;
           // }
           const wallet = await this.xrplService.generateWalletFromFamilySeed(this.environment, encryptionAlgorithm);
-          await this.sleep(4000);
+          await this.utilsService.sleep(4000);
           console.log(`wallet`, wallet);
           this.wallets[index] = {
                ...this.wallets[index],
@@ -1074,10 +1078,6 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
           this.walletListChange.emit(this.wallets);
      }
 
-     sleep(ms: number) {
-          return new Promise(resolve => setTimeout(resolve, ms));
-     }
-
      saveWallets() {
           this.storageService.set('wallets', JSON.stringify(this.wallets));
      }
@@ -1086,10 +1086,8 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
           this.activeTab = tab;
           this.clearMessages();
           this.clearFields(true);
-          // Later: load different form/content
      }
 
-     // Call this after setting paymentTx
      updatePaymentTx(tx: any) {
           this.paymentTx = tx;
           this.needsHighlight = true;
@@ -1139,19 +1137,16 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
      }
 
      /** Message that is bound to the template */
-     public get infoMessage(): any {
+     public get infoMessage(): string | null {
           if (this.activeTab === 'create') {
-               return `<strong>Creating Tickets</strong> increases your owner reserves by <strong>1 XRP</strong> per ticket.
-                         These Tickets are stored on your account and can later be used in any transaction that supports the
-                         <code>TicketSeq</code> field, after which the reserved XRP is released..`;
+               return InfoMessageConstants.CREATE_TICKET_INFORMATION;
           }
 
           if (this.activeTab === 'delete') {
-               return `<strong>Deleting a ticket releases the 1 XRP reserve</strong> that was locked when the ticket was created.
-                    The ticket sequence number you enter will be removed from the account.
-                    <br><br>
-                    <em>Note: This action is irreversible, but the reserved XRP becomes available again.</em>`;
+               return InfoMessageConstants.DELETE_TICKET_INFORMATION;
           }
+
+          return null; // no message for other tabs (if you add more later)
      }
 
      autoResize(textarea: HTMLTextAreaElement) {
@@ -1160,22 +1155,18 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
           textarea.style.height = textarea.scrollHeight + 'px'; // expand
      }
 
-     // adjustHeight(textarea: HTMLTextAreaElement) {
-     //      textarea.style.height = 'auto';
-     //      const style = window.getComputedStyle(textarea);
-     //      const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-     //      textarea.style.height = textarea.scrollHeight + padding + 'px';
-     // }
-
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
                this.isSimulateEnabled = false;
                this.useMultiSign = false;
                this.isRegularKeyAddress = false;
                this.deleteTicketSequence = '';
+               this.clearMessages();
           }
 
+          this.selectedTicket = '';
           this.isTicketEnabled = false;
+          this.selectedSingleTicket = '';
           this.isTicket = false;
           this.selectedTicket = '';
           this.ticketCountField = '';

@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SignTransactionsComponent } from './sign-transactions.component';
-import { XrplService } from '../../services/xrpl.service';
-import { UtilsService } from '../../services/utils.service';
-import { StorageService } from '../../services/storage.service';
+import { XrplService } from '../../services/xrpl-services/xrpl.service';
+import { UtilsService } from '../../services/util-service/utils.service';
+import { StorageService } from '../../services/local-storage/storage.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
 import { SignTransactionUtilService } from '../../services/sign-transactions-util/sign-transaction-util.service';

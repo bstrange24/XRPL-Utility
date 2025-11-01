@@ -132,7 +132,7 @@
                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                          </svg>
-                         Send Payment
+                         Send XRP
                     </button>
                     <!-- <button class="menu-btn" [class.active]="activeTab === 'clawback'" (click)="setTab('clawback')">
                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -215,19 +215,19 @@
                                    Add Memo
                               </label>
 
-                              <label class="switch">
+                              <label class="switch" *ngIf="multiSigningEnabled">
                                    <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
                                    <span class="slider"></span>
                                    Use Multi-Sign
                               </label>
 
-                              <label class="switch">
+                              <label class="switch" *ngIf="regularKeySigningEnabled">
                                    <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
                                    <span class="slider"></span>
                                    Use Regular Key
                               </label>
 
-                              <label class="switch">
+                              <label class="switch" *ngIf="this.ticketArray.length > 0">
                                    <input type="checkbox" [(ngModel)]="isTicket" (ngModelChange)="toggleTicketSequence()" name="isTicket" />
                                    <span class="slider"></span>
                                    Use Ticket

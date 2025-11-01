@@ -1,13 +1,13 @@
 import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { StorageService } from '../../services/storage.service';
-import { XrplService } from '../../services/xrpl.service';
+import { StorageService } from '../../services/local-storage/storage.service';
+import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { AppConstants } from '../../core/app.constants';
 import { DatePipe } from '@angular/common';
 import { interval, Subscription } from 'rxjs';
 import { formatInTimeZone } from 'date-fns-tz';
-import { UtilsService } from '../../services/utils.service';
+import { UtilsService } from '../../services/util-service/utils.service';
 import { debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import * as xrpl from 'xrpl';

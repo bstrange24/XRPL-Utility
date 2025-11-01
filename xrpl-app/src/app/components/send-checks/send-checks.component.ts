@@ -1,9 +1,9 @@
 import { Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { XrplService } from '../../services/xrpl.service';
-import { UtilsService } from '../../services/utils.service';
-import { StorageService } from '../../services/storage.service';
+import { XrplService } from '../../services/xrpl-services/xrpl.service';
+import { UtilsService } from '../../services/util-service/utils.service';
+import { StorageService } from '../../services/local-storage/storage.service';
 import { CheckCreate, CheckCash, CheckCancel } from 'xrpl';
 import * as xrpl from 'xrpl';
 import { NavbarComponent } from '../navbar/navbar.component';

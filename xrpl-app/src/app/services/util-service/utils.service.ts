@@ -3,12 +3,12 @@ import { Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { walletFromSecretNumbers, Wallet } from 'xrpl';
 import { flagNames } from 'flagnames';
-import { XrplService } from '../services/xrpl.service';
-import { AppConstants } from '../core/app.constants';
-import { StorageService } from '../services/storage.service';
+import { XrplService } from '../xrpl-services/xrpl.service';
+import { AppConstants } from '../../core/app.constants';
 import { sha256 } from 'js-sha256';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import { StorageService } from '../local-storage/storage.service';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -281,6 +281,10 @@ export class UtilsService {
      // getSelectedSeedWithOutIssuer(selectedAccount: string, account1: any, account2: any): string {
      //      return selectedAccount === 'account1' ? account1.seed : account2.seed;
      // }
+
+     sleep(ms: number) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+     }
 
      encodeIfNeeded(currency: string): string {
           return currency?.length > 3 ? this.encodeCurrencyCode(currency) : currency || '';

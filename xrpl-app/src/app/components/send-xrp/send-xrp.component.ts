@@ -2,9 +2,9 @@ import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewCheck
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { XrplService } from '../../services/xrpl.service';
-import { UtilsService } from '../../services/utils.service';
-import { StorageService } from '../../services/storage.service';
+import { XrplService } from '../../services/xrpl-services/xrpl.service';
+import { UtilsService } from '../../services/util-service/utils.service';
+import { StorageService } from '../../services/local-storage/storage.service';
 import * as xrpl from 'xrpl';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { AppConstants } from '../../core/app.constants';
@@ -12,6 +12,7 @@ import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-tr
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
 import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
 import { ClickToCopyService } from '../../services/click-to-copy/click-to-copy.service';
+import { InfoMessageConstants } from '../../core/info-message.constants';
 
 interface ValidationInputs {
      senderAddress?: string;
@@ -214,11 +215,14 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           const wallet = this.wallets[index];
           try {
                const client = await this.xrplService.getClient();
-               const balance = await client.getXrpBalance(wallet.address);
-               this.wallets[index].balance = balance.toString();
-               if (this.selectedWalletIndex === index) {
-                    this.currentWallet.balance = balance.toString();
-               }
+               // const balance = await client.getXrpBalance(wallet.address);
+               // this.wallets[index].balance = balance.toString();
+               // if (this.selectedWalletIndex === index) {
+               //      this.currentWallet.balance = balance.toString();
+               // }
+               const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
+               const accountInfo = await this.xrplService.getAccountInfo(client, walletAddress, 'validated', '');
+               await this.updateXrpBalance(client, accountInfo, wallet, index);
 
                this.cdr.detectChanges();
           } catch (err) {
@@ -266,7 +270,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           // encryptionAlgorithm = AppConstants.ENCRYPTION.ED25519;
           // }
           const wallet = await this.xrplService.generateWalletFromFamilySeed(this.environment, encryptionAlgorithm);
-          await this.sleep(4000);
+          await this.utilsService.sleep(4000);
           console.log(`wallet`, wallet);
           this.wallets[index] = {
                ...this.wallets[index],
@@ -968,10 +972,6 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           this.walletListChange.emit(this.wallets);
      }
 
-     sleep(ms: number) {
-          return new Promise(resolve => setTimeout(resolve, ms));
-     }
-
      saveWallets() {
           this.storageService.set('wallets', JSON.stringify(this.wallets));
      }
@@ -980,10 +980,8 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           this.activeTab = tab;
           this.clearMessages();
           this.clearFields(true);
-          // Later: load different form/content
      }
 
-     // Call this after setting paymentTx
      updatePaymentTx(tx: any) {
           this.paymentTx = tx;
           this.needsHighlight = true;
@@ -999,7 +997,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      copyTx() {
           const json = JSON.stringify(this.paymentTx, null, 2);
           navigator.clipboard.writeText(json).then(() => {
-               alert('Transaction JSON copied!');
+               console.log('Transaction JSON copied!');
           });
      }
 
@@ -1017,7 +1015,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      copyTxResult() {
           const json = JSON.stringify(this.txResult, null, 2);
           navigator.clipboard.writeText(json).then(() => {
-               alert('Transaction JSON copied!');
+               console.log('Transaction JSON copied!');
           });
      }
 
@@ -1035,18 +1033,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      /** Message that is bound to the template */
      public get infoMessage(): string | null {
           if (this.activeTab === 'send') {
-               return `
-                    <strong>Sending XRP (Payment Transaction)</strong>
-                    <ul>
-                    <li><strong>Amount</strong> — How much XRP to send.</li>
-                    <li><strong>Destination</strong> — The recipient address (classic or X-address).</li>
-                    <li><strong>DestinationTag (optional)</strong> — Used by custodial/exchange accounts to credit the correct sub-account. Omitting this where required can cause lost funds.</li>
-                    <li><strong>SourceTag (optional)</strong> — Identifies the sender’s sub-account (useful for exchanges or platforms sending from shared wallets).</li>
-                    <li><strong>InvoiceID (optional)</strong> — A 256-bit (64-character hex) unique ID that can be used to match payments to invoices or internal records.</li>
-                    <li><strong>Sequence / TicketSequence</strong> — Use your account <code>Sequence</code> or a <code>TicketSequence</code> (from a pre-created Ticket) to allow out-of-order submission.</li>
-                    <li><strong>Irreversible</strong> — Once validated in a ledger, XRP payments cannot be reversed.</li>
-                    </ul>
-                    <em>Tip:</em> Always double-check <strong>Destination</strong> and <strong>DestinationTag</strong> before signing to avoid lost funds.`;
+               return InfoMessageConstants.SEND_XRP_INFORMATION;
           }
 
           return null; // no message for other tabs (if you add more later)
@@ -1058,13 +1045,6 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           textarea.style.height = textarea.scrollHeight + 'px'; // expand
      }
 
-     // adjustHeight(textarea: HTMLTextAreaElement) {
-     //      textarea.style.height = 'auto';
-     //      const style = window.getComputedStyle(textarea);
-     //      const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
-     //      textarea.style.height = textarea.scrollHeight + padding + 'px';
-     // }
-
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
                this.isSimulateEnabled = false;
@@ -1074,13 +1054,15 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                this.invoiceIdField = '';
                this.destinationTagField = '';
                this.sourceTagField = '';
+               this.clearMessages();
           }
 
           this.selectedTicket = '';
           this.selectedSingleTicket = '';
           this.isTicket = false;
-          this.memoField = '';
+          this.selectedTicket = '';
           this.isMemoEnabled = false;
+          this.memoField = '';
           this.cdr.detectChanges();
      }
 

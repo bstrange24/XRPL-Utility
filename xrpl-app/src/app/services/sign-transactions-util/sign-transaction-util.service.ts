@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { XrplService } from '../xrpl.service';
-import { UtilsService } from '../utils.service';
+import { XrplService } from '../xrpl-services/xrpl.service';
+import { UtilsService } from '../../services/util-service/utils.service';
 
 interface SignTransactionOptions {
      client: xrpl.Client;

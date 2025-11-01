@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { UtilsService } from '../utils.service';
-import { XrplService } from '../xrpl.service';
+import { XrplService } from '../xrpl-services/xrpl.service';
 import { flagNames } from 'flagnames';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
+import { UtilsService } from '../../services/util-service/utils.service';
 
 @Injectable({
      providedIn: 'root',

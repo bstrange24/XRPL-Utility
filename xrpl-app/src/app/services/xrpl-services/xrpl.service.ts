@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
-import { StorageService } from './storage.service';
 import { Client, GatewayBalancesResponse } from 'xrpl';
 import * as xrpl from 'xrpl';
-import { AppConstants } from '../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { TokenCacheService } from './token-cache/token-cache.service';
+import { TokenCacheService } from '../token-cache/token-cache.service';
+import { StorageService } from '../local-storage/storage.service';
 
 interface MptInfoRequest {
      command: 'mpt_info';

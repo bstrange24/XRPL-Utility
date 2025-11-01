@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { UtilsService } from '../utils.service';
+import { UtilsService } from '../../services/util-service/utils.service';
 
 @Injectable({
      providedIn: 'root',
