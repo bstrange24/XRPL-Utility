@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef, ViewEncapsulation, EventEmitter, Output } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef, ViewEncapsulation, EventEmitter, Output, ViewChildren, QueryList } from '@angular/core';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -62,6 +62,9 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
      @ViewChild('accountForm') accountForm!: NgForm;
      @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
      @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
+     @ViewChild('signers') signersRef!: ElementRef<HTMLTextAreaElement>;
+     @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
+     @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
      lastResult: string = '';
      result: string = '';
      isError: boolean = false;
@@ -122,7 +125,11 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
           this.environment = this.xrplService.getNet().environment;
      }
 
-     ngAfterViewInit() {}
+     ngAfterViewInit() {
+          setTimeout(() => {
+               this.textareas.forEach(ta => this.autoResize(ta.nativeElement));
+          });
+     }
 
      ngAfterViewChecked() {
           if (this.needsHighlight) {
@@ -1077,6 +1084,8 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
 
      setTab(tab: string) {
           this.activeTab = tab;
+          this.clearMessages();
+          this.clearFields(true);
           // Later: load different form/content
      }
 
@@ -1128,6 +1137,35 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
           a.click();
           URL.revokeObjectURL(url);
      }
+
+     /** Message that is bound to the template */
+     public get infoMessage(): any {
+          if (this.activeTab === 'create') {
+               return `<strong>Creating Tickets</strong> increases your owner reserves by <strong>1 XRP</strong> per ticket.
+                         These Tickets are stored on your account and can later be used in any transaction that supports the
+                         <code>TicketSeq</code> field, after which the reserved XRP is released..`;
+          }
+
+          if (this.activeTab === 'delete') {
+               return `<strong>Deleting a ticket releases the 1 XRP reserve</strong> that was locked when the ticket was created.
+                    The ticket sequence number you enter will be removed from the account.
+                    <br><br>
+                    <em>Note: This action is irreversible, but the reserved XRP becomes available again.</em>`;
+          }
+     }
+
+     autoResize(textarea: HTMLTextAreaElement) {
+          if (!textarea) return;
+          textarea.style.height = 'auto'; // reset
+          textarea.style.height = textarea.scrollHeight + 'px'; // expand
+     }
+
+     // adjustHeight(textarea: HTMLTextAreaElement) {
+     //      textarea.style.height = 'auto';
+     //      const style = window.getComputedStyle(textarea);
+     //      const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+     //      textarea.style.height = textarea.scrollHeight + padding + 'px';
+     // }
 
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {

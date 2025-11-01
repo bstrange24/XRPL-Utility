@@ -10,7 +10,7 @@
 }
 
 .main-container {
-     padding: 10px;
+     /* padding: 10px; */
      /* Adds 20px space around all content */
      max-width: 12000px;
      /* Limits content width */
@@ -657,8 +657,10 @@ input[type="text"] {
      /* color: #000; */
      /* background-color: #1a1c21; */
      background-color: #fff;
-     background: #1a1c21;
-     color: white;
+     /* background: #1a1c21; */
+     background: #fff;
+     /* color: white; */
+     color: grey;
      border: 1px solid white;
      border-radius: 10px;
      padding: 6px;

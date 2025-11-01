@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef, ViewEncapsulation, EventEmitter, Output } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef, ViewChildren, ViewEncapsulation, EventEmitter, Output, QueryList } from '@angular/core';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -65,6 +65,9 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      @ViewChild('accountForm') accountForm!: NgForm;
      @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
      @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
+     @ViewChild('signers') signersRef!: ElementRef<HTMLTextAreaElement>;
+     @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
+     @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
      lastResult: string = '';
      result: string = '';
      isError: boolean = false;
@@ -121,7 +124,11 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           this.environment = this.xrplService.getNet().environment;
      }
 
-     ngAfterViewInit() {}
+     ngAfterViewInit() {
+          setTimeout(() => {
+               this.textareas.forEach(ta => this.autoResize(ta.nativeElement));
+          });
+     }
 
      ngAfterViewChecked() {
           if (this.needsHighlight) {
@@ -971,6 +978,8 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
 
      setTab(tab: string) {
           this.activeTab = tab;
+          this.clearMessages();
+          this.clearFields(true);
           // Later: load different form/content
      }
 
@@ -1022,6 +1031,39 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           a.click();
           URL.revokeObjectURL(url);
      }
+
+     /** Message that is bound to the template */
+     public get infoMessage(): string | null {
+          if (this.activeTab === 'send') {
+               return `
+                    <strong>Sending XRP (Payment Transaction)</strong>
+                    <ul>
+                    <li><strong>Amount</strong> — How much XRP to send.</li>
+                    <li><strong>Destination</strong> — The recipient address (classic or X-address).</li>
+                    <li><strong>DestinationTag (optional)</strong> — Used by custodial/exchange accounts to credit the correct sub-account. Omitting this where required can cause lost funds.</li>
+                    <li><strong>SourceTag (optional)</strong> — Identifies the sender’s sub-account (useful for exchanges or platforms sending from shared wallets).</li>
+                    <li><strong>InvoiceID (optional)</strong> — A 256-bit (64-character hex) unique ID that can be used to match payments to invoices or internal records.</li>
+                    <li><strong>Sequence / TicketSequence</strong> — Use your account <code>Sequence</code> or a <code>TicketSequence</code> (from a pre-created Ticket) to allow out-of-order submission.</li>
+                    <li><strong>Irreversible</strong> — Once validated in a ledger, XRP payments cannot be reversed.</li>
+                    </ul>
+                    <em>Tip:</em> Always double-check <strong>Destination</strong> and <strong>DestinationTag</strong> before signing to avoid lost funds.`;
+          }
+
+          return null; // no message for other tabs (if you add more later)
+     }
+
+     autoResize(textarea: HTMLTextAreaElement) {
+          if (!textarea) return;
+          textarea.style.height = 'auto'; // reset
+          textarea.style.height = textarea.scrollHeight + 'px'; // expand
+     }
+
+     // adjustHeight(textarea: HTMLTextAreaElement) {
+     //      textarea.style.height = 'auto';
+     //      const style = window.getComputedStyle(textarea);
+     //      const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+     //      textarea.style.height = textarea.scrollHeight + padding + 'px';
+     // }
 
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {

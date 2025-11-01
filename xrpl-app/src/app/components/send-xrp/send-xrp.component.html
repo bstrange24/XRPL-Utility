@@ -110,7 +110,7 @@
           <div class="form-panel">
                <!-- ==== MENU BAR ==== -->
                <div class="menu-bar">
-                    <button class="menu-btn" [class.active]="activeTab === 'create'" (click)="setTab('create')">
+                    <!-- <button class="menu-btn" [class.active]="activeTab === 'create'" (click)="setTab('create')">
                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                          </svg>
@@ -127,14 +127,14 @@
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                          </svg>
                          Destroy
-                    </button>
+                    </button> -->
                     <button class="menu-btn active" [class.active]="activeTab === 'send'" (click)="setTab('send')">
                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                          </svg>
                          Send Payment
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'clawback'" (click)="setTab('clawback')">
+                    <!-- <button class="menu-btn" [class.active]="activeTab === 'clawback'" (click)="setTab('clawback')">
                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12" />
                          </svg>
@@ -151,9 +151,17 @@
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                          </svg>
                          History
-                    </button>
+                    </button> -->
                </div>
                <h2 class="panel-title">Send XRP</h2>
+
+               <!-- ==== DYNAMIC INFO PANEL ==== -->
+               <div class="info-panel" *ngIf="infoMessage">
+                    <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div class="info-text" [innerHTML]="infoMessage"></div>
+               </div>
 
                <form #theForm="ngForm" (ngSubmit)="sendXrp()" class="send-form">
                     <div class="tab-content-container">
@@ -236,23 +244,21 @@
                          <textarea *ngIf="isMemoEnabled" [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
 
                          <!-- Multi-Sign Fields -->
-                         <div *ngIf="useMultiSign" class="multisign-fields">
-                              <fieldset>
-                                   <table>
-                                        <tr>
-                                             <td><label>Signers</label></td>
-                                             <td><textarea [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea></td>
-                                        </tr>
-                                        <tr>
-                                             <td><label>Seeds</label></td>
-                                             <td><textarea [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea></td>
-                                        </tr>
-                                        <tr>
-                                             <td><label>Quorum</label></td>
-                                             <td><input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly /></td>
-                                        </tr>
-                                   </table>
-                              </fieldset>
+                         <div *ngIf="useMultiSign" class="multisign-grid">
+                              <div class="multisign-field">
+                                   <label>Signers</label>
+                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly (ngModelChange)="autoResize(signers)"></textarea>
+                              </div>
+
+                              <div class="multisign-field">
+                                   <label>Seeds</label>
+                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly (ngModelChange)="autoResize(seeds)"></textarea>
+                              </div>
+
+                              <div class="multisign-field quorum-field">
+                                   <label>Quorum</label>
+                                   <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
+                              </div>
                          </div>
 
                          <!-- Regular Key Fields -->
@@ -276,12 +282,12 @@
                               <div class="form-group">
                                    <label>Ticket Sequence</label>
                                    <div *ngIf="multiSelectMode; else singleSelect">
-                                        <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}" class="timeUnit">
+                                        <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
                                              <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
                                         </select>
                                    </div>
                                    <ng-template #singleSelect>
-                                        <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}" class="timeUnit">
+                                        <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
                                              <option value="" disabled>Select a ticket</option>
                                              <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
                                         </select>
