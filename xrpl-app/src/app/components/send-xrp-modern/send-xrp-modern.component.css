@@ -292,7 +292,7 @@ body {
 }
 
 .slider:before {
-     content: "";
+     content: '';
      position: absolute;
      width: 20px;
      height: 20px;
@@ -303,15 +303,15 @@ body {
      transition: transform 0.3s ease;
 }
 
-input:checked+.slider {
-     background: #4CAF50;
+input:checked + .slider {
+     background: #4caf50;
 }
 
-input:checked+.slider:before {
+input:checked + .slider:before {
      transform: translateX(20px);
 }
 
-input:focus+.slider {
+input:focus + .slider {
      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
 }
 
@@ -414,7 +414,7 @@ input:focus+.slider {
      border-radius: 16px;
      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
      padding: 1.5rem;
-     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Header – avatar + name + generate button */
@@ -593,7 +593,6 @@ input:focus+.slider {
      font-weight: 500;
 }
 
-
 /* Icons */
 .wallet-actions {
      display: flex;
@@ -677,7 +676,6 @@ input:focus+.slider {
      font-weight: 500;
 }
 
-
 /* Secret Key UNDER balance */
 /* .secret-section {
      display: flex;
@@ -747,7 +745,6 @@ input:focus+.slider {
      background: #fee2e2;
 }
 
-
 .wallet-item {
      display: flex;
      flex-direction: column;
@@ -761,14 +758,14 @@ input:focus+.slider {
 }
 
 /* Top row: avatar + (address/balance/icons) side by side */
-.wallet-item>.wallet-avatar,
-.wallet-item>.wallet-top-row {
+.wallet-item > .wallet-avatar,
+.wallet-item > .wallet-top-row {
      display: flex;
      align-items: flex-start;
      gap: 0.75rem;
 }
 
-.wallet-item>.wallet-top-row {
+.wallet-item > .wallet-top-row {
      flex: 1;
      justify-content: space-between;
      min-width: 0;
@@ -807,7 +804,6 @@ input:focus+.slider {
      width: 100%;
      margin-top: 0;
 }
-
 
 /* -------------------------------------------------
    MPT BANNER – EXACT MATCH
@@ -1048,18 +1044,21 @@ input:focus+.slider {
      height: 14px;
 }
 
-
 /* -------------------------------------------------
    PAYMENT TX PREVIEW
    ------------------------------------------------- */
 .tx-preview-container {
+     max-width: 100%;
+     overflow-x: auto; /* fallback if someone wants to scroll horizontally */
+}
+/* .tx-preview-container {
      margin: 1.5rem 0;
      background: #f8fafc;
      border: 1px solid #e2e8f0;
      border-radius: 8px;
      overflow: hidden;
      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
+} */
 
 .tx-header {
      display: flex;
@@ -1129,7 +1128,24 @@ input:focus+.slider {
 /* -------------------------------------------------
    SYNTAX HIGHLIGHTING (Prism)
    ------------------------------------------------- */
+.tx-json code span.token.property {
+     color: #9cdcfe; /* key color */
+     margin-right: 4px;
+}
+
 .tx-json {
+     white-space: pre-wrap !important; /* allow wrapping within <pre> */
+     word-break: break-word !important; /* wrap long hashes or signatures */
+     overflow-wrap: anywhere; /* break very long tokens anywhere */
+     max-width: 100%;
+     background-color: #1e1e1e; /* optional for dark theme */
+     color: #dcdcdc;
+     padding: 1em;
+     border-radius: 6px;
+     box-sizing: border-box;
+}
+
+/* .tx-json {
      margin: 0;
      padding: 1rem;
      background: #ffffff;
@@ -1139,13 +1155,20 @@ input:focus+.slider {
      line-height: 1.5;
      overflow-x: auto;
      max-height: 400px;
-}
+} */
 
 .tx-json code {
+     white-space: pre-wrap !important;
+     word-break: break-word !important;
+     overflow-wrap: anywhere;
+     display: block;
+}
+
+/* .tx-json code {
      background: none !important;
      padding: 0 !important;
      color: inherit;
-}
+} */
 
 /* Optional: Dark mode variant */
 @media (prefers-color-scheme: dark) {
@@ -1156,4 +1179,91 @@ input:focus+.slider {
      .tx-json code {
           color: #e0e0e0;
      }
+}
+
+.success-message {
+     display: flex;
+     align-items: center;
+     background: #e6ffed;
+     color: #1b5e20;
+     border: 1px solid #a5d6a7;
+     border-radius: 6px;
+     padding: 10px 14px;
+     margin-bottom: 2px;
+     font-weight: 500;
+     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+     animation: fadeIn 0.4s ease-in;
+}
+
+.success-icon {
+     margin-right: 8px;
+     color: #2e7d32;
+}
+
+@keyframes fadeIn {
+     from {
+          opacity: 0;
+          transform: translateY(-5px);
+     }
+     to {
+          opacity: 1;
+          transform: translateY(0);
+     }
+}
+
+/* ✅ General layout */
+.tx-message {
+     display: flex;
+     align-items: flex-start;
+     padding: 12px 16px;
+     border-radius: 6px;
+     margin-top: 16px;
+     transition: all 0.3s ease-in-out;
+     word-wrap: break-word;
+     max-width: 100%;
+     overflow-wrap: anywhere;
+}
+
+/* ✅ Icons */
+.tx-icon {
+     flex-shrink: 0;
+     margin-right: 10px;
+}
+
+.tx-message.hidden {
+     opacity: 0;
+}
+
+/* ✅ Success Styles */
+.tx-message.success {
+     background-color: #e6f4ea;
+     border: 1px solid #34a853;
+     color: #155724;
+}
+
+.tx-icon.success-icon {
+     color: #34a853;
+}
+
+/* ❌ Error Styles */
+.tx-message.error {
+     background-color: #fdecea;
+     border: 1px solid #f44336;
+     color: #a94442;
+}
+
+.tx-icon.error-icon {
+     color: #f44336;
+}
+
+/* ✅ Text container */
+.tx-text {
+     flex: 1;
+     font-size: 0.95rem;
+     line-height: 1.5;
+}
+
+.tx-text span {
+     display: block;
+     word-break: break-word;
 }

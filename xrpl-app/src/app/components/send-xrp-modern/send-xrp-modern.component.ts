@@ -40,7 +40,7 @@ declare var Prism: any;
 @Component({
      selector: 'app-send-xrp-modern',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, SanitizeHtmlPipe],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent],
      templateUrl: './send-xrp-modern.component.html',
      styleUrl: './send-xrp-modern.component.css',
 })
@@ -48,7 +48,8 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      @Output() walletListChange = new EventEmitter<any[]>();
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      @ViewChild('accountForm') accountForm!: NgForm;
-     @ViewChild('jsonCode') jsonCode!: ElementRef<HTMLElement>;
+     @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
+     @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
      lastResult: string = '';
      result: string = '';
      isError: boolean = false;
@@ -93,8 +94,10 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      createdMPTs = 0; // placeholder – fill from XRPL if you have it
      environment: string = '';
      paymentTx: any = null; // Will hold the transaction object
+     txResult: any = null; // Will hold the transaction object
      private needsHighlight = false;
      // define how "recent" an update must be to skip (e.g. 60 seconds)
+     txHash: string = '';
 
      constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly xrplTransactions: XrplTransactionService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly clickToCopyService: ClickToCopyService) {}
 
@@ -106,17 +109,36 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
 
      async ngAfterViewInit() {}
 
-     ngAfterViewChecked() {
-          if (this.result !== this.lastResult && this.resultField?.nativeElement) {
-               this.renderUiComponentsService.attachSearchListener(this.resultField.nativeElement);
-               this.lastResult = this.result;
-               this.cdr.markForCheck();
-          }
+     // ngAfterViewChecked() {
+     //      if (this.needsHighlight && this.jsonCode) {
+     //           const json = JSON.stringify(this.paymentTx, null, 2);
+     //           this.jsonCode.nativeElement.textContent = json;
+     //           Prism.highlightElement(this.jsonCode.nativeElement);
+     //           this.needsHighlight = false;
+     //      }
 
-          if (this.needsHighlight && this.jsonCode) {
-               const json = JSON.stringify(this.paymentTx, null, 2);
-               this.jsonCode.nativeElement.textContent = json;
-               Prism.highlightElement(this.jsonCode.nativeElement);
+     //      if (this.needsHighlight && this.jsonCode) {
+     //           const json = JSON.stringify(this.txResult, null, 2);
+     //           this.jsonCode.nativeElement.textContent = json;
+     //           Prism.highlightElement(this.jsonCode.nativeElement);
+     //           this.needsHighlight = false;
+     //      }
+     // }
+
+     ngAfterViewChecked() {
+          if (this.needsHighlight) {
+               if (this.paymentTx && this.paymentJson) {
+                    const json = JSON.stringify(this.paymentTx, null, 2);
+                    this.paymentJson.nativeElement.textContent = json;
+                    Prism.highlightElement(this.paymentJson.nativeElement);
+               }
+
+               if (this.txResult && this.txResultJson) {
+                    const json = JSON.stringify(this.txResult, null, 2);
+                    this.txResultJson.nativeElement.textContent = json;
+                    Prism.highlightElement(this.txResultJson.nativeElement);
+               }
+
                this.needsHighlight = false;
           }
      }
@@ -174,7 +196,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           this.isError = event.isError;
           this.isSuccess = event.isSuccess;
           this.isEditable = !this.isSuccess;
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 
      // Toggle secret per wallet
@@ -275,7 +297,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           if (this.signerQuorum > totalWeight) {
                this.signerQuorum = totalWeight;
           }
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 
      async toggleMultiSign() {
@@ -290,7 +312,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                console.log(`ERROR getting wallet in toggleMultiSign' ${error.message}`);
                this.setError('ERROR getting wallet in toggleMultiSign');
           } finally {
-               this.cdr.markForCheck();
+               this.cdr.detectChanges();
           }
      }
 
@@ -298,11 +320,11 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           if (this.multiSignAddress === 'No Multi-Sign address configured for account') {
                this.multiSignSeeds = '';
           }
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 
      toggleTicketSequence() {
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 
      onTicketToggle(event: any, ticket: string) {
@@ -316,13 +338,11 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      async getAccountDetails() {
           console.log('Entering getAccountDetails');
           const startTime = Date.now();
-          this.setSuccessProperties();
+          // this.setSuccessProperties();
+          // this.clearMessages();
           this.updateSpinnerMessage(``);
 
           try {
-               if (this.resultField?.nativeElement) {
-                    this.resultField.nativeElement.innerHTML = '';
-               }
                this.updateSpinnerMessage(`Getting Account Details`);
 
                const client = await this.xrplService.getClient();
@@ -341,12 +361,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                     return this.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
                }
 
-               // Render immediately
-               const sortedResult = this.utilsService.sortByLedgerEntryType(accountObjects);
-               this.renderUiComponentsService.renderAccountDetails(accountInfo, sortedResult);
-               this.setSuccess(this.result);
                this.refreshUIData(wallet, accountInfo, accountObjects);
-               this.clickToCopyService.attachCopy(this.resultField.nativeElement);
 
                // Defer non-critical UI updates. Let main render complete first
                setTimeout(async () => {
@@ -372,7 +387,9 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      async sendXrp() {
           console.log('Entering sendXrp');
           const startTime = Date.now();
-          this.setSuccessProperties();
+
+          // this.setSuccessProperties();
+          this.clearMessages();
           this.updateSpinnerMessage(``);
 
           const inputs: ValidationInputs = {
@@ -395,10 +412,6 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           };
 
           try {
-               if (this.resultField?.nativeElement) {
-                    this.resultField.nativeElement.innerHTML = '';
-               }
-
                const client = await this.xrplService.getClient();
                const wallet = await this.getWallet();
 
@@ -428,7 +441,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                     return this.setError('ERROR: Insufficient XRP to complete transaction');
                }
 
-               this.updateSpinnerMessage(this.isSimulateEnabled ? 'Simulating Sending XRP (no funds will be moved)...' : 'Submitting Send XRP to Ledger...');
+               this.showSpinnerWithDelay(this.isSimulateEnabled ? 'Simulating Sending XRP (no funds will be moved)...' : 'Submitting Send XRP to Ledger...', 200);
 
                // STORE IT FOR DISPLAY
                this.paymentTx = paymentTx;
@@ -452,6 +465,12 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
+               this.utilsService.logObjects('response', response);
+               this.utilsService.logObjects('response.result.hash', response.result.hash);
+
+               this.txResult = response.result;
+               this.updateTxResult(this.txResult);
+
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
@@ -459,10 +478,10 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
 
                     console.error(`Transaction ${this.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
+               } else {
+                    this.txHash = response.result.hash;
                }
 
-               this.renderTransactionResult(response);
-               this.resultField.nativeElement.classList.add('success');
                this.setSuccess(this.result);
 
                if (!this.isSimulateEnabled) {
@@ -519,16 +538,6 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving sendXrp in ${this.executionTime}ms`);
           }
-     }
-
-     private renderTransactionResult(response: any): void {
-          if (this.isSimulateEnabled) {
-               this.renderUiComponentsService.renderSimulatedTransactionsResults(response, this.resultField.nativeElement);
-          } else {
-               console.debug(`Response`, response);
-               this.renderUiComponentsService.renderTransactionsResults(response, this.resultField.nativeElement);
-          }
-          this.clickToCopyService.attachCopy(this.resultField.nativeElement);
      }
 
      private async setTxOptionalFields(client: xrpl.Client, paymentTx: xrpl.Payment, wallet: xrpl.Wallet, accountInfo: any) {
@@ -938,7 +947,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                     this.destinationFields = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
                }
           }
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 
      private async getWallet() {
@@ -969,7 +978,14 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      // Call this after setting paymentTx
      updatePaymentTx(tx: any) {
           this.paymentTx = tx;
-          this.needsHighlight = true; // Trigger highlight
+          this.needsHighlight = true;
+          this.cdr.detectChanges();
+     }
+
+     updateTxResult(tx: any) {
+          this.txResult = tx;
+          this.needsHighlight = true;
+          this.cdr.detectChanges();
      }
 
      // COPY TO CLIPBOARD
@@ -991,6 +1007,24 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           URL.revokeObjectURL(url);
      }
 
+     copyTxResult() {
+          const json = JSON.stringify(this.txResult, null, 2);
+          navigator.clipboard.writeText(json).then(() => {
+               alert('Transaction JSON copied!');
+          });
+     }
+
+     downloadTxResult() {
+          const json = JSON.stringify(this.txResult, null, 2);
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `tx-result-${Date.now()}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+     }
+
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
                this.isSimulateEnabled = false;
@@ -1007,12 +1041,31 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           this.isTicket = false;
           this.memoField = '';
           this.isMemoEnabled = false;
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+     }
+
+     private clearMessages() {
+          const fadeDuration = 400; // ms
+          this.result = ''; // optional, keep text empty after fade
+          this.isError = false;
+          this.isSuccess = false;
+          this.txHash = '';
+          this.txResult = null;
+          this.paymentTx = null;
+          this.cdr.detectChanges();
+
+          // If using CSS fade-out with a class, you could add/remove a flag for .hidden
+     }
+
+     async showSpinnerWithDelay(message: string, delayMs: number = 200) {
+          this.spinner = true;
+          this.updateSpinnerMessage(message);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
      }
 
      private updateSpinnerMessage(message: string) {
           this.spinnerMessage = message;
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 
      private setErrorProperties() {
@@ -1033,7 +1086,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      private setSuccessProperties() {
           this.isSuccess = true;
           this.isError = false;
-          this.spinner = true;
+          this.spinner = false;
           this.result = '';
      }
 
@@ -1044,6 +1097,6 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                isError: this.isError,
                isSuccess: this.isSuccess,
           });
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 }

@@ -291,6 +291,33 @@
                          <span>{{ spinnerMessage || 'Loading...' }}</span>
                     </div>
 
+                    <!-- ✅ SUCCESS MESSAGE -->
+                    <div *ngIf="isSuccess && !isError" class="success-message">
+                         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="success-icon">
+                              <path d="M9 16.17l-3.88-3.88L4 13.41 9 18.41l12-12-1.41-1.41z" />
+                         </svg>
+                         <div class="success-text">
+                              <span>XRP payment sent successfully!</span><br />
+                              <span *ngIf="txHash">
+                                   Here is the transaction hash:
+                                   <a [href]="'https://devnet.xrpl.org/transactions/' + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>
+                              </span>
+                         </div>
+                    </div>
+
+                    <!-- ❌ ERROR MESSAGE -->
+                    <div class="tx-message error" *ngIf="isError && result">
+                         <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" class="tx-icon error-icon">
+                              <path
+                                   d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 
+      10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                              />
+                         </svg>
+                         <div class="tx-text">
+                              <span>{{ result }}</span>
+                         </div>
+                    </div>
+
                     <!-- ==== PAYMENT TX PREVIEW ==== -->
                     <div class="tx-preview-container" *ngIf="paymentTx">
                          <div class="tx-header">
@@ -310,12 +337,35 @@
                                    </button>
                               </div>
                          </div>
-                         <!-- SYNTAX HIGHLIGHTED JSON -->
-                         <pre class="tx-json language-json"><code #jsonCode class="language-json"></code></pre>
+
+                         <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
                     </div>
 
                     <!-- Result -->
-                    <div #resultField id="resultField" [innerHTML]="result | sanitizeHtml" [ngClass]="{ 'error': isError, 'success': isSuccess }" class="result-box" [attr.contenteditable]="isEditable"></div>
+                    <!-- <div #resultField id="resultField" [innerHTML]="result | sanitizeHtml" [ngClass]="{ 'error': isError, 'success': isSuccess }" class="result-box" [attr.contenteditable]="isEditable"></div> -->
+
+                    <!-- ==== PAYMENT TX PREVIEW ==== -->
+                    <div class="tx-preview-container" *ngIf="txResult">
+                         <div class="tx-header">
+                              <h3 class="tx-title">Transaction Result</h3>
+                              <div class="tx-actions">
+                                   <button class="copy-btn" (click)="copyTxResult()" title="Copy JSON">
+                                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                             <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
+                                        </svg>
+                                        Copy
+                                   </button>
+                                   <button class="download-btn" (click)="downloadTxResult()" title="Download JSON">
+                                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                             <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
+                                        </svg>
+                                        Download
+                                   </button>
+                              </div>
+                         </div>
+
+                         <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
+                    </div>
                </form>
           </div>
      </div>
