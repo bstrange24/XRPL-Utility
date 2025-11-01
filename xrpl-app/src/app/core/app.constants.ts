@@ -36,6 +36,7 @@ export const AppConstants = {
 
      CREDENTIAL_REGEX: /^[0-9A-F]{2,128}$/,
      LSF_ACCEPTED: 0x00010000,
+     SKIP_THRESHOLD_MS: 60 * 1000,
 
      // Encryption Algorithms
      ENCRYPTION: {

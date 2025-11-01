@@ -1,10 +1,22 @@
-<!-- ==== NAVBAR (unchanged) ==== -->
-<div id="navbar-container">
-     <app-navbar></app-navbar>
+<div class="mpt-banner">
+     <div class="banner-content">
+          <div id="navbar-container">
+               <app-navbar></app-navbar>
+          </div>
+     </div>
 </div>
 
-<!-- ==== DYNAMIC INPUT (unchanged) ==== -->
-<app-app-wallet-dynamic-input (walletListChange)="onWalletListChange($event)" (transactionResult)="handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange($event)" (transactionResult)="handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+
+<!-- ==== BANNER – XRPL Multi-Purpose Token Manager ==== -->
+<!-- <div class="mpt-banner">
+     <div class="banner-content">
+          <h1 class="banner-title">XRPL Multi-Purpose Token Manager</h1>
+          <div class="banner-status">
+               <span class="status-badge">Connected</span>
+          </div>
+     </div>
+</div> -->
 
 <!-- ==== MAIN CONTENT – CENTERED TWO-COLUMN ==== -->
 <div class="main-container">
@@ -22,7 +34,7 @@
                     <button class="generate-btn" (click)="generateNewAccount()">+ Generate</button>
                </div>
 
-               <p class="panel-subtitle">Generate testnet accounts with XRP from the faucet to manage MPTs.</p>
+               <p class="panel-subtitle">Generate {{environment}} accounts with XRP from the faucet.</p>
 
                <!-- ==== LIST OF WALLETS ==== -->
                <div *ngFor="let wallet of wallets; let i = index" class="wallet-item" [class.selected]="selectedWalletIndex === i" (click)="selectWallet(i)">
@@ -34,7 +46,7 @@
                     <!-- Address + Balance + Icons (new layout) -->
                     <div class="wallet-info">
                          <div class="address-line">
-                              <div class="wallet-address">{{ wallet.address | slice:0:10 }}...{{ wallet.address | slice:-10 }}</div>
+                              <div class="wallet-address">{{ wallet.address | slice:0:12 }}...{{ wallet.address | slice:-12 }}</div>
                               <!-- <div class="wallet-address">{{ wallet.address }}</div> -->
                               <div class="wallet-balance">{{ wallet.balance || '0' }} XRP</div>
                          </div>
@@ -61,28 +73,43 @@
                          </div>
                     </div>
 
+                    <div class="wallet-reserves"><span>Owner Count:</span> <span class="highlight"> {{ wallet.ownerCount }}</span></div>
+                    <div class="wallet-reserves"><span>Xrp Reserves:</span> <span class="highlight"> {{ wallet.xrpReserves }} XRP</span></div>
+
                     <!-- Secret Key -->
                     <div class="secret-section">
-                         <span class="secret-label">Secret Key:</span>
-                         <span class="secret-value" [class.hidden]="!wallet.showSecret"> {{ wallet.showSecret ? wallet.seed : '' }} </span>
-                         <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
+                         <div class="secret-header">
+                              <span class="secret-label">Secret Key:</span>
+                              <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
+                         </div>
+
+                         <!-- Seed shown BELOW the button -->
+                         <div class="secret-seed-container" *ngIf="wallet.showSecret">
+                              <div class="secret-seed">{{ wallet.seed }}</div>
+                              <button class="copy-btn" (click)="copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
+                                   <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                        <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
+                                   </svg>
+                                   Copy
+                              </button>
+                         </div>
                     </div>
                </div>
 
                <!-- ==== SELECTED ACCOUNT SUMMARY ==== -->
-               <div class="selected-account-card">
+               <!-- <div class="selected-account-card">
                     <h3 class="summary-title">Selected Account</h3>
                     <div class="summary-row"><span>Address:</span> <span>{{ currentWallet.address }}</span></div>
                     <div class="summary-row"><span>Balance:</span> <span class="highlight">{{ currentWallet.balance }} XRP</span></div>
-                    <!-- <div class="summary-row"><span>MP Tokens:</span> <span>{{ currentWallet.mpTokens || 0 }}</span></div> -->
-                    <!-- <div class="summary-row"><span>Created MPTs:</span> <span>{{ currentWallet.createdMPTs || 0 }}</span></div> -->
-               </div>
+                    <div class="summary-row"><span>Owner Count:</span> <span class="highlight">{{ currentWallet.ownerCount }}</span></div>
+                    <div class="summary-row"><span>Xrp Reserves:</span> <span class="highlight">{{ currentWallet.xrpReserves }} XRP</span></div>
+               </div> -->
           </div>
 
           <!-- ==== RIGHT – SEND XRP FORM ==== -->
           <div class="form-panel">
                <!-- ==== MENU BAR ==== -->
-               <div class="mpt-menu-bar">
+               <div class="menu-bar">
                     <button class="menu-btn" [class.active]="activeTab === 'create'" (click)="setTab('create')">
                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -198,6 +225,60 @@
                     <!-- Memo textarea -->
                     <textarea *ngIf="isMemoEnabled" [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
 
+                    <!-- Multi-Sign Fields -->
+                    <div *ngIf="useMultiSign" class="multisign-fields">
+                         <fieldset>
+                              <table>
+                                   <tr>
+                                        <td><label>Signers</label></td>
+                                        <td><textarea [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea></td>
+                                   </tr>
+                                   <tr>
+                                        <td><label>Seeds</label></td>
+                                        <td><textarea [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea></td>
+                                   </tr>
+                                   <tr>
+                                        <td><label>Quorum</label></td>
+                                        <td><input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly /></td>
+                                   </tr>
+                              </table>
+                         </fieldset>
+                    </div>
+
+                    <!-- Regular Key Fields -->
+                    <div *ngIf="isRegularKeyAddress" class="regular-key-fields">
+                         <div class="form-row">
+                              <div class="form-group">
+                                   <label>Regular Key Address</label>
+                                   <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                              </div>
+                         </div>
+                         <div class="form-row">
+                              <div class="form-group">
+                                   <label>Regular Key Seed</label>
+                                   <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
+                              </div>
+                         </div>
+                    </div>
+
+                    <!-- Ticket Selection -->
+                    <div *ngIf="isTicket" class="ticket-fields">
+                         <div class="form-group">
+                              <label>Ticket Sequence</label>
+                              <div *ngIf="multiSelectMode; else singleSelect">
+                                   <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}" class="timeUnit">
+                                        <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
+                                   </select>
+                              </div>
+                              <ng-template #singleSelect>
+                                   <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}" class="timeUnit">
+                                        <option value="" disabled>Select a ticket</option>
+                                        <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
+                                   </select>
+                              </ng-template>
+                         </div>
+                    </div>
+
                     <!-- Action buttons -->
                     <div class="button-row">
                          <button type="submit" class="btn-primary">Send XRP</button>
@@ -208,6 +289,29 @@
                     <div *ngIf="spinner" class="spinner-row">
                          <div class="spinner"></div>
                          <span>{{ spinnerMessage || 'Loading...' }}</span>
+                    </div>
+
+                    <!-- ==== PAYMENT TX PREVIEW ==== -->
+                    <div class="tx-preview-container" *ngIf="paymentTx">
+                         <div class="tx-header">
+                              <h3 class="tx-title">Payment Transaction</h3>
+                              <div class="tx-actions">
+                                   <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
+                                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                             <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
+                                        </svg>
+                                        Copy
+                                   </button>
+                                   <button class="download-btn" (click)="downloadTx()" title="Download JSON">
+                                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                             <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
+                                        </svg>
+                                        Download
+                                   </button>
+                              </div>
+                         </div>
+                         <!-- SYNTAX HIGHLIGHTED JSON -->
+                         <pre class="tx-json language-json"><code #jsonCode class="language-json"></code></pre>
                     </div>
 
                     <!-- Result -->

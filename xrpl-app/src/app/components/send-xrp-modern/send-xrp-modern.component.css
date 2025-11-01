@@ -26,10 +26,11 @@ body {
 
      .wallets-panel {
           flex: 1;
+          min-width: 250px;
      }
 
      .form-panel {
-          flex: 2;
+          flex: 2.5;
      }
 }
 
@@ -43,7 +44,7 @@ body {
 
 .wallets-panel {
      flex: 1;
-     min-width: 300px;
+     min-width: 370px;
      display: flex;
      flex-direction: column;
      gap: 1rem;
@@ -144,6 +145,11 @@ body {
      margin-top: 0.25rem;
 }
 
+.wallet-reserves {
+     font-weight: 200;
+     margin-left: 0.75rem;
+}
+
 .wallet-actions {
      display: flex;
      gap: 0.5rem;
@@ -176,15 +182,10 @@ body {
      background: #fee2e2;
 }
 
-.wallet-info {
+/* .wallet-info {
      margin-left: 0.75rem;
      flex: 1;
-}
-
-.wallet-balance {
-     font-weight: 600;
-     color: #1a1a1a;
-}
+} */
 
 .account-summary {
      margin-top: 1.5rem;
@@ -251,52 +252,75 @@ body {
 /* ==== SWITCHES ==== */
 .switch-group {
      display: flex;
-     flex-wrap: wrap;
+     flex-wrap: nowrap;
+     /* one line */
      gap: 1rem;
-     margin: 1rem 0;
+     /* ← was 2rem, now 1rem */
+     align-items: center;
+     justify-content: flex-start;
+     margin: 1.5rem 0;
+     overflow-x: auto;
+     /* scroll if needed */
+     padding-bottom: 0.5rem;
+     min-width: 0;
+     /* allows flex children to shrink */
 }
 
 .switch {
      display: flex;
      align-items: center;
+     gap: 0.5rem;
      font-size: 0.9rem;
      cursor: pointer;
+     white-space: nowrap;
+     user-select: none;
 }
 
 .switch input {
-     position: absolute;
      opacity: 0;
+     width: 0;
+     height: 0;
 }
 
 .slider {
      position: relative;
-     display: inline-block;
-     width: 40px;
-     height: 22px;
-     background: #cbd5e1;
-     border-radius: 999px;
-     margin-right: 0.5rem;
-     transition: 0.2s;
+     width: 44px;
+     height: 24px;
+     background: #686868;
+     border-radius: 12px;
+     transition: background 0.3s ease;
 }
 
 .slider:before {
      content: "";
      position: absolute;
-     width: 18px;
-     height: 18px;
+     width: 20px;
+     height: 20px;
      left: 2px;
      top: 2px;
      background: white;
      border-radius: 50%;
-     transition: 0.2s;
+     transition: transform 0.3s ease;
 }
 
 input:checked+.slider {
-     background: #6366f1;
+     background: #4CAF50;
 }
 
 input:checked+.slider:before {
-     transform: translateX(18px);
+     transform: translateX(20px);
+}
+
+input:focus+.slider {
+     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+}
+
+@media (max-width: 768px) {
+     .switch-group {
+          flex-wrap: wrap;
+          gap: 1.5rem;
+          justify-content: center;
+     }
 }
 
 /* ==== BUTTONS ==== */
@@ -554,6 +578,8 @@ input:checked+.slider:before {
      justify-content: space-between;
      align-items: flex-start;
      gap: 0.5rem;
+     margin-top: 20px 0;
+     margin-left: 0.75rem;
 }
 
 .address-line {
@@ -567,11 +593,6 @@ input:checked+.slider:before {
      font-weight: 500;
 }
 
-.wallet-balance {
-     font-size: 0.8rem;
-     color: #10b981;
-     font-weight: 600;
-}
 
 /* Icons */
 .wallet-actions {
@@ -580,20 +601,14 @@ input:checked+.slider:before {
      align-items: center;
 }
 
-.secret-section {
+/* .secret-section {
      display: flex;
      align-items: center;
      gap: 0.5rem;
      margin-top: 0.5rem;
      font-size: 0.75rem;
      width: 100%;
-}
-
-.secret-label {
-     color: #4b5563;
-     min-width: 65px;
-     /* aligns all labels */
-}
+} */
 
 .secret-value {
      flex: 1;
@@ -662,25 +677,15 @@ input:checked+.slider:before {
      font-weight: 500;
 }
 
-.wallet-balance {
-     font-size: 0.8rem;
-     color: #10b981;
-     font-weight: 600;
-}
 
 /* Secret Key UNDER balance */
-.secret-section {
+/* .secret-section {
      display: flex;
      align-items: center;
      gap: 0.4rem;
      font-size: 0.75rem;
      margin-top: 0.3rem;
-}
-
-.secret-label {
-     color: #4b5563;
-     min-width: 65px;
-}
+} */
 
 .secret-value {
      flex: 1;
@@ -770,7 +775,6 @@ input:checked+.slider:before {
      /* allows proper text truncation */
 }
 
-/* Keep existing styles for address, balance, actions, secret-section */
 .address-line {
      display: flex;
      flex-direction: column;
@@ -785,12 +789,6 @@ input:checked+.slider:before {
      overflow: hidden;
      text-overflow: ellipsis;
      white-space: nowrap;
-}
-
-.wallet-balance {
-     font-size: 0.8rem;
-     color: #10b981;
-     font-weight: 600;
 }
 
 .wallet-actions {
@@ -810,12 +808,71 @@ input:checked+.slider:before {
      margin-top: 0;
 }
 
+
+/* -------------------------------------------------
+   MPT BANNER – EXACT MATCH
+   ------------------------------------------------- */
+.mpt-banner {
+     background: linear-gradient(135deg, #6366f1, #4f46e5);
+     /* blue gradient */
+     color: white;
+     padding: 0.75rem 1rem;
+     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+     margin-bottom: 1rem;
+     border-radius: 0 0 12px 12px;
+     /* subtle bottom curve */
+}
+
+.banner-content {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     max-width: 1200px;
+     margin: 0 auto;
+}
+
+.banner-title {
+     font-size: 1.25rem;
+     font-weight: 700;
+     margin: 0;
+     color: white;
+}
+
+.banner-status {
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+}
+
+.status-badge {
+     background: rgba(255, 255, 255, 0.2);
+     color: white;
+     padding: 0.25rem 0.75rem;
+     border-radius: 20px;
+     font-size: 0.875rem;
+     font-weight: 500;
+     backdrop-filter: blur(10px);
+}
+
+/* Mobile: Stack vertically */
+@media (max-width: 768px) {
+     .banner-content {
+          flex-direction: column;
+          gap: 0.5rem;
+          text-align: center;
+     }
+
+     .banner-title {
+          font-size: 1.1rem;
+     }
+}
+
 /* -------------------------------------------------
    MPT MENU BAR – EXACT MATCH
    ------------------------------------------------- */
-.mpt-menu-bar {
+.menu-bar {
      display: flex;
-     flex-wrap: wrap;
+     /* flex-wrap: wrap; */
      gap: 0.5rem;
      padding: 0.75rem 1rem;
      background: #f8f9fa;
@@ -856,4 +913,247 @@ input:checked+.slider:before {
      border-color: #93c5fd;
      color: #1e40af;
      font-weight: 600;
+}
+
+/* -------------------------------------------------
+   CONDITIONAL FIELDS – CLEAN LAYOUT
+   ------------------------------------------------- */
+.multisign-fields,
+.regular-key-fields,
+.ticket-fields {
+     margin-top: 1rem;
+     padding: 1rem;
+     background: #2a2c31;
+     border-radius: 10px;
+     border: 1px solid #686868;
+}
+
+.multisign-fields fieldset,
+.regular-key-fields .form-group,
+.ticket-fields .form-group {
+     margin: 0;
+     border: none;
+     padding: 0;
+}
+
+.multisign-fields table {
+     width: 100%;
+     border-collapse: collapse;
+}
+
+.multisign-fields td {
+     padding: 0.5rem 0;
+     vertical-align: top;
+}
+
+.multisign-fields td:first-child {
+     width: 100px;
+     text-align: right;
+     padding-right: 1rem;
+     color: #ccc;
+}
+
+.multisign-fields textarea,
+.multisign-fields input {
+     width: 100%;
+     min-height: 80px;
+     resize: vertical;
+}
+
+.timeUnit[multiple] {
+     height: 120px;
+}
+
+/* -------------------------------------------------
+   SECRET SECTION – SEED BELOW + COPY BUTTON
+   ------------------------------------------------- */
+.secret-section {
+     display: flex;
+     flex-direction: column;
+     gap: 0.5rem;
+     margin-top: 0.5rem;
+     font-size: 0.75rem;
+}
+
+.secret-header {
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+}
+
+.secret-label {
+     color: #4b5563;
+     min-width: 65px;
+     font-weight: 500;
+}
+
+.show-toggle {
+     background: #f3f4f6;
+     border: 1px solid #d1d5db;
+     color: #3b82f6;
+     padding: 0.15rem 0.5rem;
+     border-radius: 6px;
+     font-size: 0.7rem;
+     cursor: pointer;
+     white-space: nowrap;
+     transition: all 0.2s;
+}
+
+.show-toggle:hover {
+     background: #dbeafe;
+     border-color: #93c5fd;
+}
+
+/* Seed container */
+.secret-seed-container {
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+     background: #f8fafc;
+     padding: 0.5rem;
+     border-radius: 6px;
+     border: 1px solid #e2e8f0;
+     font-family: 'Courier New', monospace;
+     font-size: 0.78rem;
+}
+
+.secret-seed {
+     flex: 1;
+     color: #1f2937;
+     word-break: break-all;
+     user-select: all;
+}
+
+/* Copy button */
+.copy-btn {
+     display: flex;
+     align-items: center;
+     gap: 0.25rem;
+     background: #e0e7ff;
+     color: #4f46e5;
+     border: none;
+     padding: 0.25rem 0.5rem;
+     border-radius: 6px;
+     font-size: 0.7rem;
+     cursor: pointer;
+     transition: all 0.2s;
+}
+
+.copy-btn:hover {
+     background: #c7d2fe;
+}
+
+.copy-btn svg {
+     width: 14px;
+     height: 14px;
+}
+
+
+/* -------------------------------------------------
+   PAYMENT TX PREVIEW
+   ------------------------------------------------- */
+.tx-preview-container {
+     margin: 1.5rem 0;
+     background: #f8fafc;
+     border: 1px solid #e2e8f0;
+     border-radius: 8px;
+     overflow: hidden;
+     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tx-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     padding: 0.75rem 1rem;
+     background: #e0e7ff;
+     border-bottom: 1px solid #c7d2fe;
+}
+
+.tx-title {
+     margin: 0;
+     font-size: 0.95rem;
+     font-weight: 600;
+     color: #4f46e5;
+}
+
+.tx-actions {
+     display: flex;
+     gap: 0.5rem;
+}
+
+.copy-btn,
+.download-btn {
+     display: flex;
+     align-items: center;
+     gap: 0.25rem;
+     background: white;
+     color: #4f46e5;
+     border: 1px solid #c7d2fe;
+     padding: 0.25rem 0.5rem;
+     border-radius: 6px;
+     font-size: 0.75rem;
+     cursor: pointer;
+     transition: all 0.2s;
+}
+
+.copy-btn:hover,
+.download-btn:hover {
+     background: #e0e7ff;
+     border-color: #818cf8;
+}
+
+.copy-btn svg,
+.download-btn svg {
+     width: 14px;
+     height: 14px;
+}
+
+/* .tx-json {
+     margin: 0;
+     padding: 1rem;
+     background: #ffffff;
+     font-family: 'Courier New', monospace;
+     font-size: 0.85rem;
+     line-height: 1.5;
+     color: #1f2937;
+     overflow-x: auto;
+     white-space: pre;
+}
+
+.tx-json code {
+     background: none;
+     padding: 0;
+} */
+
+/* -------------------------------------------------
+   SYNTAX HIGHLIGHTING (Prism)
+   ------------------------------------------------- */
+.tx-json {
+     margin: 0;
+     padding: 1rem;
+     background: #ffffff;
+     border-top: 1px solid #e2e8f0;
+     font-family: 'Courier New', monospace;
+     font-size: 0.85rem;
+     line-height: 1.5;
+     overflow-x: auto;
+     max-height: 400px;
+}
+
+.tx-json code {
+     background: none !important;
+     padding: 0 !important;
+     color: inherit;
+}
+
+/* Optional: Dark mode variant */
+@media (prefers-color-scheme: dark) {
+     .tx-json {
+          background: #fff;
+     }
+
+     .tx-json code {
+          color: #e0e0e0;
+     }
 }

@@ -35,6 +35,8 @@ interface ValidationInputs {
      signers?: { account: string; weight: number }[];
 }
 
+declare var Prism: any;
+
 @Component({
      selector: 'app-send-xrp-modern',
      standalone: true,
@@ -46,6 +48,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      @Output() walletListChange = new EventEmitter<any[]>();
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      @ViewChild('accountForm') accountForm!: NgForm;
+     @ViewChild('jsonCode') jsonCode!: ElementRef<HTMLElement>;
      lastResult: string = '';
      result: string = '';
      isError: boolean = false;
@@ -84,31 +87,37 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      wallets: any[] = [];
      selectedWalletIndex: number = 0;
-     currentWallet = { name: '', address: '', seed: '', balance: '' };
+     currentWallet = { name: '', address: '', seed: '', balance: '', ownerCount: '', xrpReserves: '', spendableXrp: '' };
      showSecret = false; // toggle for secret key
      mpTokens = 0; // placeholder – fill from XRPL if you have it
      createdMPTs = 0; // placeholder – fill from XRPL if you have it
+     environment: string = '';
+     paymentTx: any = null; // Will hold the transaction object
+     private needsHighlight = false;
+     // define how "recent" an update must be to skip (e.g. 60 seconds)
 
      constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly xrplTransactions: XrplTransactionService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly clickToCopyService: ClickToCopyService) {}
 
      activeTab = 'send'; // default
 
-     setTab(tab: string) {
-          this.activeTab = tab;
-          // Later: load different form/content
-     }
-
      ngOnInit() {
-          this.wallets = this.wallets.map(w => ({ ...w, showSecret: false }));
+          this.environment = this.xrplService.getNet().environment;
      }
 
-     ngAfterViewInit() {}
+     async ngAfterViewInit() {}
 
      ngAfterViewChecked() {
           if (this.result !== this.lastResult && this.resultField?.nativeElement) {
                this.renderUiComponentsService.attachSearchListener(this.resultField.nativeElement);
                this.lastResult = this.result;
                this.cdr.markForCheck();
+          }
+
+          if (this.needsHighlight && this.jsonCode) {
+               const json = JSON.stringify(this.paymentTx, null, 2);
+               this.jsonCode.nativeElement.textContent = json;
+               Prism.highlightElement(this.jsonCode.nativeElement);
+               this.needsHighlight = false;
           }
      }
 
@@ -118,10 +127,44 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           this.onAccountChange();
      }
 
-     onWalletListChange(event: any[]) {
+     async onWalletListChange(event: any[]) {
           this.wallets = event;
           if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
                this.selectedWalletIndex = 0;
+               await this.refreshBalance(0);
+          } else {
+               const client = await this.xrplService.getClient();
+
+               const now = Date.now();
+               await Promise.all(
+                    this.wallets.map(async (wallet, index) => {
+                         try {
+                              // --- skip wallets updated recently ---
+                              if (wallet.lastUpdated && now - wallet.lastUpdated < AppConstants.SKIP_THRESHOLD_MS) {
+                                   console.log(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
+                                   return;
+                              }
+
+                              // --- skip inactive wallets (optional) ---
+                              if (wallet.isInactive) {
+                                   console.log(`💤 Skipping inactive wallet ${wallet.name}`);
+                                   return;
+                              }
+
+                              // --- fetch and update ---
+                              console.log(`🔄 Updating ${wallet.name}...`);
+                              const accountInfo = await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
+                              await this.updateXrpBalance(client, accountInfo, wallet, index);
+
+                              // --- mark last update time ---
+                              wallet.lastUpdated = now;
+                         } catch (err) {
+                              console.error(`❌ Failed to update ${wallet.name}`, err);
+                         }
+                    })
+               );
+               this.saveWallets();
+               this.emitChange();
           }
           this.onAccountChange();
      }
@@ -149,6 +192,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                if (this.selectedWalletIndex === index) {
                     this.currentWallet.balance = balance.toString();
                }
+
                this.cdr.detectChanges();
           } catch (err) {
                this.setError('Failed to refresh balance');
@@ -162,6 +206,19 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           });
      }
 
+     copySeed(seed: string) {
+          navigator.clipboard
+               .writeText(seed)
+               .then(() => {
+                    // Optional: show toast
+                    alert('Seed copied to clipboard!');
+               })
+               .catch(err => {
+                    console.error('Failed to copy seed:', err);
+                    alert('Failed to copy. Please select and copy manually.');
+               });
+     }
+
      // Delete wallet
      deleteWallet(index: number) {
           if (confirm('Delete this wallet? This cannot be undone.')) {
@@ -169,22 +226,21 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                if (this.selectedWalletIndex >= this.wallets.length) {
                     this.selectedWalletIndex = this.wallets.length - 1;
                }
+               this.saveWallets();
+               this.emitChange();
                this.onAccountChange();
           }
      }
 
-     // ---- optional: generate a new test-net account (mirrors the “+ Generate” button) ----
      async generateNewAccount() {
-          // simple faucet call – you already have a service for this
-          // this.appWalletDynamicInputComponent.generateNewWalletFromFamilySeed(this.wallets.length + 1);
-          const index = this.wallets.length + 1;
-          const environment = this.xrplService.getNet().environment;
+          const index = this.wallets.length;
           let encryptionAlgorithm = AppConstants.ENCRYPTION.SECP256K1;
           // if (this.encryptionType) {
           // encryptionAlgorithm = AppConstants.ENCRYPTION.ED25519;
           // }
-          const wallet = await this.xrplService.generateWalletFromFamilySeed(environment, encryptionAlgorithm);
+          const wallet = await this.xrplService.generateWalletFromFamilySeed(this.environment, encryptionAlgorithm);
           await this.sleep(4000);
+          console.log(`wallet`, wallet);
           this.wallets[index] = {
                ...this.wallets[index],
                address: wallet.address,
@@ -192,15 +248,10 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                mnemonic: '',
                secretNumbers: '',
                encryptionAlgorithm: wallet.keypair.algorithm || '',
-               isIssuer: this.wallets[index].isIssuer ?? false,
+               // isIssuer: this.wallets[index].isIssuer ?? false,
           };
           this.saveWallets();
           this.emitChange();
-          // this.xrplService.generateWalletFromFamilySeed().then(newWallet => {
-          //      this.wallets.push(newWallet);
-          //      this.selectedWalletIndex = this.wallets.length - 1;
-          //      this.onAccountChange();
-          // });
      }
 
      async onAccountChange() {
@@ -303,7 +354,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                          this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                          this.clearFields(false);
                          this.updateTickets(accountObjects);
-                         await this.updateXrpBalance(client, accountInfo, wallet);
+                         await this.updateXrpBalance(client, accountInfo, wallet, -1);
                     } catch (err) {
                          console.error('Error in deferred UI updates:', err);
                     }
@@ -379,9 +430,14 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
 
                this.updateSpinnerMessage(this.isSimulateEnabled ? 'Simulating Sending XRP (no funds will be moved)...' : 'Submitting Send XRP to Ledger...');
 
+               // STORE IT FOR DISPLAY
+               this.paymentTx = paymentTx;
+               this.updatePaymentTx(this.paymentTx);
+
                let response: any;
 
                if (this.isSimulateEnabled) {
+                    this.utilsService.logObjects('paymentTx', paymentTx);
                     response = await this.xrplTransactions.simulateTransaction(client, paymentTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -392,6 +448,7 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                          return this.setError('ERROR: Failed to sign Payment transaction.');
                     }
 
+                    this.utilsService.logObjects('paymentTx', paymentTx);
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
@@ -417,7 +474,38 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
                               this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                               this.clearFields(false);
                               this.updateTickets(updatedAccountObjects);
-                              await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+                              await this.updateXrpBalance(client, updatedAccountInfo, wallet, -1);
+
+                              const now = Date.now();
+                              await Promise.all(
+                                   this.wallets.map(async (wallet, index) => {
+                                        try {
+                                             // --- skip wallets updated recently ---
+                                             if (wallet.lastUpdated && now - wallet.lastUpdated < AppConstants.SKIP_THRESHOLD_MS) {
+                                                  console.log(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
+                                                  return;
+                                             }
+
+                                             // --- skip inactive wallets (optional) ---
+                                             if (wallet.isInactive) {
+                                                  console.log(`💤 Skipping inactive wallet ${wallet.name}`);
+                                                  return;
+                                             }
+
+                                             // --- fetch and update ---
+                                             console.log(`🔄 Updating ${wallet.name}...`);
+                                             const accountInfo = await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
+                                             await this.updateXrpBalance(client, accountInfo, wallet, index);
+
+                                             // --- mark last update time ---
+                                             wallet.lastUpdated = now;
+                                        } catch (err) {
+                                             console.error(`❌ Failed to update ${wallet.name}`, err);
+                                        }
+                                   })
+                              );
+                              this.saveWallets();
+                              this.emitChange();
                          } catch (err) {
                               console.error('Error in post-tx cleanup:', err);
                          }
@@ -543,14 +631,38 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
           }
      }
 
-     private async updateXrpBalance(client: xrpl.Client, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet) {
-          const { ownerCount, totalXrpReserves } = await this.utilsService.updateOwnerCountAndReserves(client, accountInfo, wallet.classicAddress);
+     private async updateXrpBalance(client: xrpl.Client, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet, index: number) {
+          const address = wallet.classicAddress ? wallet.classicAddress : wallet.address;
+          const { ownerCount, totalXrpReserves } = await this.utilsService.updateOwnerCountAndReserves(client, accountInfo, address);
 
           this.ownerCount = ownerCount;
           this.totalXrpReserves = totalXrpReserves;
 
-          const balance = (await client.getXrpBalance(wallet.classicAddress)) - parseFloat(this.totalXrpReserves || '0');
+          this.currentWallet.ownerCount = ownerCount;
+          this.currentWallet.xrpReserves = totalXrpReserves;
+
+          const balance = (await client.getXrpBalance(address)) - parseFloat(this.totalXrpReserves || '0');
+          if (index != -1) {
+               const wallet = this.wallets[index];
+               wallet['ownerCount'] = ownerCount;
+               wallet['xrpReserves'] = totalXrpReserves;
+               wallet['spendableXrp'] = balance.toString();
+               wallet['balance'] = balance.toString();
+               this.wallets[index] = wallet;
+          } else {
+               if (index == -1) {
+                    const walletMap = Object.fromEntries(this.wallets.map(w => [w.address, w]));
+                    const wallet = walletMap[address];
+                    wallet['ownerCount'] = ownerCount;
+                    wallet['xrpReserves'] = totalXrpReserves;
+                    wallet['spendableXrp'] = balance.toString();
+                    wallet['balance'] = balance.toString();
+                    this.wallets[index] = wallet;
+               }
+          }
           this.currentWallet.balance = balance.toString();
+          this.saveWallets();
+          this.emitChange();
      }
 
      public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
@@ -847,6 +959,36 @@ export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterVi
 
      saveWallets() {
           this.storageService.set('wallets', JSON.stringify(this.wallets));
+     }
+
+     setTab(tab: string) {
+          this.activeTab = tab;
+          // Later: load different form/content
+     }
+
+     // Call this after setting paymentTx
+     updatePaymentTx(tx: any) {
+          this.paymentTx = tx;
+          this.needsHighlight = true; // Trigger highlight
+     }
+
+     // COPY TO CLIPBOARD
+     copyTx() {
+          const json = JSON.stringify(this.paymentTx, null, 2);
+          navigator.clipboard.writeText(json).then(() => {
+               alert('Transaction JSON copied!');
+          });
+     }
+
+     downloadTx() {
+          const json = JSON.stringify(this.paymentTx, null, 2);
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `payment-tx-${Date.now()}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
      }
 
      clearFields(clearAllFields: boolean) {

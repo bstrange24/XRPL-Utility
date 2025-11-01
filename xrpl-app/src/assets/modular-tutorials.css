@@ -83,8 +83,10 @@ fieldset {
 }
 
 label {
-     color: #fff;
-     background-color: #1a1c21;
+     /* color: #fff; */
+     color: #000;
+     /* background-color: #1a1c21; */
+     background-color: #fff;
      padding: 4px;
      border-radius: 10px;
 }
@@ -284,7 +286,7 @@ button:hover {
      padding-right: 10px;
 }
 
-.switch {
+/* .switch {
      position: relative;
      display: inline-block;
      width: 30px;
@@ -295,7 +297,7 @@ button:hover {
      opacity: 0;
      width: 0;
      height: 0;
-}
+} */
 
 .slider {
      position: absolute;
@@ -651,6 +653,10 @@ summary {
 
 input[type="text"] {
      flex: 1;
+     /* color: #fff; */
+     /* color: #000; */
+     /* background-color: #1a1c21; */
+     background-color: #fff;
      background: #1a1c21;
      color: white;
      border: 1px solid white;
@@ -665,19 +671,17 @@ input[type="text"]:focus {
      outline: none;
 }
 
-.switch {
+/* .switch {
      position: relative;
      display: inline-block;
      align-items: center;
-     /* width: 30px; */
-     /* height: 12px; */
 }
 
 .switch input {
      opacity: 0;
      width: 0;
      height: 0;
-}
+} */
 
 .slider {
      position: absolute;
@@ -1459,8 +1463,6 @@ mark {
      color: black;
      padding: 10px 20px;
      border-radius: 10px;
-     /* margin-left: 100px; */
-     /* margin: 0 auto; */
 }
 
 .navbar-container {

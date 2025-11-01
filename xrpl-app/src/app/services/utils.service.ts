@@ -2131,7 +2131,11 @@ export class UtilsService {
      }
 
      logObjects(type: string, object: any) {
-          console.debug(`${type}`, object.result);
+          if (object.result) {
+               console.debug(`${type}`, object.result);
+          } else {
+               console.debug(`${type}`, object);
+          }
      }
 
      logEscrowObjects(escrowObjects: xrpl.AccountObjectsResponse, escrow: any) {
