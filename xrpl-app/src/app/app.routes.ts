@@ -1,5 +1,4 @@
 import { Routes } from '@angular/router';
-import { SendXrpComponent } from './components/send-xrp/send-xrp.component';
 import { CreatePaymentChannelComponent } from './components/create-payment-channel/create-payment-channel.component';
 import { CreateTimeEscrowComponent } from './components/create-time-escrow/create-time-escrow.component';
 import { CreateConditionalEscrowComponent } from './components/create-conditional-escrow/create-conditional-escrow.component';
@@ -7,7 +6,6 @@ import { SendChecksComponent } from './components/send-checks/send-checks.compon
 import { CreateTicketsComponent } from './components/create-tickets/create-tickets.component';
 import { CreateOfferComponent } from './components/create-offer/create-offer.component';
 import { CreateNftComponent } from './components/create-nft/create-nft.component';
-
 import { CreateAmmComponent } from './components/create-amm/create-amm.component';
 import { TrustlinesComponent } from './components/trustlines/trustlines.component';
 import { DeleteAccountComponent } from './components/delete-account/delete-account.component';
@@ -23,7 +21,7 @@ import { NftOffersComponent } from './components/nft-offers/nft-offers.component
 import { SignTransactionsComponent } from './components/sign-transactions/sign-transactions.component';
 import { MptSendComponent } from './components/mpt-send/mpt-send.component';
 import { MptLockDestroyComponent } from './components/mpt-lock-destroy/mpt-lock-destroy.component';
-import { SendXrpModernComponent } from './components/send-xrp-modern/send-xrp-modern.component';
+import { SendXrpModernComponent } from './components/send-xrp/send-xrp.component';
 
 export const routes: Routes = [
      { path: '', redirectTo: '/account-configurator', pathMatch: 'full' },
@@ -37,8 +35,7 @@ export const routes: Routes = [
      { path: 'firewall', component: FirewallComponent, data: { title: 'Firewall' } },
      { path: 'sign-transactions', component: SignTransactionsComponent, data: { title: 'Sign Transactions' } },
 
-     { path: 'send-xrp-modern', component: SendXrpModernComponent, data: { title: 'Send XRP 1' } },
-     { path: 'send-xrp', component: SendXrpComponent, data: { title: 'Send XRP' } },
+     { path: 'send-xrp', component: SendXrpModernComponent, data: { title: 'Send XRP' } },
      { path: 'create-payment-channel', component: CreatePaymentChannelComponent, data: { title: 'Payment Channel' } },
      { path: 'create-time-escrow', component: CreateTimeEscrowComponent, data: { title: 'Time Escrow' } },
      { path: 'create-conditional-escrow', component: CreateConditionalEscrowComponent, data: { title: 'Conditional Escrow' } },

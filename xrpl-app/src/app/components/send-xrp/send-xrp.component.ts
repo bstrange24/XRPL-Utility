@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef, ViewEncapsulation, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { XrplService } from '../../services/xrpl.service';
@@ -35,17 +35,21 @@ interface ValidationInputs {
      signers?: { account: string; weight: number }[];
 }
 
+declare var Prism: any;
+
 @Component({
-     selector: 'app-account',
+     selector: 'app-send-xrp',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, SanitizeHtmlPipe],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
-     encapsulation: ViewEncapsulation.None,
 })
-export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit, AfterViewChecked {
+export class SendXrpModernComponent implements AfterViewChecked, OnInit, AfterViewInit, AfterViewChecked {
+     @Output() walletListChange = new EventEmitter<any[]>();
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      @ViewChild('accountForm') accountForm!: NgForm;
+     @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
+     @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
      lastResult: string = '';
      result: string = '';
      isError: boolean = false;
@@ -84,26 +88,105 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      wallets: any[] = [];
      selectedWalletIndex: number = 0;
-     currentWallet = { name: '', address: '', seed: '', balance: '' };
+     currentWallet = { name: '', address: '', seed: '', balance: '', ownerCount: '', xrpReserves: '', spendableXrp: '' };
+     showSecret = false; // toggle for secret key
+     mpTokens = 0; // placeholder – fill from XRPL if you have it
+     createdMPTs = 0; // placeholder – fill from XRPL if you have it
+     environment: string = '';
+     paymentTx: any = null; // Will hold the transaction object
+     txResult: any = null; // Will hold the transaction object
+     private needsHighlight = false;
+     // define how "recent" an update must be to skip (e.g. 60 seconds)
+     txHash: string = '';
 
      constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly xrplTransactions: XrplTransactionService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly clickToCopyService: ClickToCopyService) {}
 
-     ngOnInit() {}
+     activeTab = 'send'; // default
 
-     ngAfterViewInit() {}
+     ngOnInit() {
+          this.environment = this.xrplService.getNet().environment;
+     }
+
+     async ngAfterViewInit() {}
+
+     // ngAfterViewChecked() {
+     //      if (this.needsHighlight && this.jsonCode) {
+     //           const json = JSON.stringify(this.paymentTx, null, 2);
+     //           this.jsonCode.nativeElement.textContent = json;
+     //           Prism.highlightElement(this.jsonCode.nativeElement);
+     //           this.needsHighlight = false;
+     //      }
+
+     //      if (this.needsHighlight && this.jsonCode) {
+     //           const json = JSON.stringify(this.txResult, null, 2);
+     //           this.jsonCode.nativeElement.textContent = json;
+     //           Prism.highlightElement(this.jsonCode.nativeElement);
+     //           this.needsHighlight = false;
+     //      }
+     // }
 
      ngAfterViewChecked() {
-          if (this.result !== this.lastResult && this.resultField?.nativeElement) {
-               this.renderUiComponentsService.attachSearchListener(this.resultField.nativeElement);
-               this.lastResult = this.result;
-               this.cdr.markForCheck();
+          if (this.needsHighlight) {
+               if (this.paymentTx && this.paymentJson) {
+                    const json = JSON.stringify(this.paymentTx, null, 2);
+                    this.paymentJson.nativeElement.textContent = json;
+                    Prism.highlightElement(this.paymentJson.nativeElement);
+               }
+
+               if (this.txResult && this.txResultJson) {
+                    const json = JSON.stringify(this.txResult, null, 2);
+                    this.txResultJson.nativeElement.textContent = json;
+                    Prism.highlightElement(this.txResultJson.nativeElement);
+               }
+
+               this.needsHighlight = false;
           }
      }
 
-     onWalletListChange(event: any[]) {
+     // Wallet selection
+     selectWallet(index: number) {
+          this.selectedWalletIndex = index;
+          this.onAccountChange();
+     }
+
+     async onWalletListChange(event: any[]) {
           this.wallets = event;
           if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
                this.selectedWalletIndex = 0;
+               await this.refreshBalance(0);
+          } else {
+               const client = await this.xrplService.getClient();
+
+               const now = Date.now();
+               await Promise.all(
+                    this.wallets.map(async (wallet, index) => {
+                         try {
+                              // --- skip wallets updated recently ---
+                              if (wallet.lastUpdated && now - wallet.lastUpdated < AppConstants.SKIP_THRESHOLD_MS) {
+                                   console.log(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
+                                   return;
+                              }
+
+                              // --- skip inactive wallets (optional) ---
+                              if (wallet.isInactive) {
+                                   console.log(`💤 Skipping inactive wallet ${wallet.name}`);
+                                   return;
+                              }
+
+                              // --- fetch and update ---
+                              console.log(`🔄 Updating ${wallet.name}...`);
+                              const accountInfo = await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
+                              await this.updateXrpBalance(client, accountInfo, wallet, index);
+
+                              // --- mark last update time ---
+                              wallet.lastUpdated = now;
+                         } catch (err) {
+                              console.error(`❌ Failed to update ${wallet.name}`, err);
+                         }
+                    })
+               );
+               this.saveWallets();
+               this.emitChange();
           }
           this.onAccountChange();
      }
@@ -113,7 +196,84 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
           this.isError = event.isError;
           this.isSuccess = event.isSuccess;
           this.isEditable = !this.isSuccess;
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+     }
+
+     // Toggle secret per wallet
+     toggleSecret(index: number) {
+          this.wallets[index].showSecret = !this.wallets[index].showSecret;
+          this.cdr.detectChanges();
+     }
+
+     async refreshBalance(index: number) {
+          const wallet = this.wallets[index];
+          try {
+               const client = await this.xrplService.getClient();
+               const balance = await client.getXrpBalance(wallet.address);
+               this.wallets[index].balance = balance.toString();
+               if (this.selectedWalletIndex === index) {
+                    this.currentWallet.balance = balance.toString();
+               }
+
+               this.cdr.detectChanges();
+          } catch (err) {
+               this.setError('Failed to refresh balance');
+          }
+     }
+
+     // Copy address
+     copyAddress(address: string) {
+          navigator.clipboard.writeText(address).then(() => {
+               // optional toast
+          });
+     }
+
+     copySeed(seed: string) {
+          navigator.clipboard
+               .writeText(seed)
+               .then(() => {
+                    // Optional: show toast
+                    alert('Seed copied to clipboard!');
+               })
+               .catch(err => {
+                    console.error('Failed to copy seed:', err);
+                    alert('Failed to copy. Please select and copy manually.');
+               });
+     }
+
+     // Delete wallet
+     deleteWallet(index: number) {
+          if (confirm('Delete this wallet? This cannot be undone.')) {
+               this.wallets.splice(index, 1);
+               if (this.selectedWalletIndex >= this.wallets.length) {
+                    this.selectedWalletIndex = this.wallets.length - 1;
+               }
+               this.saveWallets();
+               this.emitChange();
+               this.onAccountChange();
+          }
+     }
+
+     async generateNewAccount() {
+          const index = this.wallets.length;
+          let encryptionAlgorithm = AppConstants.ENCRYPTION.SECP256K1;
+          // if (this.encryptionType) {
+          // encryptionAlgorithm = AppConstants.ENCRYPTION.ED25519;
+          // }
+          const wallet = await this.xrplService.generateWalletFromFamilySeed(this.environment, encryptionAlgorithm);
+          await this.sleep(4000);
+          console.log(`wallet`, wallet);
+          this.wallets[index] = {
+               ...this.wallets[index],
+               address: wallet.address,
+               seed: wallet.secret.familySeed || '',
+               mnemonic: '',
+               secretNumbers: '',
+               encryptionAlgorithm: wallet.keypair.algorithm || '',
+               // isIssuer: this.wallets[index].isIssuer ?? false,
+          };
+          this.saveWallets();
+          this.emitChange();
      }
 
      async onAccountChange() {
@@ -137,7 +297,7 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
           if (this.signerQuorum > totalWeight) {
                this.signerQuorum = totalWeight;
           }
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 
      async toggleMultiSign() {
@@ -152,7 +312,7 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
                console.log(`ERROR getting wallet in toggleMultiSign' ${error.message}`);
                this.setError('ERROR getting wallet in toggleMultiSign');
           } finally {
-               this.cdr.markForCheck();
+               this.cdr.detectChanges();
           }
      }
 
@@ -160,11 +320,11 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
           if (this.multiSignAddress === 'No Multi-Sign address configured for account') {
                this.multiSignSeeds = '';
           }
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 
      toggleTicketSequence() {
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 
      onTicketToggle(event: any, ticket: string) {
@@ -178,13 +338,11 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
      async getAccountDetails() {
           console.log('Entering getAccountDetails');
           const startTime = Date.now();
-          this.setSuccessProperties();
+          // this.setSuccessProperties();
+          // this.clearMessages();
           this.updateSpinnerMessage(``);
 
           try {
-               if (this.resultField?.nativeElement) {
-                    this.resultField.nativeElement.innerHTML = '';
-               }
                this.updateSpinnerMessage(`Getting Account Details`);
 
                const client = await this.xrplService.getClient();
@@ -203,12 +361,7 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
                     return this.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
                }
 
-               // Render immediately
-               const sortedResult = this.utilsService.sortByLedgerEntryType(accountObjects);
-               this.renderUiComponentsService.renderAccountDetails(accountInfo, sortedResult);
-               this.setSuccess(this.result);
                this.refreshUIData(wallet, accountInfo, accountObjects);
-               this.clickToCopyService.attachCopy(this.resultField.nativeElement);
 
                // Defer non-critical UI updates. Let main render complete first
                setTimeout(async () => {
@@ -216,7 +369,7 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
                          this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                          this.clearFields(false);
                          this.updateTickets(accountObjects);
-                         await this.updateXrpBalance(client, accountInfo, wallet);
+                         await this.updateXrpBalance(client, accountInfo, wallet, -1);
                     } catch (err) {
                          console.error('Error in deferred UI updates:', err);
                     }
@@ -234,7 +387,9 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
      async sendXrp() {
           console.log('Entering sendXrp');
           const startTime = Date.now();
-          this.setSuccessProperties();
+
+          // this.setSuccessProperties();
+          this.clearMessages();
           this.updateSpinnerMessage(``);
 
           const inputs: ValidationInputs = {
@@ -257,10 +412,6 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
           };
 
           try {
-               if (this.resultField?.nativeElement) {
-                    this.resultField.nativeElement.innerHTML = '';
-               }
-
                const client = await this.xrplService.getClient();
                const wallet = await this.getWallet();
 
@@ -290,11 +441,16 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
                     return this.setError('ERROR: Insufficient XRP to complete transaction');
                }
 
-               this.updateSpinnerMessage(this.isSimulateEnabled ? 'Simulating Sending XRP (no funds will be moved)...' : 'Submitting Send XRP to Ledger...');
+               this.showSpinnerWithDelay(this.isSimulateEnabled ? 'Simulating Sending XRP (no funds will be moved)...' : 'Submitting Send XRP to Ledger...', 200);
+
+               // STORE IT FOR DISPLAY
+               this.paymentTx = paymentTx;
+               this.updatePaymentTx(this.paymentTx);
 
                let response: any;
 
                if (this.isSimulateEnabled) {
+                    this.utilsService.logObjects('paymentTx', paymentTx);
                     response = await this.xrplTransactions.simulateTransaction(client, paymentTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -305,8 +461,15 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
                          return this.setError('ERROR: Failed to sign Payment transaction.');
                     }
 
+                    this.utilsService.logObjects('paymentTx', paymentTx);
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
+
+               this.utilsService.logObjects('response', response);
+               this.utilsService.logObjects('response.result.hash', response.result.hash);
+
+               this.txResult = response.result;
+               this.updateTxResult(this.txResult);
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
@@ -315,10 +478,10 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
 
                     console.error(`Transaction ${this.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
+               } else {
+                    this.txHash = response.result.hash;
                }
 
-               this.renderTransactionResult(response);
-               this.resultField.nativeElement.classList.add('success');
                this.setSuccess(this.result);
 
                if (!this.isSimulateEnabled) {
@@ -330,7 +493,38 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
                               this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                               this.clearFields(false);
                               this.updateTickets(updatedAccountObjects);
-                              await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+                              await this.updateXrpBalance(client, updatedAccountInfo, wallet, -1);
+
+                              const now = Date.now();
+                              await Promise.all(
+                                   this.wallets.map(async (wallet, index) => {
+                                        try {
+                                             // --- skip wallets updated recently ---
+                                             if (wallet.lastUpdated && now - wallet.lastUpdated < AppConstants.SKIP_THRESHOLD_MS) {
+                                                  console.log(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
+                                                  return;
+                                             }
+
+                                             // --- skip inactive wallets (optional) ---
+                                             if (wallet.isInactive) {
+                                                  console.log(`💤 Skipping inactive wallet ${wallet.name}`);
+                                                  return;
+                                             }
+
+                                             // --- fetch and update ---
+                                             console.log(`🔄 Updating ${wallet.name}...`);
+                                             const accountInfo = await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
+                                             await this.updateXrpBalance(client, accountInfo, wallet, index);
+
+                                             // --- mark last update time ---
+                                             wallet.lastUpdated = now;
+                                        } catch (err) {
+                                             console.error(`❌ Failed to update ${wallet.name}`, err);
+                                        }
+                                   })
+                              );
+                              this.saveWallets();
+                              this.emitChange();
                          } catch (err) {
                               console.error('Error in post-tx cleanup:', err);
                          }
@@ -344,16 +538,6 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving sendXrp in ${this.executionTime}ms`);
           }
-     }
-
-     private renderTransactionResult(response: any): void {
-          if (this.isSimulateEnabled) {
-               this.renderUiComponentsService.renderSimulatedTransactionsResults(response, this.resultField.nativeElement);
-          } else {
-               console.debug(`Response`, response);
-               this.renderUiComponentsService.renderTransactionsResults(response, this.resultField.nativeElement);
-          }
-          this.clickToCopyService.attachCopy(this.resultField.nativeElement);
      }
 
      private async setTxOptionalFields(client: xrpl.Client, paymentTx: xrpl.Payment, wallet: xrpl.Wallet, accountInfo: any) {
@@ -456,14 +640,38 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
           }
      }
 
-     private async updateXrpBalance(client: xrpl.Client, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet) {
-          const { ownerCount, totalXrpReserves } = await this.utilsService.updateOwnerCountAndReserves(client, accountInfo, wallet.classicAddress);
+     private async updateXrpBalance(client: xrpl.Client, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet, index: number) {
+          const address = wallet.classicAddress ? wallet.classicAddress : wallet.address;
+          const { ownerCount, totalXrpReserves } = await this.utilsService.updateOwnerCountAndReserves(client, accountInfo, address);
 
           this.ownerCount = ownerCount;
           this.totalXrpReserves = totalXrpReserves;
 
-          const balance = (await client.getXrpBalance(wallet.classicAddress)) - parseFloat(this.totalXrpReserves || '0');
+          this.currentWallet.ownerCount = ownerCount;
+          this.currentWallet.xrpReserves = totalXrpReserves;
+
+          const balance = (await client.getXrpBalance(address)) - parseFloat(this.totalXrpReserves || '0');
+          if (index != -1) {
+               const wallet = this.wallets[index];
+               wallet['ownerCount'] = ownerCount;
+               wallet['xrpReserves'] = totalXrpReserves;
+               wallet['spendableXrp'] = balance.toString();
+               wallet['balance'] = balance.toString();
+               this.wallets[index] = wallet;
+          } else {
+               if (index == -1) {
+                    const walletMap = Object.fromEntries(this.wallets.map(w => [w.address, w]));
+                    const wallet = walletMap[address];
+                    wallet['ownerCount'] = ownerCount;
+                    wallet['xrpReserves'] = totalXrpReserves;
+                    wallet['spendableXrp'] = balance.toString();
+                    wallet['balance'] = balance.toString();
+                    this.wallets[index] = wallet;
+               }
+          }
           this.currentWallet.balance = balance.toString();
+          this.saveWallets();
+          this.emitChange();
      }
 
      public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
@@ -739,7 +947,7 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
                     this.destinationFields = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
                }
           }
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 
      private async getWallet() {
@@ -748,6 +956,73 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
                throw new Error('ERROR: Wallet could not be created or is undefined');
           }
           return wallet;
+     }
+
+     private emitChange() {
+          this.walletListChange.emit(this.wallets);
+     }
+
+     sleep(ms: number) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+     }
+
+     saveWallets() {
+          this.storageService.set('wallets', JSON.stringify(this.wallets));
+     }
+
+     setTab(tab: string) {
+          this.activeTab = tab;
+          // Later: load different form/content
+     }
+
+     // Call this after setting paymentTx
+     updatePaymentTx(tx: any) {
+          this.paymentTx = tx;
+          this.needsHighlight = true;
+          this.cdr.detectChanges();
+     }
+
+     updateTxResult(tx: any) {
+          this.txResult = tx;
+          this.needsHighlight = true;
+          this.cdr.detectChanges();
+     }
+
+     // COPY TO CLIPBOARD
+     copyTx() {
+          const json = JSON.stringify(this.paymentTx, null, 2);
+          navigator.clipboard.writeText(json).then(() => {
+               alert('Transaction JSON copied!');
+          });
+     }
+
+     downloadTx() {
+          const json = JSON.stringify(this.paymentTx, null, 2);
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `payment-tx-${Date.now()}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+     }
+
+     copyTxResult() {
+          const json = JSON.stringify(this.txResult, null, 2);
+          navigator.clipboard.writeText(json).then(() => {
+               alert('Transaction JSON copied!');
+          });
+     }
+
+     downloadTxResult() {
+          const json = JSON.stringify(this.txResult, null, 2);
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `tx-result-${Date.now()}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
      }
 
      clearFields(clearAllFields: boolean) {
@@ -766,12 +1041,31 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
           this.isTicket = false;
           this.memoField = '';
           this.isMemoEnabled = false;
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
+     }
+
+     private clearMessages() {
+          const fadeDuration = 400; // ms
+          this.result = ''; // optional, keep text empty after fade
+          this.isError = false;
+          this.isSuccess = false;
+          this.txHash = '';
+          this.txResult = null;
+          this.paymentTx = null;
+          this.cdr.detectChanges();
+
+          // If using CSS fade-out with a class, you could add/remove a flag for .hidden
+     }
+
+     async showSpinnerWithDelay(message: string, delayMs: number = 200) {
+          this.spinner = true;
+          this.updateSpinnerMessage(message);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
      }
 
      private updateSpinnerMessage(message: string) {
           this.spinnerMessage = message;
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 
      private setErrorProperties() {
@@ -792,7 +1086,7 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
      private setSuccessProperties() {
           this.isSuccess = true;
           this.isError = false;
-          this.spinner = true;
+          this.spinner = false;
           this.result = '';
      }
 
@@ -803,6 +1097,6 @@ export class SendXrpComponent implements AfterViewChecked, OnInit, AfterViewInit
                isError: this.isError,
                isSuccess: this.isSuccess,
           });
-          this.cdr.markForCheck();
+          this.cdr.detectChanges();
      }
 }
