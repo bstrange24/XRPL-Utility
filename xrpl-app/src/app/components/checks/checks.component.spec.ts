@@ -5,7 +5,7 @@ import { StorageService } from '../../services/local-storage/storage.service';
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import * as xrpl from 'xrpl';
-import { SendChecksComponent } from './send-checks.component';
+import { SendChecksComponent } from './checks.component';
 
 describe('SendChecksComponent', () => {
      let component: SendChecksComponent;

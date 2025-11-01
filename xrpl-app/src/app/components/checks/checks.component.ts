@@ -71,8 +71,8 @@ declare var Prism: any;
      //           ]),
      //      ]),
      // ],
-     templateUrl: './send-checks.component.html',
-     styleUrl: './send-checks.component.css',
+     templateUrl: './checks.component.html',
+     styleUrl: './checks.component.css',
 })
 export class SendChecksComponent implements AfterViewChecked {
      @Output() walletListChange = new EventEmitter<any[]>();

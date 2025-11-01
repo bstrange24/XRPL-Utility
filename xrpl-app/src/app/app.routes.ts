@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { CreatePaymentChannelComponent } from './components/create-payment-channel/create-payment-channel.component';
 import { CreateTimeEscrowComponent } from './components/create-time-escrow/create-time-escrow.component';
 import { CreateConditionalEscrowComponent } from './components/create-conditional-escrow/create-conditional-escrow.component';
-import { SendChecksComponent } from './components/send-checks/send-checks.component';
+import { SendChecksComponent } from './components/checks/checks.component';
 import { CreateTicketsComponent } from './components/create-tickets/create-tickets.component';
 import { CreateOfferComponent } from './components/create-offer/create-offer.component';
 import { CreateNftComponent } from './components/create-nft/create-nft.component';
