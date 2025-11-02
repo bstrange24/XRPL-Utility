@@ -520,6 +520,9 @@ input[type='text']:focus {
 }
 
 
+.tx-json language-json {
+     background-color: white;
+}
 
 .content-wrapper {
      display: flex;
