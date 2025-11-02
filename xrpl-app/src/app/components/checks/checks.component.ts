@@ -148,8 +148,10 @@ export class SendChecksComponent implements AfterViewChecked {
      txResult: any = null; // Will hold the transaction object
      private needsHighlight = false;
      txHash: string = '';
-     activeTab = 'send'; // default
+     activeTab = 'create'; // default
      successMessage: string = '';
+     sourceTagField: string = '';
+     invoiceIdField: string = '';
 
      constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly xrplTransactions: XrplTransactionService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly clickToCopyService: ClickToCopyService) {}
 
@@ -324,7 +326,7 @@ export class SendChecksComponent implements AfterViewChecked {
      }
 
      onSubmit() {
-          if (this.activeTab === 'send') {
+          if (this.activeTab === 'create') {
                this.sendCheck();
           } else if (this.activeTab === 'cash') {
                this.cashCheck();
@@ -1149,6 +1151,14 @@ export class SendChecksComponent implements AfterViewChecked {
           if (this.memoField) {
                this.utilsService.setMemoField(checkTx, this.memoField);
           }
+
+          if (this.invoiceIdField) {
+               await this.utilsService.setInvoiceIdField(checkTx, this.invoiceIdField);
+          }
+
+          if (this.sourceTagField) {
+               this.utilsService.setSourceTagField(checkTx, this.sourceTagField);
+          }
      }
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
@@ -1671,8 +1681,8 @@ export class SendChecksComponent implements AfterViewChecked {
 
      /** Message that is bound to the template */
      public get infoMessage(): string | null {
-          if (this.activeTab === 'send') {
-               return InfoMessageConstants.SEND_CHECK_INFORMATION;
+          if (this.activeTab === 'create') {
+               return InfoMessageConstants.CREATE_CHECK_INFORMATION;
           }
 
           if (this.activeTab === 'cash') {

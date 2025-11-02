@@ -22,8 +22,8 @@ export const InfoMessageConstants = {
                     The ticket sequence number you enter will be removed from the account.
                     <br><br>
                     <em>Note: This action is irreversible, but the reserved XRP becomes available again.</em>`,
-     SEND_CHECK_INFORMATION: `
-                    <strong>Sending Checks</strong>
+     CREATE_CHECK_INFORMATION: `
+                    <strong>Check Create</strong> — Used by the sender to create a check.
                     <ul>
                     <li><strong>CheckCreate</strong> — Used by the sender to create a check.</li>
                     </ul>
@@ -42,13 +42,14 @@ export const InfoMessageConstants = {
 
                     <strong>💰 Reserve impact:</strong>
                     <ul>
-                    <li>Each Check object increases your owner reserve by <strong>2 XRP</strong>.</li>
+                    <li>Each Check object increases your owner reserve by <strong>1 XRP</strong>.</li>
                     <li>The reserve is <em>released</em> when the check is cashed or canceled.</li>
                     </ul>
                     <em>Tip:</em> Checks are great for deferred or conditional payments. The XRP isn’t locked when created, but the sender must have sufficient balance when it’s cashed.
                     `,
      CASH_CHECK_INFORMATION: `
-                    <strong>Cashing Checks</strong>
+                    <strong>Cash Checks</strong>
+                    <ul>
                     <li><strong>CheckCash</strong> — Used by the recipient to claim funds from a check.</li>
                     </ul>
 
@@ -62,13 +63,13 @@ export const InfoMessageConstants = {
 
                     <strong>💰 Reserve impact:</strong>
                     <ul>
-                    <li>Each Check object increases your owner reserve by <strong>2 XRP</strong>.</li>
+                    <li>Each Check object increases your owner reserve by <strong>1 XRP</strong>.</li>
                     <li>The reserve is <em>released</em> when the check is cashed or canceled.</li>
                     </ul>
                     <em>Tip:</em> Checks are great for deferred or conditional payments. The XRP isn’t locked when created, but the sender must have sufficient balance when it’s cashed.
                     `,
      CANCEL_CHECK_INFORMATION: `
-                    <strong>Cancelling Checks</strong>
+                    <strong>Cancel Checks</strong>
                     <ul>
                     <li><strong>CheckCancel</strong> — Cancels an outstanding check (only sender or recipient can do this).</li>
                     </ul>
@@ -81,7 +82,7 @@ export const InfoMessageConstants = {
 
                     <strong>💰 Reserve impact:</strong>
                     <ul>
-                    <li>Each Check object increases your owner reserve by <strong>2 XRP</strong>.</li>
+                    <li>Each Check object increases your owner reserve by <strong>1 XRP</strong>.</li>
                     <li>The reserve is <em>released</em> when the check is cashed or canceled.</li>
                     </ul>
                     <em>Tip:</em> Checks are great for deferred or conditional payments. The XRP isn’t locked when created, but the sender must have sufficient balance when it’s cashed.

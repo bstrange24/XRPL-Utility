@@ -262,7 +262,7 @@ body {
      align-items: center;
      justify-content: flex-start;
      /* margin: 1.0rem 0; */
-     margin-top: 0.5rem;
+     margin-top: 0.8rem;
      overflow-x: auto;
      /* scroll if needed */
      padding-bottom: 0.5rem;
@@ -307,15 +307,15 @@ body {
      transition: transform 0.3s ease;
 }
 
-input:checked+.slider {
+input:checked + .slider {
      background: #4caf50;
 }
 
-input:checked+.slider:before {
+input:checked + .slider:before {
      transform: translateX(20px);
 }
 
-input:focus+.slider {
+input:focus + .slider {
      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
 }
 
@@ -750,14 +750,14 @@ input:focus+.slider {
 }
 
 /* Top row: avatar + (address/balance/icons) side by side */
-.wallet-item>.wallet-avatar,
-.wallet-item>.wallet-top-row {
+.wallet-item > .wallet-avatar,
+.wallet-item > .wallet-top-row {
      display: flex;
      align-items: flex-start;
      gap: 0.75rem;
 }
 
-.wallet-item>.wallet-top-row {
+.wallet-item > .wallet-top-row {
      flex: 1;
      justify-content: space-between;
      min-width: 0;
