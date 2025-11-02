@@ -1,9 +1,8 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef, ViewEncapsulation, EventEmitter, Output, ViewChildren, QueryList } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef, EventEmitter, Output, ViewChildren, QueryList } from '@angular/core';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
-import { TransactionMetadataBase, TicketCreate } from 'xrpl';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
@@ -109,21 +108,23 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
      wallets: any[] = [];
      selectedWalletIndex: number = 0;
      currentWallet = { name: '', address: '', seed: '', balance: '', ownerCount: '', xrpReserves: '', spendableXrp: '' };
-     showSecret = false; // toggle for secret key
-     mpTokens = 0; // placeholder – fill from XRPL if you have it
-     createdMPTs = 0; // placeholder – fill from XRPL if you have it
+     showSecret: boolean = false;
+     totalTickets: number = 0;
+     createdTicketss: number = 0;
      environment: string = '';
-     paymentTx: any = null; // Will hold the transaction object
-     txResult: any = null; // Will hold the transaction object
-     private needsHighlight = false;
+     encryptionType: string = '';
+     paymentTx: any = null;
+     txResult: any = null;
+     needsHighlight: boolean = false;
      txHash: string = '';
-     activeTab = 'create'; // default
      successMessage: string = '';
+     activeTab: string = 'create'; // default
 
      constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly xrplTransactions: XrplTransactionService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly clickToCopyService: ClickToCopyService) {}
 
      ngOnInit() {
           this.environment = this.xrplService.getNet().environment;
+          this.encryptionType = this.storageService.getInputValue('encryptionType');
      }
 
      ngAfterViewInit() {
@@ -170,25 +171,26 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
                          try {
                               // --- skip wallets updated recently ---
                               if (wallet.lastUpdated && now - wallet.lastUpdated < AppConstants.SKIP_THRESHOLD_MS) {
-                                   console.log(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
+                                   const walletUpdateInfo = `Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`;
+                                   this.utilsService.logObjects(`walletUpdateInfo`, walletUpdateInfo);
                                    return;
                               }
 
                               // --- skip inactive wallets (optional) ---
                               if (wallet.isInactive) {
-                                   console.log(`💤 Skipping inactive wallet ${wallet.name}`);
+                                   this.utilsService.logObjects(`Skipping inactive wallet`, wallet.name);
                                    return;
                               }
 
                               // --- fetch and update ---
-                              console.log(`🔄 Updating ${wallet.name}...`);
+                              this.utilsService.logObjects(`Updating`, wallet.name);
                               const accountInfo = await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
                               await this.updateXrpBalance(client, accountInfo, wallet, index);
 
                               // --- mark last update time ---
                               wallet.lastUpdated = now;
                          } catch (err) {
-                              console.error(`❌ Failed to update ${wallet.name}`, err);
+                              console.error(`Failed to update ${wallet.name}`, err);
                          }
                     })
                );
@@ -206,7 +208,6 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
           this.cdr.detectChanges();
      }
 
-     // Toggle secret per wallet
      toggleSecret(index: number) {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
           this.cdr.detectChanges();
@@ -216,15 +217,9 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
           const wallet = this.wallets[index];
           try {
                const client = await this.xrplService.getClient();
-               // const balance = await client.getXrpBalance(wallet.address);
-               // this.wallets[index].balance = balance.toString();
-               // if (this.selectedWalletIndex === index) {
-               //      this.currentWallet.balance = balance.toString();
-               // }
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
                const accountInfo = await this.xrplService.getAccountInfo(client, walletAddress, 'validated', '');
                await this.updateXrpBalance(client, accountInfo, wallet, index);
-
                this.cdr.detectChanges();
           } catch (err) {
                this.setError('Failed to refresh balance');
@@ -233,9 +228,7 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
 
      // Copy address
      copyAddress(address: string) {
-          navigator.clipboard.writeText(address).then(() => {
-               // optional toast
-          });
+          navigator.clipboard.writeText(address).then(() => {});
      }
 
      copySeed(seed: string) {
@@ -266,11 +259,11 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
 
      async generateNewAccount() {
           const index = this.wallets.length;
-          let encryptionAlgorithm = AppConstants.ENCRYPTION.SECP256K1;
+          // let encryptionAlgorithm = AppConstants.ENCRYPTION.SECP256K1;
           // if (this.encryptionType) {
           // encryptionAlgorithm = AppConstants.ENCRYPTION.ED25519;
           // }
-          const wallet = await this.xrplService.generateWalletFromFamilySeed(this.environment, encryptionAlgorithm);
+          const wallet = await this.xrplService.generateWalletFromFamilySeed(this.environment, this.encryptionType);
           await this.utilsService.sleep(4000);
           console.log(`wallet`, wallet);
           this.wallets[index] = {
@@ -356,13 +349,9 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
      async getTickets() {
           console.log('Entering getTickets');
           const startTime = Date.now();
-          // this.setSuccessProperties();
-          // this.clearMessages();
           this.updateSpinnerMessage(``);
 
           try {
-               this.updateSpinnerMessage('Getting Tickets ...');
-
                const client = await this.xrplService.getClient();
                const wallet = await this.getWallet();
 
@@ -382,7 +371,6 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
 
                this.refreshUIData(wallet, accountInfo, accountObjects);
 
-               // Defer non-critical UI updates. Let main render complete first
                setTimeout(async () => {
                     try {
                          this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
@@ -509,25 +497,26 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
                                         try {
                                              // --- skip wallets updated recently ---
                                              if (wallet.lastUpdated && now - wallet.lastUpdated < AppConstants.SKIP_THRESHOLD_MS) {
-                                                  console.log(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
+                                                  const walletUpdateInfo = `Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`;
+                                                  this.utilsService.logObjects(`walletUpdateInfo`, walletUpdateInfo);
                                                   return;
                                              }
 
                                              // --- skip inactive wallets (optional) ---
                                              if (wallet.isInactive) {
-                                                  console.log(`💤 Skipping inactive wallet ${wallet.name}`);
+                                                  this.utilsService.logObjects(`Skipping inactive wallet`, wallet.name);
                                                   return;
                                              }
 
                                              // --- fetch and update ---
-                                             console.log(`🔄 Updating ${wallet.name}...`);
+                                             this.utilsService.logObjects(`Updating`, wallet.name);
                                              const accountInfo = await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
                                              await this.updateXrpBalance(client, accountInfo, wallet, index);
 
                                              // --- mark last update time ---
                                              wallet.lastUpdated = now;
                                         } catch (err) {
-                                             console.error(`❌ Failed to update ${wallet.name}`, err);
+                                             console.error(`Failed to update ${wallet.name}`, err);
                                         }
                                    })
                               );
@@ -553,7 +542,7 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
      async deleteTicket() {
           console.log('Entering deleteTicket');
           const startTime = Date.now();
-          this.setSuccessProperties();
+          this.clearMessages();
           this.updateSpinnerMessage(``);
 
           const inputs: ValidationInputs = {
@@ -643,7 +632,7 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
                this.setSuccess(this.result);
 
                if (!this.isSimulateEnabled) {
-                    this.successMessage = 'XRP payment sent successfully!';
+                    this.successMessage = 'Ticket deleted successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
@@ -660,25 +649,26 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
                                         try {
                                              // --- skip wallets updated recently ---
                                              if (wallet.lastUpdated && now - wallet.lastUpdated < AppConstants.SKIP_THRESHOLD_MS) {
-                                                  console.log(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
+                                                  const walletUpdateInfo = `Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`;
+                                                  this.utilsService.logObjects(`walletUpdateInfo`, walletUpdateInfo);
                                                   return;
                                              }
 
                                              // --- skip inactive wallets (optional) ---
                                              if (wallet.isInactive) {
-                                                  console.log(`💤 Skipping inactive wallet ${wallet.name}`);
+                                                  this.utilsService.logObjects(`Skipping inactive wallet`, wallet.name);
                                                   return;
                                              }
 
                                              // --- fetch and update ---
-                                             console.log(`🔄 Updating ${wallet.name}...`);
+                                             this.utilsService.logObjects(`Updating`, wallet.name);
                                              const accountInfo = await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
                                              await this.updateXrpBalance(client, accountInfo, wallet, index);
 
                                              // --- mark last update time ---
                                              wallet.lastUpdated = now;
                                         } catch (err) {
-                                             console.error(`❌ Failed to update ${wallet.name}`, err);
+                                             console.error(`Failed to update ${wallet.name}`, err);
                                         }
                                    })
                               );
@@ -895,6 +885,12 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
           // --- Common validators ---
           const isRequired = (value: string | null | undefined, fieldName: string): string | null => {
                if (value == null || !this.utilsService.validateInput(value)) {
+                    if (fieldName === 'TicketCount') {
+                         return `Number of tickets cannot be empty`;
+                    }
+                    if (fieldName === 'DeleteTicketSequence') {
+                         return `Ticket Sequence cannot be empty`;
+                    }
                     return `${fieldName} cannot be empty`;
                }
                return null;
@@ -957,12 +953,12 @@ export class CreateTicketsComponent implements AfterViewChecked, OnInit, AfterVi
           //      return null;
           // };
 
-          const isValidInvoiceId = (value: string | undefined): string | null => {
-               if (value && !this.utilsService.validateInput(value)) {
-                    return 'Invoice ID is invalid';
-               }
-               return null;
-          };
+          // const isValidInvoiceId = (value: string | undefined): string | null => {
+          //      if (value && !this.utilsService.validateInput(value)) {
+          //           return 'Invoice ID is invalid';
+          //      }
+          //      return null;
+          // };
 
           const validateMultiSign = (addressesStr: string | undefined, seedsStr: string | undefined): string | null => {
                if (!addressesStr || !seedsStr) return null;

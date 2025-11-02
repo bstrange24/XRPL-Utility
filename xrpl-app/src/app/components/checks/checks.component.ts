@@ -209,7 +209,7 @@ export class SendChecksComponent implements AfterViewChecked {
                          try {
                               // --- skip wallets updated recently ---
                               if (wallet.lastUpdated && now - wallet.lastUpdated < AppConstants.SKIP_THRESHOLD_MS) {
-                                   console.log(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
+                                   console.debug(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
                                    return;
                               }
 
@@ -220,7 +220,7 @@ export class SendChecksComponent implements AfterViewChecked {
                               }
 
                               // --- fetch and update ---
-                              console.log(`🔄 Updating ${wallet.name}...`);
+                              console.debug(`🔄 Updating ${wallet.name}...`);
                               const accountInfo = await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
                               await this.updateXrpBalance(client, accountInfo, wallet, index);
 
@@ -641,7 +641,7 @@ export class SendChecksComponent implements AfterViewChecked {
                                         try {
                                              // --- skip wallets updated recently ---
                                              if (wallet.lastUpdated && now - wallet.lastUpdated < AppConstants.SKIP_THRESHOLD_MS) {
-                                                  console.log(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
+                                                  console.debug(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
                                                   return;
                                              }
 
@@ -652,7 +652,7 @@ export class SendChecksComponent implements AfterViewChecked {
                                              }
 
                                              // --- fetch and update ---
-                                             console.log(`🔄 Updating ${wallet.name}...`);
+                                             console.debug(`🔄 Updating ${wallet.name}...`);
                                              const accountInfo = await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
                                              await this.updateXrpBalance(client, accountInfo, wallet, index);
 
@@ -831,7 +831,7 @@ export class SendChecksComponent implements AfterViewChecked {
                                         try {
                                              // --- skip wallets updated recently ---
                                              if (wallet.lastUpdated && now - wallet.lastUpdated < AppConstants.SKIP_THRESHOLD_MS) {
-                                                  console.log(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
+                                                  console.debug(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
                                                   return;
                                              }
 
@@ -842,7 +842,7 @@ export class SendChecksComponent implements AfterViewChecked {
                                              }
 
                                              // --- fetch and update ---
-                                             console.log(`🔄 Updating ${wallet.name}...`);
+                                             console.debug(`🔄 Updating ${wallet.name}...`);
                                              const accountInfo = await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
                                              await this.updateXrpBalance(client, accountInfo, wallet, index);
 
@@ -970,7 +970,7 @@ export class SendChecksComponent implements AfterViewChecked {
                                         try {
                                              // --- skip wallets updated recently ---
                                              if (wallet.lastUpdated && now - wallet.lastUpdated < AppConstants.SKIP_THRESHOLD_MS) {
-                                                  console.log(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
+                                                  console.debug(`⏭️ Skipping ${wallet.name} (updated ${Math.round((now - wallet.lastUpdated) / 1000)}s ago)`);
                                                   return;
                                              }
 
@@ -981,7 +981,7 @@ export class SendChecksComponent implements AfterViewChecked {
                                              }
 
                                              // --- fetch and update ---
-                                             console.log(`🔄 Updating ${wallet.name}...`);
+                                             console.debug(`🔄 Updating ${wallet.name}...`);
                                              const accountInfo = await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
                                              await this.updateXrpBalance(client, accountInfo, wallet, index);
 
