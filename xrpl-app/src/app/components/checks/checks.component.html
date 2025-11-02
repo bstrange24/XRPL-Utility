@@ -258,7 +258,7 @@
 
                          <!-- Optional fields -->
                          <!-- <div *ngIf="activeTab === 'send'" @fadeInFromBottom> -->
-                         <div *ngIf="activeTab === 'create'  || activeTab === 'cash'">
+                         <div *ngIf="activeTab === 'create'">
                               <div class="form-row">
                                    <div class="form-group">
                                         <label>Destination</label>
@@ -273,7 +273,7 @@
                               </div>
                          </div>
 
-                         <div *ngIf="activeTab === 'create' || activeTab === 'cash'">
+                         <div *ngIf="activeTab === 'create'">
                               <div class="form-row">
                                    <div class="form-group">
                                         <label>Source Tag (opt)</label>
@@ -288,7 +288,7 @@
 
                          <!-- Optional fields -->
                          <!-- <div *ngIf="activeTab === 'create'" @fadeInFromBottom> -->
-                         <div *ngIf="activeTab === 'create' || activeTab === 'cash'">
+                         <div *ngIf="activeTab === 'create'">
                               <div class="form-row">
                                    <div class="form-group">
                                         <label>Expiration Time</label>
@@ -444,57 +444,57 @@
                                    <span>{{ result }}</span>
                               </div>
                          </div>
-
-                         <!-- ==== PAYMENT TX PREVIEW ==== -->
-                         <div class="tx-preview-container" *ngIf="paymentTx">
-                              <div class="tx-header">
-                                   <h3 class="tx-title">Payment Transaction</h3>
-                                   <div class="tx-actions">
-                                        <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
-                                             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                                  <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
-                                             </svg>
-                                             Copy
-                                        </button>
-                                        <button class="download-btn" (click)="downloadTx()" title="Download JSON">
-                                             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                                  <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
-                                             </svg>
-                                             Download
-                                        </button>
-                                   </div>
-                              </div>
-
-                              <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
-                         </div>
-
-                         <!-- Result -->
-                         <!-- <div #resultField id="resultField" [innerHTML]="result | sanitizeHtml" [ngClass]="{ 'error': isError, 'success': isSuccess }" class="result-box" [attr.contenteditable]="isEditable"></div> -->
-
-                         <!-- ==== PAYMENT TX PREVIEW ==== -->
-                         <div class="tx-preview-container" *ngIf="txResult">
-                              <div class="tx-header">
-                                   <h3 class="tx-title">Transaction Result</h3>
-                                   <div class="tx-actions">
-                                        <button class="copy-btn" (click)="copyTxResult()" title="Copy JSON">
-                                             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                                  <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
-                                             </svg>
-                                             Copy
-                                        </button>
-                                        <button class="download-btn" (click)="downloadTxResult()" title="Download JSON">
-                                             <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                                  <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
-                                             </svg>
-                                             Download
-                                        </button>
-                                   </div>
-                              </div>
-
-                              <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
-                         </div>
                     </div>
                </form>
+
+               <!-- ==== PAYMENT TX PREVIEW ==== -->
+               <div class="tx-preview-container" *ngIf="paymentTx">
+                    <div class="tx-header">
+                         <h3 class="tx-title">Payment Transaction</h3>
+                         <div class="tx-actions">
+                              <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
+                                   <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                        <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
+                                   </svg>
+                                   Copy
+                              </button>
+                              <button class="download-btn" (click)="downloadTx()" title="Download JSON">
+                                   <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                        <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
+                                   </svg>
+                                   Download
+                              </button>
+                         </div>
+                    </div>
+
+                    <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
+               </div>
+
+               <!-- Result -->
+               <!-- <div #resultField id="resultField" [innerHTML]="result | sanitizeHtml" [ngClass]="{ 'error': isError, 'success': isSuccess }" class="result-box" [attr.contenteditable]="isEditable"></div> -->
+
+               <!-- ==== PAYMENT TX PREVIEW ==== -->
+               <div class="tx-preview-container" *ngIf="txResult">
+                    <div class="tx-header">
+                         <h3 class="tx-title">Transaction Result</h3>
+                         <div class="tx-actions">
+                              <button class="copy-btn" (click)="copyTxResult()" title="Copy JSON">
+                                   <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                        <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
+                                   </svg>
+                                   Copy
+                              </button>
+                              <button class="download-btn" (click)="downloadTxResult()" title="Download JSON">
+                                   <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
+                                        <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
+                                   </svg>
+                                   Download
+                              </button>
+                         </div>
+                    </div>
+
+                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
+               </div>
           </div>
      </div>
 </div>

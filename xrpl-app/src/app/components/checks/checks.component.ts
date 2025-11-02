@@ -1133,6 +1133,14 @@ export class SendChecksComponent implements AfterViewChecked {
                if (this.destinationTagField && parseInt(this.destinationTagField) > 0) {
                     this.utilsService.setDestinationTag(checkTx, this.destinationTagField);
                }
+
+               if (this.invoiceIdField) {
+                    await this.utilsService.setInvoiceIdField(checkTx, this.invoiceIdField);
+               }
+
+               if (this.sourceTagField) {
+                    this.utilsService.setSourceTagField(checkTx, this.sourceTagField);
+               }
           }
 
           if (this.selectedSingleTicket) {
@@ -1150,14 +1158,6 @@ export class SendChecksComponent implements AfterViewChecked {
 
           if (this.memoField) {
                this.utilsService.setMemoField(checkTx, this.memoField);
-          }
-
-          if (this.invoiceIdField) {
-               await this.utilsService.setInvoiceIdField(checkTx, this.invoiceIdField);
-          }
-
-          if (this.sourceTagField) {
-               this.utilsService.setSourceTagField(checkTx, this.sourceTagField);
           }
      }
 
