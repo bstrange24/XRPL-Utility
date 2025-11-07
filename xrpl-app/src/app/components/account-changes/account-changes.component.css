@@ -150,14 +150,14 @@
      --mat-form-field-filled-label-padding-bottom: 0px;
 
 
-     --mdc-filled-text-field-container-color: #1a1c21;
-     --mdc-filled-text-field-hover-container-color: #22252b;
-     --mdc-filled-text-field-focus-active-indicator-color: #686868;
-     --mdc-filled-text-field-hover-active-indicator-color: #686868;
-     --mdc-filled-text-field-input-text-color: white;
-     --mdc-filled-text-field-label-text-color: green;
-     --mdc-filled-text-field-caret-color: orange;
-     --mdc-filled-text-field-container-shape: 8px;
+     --mat-form-field-filled-container-color: #1a1c21;
+     --mat-form-field-filled-hover-container-color: #22252b;
+     --mat-form-field-filled-focus-active-indicator-color: #686868;
+     --mat-form-field-filled-hover-active-indicator-color: #686868;
+     --mat-form-field-filled-input-text-color: white;
+     --mat-form-field-filled-label-text-color: green;
+     --mat-form-field-filled-caret-color: orange;
+     --mat-form-field-filled-container-shape: 8px;
 }
 
 :host ::ng-deep .filter-form-field .mat-mdc-input-element {

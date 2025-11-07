@@ -79,6 +79,24 @@ ng update @angular/core @angular/cli
 
 ng update @angular/material @angular/cdk
 
+# 2a. Delete old build artifacts
+
+rm -rf node_modules/.cache
+rm -rf dist
+
+# 2b. Clear npm cache (optional)
+
+npm cache clean --force
+
+# 2c. Reinstall
+
+rm -rf node_modules package-lock.json
+npm install
+
+# 2d. Start dev server
+
+ng serve
+
 ## NFT URLs
 
 https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjhubGpubms0bXl5ZzM0cWE4azE5aTlyOHRyNmVhd2prcDc1am43ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NxwglXLqMeOuRF3FHv/giphy.gif
