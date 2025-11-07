@@ -8,10 +8,10 @@
 
 <app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
 
-<!-- ==== MAIN CONTENT – CENTERED TWO-COLUMN ==== -->
+<!-- Main content. Centered with 2 columns -->
 <div class="main-container">
      <div class="content-wrapper">
-          <!-- ==== LEFT – WALLETS PANEL ==== -->
+          <!-- Left Wallet panel ==== -->
           <div class="wallets-panel">
                <!-- Header with title + Generate button -->
                <div class="panel-header">
@@ -24,43 +24,38 @@
 
                <p class="panel-subtitle">Generate {{environment}} accounts with XRP from the faucet.</p>
 
-               <div *ngIf="hasWallets; else noWallets">
-                    <!-- ==== LIST OF WALLETS ==== -->
-                    <div *ngFor="let wallet of wallets; let i = index trackBy: trackByWalletAddress" class="wallet-item" [class.selected]="selectedWalletIndex === i">
+               @if (hasWallets) {
+               <div>
+                    <!-- List of wallets -->
+                    @for (wallet of wallets; track wallet.address; let i = $index) {
+                    <div class="wallet-item" [class.selected]="selectedWalletIndex === i">
                          <!-- Wallet Info -->
                          <div class="wallet-info">
-                              <!-- <div class="wallet-address">{{ wallet.name | slice:0:50 }}</div> -->
-                              <input *ngIf="editingIndex(i)" #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
-
-                              <span *ngIf="!editingIndex(i)" (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
+                              @if (editingIndex(i)) {
+                              <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
+                              } @else {
+                              <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
+                              }
                          </div>
 
-                         <!-- Address + Balance + Icons (new layout) -->
                          <div class="wallet-info" (click)="selectWallet(i)">
                               <div class="address-line">
-                                   <!-- <div class="wallet-address">{{ wallet.address | slice:0:5 }}...{{ wallet.address | slice:-5 }}</div> -->
-                                   <div class="wallet-address">{{ wallet.address | slice:0:16 }}...</div>
+                                   <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
                                    <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
                               </div>
 
                               <!-- Icons -->
                               <div class="wallet-actions">
-                                   <button class="icon-btn" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                        </svg>
+                                   <button class="icon-btn refresh" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
+                                        <lucide-icon name="refresh-ccw"></lucide-icon>
                                    </button>
 
-                                   <button class="icon-btn" (click)="copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                        </svg>
+                                   <button class="icon-btn copy" (click)="copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
+                                        <lucide-icon name="copy"></lucide-icon>
                                    </button>
 
                                    <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
+                                        <lucide-icon name="trash-2"></lucide-icon>
                                    </button>
                               </div>
                          </div>
@@ -72,128 +67,201 @@
                                    <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
                               </div>
 
-                              <!-- Seed shown BELOW the button -->
-                              <div class="secret-seed-container" *ngIf="wallet.showSecret">
+                              <!-- Seed shown below the button -->
+                              @if (activeTab === 'wallet.showSecret') {
+                              <div class="secret-seed-container">
                                    <div class="secret-seed">{{ wallet.seed }}</div>
                                    <button class="copy-btn" (click)="copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
                                         <lucide-icon name="copy" size="20"></lucide-icon>
                                    </button>
                               </div>
+                              }
                          </div>
-
-                         <!-- ==== Selected Account Summary (shown below this wallet if selected) ==== -->
-                         <!-- <div *ngIf="selectedWalletIndex === i" class="selected-account-card">
-                              <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
-                              <div class="summary-row"><span>Address:</span> <span>{{ wallet.address | slice:0:5 }}...{{ wallet.address | slice:-5 }}</span></div>
-                              <div class="summary-row"><span>Balance:</span> <span class="highlight wallet-balance">{{ wallet.balance }} XRP</span></div>
-                              <div class="summary-row"><span>Owner Count:</span> <span class="highlight wallet-balance">{{ wallet.ownerCount }}</span></div>
-                              <div class="summary-row"><span>Xrp Reserves:</span> <span class="highlight wallet-balance">{{ wallet.xrpReserves }} XRP</span></div>
-                         </div> -->
                     </div>
+                    }
 
-                    <!-- ==== SELECTED ACCOUNT SUMMARY ==== -->
+                    <!-- Selected Account Summary ==== -->
                     <div class="selected-account-card">
                          <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
                          <div class="summary-row"><span>Address:</span> <span>{{ currentWallet.address | slice:0:5 }}...{{ currentWallet.address | slice:-5 }}</span></div>
                          <div class="summary-row"><span>Balance:</span> <span class="highlight wallet-balance">{{ currentWallet.balance }} XRP</span></div>
                          <div class="summary-row"><span>Owner Count:</span> <span class="highlight wallet-balance">{{ currentWallet.ownerCount }}</span></div>
                          <div class="summary-row"><span>Xrp Reserves:</span> <span class="highlight wallet-balance">{{ currentWallet.xrpReserves }} XRP</span></div>
-                         <!-- <div class="summary-row"><span>Total Check Count:</span> <span class="highlight wallet-balance">{{ walletCheckCount }}</span></div> -->
                     </div>
                </div>
-
-               <ng-template #noWallets>
-                    <!-- This block shows if hasWallets is false -->
-                    <div class="no-wallet-found">
-                         <lucide-icon name="wallet" size="40"></lucide-icon>
-                         <p>No accounts generated yet.</p>
-                         <p>Click "Generate" to create your first {{environment}} account</p>
-                    </div>
-               </ng-template>
+               } @else {
+               <!-- This block shows if hasWallets is false -->
+               <div class="no-wallet-found">
+                    <lucide-icon name="wallet" size="40"></lucide-icon>
+                    <p>No accounts generated yet.</p>
+                    <p>Click "Generate" to create your first {{environment}} account</p>
+               </div>
+               }
           </div>
 
           <div class="toast" [class.show]="showToast">{{ toastMessage }}</div>
 
-          <!-- ==== RIGHT FORM ==== -->
+          <!-- Right form -->
           <div class="form-panel">
-               <!-- ==== MENU BAR ==== -->
+               <!-- Menu bar -->
                <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab === 'create'" (click)="setTab('create')">
-                         <lucide-icon name="cog" size="20"></lucide-icon>
+                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Create Channel
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'fund'" (click)="setTab('fund')">
-                         <lucide-icon name="banknote-arrow-down" size="20"></lucide-icon>
+                         <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon>
                          Fund Channel
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'claim'" (click)="setTab('claim')">
-                         <lucide-icon name="banknote-arrow-up" size="20"></lucide-icon>
+                         <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon>
                          Claim/Renew Channel
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'close'" (click)="setTab('close')">
-                         <lucide-icon name="trash-2" size="20"></lucide-icon>
+                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
                          Close Channel
                     </button>
                </div>
 
-               <div *ngIf="activeTab === 'create'">
-                    <div style="background-color: white; padding: 5px; margin-bottom: 1em; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
-                         <div style="background-color: rgb(0, 123, 255); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
-                              <lucide-icon name="cog" size="20"></lucide-icon>
+               <!-- Create Menu -->
+               @if (activeTab === 'create') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="blue-button-submenu">
+                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                          </div>
                          <div>
-                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Create Payment Channel</h2>
-                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Create a payment channel to another XRPL address</p>
+                              <h2 class="submenu-info-main-text">Create Payment Channel</h2>
+                              <p class="submenu-info-secondary-text">Create a payment channel to another XRPL address</p>
                          </div>
                     </div>
                </div>
+               }
 
-               <div *ngIf="activeTab === 'fund'">
-                    <div style="background-color: white; padding: 5px; margin-bottom: 1em; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
-                         <div style="background-color: #00ba7c; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
-                              <lucide-icon name="banknote-arrow-down" size="20"></lucide-icon>
+               <!-- Create Menu -->
+               @if (activeTab === 'fund') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="green-button-submenu">
+                              <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon>
                          </div>
                          <div>
-                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Fund Payment Channel</h2>
-                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Fund existing payment channel created by the selected account</p>
+                              <h2 class="submenu-info-main-text">Fund Payment Channel</h2>
+                              <p class="submenu-info-secondary-text">Fund existing payment channel created by the selected account</p>
                          </div>
                     </div>
                </div>
+               }
 
-               <div *ngIf="activeTab === 'claim'">
-                    <div style="background-color: white; padding: 5px; margin-bottom: 1em; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
-                         <div style="background-color: #00ba7c; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
-                              <lucide-icon name="banknote-arrow-up" size="20"></lucide-icon>
+               <!-- Claim Menu -->
+               @if (activeTab === 'claim') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="green-button-submenu">
+                              <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon>
                          </div>
                          <div>
-                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Claim Payment Channel</h2>
-                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Claim funds from payment channel</p>
+                              <h2 class="submenu-info-main-text">Claim Payment Channel</h2>
+                              <p class="submenu-info-secondary-text">Claim funds from payment channel</p>
                          </div>
                     </div>
                </div>
+               }
 
-               <div *ngIf="activeTab === 'close'">
-                    <div style="background-color: white; padding: 5px; margin-bottom: 1em; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
-                         <div style="background-color: red; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
-                              <lucide-icon name="trash-2" size="20"></lucide-icon>
+               <!-- Claim Menu -->
+               @if (activeTab === 'close') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="red-button-submenu">
+                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
                          </div>
                          <div>
-                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Close Payment Channel</h2>
-                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Close existing payment channel created by the selected account</p>
+                              <h2 class="submenu-info-main-text">Close Payment Channel</h2>
+                              <p class="submenu-info-secondary-text">Close existing payment channel created by the selected account</p>
                          </div>
                     </div>
                </div>
+               }
 
-               <!-- ==== DYNAMIC INFO PANEL ==== -->
-               <div class="info-panel" *ngIf="infoMessage">
-                    <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+               <!-- Dynamic info panel -->
+               @if (infoMessage) {
+               <div class="info-panel">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-red-600"></ng-icon>
                     <div class="info-text" [innerHTML]="infoMessage"></div>
                </div>
+               }
 
-               <!-- ---------- OUTSTANDING CHECKS (DISPLAY ONLY) ---------- -->
-               <div *ngIf="(activeTab === 'create' && existingPaymentChannels.length) || (activeTab === 'fund' && existingPaymentChannels.length) || (activeTab === 'claim' && receivablePaymentChannels.length) || (activeTab === 'close' && closablePaymentChannels.length)" class="outstanding-checks-panel">
+               <!-- Dynamic warning panel  -->
+               @if (warningMessage) {
+               <div class="warning-panel">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
+                    <div class="warning-text" [innerHTML]="warningMessage"></div>
+               </div>
+               }
+
+               <!-- Outstanding Payment Channels on selected account -->
+               @if ( (activeTab === 'create' && existingPaymentChannels.length) || (activeTab === 'fund' && existingPaymentChannels.length) || (activeTab === 'claim' && receivablePaymentChannels.length) || (activeTab === 'close' && closablePaymentChannels.length) ) {
+               <div class="outstanding-checks-panel">
+                    <!-- Header – clickable to expand/collapse -->
+                    <div class="panel-header" (click)="toggleExistingPaymentChannels()" style="cursor: pointer; user-select: none">
+                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
+                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
+
+                              @if (activeTab === 'claim') {
+                              <span>Receivable Payment Channels ({{ receivablePaymentChannels.length }})</span>
+                              } @else if (activeTab === 'create' || activeTab === 'fund') {
+                              <span>Created Payment Channels ({{ existingPaymentChannels.length }})</span>
+                              } @else if (activeTab === 'close') {
+                              <span>Closable Payment Channels ({{ closablePaymentChannels.length }})</span>
+                              }
+                         </h3>
+                    </div>
+
+                    <!-- Collapsible content -->
+                    <div class="payment-channel-list-container" [class.collapsed]="existingPaymentChannelsCollapsed">
+                         @if (!existingPaymentChannelsCollapsed) {
+                         <div class="checks-list">
+                              @for (chk of visiblePaymentChannels; track chk.id) {
+                              <div class="check-card">
+                                   <div class="check-amount">Total Amount: {{ chk.totalAmount }}</div>
+                                   <div class="check-amount">Balance: {{ chk.balance }}</div>
+                                   <div class="check-amount">Remaining Balance: {{ chk.remaining }}</div>
+                                   <div class="check-destination">to <strong>{{ chk.destination }}</strong></div>
+
+                                   @if (chk.expiration || chk.settleDelay) {
+                                   <div class="check-extras">
+                                        @if (chk.settleDelay) {
+                                        <span class="badge badge-tag">Settle Delay: {{ chk.settleDelay }}</span>
+                                        } @if (chk.settleDelay) {
+                                        <span
+                                             class="badge"
+                                             [ngClass]="{
+                        'badge-success': chk.status === 'Open' || chk.status === 'Claimable',
+                        'badge-warning': chk.status === 'Pending',
+                        'badge-danger': chk.status === 'Expired'
+                      }"
+                                        >
+                                             Status: {{ chk.status }}
+                                        </span>
+                                        } @if (chk.expiration && chk.expiration !== '—') {
+                                        <span class="badge badge-expire">Expires {{ chk.expiration }}</span>
+                                        } @if (chk.settleDelay) {
+                                        <span class="badge" [ngClass]="{ 'badge-success': chk.canClose === true, 'badge-danger': chk.canClose === false }"> Can Close: {{ chk.canClose }} </span>
+                                        }
+                                   </div>
+                                   }
+
+                                   <button class="icon-btn copy-check-id" type="button" title="Copy Payment Channel Hash" aria-label="Copy channel id" (click)="copyPaymentChannelId(chk.id); $event.stopPropagation()">
+                                        <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                   </button>
+                              </div>
+                              }
+                         </div>
+                         }
+                    </div>
+               </div>
+               }
+               <!-- <div *ngIf="(activeTab === 'create' && existingPaymentChannels.length) || (activeTab === 'fund' && existingPaymentChannels.length) || (activeTab === 'claim' && receivablePaymentChannels.length) || (activeTab === 'close' && closablePaymentChannels.length)" class="outstanding-checks-panel">
                     <div class="panel-header" (click)="toggleExistingPaymentChannels()" style="cursor: pointer; user-select: none">
                          <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
                               <lucide-icon [name]="existingPaymentChannelsCollapsed ? 'chevron-right' : 'chevron-down'" size="18"></lucide-icon>
@@ -227,100 +295,125 @@
                                    </div>
 
                                    <button class="icon-btn copy-check-id" type="button" title="Copy Payment Channel Hash" aria-label="Copy channel id" (click)="copyPaymentChannelId(chk.id); $event.stopPropagation()">
-                                        <lucide-icon name="copy" size="16"></lucide-icon>
+                                        <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
                                    </button>
                               </div>
                          </div>
                     </div>
-               </div>
+               </div> -->
 
                <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
                     <div [@tabTransition]="activeTab">
                          <div class="tab-content-columns">
+                              <!-- ==================== LEFT: FORM FIELDS ==================== -->
                               <div class="tab-content-container form-fields-container">
-                                   <div *ngIf="activeTab === 'create' || activeTab === 'fund' || activeTab === 'claim' || activeTab === 'close'">
-                                        <div class="form-row">
-                                             <div class="form-group" *ngIf="activeTab !== 'close'">
-                                                  <label>XRP Amount</label>
-                                                  <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
-                                             </div>
-                                             <div class="form-group" *ngIf="activeTab === 'create' || activeTab === 'fund'">
-                                                  <label>Destination</label>
-                                                  <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
-                                                       <option *ngFor="let dest of destinations; let i = index" [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{dest.name || 'Wallet ' + (i + 1)}} ({{dest.address | slice:0:6}}...{{dest.address | slice:-4}})</option>
-                                                  </select>
-                                             </div>
+                                   <!-- XRP Amount + Destination -->
+                                   @if (activeTab === 'create' || activeTab === 'fund' || activeTab === 'claim' || activeTab === 'close') {
+                                   <div class="form-row">
+                                        @if (activeTab !== 'close') {
+                                        <div class="form-group">
+                                             <label>XRP Amount</label>
+                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
                                         </div>
+                                        } @if (activeTab === 'create' || activeTab === 'fund') {
+                                        <div class="form-group">
+                                             <label>Destination</label>
+                                             <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
+                                                  @for (dest of destinations; track dest.address; let i = $index) {
+                                                  <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
+                                                  }
+                                             </select>
+                                        </div>
+                                        }
                                    </div>
+                                   }
 
-                                   <div *ngIf="activeTab === 'create' || activeTab === 'fund' || activeTab === 'claim' || activeTab === 'close'">
-                                        <div class="form-row">
-                                             <div class="form-group" *ngIf="activeTab === 'create' || activeTab === 'fund'">
-                                                  <label>Destination Tag</label>
-                                                  <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
-                                             </div>
-                                             <div class="form-group" *ngIf="activeTab === 'claim'  || activeTab === 'fund' || activeTab === 'close'">
-                                                  <label>Channel ID</label>
-                                                  <input type="text" [(ngModel)]="channelIDField" name="channelIDField" />
-                                             </div>
+                                   <!-- Destination Tag + Channel ID -->
+                                   @if (activeTab === 'create' || activeTab === 'fund' || activeTab === 'claim' || activeTab === 'close') {
+                                   <div class="form-row">
+                                        @if (activeTab === 'create' || activeTab === 'fund') {
+                                        <div class="form-group">
+                                             <label>Destination Tag</label>
+                                             <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
                                         </div>
+                                        } @if (activeTab === 'claim' || activeTab === 'fund' || activeTab === 'close') {
+                                        <div class="form-group">
+                                             <label>Channel ID</label>
+                                             <input type="text" [(ngModel)]="channelIDField" name="channelIDField" />
+                                        </div>
+                                        }
                                    </div>
+                                   }
 
-                                   <div *ngIf="activeTab === 'create' || activeTab === 'claim' || activeTab === 'close'">
-                                        <div class="form-row">
-                                             <div class="form-group" *ngIf="activeTab === 'claim'" hidden>
-                                                  <label>Sender Public Key</label>
-                                                  <input type="text" [(ngModel)]="publicKeyField" name="publicKeyField" />
-                                             </div>
-                                             <div class="form-group" *ngIf="activeTab === 'claim'">
-                                                  <label>Claim Signature</label>
-                                                  <input type="text" [(ngModel)]="channelClaimSignatureField" name="channelClaimSignatureField" />
-                                             </div>
+                                   <!-- Claim-specific fields -->
+                                   @if (activeTab === 'create' || activeTab === 'claim' || activeTab === 'close') {
+                                   <div class="form-row">
+                                        @if (activeTab === 'claim') {
+                                        <div class="form-group" hidden>
+                                             <label>Sender Public Key</label>
+                                             <input type="text" [(ngModel)]="publicKeyField" name="publicKeyField" />
                                         </div>
-                                   </div>
 
-                                   <div *ngIf="activeTab === 'create' || activeTab === 'claim' || activeTab === 'close'">
-                                        <div class="form-row">
-                                             <div class="form-group" *ngIf="activeTab === 'create'">
-                                                  <label>Settle Delay</label>
-                                                  <input type="text" [(ngModel)]="settleDelayField" name="settleDelayField" />
-                                             </div>
-                                             <div class="form-group" *ngIf="activeTab === 'create'">
-                                                  <label>Cancel After Time</label>
-                                                  <input type="text" id="paymentChannelCancelAfterTimeField" placeholder="Enter time" [(ngModel)]="paymentChannelCancelAfterTimeField" name="paymentChannelCancelAfterTimeField" />
-                                                  <select id="paymentChannelCancelAfterTimeUnit" [(ngModel)]="paymentChannelCancelAfterTimeUnit" name="paymentChannelCancelAfterTimeUnit">
-                                                       <option value="seconds">Seconds</option>
-                                                       <option value="minutes">Minutes</option>
-                                                       <option value="hours">Hours</option>
-                                                       <option value="days">Days</option>
-                                                  </select>
-                                             </div>
+                                        <div class="form-group">
+                                             <label>Claim Signature</label>
+                                             <input type="text" [(ngModel)]="channelClaimSignatureField" name="channelClaimSignatureField" />
                                         </div>
+                                        }
                                    </div>
+                                   }
 
-                                   <div *ngIf="activeTab === 'create' || activeTab === 'fund' || activeTab === 'claim' || activeTab === 'close'">
-                                        <div class="form-row" style="padding-bottom: 10px">
-                                             <div class="form-group" *ngIf="activeTab === 'claim'">
-                                                  <label>Authorized Wallet</label>
-                                                  <select id="authorizedWalletField" [(ngModel)]="authorizedWalletAddress" name="authorizedWalletField">
-                                                       <option *ngFor="let auth of authorizedWallets; let i = index" [value]="auth.address">{{auth.name || 'Wallet ' + (i + 1)}} ({{auth.address | slice:0:6}}...{{auth.address | slice:-4}})</option>
-                                                  </select>
-                                             </div>
+                                   <!-- Settle Delay + Cancel After -->
+                                   @if (activeTab === 'create' || activeTab === 'claim' || activeTab === 'close') {
+                                   <div class="form-row">
+                                        @if (activeTab === 'create') {
+                                        <div class="form-group">
+                                             <label>Settle Delay</label>
+                                             <input type="text" [(ngModel)]="settleDelayField" name="settleDelayField" />
                                         </div>
+
+                                        <div class="form-group">
+                                             <label>Cancel After Time</label>
+                                             <input type="text" id="paymentChannelCancelAfterTimeField" placeholder="Enter time" [(ngModel)]="paymentChannelCancelAfterTimeField" name="paymentChannelCancelAfterTimeField" />
+                                             <select id="paymentChannelCancelAfterTimeUnit" [(ngModel)]="paymentChannelCancelAfterTimeUnit" name="paymentChannelCancelAfterTimeUnit">
+                                                  <option value="seconds">Seconds</option>
+                                                  <option value="minutes">Minutes</option>
+                                                  <option value="hours">Hours</option>
+                                                  <option value="days">Days</option>
+                                             </select>
+                                        </div>
+                                        }
                                    </div>
+                                   }
+
+                                   <!-- Authorized Wallet (claim only) -->
+                                   @if (activeTab === 'create' || activeTab === 'fund' || activeTab === 'claim' || activeTab === 'close') {
+                                   <div class="form-row" style="padding-bottom: 10px">
+                                        @if (activeTab === 'claim') {
+                                        <div class="form-group">
+                                             <label>Authorized Wallet</label>
+                                             <select id="authorizedWalletField" [(ngModel)]="authorizedWalletAddress" name="authorizedWalletField">
+                                                  @for (auth of authorizedWallets; track auth.address; let i = $index) {
+                                                  <option [value]="auth.address">{{ auth.name || 'Wallet ' + (i + 1) }} ({{ auth.address | slice:0:6 }}...{{ auth.address | slice:-4 }})</option>
+                                                  }
+                                             </select>
+                                        </div>
+                                        }
+                                   </div>
+                                   }
                               </div>
 
-                              <!-- RIGHT: Payment Channel Flags -->
-                              <div class="tab-content-container flags-container" *ngIf="activeTab === 'claim' || activeTab === 'close'">
+                              <!-- ==================== RIGHT: PAYMENT CHANNEL FLAGS ==================== -->
+                              @if (activeTab === 'claim' || activeTab === 'close') {
+                              <div class="tab-content-container flags-container">
                                    <div class="flags-wrapper">
-                                        <!-- Token Flags Header -->
                                         <div class="token-flags-header">
                                              <lucide-icon name="flag" size="20"></lucide-icon>
                                              <span class="token-flags-title">Payment Channel Flags</span>
                                         </div>
 
                                         <!-- tfRenew -->
-                                        <div class="flag-item" [class.enabled]="flags.renew" *ngIf="activeTab === 'claim'" (click)="toggleFlag('renew')">
+                                        @if (activeTab === 'claim') {
+                                        <div class="flag-item" [class.enabled]="flags.renew" (click)="toggleFlag('renew')">
                                              <div class="flag-header">
                                                   <input type="checkbox" [checked]="flags.renew" class="flag-checkbox" />
                                                   <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -329,14 +422,18 @@
                                                   <span class="flag-title">Renew</span>
                                              </div>
                                              <div class="flag-value">0x00010000</div>
-                                             <div class="flag-desc">When set, the channel will be renewed on a <code>PaymentChannelFund</code> transaction.</div>
+                                             <div class="flag-desc">
+                                                  When set, the channel will be renewed on a
+                                                  <code>PaymentChannelFund</code> transaction.
+                                             </div>
                                         </div>
+                                        }
 
                                         <!-- tfClose -->
-                                        <div class="flag-item enabled" [class.disabled]="true" *ngIf="activeTab === 'close'" (click)="toggleFlag('close')">
+                                        @if (activeTab === 'close') {
+                                        <div class="flag-item enabled" [class.disabled]="true" (click)="toggleFlag('close')">
                                              <div class="flag-header">
                                                   <input type="checkbox" [checked]="true" class="flag-checkbox" disabled />
-                                                  <!-- <input type="checkbox" [checked]="flags.close" class="flag-checkbox" /> -->
                                                   <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
                                                        <path d="M12 2v10"></path>
@@ -347,162 +444,191 @@
                                              <div class="flag-value">0x00020000</div>
                                              <div class="flag-desc">When set on a <code>PaymentChannelClaim</code> transaction, the channel will be closed after the claim.</div>
                                         </div>
+                                        }
 
                                         <!-- TOTAL FLAGS VALUE -->
-                                        <div class="flags-total" *ngIf="activeTab !== 'close'">
+                                        @if (activeTab !== 'close') {
+                                        <div class="flags-total">
                                              <span class="total-label">Total Flags Value:</span>
                                              <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
                                         </div>
+                                        }
+                                   </div>
+                              </div>
+                              }
+                         </div>
+
+                         <!-- Switches -->
+                         <div class="switch-group">
+                              <!-- Memo group -->
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
+                                   <span class="slider"></span>
+                                   Add Memo
+                              </label>
+
+                              <!-- Multi Signing Enabled group -->
+                              @if (multiSigningEnabled) {
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
+                                   <span class="slider"></span>
+                                   Use Multi-Sign
+                              </label>
+                              }
+
+                              <!-- Regular Key Signing Enabled-->
+                              @if (regularKeySigningEnabled) {
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
+                                   <span class="slider"></span>
+                                   Use Regular Key
+                              </label>
+                              }
+
+                              <!-- Use Ticket for tx -->
+                              @if (activeTab !== 'delete' && ticketArray.length > 0) {
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
+                                   <span class="slider"></span>
+                                   Use Ticket
+                              </label>
+                              }
+
+                              <!-- Simulate tx -->
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="isSimulateEnabled" name="isSimulateEnabled" />
+                                   <span class="slider"></span>
+                                   Simulate
+                              </label>
+                         </div>
+
+                         <!-- Memo Field -->
+                         @if (isMemoEnabled) {
+                         <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
+                         }
+
+                         <!-- Sign tx with Mult Sign address -->
+                         @if (useMultiSign) {
+                         <div class="multisign-grid">
+                              <div class="multisign-field">
+                                   <label>Signers</label>
+                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly (ngModelChange)="autoResize(signers)"></textarea>
+                              </div>
+                              <div class="multisign-field">
+                                   <label>Seeds</label>
+                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly (ngModelChange)="autoResize(seeds)"></textarea>
+                              </div>
+                              <div class="multisign-field quorum-field">
+                                   <label>Quorum</label>
+                                   <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Sign tx with Regular key address -->
+                         @if (isRegularKeyAddress) {
+                         <div class="regular-key-fields">
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Regular Key Address</label>
+                                        <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                                   </div>
+                              </div>
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Regular Key Seed</label>
+                                        <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
                                    </div>
                               </div>
                          </div>
-                    </div>
+                         }
 
-                    <!-- Switches -->
-                    <div class="switch-group">
-                         <label class="switch">
-                              <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                              <span class="slider"></span>
-                              Add Memo
-                         </label>
-
-                         <label class="switch" *ngIf="multiSigningEnabled">
-                              <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                              <span class="slider"></span>
-                              Use Multi-Sign
-                         </label>
-
-                         <label class="switch" *ngIf="regularKeySigningEnabled">
-                              <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                              <span class="slider"></span>
-                              Use Regular Key
-                         </label>
-
-                         <label class="switch" *ngIf="activeTab !== 'delete' && this.ticketArray.length > 0">
-                              <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                              <span class="slider"></span>
-                              Use Ticket
-                         </label>
-
-                         <label class="switch">
-                              <input type="checkbox" [(ngModel)]="isSimulateEnabled" name="isSimulateEnabled" />
-                              <span class="slider"></span>
-                              Simulate
-                         </label>
-                    </div>
-
-                    <!-- Memo textarea -->
-                    <textarea *ngIf="isMemoEnabled" [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-
-                    <!-- Multi-Sign Fields -->
-                    <div *ngIf="useMultiSign" class="multisign-grid">
-                         <div class="multisign-field">
-                              <label>Signers</label>
-                              <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly (ngModelChange)="autoResize(signers)"></textarea>
-                         </div>
-
-                         <div class="multisign-field">
-                              <label>Seeds</label>
-                              <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly (ngModelChange)="autoResize(seeds)"></textarea>
-                         </div>
-
-                         <div class="multisign-field quorum-field">
-                              <label>Quorum</label>
-                              <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                         </div>
-                    </div>
-
-                    <!-- Regular Key Fields -->
-                    <div *ngIf="isRegularKeyAddress" class="regular-key-fields">
-                         <div class="form-row">
+                         <!-- Get ticket to delete -->
+                         @if (isTicket && activeTab !== 'delete') {
+                         <div class="ticket-fields">
                               <div class="form-group">
-                                   <label>Regular Key Address</label>
-                                   <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                                   <label>Ticket Sequence</label>
+                                   @if (multiSelectMode) {
+                                   <div>
+                                        <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
+                                             @for (ticket of ticketArray; track ticket) {
+                                             <option [value]="ticket">{{ ticket }}</option>
+                                             }
+                                        </select>
+                                   </div>
+                                   } @else {
+                                   <div>
+                                        <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
+                                             <option value="" disabled>Select a ticket</option>
+                                             @for (ticket of ticketArray; track ticket) {
+                                             <option [value]="ticket">{{ ticket }}</option>
+                                             }
+                                        </select>
+                                   </div>
+                                   }
                               </div>
                          </div>
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label>Regular Key Seed</label>
-                                   <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
+                         }
+
+                         <!-- Action buttons -->
+                         <div class="button-row">
+                              <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'cancel' ? 'red' : activeTab === 'cash'   ? 'green' : '#007bff' }">{{ activeTab === 'cancel' ? 'Cancel Check' : activeTab === 'cash' ? 'Cash Check' : 'Create Check' }}</button>
+                              <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                         </div>
+
+                         <!-- Spinner -->
+                         @if (spinner) {
+                         <div class="spinner-row">
+                              <div class="spinner"></div>
+                              <span>{{ spinnerMessage || 'Loading...' }}</span>
+                         </div>
+                         }
+
+                         <!-- Success message -->
+                         @if (isSuccess && !isError) {
+                         <div class="success-message">
+                              <lucide-icon name="check" size="20"></lucide-icon>
+                              <div class="success-text">
+                                   @if (txHash && !isSimulateEnabled) {
+                                   <span>{{successMessage}}</span><br /><br />
+                                   <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
+                                   } @else {
+                                   <span>{{successMessage}}</span>
+                                   }
                               </div>
                          </div>
-                    </div>
+                         }
 
-                    <!-- Ticket Selection -->
-                    <div *ngIf="isTicket" class="ticket-fields">
-                         <div class="form-group">
-                              <label>Ticket Sequence</label>
-                              <div *ngIf="multiSelectMode; else singleSelect">
-                                   <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                        <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
-                                   </select>
+                         <!-- Error message -->
+                         @if (isError && result) {
+                         <div class="tx-message error">
+                              <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
+                              <div class="tx-text">
+                                   <!-- Display Tx Hash if we are not in simulation mode-->
+                                   @if (txHash && !isSimulateEnabled) {
+                                   <span>{{ result }}</span><br />
+                                   <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
+                                   } @else {
+                                   <span>{{ result }}</span>
+                                   }
                               </div>
-                              <ng-template #singleSelect>
-                                   <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                        <option value="" disabled>Select a ticket</option>
-                                        <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
-                                   </select>
-                              </ng-template>
                          </div>
-                    </div>
-
-                    <!-- Action buttons -->
-                    <div class="button-row">
-                         <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'close' ? 'red' : activeTab === 'claim' || activeTab === 'fund' ? 'green' : '#007bff'}">{{ activeTab === 'close' ? 'Close Channel' : activeTab === 'claim' ? 'Claim/Renew Channel' : activeTab === 'fund' ? 'Fund Channel' : 'Create Channel' }}</button>
-                         <button type="button" *ngIf="activeTab === 'claim'" class="btn-primary" (click)="generateCreatorClaimSignature()">Generate Claim Signature</button>
-                         <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
-                    </div>
-
-                    <!-- Spinner -->
-                    <div *ngIf="spinner" class="spinner-row">
-                         <div class="spinner"></div>
-                         <span>{{ spinnerMessage || 'Loading...' }}</span>
-                    </div>
-
-                    <!-- SUCCESS MESSAGE -->
-                    <div *ngIf="isSuccess && !isError" class="success-message">
-                         <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="success-icon">
-                              <path d="M9 16.17l-3.88-3.88L4 13.41 9 18.41l12-12-1.41-1.41z" />
-                         </svg>
-                         <div class="success-text">
-                              <span>{{successMessage}}</span><br /><br />
-                              <span *ngIf="txHash && !isSimulateEnabled">
-                                   Transaction hash:
-                                   <a [href]="'https://devnet.xrpl.org/transactions/' + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>
-                              </span>
-                         </div>
-                    </div>
-
-                    <!-- ERROR MESSAGE -->
-                    <div class="tx-message error" *ngIf="isError && result">
-                         <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" class="tx-icon error-icon">
-                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                         </svg>
-                         <div class="tx-text">
-                              <span>{{ result }}</span><br />
-                              <span *ngIf="txHash && !isSimulateEnabled">
-                                   Transaction hash:
-                                   <a [href]="'https://devnet.xrpl.org/transactions/' + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>
-                              </span>
-                         </div>
+                         }
                     </div>
                </form>
 
-               <!-- PAYMENT TX PREVIEW -->
-               <div class="tx-preview-container" *ngIf="paymentTx.length >0">
+               <!-- Tx Preview -->
+               @if (paymentTx.length >0) {
+               <div class="tx-preview-container">
                     <div class="tx-header">
                          <h5 class="tx-title">Payment Transaction</h5>
                          <div class="tx-actions">
                               <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
-                                   <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                        <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
-                                   </svg>
+                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
                                    Copy
                               </button>
                               <button class="download-btn" (click)="downloadTx()" title="Download JSON">
-                                   <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                        <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
-                                   </svg>
+                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
                                    Download
                               </button>
                          </div>
@@ -510,22 +636,20 @@
 
                     <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
                </div>
+               }
 
-               <!-- PAYMENT TX PREVIEW -->
-               <div class="tx-preview-container" *ngIf="txResult.length > 0">
+               <!-- Tx Result Preview -->
+               @if (txResult.length >0) {
+               <div class="tx-preview-container">
                     <div class="tx-header">
                          <h3 class="tx-title">Transaction Result</h3>
                          <div class="tx-actions">
                               <button class="copy-btn" (click)="copyTxResult()" title="Copy JSON">
-                                   <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                        <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
-                                   </svg>
+                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
                                    Copy
                               </button>
                               <button class="download-btn" (click)="downloadTxResult()" title="Download JSON">
-                                   <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                        <path d="M8 12l4-4h-3V3H7v5H4l4 4zm6-10H2v10h3v1H1V1h14v12h-4v-1h3V2z" />
-                                   </svg>
+                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
                                    Download
                               </button>
                          </div>
@@ -533,6 +657,7 @@
 
                     <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
                </div>
+               }
           </div>
      </div>
 </div>

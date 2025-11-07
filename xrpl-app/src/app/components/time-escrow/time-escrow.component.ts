@@ -15,6 +15,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
+import { NgIcon } from '@ng-icons/core';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -99,7 +100,7 @@ interface MPToken {
 @Component({
      selector: 'app-time-escrow',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './time-escrow.component.html',
      styleUrl: './time-escrow.component.css',
@@ -212,6 +213,7 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
      url = '';
      editingIndex!: (index: number) => boolean;
      tempName = '';
+     warningMessage: string | null = null;
 
      constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly xrplTransactions: XrplTransactionService, private ngZone: NgZone, private walletGenerator: WalletGeneratorService, private walletManagerService: WalletManagerService) {}
 
@@ -739,7 +741,7 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
           const inputs: ValidationInputs = {
                seed: this.currentWallet.seed,
-               escrowSequence: this.escrowSequenceNumberField,
+               escrowSequence: this.escrowSequenceNumberField.toString(),
                isRegularKeyAddress: this.isRegularKeyAddress,
                regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
                regularKeySeed: this.isRegularKeyAddress ? this.regularKeySeed : undefined,
@@ -1849,7 +1851,7 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                     required: ['seed', 'escrowSequence'],
                     customValidators: [
                          () => isValidSeed(inputs.seed),
-                         () => isValidNumber(inputs.escrowSequence, 'Escrow sequence number', 0),
+                         () => isValidNumber(String(inputs.escrowSequence), 'Escrow sequence number', 0),
                          () => (inputs.escrow_objects === undefined || inputs.escrow_objects === null ? `No escrows found for account` : null),
                          () => (inputs.account_info === undefined || inputs.account_info === null ? `No account data found` : null),
                          () => (inputs.account_info.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
@@ -1867,7 +1869,7 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                     required: ['seed', 'escrowSequence'],
                     customValidators: [
                          () => isValidSeed(inputs.seed),
-                         () => isValidNumber(inputs.escrowSequence, 'Escrow sequence number', 0),
+                         () => isValidNumber(String(inputs.escrowSequence), 'Escrow sequence number', 0),
                          () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
                          () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
                          () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
@@ -2345,6 +2347,15 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
      formatXrplTimestamp(timestamp: number): string {
           return this.utilsService.convertXRPLTime(timestamp);
+     }
+
+     private setWarning(msg: string | null) {
+          this.warningMessage = msg;
+          this.cdr.detectChanges();
+     }
+
+     clearWarning() {
+          this.setWarning(null);
      }
 
      autoResize(textarea: HTMLTextAreaElement) {

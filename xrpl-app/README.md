@@ -70,6 +70,7 @@ update node.js
 update angular
 install svg
 npm i @ng-icons/core
+npm i @ng-icons/core @ng-icons/heroicons
 
 # 1. Update Angular CLI & Core (you likely already did this)
 

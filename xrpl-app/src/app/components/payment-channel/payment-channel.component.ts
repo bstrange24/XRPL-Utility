@@ -17,6 +17,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
+import { NgIcon } from '@ng-icons/core';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -71,7 +72,7 @@ interface UnifiedPaymentChannel {
 @Component({
      selector: 'app-account',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './payment-channel.component.html',
      styleUrl: './payment-channel.component.css',
@@ -188,6 +189,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
      private _lastTab: string | undefined;
      private _lastExisting: any[] = [];
      private _lastReceivable: any[] = [];
+     warningMessage: string | null = null;
 
      constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly xrplTransactions: XrplTransactionService, private ngZone: NgZone, private walletGenerator: WalletGeneratorService, private walletManagerService: WalletManagerService) {}
 
