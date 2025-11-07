@@ -71,6 +71,14 @@ update angular
 install svg
 npm i @ng-icons/core
 
+# 1. Update Angular CLI & Core (you likely already did this)
+
+ng update @angular/core @angular/cli
+
+# 2. Update Material & CDK to Angular 20 compatible versions
+
+ng update @angular/material @angular/cdk
+
 ## NFT URLs
 
 https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjhubGpubms0bXl5ZzM0cWE4azE5aTlyOHRyNmVhd2prcDc1am43ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NxwglXLqMeOuRF3FHv/giphy.gif

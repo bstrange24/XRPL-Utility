@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef, EventEmitter, Output, ViewChildren, QueryList, NgZone, inject, afterRender, runInInjectionContext, Injector } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, AfterViewChecked, ChangeDetectorRef, EventEmitter, Output, ViewChildren, QueryList, NgZone, inject, afterRenderEffect, runInInjectionContext, Injector } from '@angular/core';
 import { trigger, state, style, transition, animate, group, query } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -2099,8 +2099,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
      }
 
      private scheduleHighlight() {
-          // Use the captured injector to run afterRender safely
-          afterRender(
+          // Use the captured injector to run afterRenderEffect  safely
+          afterRenderEffect(
                () => {
                     if (this.paymentTx && this.paymentJson?.nativeElement) {
                          const json = JSON.stringify(this.paymentTx, null, 2);

@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, NgZone, inject, afterRender, Injector } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, NgZone, inject, afterRenderEffect, Injector } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -993,8 +993,8 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
      }
 
      private scheduleHighlight() {
-          // Use the captured injector to run afterRender safely
-          afterRender(
+          // Use the captured injector to run afterRenderEffect  safely
+          afterRenderEffect(
                () => {
                     if (this.paymentTx && this.paymentJson?.nativeElement) {
                          const json = JSON.stringify(this.paymentTx, null, 2);
