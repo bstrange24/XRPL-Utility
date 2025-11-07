@@ -66,6 +66,11 @@ npx karma start
 npm install @angular/animations@19.2.14
 npm install lucide-angular
 
+update node.js
+update angular
+install svg
+npm i @ng-icons/core
+
 ## NFT URLs
 
 https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMjhubGpubms0bXl5ZzM0cWE4azE5aTlyOHRyNmVhd2prcDc1am43ciZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NxwglXLqMeOuRF3FHv/giphy.gif
