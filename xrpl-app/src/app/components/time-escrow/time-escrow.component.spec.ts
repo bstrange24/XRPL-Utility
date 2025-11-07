@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CreateConditionalEscrowComponent } from './create-conditional-escrow.component';
+import { CreateTimeEscrowComponent } from './time-escrow.component';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
@@ -7,9 +7,9 @@ import { RenderUiComponentsService } from '../../services/render-ui-components/r
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import * as xrpl from 'xrpl';
 
-describe('CreateConditionalEscrowComponent (isolated)', () => {
-     let component: CreateConditionalEscrowComponent;
-     let fixture: ComponentFixture<CreateConditionalEscrowComponent>;
+describe('CreateTimeEscrowComponent (isolated)', () => {
+     let component: CreateTimeEscrowComponent;
+     let fixture: ComponentFixture<CreateTimeEscrowComponent>;
      let xrplServiceMock: any;
      let utilsServiceMock: any;
      let storageServiceMock: any;
@@ -17,6 +17,7 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
      let xrplTransactionServiceMock: any;
 
      const validAddr = 'rPT1Sjq2YGrBMTttX4GZHjKu9dyfzbpAYe';
+     const validSeed = 'ssgapRpEdpZA9VUmbghGEvUqLkJYg';
 
      beforeEach(async () => {
           xrplServiceMock = {
@@ -41,13 +42,11 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                setTicketSequence: jasmine.createSpy('setTicketSequence'),
                setDestinationTag: jasmine.createSpy('setDestinationTag'),
                setMemoField: jasmine.createSpy('setMemoField'),
-               addTime: jasmine.createSpy('addTime').and.callFake((_v: string, _unit: string) => 0),
+               addTime: jasmine.createSpy('addTime').and.callFake((v: string, unit: string) => 0),
                convertXRPLTime: jasmine.createSpy('convertXRPLTime').and.callFake((t: number) => `t${t}`),
                convertDateTimeToRippleTime: jasmine.createSpy('convertDateTimeToRippleTime').and.returnValue(0),
                encodeCurrencyCode: jasmine.createSpy('encodeCurrencyCode').and.callFake((c: string) => c),
-               encodeIfNeeded: jasmine.createSpy('encodeIfNeeded').and.callFake((s: string) => s),
-               decodeIfNeeded: jasmine.createSpy('decodeIfNeeded').and.callFake((s: string) => s),
-               decodeHex: jasmine.createSpy('decodeHex').and.callFake((s: string) => s),
+               decodeIfNeeded: jasmine.createSpy('decodeIfNeeded').and.callFake((c: string) => c),
                formatCurrencyForDisplay: jasmine.createSpy('formatCurrencyForDisplay').and.callFake((c: string) => c),
                formatTokenBalance: jasmine.createSpy('formatTokenBalance').and.callFake((v: string) => v),
                isEscrow: jasmine.createSpy('isEscrow').and.callFake((o: any) => o?.LedgerEntryType === 'Escrow'),
@@ -55,13 +54,12 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                isMPT: jasmine.createSpy('isMPT').and.callFake((o: any) => o?.LedgerEntryType === 'MPToken'),
                getMptFlagsReadable: jasmine.createSpy('getMptFlagsReadable').and.returnValue(''),
                updateOwnerCountAndReserves: jasmine.createSpy('updateOwnerCountAndReserves').and.resolveTo({ ownerCount: '0', totalXrpReserves: '0' }),
-               checkEscrowStatus: jasmine.createSpy('checkEscrowStatus').and.returnValue({ canFinish: true, canCancel: true }),
+               checkTimeBasedEscrowStatus: jasmine.createSpy('checkTimeBasedEscrowStatus').and.returnValue({ canFinish: true, canCancel: true }),
+               encodeIfNeeded: jasmine.createSpy('encodeIfNeeded').and.callFake((s: string) => s),
                detectXrpInputType: jasmine.createSpy('detectXrpInputType').and.returnValue({ value: 'seed', type: 'seed' }),
                getMultiSignAddress: jasmine.createSpy('getMultiSignAddress').and.returnValue(['addr1']),
                getMultiSignSeeds: jasmine.createSpy('getMultiSignSeeds').and.returnValue(['seed1']),
                validateInput: jasmine.createSpy('validateInput').and.callFake((v: string) => v != null && v !== ''),
-               validateCondition: jasmine.createSpy('validateCondition').and.returnValue(true),
-               validateFulfillment: jasmine.createSpy('validateFulfillment').and.returnValue(true),
                getRegularKeyWallet: jasmine.createSpy('getRegularKeyWallet').and.resolveTo({ useRegularKeyWalletSignTx: false, regularKeyWalletSignTx: undefined }),
                isInsufficientXrpBalance1: jasmine.createSpy('isInsufficientXrpBalance1').and.returnValue(false),
                isInsufficientIouTrustlineBalance: jasmine.createSpy('isInsufficientIouTrustlineBalance').and.returnValue(false),
@@ -90,7 +88,7 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
           };
 
           await TestBed.configureTestingModule({
-               imports: [CreateConditionalEscrowComponent],
+               imports: [CreateTimeEscrowComponent],
                providers: [
                     { provide: XrplService, useValue: xrplServiceMock },
                     { provide: UtilsService, useValue: utilsServiceMock },
@@ -99,45 +97,19 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                     { provide: XrplTransactionService, useValue: xrplTransactionServiceMock },
                ],
           })
-               .overrideComponent(CreateConditionalEscrowComponent, { set: { template: '' } })
+               .overrideComponent(CreateTimeEscrowComponent, { set: { template: '' } })
                .compileComponents();
 
-          fixture = TestBed.createComponent(CreateConditionalEscrowComponent);
+          fixture = TestBed.createComponent(CreateTimeEscrowComponent);
           component = fixture.componentInstance;
-          // Do not call detectChanges to avoid template lifecycle effects
      });
-
-     function typedClient() {
-          xrplServiceMock.getClient.and.returnValue(
-               Promise.resolve({
-                    connection: {} as any,
-                    feeCushion: 1,
-                    maxFeeXRP: '2',
-                    networkID: 0,
-                    getXrpBalance: jasmine.createSpy('getXrpBalance'),
-                    request: jasmine.createSpy('request'),
-                    autofill: jasmine.createSpy('autofill').and.callFake(async (tx: any) => tx),
-                    sign: jasmine.createSpy('sign'),
-                    submitAndWait: jasmine.createSpy('submitAndWait'),
-                    disconnect: jasmine.createSpy('disconnect'),
-                    connect: jasmine.createSpy('connect'),
-                    isConnected: jasmine.createSpy('isConnected').and.returnValue(true),
-               } as unknown as xrpl.Client)
-          );
-
-          xrplServiceMock.getXrplServerInfo.and.returnValue(Promise.resolve({ result: {} as any, id: '1', type: 'response' } as unknown as xrpl.ServerInfoResponse));
-          xrplServiceMock.getAccountInfo.and.resolveTo({ result: { account_data: { Sequence: 1 }, account_flags: {} } });
-          xrplServiceMock.getAccountObjects.and.resolveTo({ result: { account_objects: [] } });
-          xrplServiceMock.calculateTransactionFee.and.resolveTo('10');
-          xrplServiceMock.getLastLedgerIndex.and.resolveTo(123);
-     }
 
      it('should create', () => {
           expect(component).toBeTruthy();
      });
 
      describe('onWalletListChange', () => {
-          it('updates wallets, calls updateDestinations and onAccountChange', () => {
+          it('updates wallets and calls updateDestinations and onAccountChange', () => {
                const updateDestinationsSpy = spyOn(component as any, 'updateDestinations').and.stub();
                const onAccountChangeSpy = spyOn(component, 'onAccountChange').and.stub();
 
@@ -147,13 +119,6 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                expect(component.wallets).toEqual(wallets as any[]);
                expect(updateDestinationsSpy).toHaveBeenCalled();
                expect(onAccountChangeSpy).toHaveBeenCalled();
-          });
-
-          it('resets selected index when out of bounds', () => {
-               component.selectedWalletIndex = 2;
-               spyOn(component, 'onAccountChange').and.stub();
-               component.onWalletListChange([{ name: 'W', address: validAddr } as any]);
-               expect(component.selectedWalletIndex).toBe(0);
           });
      });
 
@@ -167,6 +132,7 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                const markSpy = spyOn((component as any).cdr, 'markForCheck').and.stub();
 
                component.validateQuorum();
+
                expect(component.signerQuorum).toBe(5);
                expect(markSpy).toHaveBeenCalled();
           });
@@ -176,9 +142,7 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
           it('clears signers when disabling', async () => {
                component.useMultiSign = false;
                const markSpy = spyOn((component as any).cdr, 'markForCheck').and.stub();
-
                await component.toggleMultiSign();
-
                expect(utilsServiceMock.clearSignerList).toHaveBeenCalledWith(component.signers);
                expect(markSpy).toHaveBeenCalled();
           });
@@ -227,27 +191,6 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                expect(component.multiSignSeeds).toBe('abc');
                expect(markSpy).toHaveBeenCalled();
           });
-
-          // it('loads signers when enabling', async () => {
-          //      component.useMultiSign = true;
-          //      spyOn(component as any, 'getWallet').and.resolveTo({ classicAddress: validAddr });
-          //      const markSpy = spyOn((component as any).cdr, 'markForCheck').and.stub();
-
-          //      await component.toggleMultiSign();
-
-          //      expect(utilsServiceMock.loadSignerList).toHaveBeenCalledWith(validAddr, component.signers);
-          //      expect(markSpy).toHaveBeenCalled();
-          // });
-
-          // it('sets error on getWallet failure', async () => {
-          //      component.useMultiSign = true;
-          //      spyOn(component as any, 'getWallet').and.throwError('fail');
-          //      const setErrorSpy = spyOn(component as any, 'setError').and.stub();
-
-          //      await component.toggleMultiSign();
-
-          //      expect(setErrorSpy).toHaveBeenCalledWith('ERROR getting wallet in toggleMultiSign');
-          // });
      });
 
      describe('toggleTicketSequence', () => {
@@ -269,23 +212,23 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
      });
 
      describe('ngAfterViewChecked', () => {
-          it('attaches search listener on result change', () => {
+          it('attaches search listener when result changes', () => {
                (component as any).resultField = { nativeElement: document.createElement('div') };
                (component as any)['lastResult'] = '';
-               component['result'] = 'NEW';
+               component['result'] = 'X';
                const markSpy = spyOn((component as any).cdr, 'markForCheck').and.stub();
 
                component.ngAfterViewChecked();
 
                expect(renderUiComponentsServiceMock.attachSearchListener).toHaveBeenCalled();
-               expect((component as any)['lastResult']).toBe('NEW');
+               expect((component as any)['lastResult']).toBe('X');
                expect(markSpy).toHaveBeenCalled();
           });
 
-          it('does nothing when unchanged', () => {
+          it('does nothing when result unchanged', () => {
                (component as any).resultField = { nativeElement: document.createElement('div') };
-               (component as any)['lastResult'] = 'SAME';
-               component['result'] = 'SAME';
+               (component as any)['lastResult'] = 'A';
+               component['result'] = 'A';
 
                component.ngAfterViewChecked();
                expect(renderUiComponentsServiceMock.attachSearchListener).not.toHaveBeenCalled();
@@ -293,14 +236,14 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
      });
 
      describe('renderTransactionResult', () => {
-          it('renders simulated when isSimulateEnabled', () => {
+          it('uses simulated renderer in simulate mode', () => {
                component.isSimulateEnabled = true;
                (component as any).resultField = { nativeElement: document.createElement('div') };
                (component as any)['renderTransactionResult']({ result: {} });
                expect(renderUiComponentsServiceMock.renderSimulatedTransactionsResults).toHaveBeenCalled();
           });
 
-          it('renders normal when not simulating', () => {
+          it('uses normal renderer otherwise', () => {
                component.isSimulateEnabled = false;
                (component as any).resultField = { nativeElement: document.createElement('div') };
                (component as any)['renderTransactionResult']({ result: {} });
@@ -315,56 +258,67 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                spyOn(component as any, 'validateInputs').and.resolveTo(['e']);
                const setErrorSpy = spyOn(component as any, 'setError').and.stub();
 
-               typedClient();
-               await component.getEscrows();
+               // Provide minimal, typed responses to satisfy early logs/access
+               xrplServiceMock.getClient.and.resolveTo({
+                    connection: {} as any,
+                    getXrpBalance: jasmine.createSpy('getXrpBalance'),
+               } as unknown as xrpl.Client);
+               xrplServiceMock.getAccountInfo.and.resolveTo({ result: { account_data: { Sequence: 1 }, account_flags: {} } });
+               xrplServiceMock.getAccountObjects.and.callFake((_c: any, _a: any, _s: any, type?: string) => {
+                    return Promise.resolve({ result: { account_objects: [] } });
+               });
 
+               await component.getEscrows();
                expect(setErrorSpy).toHaveBeenCalled();
                expect(renderUiComponentsServiceMock.renderDetails).not.toHaveBeenCalled();
           });
 
-          it('renders no escrows without throwing', async () => {
+          it('renders no escrows when none present', async () => {
                (component as any).resultField = { nativeElement: { innerHTML: '' } };
                spyOn(component as any, 'getWallet').and.resolveTo({ classicAddress: validAddr });
                spyOn(component as any, 'validateInputs').and.resolveTo([]);
 
                xrplBasicClient();
                xrplServiceMock.getAccountInfo.and.resolveTo({ result: { account_data: { Sequence: 1 }, account_flags: {} } });
-               xrplServiceMock.getAccountObjects.and.callFake((_c: any, _a: any, _s: any, type?: string) => ({ result: { account_objects: [] } }));
+               xrplServiceMock.getAccountObjects.and.callFake((_c: any, _a: any, _s: any, type?: string) => {
+                    if (type === 'escrow') return Promise.resolve({ result: { account_objects: [] } });
+                    return Promise.resolve({ result: { account_objects: [] } });
+               });
 
                await component.getEscrows();
                expect(renderUiComponentsServiceMock.renderDetails).toHaveBeenCalled();
           });
      });
 
-     describe('createConditionalEscrow', () => {
+     describe('createTimeBasedEscrow', () => {
           beforeEach(() => {
                (component as any).resultField = { nativeElement: { innerHTML: '', classList: { add: jasmine.createSpy('add') } } };
                component.currentWallet = { name: 'W', address: validAddr, seed: 's', balance: '0' } as any;
                component.amountField = '5';
                component.destinationFields = validAddr;
-               component.escrowConditionField = 'A1';
-               component.escrowCancelTimeField = '10';
+               component.escrowFinishTimeField = '10';
+               component.escrowCancelTimeField = '20';
           });
 
           it('sets error on validation failure', async () => {
                spyOn(component as any, 'validateInputs').and.resolveTo(['e']);
+               xrplServiceMock.getNet.and.returnValue({ environment: 'test' });
                xrplBasicClient();
                spyOn(component as any, 'getWallet').and.resolveTo({ classicAddress: validAddr, address: validAddr });
                const setErrorSpy = spyOn(component as any, 'setError').and.stub();
 
-               await component.createConditionalEscrow();
+               await component.createTimeBasedEscrow();
                expect(setErrorSpy).toHaveBeenCalled();
           });
 
           it('simulates when isSimulateEnabled', async () => {
-               (component as any).resultField = { nativeElement: { innerHTML: '' } };
                spyOn(component as any, 'validateInputs').and.resolveTo([]);
                component.isSimulateEnabled = true;
                xrplBasicClient();
                spyOn(component as any, 'getWallet').and.resolveTo({ classicAddress: validAddr, address: validAddr });
                const renderSpy = spyOn<any>(component, 'renderTransactionResult').and.stub();
 
-               await component.createConditionalEscrow();
+               await component.createTimeBasedEscrow();
 
                expect(xrplTransactionServiceMock.simulateTransaction).toHaveBeenCalled();
                expect(renderSpy).toHaveBeenCalled();
@@ -378,20 +332,17 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                xrplTransactionServiceMock.signTransaction.and.resolveTo(null);
                const setErrorSpy = spyOn(component as any, 'setError').and.stub();
 
-               await component.createConditionalEscrow();
+               await component.createTimeBasedEscrow();
 
                expect(setErrorSpy).toHaveBeenCalledWith('ERROR: Failed to sign Payment transaction.');
           });
      });
 
-     describe('finishConditionalEscrow', () => {
+     describe('finishTimeBasedEscrow', () => {
           beforeEach(() => {
                (component as any).resultField = { nativeElement: { innerHTML: '', classList: { add: jasmine.createSpy('add') } } };
                component.currentWallet = { name: 'W', address: validAddr, seed: 's', balance: '0' } as any;
                component.escrowSequenceNumberField = '1';
-               component.escrowConditionField = 'A1';
-               component.escrowFulfillmentField = 'F1';
-
                xrplServiceMock.getClient.and.resolveTo({} as xrpl.Client);
                xrplServiceMock.getAccountInfo.and.resolveTo({ result: { account_data: { Sequence: 1 }, account_flags: {} } });
                xrplServiceMock.getAccountObjects.and.resolveTo({ result: { account_objects: [] } });
@@ -400,16 +351,7 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                xrplServiceMock.calculateTransactionFee.and.resolveTo('10');
                xrplServiceMock.getLastLedgerIndex.and.resolveTo(123);
                xrplServiceMock.getXrplServerInfo.and.resolveTo({ result: {} as any, id: '1', type: 'response' } as xrpl.ServerInfoResponse);
-               utilsServiceMock.checkEscrowStatus.and.returnValue({ canFinish: true, canCancel: true });
-          });
-
-          it('errors if fulfillment missing when condition provided', async () => {
-               component.escrowConditionField = 'A1';
-               component.escrowFulfillmentField = '';
-               const setErrorSpy = spyOn(component as any, 'setError').and.stub();
-
-               await component.finishConditionalEscrow();
-               expect(setErrorSpy).toHaveBeenCalledWith('ERROR: Fulfillment is required when a condition is provided');
+               utilsServiceMock.checkTimeBasedEscrowStatus.and.returnValue({ canFinish: true, canCancel: true });
           });
 
           it('sets error on validation failure', async () => {
@@ -417,7 +359,7 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                spyOn(component as any, 'getWallet').and.resolveTo({ classicAddress: validAddr });
                const setErrorSpy = spyOn(component as any, 'setError').and.stub();
 
-               await component.finishConditionalEscrow();
+               await component.finishTimeBasedEscrow();
                expect(setErrorSpy).toHaveBeenCalled();
           });
 
@@ -427,7 +369,7 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                spyOn(component as any, 'getWallet').and.resolveTo({ classicAddress: validAddr });
                const renderSpy = spyOn<any>(component, 'renderTransactionResult').and.stub();
 
-               await component.finishConditionalEscrow();
+               await component.finishTimeBasedEscrow();
                expect(xrplTransactionServiceMock.simulateTransaction).toHaveBeenCalled();
                expect(renderSpy).toHaveBeenCalled();
           });
@@ -438,9 +380,9 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                (component as any).resultField = { nativeElement: { innerHTML: '', classList: { add: jasmine.createSpy('add') } } };
                component.currentWallet = { name: 'W', address: validAddr, seed: 's', balance: '0' } as any;
                component.escrowSequenceNumberField = '1';
-
                xrplServiceMock.getClient.and.resolveTo({} as xrpl.Client);
                xrplServiceMock.getAccountInfo.and.resolveTo({ result: { account_data: { Sequence: 1 }, account_flags: {} } });
+               xrplServiceMock.getAccountObjects.and.resolveTo({ result: { account_objects: [] } });
                xrplServiceMock.calculateTransactionFee.and.resolveTo('10');
                xrplServiceMock.getLastLedgerIndex.and.resolveTo(123);
                xrplServiceMock.getXrplServerInfo.and.resolveTo({ result: {} as any, id: '1', type: 'response' } as xrpl.ServerInfoResponse);
@@ -461,7 +403,7 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
                spyOn(component as any, 'getWallet').and.resolveTo({ classicAddress: validAddr });
                const renderSpy = spyOn<any>(component, 'renderTransactionResult').and.stub();
 
-               // Ensure escrow with matching sequence exists
+               // Ensure an escrow exists matching the sequence so flow continues past lookup
                xrplServiceMock.getAccountObjects.and.callFake((_c: any, _a: any, _s: any, type?: string) => {
                     if (type === 'escrow') {
                          return Promise.resolve({ result: { account_objects: [{ LedgerEntryType: 'Escrow', Account: validAddr, PreviousTxnID: 'ABC' }] } });
@@ -476,6 +418,7 @@ describe('CreateConditionalEscrowComponent (isolated)', () => {
           });
      });
 
+     // helper to provide minimal typed client and server info when needed elsewhere
      function xrplBasicClient() {
           xrplServiceMock.getClient.and.returnValue(
                Promise.resolve({

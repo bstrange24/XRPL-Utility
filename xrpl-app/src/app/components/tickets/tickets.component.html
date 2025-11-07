@@ -8,10 +8,10 @@
 
 <app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
 
-<!-- ==== MAIN CONTENT – CENTERED TWO-COLUMN ==== -->
+<!-- Main content. Centered with 2 columns -->
 <div class="main-container">
      <div class="content-wrapper">
-          <!-- ==== LEFT – WALLETS PANEL ==== -->
+          <!-- Left Wallet panel ==== -->
           <div class="wallets-panel">
                <!-- Header with title + Generate button -->
                <div class="panel-header">
@@ -25,21 +25,17 @@
                <p class="panel-subtitle">Generate {{environment}} accounts with XRP from the faucet.</p>
 
                <div *ngIf="hasWallets; else noWallets">
-                    <!-- ==== LIST OF WALLETS ==== -->
+                    <!-- List of wallets -->
                     <div *ngFor="let wallet of wallets; let i = index trackBy: trackByWalletAddress" class="wallet-item" [class.selected]="selectedWalletIndex === i">
                          <!-- Wallet Info -->
                          <div class="wallet-info">
-                              <!-- <div class="wallet-address">{{ wallet.name | slice:0:50 }}</div> -->
                               <input *ngIf="editingIndex(i)" #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
-
                               <span *ngIf="!editingIndex(i)" (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
                          </div>
 
-                         <!-- Address + Balance + Icons (new layout) -->
                          <div class="wallet-info" (click)="selectWallet(i)">
                               <div class="address-line">
-                                   <!-- <div class="wallet-address">{{ wallet.address | slice:0:5 }}...{{ wallet.address | slice:-5 }}</div> -->
-                                   <div class="wallet-address">{{ wallet.address | slice:0:16 }}...</div>
+                                   <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
                                    <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
                               </div>
 
@@ -72,7 +68,7 @@
                                    <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
                               </div>
 
-                              <!-- Seed shown BELOW the button -->
+                              <!-- Seed shown below the button -->
                               <div class="secret-seed-container" *ngIf="wallet.showSecret">
                                    <div class="secret-seed">{{ wallet.seed }}</div>
                                    <button class="copy-btn" (click)="copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
@@ -80,18 +76,9 @@
                                    </button>
                               </div>
                          </div>
-
-                         <!-- ==== Selected Account Summary (shown below this wallet if selected) ==== -->
-                         <!-- <div *ngIf="selectedWalletIndex === i" class="selected-account-card">
-                              <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
-                              <div class="summary-row"><span>Address:</span> <span>{{ wallet.address | slice:0:5 }}...{{ wallet.address | slice:-5 }}</span></div>
-                              <div class="summary-row"><span>Balance:</span> <span class="highlight wallet-balance">{{ wallet.balance }} XRP</span></div>
-                              <div class="summary-row"><span>Owner Count:</span> <span class="highlight wallet-balance">{{ wallet.ownerCount }}</span></div>
-                              <div class="summary-row"><span>Xrp Reserves:</span> <span class="highlight wallet-balance">{{ wallet.xrpReserves }} XRP</span></div>
-                         </div> -->
                     </div>
 
-                    <!-- ==== SELECTED ACCOUNT SUMMARY ==== -->
+                    <!-- Selected Account Summary ==== -->
                     <div class="selected-account-card">
                          <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
                          <div class="summary-row"><span>Address:</span> <span>{{ currentWallet.address | slice:0:5 }}...{{ currentWallet.address | slice:-5 }}</span></div>
@@ -113,56 +100,40 @@
 
           <div class="toast" [class.show]="showToast">{{ toastMessage }}</div>
 
-          <!-- ==== RIGHT FORM ==== -->
+          <!-- Right form -->
           <div class="form-panel">
-               <!-- ==== MENU BAR ==== -->
+               <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'create'" (click)="setTab('create')">
-                         <lucide-icon name="cog" size="20"></lucide-icon>
-                         Create Check
+                    <button class="menu-btn" [class.active]="activeTab === 'create'" (click)="setTab('create')">
+                         <lucide-icon name="ticket-check" size="20"></lucide-icon>
+                         Create Ticket
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'cash'" (click)="setTab('cash')">
-                         <lucide-icon name="dollar-sign" size="20"></lucide-icon>
-                         Cash Check
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'cancel'" (click)="setTab('cancel')">
+                    <button class="menu-btn" [class.active]="activeTab === 'delete'" (click)="setTab('delete')">
                          <lucide-icon name="trash-2" size="20"></lucide-icon>
-                         Cancel Check
+                         Delete Tickets
                     </button>
                </div>
 
                <div *ngIf="activeTab === 'create'">
                     <div style="background-color: white; padding: 5px; margin-bottom: 1em; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
-                         <div style="background-color: rgb(0, 123, 255); width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
-                              <lucide-icon name="cog" size="20"></lucide-icon>
+                         <div style="background-color: #007bff; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+                              <lucide-icon name="ticket-check" size="20"></lucide-icon>
                          </div>
                          <div>
-                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Create Check</h2>
-                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Create a check to another XRPL address</p>
+                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Create Ticket</h2>
+                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Create a ticket for the selected account</p>
                          </div>
                     </div>
                </div>
 
-               <div *ngIf="activeTab === 'cash'">
-                    <div style="background-color: white; padding: 5px; margin-bottom: 1em; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
-                         <div style="background-color: #00ba7c; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
-                              <lucide-icon name="dollar-sign" size="20"></lucide-icon>
-                         </div>
-                         <div>
-                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Cash Check</h2>
-                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Cash check sent from another XRPL address</p>
-                         </div>
-                    </div>
-               </div>
-
-               <div *ngIf="activeTab === 'cancel'">
+               <div *ngIf="activeTab === 'delete'">
                     <div style="background-color: white; padding: 5px; margin-bottom: 1em; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
                          <div style="background-color: red; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
                               <lucide-icon name="trash-2" size="20"></lucide-icon>
                          </div>
                          <div>
-                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Cancel Check</h2>
-                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Cancel check create from the selected account</p>
+                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Delete Ticket</h2>
+                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Delete a ticket for the selected account</p>
                          </div>
                     </div>
                </div>
@@ -183,167 +154,52 @@
                     <div class="warning-text" [innerHTML]="warningMessage"></div>
                </div>
 
-               <!-- Outstanding Checks on selected account -->
-               <div *ngIf="activeTab === 'create'  && existingChecks.length !== 0" class="outstanding-checks-panel">
-                    <!-- Header – clickable to expand/collapse -->
-                    <div class="panel-header" (click)="toggleOutstandingChecks()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <lucide-icon [name]="outstandingChecksCollapsed ? 'chevron-right' : 'chevron-down'" size="18"> </lucide-icon>
-                              <!-- <lucide-icon name="file-text" size="18"></lucide-icon> -->
-                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text-icon lucide-file-text">
-                                   <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
-                                   <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-                                   <path d="M10 9H8" />
-                                   <path d="M16 13H8" />
-                                   <path d="M16 17H8" />
-                              </svg>
-                              Outstanding Checks ({{ existingChecks.length }})
-                         </h3>
-                    </div>
-
-                    <!-- Collapsible content with smooth height animation -->
-                    <div class="checks-list-container" [style.max-height]="outstandingChecksCollapsed ? '0' : (existingChecks.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         <div class="checks-list" *ngIf="!outstandingChecksCollapsed">
-                              <div *ngFor="let chk of existingChecks" class="check-card">
-                                   <div class="check-amount">{{ formatIOUXrpAmountOutstanding(chk.sendMax) }}</div>
-                                   <div class="check-destination">to <strong>{{ chk.destination }}</strong></div>
-
-                                   <div class="check-extras" *ngIf="chk.expiration || chk.destinationTag || chk.invoiceId">
-                                        <span *ngIf="chk.expiration" class="badge badge-expire"> Expires {{ formatXrplTimestamp(chk.expiration) }} </span>
-                                        <span *ngIf="chk.destinationTag" class="badge badge-tag"> Dest Tag: {{ chk.destinationTag }} </span>
-                                        <span *ngIf="chk.invoiceId" class="badge badge-invoice" title="{{ chk.invoiceId }}"> Invoice ID: {{formatInvoiceId(chk.invoiceId)}} </span>
-                                   </div>
-
-                                   <button class="icon-btn copy-check-id" (click)="copyCheckId(chk.id); $event.stopPropagation(); $event.preventDefault()" title="Copy Check ID" type="button">
-                                        <lucide-icon name="copy" size="16"></lucide-icon>
-                                   </button>
-                              </div>
-                         </div>
-                    </div>
-               </div>
-
-               <!-- No checks message (shown when collapsed AND zero checks) -->
-               <!-- <div *ngIf="activeTab === 'create' && existingChecks.length === 0" class="no-data">
-                    <lucide-icon name="check" size="20"></lucide-icon>
-                    No outstanding checks.
-               </div> -->
-
                <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab">
                               <ng-container [ngSwitch]="activeTab">
-                                   <div *ngIf="activeTab === 'create' || activeTab === 'cash'">
+                                   <div *ngSwitchCase="'create'">
                                         <div class="form-row">
                                              <div class="form-group">
-                                                  <label>Currency Code</label>
-                                                  <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="toggleIssuerField()" name="currencyField">
-                                                       <option *ngFor="let curr of currencies" [value]="curr">{{curr}}</option>
-                                                  </select>
-                                             </div>
-                                             <div class="form-group">
-                                                  <label>Amount</label>
-                                                  <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
+                                                  <label>Number of Tickets to create</label>
+                                                  <input type="text" [(ngModel)]="ticketCountField" name="ticketCountField" placeholder="Total max tickets, per account, is 250" />
                                              </div>
                                         </div>
                                    </div>
 
-                                   <div *ngIf="(activeTab === 'create'  || activeTab === 'cash') && currencyFieldDropDownValue !== 'XRP'">
-                                        <div class="form-row">
+                                   <div *ngSwitchCase="'delete'">
+                                        <div class="form-row" *ngIf="this.walletTicketCount > 0">
                                              <div class="form-group">
-                                                  <label>Issuer</label>
-                                                  <select id="issuerField" [(ngModel)]="selectedIssuer" name="issuerField" (ngModelChange)="this.toggleIssuerField()">
-                                                       <option value="" disabled selected>Select an issuer</option>
-                                                       <option *ngFor="let iss of issuers; let i = index" [value]="iss.address">{{iss.name || 'Wallet ' + (i + 1)}} ({{iss.address | slice:0:6}}...{{iss.address | slice:-4}})</option>
-                                                  </select>
-                                             </div>
-                                             <div class="form-group">
-                                                  <label>Currency Balance</label>
-                                                  <input type="text" [(ngModel)]="tokenBalance" name="tokenBalance" readonly />
+                                                  <label>Ticket Sequence to Delete</label>
+                                                  <input type="text" [(ngModel)]="deleteTicketSequence" name="deleteTicketSequence" (input)="clearWarning()" />
                                              </div>
                                         </div>
-                                   </div>
 
-                                   <div *ngIf="activeTab === 'create'">
-                                        <div class="form-row">
-                                             <div class="form-group">
-                                                  <label>Destination</label>
-                                                  <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
-                                                       <option *ngFor="let dest of destinations; let i = index" [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{dest.name || 'Wallet ' + (i + 1)}} ({{dest.address | slice:0:6}}...{{dest.address | slice:-4}})</option>
-                                                  </select>
-                                             </div>
-                                             <div class="form-group">
-                                                  <label>Destination Tag</label>
-                                                  <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
-                                             </div>
-                                        </div>
-                                   </div>
+                                        <div class="ticket-fields-to-delete" *ngIf="this.walletTicketCount > 0">
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <div class="toggle-row">
+                                                            <span class="toggle-label">Multiple Ticket Selection</span>
+                                                            <label class="switch" style="display: contents">
+                                                                 <input type="checkbox" [(ngModel)]="multiSelectMode" [ngModelOptions]="{standalone: true}" (ngModelChange)="clearDeleteTicketSequence()" />
+                                                                 <span class="slider"></span>
+                                                            </label>
+                                                       </div>
 
-                                   <div *ngIf="activeTab === 'create'">
-                                        <div class="form-row">
-                                             <div class="form-group">
-                                                  <label>Source Tag (opt)</label>
-                                                  <input type="text" [(ngModel)]="sourceTagField" name="sourceTagField" />
-                                             </div>
-                                             <div class="form-group">
-                                                  <label>Invoice ID (opt)</label>
-                                                  <input type="text" [(ngModel)]="invoiceIdField" name="invoiceIdField" />
-                                             </div>
-                                        </div>
-                                   </div>
-
-                                   <div *ngIf="activeTab === 'create'">
-                                        <div class="form-row">
-                                             <div class="form-group" style="padding-bottom: 10px">
-                                                  <label>Expiration Amount</label>
-                                                  <input type="text" id="expirationTimeField" placeholder="Enter time" [(ngModel)]="expirationTimeField" name="expirationTimeField" />
-                                             </div>
-                                             <div class="form-group" style="padding-bottom: 10px">
-                                                  <label>Expiration Time</label>
-                                                  <select id="checkExpirationTime" [(ngModel)]="checkExpirationTime" name="checkExpirationTime">
-                                                       <option value="seconds">Seconds</option>
-                                                       <option value="minutes">Minutes</option>
-                                                       <option value="hours">Hours</option>
-                                                       <option value="days">Days</option>
-                                                  </select>
-                                             </div>
-                                        </div>
-                                   </div>
-
-                                   <!-- Cancel Tab -->
-                                   <div *ngIf="activeTab === 'cash' || activeTab === 'cancel'">
-                                        <div class="form-row">
-                                             <div class="form-group" style="margin-bottom: 1em">
-                                                  <label>Check ID</label>
-                                                  <input type="text" [(ngModel)]="checkIdField" name="checkIdField" />
-                                             </div>
-                                        </div>
-                                   </div>
-
-                                   <!-- Cancel Dropdown -->
-                                   <div *ngIf="activeTab === 'cancel' && cancellableChecks.length > 0">
-                                        <div class="form-row">
-                                             <div class="form-group" style="margin-bottom: 1em">
-                                                  <label>Avilable Checks to cancel</label>
-                                                  <select *ngIf="activeTab === 'cancel'" [(ngModel)]="checkIdField" name="checkIdField" class="form-control">
-                                                       <option [ngValue]="''" disabled selected>{{ cancellableChecks.length ? 'Select a check to cancel' : 'No avilable checks to cancel' }}</option>
-                                                       <!-- <option *ngFor="let chk of cancellableChecks" [ngValue]="chk.id">Amount {{ chk.amount }} from {{`Destination`}} {{ chk.destination }}</option> -->
-                                                       <!-- <option *ngFor="let chk of cancellableChecks" [ngValue]="chk.id">Amount {{ chk.amount }} from {{ chk.destination }}</option> -->
-                                                       <option *ngFor="let chk of cancellableChecks" [ngValue]="chk.id">Amount in {{ formatIOUXrpAmountUI(chk.amount) }} from {{ chk.destination }}</option>
-                                                  </select>
-                                             </div>
-                                        </div>
-                                   </div>
-
-                                   <!-- Cash Dropdown -->
-                                   <div *ngIf="activeTab === 'cash' && cashableChecks.length > 0">
-                                        <div class="form-row">
-                                             <div class="form-group" style="margin-bottom: 1em">
-                                                  <label>Avilable Checks to cash</label>
-                                                  <select *ngIf="activeTab === 'cash'" [(ngModel)]="checkIdField" name="checkIdField" class="form-control">
-                                                       <option [ngValue]="''" disabled selected>{{ cashableChecks.length ? 'Select a check' : 'No checks to cash' }}</option>
-                                                       <!-- <option *ngFor="let chk of cashableChecks" [ngValue]="chk.id">Amount {{ chk.amount }} from {{`Destination`}} {{ chk.sender }}</option> -->
-                                                       <option *ngFor="let chk of cashableChecks" [ngValue]="chk.id">Amount in {{ formatIOUXrpAmountUI(chk.amount) }} from {{ chk.sender }}</option>
-                                                  </select>
+                                                       <div class="ticket-dropdown">
+                                                            <div *ngIf="multiSelectMode; else singleSelect">
+                                                                 <select [(ngModel)]="selectedTickets" size="10" multiple (ngModelChange)="updateDeleteTicketSequence()" [ngModelOptions]="{standalone: true}">
+                                                                      <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
+                                                                 </select>
+                                                            </div>
+                                                            <ng-template #singleSelect>
+                                                                 <select [(ngModel)]="selectedSingleTicket" (ngModelChange)="updateDeleteTicketSequence()" [ngModelOptions]="{standalone: true}">
+                                                                      <option value="" disabled>Select a ticket</option>
+                                                                      <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
+                                                                 </select>
+                                                            </ng-template>
+                                                       </div>
+                                                  </div>
                                              </div>
                                         </div>
                                    </div>
@@ -419,7 +275,7 @@
                                    </div>
 
                                    <!-- Ticket Selection -->
-                                   <div *ngIf="isTicket" class="ticket-fields">
+                                   <div *ngIf="isTicket && activeTab !== 'delete'" class="ticket-fields">
                                         <div class="form-group">
                                              <label>Ticket Sequence</label>
                                              <div *ngIf="multiSelectMode; else singleSelect">
@@ -438,7 +294,7 @@
 
                                    <!-- Action buttons -->
                                    <div class="button-row">
-                                        <button type="submit" class="btn-primary" [ngStyle]="{ 'background-color': activeTab === 'cancel' ? 'red' : activeTab === 'cash' ? 'green' : '#007bff'}">{{ activeTab === 'cancel' ? 'Cancel Check' : activeTab === 'cash' ? 'Cash Check' : 'Create Check' }}</button>
+                                        <button type="submit" class="btn-primary" [ngStyle]="{ 'background-color': activeTab === 'delete' ? 'red' : '#007bff' }">{{ activeTab === 'delete' ? 'Delete Ticket' : 'Create Ticket' }}</button>
                                         <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                                    </div>
                               </ng-container>
@@ -459,8 +315,21 @@
                                    <span>{{successMessage}}</span><br /><br />
                                    <span *ngIf="txHash && !isSimulateEnabled">
                                         Transaction hash:
-                                        <!-- <a [href]="'https://devnet.xrpl.org/transactions/' + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a> -->
                                         <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>
+                                   </span>
+
+                                   <!-- Multiple Hashes -->
+                                   <div *ngIf="txHashes.length > 1 && !isSimulateEnabled" class="tx-hashes">
+                                        <div *ngFor="let hash of txHashes; let i = index" class="tx-hash-item">
+                                             Transaction {{ i + 1 }} hash:
+                                             <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
+                                        </div>
+                                   </div>
+
+                                   <!-- Single hash -->
+                                   <span *ngIf="txHashes.length === 1 && !isSimulateEnabled">
+                                        Transaction hash:
+                                        <a [href]="url + 'tx/' + txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHashes[0] }} </a>
                                    </span>
                               </div>
                          </div>
@@ -474,7 +343,6 @@
                                    <span>{{ result }}</span><br />
                                    <span *ngIf="txHash && !isSimulateEnabled">
                                         Transaction hash:
-                                        <!-- <a [href]="'https://devnet.xrpl.org/transactions/' + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>  -->
                                         <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>
                                    </span>
                               </div>

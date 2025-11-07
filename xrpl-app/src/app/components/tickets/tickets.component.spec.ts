@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { CreateTicketsComponent } from './create-tickets.component';
+import { CreateTicketsComponent } from './tickets.component';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';

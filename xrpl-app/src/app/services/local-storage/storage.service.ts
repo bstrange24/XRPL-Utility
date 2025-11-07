@@ -8,22 +8,22 @@ import { AppConstants } from '../../core/app.constants';
 export class StorageService {
      inputsCleared = new EventEmitter<void>();
 
-     private readonly pageTitles: { [key: string]: string } = {
-          'send-xrp': 'Send XRP',
-          'send-checks': 'Checks',
-          'send-currency': 'Currency',
-          'create-time-escrow': 'Create Time Escrow',
-          'create-conditional-escrow': 'Create Conditional Escrow',
-          account: 'Account Info',
-          'create-offer': 'Create Offers',
-          'create-nft': 'NFTs',
-          'create-tickets': 'Tickets',
-          'create-payment-channel': 'Payment Channel',
-          'sign-Transactions': 'Sign Transactions',
-          trustlines: 'Trustlines',
-          'create-amm': 'AMM',
-          'fiat-on-off-ramp': 'Fiat On/Off Ramp',
-     };
+     // private readonly pageTitles: { [key: string]: string } = {
+     //      'send-xrp': 'Send XRP',
+     //      checks: 'Checks',
+     //      'send-currency': 'Currency',
+     //      'time-escrow': 'Time Escrow',
+     //      'conditional-escrow': 'Conditional Escrow',
+     //      account: 'Account Info',
+     //      'create-offer': 'Create Offers',
+     //      'create-nft': 'NFTs',
+     //      tickets: 'Tickets',
+     //      'payment-channel': 'Payment Channel',
+     //      'sign-Transactions': 'Sign Transactions',
+     //      trustlines: 'Trustlines',
+     //      'create-amm': 'AMM',
+     //      'fiat-on-off-ramp': 'Fiat On/Off Ramp',
+     // };
 
      private readonly networkColors: { [key: string]: string } = {
           devnet: 'rgb(56, 113, 69)',
@@ -157,9 +157,9 @@ export class StorageService {
           return [...AppConstants.INPUT_IDS];
      }
 
-     getPageTitle(route: string): string {
-          return this.pageTitles[route] || 'XRPL App';
-     }
+     // getPageTitle(route: string): string {
+     //      return this.pageTitles[route] || 'XRPL App';
+     // }
 
      getActiveNavLink(): string {
           return localStorage.getItem('activeNavLink') || '';

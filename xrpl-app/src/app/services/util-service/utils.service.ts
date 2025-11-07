@@ -435,8 +435,8 @@ export class UtilsService {
 
           const cancelAfterDate = new Date(cancelAfterUnix * 1000);
           const formatter1 = this.dateFormatter();
-          console.debug('toUTCString: ', cancelAfterDate.toUTCString());
-          console.debug('Formatter 1: ', formatter1.format(cancelAfterDate));
+          // console.debug('toUTCString: ', cancelAfterDate.toUTCString());
+          // console.debug('Formatter 1: ', formatter1.format(cancelAfterDate));
           return formatter1.format(cancelAfterDate);
 
           // Convert Ripple time (seconds since Jan 1, 2000) to UTC datetime
@@ -645,6 +645,36 @@ export class UtilsService {
                }
           }
           return strV;
+     }
+
+     /**
+      * Converts an XRPL InvoiceID (hex string) to human-readable text if possible.
+      * Falls back to truncated hex if not valid UTF-8.
+      */
+     formatInvoiceId(invoiceIdHex: string | undefined): string {
+          if (!invoiceIdHex || invoiceIdHex.length !== 64) {
+               return '—';
+          }
+
+          try {
+               // Convert hex to Uint8Array
+               const bytes = new Uint8Array(invoiceIdHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+
+               // Try to decode as UTF-8
+               const decoder = new TextDecoder('utf-8', { fatal: true });
+               const text = decoder.decode(bytes);
+
+               // If decoding succeeds and contains printable chars, return it
+               if (/[\w\d\s\-\.\,\!\@\#\$\%\^\&\*\(\)]/.test(text)) {
+                    const trimmed = text.trim();
+                    return trimmed || invoiceIdHex.slice(0, 16) + '...';
+               }
+          } catch (e) {
+               // Not valid UTF-8 → fall through
+          }
+
+          // Fallback: show truncated hex
+          return invoiceIdHex.slice(0, 12) + '...' + invoiceIdHex.slice(-8);
      }
 
      normalizeAccounts(accounts: Record<string, string>, newAddress: string): Record<string, string> {
@@ -1736,11 +1766,10 @@ export class UtilsService {
           }
      }
 
-     async getAccountReserves(client: xrpl.Client, accountInfo: any, address: string) {
+     async getAccountReserves(client: xrpl.Client, accountInfo: any, address: string): Promise<{ ownerCount: number; totalReserveXRP: number } | undefined> {
           try {
-               // Get the current ledger index from the client
                const accountData = accountInfo.result.account_data;
-               const ownerCount = accountData.OwnerCount;
+               const ownerCount = Number(accountData.OwnerCount || 0);
 
                const reserveData = await this.getXrplReserve(client);
                if (!reserveData) {
@@ -1748,15 +1777,39 @@ export class UtilsService {
                }
 
                const { reserveBaseXRP, reserveIncrementXRP } = reserveData;
+
+               // Calculate total in XRP units directly
                const totalReserveXRP = reserveBaseXRP + ownerCount * reserveIncrementXRP;
 
                return { ownerCount, totalReserveXRP };
           } catch (error: any) {
-               console.error('Error:', error);
+               console.error('Error in getAccountReserves:', error);
                this.setError(`ERROR: ${error.message || 'Unknown error'}`, undefined);
                return undefined;
           }
      }
+
+     // async getAccountReserves(client: xrpl.Client, accountInfo: any, address: string) {
+     //      try {
+     //           // Get the current ledger index from the client
+     //           const accountData = accountInfo.result.account_data;
+     //           const ownerCount = accountData.OwnerCount;
+
+     //           const reserveData = await this.getXrplReserve(client);
+     //           if (!reserveData) {
+     //                throw new Error('Failed to fetch XRPL reserve data');
+     //           }
+
+     //           const { reserveBaseXRP, reserveIncrementXRP } = reserveData;
+     //           const totalReserveXRP = reserveBaseXRP + ownerCount * reserveIncrementXRP;
+
+     //           return { ownerCount, totalReserveXRP };
+     //      } catch (error: any) {
+     //           console.error('Error:', error);
+     //           this.setError(`ERROR: ${error.message || 'Unknown error'}`, undefined);
+     //           return undefined;
+     //      }
+     // }
 
      async getXrplReserve(client: xrpl.Client) {
           try {
@@ -1769,7 +1822,7 @@ export class UtilsService {
                const reserveBaseXRP = ledgerData.reserve_base;
                const reserveIncrementXRP = ledgerData.reserve_inc;
 
-               console.debug(`baseFee: ${baseFee} reserveBaseXRP: ${xrpl.dropsToXrp(reserveBaseXRP)} Total incremental owner count: ${xrpl.dropsToXrp(reserveIncrementXRP)} XRP Total Reserve: ${xrpl.dropsToXrp(reserveIncrementXRP)} XRP`);
+               // console.debug(`baseFee: ${baseFee} reserveBaseXRP: ${xrpl.dropsToXrp(reserveBaseXRP)} Total incremental owner count: ${xrpl.dropsToXrp(reserveIncrementXRP)} XRP Total Reserve: ${xrpl.dropsToXrp(reserveIncrementXRP)} XRP`);
 
                return { reserveBaseXRP, reserveIncrementXRP };
           } catch (error: any) {

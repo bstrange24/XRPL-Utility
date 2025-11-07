@@ -64,6 +64,7 @@ Run test on Ubuntu
 export CHROME_BIN=$(which chromium)
 npx karma start
 npm install @angular/animations@19.2.14
+npm install lucide-angular
 
 ## NFT URLs
 

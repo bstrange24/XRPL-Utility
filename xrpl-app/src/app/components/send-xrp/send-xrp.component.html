@@ -6,30 +6,17 @@
      </div>
 </div>
 
-<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange($event)" (transactionResult)="handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
 
-<!-- ==== BANNER – XRPL Multi-Purpose Token Manager ==== -->
-<!-- <div class="mpt-banner">
-     <div class="banner-content">
-          <h1 class="banner-title">XRPL Multi-Purpose Token Manager</h1>
-          <div class="banner-status">
-               <span class="status-badge">Connected</span>
-          </div>
-     </div>
-</div> -->
-
-<!-- ==== MAIN CONTENT – CENTERED TWO-COLUMN ==== -->
+<!-- Main content. Centered with 2 columns -->
 <div class="main-container">
      <div class="content-wrapper">
-          <!-- ==== LEFT – WALLETS PANEL ==== -->
+          <!-- Left Wallet panel ==== -->
           <div class="wallets-panel">
                <!-- Header with title + Generate button -->
                <div class="panel-header">
                     <h2 class="panel-title">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wallet-icon lucide-wallet">
-                              <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" />
-                              <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" />
-                         </svg>
+                         <lucide-icon name="wallet" size="25" style="padding-top: 5px"></lucide-icon>
                          Accounts
                     </h2>
                     <button class="generate-btn" (click)="generateNewAccount()">+ Generate</button>
@@ -37,80 +24,95 @@
 
                <p class="panel-subtitle">Generate {{environment}} accounts with XRP from the faucet.</p>
 
-               <!-- ==== LIST OF WALLETS ==== -->
-               <div *ngFor="let wallet of wallets; let i = index" class="wallet-item" [class.selected]="selectedWalletIndex === i" (click)="selectWallet(i)">
-                    <div class="wallet-info">
-                         <div class="address-line">
-                              <div class="wallet-address">{{ wallet.address | slice:0:5 }}...{{ wallet.address | slice:-5 }}</div>
-                              <!-- <div class="wallet-address">{{ wallet.address }}</div> -->
-                              <div class="wallet-balance">{{ wallet.balance || '0' }} XRP</div>
+               <div *ngIf="hasWallets; else noWallets">
+                    <!-- List of wallets -->
+                    <div *ngFor="let wallet of wallets; let i = index trackBy: trackByWalletAddress" class="wallet-item" [class.selected]="selectedWalletIndex === i">
+                         <!-- Wallet Info -->
+                         <div class="wallet-info">
+                              <input *ngIf="editingIndex(i)" #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
+                              <span *ngIf="!editingIndex(i)" (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
                          </div>
 
-                         <div class="wallet-actions">
-                              <button class="icon-btn" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
-                                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                   </svg>
-                              </button>
+                         <div class="wallet-info" (click)="selectWallet(i)">
+                              <div class="address-line">
+                                   <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
+                                   <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
+                              </div>
 
-                              <button class="icon-btn" (click)="copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
-                                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                   </svg>
-                              </button>
+                              <!-- Icons -->
+                              <div class="wallet-actions">
+                                   <button class="icon-btn" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                        </svg>
+                                   </button>
 
-                              <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
-                                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                   </svg>
-                              </button>
+                                   <button class="icon-btn" (click)="copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                        </svg>
+                                   </button>
+
+                                   <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                   </button>
+                              </div>
+                         </div>
+
+                         <!-- Secret Key -->
+                         <div class="secret-section" (click)="selectWallet(i)">
+                              <div class="secret-header">
+                                   <span class="secret-label">Secret Key:</span>
+                                   <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
+                              </div>
+
+                              <!-- Seed shown below the button -->
+                              <div class="secret-seed-container" *ngIf="wallet.showSecret">
+                                   <div class="secret-seed">{{ wallet.seed }}</div>
+                                   <button class="copy-btn" (click)="copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
+                                        <lucide-icon name="copy" size="20"></lucide-icon>
+                                   </button>
+                              </div>
                          </div>
                     </div>
 
-                    <div class="wallet-reserves"><span>Owner Count:</span> <span class="highlight"> {{ wallet.ownerCount }}</span></div>
-                    <div class="wallet-reserves"><span>Xrp Reserves:</span> <span class="highlight"> {{ wallet.xrpReserves }} XRP</span></div>
-
-                    <!-- Secret Key -->
-                    <div class="secret-section">
-                         <div class="secret-header">
-                              <span class="secret-label">Secret Key:</span>
-                              <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
-                         </div>
-
-                         <!-- Seed shown BELOW the button -->
-                         <div class="secret-seed-container" *ngIf="wallet.showSecret">
-                              <div class="secret-seed">{{ wallet.seed }}</div>
-                              <button class="copy-btn" (click)="copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
-                                   <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
-                                        <path d="M4 4h8v2H4V4zm0 4h8v6H4V8zm10-4h-2v8h2V4z" />
-                                   </svg>
-                                   Copy
-                              </button>
-                         </div>
+                    <!-- Selected Account Summary ==== -->
+                    <div class="selected-account-card">
+                         <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
+                         <div class="summary-row"><span>Address:</span> <span>{{ currentWallet.address | slice:0:5 }}...{{ currentWallet.address | slice:-5 }}</span></div>
+                         <div class="summary-row"><span>Balance:</span> <span class="highlight wallet-balance">{{ currentWallet.balance }} XRP</span></div>
+                         <div class="summary-row"><span>Owner Count:</span> <span class="highlight wallet-balance">{{ currentWallet.ownerCount }}</span></div>
+                         <div class="summary-row"><span>Xrp Reserves:</span> <span class="highlight wallet-balance">{{ currentWallet.xrpReserves }} XRP</span></div>
                     </div>
                </div>
+
+               <ng-template #noWallets>
+                    <!-- This block shows if hasWallets is false -->
+                    <div class="no-wallet-found">
+                         <lucide-icon name="wallet" size="40"></lucide-icon>
+                         <p>No accounts generated yet.</p>
+                         <p>Click "Generate" to create your first {{environment}} account</p>
+                    </div>
+               </ng-template>
           </div>
 
-          <!-- ==== RIGHT – SEND XRP FORM ==== -->
+          <div class="toast" [class.show]="showToast">{{ toastMessage }}</div>
+
+          <!-- Right form -->
           <div class="form-panel">
-               <!-- ==== MENU BAR ==== -->
+               <!-- Menu bar -->
                <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab === 'send'" (click)="setTab('send')">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send-icon lucide-send">
-                              <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
-                              <path d="m21.854 2.147-10.94 10.939" />
-                         </svg>
+                         <lucide-icon name="send" size="20"></lucide-icon>
                          Send XRP
                     </button>
                </div>
 
-               <!-- <h2 class="panel-title">Send XRP</h2> -->
                <div style="background-color: white; padding: 5px; margin-bottom: 1em; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
                     <div style="background-color: #00ba7c; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
-                              <path d="m21.854 2.147-10.94 10.939" />
-                         </svg>
+                         <lucide-icon name="send" size="20"></lucide-icon>
                     </div>
                     <div>
                          <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Send XRP</h2>
@@ -118,150 +120,157 @@
                     </div>
                </div>
 
-               <!-- ==== DYNAMIC INFO PANEL ==== -->
-               <!-- <div class="info-panel" *ngIf="infoMessage">
+               <!-- Dynamic info panel -->
+               <div class="info-panel" *ngIf="infoMessage">
                     <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div class="info-text" [innerHTML]="infoMessage"></div>
-               </div> -->
+               </div>
+
+               <!-- Dynamic warning panel  -->
+               <div class="warning-panel" *ngIf="warningMessage">
+                    <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div class="warning-text" [innerHTML]="warningMessage"></div>
+               </div>
 
                <form #theForm="ngForm" (ngSubmit)="sendXrp()" class="send-form">
                     <div class="tab-content-container">
-                         <!-- Amount + Destination -->
-                         <!-- <div *ngIf="activeTab === 'send'" @fadeInFromBottom> -->
-                         <div *ngIf="activeTab === 'send'">
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>XRP Amount</label>
-                                        <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
+                         <div [@tabTransition]="activeTab">
+                              <ng-container [ngSwitch]="activeTab">
+                                   <div *ngSwitchCase="'send'">
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>XRP Amount</label>
+                                                  <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
+                                             </div>
+                                             <div class="form-group">
+                                                  <label>Destination</label>
+                                                  <select [(ngModel)]="destinationField" name="destinationField">
+                                                       <option *ngFor="let d of destinations" [value]="d.address" [disabled]="d.address===currentWallet.address">{{ d.name || 'Wallet' }} ({{ d.address | slice:0:6 }}...{{ d.address | slice:-4 }})</option>
+                                                  </select>
+                                             </div>
+                                        </div>
                                    </div>
-                                   <div class="form-group">
-                                        <label>Destination</label>
-                                        <select [(ngModel)]="destinationFields" name="destinationFields">
-                                             <option *ngFor="let d of destinations" [value]="d.address" [disabled]="d.address===currentWallet.address">{{ d.name || 'Wallet' }} ({{ d.address | slice:0:6 }}...{{ d.address | slice:-4 }})</option>
-                                        </select>
+
+                                   <div *ngSwitchCase="'send'">
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Destination Tag (opt)</label>
+                                                  <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
+                                             </div>
+                                             <div class="form-group">
+                                                  <label>Source Tag (opt)</label>
+                                                  <input type="text" [(ngModel)]="sourceTagField" name="sourceTagField" />
+                                             </div>
+                                        </div>
                                    </div>
-                              </div>
-                         </div>
 
-                         <!-- Optional fields -->
-                         <!-- <div *ngIf="activeTab === 'send'" @fadeInFromBottom> -->
-                         <div *ngIf="activeTab === 'send'">
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Destination Tag (opt)</label>
-                                        <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
+                                   <div *ngSwitchCase="'send'">
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Invoice ID (opt)</label>
+                                                  <input type="text" [(ngModel)]="invoiceIdField" name="invoiceIdField" />
+                                             </div>
+                                        </div>
                                    </div>
-                                   <div class="form-group">
-                                        <label>Source Tag (opt)</label>
-                                        <input type="text" [(ngModel)]="sourceTagField" name="sourceTagField" />
+
+                                   <!-- Switches -->
+                                   <div class="switch-group">
+                                        <label class="switch">
+                                             <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
+                                             <span class="slider"></span>
+                                             Add Memo
+                                        </label>
+
+                                        <label class="switch" *ngIf="multiSigningEnabled">
+                                             <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
+                                             <span class="slider"></span>
+                                             Use Multi-Sign
+                                        </label>
+
+                                        <label class="switch" *ngIf="regularKeySigningEnabled">
+                                             <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
+                                             <span class="slider"></span>
+                                             Use Regular Key
+                                        </label>
+
+                                        <label class="switch" *ngIf="this.ticketArray.length > 0">
+                                             <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
+                                             <span class="slider"></span>
+                                             Use Ticket
+                                        </label>
+
+                                        <label class="switch">
+                                             <input type="checkbox" [(ngModel)]="isSimulateEnabled" name="isSimulateEnabled" />
+                                             <span class="slider"></span>
+                                             Simulate
+                                        </label>
                                    </div>
-                              </div>
-                         </div>
 
-                         <!-- <div *ngIf="activeTab === 'send'" @fadeInFromBottom> -->
-                         <div *ngIf="activeTab === 'send'">
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Invoice ID (opt)</label>
-                                        <input type="text" [(ngModel)]="invoiceIdField" name="invoiceIdField" />
+                                   <!-- Memo textarea -->
+                                   <textarea *ngIf="isMemoEnabled" [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
+
+                                   <!-- Multi-Sign Fields -->
+                                   <div *ngIf="useMultiSign" class="multisign-grid">
+                                        <div class="multisign-field">
+                                             <label>Signers</label>
+                                             <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly (ngModelChange)="autoResize(signers)"></textarea>
+                                        </div>
+
+                                        <div class="multisign-field">
+                                             <label>Seeds</label>
+                                             <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly (ngModelChange)="autoResize(seeds)"></textarea>
+                                        </div>
+
+                                        <div class="multisign-field quorum-field">
+                                             <label>Quorum</label>
+                                             <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
+                                        </div>
                                    </div>
-                              </div>
-                         </div>
 
-                         <!-- Switches -->
-                         <div class="switch-group">
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                   <span class="slider"></span>
-                                   Add Memo
-                              </label>
-
-                              <label class="switch" *ngIf="multiSigningEnabled">
-                                   <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                   <span class="slider"></span>
-                                   Use Multi-Sign
-                              </label>
-
-                              <label class="switch" *ngIf="regularKeySigningEnabled">
-                                   <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                                   <span class="slider"></span>
-                                   Use Regular Key
-                              </label>
-
-                              <label class="switch" *ngIf="this.ticketArray.length > 0">
-                                   <input type="checkbox" [(ngModel)]="isTicket" (ngModelChange)="toggleTicketSequence()" name="isTicket" />
-                                   <span class="slider"></span>
-                                   Use Ticket
-                              </label>
-
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isSimulateEnabled" name="isSimulateEnabled" />
-                                   <span class="slider"></span>
-                                   Simulate
-                              </label>
-                         </div>
-
-                         <!-- Memo textarea -->
-                         <textarea *ngIf="isMemoEnabled" [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-
-                         <!-- Multi-Sign Fields -->
-                         <div *ngIf="useMultiSign" class="multisign-grid">
-                              <div class="multisign-field">
-                                   <label>Signers</label>
-                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly (ngModelChange)="autoResize(signers)"></textarea>
-                              </div>
-
-                              <div class="multisign-field">
-                                   <label>Seeds</label>
-                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly (ngModelChange)="autoResize(seeds)"></textarea>
-                              </div>
-
-                              <div class="multisign-field quorum-field">
-                                   <label>Quorum</label>
-                                   <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                              </div>
-                         </div>
-
-                         <!-- Regular Key Fields -->
-                         <div *ngIf="isRegularKeyAddress" class="regular-key-fields">
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Address</label>
-                                        <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                                   <!-- Regular Key Fields -->
+                                   <div *ngIf="isRegularKeyAddress" class="regular-key-fields">
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Regular Key Address</label>
+                                                  <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                                             </div>
+                                        </div>
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Regular Key Seed</label>
+                                                  <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
+                                             </div>
+                                        </div>
                                    </div>
-                              </div>
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Seed</label>
-                                        <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                   </div>
-                              </div>
-                         </div>
 
-                         <!-- Ticket Selection -->
-                         <div *ngIf="isTicket" class="ticket-fields">
-                              <div class="form-group">
-                                   <label>Ticket Sequence</label>
-                                   <div *ngIf="multiSelectMode; else singleSelect">
-                                        <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                             <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
-                                        </select>
+                                   <!-- Ticket Selection -->
+                                   <div *ngIf="isTicket" class="ticket-fields">
+                                        <div class="form-group">
+                                             <label>Ticket Sequence</label>
+                                             <div *ngIf="multiSelectMode; else singleSelect">
+                                                  <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
+                                                       <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
+                                                  </select>
+                                             </div>
+                                             <ng-template #singleSelect>
+                                                  <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
+                                                       <option value="" disabled>Select a ticket</option>
+                                                       <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
+                                                  </select>
+                                             </ng-template>
+                                        </div>
                                    </div>
-                                   <ng-template #singleSelect>
-                                        <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                             <option value="" disabled>Select a ticket</option>
-                                             <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ ticket }}</option>
-                                        </select>
-                                   </ng-template>
-                              </div>
-                         </div>
 
-                         <!-- Action buttons -->
-                         <div class="button-row">
-                              <button type="submit" class="btn-primary">Send XRP</button>
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                                   <!-- Action buttons -->
+                                   <div class="button-row">
+                                        <button type="submit" class="btn-primary">Send XRP</button>
+                                        <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                                   </div>
+                              </ng-container>
                          </div>
 
                          <!-- Spinner -->
@@ -270,45 +279,40 @@
                               <span>{{ spinnerMessage || 'Loading...' }}</span>
                          </div>
 
-                         <!-- SUCCESS MESSAGE -->
+                         <!-- Success message -->
                          <div *ngIf="isSuccess && !isError" class="success-message">
                               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="success-icon">
                                    <path d="M9 16.17l-3.88-3.88L4 13.41 9 18.41l12-12-1.41-1.41z" />
                               </svg>
-                              <!-- <div class="success-text">
-                                   <span>{{ successMessage }}</span><br />
-
-                                   <span *ngIf="txHash && !isSimulateEnabled && !successMessage?.includes('Simulated')">
-                                        Transaction hash:
-                                        <a [href]="'https://devnet.xrpl.org/transactions/' + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>
-                                   </span>
-                              </div> -->
-
                               <div class="success-text">
-                                   <span>{{successMessage}}</span><br />
+                                   <span>{{successMessage}}</span><br /><br />
                                    <span *ngIf="txHash && !isSimulateEnabled">
                                         Transaction hash:
-                                        <a [href]="'https://devnet.xrpl.org/transactions/' + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>
+                                        <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>
                                    </span>
                               </div>
                          </div>
 
-                         <!-- ERROR MESSAGE -->
+                         <!-- Error message -->
                          <div class="tx-message error" *ngIf="isError && result">
                               <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" class="tx-icon error-icon">
                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
                               </svg>
                               <div class="tx-text">
-                                   <span>{{ result }}</span>
+                                   <span>{{ result }}</span><br />
+                                   <span *ngIf="txHash && !isSimulateEnabled">
+                                        Transaction hash:
+                                        <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a>
+                                   </span>
                               </div>
                          </div>
                     </div>
                </form>
 
-               <!-- PAYMENT TX PREVIEW -->
-               <div class="tx-preview-container" *ngIf="paymentTx">
+               <!-- Tx Preview -->
+               <div class="tx-preview-container" *ngIf="paymentTx.length >0">
                     <div class="tx-header">
-                         <h3 class="tx-title">Payment Transaction</h3>
+                         <h5 class="tx-title">Payment Transaction</h5>
                          <div class="tx-actions">
                               <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
                                    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
@@ -328,8 +332,8 @@
                     <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
                </div>
 
-               <!-- PAYMENT TX PREVIEW -->
-               <div class="tx-preview-container" *ngIf="txResult">
+               <!-- Tx Result Preview -->
+               <div class="tx-preview-container" *ngIf="txResult.length > 0">
                     <div class="tx-header">
                          <h3 class="tx-title">Transaction Result</h3>
                          <div class="tx-actions">

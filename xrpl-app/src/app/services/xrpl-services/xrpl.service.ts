@@ -590,6 +590,22 @@ export class XrplService {
           }
      }
 
+     filterAccountObjectsByTypes(accountObjectsResponse: xrpl.AccountObjectsResponse, types: string[]): xrpl.AccountObjectsResponse {
+          const filtered = (accountObjectsResponse.result.account_objects ?? []).filter((obj: any) => types.includes(obj.LedgerEntryType));
+          return {
+               ...accountObjectsResponse,
+               result: {
+                    ...accountObjectsResponse.result,
+                    account_objects: filtered,
+               },
+          };
+     }
+
+     // filterAccountObjectsByTypes(accountObjectsResponse: xrpl.AccountObjectsResponse, types: string[]) {
+     //      const objects = accountObjectsResponse.result.account_objects ?? [];
+     //      return objects.filter((obj: any) => types.includes(obj.LedgerEntryType));
+     // }
+
      async getAMMInfo(client: Client, asset: any, asset2: any, account: string, ledgerIndex: xrpl.LedgerIndex): Promise<any> {
           try {
                const response = await client.request({

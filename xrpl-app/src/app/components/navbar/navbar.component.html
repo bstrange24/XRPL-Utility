@@ -38,18 +38,18 @@
                     <a routerLink="/send-xrp" routerLinkActive="active" (click)="setActiveLink('/send-xrp')">Send XRP</a>
                     <a routerLink="/sign-transactions" routerLinkActive="active" (click)="setActiveLink('/sign-transactions')">Sign Transactions</a>
                     <a routerLink="/trustlines" routerLinkActive="active" (click)="setActiveLink('/trustlines')">Trustlines</a>
-                    <a routerLink="/create-payment-channel" routerLinkActive="active" (click)="setActiveLink('/create-payment-channel')"> Payment Channel </a>
+                    <a routerLink="/payment-channel" routerLinkActive="active" (click)="setActiveLink('/payment-channel')"> Payment Channel </a>
 
                     <div class="dropdown escrows-dropdown" [ngClass]="{ active: isEscrowsDropdownActive }">
                          <a href="#" class="dropdown-toggle" aria-label="Toggle Escrows dropdown" (click)="toggleEscrowsDropdown($event)">Escrows ▾</a>
                          <div class="dropdown-menu">
-                              <a routerLink="/create-time-escrow" routerLinkActive="active" (click)="setActiveEscrowLink('/create-time-escrow')">Create Time Escrow</a>
-                              <a routerLink="/create-conditional-escrow" routerLinkActive="active" (click)="setActiveEscrowLink('/create-conditional-escrow')">Create Conditional Escrow</a>
+                              <a routerLink="/time-escrow" routerLinkActive="active" (click)="setActiveEscrowLink('/time-escrow')">Time Escrow</a>
+                              <a routerLink="/conditional-escrow" routerLinkActive="active" (click)="setActiveEscrowLink('/conditional-escrow')">Conditional Escrow</a>
                          </div>
                     </div>
 
-                    <a routerLink="/send-checks" routerLinkActive="active" (click)="setActiveLink('/send-checks')">Checks</a>
-                    <a routerLink="/create-tickets" routerLinkActive="active" (click)="setActiveLink('/create-tickets')">Tickets</a>
+                    <a routerLink="/checks" routerLinkActive="active" (click)="setActiveLink('/checks')">Checks</a>
+                    <a routerLink="/tickets" routerLinkActive="active" (click)="setActiveLink('/tickets')">Tickets</a>
                     <a routerLink="/create-offer" routerLinkActive="active" (click)="setActiveLink('/create-offer')">Offers</a>
                     <a routerLink="/create-amm" routerLinkActive="active" (click)="setActiveLink('/create-amm')">AMM</a>
 

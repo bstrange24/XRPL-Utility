@@ -119,15 +119,15 @@
                <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab === 'create'" (click)="setTab('create')">
                          <lucide-icon name="cog" size="20"></lucide-icon>
-                         Create Check
+                         Create Escrow
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'cash'" (click)="setTab('cash')">
-                         <lucide-icon name="dollar-sign" size="20"></lucide-icon>
-                         Cash Check
+                    <button class="menu-btn" [class.active]="activeTab === 'finish'" (click)="setTab('finish')">
+                         <lucide-icon name="book-open-check" size="20"></lucide-icon>
+                         Finish Escrow
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'cancel'" (click)="setTab('cancel')">
                          <lucide-icon name="trash-2" size="20"></lucide-icon>
-                         Cancel Check
+                         Cancel Escrow
                     </button>
                </div>
 
@@ -137,20 +137,20 @@
                               <lucide-icon name="cog" size="20"></lucide-icon>
                          </div>
                          <div>
-                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Create Check</h2>
-                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Create a check to another XRPL address</p>
+                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Create Conditional Escrow</h2>
+                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Create a conditional escrow to another XRPL address</p>
                          </div>
                     </div>
                </div>
 
-               <div *ngIf="activeTab === 'cash'">
+               <div *ngIf="activeTab === 'finish'">
                     <div style="background-color: white; padding: 5px; margin-bottom: 1em; border-radius: 12px; display: flex; align-items: center; gap: 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
                          <div style="background-color: #00ba7c; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
-                              <lucide-icon name="dollar-sign" size="20"></lucide-icon>
+                              <lucide-icon name="book-open-check" size="20"></lucide-icon>
                          </div>
                          <div>
-                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Cash Check</h2>
-                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Cash check sent from another XRPL address</p>
+                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Finish Conditional Escrow</h2>
+                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Finish a conditional escrow sent from another XRPL address</p>
                          </div>
                     </div>
                </div>
@@ -161,13 +161,13 @@
                               <lucide-icon name="trash-2" size="20"></lucide-icon>
                          </div>
                          <div>
-                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Cancel Check</h2>
-                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Cancel check create from the selected account</p>
+                              <h2 style="margin: 0; font-size: 16px; font-weight: 600; color: #000000; line-height: 1.2">Cancel Conditional Escrow</h2>
+                              <p style="margin: 4px 0 0; font-size: 13px; color: #555555; line-height: 1.3">Cancel conditional escrow create from the selected account</p>
                          </div>
                     </div>
                </div>
 
-               <!-- Dynamic info panel -->
+               <!-- ==== DYNAMIC INFO PANEL ==== -->
                <div class="info-panel" *ngIf="infoMessage">
                     <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -175,20 +175,12 @@
                     <div class="info-text" [innerHTML]="infoMessage"></div>
                </div>
 
-               <!-- Dynamic warning panel  -->
-               <div class="warning-panel" *ngIf="warningMessage">
-                    <svg class="warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <div class="warning-text" [innerHTML]="warningMessage"></div>
-               </div>
-
-               <!-- Outstanding Checks on selected account -->
-               <div *ngIf="activeTab === 'create'  && existingChecks.length !== 0" class="outstanding-checks-panel">
+               <!-- ---------- OUTSTANDING CHECKS (DISPLAY ONLY) ---------- -->
+               <div *ngIf="activeTab === 'create'  && existingEscrow.length !== 0" class="outstanding-checks-panel">
                     <!-- Header – clickable to expand/collapse -->
-                    <div class="panel-header" (click)="toggleOutstandingChecks()" style="cursor: pointer; user-select: none">
+                    <div class="panel-header" (click)="toggleOutstandingEscrows()" style="cursor: pointer; user-select: none">
                          <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <lucide-icon [name]="outstandingChecksCollapsed ? 'chevron-right' : 'chevron-down'" size="18"> </lucide-icon>
+                              <lucide-icon [name]="outstandingEscrowCollapsed ? 'chevron-right' : 'chevron-down'" size="18"> </lucide-icon>
                               <!-- <lucide-icon name="file-text" size="18"></lucide-icon> -->
                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text-icon lucide-file-text">
                                    <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
@@ -197,24 +189,89 @@
                                    <path d="M16 13H8" />
                                    <path d="M16 17H8" />
                               </svg>
-                              Outstanding Checks ({{ existingChecks.length }})
+                              Existing Escrows ({{ existingEscrow.length }})
                          </h3>
                     </div>
 
                     <!-- Collapsible content with smooth height animation -->
-                    <div class="checks-list-container" [style.max-height]="outstandingChecksCollapsed ? '0' : (existingChecks.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         <div class="checks-list" *ngIf="!outstandingChecksCollapsed">
-                              <div *ngFor="let chk of existingChecks" class="check-card">
-                                   <div class="check-amount">{{ formatIOUXrpAmountOutstanding(chk.sendMax) }}</div>
-                                   <div class="check-destination">to <strong>{{ chk.destination }}</strong></div>
+                    <div class="payment-channel-list-container" [style.max-height]="outstandingEscrowCollapsed">
+                         <div class="checks-list" *ngIf="!outstandingEscrowCollapsed">
+                              <!-- <lucide-icon name="file-text" size="18"></lucide-icon> -->
+                              <div *ngFor="let chk of existingEscrow" class="check-card">
+                                   <div class="check-amount">{{ formatIOUXrpAmountOutstanding(chk.Amount) }}</div>
+                                   <div class="check-destination">to <strong>{{ chk.Destination }}</strong></div>
 
-                                   <div class="check-extras" *ngIf="chk.expiration || chk.destinationTag || chk.invoiceId">
-                                        <span *ngIf="chk.expiration" class="badge badge-expire"> Expires {{ formatXrplTimestamp(chk.expiration) }} </span>
-                                        <span *ngIf="chk.destinationTag" class="badge badge-tag"> Dest Tag: {{ chk.destinationTag }} </span>
-                                        <span *ngIf="chk.invoiceId" class="badge badge-invoice" title="{{ chk.invoiceId }}"> Invoice ID: {{formatInvoiceId(chk.invoiceId)}} </span>
+                                   <div class="check-extras" *ngIf="chk.CancelAfter || chk.FinishAfter || chk.DestinationTag || chk.invoiceId">
+                                        <span *ngIf="chk.CancelAfter" class="badge badge-expire"> Cancel After {{ formatXrplTimestamp(chk.CancelAfter) }} </span>
+                                        <span *ngIf="chk.FinishAfter" class="badge badge-expire" title="{{ chk.FinishAfter }}"> Finish After: {{formatXrplTimestamp(chk.FinishAfter)}} </span>
+                                        <span *ngIf="chk.DestinationTag" class="badge badge-tag"> Dest Tag: {{ chk.DestinationTag }} </span>
+                                        <!-- <span *ngIf="chk.Sequence" class="badge badge-tag">TxHash: {{ chk.TxHash }} </span> -->
                                    </div>
 
-                                   <button class="icon-btn copy-check-id" (click)="copyCheckId(chk.id); $event.stopPropagation(); $event.preventDefault()" title="Copy Check ID" type="button">
+                                   <button class="icon-btn copy-check-id" (click)="copyEscrowTxHash(chk.TxHash); $event.stopPropagation(); $event.preventDefault()" title="Copy Escrow Hash" type="button">
+                                        <lucide-icon name="copy" size="16"></lucide-icon>
+                                   </button>
+                              </div>
+                         </div>
+                    </div>
+               </div>
+
+               <div *ngIf="activeTab === 'create'  && exsitingMpt.length !== 0" class="outstanding-checks-panel">
+                    <!-- Header – clickable to expand/collapse -->
+                    <div class="panel-header" (click)="toggleOutstandingMpt()" style="cursor: pointer; user-select: none">
+                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
+                              <lucide-icon [name]="outstandingMptCollapsed ? 'chevron-right' : 'chevron-down'" size="18"> </lucide-icon>
+                              <!-- <lucide-icon name="file-text" size="18"></lucide-icon> -->
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text-icon lucide-file-text">
+                                   <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+                                   <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                                   <path d="M10 9H8" />
+                                   <path d="M16 13H8" />
+                                   <path d="M16 17H8" />
+                              </svg>
+                              Existing MPT ({{ exsitingMpt.length }})
+                         </h3>
+                    </div>
+
+                    <!-- Collapsible content with smooth height animation -->
+                    <div class="payment-channel-list-container" [style.max-height]="outstandingMptCollapsed">
+                         <div class="checks-list" *ngIf="!outstandingMptCollapsed">
+                              <div *ngFor="let chk of exsitingMpt" class="check-card">
+                                   <div class="check-amount">MPT Amount: {{ chk.MPTAmount }}</div>
+                                   <div class="check-destination"><strong>MPT Issuance ID: {{ chk.mpt_issuance_id }}</strong></div>
+
+                                   <button class="icon-btn copy-check-id" (click)="copyMptIssuanceIdHash(chk.mpt_issuance_id); $event.stopPropagation(); $event.preventDefault()" title="Copy Escrow Hash" type="button">
+                                        <lucide-icon name="copy" size="16"></lucide-icon>
+                                   </button>
+                              </div>
+                         </div>
+                    </div>
+               </div>
+
+               <div *ngIf="activeTab === 'create'  && existingIOUs.length !== 0" class="outstanding-checks-panel">
+                    <div class="panel-header" (click)="toggleOutstandingIOU()" style="cursor: pointer; user-select: none">
+                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
+                              <lucide-icon [name]="outstandingIOUCollapsed ? 'chevron-right' : 'chevron-down'" size="18"> </lucide-icon>
+                              <!-- <lucide-icon name="file-text" size="18"></lucide-icon> -->
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text-icon lucide-file-text">
+                                   <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+                                   <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+                                   <path d="M10 9H8" />
+                                   <path d="M16 13H8" />
+                                   <path d="M16 17H8" />
+                              </svg>
+                              Existing IOUs ({{ existingIOUs.length }})
+                         </h3>
+                    </div>
+
+                    <!-- Collapsible content with smooth height animation -->
+                    <div class="payment-channel-list-container" [style.max-height]="outstandingIOUCollapsed">
+                         <div class="checks-list" *ngIf="!outstandingIOUCollapsed">
+                              <div *ngFor="let chk of existingIOUs" class="check-card">
+                                   <div class="check-amount">Currency: {{ chk.Balance.currency }} Amount: {{ chk.Balance.value }}</div>
+                                   <div class="check-destination"><strong>Issuer: {{ chk.HighLimit.issuer }}</strong></div>
+
+                                   <button class="icon-btn copy-check-id" (click)="copyIOUIssuanceAddress(chk.mpt_issuance_id); $event.stopPropagation(); $event.preventDefault()" title="Copy Escrow Hash" type="button">
                                         <lucide-icon name="copy" size="16"></lucide-icon>
                                    </button>
                               </div>
@@ -232,7 +289,7 @@
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab">
                               <ng-container [ngSwitch]="activeTab">
-                                   <div *ngIf="activeTab === 'create' || activeTab === 'cash'">
+                                   <div *ngIf="activeTab === 'create'">
                                         <div class="form-row">
                                              <div class="form-group">
                                                   <label>Currency Code</label>
@@ -247,7 +304,7 @@
                                         </div>
                                    </div>
 
-                                   <div *ngIf="(activeTab === 'create'  || activeTab === 'cash') && currencyFieldDropDownValue !== 'XRP'">
+                                   <div *ngIf="activeTab === 'create' && currencyFieldDropDownValue !== 'XRP'&& currencyFieldDropDownValue !== 'MPT'">
                                         <div class="form-row">
                                              <div class="form-group">
                                                   <label>Issuer</label>
@@ -259,6 +316,15 @@
                                              <div class="form-group">
                                                   <label>Currency Balance</label>
                                                   <input type="text" [(ngModel)]="tokenBalance" name="tokenBalance" readonly />
+                                             </div>
+                                        </div>
+                                   </div>
+
+                                   <div *ngIf="activeTab === 'create' && currencyFieldDropDownValue !== 'XRP' && currencyFieldDropDownValue === 'MPT'">
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>MPT Issuance ID</label>
+                                                  <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" />
                                              </div>
                                         </div>
                                    </div>
@@ -278,15 +344,20 @@
                                         </div>
                                    </div>
 
-                                   <div *ngIf="activeTab === 'create'">
+                                   <div *ngIf="activeTab === 'create' || activeTab === 'finish'">
                                         <div class="form-row">
                                              <div class="form-group">
-                                                  <label>Source Tag (opt)</label>
-                                                  <input type="text" [(ngModel)]="sourceTagField" name="sourceTagField" />
+                                                  <label>Condition</label>
+                                                  <input type="text" [(ngModel)]="escrowConditionField" name="escrowConditionField" />
                                              </div>
+                                        </div>
+                                   </div>
+
+                                   <div *ngIf="activeTab === 'create' || activeTab === 'finish'">
+                                        <div class="form-row">
                                              <div class="form-group">
-                                                  <label>Invoice ID (opt)</label>
-                                                  <input type="text" [(ngModel)]="invoiceIdField" name="invoiceIdField" />
+                                                  <label>Fulfillment</label>
+                                                  <input type="text" [(ngModel)]="escrowFulfillmentField" name="escrowFulfillmentField" />
                                              </div>
                                         </div>
                                    </div>
@@ -294,12 +365,12 @@
                                    <div *ngIf="activeTab === 'create'">
                                         <div class="form-row">
                                              <div class="form-group" style="padding-bottom: 10px">
-                                                  <label>Expiration Amount</label>
-                                                  <input type="text" id="expirationTimeField" placeholder="Enter time" [(ngModel)]="expirationTimeField" name="expirationTimeField" />
+                                                  <label>Finish Time</label>
+                                                  <input type="text" id="escrowFinishTimeField" placeholder="Enter time" [(ngModel)]="escrowFinishTimeField" name="escrowFinishTimeField" />
                                              </div>
                                              <div class="form-group" style="padding-bottom: 10px">
-                                                  <label>Expiration Time</label>
-                                                  <select id="checkExpirationTime" [(ngModel)]="checkExpirationTime" name="checkExpirationTime">
+                                                  <label>Finish Time Unit</label>
+                                                  <select id="escrowFinishTimeUnit" [(ngModel)]="escrowFinishTimeUnit" name="escrowFinishTimeUnit">
                                                        <option value="seconds">Seconds</option>
                                                        <option value="minutes">Minutes</option>
                                                        <option value="hours">Hours</option>
@@ -309,40 +380,60 @@
                                         </div>
                                    </div>
 
-                                   <!-- Cancel Tab -->
-                                   <div *ngIf="activeTab === 'cash' || activeTab === 'cancel'">
+                                   <div *ngIf="activeTab === 'create'">
                                         <div class="form-row">
-                                             <div class="form-group" style="margin-bottom: 1em">
-                                                  <label>Check ID</label>
-                                                  <input type="text" [(ngModel)]="checkIdField" name="checkIdField" />
+                                             <div class="form-group" style="padding-bottom: 10px">
+                                                  <label>Cancel Time</label>
+                                                  <input type="text" id="escrowCancelTimeField" placeholder="Enter time" [(ngModel)]="escrowCancelTimeField" name="escrowCancelTimeField" />
                                              </div>
-                                        </div>
-                                   </div>
-
-                                   <!-- Cancel Dropdown -->
-                                   <div *ngIf="activeTab === 'cancel' && cancellableChecks.length > 0">
-                                        <div class="form-row">
-                                             <div class="form-group" style="margin-bottom: 1em">
-                                                  <label>Avilable Checks to cancel</label>
-                                                  <select *ngIf="activeTab === 'cancel'" [(ngModel)]="checkIdField" name="checkIdField" class="form-control">
-                                                       <option [ngValue]="''" disabled selected>{{ cancellableChecks.length ? 'Select a check to cancel' : 'No avilable checks to cancel' }}</option>
-                                                       <!-- <option *ngFor="let chk of cancellableChecks" [ngValue]="chk.id">Amount {{ chk.amount }} from {{`Destination`}} {{ chk.destination }}</option> -->
-                                                       <!-- <option *ngFor="let chk of cancellableChecks" [ngValue]="chk.id">Amount {{ chk.amount }} from {{ chk.destination }}</option> -->
-                                                       <option *ngFor="let chk of cancellableChecks" [ngValue]="chk.id">Amount in {{ formatIOUXrpAmountUI(chk.amount) }} from {{ chk.destination }}</option>
+                                             <div class="form-group" style="padding-bottom: 10px">
+                                                  <label>Cancel Time Unit</label>
+                                                  <select id="escrowCancelTimeUnit" [(ngModel)]="escrowCancelTimeUnit" name="escrowCancelTimeUnit">
+                                                       <option value="seconds">Seconds</option>
+                                                       <option value="minutes">Minutes</option>
+                                                       <option value="hours">Hours</option>
+                                                       <option value="days">Days</option>
                                                   </select>
                                              </div>
                                         </div>
                                    </div>
 
-                                   <!-- Cash Dropdown -->
-                                   <div *ngIf="activeTab === 'cash' && cashableChecks.length > 0">
+                                   <div *ngIf="activeTab === 'finish' || activeTab === 'cancel'">
+                                        <div class="form-row">
+                                             <div class="form-group" *ngIf="activeTab === 'finish'" style="padding-bottom: 10px">
+                                                  <label>Escrow Owner</label>
+                                                  <input type="text" id="escrowOwnerField" placeholder="" [(ngModel)]="escrowOwnerField" name="escrowOwnerField" />
+                                             </div>
+                                             <div class="form-group" *ngIf="activeTab === 'finish' || activeTab === 'cancel'" style="margin-bottom: 1em">
+                                                  <label>Escrow Sequence ID</label>
+                                                  <input type="text" [(ngModel)]="escrowSequenceNumberField" name="escrowSequenceNumberField" />
+                                             </div>
+                                        </div>
+                                        <!-- <div class="form-row" *ngIf="activeTab === 'finish' || activeTab === 'cancel'">
+                                             <div class="form-group"  *ngIf="activeTab === 'finish' || activeTab === 'cancel'" style="margin-bottom: 1em">
+                                                  <label>Escrow Sequence ID</label>
+                                                  <input type="text" [(ngModel)]="escrowSequenceNumberField" name="escrowSequenceNumberField" />
+                                             </div>
+                                        </div> -->
+                                   </div>
+
+                                   <!-- <div *ngIf="activeTab === 'finish' || activeTab === 'cancel'">
                                         <div class="form-row">
                                              <div class="form-group" style="margin-bottom: 1em">
-                                                  <label>Avilable Checks to cash</label>
-                                                  <select *ngIf="activeTab === 'cash'" [(ngModel)]="checkIdField" name="checkIdField" class="form-control">
-                                                       <option [ngValue]="''" disabled selected>{{ cashableChecks.length ? 'Select a check' : 'No checks to cash' }}</option>
-                                                       <!-- <option *ngFor="let chk of cashableChecks" [ngValue]="chk.id">Amount {{ chk.amount }} from {{`Destination`}} {{ chk.sender }}</option> -->
-                                                       <option *ngFor="let chk of cashableChecks" [ngValue]="chk.id">Amount in {{ formatIOUXrpAmountUI(chk.amount) }} from {{ chk.sender }}</option>
+                                                  <label>Escrow Sequence ID</label>
+                                                  <input type="text" [(ngModel)]="escrowSequenceNumberField" name="escrowSequenceNumberField" />
+                                             </div>
+                                        </div>
+                                   </div> -->
+
+                                   <!-- ---------- FINISH AND CANCEL DROPDOWN ---------- -->
+                                   <div *ngIf="(activeTab === 'finish' || activeTab === 'cancel') && expiredOrFulfilledEscrows.length > 0">
+                                        <div class="form-row">
+                                             <div class="form-group" style="margin-bottom: 1em">
+                                                  <label> {{ activeTab === 'finish' ? 'Available Escrows to finish' : 'Available Escrows to cancel' }} </label>
+                                                  <select [(ngModel)]="selectedEscrow" name="selectedEscrow" class="form-control" (ngModelChange)="onEscrowSelect($event)">
+                                                       <option [ngValue]="null" disabled>{{ activeTab === 'finish' ? 'Select an escrow to finish' : 'Select an escrow to cancel' }}</option>
+                                                       <option *ngFor="let chk of expiredOrFulfilledEscrows" [ngValue]="chk">Amount in {{ formatIOUXrpAmountUI(chk.Amount) }} {{ activeTab === 'finish' ? 'from' : 'to' }} {{ activeTab === 'finish' ? chk.Sender : chk.Destination }}</option>
                                                   </select>
                                              </div>
                                         </div>
@@ -438,7 +529,8 @@
 
                                    <!-- Action buttons -->
                                    <div class="button-row">
-                                        <button type="submit" class="btn-primary" [ngStyle]="{ 'background-color': activeTab === 'cancel' ? 'red' : activeTab === 'cash' ? 'green' : '#007bff'}">{{ activeTab === 'cancel' ? 'Cancel Check' : activeTab === 'cash' ? 'Cash Check' : 'Create Check' }}</button>
+                                        <button type="submit" class="btn-primary" [ngStyle]="{ 'background-color': activeTab === 'cancel' ? 'red' : activeTab === 'finish' ? 'green' : '#007bff'}">{{ activeTab === 'cancel' ? 'Cancel Escrow' : activeTab === 'finish' ? 'Finish Escrow' : 'Create Escrow' }}</button>
+                                        <button *ngIf="activeTab === 'create'" type="submit" class="btn-primary" [ngStyle]="{ 'background-color': 'green' }">Generate Condition</button>
                                         <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                                    </div>
                               </ng-container>
@@ -450,7 +542,7 @@
                               <span>{{ spinnerMessage || 'Loading...' }}</span>
                          </div>
 
-                         <!-- Success message -->
+                         <!-- SUCCESS MESSAGE -->
                          <div *ngIf="isSuccess && !isError" class="success-message">
                               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" class="success-icon">
                                    <path d="M9 16.17l-3.88-3.88L4 13.41 9 18.41l12-12-1.41-1.41z" />
@@ -465,7 +557,7 @@
                               </div>
                          </div>
 
-                         <!-- Error message -->
+                         <!-- ERROR MESSAGE -->
                          <div class="tx-message error" *ngIf="isError && result">
                               <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" class="tx-icon error-icon">
                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
@@ -482,10 +574,10 @@
                     </div>
                </form>
 
-               <!-- Tx Preview -->
+               <!-- PAYMENT TX PREVIEW -->
                <div class="tx-preview-container" *ngIf="paymentTx.length >0">
                     <div class="tx-header">
-                         <h5 class="tx-title">Ticket Transaction</h5>
+                         <h5 class="tx-title">Escrow Transaction</h5>
                          <div class="tx-actions">
                               <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
                                    <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor">
@@ -505,7 +597,7 @@
                     <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
                </div>
 
-               <!-- Tx Result Preview -->
+               <!-- PAYMENT TX PREVIEW -->
                <div class="tx-preview-container" *ngIf="txResult.length > 0">
                     <div class="tx-header">
                          <h3 class="tx-title">Transaction Result</h3>

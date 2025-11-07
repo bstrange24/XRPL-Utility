@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
-import { CreatePaymentChannelComponent } from './components/create-payment-channel/create-payment-channel.component';
-import { CreateTimeEscrowComponent } from './components/create-time-escrow/create-time-escrow.component';
-import { CreateConditionalEscrowComponent } from './components/create-conditional-escrow/create-conditional-escrow.component';
+import { CreatePaymentChannelComponent } from './components/payment-channel/payment-channel.component';
+import { CreateTimeEscrowComponent } from './components/time-escrow/time-escrow.component';
+import { CreateConditionalEscrowComponent } from './components/conditional-escrow/conditional-escrow.component';
 import { SendChecksComponent } from './components/checks/checks.component';
-import { CreateTicketsComponent } from './components/create-tickets/create-tickets.component';
+import { CreateTicketsComponent } from './components/tickets/tickets.component';
 import { CreateOfferComponent } from './components/create-offer/create-offer.component';
 import { CreateNftComponent } from './components/create-nft/create-nft.component';
 import { CreateAmmComponent } from './components/create-amm/create-amm.component';
@@ -36,11 +36,11 @@ export const routes: Routes = [
      { path: 'sign-transactions', component: SignTransactionsComponent, data: { title: 'Sign Transactions' } },
 
      { path: 'send-xrp', component: SendXrpModernComponent, data: { title: 'Send XRP' } },
-     { path: 'create-payment-channel', component: CreatePaymentChannelComponent, data: { title: 'Payment Channel' } },
-     { path: 'create-time-escrow', component: CreateTimeEscrowComponent, data: { title: 'Time Escrow' } },
-     { path: 'create-conditional-escrow', component: CreateConditionalEscrowComponent, data: { title: 'Conditional Escrow' } },
-     { path: 'send-checks', component: SendChecksComponent, data: { title: 'Checks' } },
-     { path: 'create-tickets', component: CreateTicketsComponent, data: { title: 'Tickets' } },
+     { path: 'payment-channel', component: CreatePaymentChannelComponent, data: { title: 'Payment Channel' } },
+     { path: 'time-escrow', component: CreateTimeEscrowComponent, data: { title: 'Time Escrow' } },
+     { path: 'conditional-escrow', component: CreateConditionalEscrowComponent, data: { title: 'Conditional Escrow' } },
+     { path: 'checks', component: SendChecksComponent, data: { title: 'Checks' } },
+     { path: 'tickets', component: CreateTicketsComponent, data: { title: 'Tickets' } },
      { path: 'create-offer', component: CreateOfferComponent, data: { title: 'Create Offers' } },
      { path: 'create-nft', component: CreateNftComponent, data: { title: 'NFT' } },
      { path: 'nft-offers', component: NftOffersComponent, data: { title: 'NFT Offers' } },
