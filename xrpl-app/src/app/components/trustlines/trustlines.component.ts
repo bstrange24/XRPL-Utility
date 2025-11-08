@@ -509,21 +509,8 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     return currency === this.currencyFieldDropDownValue && !(balance === 0 && lowLimit === 0 && highLimit === 0);
                });
 
-               // Build UI data structure
-               const data = { sections: [] as any[] };
-
                // --- Trust Lines Section ---
                if (activeTrustLines.length === 0) {
-                    data.sections.push({
-                         title: 'Trust Lines',
-                         openByDefault: true,
-                         content: [
-                              {
-                                   key: 'Status',
-                                   value: `No active trust lines found for <code>${this.currencyFieldDropDownValue}</code> and <code>${wallet.classicAddress}</code>`,
-                              },
-                         ],
-                    });
                     this.gatewayBalance = '';
                } else {
                     const trustLineItems = activeTrustLines
@@ -562,12 +549,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                               };
                          })
                          .filter(Boolean);
-
-                    data.sections.push({
-                         title: `Trust Lines (${activeTrustLines.length})`,
-                         openByDefault: true,
-                         subItems: trustLineItems,
-                    });
                }
 
                this.setSuccess(this.result);
@@ -577,63 +558,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     try {
                          const tokenBalance = await this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '');
 
-                         // Add Obligations
-                         if (tokenBalance.result.obligations && Object.keys(tokenBalance.result.obligations).length > 0) {
-                              data.sections.push({
-                                   title: `Obligations (${Object.keys(tokenBalance.result.obligations).length})`,
-                                   openByDefault: true,
-                                   subItems: Object.entries(tokenBalance.result.obligations).map(([currency, amount], i) => ({
-                                        key: `Obligation ${i + 1} (${this.utilsService.decodeIfNeeded(currency)})`,
-                                        openByDefault: false,
-                                        content: [
-                                             { key: 'Currency', value: this.utilsService.decodeIfNeeded(currency) },
-                                             { key: 'Amount', value: this.utilsService.formatTokenBalance(amount.toString(), 18) },
-                                        ],
-                                   })),
-                              });
-                         }
-
-                         // Add Balances
-                         if (tokenBalance.result.assets && Object.keys(tokenBalance.result.assets).length > 0) {
-                              const balanceItems = [];
-                              for (const [issuer, currencies] of Object.entries(tokenBalance.result.assets)) {
-                                   for (const { currency, value } of currencies) {
-                                        const displayCurrency = this.utilsService.formatCurrencyForDisplay(currency);
-                                        balanceItems.push({
-                                             key: `${displayCurrency} from ${issuer.slice(0, 8)}...`,
-                                             openByDefault: false,
-                                             content: [
-                                                  { key: 'Currency', value: displayCurrency },
-                                                  { key: 'Issuer', value: `<code>${issuer}</code>` },
-                                                  { key: 'Amount', value: this.utilsService.formatTokenBalance(value, 2) },
-                                             ],
-                                        });
-                                   }
-                              }
-                              data.sections.push({
-                                   title: `Balances (${balanceItems.length})`,
-                                   openByDefault: true,
-                                   subItems: balanceItems,
-                              });
-                         }
-
-                         // Add Account Currencies
-                         // const { receive, send } = this.processAccountCurrencies(accountCurrencies);
-                         // if (receive.length > 0) {
-                         //      data.sections.push({
-                         //           title: 'Received Currencies',
-                         //           openByDefault: true,
-                         //           content: [{ key: 'Status', value: receive.join(', ') }],
-                         //      });
-                         // }
-                         // if (send.length > 0) {
-                         //      data.sections.push({
-                         //           title: 'Sent Currencies',
-                         //           openByDefault: true,
-                         //           content: [{ key: 'Status', value: send.join(', ') }],
-                         //      });
-                         // }
-
                          // Update balance field
                          const parsedBalances = this.parseAllGatewayBalances(tokenBalance, wallet);
                          this.currencyBalanceField = parsedBalances?.[this.currencyFieldDropDownValue]?.[this.issuerFields] ?? '0';
@@ -642,6 +566,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                          this.refreshUIData(wallet, accountInfo, accountObjects);
                          this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                          this.clearFields(false);
+                         this.clearFlagsValue();
                          this.updateTrustLineFlagsInUI(accountObjects, wallet);
                          this.updateTickets(accountObjects);
                     } catch (err) {
@@ -1805,26 +1730,43 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                // Correct way: check if your wallet is the low side
                const isLowAddress = wallet.classicAddress === rippleState.LowLimit.issuer;
 
+               // tfSetfAuth: false,
+               // tfSetNoRipple: false,
+               // tfClearNoRipple: false,
+               // tfSetFreeze: false,
+               // tfClearFreeze: false,
+               // tfSetDeepFreeze: false,
+               // tfClearDeepFreeze: false,
                if (isLowAddress) {
-                    this.trustlineFlags['tfSetfAuth'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfLowAuth);
-                    this.trustlineFlags['tfSetNoRipple'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfNoRipple); // Adjusted key
-                    this.trustlineFlags['tfSetFreeze'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfLowFreeze);
+                    this.flags.tfSetfAuth = true;
+                    this.flags.tfSetNoRipple = true;
+                    this.flags.tfSetFreeze = true;
+                    // this.flags.tfClearNoRipple = false;
+                    // this.flags.tfClearFreeze = false;
+                    // this.flags.tfSetDeepFreeze = false;
+                    // this.flags.tfClearDeepFreeze = false;
+                    // this.trustlineFlags['tfSetfAuth'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfLowAuth);
+                    // this.trustlineFlags['tfSetNoRipple'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfNoRipple); // Adjusted key
+                    // this.trustlineFlags['tfSetFreeze'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfLowFreeze);
                } else {
-                    this.trustlineFlags['tfSetfAuth'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfHighAuth);
-                    this.trustlineFlags['tfSetNoRipple'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfNoRipple); // Adjusted for high (note: constants may need lsfHighNoRipple: 0x00200000)
-                    this.trustlineFlags['tfSetFreeze'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfHighFreeze);
+                    this.flags.tfSetfAuth = false;
+                    this.flags.tfSetNoRipple = false;
+                    this.flags.tfSetFreeze = false;
+                    // this.trustlineFlags['tfSetfAuth'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfHighAuth);
+                    // this.trustlineFlags['tfSetNoRipple'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfNoRipple); // Adjusted for high (note: constants may need lsfHighNoRipple: 0x00200000)
+                    // this.trustlineFlags['tfSetFreeze'] = !!(flagsNumber & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfHighFreeze);
                }
 
                // Clear flags are just inverses
-               this.trustlineFlags['tfClearNoRipple'] = !this.trustlineFlags['tfSetNoRipple'];
-               this.trustlineFlags['tfClearFreeze'] = !this.trustlineFlags['tfSetFreeze'];
+               // this.trustlineFlags['tfClearNoRipple'] = !this.trustlineFlags['tfSetNoRipple'];
+               // this.trustlineFlags['tfClearFreeze'] = !this.trustlineFlags['tfSetFreeze'];
 
                // Not applicable for trustlines
-               this.trustlineFlags['tfPartialPayment'] = false;
-               this.trustlineFlags['tfNoDirectRipple'] = false;
-               this.trustlineFlags['tfLimitQuality'] = false;
+               // this.trustlineFlags['tfPartialPayment'] = false;
+               // this.trustlineFlags['tfNoDirectRipple'] = false;
+               // this.trustlineFlags['tfLimitQuality'] = false;
 
-               this.showTrustlineOptions = true;
+               // this.showTrustlineOptions = true;
           } else {
                // No trustline → reset UI
                this.trustlineFlags = { ...AppConstants.TRUSTLINE.FLAGS };
@@ -2271,22 +2213,23 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           return grouped;
      }
 
-     ensureDefaultNotSelected() {
+     private ensureDefaultNotSelected() {
           const currentAddress = this.currentWallet.address;
           if (currentAddress && this.destinations.length > 0) {
-               if (!this.destinationField || this.destinationField === currentAddress) {
+               if (!this.destinationField) {
                     const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
                     this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
                }
           }
-          // if (currentAddress && this.currencyIssuers.length > 0) {
-          //      if (!this.selectedIssuer || this.selectedIssuer === currentAddress) {
-          //           const nonSelectedIss = this.currencyIssuers.find(i => i.address !== currentAddress);
-          //           this.selectedIssuer = nonSelectedIss ? nonSelectedIss.address : this.currencyIssuers[0].address;
-          //      }
-          // }
+          if (currentAddress && this.issuers.length > 0) {
+               if (!this.issuerFields) {
+                    const nonSelectedIss = this.issuers.find(i => i.address !== currentAddress);
+                    this.issuerFields = nonSelectedIss ? nonSelectedIss.address : this.issuers[0].address;
+               }
+          }
           this.cdr.detectChanges();
      }
+
      private async getWallet() {
           const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
           if (!wallet) {

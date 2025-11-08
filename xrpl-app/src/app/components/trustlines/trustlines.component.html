@@ -300,8 +300,8 @@
                                              <div class="form-group">
                                                   <label>Issuer</label>
                                                   <select id="issuerFields" [(ngModel)]="issuerFields" name="issuerFields">
-                                                       @for (issu of issuers; track issu) {
-                                                       <option [value]="issu">{{issu.name || 'Wallet ' + (1)}} ({{issu.address | slice:0:6}}...{{issu.address | slice:-6}})</option>
+                                                       @for (iss of issuers; track iss.address; let i = $index) {
+                                                       <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
                                                        }
                                                   </select>
                                              </div>
