@@ -80,7 +80,6 @@ interface UnifiedPaymentChannel {
 export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
      private destroy$ = new Subject<void>();
      @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
-     @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      @ViewChild('accountForm') accountForm!: NgForm;
      @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
      @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
@@ -304,7 +303,6 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
 
      toggleSecret(index: number) {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
-          this.cdr.detectChanges();
      }
 
      toggleFlag(key: 'renew' | 'close') {
@@ -332,7 +330,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
                const accountInfo = await this.xrplService.getAccountInfo(client, walletAddress, 'validated', '');
                await this.updateXrpBalance(client, accountInfo, wallet, index);
-               this.cdr.detectChanges();
+               // this.cdr.detectChanges();
           } catch (err) {
                this.setError('Failed to refresh balance');
           }

@@ -59,7 +59,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      isError: boolean = false;
      isSuccess: boolean = false;
      isEditable: boolean = true;
-     currencyFieldDropDownValue: string = 'CTZ';
+     currencyFieldDropDownValue: string = 'BOB';
      destinationField: string = '';
      issuerFields: string = '';
      currencyBalanceField: string = '';
@@ -111,6 +111,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           ownerCount: undefined,
           xrpReserves: undefined,
           spendableXrp: undefined,
+          isIssuer: false,
      };
      destinations: { name?: string; address: string }[] = [];
      issuers: { name?: string; address: string }[] = [];
@@ -143,6 +144,27 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
      warningMessage: string | null = null;
+     flags = {
+          tfSetfAuth: false,
+          tfSetNoRipple: false,
+          tfClearNoRipple: false,
+          tfSetFreeze: false,
+          tfClearFreeze: false,
+          tfSetDeepFreeze: false,
+          tfClearDeepFreeze: false,
+     };
+     totalFlagsValue = 0;
+     totalFlagsHex = '0x0';
+
+     private flagValues = {
+          tfSetfAuth: 0x00010000,
+          tfSetNoRipple: 0x00020000,
+          tfClearNoRipple: 0x00040000,
+          tfSetFreeze: 0x00100000,
+          tfClearFreeze: 0x00200000,
+          tfSetDeepFreeze: 0x00400000,
+          tfClearDeepFreeze: 0x00800000,
+     };
 
      constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly xrplTransactions: XrplTransactionService, private ngZone: NgZone, private walletGenerator: WalletGeneratorService, private walletManagerService: WalletManagerService) {}
 
@@ -195,6 +217,8 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                this.issueCurrency();
           } else if (this.activeTab === 'clawbackTokens') {
                this.clawbackTokens();
+          } else if (this.activeTab === 'addNewIssuers') {
+               this.clawbackTokens();
           }
      }
 
@@ -207,6 +231,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           }
 
           if (this.activeTab === 'removeTrustline') {
+               this.amountField = '0';
                // const client = await this.xrplService.getClient();
                // const checkObjects = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', 'check');
                // this.getExistingChecks(checkObjects, this.currentWallet.address);
@@ -221,10 +246,29 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           if (this.activeTab === 'clawbackTokens') {
           }
 
-          this.toggleIssuerField();
+          if (this.activeTab === 'addNewIssuers') {
+          }
 
+          this.toggleIssuerField();
+          this.clearFlagsValue();
           this.clearMessages();
           this.clearFields(true);
+     }
+
+     async onIssuerChange(index: number, event: Event) {
+          const checked = (event.target as HTMLInputElement).checked;
+          if (!this.wallets[index].isIssuer) {
+               this.removeToken(this.currencyFieldDropDownValue, this.wallets[index]);
+          } else {
+               this.wallets[index].isIssuer = checked;
+               const updates = {
+                    isIssuer: checked,
+               };
+               this.walletManagerService.updateWalletByAddress(this.wallets[index].address, updates);
+               this.addToken(this.currencyFieldDropDownValue, this.wallets[index]);
+               // this.toggleIssuerField();
+               // any extra logic, e.g. save to localStorage, emit event, etc.
+          }
      }
 
      selectWallet(index: number) {
@@ -283,7 +327,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
      toggleSecret(index: number) {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
-          this.cdr.detectChanges();
      }
 
      async refreshBalance(index: number) {
@@ -292,7 +335,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
                await this.refreshWallets(client, [walletAddress]);
-               this.cdr.detectChanges();
+               // this.cdr.detectChanges();
           } catch (err) {
                this.setError('Failed to refresh balance');
           }
@@ -1817,6 +1860,43 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                .map(([name]) => name);
      }
 
+     toggleFlag(key: 'tfSetfAuth' | 'tfSetNoRipple' | 'tfClearNoRipple' | 'tfSetFreeze' | 'tfClearFreeze' | 'tfSetDeepFreeze' | 'tfClearDeepFreeze') {
+          // if (key === 'close') {
+          // Do nothing – tfClose is locked
+          // return;
+          // }
+          this.flags[key] = !this.flags[key];
+          this.updateFlagTotal();
+     }
+
+     private updateFlagTotal() {
+          let sum = 0;
+          if (this.flags.tfSetfAuth) sum |= this.flagValues.tfSetfAuth;
+          if (this.flags.tfSetNoRipple) sum |= this.flagValues.tfSetNoRipple;
+          if (this.flags.tfClearNoRipple) sum |= this.flagValues.tfClearNoRipple;
+          if (this.flags.tfSetFreeze) sum |= this.flagValues.tfSetFreeze;
+          if (this.flags.tfClearFreeze) sum |= this.flagValues.tfClearFreeze;
+          if (this.flags.tfSetDeepFreeze) sum |= this.flagValues.tfSetDeepFreeze;
+          if (this.flags.tfClearDeepFreeze) sum |= this.flagValues.tfClearDeepFreeze;
+
+          this.totalFlagsValue = sum;
+          this.totalFlagsHex = '0x' + sum.toString(16).toUpperCase().padStart(8, '0');
+     }
+
+     clearFlagsValue() {
+          this.flags = {
+               tfSetfAuth: false,
+               tfSetNoRipple: false,
+               tfClearNoRipple: false,
+               tfSetFreeze: false,
+               tfClearFreeze: false,
+               tfSetDeepFreeze: false,
+               tfClearDeepFreeze: false,
+          };
+          this.totalFlagsValue = 0;
+          this.totalFlagsHex = '0x0';
+     }
+
      private async validateInputs(inputs: ValidationInputs, action: string): Promise<string[]> {
           const errors: string[] = [];
 
@@ -2086,6 +2166,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           if (clearAllFields) {
                this.amountField = '';
                this.destinationTagField = '';
+               this.clearFlagsValue();
           }
           this.isMemoEnabled = false;
           this.memoField = '';
@@ -2406,20 +2487,22 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           await new Promise(resolve => setTimeout(resolve, delayMs));
      }
 
-     addToken() {
-          if (this.newCurrency && this.newCurrency.trim() && this.newIssuer && this.newIssuer.trim()) {
-               const currency = this.newCurrency.trim();
-               const issuer = this.newIssuer.trim();
+     addToken(newToken: string, newIssuerAddress: any) {
+          if (newToken && newToken.trim() && newIssuerAddress.address && newIssuerAddress.address.trim()) {
+               const currency = newToken.trim();
+               const issuer = newIssuerAddress.address.trim();
 
                // Validate currency code
                if (!this.utilsService.isValidCurrencyCode(currency)) {
                     this.setError('Invalid currency code: Must be 3-20 characters or valid hex');
+                    newIssuerAddress.isIssuer = false;
                     return;
                }
 
                // Validate XRPL address
                if (!xrpl.isValidAddress(issuer)) {
                     this.setError('Invalid issuer address');
+                    newIssuerAddress.isIssuer = false;
                     return;
                }
 
@@ -2431,6 +2514,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                // Check for duplicates
                if (this.knownTrustLinesIssuers[currency].includes(issuer)) {
                     this.setError(`Issuer ${issuer} already exists for ${currency}`);
+                    newIssuerAddress.isIssuer = false;
                     return;
                }
 
@@ -2441,21 +2525,17 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers);
                this.updateCurrencies();
 
-               this.newCurrency = '';
-               this.newIssuer = '';
                this.setSuccess(`Added issuer ${issuer} for ${currency}`);
-               this.cdr.detectChanges();
           } else {
                this.setError('Currency code and issuer address are required');
+               newIssuerAddress.isIssuer = false;
           }
-
-          this.spinner = false;
      }
 
-     removeToken() {
-          if (this.tokenToRemove && this.issuerToRemove) {
-               const currency = this.tokenToRemove;
-               const issuer = this.issuerToRemove;
+     removeToken(tokenToRemove: string, removeIssuerAddress: any) {
+          if (tokenToRemove && removeIssuerAddress.address.trim()) {
+               const currency = tokenToRemove;
+               const issuer = removeIssuerAddress.address.trim();
 
                if (this.knownTrustLinesIssuers[currency]) {
                     this.knownTrustLinesIssuers[currency] = this.knownTrustLinesIssuers[currency].filter(addr => addr !== issuer);
@@ -2468,29 +2548,24 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers);
                     this.updateCurrencies();
                     this.setSuccess(`Removed issuer ${issuer} from ${currency}`);
-                    this.cdr.detectChanges();
                } else {
                     this.setError(`Currency ${currency} not found`);
                }
-          } else if (this.tokenToRemove) {
+          } else if (tokenToRemove) {
                // Remove entire token and all issuers
-               delete this.knownTrustLinesIssuers[this.tokenToRemove];
+               delete this.knownTrustLinesIssuers[tokenToRemove];
                this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers);
                this.updateCurrencies();
-               this.setSuccess(`Removed all issuers for ${this.tokenToRemove}`);
-               this.tokenToRemove = '';
-               this.cdr.detectChanges();
+               this.setSuccess(`Removed all issuers for ${tokenToRemove}`);
           } else {
                this.setError('Select a token to remove');
           }
-
-          this.spinner = false;
      }
 
      private updateCurrencies() {
           this.currencies = [...Object.keys(this.knownTrustLinesIssuers)];
           this.currencies.sort((a, b) => a.localeCompare(b));
-          this.currencyFieldDropDownValue = 'CZT';
+          this.currencyFieldDropDownValue = 'BOB';
      }
 
      private processAccountCurrencies(accountCurrencies: any) {

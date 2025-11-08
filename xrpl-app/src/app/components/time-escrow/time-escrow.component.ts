@@ -353,7 +353,6 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
      toggleSecret(index: number) {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
-          this.cdr.detectChanges();
      }
 
      async refreshBalance(index: number) {
@@ -363,7 +362,7 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
                const accountInfo = await this.xrplService.getAccountInfo(client, walletAddress, 'validated', '');
                await this.updateXrpBalance(client, accountInfo, wallet, index);
-               this.cdr.detectChanges();
+               // this.cdr.detectChanges();
           } catch (err) {
                this.setError('Failed to refresh balance');
           }

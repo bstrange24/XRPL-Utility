@@ -304,7 +304,6 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
 
      toggleSecret(index: number) {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
-          this.cdr.detectChanges();
      }
 
      async refreshBalance(index: number) {
@@ -313,7 +312,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
                await this.refreshWallets(client, [walletAddress]);
-               this.cdr.detectChanges();
+               // this.cdr.detectChanges();
           } catch (err) {
                this.setError('Failed to refresh balance');
           }

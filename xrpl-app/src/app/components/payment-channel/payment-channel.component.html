@@ -68,7 +68,7 @@
                               </div>
 
                               <!-- Seed shown below the button -->
-                              @if (activeTab === 'wallet.showSecret') {
+                              @if (wallet.showSecret) {
                               <div class="secret-seed-container">
                                    <div class="secret-seed">{{ wallet.seed }}</div>
                                    <button class="copy-btn" (click)="copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
@@ -138,7 +138,7 @@
                </div>
                }
 
-               <!-- Create Menu -->
+               <!-- Fund Menu -->
                @if (activeTab === 'fund') {
                <div>
                     <div class="submenu-info-text">
@@ -168,7 +168,7 @@
                </div>
                }
 
-               <!-- Claim Menu -->
+               <!-- Close Menu -->
                @if (activeTab === 'close') {
                <div>
                     <div class="submenu-info-text">

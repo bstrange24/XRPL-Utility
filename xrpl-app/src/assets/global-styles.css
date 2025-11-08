@@ -329,7 +329,7 @@ input[type='text']:focus {
      line-height: 1.4 !important;
 }
 
-.navbar-links > .dropdown {
+.navbar-links>.dropdown {
      display: inline-flex !important;
      align-items: center !important;
      height: auto !important;
@@ -542,6 +542,10 @@ input[type='text']:focus {
           /* overflow: auto; */
           /* scroll inside if needed */
      }
+
+     /* .form-panel.wide {
+          min-width: 875px;
+     } */
 }
 
 /* ==== PANELS ==== */
@@ -554,7 +558,7 @@ input[type='text']:focus {
      padding-right: 1.5rem;
      padding-bottom: 1.5rem;
      margin-bottom: 5em;
-     min-width: 850px;
+     /* min-width: 850px; */
 }
 
 .no-wallet-found {
@@ -889,18 +893,18 @@ input[type='text']:focus {
 }
 
 /* CHECKED STATE */
-input:checked + .slider {
+input:checked+.slider {
      background: #4caf50;
      /* green on */
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
      transform: translateX(14px);
      /* 34-20 = 14px travel */
 }
 
 /* FOCUS RING (still visible but tighter) */
-input:focus + .slider {
+input:focus+.slider {
      box-shadow: 0 0 0 2.5px rgba(76, 175, 80, 0.3);
 }
 
@@ -1238,14 +1242,14 @@ input:focus + .slider {
 }
 
 /* Top row: avatar + (address/balance/icons) side by side */
-.wallet-item > .wallet-avatar,
-.wallet-item > .wallet-top-row {
+.wallet-item>.wallet-avatar,
+.wallet-item>.wallet-top-row {
      display: flex;
      align-items: flex-start;
      gap: 0.75rem;
 }
 
-.wallet-item > .wallet-top-row {
+.wallet-item>.wallet-top-row {
      flex: 1;
      justify-content: space-between;
      min-width: 0;
@@ -1625,7 +1629,7 @@ input:focus + .slider {
      margin-right: 4px;
 }
 
-:not(pre) > code[class*='language-'],
+:not(pre)>code[class*='language-'],
 pre[class*='language-'] {
      background: #fff;
 }
@@ -1762,7 +1766,8 @@ pre[class*='language-'] {
 
 .tab-content-container {
      position: relative;
-     min-height: 200px;
+     /* min-height: 200px; */
+     min-height: auto;
      /* adjust based on tallest tab */
      overflow: hidden;
 }
@@ -2033,7 +2038,7 @@ app-root {
      /* base size for the whole row */
 }
 
-.flag-header > * {
+.flag-header>* {
      line-height: 18px !important;
 }
 
@@ -2436,4 +2441,69 @@ app-root {
      font-size: 13px;
      color: #555555;
      line-height: 1.3;
+}
+
+
+.issuer-checkbox {
+     display: flex;
+     align-items: center;
+     gap: 4px;
+     cursor: pointer;
+     margin: 0;
+     padding: 0;
+     line-height: 1;
+     /* margin-top: 0.5em; */
+     /* no extra margin */
+     background-color: aliceblue;
+     /* padding-top: 10px; */
+}
+
+.issuer-checkbox input[type="checkbox"] {
+     /* reset any browser default */
+     appearance: none;
+     -webkit-appearance: none;
+
+     /* size exactly matches text height */
+     width: 1.1em;
+     height: 1.1em;
+     margin: 0;
+     padding: 0;
+
+     /* draw a clean square + checkmark */
+     border: 1.5px solid #555;
+     border-radius: 3px;
+     background: white;
+
+     /* center the checkmark */
+     display: flex;
+     align-items: center;
+     justify-content: center;
+}
+
+.issuer-checkbox input[type="checkbox"]:checked {
+     background: #2563eb;
+     border-color: #2563eb;
+}
+
+.issuer-checkbox input[type="checkbox"]:checked::after {
+     content: "✓";
+     color: white;
+     font-weight: bold;
+     font-size: 0.8em;
+}
+
+/* optional – hover effect */
+.issuer-checkbox input[type="checkbox"]:hover {
+     border-color: #2563eb;
+}
+
+.issuer-label {
+     font-size: 0.9rem;
+     white-space: nowrap;
+     color: #007bff;
+}
+
+.clickable-name {
+     line-height: 1;
+     /* removes extra top/bottom space */
 }
