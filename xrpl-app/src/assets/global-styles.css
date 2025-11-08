@@ -123,7 +123,7 @@ input:read-only {
 #backupAccountField,
 #selectedWalletField,
 /* #authorizedWalletField, */
-#issuerFields,
+/* #issuerFields, */
 #holderAccount {
      color: #4caf50;
 }
@@ -139,7 +139,6 @@ button {
 }
 
 button:hover {
-
      cursor: pointer;
 }
 
@@ -322,7 +321,6 @@ input[type='text']:focus {
      align-items: center;
 }
 
-
 .navbar-links .dropdown-toggle,
 .navbar-links a:not(.dropdown-toggle) {
      white-space: nowrap !important;
@@ -331,13 +329,11 @@ input[type='text']:focus {
      line-height: 1.4 !important;
 }
 
-
-.navbar-links>.dropdown {
+.navbar-links > .dropdown {
      display: inline-flex !important;
      align-items: center !important;
      height: auto !important;
 }
-
 
 .navbar {
      min-height: 48px;
@@ -512,7 +508,6 @@ input[type='text']:focus {
      background-color: #2a2c31;
      color: #4caf50;
 }
-
 
 .tx-json language-json {
      background-color: white;
@@ -894,18 +889,18 @@ input[type='text']:focus {
 }
 
 /* CHECKED STATE */
-input:checked+.slider {
+input:checked + .slider {
      background: #4caf50;
      /* green on */
 }
 
-input:checked+.slider:before {
+input:checked + .slider:before {
      transform: translateX(14px);
      /* 34-20 = 14px travel */
 }
 
 /* FOCUS RING (still visible but tighter) */
-input:focus+.slider {
+input:focus + .slider {
      box-shadow: 0 0 0 2.5px rgba(76, 175, 80, 0.3);
 }
 
@@ -1243,14 +1238,14 @@ input:focus+.slider {
 }
 
 /* Top row: avatar + (address/balance/icons) side by side */
-.wallet-item>.wallet-avatar,
-.wallet-item>.wallet-top-row {
+.wallet-item > .wallet-avatar,
+.wallet-item > .wallet-top-row {
      display: flex;
      align-items: flex-start;
      gap: 0.75rem;
 }
 
-.wallet-item>.wallet-top-row {
+.wallet-item > .wallet-top-row {
      flex: 1;
      justify-content: space-between;
      min-width: 0;
@@ -1587,7 +1582,6 @@ input:focus+.slider {
      font-size: 0.95rem;
      font-weight: 600;
      color: #4f46e5;
-
 }
 
 .tx-actions {
@@ -1631,8 +1625,8 @@ input:focus+.slider {
      margin-right: 4px;
 }
 
-:not(pre)>code[class*=language-],
-pre[class*=language-] {
+:not(pre) > code[class*='language-'],
+pre[class*='language-'] {
      background: #fff;
 }
 
@@ -1838,7 +1832,7 @@ pre[class*=language-] {
 }
 
 .warning-text code {
-     background: rgba(0, 0, 0, .07);
+     background: rgba(0, 0, 0, 0.07);
      padding: 0.1em 0.3em;
      border-radius: 4px;
 }
@@ -1915,7 +1909,7 @@ app-root {
      border: 1px solid #e5e7eb;
      border-radius: 10px;
      padding: 0.75rem;
-     box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
      cursor: pointer;
      transition: all 0.2s ease;
      transform: translateZ(0);
@@ -1992,7 +1986,7 @@ app-root {
 
 .flag-title {
      font-weight: 600;
-     font-size: .95rem;
+     font-size: 0.95rem;
      line-height: 1;
      /* tight line height */
      margin-top: 0;
@@ -2004,13 +1998,13 @@ app-root {
 
 .flag-value {
      font-family: 'Courier New', monospace;
-     font-size: .85rem;
+     font-size: 0.85rem;
      color: #2563eb;
      margin-bottom: 0.25rem;
 }
 
 .flag-desc {
-     font-size: .78rem;
+     font-size: 0.78rem;
      color: #4b5563;
      line-height: 1.4;
 }
@@ -2019,7 +2013,7 @@ app-root {
      background: #f3f4f6;
      padding: 0.1rem 0.25rem;
      border-radius: 4px;
-     font-size: .75rem;
+     font-size: 0.75rem;
 }
 
 /* total line */
@@ -2029,7 +2023,7 @@ app-root {
      align-items: center;
      /* padding-top: 0.50rem; */
      /* padding-bottom: 0.50rem; */
-     padding: 0.50rem;
+     padding: 0.5rem;
      border: 1px solid #e2e8f0;
      border-radius: 8px;
      background-color: #eef2f8;
@@ -2039,12 +2033,12 @@ app-root {
      /* base size for the whole row */
 }
 
-.flag-header>* {
+.flag-header > * {
      line-height: 18px !important;
 }
 
 .total-label {
-     font-size: .9rem;
+     font-size: 0.9rem;
 }
 
 .total-value {
@@ -2163,7 +2157,7 @@ app-root {
      border: 1px solid #e9ecef;
      border-radius: 8px;
      padding: 0.5rem;
-     margin-bottom: 1.0rem;
+     margin-bottom: 1rem;
 }
 
 .checks-list {
@@ -2393,7 +2387,7 @@ app-root {
      display: flex;
      align-items: center;
      justify-content: center;
-     flex-shrink: 0
+     flex-shrink: 0;
 }
 
 .blue-button-submenu {
@@ -2404,7 +2398,7 @@ app-root {
      display: flex;
      align-items: center;
      justify-content: center;
-     flex-shrink: 0
+     flex-shrink: 0;
 }
 
 .red-button-submenu {
@@ -2415,7 +2409,7 @@ app-root {
      display: flex;
      align-items: center;
      justify-content: center;
-     flex-shrink: 0
+     flex-shrink: 0;
 }
 
 .submenu-info-text {
@@ -2426,7 +2420,7 @@ app-root {
      display: flex;
      align-items: center;
      gap: 12px;
-     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif
+     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .submenu-info-main-text {
@@ -2434,12 +2428,12 @@ app-root {
      font-size: 16px;
      font-weight: 600;
      color: #000000;
-     line-height: 1.2
+     line-height: 1.2;
 }
 
 .submenu-info-secondary-text {
      margin: 4px 0 0;
      font-size: 13px;
      color: #555555;
-     line-height: 1.3
+     line-height: 1.3;
 }
