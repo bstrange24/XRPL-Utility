@@ -329,7 +329,7 @@ input[type='text']:focus {
      line-height: 1.4 !important;
 }
 
-.navbar-links>.dropdown {
+.navbar-links > .dropdown {
      display: inline-flex !important;
      align-items: center !important;
      height: auto !important;
@@ -761,6 +761,55 @@ input[type='text']:focus {
      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
+.flag-title-account-flags {
+     font-weight: 600;
+     font-size: 0.95rem;
+     line-height: 1;
+     /* tight line height */
+     margin-top: 0;
+     margin-bottom: 0;
+     /* display: flex; */
+     align-items: center;
+     /* color: #1a1a1a; */
+}
+
+.form-row-account-flags {
+     display: flex;
+     gap: 1rem;
+     align-items: stretch; /* makes all children equal height */
+     /* flex-wrap: wrap; */
+}
+
+.form-group-account-flags {
+     flex: 1;
+     min-width: 200px;
+     display: flex;
+     flex-direction: column; /* allow internal layout */
+}
+
+.form-group-account-flags label {
+     display: block;
+     margin-bottom: 0.35rem;
+     font-weight: 500;
+     font-size: 0.9rem;
+}
+
+.form-group-account-flags input,
+.form-group-account-flags select {
+     /* width: 100%; */
+     padding: 0.5rem 0.75rem;
+     border: 1px solid #cbd5e1;
+     border-radius: 6px;
+     font-size: 0.95rem;
+}
+
+.form-group-account-flags input:focus,
+.form-group-account-flags select:focus {
+     outline: none;
+     border-color: #6366f1;
+     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
 .memo-input,
 .regular-key-fields,
 .ticket-fields {
@@ -893,18 +942,18 @@ input[type='text']:focus {
 }
 
 /* CHECKED STATE */
-input:checked+.slider {
+input:checked + .slider {
      background: #4caf50;
      /* green on */
 }
 
-input:checked+.slider:before {
+input:checked + .slider:before {
      transform: translateX(14px);
      /* 34-20 = 14px travel */
 }
 
 /* FOCUS RING (still visible but tighter) */
-input:focus+.slider {
+input:focus + .slider {
      box-shadow: 0 0 0 2.5px rgba(76, 175, 80, 0.3);
 }
 
@@ -1242,14 +1291,14 @@ input:focus+.slider {
 }
 
 /* Top row: avatar + (address/balance/icons) side by side */
-.wallet-item>.wallet-avatar,
-.wallet-item>.wallet-top-row {
+.wallet-item > .wallet-avatar,
+.wallet-item > .wallet-top-row {
      display: flex;
      align-items: flex-start;
      gap: 0.75rem;
 }
 
-.wallet-item>.wallet-top-row {
+.wallet-item > .wallet-top-row {
      flex: 1;
      justify-content: space-between;
      min-width: 0;
@@ -1629,7 +1678,7 @@ input:focus+.slider {
      margin-right: 4px;
 }
 
-:not(pre)>code[class*='language-'],
+:not(pre) > code[class*='language-'],
 pre[class*='language-'] {
      background: #fff;
 }
@@ -1953,6 +2002,29 @@ app-root {
      margin-bottom: 0.85rem;
 }
 
+.flag-header-account {
+     display: flex;
+     align-items: center;
+     gap: 0.6rem;
+     margin-bottom: 0.85rem;
+}
+
+.flag-header-account > * {
+     line-height: 18px !important;
+}
+
+.flag-item-account-flags {
+     flex: 1; /* expand to fill height */
+     display: flex;
+     flex-direction: column;
+     justify-content: space-between; /* spread content vertically */
+     background-color: #f8fafc; /* optional for visibility */
+     border: 1px solid #e2e8f0;
+     border-radius: 8px;
+     padding: 1rem;
+     box-sizing: border-box;
+}
+
 /* hide native checkbox, style with ::after */
 .flag-checkbox {
      appearance: none;
@@ -2038,7 +2110,7 @@ app-root {
      /* base size for the whole row */
 }
 
-.flag-header>* {
+.flag-header > * {
      line-height: 18px !important;
 }
 
@@ -2443,7 +2515,6 @@ app-root {
      line-height: 1.3;
 }
 
-
 .issuer-checkbox {
      display: flex;
      align-items: center;
@@ -2458,7 +2529,7 @@ app-root {
      /* padding-top: 10px; */
 }
 
-.issuer-checkbox input[type="checkbox"] {
+.issuer-checkbox input[type='checkbox'] {
      /* reset any browser default */
      appearance: none;
      -webkit-appearance: none;
@@ -2480,20 +2551,20 @@ app-root {
      justify-content: center;
 }
 
-.issuer-checkbox input[type="checkbox"]:checked {
+.issuer-checkbox input[type='checkbox']:checked {
      background: #2563eb;
      border-color: #2563eb;
 }
 
-.issuer-checkbox input[type="checkbox"]:checked::after {
-     content: "✓";
+.issuer-checkbox input[type='checkbox']:checked::after {
+     content: '✓';
      color: white;
      font-weight: bold;
      font-size: 0.8em;
 }
 
 /* optional – hover effect */
-.issuer-checkbox input[type="checkbox"]:hover {
+.issuer-checkbox input[type='checkbox']:hover {
      border-color: #2563eb;
 }
 

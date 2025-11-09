@@ -113,7 +113,7 @@
           <div class="form-panel">
                <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'setTrustline'" (click)="setTab('setTrustline')">
+                    <button class="menu-btn active" [class.active]="activeTab === 'getAccountDetails'" (click)="setTab('getAccountDetails')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Modify Account Flags
                     </button>
@@ -136,7 +136,7 @@
                </div>
 
                <!-- Create Menu -->
-               @if (activeTab === 'setTrustline') {
+               @if (activeTab === 'getAccountDetails') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -227,214 +227,447 @@
                }
 
                <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
-                    <div [@tabTransition]="activeTab">
-                         <div class="tab-content-columns">
+                    <div class="tab-content-container">
+                         <div [@tabTransition]="activeTab">
                               <!-- ==================== LEFT: FORM FIELDS ==================== -->
-                              <div class="tab-content-container form-fields-container"></div>
+                              <!-- <div class="tab-content-container form-fields-container"></div> -->
 
                               <!-- ==================== RIGHT: PAYMENT CHANNEL FLAGS ==================== -->
                               @if (activeTab === 'getAccountDetails') {
-                              <!-- <div class="tab-content-container flags-container"> -->
                               <div class="flags-wrapper">
+                                   @if (activeTab === 'getAccountDetails') {
                                    <!-- Flags header -->
                                    <div class="token-flags-header">
                                         <lucide-icon name="flag" size="20"></lucide-icon>
-                                        <span class="token-flags-title">Trustline Flags</span>
+                                        <span class="token-flags-title">Account Flags</span>
                                    </div>
 
-                                   <!-- asfRequireDest -->
-                                   @if (activeTab === 'getAccountDetails') {
-                                   <div class="flag-item" [class.enabled]="flags.asfRequireDest" (click)="toggleFlag('asfRequireDest')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfRequireDest" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfRequireDest</span>
+                                   <div>
+                                        <div class="form-row-account-flags">
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfRequireDest -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfRequireDest" (click)="toggleFlag('asfRequireDest')">
+                                                       <div class="flag-header-account">
+                                                            <!-- <div class="flag-header"> -->
+                                                            <input type="checkbox" [checked]="flags.asfRequireDest" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title-account-flags">asfRequireDest</span>
+                                                       </div>
+                                                       <div class="flag-value">1</div>
+                                                       <div class="flag-desc">Require a destination tag to send transactions to this account.</div>
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfRequireAuth -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfRequireAuth" (click)="toggleFlag('asfRequireAuth')">
+                                                       <div class="flag-header-account">
+                                                            <!-- <div class="flag-header"> -->
+                                                            <input type="checkbox" [checked]="flags.asfRequireAuth" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title-account-flags">asfRequireAuth</span>
+                                                       </div>
+                                                       <div class="flag-value">2</div>
+                                                       <div class="flag-desc">Require authorization for users to hold balances issued by this address can only be enabled if the address has no trust lines connected to it.</div>
+                                                  </div>
+                                             </div>
                                         </div>
-                                        <div class="flag-value">1</div>
-                                        <div class="flag-desc">Require a destination tag to send transactions to this account.</div>
                                    </div>
 
-                                   <!-- asfRequireAuth -->
-                                   <div class="flag-item" [class.enabled]="flags.asfRequireAuth" (click)="toggleFlag('asfRequireAuth')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfRequireAuth" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfRequireAuth</span>
+                                   <div>
+                                        <div class="form-row-account-flags">
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfDisallowXRP -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowXRP" (click)="toggleFlag('asfDisallowXRP')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfDisallowXRP" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfDisallowXRP</span>
+                                                       </div>
+                                                       <div class="flag-value">3</div>
+                                                       <div class="flag-desc">XRP should not be sent to this account.</div>
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfDisableMaster -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfDisableMaster" (click)="toggleFlag('asfDisableMaster')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfDisableMaster" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfDisableMaster</span>
+                                                       </div>
+                                                       <div class="flag-value">4</div>
+                                                       <div class="flag-desc">Disallow use of the master key pair. Can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.</div>
+                                                  </div>
+                                             </div>
                                         </div>
-                                        <div class="flag-value">2</div>
-                                        <div class="flag-desc">Require authorization for users to hold balances issued by this address can only be enabled if the address has no trust lines connected to it.</div>
                                    </div>
 
-                                   <!-- asfDisallowXRP -->
-                                   <div class="flag-item" [class.enabled]="flags.asfDisallowXRP" (click)="toggleFlag('asfDisallowXRP')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfDisallowXRP" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfDisallowXRP</span>
+                                   <div>
+                                        <div class="form-row-account-flags">
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfNoFreeze -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfNoFreeze" (click)="toggleFlag('asfNoFreeze')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfNoFreeze" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfNoFreeze</span>
+                                                       </div>
+                                                       <div class="flag-value">6</div>
+                                                       <div class="flag-desc">Permanently give up the ability to freeze individual trust lines or disable Global Freeze. This flag can never be disabled after being enabled.</div>
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfGlobalFreeze -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfGlobalFreeze" (click)="toggleFlag('asfGlobalFreeze')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfGlobalFreeze" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfGlobalFreeze</span>
+                                                       </div>
+                                                       <div class="flag-value">7</div>
+                                                       <div class="flag-desc">Freeze all assets issued by this account.</div>
+                                                  </div>
+                                             </div>
                                         </div>
-                                        <div class="flag-value">3</div>
-                                        <div class="flag-desc">XRP should not be sent to this account.</div>
                                    </div>
 
-                                   <!-- asfDisableMaster -->
-                                   <div class="flag-item" [class.enabled]="flags.asfDisableMaster" (click)="toggleFlag('asfDisableMaster')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfDisableMaster" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfDisableMaster</span>
+                                   <div>
+                                        <div class="form-row-account-flags">
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfDefaultRipple -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfDefaultRipple" (click)="toggleFlag('asfDefaultRipple')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfDefaultRipple" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfDefaultRipple</span>
+                                                       </div>
+                                                       <div class="flag-value">8</div>
+                                                       <div class="flag-desc">Enable rippling on this account's trust lines by default.</div>
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfDepositAuth -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfDepositAuth" (click)="toggleFlag('asfDepositAuth')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfDepositAuth" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfDepositAuth</span>
+                                                       </div>
+                                                       <div class="flag-value">9</div>
+                                                       <div class="flag-desc">Enable Deposit Authorization on this account.</div>
+                                                  </div>
+                                             </div>
                                         </div>
-                                        <div class="flag-value">4</div>
-                                        <div class="flag-desc">Disallow use of the master key pair. Can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.</div>
                                    </div>
 
-                                   <!-- asfNoFreeze -->
-                                   <div class="flag-item" [class.enabled]="flags.asfNoFreeze" (click)="toggleFlag('asfNoFreeze')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfNoFreeze" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfNoFreeze</span>
+                                   <div>
+                                        <div class="form-row-account-flags">
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfAuthorizedNFTokenMinter -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfAuthorizedNFTokenMinter" (click)="toggleFlag('asfAuthorizedNFTokenMinter')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfAuthorizedNFTokenMinter" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfAuthorizedNFTokenMinter</span>
+                                                       </div>
+                                                       <div class="flag-value">10</div>
+                                                       <div class="flag-desc">Allow another account to mint and burn tokens on behalf of this account.</div>
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfDisallowIncomingNFTokenOffer -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingNFTokenOffer" (click)="toggleFlag('asfDisallowIncomingNFTokenOffer')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfDisallowIncomingNFTokenOffer" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfDisallowIncomingNFTokenOffer</span>
+                                                       </div>
+                                                       <div class="flag-value">12</div>
+                                                       <div class="flag-desc">Disallow other accounts from creating incoming NFTOffers.</div>
+                                                  </div>
+                                             </div>
                                         </div>
-                                        <div class="flag-value">6</div>
-                                        <div class="flag-desc">Permanently give up the ability to freeze individual trust lines or disable Global Freeze. This flag can never be disabled after being enabled.</div>
                                    </div>
 
-                                   <!-- asfGlobalFreeze -->
-                                   <div class="flag-item" [class.enabled]="flags.asfGlobalFreeze" (click)="toggleFlag('asfGlobalFreeze')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfGlobalFreeze" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfGlobalFreeze</span>
+                                   <div>
+                                        <div class="form-row-account-flags">
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfDisallowIncomingCheck -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingCheck" (click)="toggleFlag('asfDisallowIncomingCheck')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfDisallowIncomingCheck" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfDisallowIncomingCheck</span>
+                                                       </div>
+                                                       <div class="flag-value">13</div>
+                                                       <div class="flag-desc">Disallow other accounts from creating incoming Checks.</div>
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfDisallowIncomingPayChan -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingPayChan" (click)="toggleFlag('asfDisallowIncomingPayChan')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfDisallowIncomingPayChan" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfDisallowIncomingPayChan</span>
+                                                       </div>
+                                                       <div class="flag-value">14</div>
+                                                       <div class="flag-desc">Disallow other accounts from creating incoming PayChannels.</div>
+                                                  </div>
+                                             </div>
                                         </div>
-                                        <div class="flag-value">7</div>
-                                        <div class="flag-desc">Freeze all assets issued by this account.</div>
                                    </div>
 
-                                   <!-- asfDefaultRipple -->
-                                   <div class="flag-item" [class.enabled]="flags.asfDefaultRipple" (click)="toggleFlag('asfDefaultRipple')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfDefaultRipple" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfDefaultRipple</span>
+                                   <div>
+                                        <div class="form-row-account-flags">
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfDisallowIncomingTrustline -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingTrustline" (click)="toggleFlag('asfDisallowIncomingTrustline')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfDisallowIncomingTrustline" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfDisallowIncomingTrustline</span>
+                                                       </div>
+                                                       <div class="flag-value">15</div>
+                                                       <div class="flag-desc">Disallow other accounts from creating incoming Trustlines.</div>
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfAllowTrustLineClawback -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfAllowTrustLineClawback" (click)="toggleFlag('asfAllowTrustLineClawback')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfAllowTrustLineClawback" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfAllowTrustLineClawback</span>
+                                                       </div>
+                                                       <div class="flag-value">16</div>
+                                                       <div class="flag-desc">Permanently gain the ability to claw back issued IOUs.</div>
+                                                  </div>
+                                             </div>
                                         </div>
-                                        <div class="flag-value">8</div>
-                                        <div class="flag-desc">Enable rippling on this account's trust lines by default.</div>
                                    </div>
 
-                                   <!-- asfDepositAuth -->
-                                   <div class="flag-item" [class.enabled]="flags.asfDepositAuth" (click)="toggleFlag('asfDepositAuth')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfDepositAuth" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfDefaultRipple</span>
+                                   <div>
+                                        <div class="form-row-account-flags">
+                                             <div class="form-group-account-flags">
+                                                  <!-- asfAllowTrustLineLocking -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfAllowTrustLineLocking" (click)="toggleFlag('asfAllowTrustLineLocking')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.asfAllowTrustLineLocking" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">asfAllowTrustLineLocking</span>
+                                                       </div>
+                                                       <div class="flag-value">17</div>
+                                                       <div class="flag-desc">Issuers allow their IOUs to be used as escrow amounts.</div>
+                                                  </div>
+                                             </div>
+                                             <div class="form-group-account-flags">
+                                                  <div class="flag-item-account-flags">
+                                                       <!-- TOTAL FLAGS VALUE -->
+                                                       <div class="flags-total">
+                                                            <span class="total-label">Total Flags Value:</span>
+                                                            <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
+                                                       </div>
+                                                  </div>
+                                             </div>
                                         </div>
-                                        <div class="flag-value">9</div>
-                                        <div class="flag-desc">Enable Deposit Authorization on this account.</div>
-                                   </div>
-
-                                   <!-- asfAuthorizedNFTokenMinter -->
-                                   <div class="flag-item" [class.enabled]="flags.asfAuthorizedNFTokenMinter" (click)="toggleFlag('asfAuthorizedNFTokenMinter')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfDisallowIncomingNFTokenOffer" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfAuthorizedNFTokenMinter</span>
-                                        </div>
-                                        <div class="flag-value">10</div>
-                                        <div class="flag-desc">Allow another account to mint and burn tokens on behalf of this account.</div>
-                                   </div>
-
-                                   <!-- asfDisallowIncomingNFTokenOffer -->
-                                   <div class="flag-item" [class.enabled]="flags.asfDisallowIncomingNFTokenOffer" (click)="toggleFlag('asfDisallowIncomingNFTokenOffer')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfDisallowIncomingNFTokenOffer" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfDisallowIncomingNFTokenOffer</span>
-                                        </div>
-                                        <div class="flag-value">12</div>
-                                        <div class="flag-desc">Allow another account to mint and burn tokens on behalf of this account.</div>
-                                   </div>
-                                   }
-
-                                   <!-- asfDisallowIncomingCheck -->
-                                   <div class="flag-item" [class.enabled]="flags.asfDisallowIncomingCheck" (click)="toggleFlag('asfDisallowIncomingCheck')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfDisallowIncomingCheck" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfDisallowIncomingCheck</span>
-                                        </div>
-                                        <div class="flag-value">13</div>
-                                        <div class="flag-desc">Disallow other accounts from creating incoming Checks.</div>
-                                   </div>
-
-                                   <!-- asfDisallowIncomingPayChan -->
-                                   <div class="flag-item" [class.enabled]="flags.asfDisallowIncomingPayChan" (click)="toggleFlag('asfDisallowIncomingPayChan')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfDisallowIncomingPayChan" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfDisallowIncomingPayChan</span>
-                                        </div>
-                                        <div class="flag-value">14</div>
-                                        <div class="flag-desc">Disallow other accounts from creating incoming Checks.</div>
-                                   </div>
-
-                                   <!-- asfDisallowIncomingTrustline -->
-                                   <div class="flag-item" [class.enabled]="flags.asfDisallowIncomingTrustline" (click)="toggleFlag('asfDisallowIncomingTrustline')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfDisallowIncomingTrustline" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfDisallowIncomingTrustline</span>
-                                        </div>
-                                        <div class="flag-value">15</div>
-                                        <div class="flag-desc">Disallow other accounts from creating incoming Trustlines.</div>
-                                   </div>
-
-                                   <!-- asfAllowTrustLineLocking -->
-                                   <div class="flag-item" [class.enabled]="flags.asfAllowTrustLineLocking" (click)="toggleFlag('asfAllowTrustLineLocking')">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="flags.asfAllowTrustLineLocking" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">asfAllowTrustLineLocking</span>
-                                        </div>
-                                        <div class="flag-value">15</div>
-                                        <div class="flag-desc">Disallow other accounts from creating incoming Trustlines.</div>
-                                   </div>
-
-                                   <!-- TOTAL FLAGS VALUE -->
-                                   @if (activeTab === 'getAccountDetails') {
-                                   <div class="flags-total">
-                                        <span class="total-label">Total Flags Value:</span>
-                                        <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
                                    </div>
                                    }
                               </div>
-                              <!-- </div> -->
+                              }
+
+                              <!-- Switches -->
+                              <div class="switch-group">
+                                   <!-- Memo group -->
+                                   <label class="switch">
+                                        <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
+                                        <span class="slider"></span>
+                                        Add Memo
+                                   </label>
+
+                                   <!-- Multi Signing Enabled group -->
+                                   @if (multiSigningEnabled) {
+                                   <label class="switch">
+                                        <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
+                                        <span class="slider"></span>
+                                        Use Multi-Sign
+                                   </label>
+                                   }
+
+                                   <!-- Regular Key Signing Enabled-->
+                                   @if (regularKeySigningEnabled) {
+                                   <label class="switch">
+                                        <!-- <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" /> -->
+                                        <span class="slider"></span>
+                                        Use Regular Key
+                                   </label>
+                                   }
+
+                                   <!-- Use Ticket for tx -->
+                                   @if (activeTab !== 'delete' && ticketArray.length > 0) {
+                                   <label class="switch">
+                                        <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
+                                        <span class="slider"></span>
+                                        Use Ticket
+                                   </label>
+                                   }
+
+                                   <!-- Simulate tx -->
+                                   <label class="switch">
+                                        <input type="checkbox" [(ngModel)]="isSimulateEnabled" name="isSimulateEnabled" />
+                                        <span class="slider"></span>
+                                        Simulate
+                                   </label>
+                              </div>
+
+                              <!-- Memo Field -->
+                              @if (isMemoEnabled) {
+                              <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
+                              }
+
+                              <!-- Sign tx with Mult Sign address -->
+                              @if (useMultiSign) {
+                              <div class="multisign-grid">
+                                   <div class="multisign-field">
+                                        <label>Signers</label>
+                                        <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly (ngModelChange)="autoResize(signers)"></textarea>
+                                   </div>
+                                   <div class="multisign-field">
+                                        <label>Seeds</label>
+                                        <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly (ngModelChange)="autoResize(seeds)"></textarea>
+                                   </div>
+                                   <div class="multisign-field quorum-field">
+                                        <label>Quorum</label>
+                                        <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
+                                   </div>
+                              </div>
+                              }
+
+                              <!-- Sign tx with Regular key address -->
+                              <!-- @if (isRegularKeyAddress) {
+                         <div class="regular-key-fields">
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Regular Key Address</label>
+                                        <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                                   </div>
+                              </div>
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Regular Key Seed</label>
+                                        <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
+                                   </div>
+                              </div>
+                         </div>
+                         } -->
+
+                              <!-- Get ticket to delete -->
+                              @if (isTicket && activeTab !== 'delete') {
+                              <div class="ticket-fields">
+                                   <div class="form-group">
+                                        <label>Ticket Sequence</label>
+                                        @if (multiSelectMode) {
+                                        <div>
+                                             <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
+                                                  @for (ticket of ticketArray; track ticket) {
+                                                  <option [value]="ticket">{{ ticket }}</option>
+                                                  }
+                                             </select>
+                                        </div>
+                                        } @else {
+                                        <div>
+                                             <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
+                                                  <option value="" disabled>Select a ticket</option>
+                                                  @for (ticket of ticketArray; track ticket) {
+                                                  <option [value]="ticket">{{ ticket }}</option>
+                                                  }
+                                             </select>
+                                        </div>
+                                        }
+                                   </div>
+                              </div>
+                              }
+
+                              <!-- Action buttons -->
+                              <div class="button-row">
+                                   <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'cancel' ? 'red' : activeTab === 'finish' ? 'green' : '#007bff'}">{{ activeTab === 'cancel' ? 'Cancel Escrow' : activeTab === 'finish' ? 'Finish Escrow' : 'Create Escrow' }}</button>
+                                   <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                              </div>
+
+                              <!-- Spinner / Messages -->
+                              @if (spinner) {
+                              <div class="spinner-row">
+                                   <div class="spinner"></div>
+                                   <span>{{ spinnerMessage || 'Loading...' }}</span>
+                              </div>
+                              }
+
+                              <!-- Success message -->
+                              @if (isSuccess && !isError) {
+                              <div class="success-message">
+                                   <lucide-icon name="check" size="20"></lucide-icon>
+                                   <div class="success-text">
+                                        @if (txHash && !isSimulateEnabled) {
+                                        <span>{{successMessage}}</span><br /><br />
+                                        <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
+                                        } @else {
+                                        <span>{{successMessage}}</span>
+                                        }
+                                   </div>
+                              </div>
+                              }
+
+                              <!-- Error message -->
+                              @if (isError && result) {
+                              <div class="tx-message error">
+                                   <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
+                                   <div class="tx-text">
+                                        <!-- Display Tx Hash if we are not in simulation mode-->
+                                        @if (txHash && !isSimulateEnabled) {
+                                        <span>{{ result }}</span><br />
+                                        <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
+                                        } @else {
+                                        <span>{{ result }}</span>
+                                        }
+                                   </div>
+                              </div>
                               }
                          </div>
                     </div>
@@ -444,7 +677,7 @@
                @if (paymentTx.length >0) {
                <div class="tx-preview-container">
                     <div class="tx-header">
-                         <h5 class="tx-title">Ticket Transaction</h5>
+                         <h5 class="tx-title">Account Configuration Transaction</h5>
                          <div class="tx-actions">
                               <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
                                    <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>

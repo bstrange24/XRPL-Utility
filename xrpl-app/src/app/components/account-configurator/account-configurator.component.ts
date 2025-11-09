@@ -255,12 +255,13 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           if (this.activeTab !== 'addNewIssuers') {
                const client = await this.xrplService.getClient();
                const accountObjects = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', '');
-               const mptObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['MPToken']);
-               this.utilsService.logObjects('mptObjects', mptObjects);
-               const trustlineObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['RippleState']);
-               this.utilsService.logObjects('trustlineObjects', trustlineObjects);
+               // const mptObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['MPToken']);
+               // this.utilsService.logObjects('mptObjects', mptObjects);
+               // const trustlineObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['RippleState']);
+               // this.utilsService.logObjects('trustlineObjects', trustlineObjects);
                this.clearMessages();
                this.clearFields(true);
+               this.getAccountDetails();
           }
      }
 
@@ -2468,7 +2469,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           this.cdr.detectChanges();
      }
 
-     toggleFlag(key: 'asfRequireDest' | 'asfRequireAuth' | 'asfDisallowXRP' | 'asfDisableMaster' | 'asfNoFreeze' | 'asfGlobalFreeze' | 'asfDefaultRipple' | 'asfDepositAuth' | 'asfAuthorizedNFTokenMinter' | 'asfDisallowIncomingNFTokenOffer' | 'asfDisallowIncomingCheck' | 'asfDisallowIncomingPayChan' | 'asfDisallowIncomingTrustline' | 'asfAllowTrustLineLocking') {
+     toggleFlag(key: 'asfRequireDest' | 'asfRequireAuth' | 'asfDisallowXRP' | 'asfDisableMaster' | 'asfNoFreeze' | 'asfGlobalFreeze' | 'asfDefaultRipple' | 'asfDepositAuth' | 'asfAuthorizedNFTokenMinter' | 'asfDisallowIncomingNFTokenOffer' | 'asfDisallowIncomingCheck' | 'asfDisallowIncomingPayChan' | 'asfDisallowIncomingTrustline' | 'asfAllowTrustLineClawback' | 'asfAllowTrustLineLocking') {
           // if (key === 'close') {
           // Do nothing – tfClose is locked
           // return;
@@ -2482,7 +2483,6 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           if (this.flags.asfRequireDest) sum |= xrpl.AccountSetAsfFlags.asfRequireDest;
           if (this.flags.asfRequireAuth) sum |= xrpl.AccountSetAsfFlags.asfRequireAuth;
           if (this.flags.asfDisallowXRP) sum |= xrpl.AccountSetAsfFlags.asfDisallowXRP;
-          if (this.flags.asfDisableMaster) sum |= xrpl.AccountSetAsfFlags.asfDisallowXRP;
           if (this.flags.asfDisableMaster) sum |= xrpl.AccountSetAsfFlags.asfDisableMaster;
           if (this.flags.asfNoFreeze) sum |= xrpl.AccountSetAsfFlags.asfNoFreeze;
           if (this.flags.asfGlobalFreeze) sum |= xrpl.AccountSetAsfFlags.asfGlobalFreeze;
