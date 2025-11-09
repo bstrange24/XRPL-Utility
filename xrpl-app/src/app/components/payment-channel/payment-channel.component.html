@@ -572,7 +572,8 @@
 
                          <!-- Action buttons -->
                          <div class="button-row">
-                              <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'cancel' ? 'red' : activeTab === 'cash'   ? 'green' : '#007bff' }">{{ activeTab === 'cancel' ? 'Cancel Check' : activeTab === 'cash' ? 'Cash Check' : 'Create Check' }}</button>
+                              <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'close' ? 'red' : activeTab === 'claim' || activeTab === 'fund' ? 'green' : '#007bff'}">{{ activeTab === 'close' ? 'Close Channel' : activeTab === 'claim' ? 'Claim/Renew Channel' : activeTab === 'fund' ? 'Fund Channel' : 'Create Channel' }}</button>
+                              <button type="button" *ngIf="activeTab === 'claim'" class="btn-primary" (click)="generateCreatorClaimSignature()">Generate Claim Signature</button>
                               <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                          </div>
 
