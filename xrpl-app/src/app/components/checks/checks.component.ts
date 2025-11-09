@@ -263,6 +263,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
      saveName() {
           this.walletManagerService.saveEdit(this.tempName); // ← PASS IT!
           this.tempName = '';
+          this.updateDestinations();
      }
 
      cancelEdit() {

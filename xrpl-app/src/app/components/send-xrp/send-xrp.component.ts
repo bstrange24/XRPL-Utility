@@ -178,8 +178,9 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
      }
 
      saveName() {
-          this.walletManagerService.saveEdit(this.tempName); // ← PASS IT!
+          this.walletManagerService.saveEdit(this.tempName);
           this.tempName = '';
+          this.updateDestinations();
      }
 
      cancelEdit() {
