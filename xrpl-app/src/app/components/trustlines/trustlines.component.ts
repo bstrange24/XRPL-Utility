@@ -37,6 +37,25 @@ interface ValidationInputs {
      signers?: { account: string; weight: number }[];
 }
 
+interface RippleState {
+     LedgerEntryType: 'RippleState';
+     Balance: { currency: string; value: string };
+     HighLimit: { issuer: string };
+}
+
+interface MPToken {
+     index?: string;
+     mpt_issuance_id?: string;
+     MPTokenIssuanceID?: string;
+     PreviousTxnID?: string;
+     Flags?: number;
+     MPTAmount?: string | number;
+     MaximumAmount?: string | number;
+     OutstandingAmount?: string | number;
+     TransferFee?: string | number;
+     MPTokenMetadata?: string;
+}
+
 @Component({
      selector: 'app-trustlines',
      standalone: true,
@@ -135,11 +154,13 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      hasWallets: boolean = true;
      showToast: boolean = false;
      toastMessage: string = '';
-     cancellableChecks: any = [];
-     cashableChecks: any = [];
-     existingChecks: any = [];
+     accountTrustlines: any = [];
+     exsitingMpt: any = [];
+     existingIOUs: any = [];
      // Controls whether the panel is expanded or collapsed
      outstandingChecksCollapsed = true;
+     outstandingMptCollapsed: boolean = true;
+     outstandingIOUCollapsed: boolean = true;
      url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
@@ -224,10 +245,16 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
      async setTab(tab: string) {
           this.activeTab = tab;
-          if (this.activeTab === 'setTrustline') {
-               // const client = await this.xrplService.getClient();
-               // const checkObjects = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', 'check');
-               // this.getCancelableChecks(checkObjects, this.currentWallet.address);
+          if (this.activeTab !== 'addNewIssuers') {
+               const client = await this.xrplService.getClient();
+               const accountObjects = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', '');
+               const mptObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['MPToken']);
+               this.utilsService.logObjects('mptObjects', mptObjects);
+               this.getExistingMpts(mptObjects, this.currentWallet.address);
+               const trustlineObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['RippleState']);
+               this.utilsService.logObjects('trustlineObjects', trustlineObjects);
+               this.getExistingIOUs(trustlineObjects, this.currentWallet.address);
+               this.toggleIssuerField();
           }
 
           if (this.activeTab === 'removeTrustline') {
@@ -237,19 +264,19 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                // this.getExistingChecks(checkObjects, this.currentWallet.address);
           }
 
-          if (this.activeTab === 'issueCurrency') {
-               // const client = await this.xrplService.getClient();
-               // const checkObjects = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', 'check');
-               // this.getCashableChecks(checkObjects, this.currentWallet.address);
-          }
+          // if (this.activeTab === 'issueCurrency') {
+          // const client = await this.xrplService.getClient();
+          // const checkObjects = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', 'check');
+          // this.getCashableChecks(checkObjects, this.currentWallet.address);
+          // }
 
-          if (this.activeTab === 'clawbackTokens') {
-          }
+          // if (this.activeTab === 'clawbackTokens') {
+          // }
 
-          if (this.activeTab === 'addNewIssuers') {
-          }
+          // if (this.activeTab === 'addNewIssuers') {
+          // }
 
-          this.toggleIssuerField();
+          // this.toggleIssuerField();
           this.clearFlagsValue();
           this.clearMessages();
           this.clearFields(true);
@@ -424,6 +451,14 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           this.outstandingChecksCollapsed = !this.outstandingChecksCollapsed;
      }
 
+     toggleOutstandingMpt() {
+          this.outstandingMptCollapsed = !this.outstandingMptCollapsed;
+     }
+
+     toggleOutstandingIOU() {
+          this.outstandingIOUCollapsed = !this.outstandingIOUCollapsed;
+     }
+
      validateQuorum() {
           const totalWeight = this.signers.reduce((sum, s) => sum + (s.weight || 0), 0);
           if (this.signerQuorum > totalWeight) {
@@ -449,10 +484,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           if (this.multiSignAddress === 'No Multi-Sign address configured for account') {
                this.multiSignSeeds = '';
           }
-     }
-
-     toggleTicketSequence() {
-          this.cdr.markForCheck();
      }
 
      onTicketToggle(event: any, ticket: string) {
@@ -481,10 +512,15 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                const client = await this.xrplService.getClient();
                const wallet = await this.getWallet();
 
-               const [accountInfo, accountObjects, accountCurrencies] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountCurrencies(client, wallet.classicAddress, 'validated', '')]);
+               // Get account info and account objects
+               const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
-               this.utilsService.logObjects('accountCurrencies', accountCurrencies);
 
+               const mptObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['MPToken']);
+               this.utilsService.logObjects('mptObjects', mptObjects);
+
+               const trustlineObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['RippleState']);
+               this.utilsService.logObjects('trustlineObjects', trustlineObjects);
                const inputs: ValidationInputs = {
                     seed: this.currentWallet.seed,
                     account_info: accountInfo,
@@ -495,63 +531,8 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     return this.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Errors:\n${errors.join('\n')}`);
                }
 
-               // Extract RippleState entries
-               const rippleStates = (accountObjects.result.account_objects || []).filter(obj => obj.LedgerEntryType === 'RippleState');
-
-               // Filter for selected currency and non-zero state
-               const activeTrustLines = rippleStates.filter((line: xrpl.LedgerEntry.RippleState) => {
-                    const currency = this.utilsService.decodeIfNeeded(line.Balance.currency);
-                    const balance = parseFloat(line.Balance.value || '0');
-                    const lowLimit = parseFloat(line.LowLimit.value || '0');
-                    const highLimit = parseFloat(line.HighLimit.value || '0');
-
-                    // Exclude fully zeroed-out trust lines
-                    return currency === this.currencyFieldDropDownValue && !(balance === 0 && lowLimit === 0 && highLimit === 0);
-               });
-
-               // --- Trust Lines Section ---
-               if (activeTrustLines.length === 0) {
-                    this.gatewayBalance = '';
-               } else {
-                    const trustLineItems = activeTrustLines
-                         .map((line, index) => {
-                              const currency = this.utilsService.decodeIfNeeded(line.Balance.currency);
-                              const isLow = wallet.classicAddress === line.LowLimit.issuer;
-                              const isHigh = wallet.classicAddress === line.HighLimit.issuer;
-
-                              if (!isLow && !isHigh) return null; // Should not happen
-
-                              const counterparty = isLow ? line.HighLimit.issuer : line.LowLimit.issuer;
-                              const ourLimit = isLow ? line.LowLimit.value : line.HighLimit.value;
-                              const theirLimit = isLow ? line.HighLimit.value : line.LowLimit.value;
-
-                              // Correct balance interpretation:
-                              // Balance is from Low -> High
-                              // So if we are Low, positive balance = we owe
-                              // If we are High, positive balance = they owe us → our balance is +value
-                              let ourBalance = parseFloat(line.Balance.value);
-                              if (isHigh) {
-                                   ourBalance = -ourBalance; // We are debtor → negative balance from our POV
-                              }
-                              // If we are High, ourBalance stays positive (they owe us)
-
-                              return {
-                                   key: `Trust Line ${index + 1} (${currency}, Counterparty: ${counterparty})`,
-                                   openByDefault: false,
-                                   content: [
-                                        { key: 'Currency', value: currency },
-                                        { key: 'Your Balance', value: `${this.utilsService.formatTokenBalance(ourBalance.toString(), 2)} ${currency}` },
-                                        { key: 'Your Limit', value: ourLimit },
-                                        { key: 'Counterparty', value: `<code>${counterparty}</code>` },
-                                        { key: 'Counterparty Limit', value: theirLimit },
-                                        { key: 'Flags', value: this.decodeRippleStateFlags(line.Flags).join(', ') || 'None' },
-                                   ],
-                              };
-                         })
-                         .filter(Boolean);
-               }
-
-               this.setSuccess(this.result);
+               this.getExistingMpts(mptObjects, this.currentWallet.address);
+               this.getExistingIOUs(trustlineObjects, this.currentWallet.address);
 
                // --- Defer: Fetch additional data and enhance UI ---
                setTimeout(async () => {
@@ -571,7 +552,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                          this.updateTickets(accountObjects);
                     } catch (err) {
                          console.error('Failed to load extended token data:', err);
-                         this.setError('Partial data loaded. Failed to fetch full token balances.');
                     }
                }, 0);
           } catch (error: any) {
@@ -663,6 +643,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
                this.showSpinnerWithDelay(this.isSimulateEnabled ? 'Simulating Setting Trustline (no changes will be made)...' : 'Submitting to Ledger...', 200);
 
+               // STORE IT FOR DISPLAY
                this.paymentTx.push(trustSetTx);
                this.updatePaymentTx();
 
@@ -705,13 +686,15 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                if (!this.isSimulateEnabled) {
                     this.successMessage = 'Trustline set successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-                    // Filter specific types using the helper
-                    const checkObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['Check']);
-                    this.utilsService.logObjects('checkObjects', checkObjects);
 
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                    this.getExistingChecks(checkObjects, wallet.classicAddress);
-                    await this.refreshWallets(client, [wallet.classicAddress ?? wallet.address, this.destinationField]);
+                    const mptObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['MPToken']);
+                    this.utilsService.logObjects('mptObjects', mptObjects);
+                    const trustlineObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['RippleState']);
+                    this.utilsService.logObjects('trustlineObjects', trustlineObjects);
+                    this.getExistingMpts(mptObjects, wallet.classicAddress);
+                    this.getExistingIOUs(trustlineObjects, wallet.classicAddress);
+                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
 
                     setTimeout(async () => {
                          try {
@@ -876,15 +859,20 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                if (!this.isSimulateEnabled) {
                     this.successMessage = 'Trustline removed successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     // Filter specific types using the helper
                     const checkObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['Check']);
                     this.utilsService.logObjects('checkObjects', checkObjects);
-                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    const mptObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['MPToken']);
+                    this.utilsService.logObjects('mptObjects', mptObjects);
+                    const trustlineObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['RippleState']);
+                    this.utilsService.logObjects('trustlineObjects', trustlineObjects);
 
-                    this.getCashableChecks(checkObjects, wallet.classicAddress ?? wallet.address);
-                    this.getExistingChecks(checkObjects, wallet.classicAddress ?? wallet.address);
+                    // this.getCashableChecks(checkObjects, wallet.classicAddress ?? wallet.address);
+                    this.getExistingMpts(mptObjects, wallet.classicAddress);
+                    this.getExistingIOUs(trustlineObjects, wallet.classicAddress);
 
-                    await this.refreshWallets(client, [wallet.classicAddress ?? wallet.address, this.destinationField]);
+                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
 
                     setTimeout(async () => {
                          try {
@@ -1132,8 +1120,8 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    this.getCancelableChecks(checkObjects, wallet.classicAddress ?? wallet.address);
-                    this.getExistingChecks(checkObjects, wallet.classicAddress);
+                    // this.getCancelableChecks(checkObjects, wallet.classicAddress ?? wallet.address);
+                    // this.getExistingChecks(checkObjects, wallet.classicAddress);
 
                     await this.refreshWallets(client, [wallet.classicAddress ?? wallet.address]);
 
@@ -1233,8 +1221,11 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                }
 
                this.updateSpinnerMessage(this.isSimulateEnabled ? 'Simulating Token Clawback (no tokens will be moved)...' : 'Submitting Clawback to Ledger...');
+               // STORE IT FOR DISPLAY
+               this.paymentTx.push(clawbackTx);
+               this.updatePaymentTx();
 
-               let response;
+               let response: any;
 
                if (this.isSimulateEnabled) {
                     response = await this.xrplTransactions.simulateTransaction(client, clawbackTx);
@@ -1250,6 +1241,11 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
+               this.utilsService.logObjects('response', response);
+               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+
+               this.txResult.push(response.result);
+               this.updateTxResult(this.txResult);
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
@@ -1257,14 +1253,26 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
+                    this.setError(userMessage);
+               } else {
+                    this.setSuccess(this.result);
                }
 
-               this.setSuccess(this.result);
+               this.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
                if (!this.isSimulateEnabled) {
+                    this.successMessage = 'Cancelled escrow successfully!';
                     const [updatedAccountInfo, updatedAccountObjects, gatewayBalancePromise] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
+                    const mptObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['MPToken']);
+                    this.utilsService.logObjects('mptObjects', mptObjects);
+                    const trustlineObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['RippleState']);
+                    this.utilsService.logObjects('trustlineObjects', trustlineObjects);
+                    this.getExistingMpts(mptObjects, wallet.classicAddress);
+                    this.getExistingIOUs(trustlineObjects, wallet.classicAddress);
+
+                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
                     setTimeout(async () => {
                          try {
                               await this.updateCurrencyBalance(gatewayBalancePromise, wallet);
@@ -1275,6 +1283,8 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                               console.error('Error in post-tx cleanup:', err);
                          }
                     }, 0);
+               } else {
+                    this.successMessage = 'Simulated Escrow cancel successfully!';
                }
           } catch (error: any) {
                console.error('Error in clawbackTokens:', error);
@@ -1284,6 +1294,53 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving clawbackTokens in ${this.executionTime}ms`);
           }
+     }
+
+     private getExistingMpts(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string): MPToken[] {
+          this.exsitingMpt = (escrowObjects.result.account_objects ?? [])
+               .filter((obj: any) => obj.LedgerEntryType === 'MPToken' && obj.Account === classicAddress)
+               .map((obj: any): MPToken => {
+                    return {
+                         MPTAmount: obj.MPTAmount,
+                         mpt_issuance_id: obj.MPTokenIssuanceID,
+                    };
+               })
+               .sort((a, b) => {
+                    const ai = a.mpt_issuance_id ?? '';
+                    const bi = b.mpt_issuance_id ?? '';
+                    return ai.localeCompare(bi);
+               });
+
+          this.utilsService.logObjects('exsitingMpt', this.exsitingMpt);
+          return this.exsitingMpt;
+     }
+
+     private getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string): RippleState[] {
+          this.existingIOUs = (accountObjects.result.account_objects ?? [])
+               .filter((obj: any) => obj.LedgerEntryType === 'RippleState')
+               .map((obj: any): RippleState => {
+                    const balance = obj.Balance?.value ?? '0';
+                    const currency = this.utilsService.normalizeCurrencyCode(obj.Balance?.currency);
+
+                    // Determine if this account is the issuer or holder
+                    const issuer = obj.HighLimit?.issuer === classicAddress ? obj.LowLimit?.issuer : obj.HighLimit?.issuer;
+
+                    return {
+                         LedgerEntryType: 'RippleState',
+                         Balance: {
+                              currency,
+                              value: balance,
+                         },
+                         HighLimit: {
+                              issuer,
+                         },
+                    };
+               })
+               // Sort alphabetically by issuer or currency if available
+               .sort((a, b) => a.HighLimit.issuer.localeCompare(b.HighLimit.issuer));
+
+          this.utilsService.logObjects('existingIOUs', this.existingIOUs);
+          return this.existingIOUs;
      }
 
      async toggleIssuerField(): Promise<void> {
@@ -1429,84 +1486,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           } catch (error: any) {
                throw new Error(error.message);
           }
-     }
-
-     private getExistingChecks(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          this.existingChecks = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'Check' && obj.Account === classicAddress)
-               .map((obj: any) => {
-                    const sendMax = obj.SendMax;
-                    let amount = '0';
-                    let currency = '';
-
-                    if (typeof sendMax === 'string') {
-                         amount = String(xrpl.dropsToXrp(sendMax));
-                    } else if (sendMax?.value) {
-                         amount = sendMax.value;
-                         currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
-                    }
-
-                    return {
-                         id: obj.index,
-                         amount: `${amount} ${currency}`,
-                         destination: obj.Destination,
-                         sendMax,
-                         expiration: obj.Expiration,
-                         destinationTag: obj.DestinationTag,
-                         sourceTag: obj.SourceTag,
-                         invoiceId: obj.InvoiceID,
-                    };
-               })
-               .sort((a, b) => a.destination.localeCompare(b.destination));
-          this.utilsService.logObjects('existingChecks', this.existingChecks);
-     }
-
-     private getCashableChecks(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          this.cashableChecks = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'Check' && obj.Destination === classicAddress)
-               .map((obj: any) => {
-                    const sendMax = obj.SendMax;
-                    let amount = '0';
-                    if (typeof sendMax === 'string') {
-                         amount = String(xrpl.dropsToXrp(sendMax));
-                    } else if (sendMax?.value) {
-                         amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
-                    }
-                    return {
-                         id: obj.index,
-                         amount,
-                         sender: obj.Account,
-                         sendMax,
-                    };
-               })
-               .sort((a, b) => a.sender.localeCompare(b.sender));
-          this.utilsService.logObjects('cashableChecks', this.cashableChecks);
-     }
-
-     private getCancelableChecks(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
-          this.cancellableChecks = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'Check' && obj.Account === sender)
-               .map((obj: any) => {
-                    const sendMax = obj.SendMax;
-                    let amount = '0';
-
-                    if (typeof sendMax === 'string') {
-                         // XRP (drops)
-                         amount = String(xrpl.dropsToXrp(sendMax));
-                    } else if (sendMax?.value) {
-                         // IOU
-                         amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
-                    }
-
-                    return {
-                         id: obj.index, // <-- CheckID
-                         amount,
-                         destination: obj.Destination,
-                         sendMax,
-                    };
-               })
-               .sort((a, b) => a.destination.localeCompare(b.destination));
-          this.utilsService.logObjects('cancellableChecks', this.cancellableChecks);
      }
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
@@ -2276,6 +2255,12 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           });
      }
 
+     copyIOUIssuanceAddress(mpt_issuance_id: string) {
+          navigator.clipboard.writeText(mpt_issuance_id).then(() => {
+               this.showToastMessage('IOU Token Issuer copied!');
+          });
+     }
+
      copyTx() {
           const json = JSON.stringify(this.paymentTx, null, 2);
           navigator.clipboard.writeText(json).then(() => {
@@ -2315,19 +2300,19 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      public get infoMessage(): string | null {
           const tabConfig = {
                create: {
-                    checks: this.existingChecks,
+                    // checks: this.existingChecks,
                     getDescription: (count: number) => (count === 1 ? 'check' : 'checks'),
                     dynamicText: 'created', // Add dynamic text here
                     showLink: true,
                },
                cash: {
-                    checks: this.cashableChecks,
+                    // checks: this.cashableChecks,
                     getDescription: (count: number) => (count === 1 ? 'check that can be cashed' : 'checks that can be cashed'),
                     dynamicText: '', // Empty for no additional text
                     showLink: true,
                },
                cancel: {
-                    checks: this.cancellableChecks,
+                    // checks: this.cancellableChecks,
                     getDescription: (count: number) => (count === 1 ? 'check that can be cancelled' : 'checks that can be cancelled'),
                     dynamicText: '', // Dynamic text before the count
                     showLink: true,
@@ -2338,7 +2323,8 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           if (!config) return null;
 
           const walletName = this.currentWallet.name || 'selected';
-          const count = config.checks.length;
+          // const count = config.checks.length;
+          const count = 0;
 
           // Build the dynamic text part (with space if text exists)
           const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';

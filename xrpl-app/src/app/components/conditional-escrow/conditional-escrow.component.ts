@@ -364,8 +364,9 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           try {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               const accountInfo = await this.xrplService.getAccountInfo(client, walletAddress, 'validated', '');
-               await this.updateXrpBalance(client, accountInfo, wallet, index);
+               // const accountInfo = await this.xrplService.getAccountInfo(client, walletAddress, 'validated', '');
+               // await this.updateXrpBalance(client, accountInfo, wallet, index);
+               await this.refreshWallets(client, [walletAddress]);
                // this.cdr.detectChanges();
           } catch (err) {
                this.setError('Failed to refresh balance');
@@ -1087,7 +1088,14 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
      private getExistingEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string): EscrowDataForUI[] {
           this.existingEscrow = (escrowObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'Escrow' && obj.Account === classicAddress)
+               // .filter((obj: any) => obj.LedgerEntryType === 'Escrow' && obj.Account === classicAddress)
+               .filter(
+                    (obj: any) =>
+                         obj.LedgerEntryType === 'Escrow' &&
+                         obj.Account === classicAddress &&
+                         // Only condition-based escrows:
+                         !!obj.Condition
+               )
                .map((obj: any): EscrowDataForUI => {
                     const sendMax = obj.Amount;
                     let amount = '0';

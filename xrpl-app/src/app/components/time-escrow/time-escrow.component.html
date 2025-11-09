@@ -68,7 +68,7 @@
                               </div>
 
                               <!-- Seed shown below the button -->
-                              @if (activeTab === 'wallet.showSecret') {
+                              @if (wallet.showSecret) {
                               <div class="secret-seed-container">
                                    <div class="secret-seed">{{ wallet.seed }}</div>
                                    <button class="copy-btn" (click)="copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
@@ -282,7 +282,8 @@
                          <div class="checks-list">
                               @for (chk of existingIOUs; track chk.Balance.currency + chk.Balance.value) {
                               <div class="check-card">
-                                   <div class="check-amount">Currency: {{ chk.Balance.currency }} Amount: {{ chk.Balance.value }} <strong>Issuer: {{ chk.HighLimit.issuer }}</strong></div>
+                                   <div class="check-amount">Currency: {{ chk.Balance.currency }} Amount: {{ chk.Balance.value }}</div>
+                                   <div class="check-amount"><strong>Issuer: {{ chk.HighLimit.issuer }}</strong></div>
 
                                    <div class="button-group">
                                         <button class="icon-btn copy-check-id" (click)="copyIOUIssuanceAddress(chk.mpt_issuance_id); $event.stopPropagation(); $event.preventDefault()" title="Copy IOU Issuer" type="button">

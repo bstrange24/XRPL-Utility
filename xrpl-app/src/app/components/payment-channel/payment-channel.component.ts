@@ -328,8 +328,9 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
           try {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               const accountInfo = await this.xrplService.getAccountInfo(client, walletAddress, 'validated', '');
-               await this.updateXrpBalance(client, accountInfo, wallet, index);
+               // const accountInfo = await this.xrplService.getAccountInfo(client, walletAddress, 'validated', '');
+               // await this.updateXrpBalance(client, accountInfo, wallet, index);
+               await this.refreshWallets(client, [walletAddress]);
                // this.cdr.detectChanges();
           } catch (err) {
                this.setError('Failed to refresh balance');

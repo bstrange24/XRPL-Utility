@@ -226,58 +226,6 @@
                </div>
                }
 
-               <!-- <div class="top-section-right">
-                    <div class="button-container">
-                         <tr>
-                              <td colspan="2" style="display: flex; align-items: center; gap: 5px; margin-left: 5px">
-                                   <label>Show Manage Tokens</label>
-                                   <label class="switch" style="margin-left: 10px">
-                                        <input type="checkbox" [(ngModel)]="showManageTokens" name="showManageTokens" />
-                                        <span class="slider round"></span>
-                                   </label>
-                              </td>
-                         </tr>
-
-                         <tr *ngIf="showManageTokens">
-                              <td colspan="2">
-                                   <fieldset class="manage-tokens">
-                                        <legend>Manage Tokens</legend>
-                                        <div class="token-row">
-                                             <label style="padding-bottom: 12px">Add Token:</label>
-                                             <input type="text" [(ngModel)]="newCurrency" placeholder="Currency Code (e.g., USDC)" name="newCurrency" />
-                                             <input type="text" [(ngModel)]="newIssuer" placeholder="Issuer Address" name="newIssuer" />
-                                             <button style="margin-bottom: 20px" type="button" (click)="addToken()">Add</button>
-                                        </div>
-                                        <div class="token-row">
-                                             <label>Delete Token:</label>
-                                             <select [(ngModel)]="tokenToRemove" name="tokenToRemove" (change)="onTokenChange()">
-                                                  <option value="">Select a token</option>
-                                                  <option *ngFor="let curr of currencies" [value]="curr">{{ curr }}</option>
-                                             </select>
-
-                                             <select [(ngModel)]="issuerToRemove" name="issuerToRemove" [disabled]="!tokenToRemove">
-                                                  <option value="">{{ ((knownTrustLinesIssuers[tokenToRemove] || []).length) > 0 ? 'Select Issuer' : 'No issuers found' }}</option>
-                                                  <option *ngFor="let issuer of knownTrustLinesIssuers[tokenToRemove] || []" [value]="issuer">{{ issuer }}</option>
-                                             </select>
-                                             <button type="button" (click)="removeToken()">Remove</button>
-                                        </div>
-                                   </fieldset>
-                              </td>
-                         </tr>
-
-                              <tr>
-                                   <td colspan="2">
-                                        <button type="button" (click)="getTrustlinesForAccount()">Get Trustlines and Balances</button>
-                                        <button type="button" (click)="setTrustLine()">Set Trustline</button>
-                                        <button type="button" (click)="removeTrustline()">Remove Trustline</button>
-                                        <button type="button" (click)="issueCurrency()">Issue Currency</button>
-                                        <button type="button" (click)="clawbackTokens()">Clawback Tokens</button>
-                                        <button type="button" (click)="clearFields(true)">Clear Fields</button>
-                                   </td>
-                              </tr>
-                    </div>
-               </div> -->
-
                <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
                     <div [@tabTransition]="activeTab">
                          <div class="tab-content-columns">
@@ -365,20 +313,38 @@
                                    }
 
                                    <!-- Check ID (cash / cancel) -->
-                                   @if (activeTab === 'issueCurrency') {
+                                   @if (activeTab !== 'addNewIssuers') {
                                    <!-- Cancellable checks dropdown -->
-                                   @if (cancellableChecks.length > 0) {
-                                   <div>
-                                        <div class="form-row">
-                                             <div class="form-group" style="margin-bottom: 1em">
-                                                  <label>Available Checks to cancel</label>
-                                                  <!-- <select [(ngModel)]="checkIdField" name="checkIdField" class="form-control">
-                                                                           <option [ngValue]="''" disabled selected>{{ cancellableChecks.length ? 'Select a check to cancel' : 'No available checks to cancel' }}</option>
-                                                                           @for (chk of cancellableChecks; track chk.id) {
-                                                                           <option [ngValue]="chk.id">Amount in {{ formatIOUXrpAmountUI(chk.amount) }} from {{ chk.destination }}</option>
-                                                                           }
-                                                                      </select> -->
+                                   <!-- ==================== EXISTING IOUs ==================== -->
+                                   @if (activeTab !== 'addNewIssuers' && existingIOUs.length > 0) {
+                                   <div class="outstanding-checks-panel">
+                                        <div class="panel-header" (click)="toggleOutstandingIOU()" style="cursor: pointer; user-select: none">
+                                             <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
+                                                  <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
+                                                  Existing IOUs ({{ existingIOUs.length }})
+                                             </h3>
+                                        </div>
+
+                                        <div class="payment-channel-list-container" [style.max-height]="outstandingIOUCollapsed ? '0' : (existingIOUs.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
+                                             @if (!outstandingIOUCollapsed) {
+                                             <div class="checks-list">
+                                                  @for (chk of existingIOUs; track chk.Balance.currency + chk.Balance.value) {
+                                                  <div class="check-card">
+                                                       <div class="check-amount">Currency: {{ chk.Balance.currency }} Amount: {{ chk.Balance.value }}</div>
+                                                       <div class="check-amount"><strong>Issuer: {{ chk.HighLimit.issuer }}</strong></div>
+
+                                                       <div class="button-group">
+                                                            <button class="icon-btn copy-check-id" (click)="copyIOUIssuanceAddress(chk.HighLimit.issuer); $event.stopPropagation(); $event.preventDefault()" title="Copy IOU Issuer" type="button">
+                                                                 <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                                                 <a [href]="`${url}account/` + chk.HighLimit.issuer + `/tokens`" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
+                                                                      <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
+                                                                 </a>
+                                                            </button>
+                                                       </div>
+                                                  </div>
+                                                  }
                                              </div>
+                                             }
                                         </div>
                                    </div>
                                    } }
