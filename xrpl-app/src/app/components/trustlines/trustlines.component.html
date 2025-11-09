@@ -199,7 +199,7 @@
                @if (activeTab === 'addNewIssuers') {
                <div>
                     <div class="submenu-info-text">
-                         <div class="red-button-submenu">
+                         <div class="blue-button-submenu">
                               <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                          </div>
                          <div>
@@ -466,6 +466,7 @@
                          </div>
 
                          <!-- Switches -->
+                         @if(activeTab !== 'addNewIssuers') {
                          <div class="switch-group">
                               <!-- Memo group -->
                               <label class="switch">
@@ -508,6 +509,7 @@
                                    Simulate
                               </label>
                          </div>
+                         }
 
                          <!-- Memo Field -->
                          @if (isMemoEnabled) {
@@ -579,7 +581,9 @@
 
                          <!-- Action buttons -->
                          <div class="button-row">
-                              <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'removeTrustline' ? 'red' : activeTab === 'issueCurrency'   ? 'green' : '#007bff'}">{{ activeTab === 'cancel' ? 'Cancel Check' : activeTab === 'cash' ? 'Cash Check' : 'Set Trustline' }}</button>
+                              <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'removeTrustline' || activeTab === 'clawbackTokens' ? 'red' :activeTab === 'issueCurrency'  ? 'green' :'#007bff'}">
+                                   {{ activeTab === 'setTrustline' ? 'Set Trustline' : activeTab === 'removeTrustline' ? 'Remove Trustline' : activeTab === 'issueCurrency' ? 'Issue Currency' : activeTab === 'clawbackTokens' ? 'Clawback Tokens' : activeTab === 'addNewIssuers' ? 'Add Issuer' : '' }}
+                              </button>
                               <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                          </div>
 

@@ -1,7 +1,491 @@
-<div id="navbar-container">
-     <app-navbar></app-navbar>
+<div class="banner">
+     <div class="banner-content">
+          <div id="navbar-container">
+               <app-navbar></app-navbar>
+          </div>
+     </div>
 </div>
-<form id="theForm">
+
+<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+
+<!-- Main content. Centered with 2 columns -->
+<div class="main-container">
+     <div class="content-wrapper">
+          <!-- Left Wallet panel ==== -->
+          <div class="wallets-panel">
+               <!-- Header with title + Generate button -->
+               <div class="panel-header">
+                    <h2 class="panel-title">
+                         <lucide-icon name="wallet" size="25" style="padding-top: 5px"></lucide-icon>
+                         Accounts
+                    </h2>
+                    <button class="generate-btn" (click)="generateNewAccount()">+ Generate</button>
+               </div>
+
+               <p class="panel-subtitle">Generate {{environment}} accounts with XRP from the faucet.</p>
+
+               @if (hasWallets) {
+               <div>
+                    <!-- List of wallets -->
+                    @for (wallet of wallets; track wallet.address; let i = $index) {
+                    <div class="wallet-item" [class.selected]="selectedWalletIndex === i">
+                         <!-- Wallet Info -->
+                         <div class="wallet-info">
+                              @if (editingIndex(i)) {
+                              <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
+                              <label class="issuer-checkbox" title="Mark as issuer account">
+                                   <span class="issuer-label">Issuer</span>
+                                   <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" (change)="onIssuerChange(i, $event)" />
+                              </label>
+                              } @else {
+                              <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
+                              <label class="issuer-checkbox" title="Mark as issuer account">
+                                   <span class="issuer-label">Issuer</span>
+                                   <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" (change)="onIssuerChange(i, $event)" />
+                              </label>
+                              }
+                         </div>
+
+                         <div class="wallet-info" (click)="selectWallet(i)">
+                              <div class="address-line">
+                                   <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
+                                   <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
+                              </div>
+
+                              <!-- Icons -->
+                              <div class="wallet-actions">
+                                   <button class="icon-btn refresh" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
+                                        <lucide-icon name="refresh-ccw"></lucide-icon>
+                                   </button>
+
+                                   <button class="icon-btn copy" (click)="copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
+                                        <lucide-icon name="copy"></lucide-icon>
+                                   </button>
+
+                                   <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
+                                        <lucide-icon name="trash-2"></lucide-icon>
+                                   </button>
+                              </div>
+                         </div>
+
+                         <!-- Secret Key -->
+                         <div class="secret-section" (click)="selectWallet(i)">
+                              <div class="secret-header">
+                                   <span class="secret-label">Secret Key:</span>
+                                   <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
+                              </div>
+
+                              <!-- Seed shown below the button -->
+                              @if (wallet.showSecret) {
+                              <div class="secret-seed-container">
+                                   <div class="secret-seed">{{ wallet.seed }}</div>
+                                   <button class="copy-btn" (click)="copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
+                                        <lucide-icon name="copy" size="20"></lucide-icon>
+                                   </button>
+                              </div>
+                              }
+                         </div>
+                    </div>
+                    }
+
+                    <!-- Selected Account Summary ==== -->
+                    <div class="selected-account-card">
+                         <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
+                         <div class="summary-row"><span>Address:</span> <span>{{ currentWallet.address | slice:0:5 }}...{{ currentWallet.address | slice:-5 }}</span></div>
+                         <div class="summary-row"><span>Balance:</span> <span class="highlight wallet-balance">{{ currentWallet.balance }} XRP</span></div>
+                         <div class="summary-row"><span>Owner Count:</span> <span class="highlight wallet-balance">{{ currentWallet.ownerCount }}</span></div>
+                         <div class="summary-row"><span>Xrp Reserves:</span> <span class="highlight wallet-balance">{{ currentWallet.xrpReserves }} XRP</span></div>
+                    </div>
+               </div>
+               } @else {
+               <!-- This block shows if hasWallets is false -->
+               <div class="no-wallet-found">
+                    <lucide-icon name="wallet" size="40"></lucide-icon>
+                    <p>No accounts generated yet.</p>
+                    <p>Click "Generate" to create your first {{environment}} account</p>
+               </div>
+               }
+          </div>
+
+          <div class="toast" [class.show]="showToast">{{ toastMessage }}</div>
+
+          <!-- Right form -->
+          <div class="form-panel">
+               <!-- Menu bar -->
+               <div class="menu-bar">
+                    <button class="menu-btn active" [class.active]="activeTab === 'setTrustline'" (click)="setTab('setTrustline')">
+                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
+                         Modify Account Flags
+                    </button>
+                    <button class="menu-btn" [class.active]="activeTab === 'removeTrustline'" (click)="setTab('removeTrustline')">
+                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
+                         Remove Trustline
+                    </button>
+                    <button class="menu-btn" [class.active]="activeTab === 'issueCurrency'" (click)="setTab('issueCurrency')">
+                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
+                         Issue Tokens
+                    </button>
+                    <button class="menu-btn" [class.active]="activeTab === 'clawbackTokens'" (click)="setTab('clawbackTokens')">
+                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
+                         Clawback Tokens
+                    </button>
+                    <button class="menu-btn active" [class.active]="activeTab === 'addNewIssuers'" (click)="setTab('addNewIssuers')">
+                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
+                         Add/Remove Issuers
+                    </button>
+               </div>
+
+               <!-- Create Menu -->
+               @if (activeTab === 'setTrustline') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="blue-button-submenu">
+                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Modify Account Flags</h2>
+                              <p class="submenu-info-secondary-text">Set or Clear account level flags</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Remove Trustline Menu -->
+               @if (activeTab === 'removeTrustline') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="red-button-submenu">
+                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Remove Trustline</h2>
+                              <p class="submenu-info-secondary-text">Remove trustline to another XRPL address</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Issue Currency Menu -->
+               @if (activeTab === 'issueCurrency') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="green-button-submenu">
+                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Issue Currency</h2>
+                              <p class="submenu-info-secondary-text">Issue currency to another XRPL address</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Clawback Tokens Menu -->
+               @if (activeTab === 'clawbackTokens') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="red-button-submenu">
+                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Clawback Tokens</h2>
+                              <p class="submenu-info-secondary-text">Clawback tokens from another XRPL address</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Add/Remove New Issuers Menu -->
+               @if (activeTab === 'addNewIssuers') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="blue-button-submenu">
+                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Add/Remove Issuers</h2>
+                              <p class="submenu-info-secondary-text">Add issuers and tokens from external sources.</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Dynamic info panel -->
+               @if (infoMessage) {
+               <div class="info-panel">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-red-600"></ng-icon>
+                    <div class="info-text" [innerHTML]="infoMessage"></div>
+               </div>
+               }
+
+               <!-- Dynamic warning panel  -->
+               @if (warningMessage) {
+               <div class="warning-panel">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
+                    <div class="warning-text" [innerHTML]="warningMessage"></div>
+               </div>
+               }
+
+               <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
+                    <div [@tabTransition]="activeTab">
+                         <div class="tab-content-columns">
+                              <!-- ==================== LEFT: FORM FIELDS ==================== -->
+                              <div class="tab-content-container form-fields-container"></div>
+
+                              <!-- ==================== RIGHT: PAYMENT CHANNEL FLAGS ==================== -->
+                              @if (activeTab === 'getAccountDetails') {
+                              <!-- <div class="tab-content-container flags-container"> -->
+                              <div class="flags-wrapper">
+                                   <!-- Flags header -->
+                                   <div class="token-flags-header">
+                                        <lucide-icon name="flag" size="20"></lucide-icon>
+                                        <span class="token-flags-title">Trustline Flags</span>
+                                   </div>
+
+                                   <!-- asfRequireDest -->
+                                   @if (activeTab === 'getAccountDetails') {
+                                   <div class="flag-item" [class.enabled]="flags.asfRequireDest" (click)="toggleFlag('asfRequireDest')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfRequireDest" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfRequireDest</span>
+                                        </div>
+                                        <div class="flag-value">1</div>
+                                        <div class="flag-desc">Require a destination tag to send transactions to this account.</div>
+                                   </div>
+
+                                   <!-- asfRequireAuth -->
+                                   <div class="flag-item" [class.enabled]="flags.asfRequireAuth" (click)="toggleFlag('asfRequireAuth')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfRequireAuth" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfRequireAuth</span>
+                                        </div>
+                                        <div class="flag-value">2</div>
+                                        <div class="flag-desc">Require authorization for users to hold balances issued by this address can only be enabled if the address has no trust lines connected to it.</div>
+                                   </div>
+
+                                   <!-- asfDisallowXRP -->
+                                   <div class="flag-item" [class.enabled]="flags.asfDisallowXRP" (click)="toggleFlag('asfDisallowXRP')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfDisallowXRP" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfDisallowXRP</span>
+                                        </div>
+                                        <div class="flag-value">3</div>
+                                        <div class="flag-desc">XRP should not be sent to this account.</div>
+                                   </div>
+
+                                   <!-- asfDisableMaster -->
+                                   <div class="flag-item" [class.enabled]="flags.asfDisableMaster" (click)="toggleFlag('asfDisableMaster')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfDisableMaster" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfDisableMaster</span>
+                                        </div>
+                                        <div class="flag-value">4</div>
+                                        <div class="flag-desc">Disallow use of the master key pair. Can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.</div>
+                                   </div>
+
+                                   <!-- asfNoFreeze -->
+                                   <div class="flag-item" [class.enabled]="flags.asfNoFreeze" (click)="toggleFlag('asfNoFreeze')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfNoFreeze" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfNoFreeze</span>
+                                        </div>
+                                        <div class="flag-value">6</div>
+                                        <div class="flag-desc">Permanently give up the ability to freeze individual trust lines or disable Global Freeze. This flag can never be disabled after being enabled.</div>
+                                   </div>
+
+                                   <!-- asfGlobalFreeze -->
+                                   <div class="flag-item" [class.enabled]="flags.asfGlobalFreeze" (click)="toggleFlag('asfGlobalFreeze')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfGlobalFreeze" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfGlobalFreeze</span>
+                                        </div>
+                                        <div class="flag-value">7</div>
+                                        <div class="flag-desc">Freeze all assets issued by this account.</div>
+                                   </div>
+
+                                   <!-- asfDefaultRipple -->
+                                   <div class="flag-item" [class.enabled]="flags.asfDefaultRipple" (click)="toggleFlag('asfDefaultRipple')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfDefaultRipple" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfDefaultRipple</span>
+                                        </div>
+                                        <div class="flag-value">8</div>
+                                        <div class="flag-desc">Enable rippling on this account's trust lines by default.</div>
+                                   </div>
+
+                                   <!-- asfDepositAuth -->
+                                   <div class="flag-item" [class.enabled]="flags.asfDepositAuth" (click)="toggleFlag('asfDepositAuth')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfDepositAuth" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfDefaultRipple</span>
+                                        </div>
+                                        <div class="flag-value">9</div>
+                                        <div class="flag-desc">Enable Deposit Authorization on this account.</div>
+                                   </div>
+
+                                   <!-- asfAuthorizedNFTokenMinter -->
+                                   <div class="flag-item" [class.enabled]="flags.asfAuthorizedNFTokenMinter" (click)="toggleFlag('asfAuthorizedNFTokenMinter')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfDisallowIncomingNFTokenOffer" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfAuthorizedNFTokenMinter</span>
+                                        </div>
+                                        <div class="flag-value">10</div>
+                                        <div class="flag-desc">Allow another account to mint and burn tokens on behalf of this account.</div>
+                                   </div>
+
+                                   <!-- asfDisallowIncomingNFTokenOffer -->
+                                   <div class="flag-item" [class.enabled]="flags.asfDisallowIncomingNFTokenOffer" (click)="toggleFlag('asfDisallowIncomingNFTokenOffer')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfDisallowIncomingNFTokenOffer" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfDisallowIncomingNFTokenOffer</span>
+                                        </div>
+                                        <div class="flag-value">12</div>
+                                        <div class="flag-desc">Allow another account to mint and burn tokens on behalf of this account.</div>
+                                   </div>
+                                   }
+
+                                   <!-- asfDisallowIncomingCheck -->
+                                   <div class="flag-item" [class.enabled]="flags.asfDisallowIncomingCheck" (click)="toggleFlag('asfDisallowIncomingCheck')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfDisallowIncomingCheck" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfDisallowIncomingCheck</span>
+                                        </div>
+                                        <div class="flag-value">13</div>
+                                        <div class="flag-desc">Disallow other accounts from creating incoming Checks.</div>
+                                   </div>
+
+                                   <!-- asfDisallowIncomingPayChan -->
+                                   <div class="flag-item" [class.enabled]="flags.asfDisallowIncomingPayChan" (click)="toggleFlag('asfDisallowIncomingPayChan')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfDisallowIncomingPayChan" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfDisallowIncomingPayChan</span>
+                                        </div>
+                                        <div class="flag-value">14</div>
+                                        <div class="flag-desc">Disallow other accounts from creating incoming Checks.</div>
+                                   </div>
+
+                                   <!-- asfDisallowIncomingTrustline -->
+                                   <div class="flag-item" [class.enabled]="flags.asfDisallowIncomingTrustline" (click)="toggleFlag('asfDisallowIncomingTrustline')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfDisallowIncomingTrustline" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfDisallowIncomingTrustline</span>
+                                        </div>
+                                        <div class="flag-value">15</div>
+                                        <div class="flag-desc">Disallow other accounts from creating incoming Trustlines.</div>
+                                   </div>
+
+                                   <!-- asfAllowTrustLineLocking -->
+                                   <div class="flag-item" [class.enabled]="flags.asfAllowTrustLineLocking" (click)="toggleFlag('asfAllowTrustLineLocking')">
+                                        <div class="flag-header">
+                                             <input type="checkbox" [checked]="flags.asfAllowTrustLineLocking" class="flag-checkbox" />
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                             </svg>
+                                             <span class="flag-title">asfAllowTrustLineLocking</span>
+                                        </div>
+                                        <div class="flag-value">15</div>
+                                        <div class="flag-desc">Disallow other accounts from creating incoming Trustlines.</div>
+                                   </div>
+
+                                   <!-- TOTAL FLAGS VALUE -->
+                                   @if (activeTab === 'getAccountDetails') {
+                                   <div class="flags-total">
+                                        <span class="total-label">Total Flags Value:</span>
+                                        <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
+                                   </div>
+                                   }
+                              </div>
+                              <!-- </div> -->
+                              }
+                         </div>
+                    </div>
+               </form>
+
+               <!-- Tx Preview -->
+               @if (paymentTx.length >0) {
+               <div class="tx-preview-container">
+                    <div class="tx-header">
+                         <h5 class="tx-title">Ticket Transaction</h5>
+                         <div class="tx-actions">
+                              <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
+                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                   Copy
+                              </button>
+                              <button class="download-btn" (click)="downloadTx()" title="Download JSON">
+                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+                                   Download
+                              </button>
+                         </div>
+                    </div>
+
+                    <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
+               </div>
+               }
+
+               <!-- Tx Result Preview -->
+               @if (txResult.length >0) {
+               <div class="tx-preview-container">
+                    <div class="tx-header">
+                         <h3 class="tx-title">Transaction Result</h3>
+                         <div class="tx-actions">
+                              <button class="copy-btn" (click)="copyTxResult()" title="Copy JSON">
+                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                   Copy
+                              </button>
+                              <button class="download-btn" (click)="downloadTxResult()" title="Download JSON">
+                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+                                   Download
+                              </button>
+                         </div>
+                    </div>
+
+                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
+               </div>
+               }
+          </div>
+     </div>
+</div>
+
+<!-- <form id="theForm">
      <app-app-wallet-dynamic-input (walletListChange)="onWalletListChange($event)" (transactionResult)="handleTransactionResult($event)"></app-app-wallet-dynamic-input>
 
      <fieldset>
@@ -348,7 +832,6 @@
                               <summary>Account Flag Info</summary>
                               <fieldset class="flag-fieldset">
                                    <div class="flag-table">
-                                        <!-- Header Row -->
                                         <div class="flag-row flag-header">
                                              <div class="flag-cell">Flag</div>
                                              <div class="flag-cell">Purpose</div>
@@ -356,7 +839,6 @@
                                              <div class="flag-cell">Mutually Exclusive</div>
                                              <div class="flag-cell">Notes</div>
                                         </div>
-                                        <!-- Data Rows -->
                                         <div class="flag-row">
                                              <div class="flag-cell">asfRequireDest</div>
                                              <div class="flag-cell">Require a destination tag to send transactions to this account.</div>
@@ -783,13 +1265,6 @@
                                    </span>
                               </td>
                               <td>
-                                   <!-- <div class="selection-mode">
-                                        <label>
-                                             <input type="checkbox" [(ngModel)]="multiSelectMode" [ngModelOptions]="{standalone: true}" />
-                                             Multiple Selection
-                                        </label>
-                                   </div> -->
-
                                    <div *ngIf="multiSelectMode; else singleSelect">
                                         <select class="timeUnit" [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
                                              <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
@@ -822,4 +1297,4 @@
                </div>
           </div>
      </fieldset>
-</form>
+</form> -->
