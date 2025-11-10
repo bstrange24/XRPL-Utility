@@ -9,6 +9,7 @@ import { sha256 } from 'js-sha256';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { StorageService } from '../local-storage/storage.service';
+import md5 from 'blueimp-md5';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -2111,6 +2112,11 @@ export class UtilsService {
 
      setMessageKey(tx: any, messageKey: string) {
           tx.MessageKey = messageKey;
+     }
+
+     setEmailHash(tx: any, email: string) {
+          const emailHash = md5(email.trim().toLowerCase()).toUpperCase();
+          tx.EmailHash = emailHash;
      }
 
      setDomain(tx: any, domain: string) {

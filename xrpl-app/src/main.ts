@@ -10,7 +10,7 @@ import process from 'process';
 import { importProvidersFrom } from '@angular/core';
 import { LucideAngularModule, Cog, BanknoteArrowUp, BanknoteArrowDown, Trash2, DollarSign, TicketCheck, Check, Hourglass, Wallet, Send, ShieldCheck, Flag, Copy, FileTextIcon, ChevronDown, ChevronRight, BookOpenCheck, ArrowBigRight, RefreshCcw, SplitIcon } from 'lucide-angular';
 import { provideIcons } from '@ng-icons/core';
-import { heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList } from '@ng-icons/heroicons/outline';
+import { heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath } from '@ng-icons/heroicons/outline';
 
 // Make Buffer and process available globally
 (window as any).Buffer = Buffer;
@@ -45,6 +45,6 @@ bootstrapApplication(AppComponent, {
                     SplitIcon,
                })
           ),
-          provideIcons({ heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList }),
+          provideIcons({ heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath }),
      ],
 }).catch(err => console.error(err));

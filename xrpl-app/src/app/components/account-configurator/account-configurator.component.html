@@ -113,34 +113,26 @@
           <div class="form-panel">
                <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'getAccountDetails'" (click)="setTab('getAccountDetails')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
+                    <button class="menu-btn active" [class.active]="activeTab === 'modifyAccountFlags'" (click)="setTab('modifyAccountFlags')">
+                         <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
                          Modify Account Flags
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'removeTrustline'" (click)="setTab('removeTrustline')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Remove Trustline
+                    <button class="menu-btn" [class.active]="activeTab === 'modifyMetaData'" (click)="setTab('modifyMetaData')">
+                         <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
+                         Modify Account Meta Data
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'issueCurrency'" (click)="setTab('issueCurrency')">
-                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Issue Tokens
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'clawbackTokens'" (click)="setTab('clawbackTokens')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Clawback Tokens
-                    </button>
-                    <button class="menu-btn active" [class.active]="activeTab === 'addNewIssuers'" (click)="setTab('addNewIssuers')">
+                    <button class="menu-btn" [class.active]="activeTab === 'addSigners'" (click)="setTab('addSigners')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Add/Remove Issuers
+                         Add Signers
                     </button>
                </div>
 
-               <!-- Create Menu -->
-               @if (activeTab === 'getAccountDetails') {
+               <!-- Modify Flag Menu -->
+               @if (activeTab === 'modifyAccountFlags') {
                <div>
                     <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                         <div class="white-button-submenu">
+                              <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
                          </div>
                          <div>
                               <h2 class="submenu-info-main-text">Modify Account Flags</h2>
@@ -150,61 +142,32 @@
                </div>
                }
 
-               <!-- Remove Trustline Menu -->
-               @if (activeTab === 'removeTrustline') {
+               <!-- Modify Meta Data Menu -->
+               @if (activeTab === 'modifyMetaData') {
                <div>
                     <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                         <div class="white-button-submenu">
+                              <!-- <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon> -->
+                              <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
                          </div>
                          <div>
-                              <h2 class="submenu-info-main-text">Remove Trustline</h2>
-                              <p class="submenu-info-secondary-text">Remove trustline to another XRPL address</p>
+                              <h2 class="submenu-info-main-text">Modify Account Meta Data</h2>
+                              <p class="submenu-info-secondary-text">Modify the account meta data</p>
                          </div>
                     </div>
                </div>
                }
 
                <!-- Issue Currency Menu -->
-               @if (activeTab === 'issueCurrency') {
+               @if (activeTab === 'addSigners') {
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                              <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          </div>
                          <div>
-                              <h2 class="submenu-info-main-text">Issue Currency</h2>
-                              <p class="submenu-info-secondary-text">Issue currency to another XRPL address</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Clawback Tokens Menu -->
-               @if (activeTab === 'clawbackTokens') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Clawback Tokens</h2>
-                              <p class="submenu-info-secondary-text">Clawback tokens from another XRPL address</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Add/Remove New Issuers Menu -->
-               @if (activeTab === 'addNewIssuers') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Add/Remove Issuers</h2>
-                              <p class="submenu-info-secondary-text">Add issuers and tokens from external sources.</p>
+                              <h2 class="submenu-info-main-text">Add Signers</h2>
+                              <p class="submenu-info-secondary-text">Add Multi Signers and Regular Key address for signing transactions</p>
                          </div>
                     </div>
                </div>
@@ -227,280 +190,261 @@
                }
 
                <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
-                    <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab">
-                              <!-- ==================== LEFT: FORM FIELDS ==================== -->
-                              <!-- <div class="tab-content-container form-fields-container"></div> -->
+                    <div [@tabTransition]="activeTab">
+                         <div class="tab-content-columns">
+                              <!-- Left Form Fields -->
+                              <div class="tab-content-container form-fields-container">
+                                   <!-- Right Account Flags-->
+                                   @if (activeTab === 'modifyAccountFlags') {
+                                   <div class="flags-wrapper">
+                                        <!-- Configuration template -->
+                                        <div style="padding-bottom: 0.3em">
+                                             <span class="token-flags-title">
+                                                  <label for="isHolderConfiguration">Configuration Templates:</label>
+                                             </span>
+                                             <span class="token-flags-title">
+                                                  <input type="radio" id="isHolderConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="holder" />
+                                                  <label for="isHolderConfiguration">Holder</label>
+                                                  <input type="radio" id="isExchangerConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="exchanger" />
+                                                  <label for="isExchangerConfiguration">Exchanger</label>
+                                                  <input type="radio" id="isIssuerConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="issuer" />
+                                                  <label for="isIssuerConfiguration">Issuer</label>
+                                             </span>
+                                        </div>
 
-                              <!-- ==================== RIGHT: PAYMENT CHANNEL FLAGS ==================== -->
-                              @if (activeTab === 'getAccountDetails') {
-                              <div class="flags-wrapper">
-                                   @if (activeTab === 'getAccountDetails') {
-                                   <!-- Flags header -->
-                                   <div class="token-flags-header">
-                                        <lucide-icon name="flag" size="20"></lucide-icon>
-                                        <span class="token-flags-title">Account Flags</span>
-                                   </div>
+                                        <!-- Flags header -->
+                                        <div class="token-flags-header">
+                                             <lucide-icon name="flag" size="20"></lucide-icon>
+                                             <span class="token-flags-title">Account Flags</span>
+                                        </div>
 
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <div class="form-group-account-flags">
+                                        <div>
+                                             <div class="form-row-account-flags">
                                                   <!-- asfRequireDest -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfRequireDest" (click)="toggleFlag('asfRequireDest')">
                                                        <div class="flag-header-account">
-                                                            <!-- <div class="flag-header"> -->
-                                                            <input type="checkbox" [checked]="flags.asfRequireDest" class="flag-checkbox" />
+                                                            <input type="checkbox" id="asfRequireDest" name="asfRequireDest" [checked]="flags.asfRequireDest" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title-account-flags">asfRequireDest</span>
+                                                            <span class="flag-title-account-flags">Require Destination Tag</span>
                                                        </div>
-                                                       <div class="flag-value">1</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfRequireDest }} {{'asfRequireDest'}}</div>
                                                        <div class="flag-desc">Require a destination tag to send transactions to this account.</div>
                                                   </div>
-                                             </div>
 
-                                             <div class="form-group-account-flags">
                                                   <!-- asfRequireAuth -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfRequireAuth" (click)="toggleFlag('asfRequireAuth')">
                                                        <div class="flag-header-account">
-                                                            <!-- <div class="flag-header"> -->
-                                                            <input type="checkbox" [checked]="flags.asfRequireAuth" class="flag-checkbox" />
+                                                            <input type="checkbox" id="asfRequireAuth" name="asfRequireAuth" [checked]="flags.asfRequireAuth" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title-account-flags">asfRequireAuth</span>
+                                                            <span class="flag-title-account-flags">Require Authorization</span>
                                                        </div>
-                                                       <div class="flag-value">2</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfRequireAuth }} {{'asfRequireAuth'}}</div>
                                                        <div class="flag-desc">Require authorization for users to hold balances issued by this address can only be enabled if the address has no trust lines connected to it.</div>
                                                   </div>
                                              </div>
                                         </div>
-                                   </div>
 
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <div class="form-group-account-flags">
+                                        <div>
+                                             <div class="form-row-account-flags">
                                                   <!-- asfDisallowXRP -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowXRP" (click)="toggleFlag('asfDisallowXRP')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfDisallowXRP" class="flag-checkbox" />
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfDisallowXRP" name="asfDisallowXRP" [checked]="flags.asfDisallowXRP" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfDisallowXRP</span>
+                                                            <span class="flag-title">Disallow XRP</span>
                                                        </div>
-                                                       <div class="flag-value">3</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfDisallowXRP }} {{'asfDisallowXRP'}}</div>
                                                        <div class="flag-desc">XRP should not be sent to this account.</div>
                                                   </div>
-                                             </div>
 
-                                             <div class="form-group-account-flags">
                                                   <!-- asfDisableMaster -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfDisableMaster" (click)="toggleFlag('asfDisableMaster')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfDisableMaster" class="flag-checkbox" />
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfDisableMaster" name="asfDisableMaster" [checked]="flags.asfDisableMaster" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfDisableMaster</span>
+                                                            <span class="flag-title">Disable Master Key</span>
                                                        </div>
-                                                       <div class="flag-value">4</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfDisableMaster }} {{'asfDisableMaster'}}</div>
                                                        <div class="flag-desc">Disallow use of the master key pair. Can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.</div>
                                                   </div>
                                              </div>
                                         </div>
-                                   </div>
 
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <div class="form-group-account-flags">
+                                        <div>
+                                             <div class="form-row-account-flags">
                                                   <!-- asfNoFreeze -->
-                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfNoFreeze" (click)="toggleFlag('asfNoFreeze')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfNoFreeze" class="flag-checkbox" />
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfNoFreeze" (click)="toggleFlag('asfNoFreeze');onNoFreezeChange();">
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfNoFreeze" name="asfNoFreeze" [checked]="flags.asfNoFreeze" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfNoFreeze</span>
+                                                            <span class="flag-title">No Freeze</span>
                                                        </div>
-                                                       <div class="flag-value">6</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfNoFreeze }} {{'asfNoFreeze'}}</div>
                                                        <div class="flag-desc">Permanently give up the ability to freeze individual trust lines or disable Global Freeze. This flag can never be disabled after being enabled.</div>
                                                   </div>
-                                             </div>
 
-                                             <div class="form-group-account-flags">
                                                   <!-- asfGlobalFreeze -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfGlobalFreeze" (click)="toggleFlag('asfGlobalFreeze')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfGlobalFreeze" class="flag-checkbox" />
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfGlobalFreeze" name="asfGlobalFreeze" [checked]="flags.asfGlobalFreeze" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfGlobalFreeze</span>
+                                                            <span class="flag-title">Global Freeze</span>
                                                        </div>
-                                                       <div class="flag-value">7</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfGlobalFreeze }} {{'asfGlobalFreeze'}}</div>
                                                        <div class="flag-desc">Freeze all assets issued by this account.</div>
                                                   </div>
                                              </div>
                                         </div>
-                                   </div>
 
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <div class="form-group-account-flags">
+                                        <div>
+                                             <div class="form-row-account-flags">
                                                   <!-- asfDefaultRipple -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfDefaultRipple" (click)="toggleFlag('asfDefaultRipple')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfDefaultRipple" class="flag-checkbox" />
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfDefaultRipple" name="asfDefaultRipple" [checked]="flags.asfDefaultRipple" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfDefaultRipple</span>
+                                                            <span class="flag-title">Default Ripple</span>
                                                        </div>
-                                                       <div class="flag-value">8</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfDefaultRipple }} {{'asfDefaultRipple'}}</div>
                                                        <div class="flag-desc">Enable rippling on this account's trust lines by default.</div>
                                                   </div>
-                                             </div>
 
-                                             <div class="form-group-account-flags">
                                                   <!-- asfDepositAuth -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfDepositAuth" (click)="toggleFlag('asfDepositAuth')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfDepositAuth" class="flag-checkbox" />
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfDepositAuth" name="asfDepositAuth" [checked]="flags.asfDepositAuth" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfDepositAuth</span>
+                                                            <span class="flag-title">Deposit Authorization</span>
                                                        </div>
-                                                       <div class="flag-value">9</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfDepositAuth }} {{'asfDepositAuth'}}</div>
                                                        <div class="flag-desc">Enable Deposit Authorization on this account.</div>
                                                   </div>
                                              </div>
                                         </div>
-                                   </div>
 
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <div class="form-group-account-flags">
+                                        <div>
+                                             <div class="form-row-account-flags">
                                                   <!-- asfAuthorizedNFTokenMinter -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfAuthorizedNFTokenMinter" (click)="toggleFlag('asfAuthorizedNFTokenMinter')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfAuthorizedNFTokenMinter" class="flag-checkbox" />
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfAuthorizedNFTokenMinter" name="asfAuthorizedNFTokenMinter" [checked]="flags.asfAuthorizedNFTokenMinter" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfAuthorizedNFTokenMinter</span>
+                                                            <span class="flag-title">Authorized NFToken Minter</span>
                                                        </div>
-                                                       <div class="flag-value">10</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfAuthorizedNFTokenMinter }} {{'asfAuthorizedNFTokenMinter'}}</div>
                                                        <div class="flag-desc">Allow another account to mint and burn tokens on behalf of this account.</div>
                                                   </div>
-                                             </div>
 
-                                             <div class="form-group-account-flags">
                                                   <!-- asfDisallowIncomingNFTokenOffer -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingNFTokenOffer" (click)="toggleFlag('asfDisallowIncomingNFTokenOffer')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfDisallowIncomingNFTokenOffer" class="flag-checkbox" />
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfDisallowIncomingNFTokenOffer" name="asfDisallowIncomingNFTokenOffer" [checked]="flags.asfDisallowIncomingNFTokenOffer" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfDisallowIncomingNFTokenOffer</span>
+                                                            <span class="flag-title">Disallow Incoming NFToken Offer</span>
                                                        </div>
-                                                       <div class="flag-value">12</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfDisallowIncomingNFTokenOffer }} {{'asfDisallowIncomingNFTokenOffer'}}</div>
                                                        <div class="flag-desc">Disallow other accounts from creating incoming NFTOffers.</div>
                                                   </div>
                                              </div>
                                         </div>
-                                   </div>
 
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <div class="form-group-account-flags">
+                                        <div>
+                                             <div class="form-row-account-flags">
                                                   <!-- asfDisallowIncomingCheck -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingCheck" (click)="toggleFlag('asfDisallowIncomingCheck')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfDisallowIncomingCheck" class="flag-checkbox" />
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfDisallowIncomingCheck" name="asfDisallowIncomingCheck" [checked]="flags.asfDisallowIncomingCheck" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfDisallowIncomingCheck</span>
+                                                            <span class="flag-title">Disallow Incoming Check</span>
                                                        </div>
-                                                       <div class="flag-value">13</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfDisallowIncomingCheck }} {{'asfDisallowIncomingCheck'}}</div>
                                                        <div class="flag-desc">Disallow other accounts from creating incoming Checks.</div>
                                                   </div>
-                                             </div>
 
-                                             <div class="form-group-account-flags">
                                                   <!-- asfDisallowIncomingPayChan -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingPayChan" (click)="toggleFlag('asfDisallowIncomingPayChan')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfDisallowIncomingPayChan" class="flag-checkbox" />
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfDisallowIncomingPayChan" name="asfDisallowIncomingPayChan" [checked]="flags.asfDisallowIncomingPayChan" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfDisallowIncomingPayChan</span>
+                                                            <span class="flag-title">Disallow Incoming Payment Channel</span>
                                                        </div>
-                                                       <div class="flag-value">14</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfDisallowIncomingPayChan }} {{'asfDisallowIncomingPayChan'}}</div>
                                                        <div class="flag-desc">Disallow other accounts from creating incoming PayChannels.</div>
                                                   </div>
                                              </div>
                                         </div>
-                                   </div>
 
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <div class="form-group-account-flags">
+                                        <div>
+                                             <div class="form-row-account-flags">
                                                   <!-- asfDisallowIncomingTrustline -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingTrustline" (click)="toggleFlag('asfDisallowIncomingTrustline')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfDisallowIncomingTrustline" class="flag-checkbox" />
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfDisallowIncomingTrustline" name="asfDisallowIncomingTrustline" [checked]="flags.asfDisallowIncomingTrustline" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfDisallowIncomingTrustline</span>
+                                                            <span class="flag-title">Disallow Incoming Trustline</span>
                                                        </div>
-                                                       <div class="flag-value">15</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfDisallowIncomingTrustline }} {{'asfDisallowIncomingTrustline'}}</div>
                                                        <div class="flag-desc">Disallow other accounts from creating incoming Trustlines.</div>
                                                   </div>
-                                             </div>
 
-                                             <div class="form-group-account-flags">
                                                   <!-- asfAllowTrustLineClawback -->
-                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfAllowTrustLineClawback" (click)="toggleFlag('asfAllowTrustLineClawback')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfAllowTrustLineClawback" class="flag-checkbox" />
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.asfAllowTrustLineClawback" (click)="toggleFlag('asfAllowTrustLineClawback');onClawbackChange();">
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfAllowTrustLineClawback" name="asfAllowTrustLineClawback" [checked]="flags.asfAllowTrustLineClawback" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfAllowTrustLineClawback</span>
+                                                            <span class="flag-title">Allow TrustLine Clawback</span>
                                                        </div>
-                                                       <div class="flag-value">16</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfAllowTrustLineClawback }} {{'asfAllowTrustLineClawback'}}</div>
                                                        <div class="flag-desc">Permanently gain the ability to claw back issued IOUs.</div>
                                                   </div>
                                              </div>
                                         </div>
-                                   </div>
 
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <div class="form-group-account-flags">
+                                        <div>
+                                             <div class="form-row-account-flags">
                                                   <!-- asfAllowTrustLineLocking -->
                                                   <div class="flag-item-account-flags" [class.enabled]="flags.asfAllowTrustLineLocking" (click)="toggleFlag('asfAllowTrustLineLocking')">
-                                                       <div class="flag-header">
-                                                            <input type="checkbox" [checked]="flags.asfAllowTrustLineLocking" class="flag-checkbox" />
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="asfAllowTrustLineLocking" name="asfAllowTrustLineLocking" [checked]="flags.asfAllowTrustLineLocking" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
-                                                            <span class="flag-title">asfAllowTrustLineLocking</span>
+                                                            <span class="flag-title">Allow TrustLine Locking</span>
                                                        </div>
-                                                       <div class="flag-value">17</div>
+                                                       <div class="flag-value">{{ FLAG_VALUES.asfAllowTrustLineLocking }} {{'asfAllowTrustLineLocking'}}</div>
                                                        <div class="flag-desc">Issuers allow their IOUs to be used as escrow amounts.</div>
                                                   </div>
-                                             </div>
-                                             <div class="form-group-account-flags">
+
                                                   <div class="flag-item-account-flags">
-                                                       <!-- TOTAL FLAGS VALUE -->
+                                                       <!-- Total Flag value -->
                                                        <div class="flags-total">
                                                             <span class="total-label">Total Flags Value:</span>
                                                             <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
@@ -510,78 +454,315 @@
                                         </div>
                                    </div>
                                    }
-                              </div>
-                              }
 
-                              <!-- Switches -->
-                              <div class="switch-group">
-                                   <!-- Memo group -->
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                        <span class="slider"></span>
-                                        Add Memo
-                                   </label>
+                                   <!-- Modify Meta Data -->
+                                   @if (activeTab === 'modifyMetaData') {
+                                   <!-- Deposit Auth Address -->
+                                   <fieldset class="fieldset">
+                                        <div>
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Set Deposit Authorization Addresses</label>
+                                                       <input type="text" [(ngModel)]="depositAuthAddress" name="depositAuthAddress" placeholder="Comma seperated list of address for deposit authorization." />
+                                                  </div>
+                                             </div>
 
-                                   <!-- Multi Signing Enabled group -->
-                                   @if (multiSigningEnabled) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                        <span class="slider"></span>
-                                        Use Multi-Sign
-                                   </label>
+                                             <div class="button-row" style="margin-top: 0">
+                                                  <button type="button" (click)="setDepositAuthAccounts('Y')" class="btn-primary">Set Deposit Auth</button>
+                                                  <button type="button" (click)="setDepositAuthAccounts('N')" class="btn-primary" [ngStyle]="{'background-color':'red'}">Unauthorize Deposit Auth</button>
+                                             </div>
+                                        </div>
+
+                                        <div>
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Set NFT Minter Address</label>
+                                                       <input type="text" [(ngModel)]="nfTokenMinterAddress" name="nfTokenMinterAddress" />
+                                                  </div>
+                                             </div>
+
+                                             <div class="button-row" style="margin-top: 0">
+                                                  <button type="button" (click)="setNftMinterAddress('Y')" class="btn-primary">Set NFT Minter</button>
+                                                  <button type="button" (click)="setNftMinterAddress('N')" class="btn-primary" [ngStyle]="{'background-color':'red'}">Remove NFT Minter</button>
+                                             </div>
+                                        </div>
+                                   </fieldset>
+
+                                   <!-- Transfer Rate, tick -->
+                                   <div>
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Transfer Rate</label>
+                                                  <input type="text" [(ngModel)]="transferRate" name="transferRate" />
+                                             </div>
+
+                                             <div class="form-group">
+                                                  <label>Tick Size</label>
+                                                  <input type="text" [(ngModel)]="tickSize" name="tickSize" />
+                                             </div>
+                                        </div>
+
+                                        <!-- <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Email</label>
+                                                  <input type="email" [(ngModel)]="userEmail" name="userEmail" (ngModelChange)="updateAvatarUrlFromEmail($event)" placeholder="Enter email" />
+                                             </div>
+
+                                             <div class="form-group">
+                                                  <label>Avatar URL</label>
+                                                  <input type="text" [(ngModel)]="avatarUrl" name="avatarUrl" readonly />
+                                             </div>
+                                        </div>
+
+                                        @if (avatarUrl) {
+                                        <div class="avatar-preview">
+                                             <img [src]="avatarUrl" alt="Avatar Preview" />
+                                        </div>
+                                        } -->
+
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Domain</label>
+                                                  <input type="text" [(ngModel)]="domain" name="domain" />
+                                             </div>
+                                        </div>
+
+                                        <div>
+                                             <div class="form-row-account-flags" style="margin-top: 0.5em; margin-bottom: 0.5em">
+                                                  <!-- isMessageKey -->
+                                                  <div class="flag-item-account-flags" [class.enabled]="isMessageKey" (click)="toggleMessageKey()">
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="isMessageKey" name="isMessageKey" [checked]="isMessageKey" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title-account-flags">Save Message Key</span>
+                                                       </div>
+                                                       <div class="flag-desc">Public key for sending encrypted messages to this account.</div>
+                                                  </div>
+                                             </div>
+                                        </div>
+                                   </div>
                                    }
 
-                                   <!-- Regular Key Signing Enabled-->
-                                   @if (regularKeySigningEnabled) {
-                                   <label class="switch">
-                                        <!-- <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" /> -->
-                                        <span class="slider"></span>
-                                        Use Regular Key
-                                   </label>
+                                   <!-- Multi Sign -->
+                                   @if(activeTab === 'addSigners') {
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Check this to update add Multi-Sign Address">
+                                                  <label>Setup Multi-Sign</label>
+                                             </span>
+                                        </td>
+                                        <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                             <label class="switch">
+                                                  <input type="checkbox" id="isMultiSignAddressData" [(ngModel)]="isMultiSign" (ngModelChange)="toggleMultiSign()" name="isMultiSignAddressData" />
+                                                  <span class="slider round"></span>
+                                             </label>
+                                        </td>
+                                   </tr>
+
+                                   <ng-container *ngIf="isMultiSign">
+                                        <tr>
+                                             <td></td>
+                                             <td>
+                                                  <fieldset style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; width: fit-content">
+                                                       <ng-container *ngFor="let signer of signers; let i = index">
+                                                            <fieldset style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px">
+                                                                 <legend style="font-weight: bold; color: white">Signer {{ i + 1 }}</legend>
+                                                                 <div style="margin-bottom: 8px">
+                                                                      <label for="signerAccountField{{ i }}" class="signer-label">Account:</label>
+                                                                      <input type="text" id="signerAccountField{{ i }}" style="width: 270px" [(ngModel)]="signer.account" name="signerAccountField{{ i }}" />
+                                                                 </div>
+                                                                 <div style="margin-bottom: 8px">
+                                                                      <label for="signerSeedField{{ i }}" style="padding-left: 26px" class="signer-label">Seed:</label>
+                                                                      <input type="text" id="signerSeedField{{ i }}" style="width: 270px" [(ngModel)]="signer.seed" name="signerSeedField{{ i }}" />
+                                                                 </div>
+                                                                 <div>
+                                                                      <label for="signerWeightField{{ i }}" style="padding-left: 17px" class="signer-label">Weight:</label>
+                                                                      <input class="multisignMultiAddressAccount" style="width: 50px; height: 28px" type="number" id="signerWeightField{{ i }}" [(ngModel)]="signer.weight" name="signerWeightField{{ i }}" />
+                                                                      <button type="button" (click)="removeSigner(i)" *ngIf="signers.length > 1">Remove</button>
+                                                                 </div>
+                                                            </fieldset>
+                                                       </ng-container>
+
+                                                       <div style="margin: 10px 0">
+                                                            <button type="button" (click)="addSigner()">+ Add Signer</button>
+                                                       </div>
+
+                                                       <div style="margin: 10px 0">
+                                                            <label style="display: inline-block; margin-right: 10px">Signer Quorum</label>
+                                                            <input class="multisignMultiAddressAccount" type="number" id="signerQuorumField" style="width: 50px; height: 28px" [(ngModel)]="signerQuorum" (ngModelChange)="validateQuorum()" name="signerQuorumField" />
+                                                       </div>
+
+                                                       <div>
+                                                            <button type="button" (click)="setMultiSign('Y')">Set Multi-Sign</button>
+                                                            <button type="button" (click)="setMultiSign('N')">Remove Multi-Sign</button>
+                                                       </div>
+                                                  </fieldset>
+                                             </td>
+                                        </tr>
+                                   </ng-container>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Check this to update add Multi-Sign Address">
+                                                  <label [ngStyle]="{'color': multiSigningEnabled ? '#4CAF50' : 'white'}">Use Multi-Sign Address</label>
+                                             </span>
+                                        </td>
+                                        <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                             <label class="switch">
+                                                  <input type="checkbox" id="isMultiSignAddressData" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="isMultiSignAddressData" />
+                                                  <span class="slider round"></span>
+                                             </label>
+                                             <label for="isMultiSignAddressData"></label>
+                                        </td>
+                                   </tr>
+                                   <tr *ngIf="useMultiSign">
+                                        <td></td>
+                                        <td>
+                                             <fieldset style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; width: fit-content">
+                                                  <table style="border-collapse: collapse">
+                                                       <tr class="multisignAddressClass" *ngIf="useMultiSign">
+                                                            <td>
+                                                                 <span class="tooltip" tooltip-data="Comma-separated list of signer addresses (must be in the account's SignerList)">
+                                                                      <label for="multiSignAddress">Signers</label>
+                                                                 </span>
+                                                            </td>
+                                                            <td>
+                                                                 <textarea class="memoField" style="width: 280px; height: 100px" id="multiSignAddress" placeholder="Comma-separated list of signer addresses" [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
+                                                            </td>
+                                                       </tr>
+                                                       <tr class="multisignAddressClass" *ngIf="useMultiSign">
+                                                            <td>
+                                                                 <span class="tooltip" tooltip-data="Comma-separated list of signer seeds (must correspond to signer addresses)">
+                                                                      <label for="multiSignSeeds">Seeds</label>
+                                                                 </span>
+                                                            </td>
+                                                            <td>
+                                                                 <textarea class="memoField" style="width: 280px; height: 100px" id="multiSignSeeds" placeholder="Comma-separated list of signer seeds" [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
+                                                            </td>
+                                                       </tr>
+                                                       <tr class="multisignAddressClass" *ngIf="useMultiSign">
+                                                            <td>
+                                                                 <span class="tooltip" tooltip-data="Quorum amount for multi sign.">
+                                                                      <label for="quorum">Quorum</label>
+                                                                 </span>
+                                                            </td>
+                                                            <td>
+                                                                 <input type="text" id="signerQuorumField" style="width: 50px; height: 28px" [(ngModel)]="signerQuorum" (ngModelChange)="validateQuorum()" name="signerQuorumField" readonly />
+                                                            </td>
+                                                       </tr>
+                                                  </table>
+                                             </fieldset>
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Check this to use Regular Key Address">
+                                                  <label [ngStyle]="{'color': regularKeySigningEnabled ? '#4CAF50' : 'white'}">Use Regular Key</label>
+                                             </span>
+                                        </td>
+                                        <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                             <label class="switch">
+                                                  <input type="checkbox" id="isSetRegularKeyData" [(ngModel)]="isSetRegularKey" (ngModelChange)="toggleMultiSign()" name="isSetRegularKeyData" />
+                                                  <span class="slider round"></span>
+                                             </label>
+                                             <label for="isSetRegularKeyData"></label>
+                                        </td>
+                                   </tr>
+                                   <tr class="" *ngIf="isSetRegularKey">
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Add address to set regular key.">
+                                                  <label for="regularKeyAccount">Account</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="regularKeyAccount" placeholder="Enter Regular Key Address" size="40" [(ngModel)]="regularKeyAccount" name="regularKeyAccount" />
+                                        </td>
+                                   </tr>
+                                   <tr class="" *ngIf="isSetRegularKey">
+                                        <td>
+                                             <span class="tooltip" tooltip-data="Add seed to set regular key. This is a comma separated list">
+                                                  <label for="regularKeySeed">Seed</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="regularKeySeed" size="40" placeholder="Enter Regular Key Seed" [(ngModel)]="regularKeyAccountSeed" name="regularKeySeed" />
+                                             <br />
+                                             <button type="button" (click)="setRegularKey('Y')">Set Regular Key</button>
+                                             <button type="button" (click)="setRegularKey('N')">Remove Regular Key</button>
+                                        </td>
+                                   </tr>
                                    }
 
-                                   <!-- Use Ticket for tx -->
-                                   @if (activeTab !== 'delete' && ticketArray.length > 0) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                                        <span class="slider"></span>
-                                        Use Ticket
-                                   </label>
+                                   <!-- Switches -->
+                                   <div class="switch-group" style="margin-top: 1em">
+                                        <!-- Memo group -->
+                                        <label class="switch">
+                                             <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
+                                             <span class="slider"></span>
+                                             Add Memo
+                                        </label>
+
+                                        <!-- Multi Signing Enabled group -->
+                                        @if (multiSigningEnabled) {
+                                        <label class="switch">
+                                             <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
+                                             <span class="slider"></span>
+                                             Use Multi-Sign
+                                        </label>
+                                        }
+
+                                        <!-- Regular Key Signing Enabled-->
+                                        @if (regularKeySigningEnabled) {
+                                        <label class="switch">
+                                             <!-- <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" /> -->
+                                             <span class="slider"></span>
+                                             Use Regular Key
+                                        </label>
+                                        }
+
+                                        <!-- Use Ticket for tx -->
+                                        @if (activeTab !== 'delete' && ticketArray.length > 0) {
+                                        <label class="switch">
+                                             <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
+                                             <span class="slider"></span>
+                                             Use Ticket
+                                        </label>
+                                        }
+
+                                        <!-- Simulate tx -->
+                                        <label class="switch">
+                                             <input type="checkbox" [(ngModel)]="isSimulateEnabled" name="isSimulateEnabled" />
+                                             <span class="slider"></span>
+                                             Simulate
+                                        </label>
+                                   </div>
+
+                                   <!-- Memo Field -->
+                                   @if (isMemoEnabled) {
+                                   <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
                                    }
 
-                                   <!-- Simulate tx -->
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isSimulateEnabled" name="isSimulateEnabled" />
-                                        <span class="slider"></span>
-                                        Simulate
-                                   </label>
-                              </div>
-
-                              <!-- Memo Field -->
-                              @if (isMemoEnabled) {
-                              <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-                              }
-
-                              <!-- Sign tx with Mult Sign address -->
-                              @if (useMultiSign) {
-                              <div class="multisign-grid">
-                                   <div class="multisign-field">
-                                        <label>Signers</label>
-                                        <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly (ngModelChange)="autoResize(signers)"></textarea>
+                                   <!-- Sign tx with Mult Sign address -->
+                                   @if (useMultiSign) {
+                                   <div class="multisign-grid">
+                                        <div class="multisign-field">
+                                             <label>Signers</label>
+                                             <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly (ngModelChange)="autoResize(signers)"></textarea>
+                                        </div>
+                                        <div class="multisign-field">
+                                             <label>Seeds</label>
+                                             <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly (ngModelChange)="autoResize(seeds)"></textarea>
+                                        </div>
+                                        <div class="multisign-field quorum-field">
+                                             <label>Quorum</label>
+                                             <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
+                                        </div>
                                    </div>
-                                   <div class="multisign-field">
-                                        <label>Seeds</label>
-                                        <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly (ngModelChange)="autoResize(seeds)"></textarea>
-                                   </div>
-                                   <div class="multisign-field quorum-field">
-                                        <label>Quorum</label>
-                                        <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                                   </div>
-                              </div>
-                              }
+                                   }
 
-                              <!-- Sign tx with Regular key address -->
-                              <!-- @if (isRegularKeyAddress) {
+                                   <!-- Sign tx with Regular key address -->
+                                   <!-- @if (isRegularKeyAddress) {
                          <div class="regular-key-fields">
                               <div class="form-row">
                                    <div class="form-group">
@@ -598,77 +779,95 @@
                          </div>
                          } -->
 
-                              <!-- Get ticket to delete -->
-                              @if (isTicket && activeTab !== 'delete') {
-                              <div class="ticket-fields">
-                                   <div class="form-group">
-                                        <label>Ticket Sequence</label>
-                                        @if (multiSelectMode) {
-                                        <div>
-                                             <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                                  @for (ticket of ticketArray; track ticket) {
-                                                  <option [value]="ticket">{{ ticket }}</option>
-                                                  }
-                                             </select>
+                                   <!-- Get ticket to delete -->
+                                   @if (isTicket && activeTab !== 'delete') {
+                                   <div class="ticket-fields">
+                                        <div class="form-group">
+                                             <label>Ticket Sequence</label>
+                                             @if (multiSelectMode) {
+                                             <div>
+                                                  <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
+                                                       @for (ticket of ticketArray; track ticket) {
+                                                       <option [value]="ticket">{{ ticket }}</option>
+                                                       }
+                                                  </select>
+                                             </div>
+                                             } @else {
+                                             <div>
+                                                  <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
+                                                       <option value="" disabled>Select a ticket</option>
+                                                       @for (ticket of ticketArray; track ticket) {
+                                                       <option [value]="ticket">{{ ticket }}</option>
+                                                       }
+                                                  </select>
+                                             </div>
+                                             }
                                         </div>
-                                        } @else {
-                                        <div>
-                                             <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                                  <option value="" disabled>Select a ticket</option>
-                                                  @for (ticket of ticketArray; track ticket) {
-                                                  <option [value]="ticket">{{ ticket }}</option>
+                                   </div>
+                                   }
+
+                                   <!-- Action buttons -->
+                                   <div class="button-row" style="margin-top: 0.6rem">
+                                        <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'cancel' ? 'red' : activeTab === 'finish' ? 'green' : '#007bff'}">{{ activeTab === 'cancel' ? 'Cancel Escrow' : activeTab === 'finish' ? 'Finish Escrow' : 'Modify Account Flags' }}</button>
+                                        <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                                   </div>
+
+                                   <!-- Spinner / Messages -->
+                                   @if (spinner) {
+                                   <div class="spinner-row">
+                                        <div class="spinner"></div>
+                                        <span>{{ spinnerMessage || 'Loading...' }}</span>
+                                   </div>
+                                   }
+
+                                   <!-- Success message -->
+                                   @if (isSuccess && !isError) {
+                                   <div class="success-message">
+                                        <lucide-icon name="check" size="20"></lucide-icon>
+                                        <div class="success-text">
+                                             @if (txHash && !isSimulateEnabled) {
+                                             <span>{{successMessage}}</span><br /><br />
+                                             <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
+                                             } @else {
+                                             <span>{{successMessage}}</span><br /><br />
+                                             }
+
+                                             <!-- Multiple Hashes -->
+                                             @if (txHashes.length > 1 && !isSimulateEnabled) {
+                                             <div class="tx-hashes">
+                                                  @for (hash of txHashes; track hash; let i = $index) {
+                                                  <div class="tx-hash-item">
+                                                       Transaction {{ i + 1 }} hash:
+                                                       <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
+                                                  </div>
                                                   }
-                                             </select>
+                                             </div>
+                                             }
+
+                                             <!-- Single hash -->
+                                             @if (txHashes.length === 1 && !isSimulateEnabled) {
+                                             <span>Transaction hash: <a [href]="url + 'tx/' + txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHashes[0] }} </a></span>
+                                             }
                                         </div>
-                                        }
                                    </div>
-                              </div>
-                              }
+                                   }
 
-                              <!-- Action buttons -->
-                              <div class="button-row">
-                                   <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'cancel' ? 'red' : activeTab === 'finish' ? 'green' : '#007bff'}">{{ activeTab === 'cancel' ? 'Cancel Escrow' : activeTab === 'finish' ? 'Finish Escrow' : 'Create Escrow' }}</button>
-                                   <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
-                              </div>
-
-                              <!-- Spinner / Messages -->
-                              @if (spinner) {
-                              <div class="spinner-row">
-                                   <div class="spinner"></div>
-                                   <span>{{ spinnerMessage || 'Loading...' }}</span>
-                              </div>
-                              }
-
-                              <!-- Success message -->
-                              @if (isSuccess && !isError) {
-                              <div class="success-message">
-                                   <lucide-icon name="check" size="20"></lucide-icon>
-                                   <div class="success-text">
-                                        @if (txHash && !isSimulateEnabled) {
-                                        <span>{{successMessage}}</span><br /><br />
-                                        <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
-                                        } @else {
-                                        <span>{{successMessage}}</span>
-                                        }
+                                   <!-- Error message -->
+                                   @if (isError && result) {
+                                   <div class="tx-message error">
+                                        <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
+                                        <div class="tx-text">
+                                             <!-- Display Tx Hash if we are not in simulation mode-->
+                                             @if (txHash && !isSimulateEnabled) {
+                                             <span>{{ result }}</span><br />
+                                             <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
+                                             } @else {
+                                             <span>{{ result }}</span>
+                                             }
+                                        </div>
                                    </div>
+                                   }
                               </div>
-                              }
-
-                              <!-- Error message -->
-                              @if (isError && result) {
-                              <div class="tx-message error">
-                                   <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
-                                   <div class="tx-text">
-                                        <!-- Display Tx Hash if we are not in simulation mode-->
-                                        @if (txHash && !isSimulateEnabled) {
-                                        <span>{{ result }}</span><br />
-                                        <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
-                                        } @else {
-                                        <span>{{ result }}</span>
-                                        }
-                                   </div>
-                              </div>
-                              }
                          </div>
                     </div>
                </form>
@@ -743,305 +942,7 @@
                                         <label for="isIssuerConfiguration">Issuer</label>
                                    </td>
                               </tr>
-                              <table id="accountSelection">
-                                   <th></th>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Select the account to use for the transaction.">
-                                                  <label for="selectedWalletField">Select Account</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <select id="selectedWalletField" class="dropdownWallet" [(ngModel)]="selectedWalletIndex" (ngModelChange)="onAccountChange()" name="selectedWalletField">
-                                                  <option *ngFor="let wallet of wallets; let i = index" [value]="i">{{wallet.name || 'Wallet ' + (i+1)}} ({{wallet.address | slice:0:6}}...{{wallet.address | slice:-4}})</option>
-                                             </select>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Name of the currently selected account.">
-                                                  <label for="accountNameField">Name</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountNameField" [(ngModel)]="currentWallet.name" name="accountNameField" readonly />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Address of the currently selected account.">
-                                                  <label for="accountAddressField">Address</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountAddressField" [(ngModel)]="currentWallet.address" name="accountAddressField" readonly />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Seed of the currently selected account.">
-                                                  <label for="accountSeedField">Seed</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountSeedField" [(ngModel)]="currentWallet.seed" name="accountSeedField" readonly />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="XRP balance for the currently selected account.">
-                                                  <label for="xrpBalanceField">Spendable XRP Balance</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="xrpBalanceField" [(ngModel)]="currentWallet.balance" readonly name="xrpBalanceField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total account objects that require an XRP reserve.">
-                                                  <label for="ownerCountField">Owner Count</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="ownerCountField" [(ngModel)]="ownerCount" readonly name="ownerCountField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total number of XRP reserves. This includes the base reserve and any account objects that require a reserve.">
-                                                  <label for="totalXrpReservesField">Total XRP Reserves</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="totalXrpReservesField" [(ngModel)]="totalXrpReserves" readonly name="totalXrpReservesField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total Execution time in milli seconds.">
-                                                  <label for="totalExecutionTime">Total Execution Time</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="totalExecutionTime" [(ngModel)]="executionTime" readonly name="totalExecutionTime" />
-                                        </td>
-                                   </tr>
-                              </table>
                          </div>
-
-                         <div class="top-section-right">
-                              <table id="xrpDetails">
-                                   <th></th>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfRequireDest) Requires a destination tag for incoming payments">
-                                                  <label for="asfRequireDest">Require Destination Tag</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfRequireDest" [(ngModel)]="flags.asfRequireDest" name="asfRequireDest" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfRequireAuth) Requires authorization">
-                                                  <label for="asfRequireAuth">Require Auth</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfRequireAuth" [(ngModel)]="flags.asfRequireAuth" name="asfRequireAuth" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfDisallowXRP) Discourages incoming XRP payments (not enforced)">
-                                                  <label for="asfDisallowXRP">Disallow XRP Payments</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfDisallowXRP" [(ngModel)]="flags.asfDisallowXRP" name="asfDisallowXRP" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfDisableMaster) Disables the master key pair">
-                                                  <label for="asfDisableMaster">Disable Master Key</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfDisableMaster" [(ngModel)]="flags.asfDisableMaster" name="asfDisableMaster" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfNoFreeze) Prevents freezing trust lines">
-                                                  <label for="asfNoFreeze">Don't Freeze Trust Lines</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfNoFreeze" [(ngModel)]="flags.asfNoFreeze" (ngModelChange)="onNoFreezeChange()" name="asfNoFreeze" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfGlobalFreeze) Freezes all trust lines">
-                                                  <label for="asfGlobalFreeze">Freeze All Trust Lines</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfGlobalFreeze" [(ngModel)]="flags.asfGlobalFreeze" name="asfGlobalFreeze" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfDefaultRipple) Enables rippling by default on trust lines">
-                                                  <label for="asfDefaultRipple">Enable Rippling</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfDefaultRipple" [(ngModel)]="flags.asfDefaultRipple" name="asfDefaultRipple" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="">
-                                                  <label for="isIssuer">Is Issuer</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="isIssuer" [(ngModel)]="this.currentWallet.isIssuer" name="isIssuer" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                              </table>
-                         </div>
-
-                         <div class="top-section-right">
-                              <table id="xrpDetails">
-                                   <th></th>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfDepositAuth) Requires preauthorization for incoming deposits">
-                                                  <label for="asfDepositAuth">Require Deposit Auth</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfDepositAuth" [(ngModel)]="flags.asfDepositAuth" name="asfDepositAuth" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                             <label for="asfDepositAuth"></label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfAllowTrustLineClawback) Allows another account to mint NFTs">
-                                                  <label for="asfAllowTrustLineClawback">Allow Trustline Clawback</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfAllowTrustLineClawback" [(ngModel)]="flags.asfAllowTrustLineClawback" (ngModelChange)="onClawbackChange()" name="asfAllowTrustLineClawback" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfAllowTrustLineLocking) Allows another account to mint NFTs">
-                                                  <label for="asfAllowTrustLineLocking">Allow Trustline Locking</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfAllowTrustLineLocking" [(ngModel)]="flags.asfAllowTrustLineLocking" name="asfAllowTrustLineLocking" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfDisallowIncomingNFTokenOffer) Blocks incoming NFT offers">
-                                                  <label for="asfDisallowIncomingNFTokenOffer">Block NFT Offers</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfDisallowIncomingNFTokenOffer" [(ngModel)]="flags.asfDisallowIncomingNFTokenOffer" name="asfDisallowIncomingNFTokenOffer" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfDisallowIncomingCheck) Blocks incoming checks">
-                                                  <label for="asfDisallowIncomingCheck">Block Checks</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfDisallowIncomingCheck" [(ngModel)]="flags.asfDisallowIncomingCheck" name="asfDisallowIncomingCheck" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfDisallowIncomingPayChan) Blocks incoming payment channels">
-                                                  <label for="asfDisallowIncomingPayChan">Block Payment Channels</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfDisallowIncomingPayChan" [(ngModel)]="flags.asfDisallowIncomingPayChan" name="asfDisallowIncomingPayChan" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="(asfDisallowIncomingTrustline) Blocks incoming trust lines">
-                                                  <label for="asfDisallowIncomingTrustline">Block Trust Lines</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <label class="switch">
-                                                  <input type="checkbox" id="asfDisallowIncomingTrustline" [(ngModel)]="flags.asfDisallowIncomingTrustline" name="asfDisallowIncomingTrustline" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                        </td>
-                                   </tr>
-                              </table>
-                         </div>
-                    </div>
-
-                    <div class="spinner-container">
-                         <div id="spinner" [ngStyle]="{ display: spinner ? 'block' : 'none' }" class="spinner"></div>
-                         <div *ngIf="spinner" class="spinner-text">{{ spinnerMessage || '' }}</div>
                     </div>
 
                     <div class="button-container">
@@ -1054,279 +955,12 @@
                                         <button type="button" (click)="clearFields(true)">Clear Fields</button>
                                    </td>
                               </tr>
-                              <tr style="vertical-align: top">
-                                   <td colspan="2">
-                                        <div #resultField id="resultField" [attr.contenteditable]="isEditable" [ngClass]="{ error: isError, success: isSuccess }" class="result-container" [innerHTML]="result | sanitizeHtml"></div>
-                                   </td>
-                              </tr>
                          </table>
-
-                         <details class="account-flag-info">
-                              <summary>Account Flag Info</summary>
-                              <fieldset class="flag-fieldset">
-                                   <div class="flag-table">
-                                        <div class="flag-row flag-header">
-                                             <div class="flag-cell">Flag</div>
-                                             <div class="flag-cell">Purpose</div>
-                                             <div class="flag-cell">Set Once?</div>
-                                             <div class="flag-cell">Mutually Exclusive</div>
-                                             <div class="flag-cell">Notes</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfRequireDest</div>
-                                             <div class="flag-cell">Require a destination tag to send transactions to this account.</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Protects against ambiguous payments</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfRequireAuth</div>
-                                             <div class="flag-cell">Require authorization for users to hold balances issued by this address.</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Used for compliance (e.g., KYC/AML). Can only be enabled if the address has no trust lines connected to it.</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfDisallowXRP</div>
-                                             <div class="flag-cell">XRP should not be sent to this account.</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Not enforced by rippled; client-respected</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfDisableMaster</div>
-                                             <div class="flag-cell">Disallow use of the master key pair.</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfNoFreeze</div>
-                                             <div class="flag-cell">Permanently give up the ability to freeze individual trust lines or disable Global Freeze.</div>
-                                             <div class="flag-cell">Yes</div>
-                                             <div class="flag-cell">asfGlobalFreeze</div>
-                                             <div class="flag-cell">Irreversible once set</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfGlobalFreeze</div>
-                                             <div class="flag-cell">Freezes all issued tokens</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">asfNoFreeze</div>
-                                             <div class="flag-cell">Can be toggled unless asfNoFreeze is set</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfDefaultRipple</div>
-                                             <div class="flag-cell">Enables rippling on trust lines</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Recommended for issuers</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfDepositAuth</div>
-                                             <div class="flag-cell">Enable Deposit Authorization on this account.</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Controls incoming funds</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfAuthorizedNFTokenMinter</div>
-                                             <div class="flag-cell">Enable to allow another account to mint non-fungible tokens (NFTokens) on this account's behalf.</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Specify the authorized account in the NFTokenMinter field of the AccountRoot object. To remove an authorized minter, enable this flag and omit the NFTokenMinter field.</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfDisallowIncomingNFTokenOffer</div>
-                                             <div class="flag-cell">Blocks incoming NFT offers</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Controls NFT interactions</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfDisallowIncomingCheck</div>
-                                             <div class="flag-cell">Blocks incoming checks</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Prevents check transactions</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfDisallowIncomingPayChan</div>
-                                             <div class="flag-cell">Blocks incoming payment channels</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Restricts payment channels</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfDisallowIncomingTrustline</div>
-                                             <div class="flag-cell">Blocks incoming trust lines</div>
-                                             <div class="flag-cell">No</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Useful for token issuers</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">asfAllowTrustLineClawback</div>
-                                             <div class="flag-cell">Enables IOU clawback</div>
-                                             <div class="flag-cell">Yes</div>
-                                             <div class="flag-cell">None</div>
-                                             <div class="flag-cell">Irreversible; for regulatory use</div>
-                                        </div>
-                                   </div>
-                              </fieldset>
-                         </details>
                     </div>
                </div>
 
                <div class="right-section">
                     <table id="flags">
-                         <th></th>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Add memo to transaction.">
-                                        <label>Memo</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isMemoEnabled" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isMemoEnabled"></label>
-                              </td>
-                         </tr>
-                         <tr class="multisignAddressClass" *ngIf="isMemoEnabled">
-                              <td>
-                                   <span class="tooltip" tooltip-data="">
-                                        <label for="memoField"></label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <textarea class="memoField" style="width: 300px; height: 100px" id="memoField" placeholder="Add optional memo to transaction." [(ngModel)]="memoField" name="memoField"></textarea>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to enter a deposit auth address">
-                                        <label [ngStyle]="{'color': depositAuthEnabled ? '#4CAF50' : 'white'}">Deposit Auth Address</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isdepositAuthAddress" [(ngModel)]="isdepositAuthAddress" name="isdepositAuthAddress" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isdepositAuthAddress"></label>
-                              </td>
-                         </tr>
-                         <tr class="multisignAddressClass" *ngIf="isdepositAuthAddress">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Enter ticket sequence to use for currently selected account">
-                                        <label for="depositAuthAddress"></label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <textarea class="memoField" style="width: 300px; height: 100px" id="depositAuthAddress" placeholder="Comma seperated list of address for deposit authorization." [(ngModel)]="depositAuthAddress" name="depositAuthAddress"></textarea>
-                                   <br />
-                                   <button type="button" (click)="setDepositAuthAccounts('Y')">Set Deposit Auth</button>
-                                   <button type="button" (click)="setDepositAuthAccounts('N')">Unauthorize Deposit Auth</button>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Enable to allow another account to mint non-fungible tokens (NFTokens) on this account's behalf.">
-                                        <label [ngStyle]="{'color': isNFTokenMinterEnabled ? '#4CAF50' : 'white'}">Auth NFT Minter</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isAuthorizedNFTokenMinter" [(ngModel)]="isAuthorizedNFTokenMinter" (ngModelChange)="onAuthorizedNFTokenMinter()" name="isAuthorizedNFTokenMinter" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isAuthorizedNFTokenMinter"></label>
-                              </td>
-                         </tr>
-                         <tr class="multisignAddressClass" *ngIf="isAuthorizedNFTokenMinter">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Enter NFT Minter addresses">
-                                        <label for="nfTokenMinterAddress"></label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <input type="text" id="nfTokenMinterAddress" id="nfTokenMinterAddress" placeholder="" [(ngModel)]="nfTokenMinterAddress" name="nfTokenMinterAddress" />
-                                   <br />
-                                   <button type="button" (click)="setNftMinterAddress('Y')">Set NFT Minter</button>
-                                   <button type="button" (click)="setNftMinterAddress('N')">Remove NFT Minter</button>
-                              </td>
-                         </tr>
-                         <tr class="">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to update the account meta data">
-                                        <label [ngStyle]="{'color': isUpdateMetaData ? '#4CAF50' : 'white'}">Update Meta Data</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isUpdateMetaData" [(ngModel)]="isUpdateMetaData" (ngModelChange)="toggleMetaData()" name="isUpdateMetaData" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isUpdateMetaData"></label>
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isUpdateMetaData">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Only applies to AMM/DEX issuers. Controls how precisely prices are rounded in the DEX.">
-                                        <label for="tickSizeField">Tick Size</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <input type="text" id="tickSizeField" size="40" placeholder="Value must be between 3 and 15" [(ngModel)]="tickSize" name="tickSizeField" />
-                              </td>
-                         </tr>
-                         <tr class="metaData" *ngIf="isUpdateMetaData">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Defines how much extra to charge when people hold your issued tokens (only applies to issuers). It's a ratio multiplied by 1,000,000,000">
-                                        <label for="transferRateField">Transfer Rate</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <input type="text" id="transferRateField" size="40" placeholder="This will be a percentage" [(ngModel)]="transferRate" name="transferRateField" />
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isUpdateMetaData">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to save the message key in the account Information">
-                                        <label>Save Message Key</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isMessageKey" [(ngModel)]="isMessageKey" name="isMessageKey" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isMessageKey"></label>
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isUpdateMetaData">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Web identity.">
-                                        <label for="domainField">Domain</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <input type="text" id="domainField" size="40" [(ngModel)]="domain" name="domainField" />
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isUpdateMetaData">
-                              <td>
-                                   <span class="tooltip" tooltip-data="URL of the image to be used as the account's avatar.">
-                                        <label for="urlField">Avatar URL</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <input type="text" id="urlField" size="40" [(ngModel)]="avatarUrl" name="urlField" />
-                                   <br />
-                                   <button type="button" (click)="updateMetaData()">Update Meta Data</button>
-                              </td>
-                         </tr>
                          <tr>
                               <td></td>
                               <td *ngIf="masterKeyDisabled">
