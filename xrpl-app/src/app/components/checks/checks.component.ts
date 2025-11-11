@@ -313,7 +313,6 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
                await this.refreshWallets(client, [walletAddress]);
-               // this.cdr.detectChanges();
           } catch (err) {
                this.setError('Failed to refresh balance');
           }

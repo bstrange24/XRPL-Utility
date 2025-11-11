@@ -511,6 +511,7 @@ input[type='text']:focus {
 
 .tx-json language-json {
      background-color: white;
+     color: #64c1f3;
 }
 
 /* -------------------------------------------------
@@ -1619,6 +1620,11 @@ input:focus+.slider {
      max-width: 100%;
      overflow-x: auto;
      border-radius: 8px;
+}
+
+.tx-preview-container pre.error {
+     background: #fef2f2;
+     border: 1px solid #f87171;
 }
 
 .tx-header {

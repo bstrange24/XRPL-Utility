@@ -1,112 +1,165 @@
-<div id="navbar-container">
-     <app-navbar></app-navbar>
+<div class="banner">
+     <div class="banner-content">
+          <div id="navbar-container">
+               <app-navbar></app-navbar>
+          </div>
+     </div>
 </div>
-<form id="theForm">
-     <app-app-wallet-dynamic-input (walletListChange)="onWalletListChange($any($event))" (transactionResult)="handleTransactionResult($event, null)"></app-app-wallet-dynamic-input>
 
-     <fieldset>
-          <legend style="color: white">Transaction Information</legend>
+<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
 
-          <div class="transaction-layout">
-               <div class="top-section-left">
-                    <div class="top-sections-wrapper">
-                         <div class="top-section-left">
-                              <table id="accountSelection">
-                                   <th></th>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Select the account to use for the transaction.">
-                                                  <label for="selectedWalletField">Select Account</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <select id="selectedWalletField" class="dropdownWallet" [(ngModel)]="selectedWalletIndex" (ngModelChange)="onAccountChange()" name="selectedWalletField">
-                                                  <option *ngFor="let wallet of wallets; let i = index" [value]="i">{{ wallet.name || 'Wallet ' + (i + 1) }} ({{ wallet.address | slice : 0 : 6 }}...{{ wallet.address | slice : -4 }})</option>
-                                             </select>
-                                        </td>
-                                   </tr>
-                                   <!-- <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Name of the currently selected account.">
-                                                  <label for="accountNameField">Name</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountNameField" [(ngModel)]="currentWallet.name" name="accountNameField" readonly />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Address of the currently selected account.">
-                                                  <label for="accountAddressField">Address</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountAddressField" [(ngModel)]="currentWallet.address" name="accountAddressField" readonly />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Seed of the currently selected account.">
-                                                  <label for="accountSeedField">Seed</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountSeedField" [(ngModel)]="currentWallet.seed" name="accountSeedField" readonly />
-                                        </td>
-                                   </tr> -->
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="XRP balance for the currently selected account.">
-                                                  <label for="xrpBalanceField">Spendable XRP Balance</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="xrpBalanceField" [(ngModel)]="currentWallet.balance" readonly name="xrpBalanceField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total account objects that require an XRP reserve.">
-                                                  <label for="ownerCountField">Owner Count</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="ownerCountField" [(ngModel)]="ownerCount" readonly name="ownerCountField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total number of XRP reserves. This includes the base reserve and any account objects that require a reserve.">
-                                                  <label for="totalXrpReservesField">Total XRP Reserves</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="totalXrpReservesField" [(ngModel)]="totalXrpReserves" readonly name="totalXrpReservesField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total Execution time in milli seconds.">
-                                                  <label for="totalExecutionTime">Total Execution Time</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="totalExecutionTime" [(ngModel)]="executionTime" readonly name="totalExecutionTime" />
-                                        </td>
-                                   </tr>
-                              </table>
+<!-- Main content. Centered with 2 columns -->
+<div class="main-container">
+     <div class="content-wrapper">
+          <!-- Left Wallet panel ==== -->
+          <div class="wallets-panel">
+               <!-- Header with title + Generate button -->
+               <div class="panel-header">
+                    <h2 class="panel-title">
+                         <lucide-icon name="wallet" size="25" style="padding-top: 5px"></lucide-icon>
+                         Accounts
+                    </h2>
+                    <button class="generate-btn" (click)="generateNewAccount()">+ Generate</button>
+               </div>
+
+               <p class="panel-subtitle">Generate {{environment}} accounts with XRP from the faucet.</p>
+
+               @if (hasWallets) {
+               <div>
+                    <!-- List of wallets -->
+                    @for (wallet of wallets; track wallet.address; let i = $index) {
+                    <div class="wallet-item" [class.selected]="selectedWalletIndex === i">
+                         <!-- Wallet Info -->
+                         <div class="wallet-info">
+                              @if (editingIndex(i)) {
+                              <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
+                              <label class="issuer-checkbox" title="Mark as issuer account">
+                                   <span class="issuer-label">Issuer</span>
+                                   <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" (change)="onIssuerChange(i, $event)" />
+                              </label>
+                              } @else {
+                              <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
+                              <label class="issuer-checkbox" title="Mark as issuer account">
+                                   <span class="issuer-label">Issuer</span>
+                                   <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" (change)="onIssuerChange(i, $event)" />
+                              </label>
+                              }
                          </div>
 
-                         <!-- ======================  TRANSACTION SELECTOR  ====================== -->
-                         <div class="top-section-right">
-                              <table id="xrpDetails">
-                                   <th></th>
-                                   <tbody>
-                                        <tr>
-                                             <td><label>Transaction Type</label></td>
-                                             <td>
-                                                  <!-- ONE dropdown – all transaction types grouped -->
+                         <div class="wallet-info" (click)="selectWallet(i)">
+                              <div class="address-line">
+                                   <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
+                                   <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
+                              </div>
+
+                              <!-- Icons -->
+                              <div class="wallet-actions">
+                                   <button class="icon-btn refresh" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
+                                        <lucide-icon name="refresh-ccw"></lucide-icon>
+                                   </button>
+
+                                   <button class="icon-btn copy" (click)="copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
+                                        <lucide-icon name="copy"></lucide-icon>
+                                   </button>
+
+                                   <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
+                                        <lucide-icon name="trash-2"></lucide-icon>
+                                   </button>
+                              </div>
+                         </div>
+
+                         <!-- Secret Key -->
+                         <div class="secret-section" (click)="selectWallet(i)">
+                              <div class="secret-header">
+                                   <span class="secret-label">Secret Key:</span>
+                                   <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
+                              </div>
+
+                              <!-- Seed shown below the button -->
+                              @if (wallet.showSecret) {
+                              <div class="secret-seed-container">
+                                   <div class="secret-seed">{{ wallet.seed }}</div>
+                                   <button class="copy-btn" (click)="copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
+                                        <lucide-icon name="copy" size="20"></lucide-icon>
+                                   </button>
+                              </div>
+                              }
+                         </div>
+                    </div>
+                    }
+
+                    <!-- Selected Account Summary ==== -->
+                    <div class="selected-account-card">
+                         <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
+                         <div class="summary-row"><span>Address:</span> <span>{{ currentWallet.address | slice:0:5 }}...{{ currentWallet.address | slice:-5 }}</span></div>
+                         <div class="summary-row"><span>Balance:</span> <span class="highlight wallet-balance">{{ currentWallet.balance }} XRP</span></div>
+                         <div class="summary-row"><span>Owner Count:</span> <span class="highlight wallet-balance">{{ currentWallet.ownerCount }}</span></div>
+                         <div class="summary-row"><span>Xrp Reserves:</span> <span class="highlight wallet-balance">{{ currentWallet.xrpReserves }} XRP</span></div>
+                    </div>
+               </div>
+               } @else {
+               <!-- This block shows if hasWallets is false -->
+               <div class="no-wallet-found">
+                    <lucide-icon name="wallet" size="40"></lucide-icon>
+                    <p>No accounts generated yet.</p>
+                    <p>Click "Generate" to create your first {{environment}} account</p>
+               </div>
+               }
+          </div>
+
+          <div class="toast" [class.show]="showToast">{{ toastMessage }}</div>
+
+          <!-- Right form -->
+          <div class="form-panel">
+               <!-- Menu bar -->
+               <div class="menu-bar">
+                    <button class="menu-btn active" [class.active]="activeTab === 'getAccountDetails'" (click)="setTab('getAccountDetails')">
+                         <lucide-icon name="signature" size="30" style="padding-top: 8px; color: #1e40af"></lucide-icon>
+                         Sign Transactions
+                    </button>
+               </div>
+
+               <!-- Modify Flag Menu -->
+               @if (activeTab === 'getAccountDetails') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="white-button-submenu">
+                              <lucide-icon name="signature" size="30" style="padding-top: 15px; color: #1e40af"></lucide-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Sign Transactions</h2>
+                              <p class="submenu-info-secondary-text">Sign and submit transactions.</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Dynamic info panel -->
+               @if (infoMessage) {
+               <div class="info-panel">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-red-600"></ng-icon>
+                    <div class="info-text" [innerHTML]="infoMessage"></div>
+               </div>
+               }
+
+               <!-- Dynamic warning panel  -->
+               @if (warningMessage) {
+               <div class="warning-panel">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
+                    <div class="warning-text" [innerHTML]="warningMessage"></div>
+               </div>
+               }
+
+               <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
+                    <div [@tabTransition]="activeTab">
+                         <div class="tab-content-columns">
+                              <!-- Left Form Fields -->
+                              <div class="tab-content-container form-fields-container">
+                                   @if (activeTab === 'getAccountDetails') {
+                                   <div>
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Transaction Type</label>
                                                   <select class="dropdownTransactionTypes" id="transactionSelect" [(ngModel)]="selectedTransaction" (ngModelChange)="onTransactionChange()" name="transactionSelect">
                                                        <optgroup label="Basic">
                                                             <option value="batch">Batch</option>
@@ -162,161 +215,258 @@
                                                             <option value="destroyMPT">Destroy MPT</option>
                                                        </optgroup>
                                                   </select>
-                                             </td>
-                                        </tr>
-                                   </tbody>
-                              </table>
+                                             </div>
+                                        </div>
+                                   </div>
+                                   }
+
+                                   <!-- Switches -->
+                                   <div class="switch-group" style="margin-top: 1em">
+                                        <!-- Memo group -->
+                                        <label class="switch">
+                                             <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
+                                             <span class="slider"></span>
+                                             Add Memo
+                                        </label>
+
+                                        <!-- Multi Signing Enabled group -->
+                                        @if (multiSigningEnabled) {
+                                        <label class="switch">
+                                             <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
+                                             <span class="slider"></span>
+                                             Use Multi-Sign
+                                        </label>
+                                        }
+
+                                        <!-- Regular Key Signing Enabled-->
+                                        @if (regularKeySigningEnabled) {
+                                        <label class="switch">
+                                             <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
+                                             <span class="slider"></span>
+                                             Use Regular Key
+                                        </label>
+                                        }
+
+                                        <!-- Use Ticket for tx -->
+                                        @if (activeTab !== 'delete' && ticketArray.length > 0) {
+                                        <label class="switch">
+                                             <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
+                                             <span class="slider"></span>
+                                             Use Ticket
+                                        </label>
+                                        }
+
+                                        <!-- Simulate tx -->
+                                        <label class="switch">
+                                             <input type="checkbox" [(ngModel)]="isSimulateEnabled" name="isSimulateEnabled" />
+                                             <span class="slider"></span>
+                                             Simulate
+                                        </label>
+                                   </div>
+
+                                   <!-- Memo Field -->
+                                   @if (isMemoEnabled) {
+                                   <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
+                                   }
+
+                                   <!-- Sign tx with Mult Sign address -->
+                                   @if (useMultiSign) {
+                                   <div class="multisign-grid">
+                                        <div class="multisign-field">
+                                             <label>Signers</label>
+                                             <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly (ngModelChange)="autoResize(signers)"></textarea>
+                                        </div>
+                                        <div class="multisign-field">
+                                             <label>Seeds</label>
+                                             <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly (ngModelChange)="autoResize(seeds)"></textarea>
+                                        </div>
+                                        <div class="multisign-field quorum-field">
+                                             <label>Quorum</label>
+                                             <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
+                                        </div>
+                                   </div>
+                                   }
+
+                                   <!-- Sign tx with Regular key address -->
+                                   @if (isRegularKeyAddress) {
+                                   <div class="regular-key-fields">
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Regular Key Address</label>
+                                                  <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                                             </div>
+                                        </div>
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Regular Key Seed</label>
+                                                  <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
+                                             </div>
+                                        </div>
+                                   </div>
+                                   }
+
+                                   <!-- Get ticket to delete -->
+                                   @if (isTicket && activeTab !== 'delete') {
+                                   <div class="ticket-fields">
+                                        <div class="form-group">
+                                             <label>Ticket Sequence</label>
+                                             @if (multiSelectMode) {
+                                             <div>
+                                                  <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
+                                                       @for (ticket of ticketArray; track ticket) {
+                                                       <option [value]="ticket">{{ ticket }}</option>
+                                                       }
+                                                  </select>
+                                             </div>
+                                             } @else {
+                                             <div>
+                                                  <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
+                                                       <option value="" disabled>Select a ticket</option>
+                                                       @for (ticket of ticketArray; track ticket) {
+                                                       <option [value]="ticket">{{ ticket }}</option>
+                                                       }
+                                                  </select>
+                                             </div>
+                                             }
+                                        </div>
+                                   </div>
+                                   }
+
+                                   <!-- Action buttons -->
+                                   @if(activeTab === 'getAccountDetails') {
+                                   <div class="button-row" style="margin-top: 0">
+                                        <button type="button" (click)="getTransactionJSON()" class="btn-primary">Get Transaction JSON</button>
+                                        <!-- <button type="button" (click)="unsignedTransaction()" class="btn-primary">Unsigned Transaction</button> -->
+                                        <button type="button" (click)="signedTransaction()" class="btn-primary">Signed Transaction</button>
+                                        <button type="button" (click)="submitTransaction()" class="btn-primary">Submit Transaction</button>
+                                        <button type="button" (click)="signedTransaction()" class="btn-primary">Sign for Multi-Sign</button>
+                                        <!-- <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button> -->
+                                   </div>
+                                   }
+
+                                   <!-- Spinner / Messages -->
+                                   @if (spinner) {
+                                   <div class="spinner-row">
+                                        <div class="spinner"></div>
+                                        <span>{{ spinnerMessage || 'Loading...' }}</span>
+                                   </div>
+                                   }
+
+                                   <!-- Success message -->
+                                   @if (isSuccess && successMessage.length > 0) {
+                                   <div class="success-message">
+                                        <lucide-icon name="check" size="20"></lucide-icon>
+                                        <div class="success-text">
+                                             @if (txHash && !isSimulateEnabled) {
+                                             <span>{{successMessage}}</span><br /><br />
+                                             <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
+                                             } @else {
+                                             <span>{{successMessage}}</span><br /><br />
+                                             }
+
+                                             <!-- Multiple Hashes -->
+                                             @if (txHashes.length > 1 && !isSimulateEnabled) {
+                                             <div class="tx-hashes">
+                                                  @for (hash of txHashes; track hash; let i = $index) {
+                                                  <div class="tx-hash-item">
+                                                       Transaction {{ i + 1 }} hash:
+                                                       <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
+                                                  </div>
+                                                  }
+                                             </div>
+                                             }
+
+                                             <!-- Single hash -->
+                                             @if (txHashes.length === 1 && !isSimulateEnabled) {
+                                             <span>Transaction hash: <a [href]="url + 'tx/' + txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHashes[0] }} </a></span>
+                                             }
+                                        </div>
+                                   </div>
+                                   }
+
+                                   <!-- Error message -->
+                                   @if (isError && result) {
+                                   <div class="tx-message error">
+                                        <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
+                                        <div class="tx-text">
+                                             <!-- Display Tx Hash if we are not in simulation mode-->
+                                             @if (txHash && !isSimulateEnabled) {
+                                             <span>{{ result }}</span><br />
+                                             <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
+                                             }
+
+                                             <!-- Multiple Hashes -->
+                                             @if (txErrorHashes.length > 1 && !isSimulateEnabled) {
+                                             <div class="tx-hashes">
+                                                  @for (hash of txErrorHashes; track hash; let i = $index) {
+                                                  <div class="tx-hash-item">
+                                                       Transaction {{ i + 1 }} hash:
+                                                       <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
+                                                  </div>
+                                                  }
+                                             </div>
+                                             }
+
+                                             <!-- Single hash -->
+                                             @if (txErrorHashes.length === 1 && !isSimulateEnabled) {
+                                             <span>Transaction hash: <a [href]="url + 'tx/' + txErrorHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txErrorHashes[0] }} </a></span>
+                                             }@else {
+                                             <span>{{ result }}</span><br />
+                                             }
+                                        </div>
+                                   </div>
+                                   }
+
+                                   <!-- ==== TRANSACTION JSON (EDITABLE) ==== -->
+                                   <div class="tx-preview-container" style="margin-top: 1.5rem">
+                                        <div class="tx-header">
+                                             <h5 class="tx-title">Transaction JSON</h5>
+                                             <div class="tx-actions">
+                                                  <button type="button" class="copy-btn" (click)="copyTxJson()" title="Copy JSON"><ng-icon name="heroClipboardDocumentList" size="20"></ng-icon> Copy</button>
+                                                  <button type="button" class="download-btn" (click)="downloadTxJson()" title="Download TX JSON"><ng-icon name="heroArrowDownOnSquareStack" size="20"></ng-icon> Download</button>
+                                             </div>
+                                        </div>
+
+                                        <pre #txJsonPre class="tx-json language-json editable" [ngClass]="{ 'success': isSuccess }" spellcheck="false" contenteditable="true" (blur)="onTxJsonBlur()" (input)="onTxJsonInput()"><code #txJsonCode class="language-json"></code></pre>
+                                   </div>
+
+                                   <!-- ==== SIGNED TRANSACTION (EDITABLE) ==== -->
+                                   <div class="tx-preview-container" style="margin-top: 1rem">
+                                        <div class="tx-header">
+                                             <h5 class="tx-title">Signed Transaction</h5>
+                                             <div class="tx-actions">
+                                                  <button type="button" class="copy-btn" (click)="copySigned()" title="Copy Signed TX"><ng-icon name="heroClipboardDocumentList" size="20"></ng-icon> Copy</button>
+                                                  <button type="button" class="download-btn" (click)="downloadSigned()" title="Download Signed TX"><ng-icon name="heroArrowDownOnSquareStack" size="20"></ng-icon> Download</button>
+                                             </div>
+                                        </div>
+
+                                        <div #signedEditable id="hashField" spellcheck="false" style="color: #669900" class="tx-json language-json editable" [ngClass]="{ 'success': isSuccess }" [textContent]="outputField"></div>
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+               </form>
+
+               <!-- Tx Result Preview -->
+               @if (txResult.length >0) {
+               <div class="tx-preview-container">
+                    <div class="tx-header">
+                         <h3 class="tx-title">Transaction Result</h3>
+                         <div class="tx-actions">
+                              <button class="copy-btn" (click)="copyTxResult()" title="Copy JSON">
+                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                   Copy
+                              </button>
+                              <button class="download-btn" (click)="downloadTxResult()" title="Download JSON">
+                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+                                   Download
+                              </button>
                          </div>
                     </div>
 
-                    <div class="spinner-container">
-                         <div id="spinner" [ngStyle]="{ display: spinner ? 'block' : 'none' }" class="spinner"></div>
-                         <div *ngIf="spinner" class="spinner-text">{{ spinnerMessage || 'Loading...' }}</div>
-                    </div>
-
-                    <div class="button-container">
-                         <table style="text-align: left; width: 100%">
-                              <th></th>
-                              <tr style="vertical-align: top">
-                                   <td colspan="2">
-                                        <button type="button" (click)="getTransactionJSON()">Get Transaction JSON</button>
-                                        <!-- <button type="button" (click)="unsignedTransaction()">Unsigned Transaction</button> -->
-                                        <button type="button" (click)="signedTransaction()">Signed Transaction</button>
-                                        <button type="button" (click)="submitTransaction()">Submit Transaction</button>
-                                        <!-- <button type="button" (click)="signedTransaction()">Sign for Multi-Sign</button> -->
-                                        <button type="button" (click)="clearFields()">Clear Fields</button>
-                                   </td>
-                              </tr>
-
-                              <td>
-                                   <div class="results-container">
-                                        <div class="transaction-results">
-                                             <div class="transaction-column">
-                                                  <h4>Transaction JSON</h4>
-                                                  <div #resultField id="resultField" *ngIf="(selectedTransaction && txJson) || isError" spellcheck="false" contenteditable="true" [ngClass]="{ error: isError, success: isSuccess }" class="result-container result-equal" (blur)="syncTxJsonFromField()">
-                                                       <div *ngIf="isError && errorMessage" class="error-message">ERROR: {{ errorMessage }}</div>
-                                                       <div *ngIf="txJson" [innerHTML]="highlightJson(txJson) | sanitizeHtml"></div>
-                                                  </div>
-                                             </div>
-
-                                             <div class="transaction-column">
-                                                  <h4>Signed</h4>
-                                                  <div #hashField id="hashField" spellcheck="false" contenteditable="true" [ngClass]="{ error: isError, success: isSuccess }" class="result-container result-equal" [textContent]="outputField" (blur)="populateTxDetails()"></div>
-                                             </div>
-                                        </div>
-                                   </div>
-                              </td>
-                         </table>
-                    </div>
+                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
                </div>
-
-               <div class="right-section">
-                    <table id="flags">
-                         <th></th>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to use a ticket sequence">
-                                        <label>Use Multi Sign</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="useMultiSign" [(ngModel)]="useMultiSign" name="useMultiSign" />
-                                        <span class="slider round"></span>
-                                   </label>
-                              </td>
-                         </tr>
-                         <tr *ngIf="useMultiSign">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to simulate a send xrp transaction">
-                                        <label></label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <div *ngIf="currentWallet && availableSigners.length === 0">No signers configured for {{ currentWallet.name || currentWallet.address }}.</div>
-
-                                   <div *ngFor="let wallet of availableSigners; let i = index">
-                                        <label>
-                                             <input type="checkbox" [(ngModel)]="wallet.isSelectedSigner" (change)="updateSelectedQuorum()" name="multiSigner{{i}}" />
-                                             {{ wallet.name || 'Wallet ' + (i + 1) }} ({{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-4 }})
-                                             <span *ngIf="wallet.quorum !== null" style="padding-left: 13px">Quorum {{ wallet.quorum }}</span>
-                                        </label>
-                                   </div>
-
-                                   <div *ngIf="requiredQuorum" class="quorum-progress">Required quorum: {{ requiredQuorum }}</div>
-
-                                   <div *ngIf="currentWallet && availableSigners.length !== 0" class="quorum-container">
-                                        <div class="quorum-header">
-                                             <span>Quorum Progress:</span>
-                                             <span class="quorum-value">{{ selectedQuorum }} / {{ requiredQuorum }}</span>
-                                        </div>
-
-                                        <div class="progress-bar-container">
-                                             <div class="progress-bar" [style.width.%]="(selectedQuorum / requiredQuorum) * 100" [style.background-color]="selectedQuorum >= requiredQuorum ? 'green' : 'gray'"></div>
-                                        </div>
-                                   </div>
-
-                                   <button type="button" (click)="signForMultiSign()" *ngIf="availableSigners.length > 0">Sign for Multi-Sign</button>
-                                   <button type="button" (click)="submitTransaction()" *ngIf="availableSigners.length > 0">Submit Multi-Signed TX</button>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to use a ticket sequence">
-                                        <label>Use Ticket Sequence</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isTicketEnabled" [(ngModel)]="isTicket" (ngModelChange)="toggleTicketSequence()" name="isTicketEnabled" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isTicketEnabled"></label>
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isTicket">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Enter ticket sequence to use for currently selected account">
-                                        <label for="ticketSequence"></label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <!-- Multi Select -->
-                                   <!-- <div class="selection-mode">
-                                        <label>
-                                             <input type="checkbox" [(ngModel)]="multiSelectMode" [ngModelOptions]="{standalone: true}" />
-                                             Multiple Selection
-                                        </label>
-                                   </div> -->
-
-                                   <!-- Single Select -->
-                                   <select class="timeUnit" [(ngModel)]="selectedSingleTicket" (ngModelChange)="onTicketChange($event)" [ngModelOptions]="{standalone: true}">
-                                        <option value="" disabled>Select a ticket</option>
-                                        <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
-                                   </select>
-
-                                   <!-- Multi Select -->
-                                   <select *ngIf="multiSelectMode" class="timeUnit" [(ngModel)]="selectedTickets" (ngModelChange)="onTicketChange($event)" multiple [ngModelOptions]="{standalone: true}">
-                                        <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
-                                   </select>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to simulate a send xrp transaction">
-                                        <label>Simulate Transaction</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isSimulateEnabled" [(ngModel)]="isSimulateEnabled" (ngModelChange)="toggleTicketSequence()" name="isSimulateEnabled" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isSimulateEnabled"></label>
-                              </td>
-                         </tr>
-                    </table>
-               </div>
+               }
           </div>
-     </fieldset>
-</form>
+     </div>
+</div>
