@@ -1498,7 +1498,7 @@ input:focus+.slider {
      /* remove scrollbars */
      min-height: 8rem;
      box-sizing: border-box;
-     background-color: #f3f4f6;
+     /* background-color: #f3f4f6; */
      cursor: not-allowed;
 }
 
@@ -1507,7 +1507,7 @@ input:focus+.slider {
      border: 1px solid #cbd5e1;
      border-radius: 6px;
      font-size: 0.95rem;
-     background-color: #f3f4f6;
+     /* background-color: #f3f4f6; */
      cursor: not-allowed;
      height: 2rem;
      box-sizing: border-box;
@@ -1808,6 +1808,7 @@ pre[class*='language-'] {
      flex: 1;
      font-size: 0.95rem;
      line-height: 1.5;
+     padding-left: 10px;
 }
 
 .tx-text span {
@@ -2633,4 +2634,157 @@ app-root {
      background: white;
      /* margin: 0.5em; */
      margin-bottom: 0.8em;
+}
+
+
+/* -------------------------------------------------
+   MULTI-SIGN SECTION – clean, flag-style layout
+   ------------------------------------------------- */
+.multisign-section {
+     display: flex;
+     flex-direction: column;
+     gap: 1.25rem;
+     padding: 0.5rem 0;
+}
+
+/* Header (icon + title) – same look as flags header */
+.section-header {
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+     margin-bottom: 0.25rem;
+}
+
+.section-title {
+     font-weight: 600;
+     font-size: 1rem;
+     color: #1a1a1a;
+}
+
+/* List of signers */
+.signers-list {
+     display: flex;
+     flex-direction: column;
+     gap: 1rem;
+}
+
+.signer-fieldset {
+     border: 1.5px solid #b1b1b1;
+     border-radius: 8px;
+     background: #fff;
+     /* padding: 0.75rem; */
+     margin: 0;
+}
+
+.signer-legend {
+     padding: 0 0.4rem;
+     font-weight: 600;
+     font-size: 0.9rem;
+     color: #4caf50;
+}
+
+/* Row inside each signer (account / seed / weight / remove) */
+.signer-fieldset .form-row {
+     display: grid;
+     /* grid-template-columns: 2fr 2fr 1fr auto; */
+     grid-template-columns: 3fr 3fr 80px 40px;
+     /* explicit small widths for weight + trash */
+     gap: 0.75rem;
+     align-items: center;
+     width: 100%;
+}
+
+.signer-fieldset .form-group {
+     min-width: 0;
+     /* <-- critical: allow the grid column to shrink below 200px */
+     flex: 0 1 auto;
+     /* prevent inherited flex:1 from forcing width behavior here */
+}
+
+.signer-fieldset .input-number {
+     width: 100%;
+     max-width: 80px;
+     /* matches the grid column above */
+     justify-self: end;
+}
+
+.signer-fieldset .remove-group {
+     display: flex;
+     justify-content: center;
+     /* center the button in its small column */
+     align-items: center;
+     padding-top: 20px;
+}
+
+.signer-fieldset .remove-group button {
+     width: auto;
+     height: auto;
+}
+
+.signer-fieldset .form-group input[type="text"],
+.signer-fieldset .form-group input[type="number"],
+.signer-fieldset .form-group select {
+     width: 100%;
+     max-width: none;
+     box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+     .signer-fieldset .form-row {
+          grid-template-columns: 1fr;
+     }
+
+     .signer-fieldset .form-group {
+          min-width: 0;
+          flex: 1 1 auto;
+     }
+
+     .signer-fieldset .input-number {
+          max-width: 100%;
+          justify-self: start;
+     }
+}
+
+/* Input styling – monospace for XRPL addresses/seeds */
+.input-monospace {
+     font-family: 'Courier New', monospace;
+     font-size: 0.9rem;
+}
+
+.input-number {
+     width: 100%;
+     max-width: 80px;
+}
+
+/* Weight & Remove columns */
+.weight-group,
+.remove-group {
+     display: flex;
+     flex-direction: column;
+     justify-content: flex-end;
+}
+
+.remove-group button {
+     align-self: flex-start;
+}
+
+/* Add-Signer / Quorum row (side-by-side) */
+.actions-row {
+     display: flex;
+     gap: 1rem;
+     flex-wrap: wrap;
+     align-items: end;
+}
+
+/* Small buttons (Add / Remove) */
+.btn-sm {
+     padding: 0.35rem 0.6rem;
+     font-size: 0.85rem;
+     display: inline-flex;
+     align-items: center;
+     gap: 0.3rem;
+}
+
+.btn-sm lucide-icon {
+     margin-right: 0;
 }

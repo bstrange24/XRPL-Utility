@@ -121,11 +121,11 @@
                          <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
                          Modify Account Meta Data
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'addSigners'" (click)="setTab('addSigners')">
+                    <button class="menu-btn" [class.active]="activeTab === 'modifyMultiSigners'" (click)="setTab('modifyMultiSigners')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Add Multi Signers
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'addRegularKey'" (click)="setTab('addRegularKey ')">
+                    <button class="menu-btn" [class.active]="activeTab === 'modifyRegularKey'" (click)="setTab('modifyRegularKey')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Add Regular Key Address
                     </button>
@@ -162,8 +162,8 @@
                </div>
                }
 
-               <!-- Issue Currency Menu -->
-               @if (activeTab === 'addSigners') {
+               <!-- Add Multi Signer Menu -->
+               @if (activeTab === 'modifyMultiSigners') {
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
@@ -177,8 +177,8 @@
                </div>
                }
 
-               <!-- Issue Currency Menu -->
-               @if (activeTab === 'addRegularKey') {
+               <!-- Add Regular Key signer Menu -->
+               @if (activeTab === 'modifyRegularKey') {
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
@@ -487,8 +487,8 @@
                                              </div>
 
                                              <div class="button-row" style="margin-top: 0">
-                                                  <button type="button" (click)="setDepositAuthAccounts('Y')" class="btn-primary">Set Deposit Auth</button>
-                                                  <button type="button" (click)="setDepositAuthAccounts('N')" class="btn-primary" [ngStyle]="{'background-color':'red'}">Unauthorize Deposit Auth</button>
+                                                  <button type="button" (click)="setDepositAuthAccounts('Y')" class="btn-primary">Set Deposit Authorization</button>
+                                                  <button type="button" (click)="setDepositAuthAccounts('N')" class="btn-primary" [ngStyle]="{'background-color':'red'}">Remove Deposit Authorization</button>
                                              </div>
                                         </div>
 
@@ -521,7 +521,7 @@
                                              </div>
                                         </div>
 
-                                        <!-- <div class="form-row">
+                                        <div class="form-row">
                                              <div class="form-group">
                                                   <label>Email</label>
                                                   <input type="email" [(ngModel)]="userEmail" name="userEmail" (ngModelChange)="updateAvatarUrlFromEmail($event)" placeholder="Enter email" />
@@ -537,7 +537,7 @@
                                         <div class="avatar-preview">
                                              <img [src]="avatarUrl" alt="Avatar Preview" />
                                         </div>
-                                        } -->
+                                        }
 
                                         <div class="form-row">
                                              <div class="form-group">
@@ -565,140 +565,82 @@
                                    }
 
                                    <!-- Multi Sign -->
-                                   @if(activeTab === 'addSigners') {
-                                   <div>
-                                        <div class="form-row">
+                                   @if (activeTab === 'modifyMultiSigners') {
+                                   <div class="multisign-section">
+                                        <div class="section-header">
+                                             <ng-icon name="heroUserGroup" size="20" class="text-red-600"></ng-icon>
+                                             <span class="section-title">Multi-Sign Configuration</span>
+                                        </div>
+
+                                        <!-- Signers list -->
+                                        <div class="signers-list">
+                                             @for (signer of signers; track signer.account; let i = $index) {
+                                             <fieldset class="signer-fieldset">
+                                                  <legend class="signer-legend">Signer {{ i + 1 }}</legend>
+
+                                                  <div class="form-row">
+                                                       <div class="form-group">
+                                                            <label for="signerAccountField{{ i }}">Account</label>
+                                                            <input type="text" id="signerAccountField{{ i }}" [(ngModel)]="signer.account" name="signerAccountField{{ i }}" placeholder="r..." class="input-monospace" />
+                                                       </div>
+
+                                                       <div class="form-group">
+                                                            <label for="signerSeedField{{ i }}">Seed</label>
+                                                            <input type="text" id="signerSeedField{{ i }}" [(ngModel)]="signer.seed" name="signerSeedField{{ i }}" placeholder="s..." class="input-monospace" />
+                                                       </div>
+
+                                                       <div class="form-group weight-group">
+                                                            <label for="signerWeightField{{ i }}">Weight</label>
+                                                            <input type="number" id="signerWeightField{{ i }}" [(ngModel)]="signer.weight" name="signerWeightField{{ i }}" min="1" class="input-number" />
+                                                       </div>
+
+                                                       <div class="form-group remove-group">
+                                                            <button type="button" (click)="removeSigner(i)" class="btn-danger btn-sm" *ngIf="signers.length > 1" title="Remove this signer">
+                                                                 <lucide-icon name="trash-2" size="16"></lucide-icon>
+                                                            </button>
+                                                       </div>
+                                                  </div>
+                                             </fieldset>
+                                             }
+                                        </div>
+
+                                        <!-- Add / Quorum -->
+                                        <div class="form-row actions-row">
                                              <div class="form-group">
-                                                  <span>
-                                                       <label>Setup Multi-Sign</label>
-                                                  </span>
+                                                  <!-- <button type="button" (click)="addSigner()" class="btn-primary"><ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon> Add Signer</button> -->
+                                                  <button type="button" (click)="addSigner()" class="btn-primary">Add Signer</button>
                                              </div>
-                                             <!-- <div class="form-group"> -->
-                                             <label class="switch">
-                                                  <input type="checkbox" id="isMultiSignAddressData" [(ngModel)]="isMultiSign" (ngModelChange)="toggleMultiSign()" name="isMultiSignAddressData" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                             <!-- </div> -->
+
+                                             <div class="form-group">
+                                                  <label for="signerQuorumField">Signer Quorum</label>
+                                                  <input type="number" id="signerQuorumField" [(ngModel)]="signerQuorum" (ngModelChange)="validateQuorum()" name="signerQuorumField" min="1" class="input-number" />
+                                             </div>
                                         </div>
                                    </div>
-
-                                   @if(isMultiSign) {
-                                   <div>
-                                        <fieldset>
-                                             <ng-container *ngFor="let signer of signers; let i = index">
-                                                  <fieldset>
-                                                       <legend style="font-weight: bold">Signer {{ i + 1 }}</legend>
-                                                       <div>
-                                                            <label for="signerAccountField{{ i }}" class="signer-label">Account:</label>
-                                                            <input type="text" id="signerAccountField{{ i }}" [(ngModel)]="signer.account" name="signerAccountField{{ i }}" />
-                                                       </div>
-                                                       <div>
-                                                            <label for="signerSeedField{{ i }}" class="signer-label">Seed:</label>
-                                                            <input type="text" id="signerSeedField{{ i }}" [(ngModel)]="signer.seed" name="signerSeedField{{ i }}" />
-                                                       </div>
-                                                       <div>
-                                                            <label for="signerWeightField{{ i }}" class="signer-label">Weight:</label>
-                                                            <input class="multisignMultiAddressAccount" type="number" id="signerWeightField{{ i }}" [(ngModel)]="signer.weight" name="signerWeightField{{ i }}" />
-                                                            <button type="button" (click)="removeSigner(i)" *ngIf="signers.length > 1">Remove</button>
-                                                       </div>
-                                                  </fieldset>
-                                             </ng-container>
-
-                                             <div>
-                                                  <button type="button" (click)="addSigner()">+ Add Signer</button>
-                                             </div>
-
-                                             <div>
-                                                  <label style="display: inline-block; margin-right: 10px">Signer Quorum</label>
-                                                  <input class="multisignMultiAddressAccount" type="number" id="signerQuorumField" style="width: 50px; height: 28px" [(ngModel)]="signerQuorum" (ngModelChange)="validateQuorum()" name="signerQuorumField" />
-                                             </div>
-
-                                             <div>
-                                                  <button type="button" (click)="setMultiSign('Y')">Set Multi-Sign</button>
-                                                  <button type="button" (click)="setMultiSign('N')">Remove Multi-Sign</button>
-                                             </div>
-                                        </fieldset>
-                                   </div>
-                                   }
-                                   <!-- <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Check this to use Regular Key Address">
-                                                  <label [ngStyle]="{'color': regularKeySigningEnabled ? '#4CAF50' : 'black'}">Use Regular Key</label>
-                                             </span>
-                                        </td>
-                                        <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                             <label class="switch">
-                                                  <input type="checkbox" id="isSetRegularKeyData" [(ngModel)]="isSetRegularKey" (ngModelChange)="toggleMultiSign()" name="isSetRegularKeyData" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                             <label for="isSetRegularKeyData"></label>
-                                        </td>
-                                   </tr> -->
-                                   <!-- <tr class="" *ngIf="isSetRegularKey">
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Add address to set regular key.">
-                                                  <label for="regularKeyAccount">Account</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="regularKeyAccount" placeholder="Enter Regular Key Address" size="40" [(ngModel)]="regularKeyAccount" name="regularKeyAccount" />
-                                        </td>
-                                   </tr>
-                                   <tr class="" *ngIf="isSetRegularKey">
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Add seed to set regular key. This is a comma separated list">
-                                                  <label for="regularKeySeed">Seed</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="regularKeySeed" size="40" placeholder="Enter Regular Key Seed" [(ngModel)]="regularKeyAccountSeed" name="regularKeySeed" />
-                                             <br />
-                                             <button type="button" (click)="setRegularKey('Y')">Set Regular Key</button>
-                                             <button type="button" (click)="setRegularKey('N')">Remove Regular Key</button>
-                                        </td>
-                                   </tr> -->
                                    }
 
                                    <!-- Regular Key -->
-                                   @if(activeTab === 'addRegularKey') {
-                                   <!-- < *ngIf="isSetRegularKey"> -->
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Check this to use Regular Key Address">
-                                                  <label [ngStyle]="{'color': regularKeySigningEnabled ? '#4CAF50' : 'black'}">Use Regular Key</label>
-                                             </span>
-                                        </td>
-                                        <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                             <label class="switch">
-                                                  <input type="checkbox" id="isSetRegularKeyData" [(ngModel)]="isSetRegularKey" (ngModelChange)="toggleMultiSign()" name="isSetRegularKeyData" />
-                                                  <span class="slider round"></span>
-                                             </label>
-                                             <label for="isSetRegularKeyData"></label>
-                                        </td>
-                                   </tr>
-                                   <tr class="" *ngIf="isSetRegularKey">
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Add address to set regular key.">
-                                                  <label for="regularKeyAccount">Account</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="regularKeyAccount" placeholder="Enter Regular Key Address" size="40" [(ngModel)]="regularKeyAccount" name="regularKeyAccount" />
-                                        </td>
-                                   </tr>
-                                   <tr class="" *ngIf="isSetRegularKey">
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Add seed to set regular key. This is a comma separated list">
-                                                  <label for="regularKeySeed">Seed</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="regularKeySeed" size="40" placeholder="Enter Regular Key Seed" [(ngModel)]="regularKeyAccountSeed" name="regularKeySeed" />
-                                             <br />
-                                             <button type="button" (click)="setRegularKey('Y')">Set Regular Key</button>
-                                             <button type="button" (click)="setRegularKey('N')">Remove Regular Key</button>
-                                        </td>
-                                   </tr>
+                                   @if(activeTab === 'modifyRegularKey') {
+                                   <div class="multisign-section">
+                                        <div class="section-header">
+                                             <ng-icon name="heroKey" size="20" class="text-red-600"></ng-icon>
+                                             <span class="section-title">Regular Key Configuration</span>
+                                        </div>
+
+                                        <div class="signers-list">
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label for="regularKeyAddress">Account</label>
+                                                       <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" placeholder="No Regular Key configured for account" />
+                                                  </div>
+
+                                                  <div class="form-group">
+                                                       <label>Seed</label>
+                                                       <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" />
+                                                  </div>
+                                             </div>
+                                        </div>
+                                   </div>
                                    }
 
                                    <!-- Switches -->
@@ -722,7 +664,7 @@
                                         <!-- Regular Key Signing Enabled-->
                                         @if (regularKeySigningEnabled) {
                                         <label class="switch">
-                                             <input type="checkbox" [(ngModel)]="regularKeySigningEnabled" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
+                                             <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
                                              <span class="slider"></span>
                                              Use Regular Key
                                         </label>
@@ -769,22 +711,22 @@
                                    }
 
                                    <!-- Sign tx with Regular key address -->
-                                   <!-- @if (isRegularKeyAddress) {
-                         <div class="regular-key-fields">
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Address</label>
-                                        <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                                   @if (isRegularKeyAddress) {
+                                   <div class="regular-key-fields">
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Regular Key Address</label>
+                                                  <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                                             </div>
+                                        </div>
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Regular Key Seed</label>
+                                                  <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
+                                             </div>
+                                        </div>
                                    </div>
-                              </div>
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Seed</label>
-                                        <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                   </div>
-                              </div>
-                         </div>
-                         } -->
+                                   }
 
                                    <!-- Get ticket to delete -->
                                    @if (isTicket && activeTab !== 'delete') {
@@ -814,10 +756,24 @@
                                    }
 
                                    <!-- Action buttons -->
+                                   @if(activeTab === 'modifyMultiSigners') {
+                                   <div class="button-row" style="margin-top: 0">
+                                        <button type="button" (click)="setMultiSign('Y')" class="btn-primary">Set Multi-Sign</button>
+                                        <button type="button" (click)="setMultiSign('N')" class="btn-primary" [ngStyle]="{'background-color':'red'}">Remove Multi-Sign</button>
+                                        <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                                   </div>
+                                   } @else if(activeTab === 'modifyRegularKey') {
+                                   <div class="button-row" style="margin-top: 0">
+                                        <button type="button" (click)="setRegularKey('Y')" class="btn-primary">Set Regular Key</button>
+                                        <button type="button" (click)="setRegularKey('N')" class="btn-primary" [ngStyle]="{'background-color':'red'}">Remove Regular Key</button>
+                                        <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                                   </div>
+                                   } @else {
                                    <div class="button-row" style="margin-top: 0.6rem">
                                         <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'cancel' ? 'red' : activeTab === 'finish' ? 'green' : '#007bff'}">{{ activeTab === 'cancel' ? 'Cancel Escrow' : activeTab === 'finish' ? 'Finish Escrow' : 'Modify Account Flags' }}</button>
                                         <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                                    </div>
+                                   }
 
                                    <!-- Spinner / Messages -->
                                    @if (spinner) {
@@ -828,7 +784,7 @@
                                    }
 
                                    <!-- Success message -->
-                                   @if (isSuccess && !isError) {
+                                   @if (isSuccess) {
                                    <div class="success-message">
                                         <lucide-icon name="check" size="20"></lucide-icon>
                                         <div class="success-text">
@@ -869,7 +825,24 @@
                                              <span>{{ result }}</span><br />
                                              <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
                                              } @else {
-                                             <span>{{ result }}</span>
+                                             <span>{{ result }}</span><br />
+                                             }
+
+                                             <!-- Multiple Hashes -->
+                                             @if (txErrorHashes.length > 1 && !isSimulateEnabled) {
+                                             <div class="tx-hashes">
+                                                  @for (hash of txErrorHashes; track hash; let i = $index) {
+                                                  <div class="tx-hash-item">
+                                                       Transaction {{ i + 1 }} hash:
+                                                       <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
+                                                  </div>
+                                                  }
+                                             </div>
+                                             }
+
+                                             <!-- Single hash -->
+                                             @if (txErrorHashes.length === 1 && !isSimulateEnabled) {
+                                             <span>Transaction hash: <a [href]="url + 'tx/' + txErrorHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txErrorHashes[0] }} </a></span>
                                              }
                                         </div>
                                    </div>
@@ -923,252 +896,3 @@
           </div>
      </div>
 </div>
-
-<!-- <form id="theForm">
-     <app-app-wallet-dynamic-input (walletListChange)="onWalletListChange($event)" (transactionResult)="handleTransactionResult($event)"></app-app-wallet-dynamic-input>
-
-     <fieldset>
-          <legend style="color: white">Transaction Information</legend>
-
-          <div class="transaction-layout">
-               <div class="top-section-left">
-                    <div class="top-sections-wrapper">
-                         <div class="top-section-left">
-                              <tr>
-                                   <td>
-                                        <span class="tooltip" tooltip-data="Check this to update add Multi-Sign Address">
-                                             <label for="isHolderConfiguration">Configuration Templates:</label>
-                                        </span>
-                                   </td>
-                                   <td>
-                                        <input type="radio" id="isHolderConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="holder" />
-                                        <label for="isHolderConfiguration">Holder</label>
-                                        <input type="radio" id="isExchangerConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="exchanger" />
-                                        <label for="isExchangerConfiguration">Exchanger</label>
-                                        <input type="radio" id="isIssuerConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="issuer" />
-                                        <label for="isIssuerConfiguration">Issuer</label>
-                                   </td>
-                              </tr>
-                         </div>
-                    </div>
-
-                    <div class="button-container">
-                         <table style="text-align: left; width: 100%">
-                              <th></th>
-                              <tr style="vertical-align: top">
-                                   <td colspan="2">
-                                        <button type="button" (click)="getAccountDetails()">Get Account Info</button>
-                                        <button type="button" (click)="updateFlags()">Update Flags</button>
-                                        <button type="button" (click)="clearFields(true)">Clear Fields</button>
-                                   </td>
-                              </tr>
-                         </table>
-                    </div>
-               </div>
-
-               <div class="right-section">
-                    <table id="flags">
-                         <tr>
-                              <td></td>
-                              <td *ngIf="masterKeyDisabled">
-                                   <label style="color: red">Master Key is disabled. Use multi-sign or regular key to sign transactions.</label>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to update add Multi-Sign Address">
-                                        <label>Setup Multi-Sign</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isMultiSignAddressData" [(ngModel)]="isMultiSign" (ngModelChange)="toggleMultiSign()" name="isMultiSignAddressData" />
-                                        <span class="slider round"></span>
-                                   </label>
-                              </td>
-                         </tr>
-                         <ng-container *ngIf="isMultiSign">
-                              <tr>
-                                   <td></td>
-                                   <td>
-                                        <fieldset style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; width: fit-content">
-                                             <ng-container *ngFor="let signer of signers; let i = index">
-                                                  <fieldset style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px">
-                                                       <legend style="font-weight: bold; color: white">Signer {{ i + 1 }}</legend>
-                                                       <div style="margin-bottom: 8px">
-                                                            <label for="signerAccountField{{ i }}" class="signer-label">Account:</label>
-                                                            <input type="text" id="signerAccountField{{ i }}" style="width: 270px" [(ngModel)]="signer.account" name="signerAccountField{{ i }}" />
-                                                       </div>
-                                                       <div style="margin-bottom: 8px">
-                                                            <label for="signerSeedField{{ i }}" style="padding-left: 26px" class="signer-label">Seed:</label>
-                                                            <input type="text" id="signerSeedField{{ i }}" style="width: 270px" [(ngModel)]="signer.seed" name="signerSeedField{{ i }}" />
-                                                       </div>
-                                                       <div>
-                                                            <label for="signerWeightField{{ i }}" style="padding-left: 17px" class="signer-label">Weight:</label>
-                                                            <input class="multisignMultiAddressAccount" style="width: 50px; height: 28px" type="number" id="signerWeightField{{ i }}" [(ngModel)]="signer.weight" name="signerWeightField{{ i }}" />
-                                                            <button type="button" (click)="removeSigner(i)" *ngIf="signers.length > 1">Remove</button>
-                                                       </div>
-                                                  </fieldset>
-                                             </ng-container>
-
-                                             <div style="margin: 10px 0">
-                                                  <button type="button" (click)="addSigner()">+ Add Signer</button>
-                                             </div>
-
-                                             <div style="margin: 10px 0">
-                                                  <label style="display: inline-block; margin-right: 10px">Signer Quorum</label>
-                                                  <input class="multisignMultiAddressAccount" type="number" id="signerQuorumField" style="width: 50px; height: 28px" [(ngModel)]="signerQuorum" (ngModelChange)="validateQuorum()" name="signerQuorumField" />
-                                             </div>
-
-                                             <div>
-                                                  <button type="button" (click)="setMultiSign('Y')">Set Multi-Sign</button>
-                                                  <button type="button" (click)="setMultiSign('N')">Remove Multi-Sign</button>
-                                             </div>
-                                        </fieldset>
-                                   </td>
-                              </tr>
-                         </ng-container>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to update add Multi-Sign Address">
-                                        <label [ngStyle]="{'color': multiSigningEnabled ? '#4CAF50' : 'white'}">Use Multi-Sign Address</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isMultiSignAddressData" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="isMultiSignAddressData" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isMultiSignAddressData"></label>
-                              </td>
-                         </tr>
-                         <tr *ngIf="useMultiSign">
-                              <td></td>
-                              <td>
-                                   <fieldset style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; width: fit-content">
-                                        <table style="border-collapse: collapse">
-                                             <tr class="multisignAddressClass" *ngIf="useMultiSign">
-                                                  <td>
-                                                       <span class="tooltip" tooltip-data="Comma-separated list of signer addresses (must be in the account's SignerList)">
-                                                            <label for="multiSignAddress">Signers</label>
-                                                       </span>
-                                                  </td>
-                                                  <td>
-                                                       <textarea class="memoField" style="width: 280px; height: 100px" id="multiSignAddress" placeholder="Comma-separated list of signer addresses" [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                                                  </td>
-                                             </tr>
-                                             <tr class="multisignAddressClass" *ngIf="useMultiSign">
-                                                  <td>
-                                                       <span class="tooltip" tooltip-data="Comma-separated list of signer seeds (must correspond to signer addresses)">
-                                                            <label for="multiSignSeeds">Seeds</label>
-                                                       </span>
-                                                  </td>
-                                                  <td>
-                                                       <textarea class="memoField" style="width: 280px; height: 100px" id="multiSignSeeds" placeholder="Comma-separated list of signer seeds" [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                                                  </td>
-                                             </tr>
-                                             <tr class="multisignAddressClass" *ngIf="useMultiSign">
-                                                  <td>
-                                                       <span class="tooltip" tooltip-data="Quorum amount for multi sign.">
-                                                            <label for="quorum">Quorum</label>
-                                                       </span>
-                                                  </td>
-                                                  <td>
-                                                       <input type="text" id="signerQuorumField" style="width: 50px; height: 28px" [(ngModel)]="signerQuorum" (ngModelChange)="validateQuorum()" name="signerQuorumField" readonly />
-                                                  </td>
-                                             </tr>
-                                        </table>
-                                   </fieldset>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to use Regular Key Address">
-                                        <label [ngStyle]="{'color': regularKeySigningEnabled ? '#4CAF50' : 'white'}">Use Regular Key</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isSetRegularKeyData" [(ngModel)]="isSetRegularKey" (ngModelChange)="toggleMultiSign()" name="isSetRegularKeyData" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isSetRegularKeyData"></label>
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isSetRegularKey">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Add address to set regular key.">
-                                        <label for="regularKeyAccount">Account</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <input type="text" id="regularKeyAccount" placeholder="Enter Regular Key Address" size="40" [(ngModel)]="regularKeyAccount" name="regularKeyAccount" />
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isSetRegularKey">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Add seed to set regular key. This is a comma separated list">
-                                        <label for="regularKeySeed">Seed</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <input type="text" id="regularKeySeed" size="40" placeholder="Enter Regular Key Seed" [(ngModel)]="regularKeyAccountSeed" name="regularKeySeed" />
-                                   <br />
-                                   <button type="button" (click)="setRegularKey('Y')">Set Regular Key</button>
-                                   <button type="button" (click)="setRegularKey('N')">Remove Regular Key</button>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to use a ticket sequence">
-                                        <label>Use Ticket Sequence</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isTicketEnabled" [(ngModel)]="isTicket" (ngModelChange)="toggleTicketSequence()" name="isTicketEnabled" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isTicketEnabled"></label>
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isTicket">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Enter ticket sequence to use for currently selected account">
-                                        <label for="ticketSequence"></label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <div *ngIf="multiSelectMode; else singleSelect">
-                                        <select class="timeUnit" [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                             <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
-                                        </select>
-                                   </div>
-
-                                   <ng-template #singleSelect>
-                                        <select class="timeUnit" [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                             <option value="" disabled>Select a ticket</option>
-                                             <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
-                                        </select>
-                                   </ng-template>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to simulate a send xrp transaction">
-                                        <label>Simulate Transaction</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isSimulateEnabled" [(ngModel)]="isSimulateEnabled" (ngModelChange)="toggleTicketSequence()" name="isSimulateEnabled" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isSimulateEnabled"></label>
-                              </td>
-                         </tr>
-                    </table>
-               </div>
-          </div>
-     </fieldset>
-</form> -->
