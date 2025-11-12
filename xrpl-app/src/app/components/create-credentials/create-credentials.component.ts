@@ -886,22 +886,9 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
                const errors = this.validateInputs(inputs, 'verifyCredential');
                if (errors.length > 0) {
+                    this.isSuccess = false;
                     return this.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
                }
-
-               type Section = {
-                    title: string;
-                    openByDefault: boolean;
-                    content?: { key: string; value: string }[];
-                    subItems?: {
-                         key: string;
-                         openByDefault: boolean;
-                         content: { key: string; value: string }[];
-                    }[];
-               };
-               const data: { sections: Section[] } = {
-                    sections: [],
-               };
 
                // Encode credentialType as uppercase hex, if needed
                let credentialTypeHex = '';
@@ -914,11 +901,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
                if (credentialTypeHex.length % 2 !== 0 || !AppConstants.CREDENTIAL_REGEX.test(credentialTypeHex)) {
                     // Hexadecimal is always 2 chars per byte, so an odd length is invalid.
-                    data.sections.push({
-                         title: 'Credentials',
-                         openByDefault: true,
-                         content: [{ key: 'Status', value: `Credential type must be 128 characters as hexadecimal.` }],
-                    });
+                    this.paymentTx = [];
                     this.setError(`Credential type must be 128 characters as hexadecimal.`);
                     return;
                }
@@ -945,19 +928,11 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                } catch (error: any) {
                     if (error.data?.error === 'entryNotFound') {
                          console.info('Credential was not found');
-                         data.sections.push({
-                              title: 'Credentials',
-                              openByDefault: true,
-                              content: [{ key: 'Status', value: `Credential not found.` }],
-                         });
+                         this.paymentTx = [];
                          this.setError(`Credential not found.`);
                          return;
                     } else {
-                         data.sections.push({
-                              title: 'Credentials',
-                              openByDefault: true,
-                              content: [{ key: 'Status', value: `Failed to check credential: ${error.message || 'Unknown error'}` }],
-                         });
+                         this.paymentTx = [];
                          this.setError(`Failed to check credential: ${error.message || 'Unknown error'}`);
                          return;
                     }
@@ -971,12 +946,8 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
                // Check if the credential has been accepted
                if (!(credential.Flags & AppConstants.LSF_ACCEPTED)) {
-                    data.sections.push({
-                         title: 'Credentials',
-                         openByDefault: true,
-                         content: [{ key: 'Status', value: 'Credential is not accepted' }],
-                    });
                     console.info('Credential is not accepted.');
+                    this.paymentTx = [];
                     this.setError('Credential is not accepted.');
                     return;
                }
@@ -994,11 +965,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                               ledger_index: 'validated',
                          });
                     } catch (error: any) {
-                         data.sections.push({
-                              title: 'Credentials',
-                              openByDefault: true,
-                              content: [{ key: 'Status', value: `Failed to check credential: ${error.message || 'Unknown error'}` }],
-                         });
+                         this.paymentTx = [];
                          this.setError(`Failed to check credential: ${error.message || 'Unknown error'}`);
                          return;
                     }
@@ -1008,11 +975,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
                     if (new Date(closeTime) > new Date(expirationTime)) {
                          console.info('Credential is expired.');
-                         data.sections.push({
-                              title: 'Credentials',
-                              openByDefault: true,
-                              content: [{ key: 'Status', value: `Credential is expired.` }],
-                         });
+                         this.paymentTx = [];
                          this.setError(`Credential is expired.`);
                          return;
                     }
@@ -1021,27 +984,10 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                     this.updateTxResult(this.txResult);
                }
 
-               data.sections.push({
-                    title: 'Credentials',
-                    openByDefault: true,
-                    content: [
-                         { key: 'Status', value: 'Credential is verified' },
-                         { key: 'Credential Type', value: ledgerEntryRequest.credential.credential_type || 'Credential' },
-                         { key: 'Issuer', value: ledgerEntryRequest.credential.issuer || 'N/A' },
-                         { key: 'Subject', value: ledgerEntryRequest.credential.subject || 'N/A' },
-                         { key: 'Expiration', value: this.utilsService.fromRippleTime(credential.Expiration).est || 'Credential' },
-                         { key: 'Flags', value: this.utilsService.getCredentialStatus(credential.Flags) },
-                         { key: 'IssuerNode', value: credential.IssuerNode || 'N/A' },
-                         { key: 'PreviousTxnID', value: credential.PreviousTxnID || 'N/A' },
-                         { key: 'PreviousTxnLgrSeq', value: credential.PreviousTxnLgrSeq || 'N/A' },
-                         { key: 'Subject Node', value: credential.SubjectNode || 'N/A' },
-                         { key: 'URI', value: credential.URI || 'N/A' },
-                         { key: 'Index', value: credential.index || 'N/A' },
-                    ],
-               });
-
                // Credential has passed all checks
-               console.info('Credential is valid.');
+               console.info('Credential is verified.');
+               this.successMessage = 'Credential is verified.';
+               this.setSuccess(this.result);
                return true;
           } catch (error: any) {
                console.error('Error:', error);
