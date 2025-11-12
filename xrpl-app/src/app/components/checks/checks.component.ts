@@ -246,6 +246,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
 
           this.clearMessages();
           this.clearFields(true);
+          this.clearWarning();
      }
 
      selectWallet(index: number) {
@@ -261,7 +262,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
      }
 
      saveName() {
-          this.walletManagerService.saveEdit(this.tempName); // ← PASS IT!
+          this.walletManagerService.saveEdit(this.tempName);
           this.tempName = '';
           this.updateDestinations();
      }
@@ -473,12 +474,11 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                this.getCashableChecks(checkObjects, wallet.classicAddress);
                this.getCancelableChecks(checkObjects, wallet.classicAddress);
 
-               this.refreshUIData(wallet, accountInfo, accountObjects);
-
                await this.refreshWallets(client, [wallet.classicAddress]);
 
                setTimeout(async () => {
                     try {
+                         this.refreshUIData(wallet, accountInfo, accountObjects);
                          if ((this.activeTab === 'create' || this.activeTab === 'cash') && this.currencyFieldDropDownValue !== 'XRP') {
                               this.toggleIssuerField();
                          }
@@ -657,12 +657,12 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     const checkObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['Check']);
                     this.utilsService.logObjects('checkObjects', checkObjects);
 
-                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.getExistingChecks(checkObjects, wallet.classicAddress);
                     await this.refreshWallets(client, [wallet.classicAddress ?? wallet.address, this.destinationField]);
 
                     setTimeout(async () => {
                          try {
+                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                               if (this.currencyFieldDropDownValue !== 'XRP') {
                                    await this.updateCurrencyBalance(gatewayBalances, wallet);
                                    await this.toggleIssuerField();

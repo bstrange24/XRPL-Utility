@@ -2312,7 +2312,7 @@ app-root {
 }
 
 .badge {
-     font-size: 0.65rem;
+     font-size: 0.69rem;
      padding: 0.15rem 0.35rem;
      border-radius: 4px;
      color: white;
@@ -2330,9 +2330,24 @@ app-root {
      background: #17a2b8;
 }
 
+.badge-address {
+     background: #6f42c1;
+}
+
+.badge-uri {
+     background: #fd7e14;
+}
+
+.badge-credential-index {
+     background: #20c997;
+}
+
 .badge-tag-not-set,
 .badge-invoice-not-set,
-.badge-expire-not-set {
+.badge-expire-not-set,
+.badge-address-not-set,
+.badge-uri-not-set,
+.badge-credential-index-not-set {
      background: #6c757d;
 }
 
@@ -2393,7 +2408,8 @@ app-root {
      margin-bottom: 1rem;
 }
 
-.payment-channel-list-container {
+.payment-channel-list-container,
+.credential-list-container {
      transition: max-height 0.3s ease;
      overflow: hidden;
      max-height: 1000px;
@@ -2485,6 +2501,17 @@ app-root {
 
 .badge-success {
      animation: pulse 1s ease;
+}
+
+.verify-button-submenu {
+     background-color: #ff7f00;
+     width: 40px;
+     height: 40px;
+     border-radius: 10px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     flex-shrink: 0;
 }
 
 .green-button-submenu {

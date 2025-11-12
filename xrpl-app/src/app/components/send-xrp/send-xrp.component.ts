@@ -373,11 +373,11 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                     return this.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
                }
 
-               this.refreshUIData(wallet, accountInfo, accountObjects);
                await this.refreshWallets(client, [wallet.classicAddress]);
 
                setTimeout(async () => {
                     try {
+                         this.refreshUIData(wallet, accountInfo, accountObjects);
                          this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                          this.clearFields(false);
                          this.updateTickets(accountObjects);
