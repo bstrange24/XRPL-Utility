@@ -409,6 +409,14 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           }
      }
 
+     setMemoField() {
+          this.enableTransaction();
+     }
+
+     setTicketField() {
+          this.enableTransaction();
+     }
+
      getTransactionJSON() {
           this.onTransactionChange();
      }
@@ -482,111 +490,111 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                     this.setTxJson(this.txJson);
                     break;
                case 'sendXrp':
-                    this.txJson = await this.signTransactionUtilService.createSendXrpRequestText({ client, wallet, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.createSendXrpRequestText({ client, wallet, isTicketEnabled: this.isTicket, isMemoEnable: this.isMemoEnabled, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'setTrustline':
-                    this.txJson = await this.signTransactionUtilService.modifyTrustlineRequestText({ client, wallet, selectedTransaction: 'setTrustline', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.modifyTrustlineRequestText({ client, wallet, selectedTransaction: 'setTrustline', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'removeTrustline':
-                    this.txJson = await this.signTransactionUtilService.modifyTrustlineRequestText({ client, wallet, selectedTransaction: 'removeTrustline', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.modifyTrustlineRequestText({ client, wallet, selectedTransaction: 'removeTrustline', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'issueCurrency':
-                    this.txJson = await this.signTransactionUtilService.issueCurrencyRequestText({ client, wallet, selectedTransaction: 'issueCurrency', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.issueCurrencyRequestText({ client, wallet, selectedTransaction: 'issueCurrency', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'accountFlagSet':
-                    this.txJson = await this.signTransactionUtilService.modifyAccountFlagsRequestText({ client, wallet, selectedTransaction: 'accountFlagSet', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.modifyAccountFlagsRequestText({ client, wallet, selectedTransaction: 'accountFlagSet', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'accountFlagClear':
-                    this.txJson = await this.signTransactionUtilService.modifyAccountFlagsRequestText({ client, wallet, selectedTransaction: 'accountFlagSet', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.modifyAccountFlagsRequestText({ client, wallet, selectedTransaction: 'accountFlagSet', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'createTimeEscrow':
-                    this.txJson = await this.signTransactionUtilService.createTimeEscrowRequestText({ client, wallet, selectedTransaction: 'createTimeEscrow', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.createTimeEscrowRequestText({ client, wallet, selectedTransaction: 'createTimeEscrow', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'finishTimeEscrow':
-                    this.txJson = await this.signTransactionUtilService.finshTimeEscrowRequestText({ client, wallet, selectedTransaction: 'finishTimeEscrow', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.finshTimeEscrowRequestText({ client, wallet, selectedTransaction: 'finishTimeEscrow', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'createTimeEscrowToken':
-                    this.txJson = await this.signTransactionUtilService.createTimeEscrowRequestText({ client, wallet, selectedTransaction: 'createTimeEscrowToken', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.createTimeEscrowRequestText({ client, wallet, selectedTransaction: 'createTimeEscrowToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'finishTimeEscrowToken':
-                    this.txJson = await this.signTransactionUtilService.finshTimeEscrowRequestText({ client, wallet, selectedTransaction: 'finishTimeEscrowToken', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.finshTimeEscrowRequestText({ client, wallet, selectedTransaction: 'finishTimeEscrowToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'createConditionEscrow':
-                    this.txJson = await this.signTransactionUtilService.createConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'createConditionEscrow', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.createConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'createConditionEscrow', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'finishConditionEscrow':
-                    this.txJson = await this.signTransactionUtilService.finsishConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'finishConditionEscrow', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.finsishConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'finishConditionEscrow', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'createConditionEscrowToken':
-                    this.txJson = await this.signTransactionUtilService.createConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'createConditionEscrowToken', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.createConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'createConditionEscrowToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'finishConditionEscrowToken':
-                    this.txJson = await this.signTransactionUtilService.finsishConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'finishConditionEscrowToken', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.finsishConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'finishConditionEscrowToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'cancelEscrow':
-                    this.txJson = await this.signTransactionUtilService.cancelEscrowRequestText({ client, wallet, selectedTransaction: 'cancelEscrow', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.cancelEscrowRequestText({ client, wallet, selectedTransaction: 'cancelEscrow', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'createCheck':
-                    this.txJson = await this.signTransactionUtilService.createCheckRequestText({ client, wallet, selectedTransaction: 'createCheck', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.createCheckRequestText({ client, wallet, selectedTransaction: 'createCheck', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'createCheckToken':
-                    this.txJson = await this.signTransactionUtilService.createCheckRequestText({ client, wallet, selectedTransaction: 'createCheckToken', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.createCheckRequestText({ client, wallet, selectedTransaction: 'createCheckToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'cashCheck':
-                    this.txJson = await this.signTransactionUtilService.cashCheckRequestText({ client, wallet, selectedTransaction: 'cashCheck', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.cashCheckRequestText({ client, wallet, selectedTransaction: 'cashCheck', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'cashCheckToken':
-                    this.txJson = await this.signTransactionUtilService.cashCheckRequestText({ client, wallet, selectedTransaction: 'cashCheckToken', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.cashCheckRequestText({ client, wallet, selectedTransaction: 'cashCheckToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'cancelCheck':
-                    this.txJson = await this.signTransactionUtilService.cancelCheckRequestText({ client, wallet, selectedTransaction: 'cancelCheck', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.cancelCheckRequestText({ client, wallet, selectedTransaction: 'cancelCheck', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'createMPT':
-                    this.txJson = await this.signTransactionUtilService.createMPTRequestText({ client, wallet, selectedTransaction: 'createMPT', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.createMPTRequestText({ client, wallet, selectedTransaction: 'createMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'authorizeMPT':
-                    this.txJson = await this.signTransactionUtilService.authorizeMPTRequestText({ client, wallet, selectedTransaction: 'authorizeMPT', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.authorizeMPTRequestText({ client, wallet, selectedTransaction: 'authorizeMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'unauthorizeMPT':
-                    this.txJson = await this.signTransactionUtilService.unauthorizeMPTRequestText({ client, wallet, selectedTransaction: 'unauthorizeMPT', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.unauthorizeMPTRequestText({ client, wallet, selectedTransaction: 'unauthorizeMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'sendMPT':
-                    this.txJson = await this.signTransactionUtilService.sendMPTRequestText({ client, wallet, selectedTransaction: 'sendMPT', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.sendMPTRequestText({ client, wallet, selectedTransaction: 'sendMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'lockMPT':
-                    this.txJson = await this.signTransactionUtilService.lockMPTRequestText({ client, wallet, selectedTransaction: 'lockMPT', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.lockMPTRequestText({ client, wallet, selectedTransaction: 'lockMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'unlockMPT':
-                    this.txJson = await this.signTransactionUtilService.unlockMPTRequestText({ client, wallet, selectedTransaction: 'unlockMPT', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.unlockMPTRequestText({ client, wallet, selectedTransaction: 'unlockMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                case 'destroyMPT':
-                    this.txJson = await this.signTransactionUtilService.destroyMPTRequestText({ client, wallet, selectedTransaction: 'destroyMPT', isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.destroyMPTRequestText({ client, wallet, selectedTransaction: 'destroyMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
                     this.setTxJson(this.txJson);
                     break;
                // add others as needed

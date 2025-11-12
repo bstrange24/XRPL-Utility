@@ -34,6 +34,7 @@ interface SignTransactionOptions {
           | 'unlockMPT'
           | 'destroyMPT';
      isTicketEnabled?: boolean;
+     isMemoEnable?: boolean;
      ticketSequence?: string;
 }
 
@@ -100,7 +101,7 @@ export class SignTransactionUtilService {
           return txString;
      }
 
-     async createSendXrpRequestText({ client, wallet, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async createSendXrpRequestText({ client, wallet, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let xrpPaymentRequest: any = {
@@ -114,20 +115,6 @@ export class SignTransactionUtilService {
                DestinationTag: 0,
                SourceTag: 0,
                InvoiceID: 0,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           // If using a Ticket
@@ -141,13 +128,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                xrpPaymentRequest.TicketSequence = Number(ticketSequence);
                xrpPaymentRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               xrpPaymentRequest.TicketSequence = 'TICKET_SEQUENCE';
+               xrpPaymentRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               xrpPaymentRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(xrpPaymentRequest, null, 2);
           return txString;
      }
 
-     async modifyTrustlineRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async modifyTrustlineRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let modifyTrustlineRequest: any = {
@@ -175,20 +182,6 @@ export class SignTransactionUtilService {
           // modifyTrustlineRequest.Flags = 0;
           modifyTrustlineRequest.LastLedgerSequence = currentLedger;
           modifyTrustlineRequest.Sequence = accountInfo.result.account_data.Sequence;
-          modifyTrustlineRequest.Memos = [
-               {
-                    Memo: {
-                         MemoData: '',
-                         MemoType: 'text/plain',
-                    },
-               },
-               {
-                    Memo: {
-                         MemoData: '',
-                         MemoType: 'text/plain',
-                    },
-               },
-          ];
 
           if (isTicketEnabled && ticketSequence) {
                // If using a Ticket
@@ -201,13 +194,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                modifyTrustlineRequest.TicketSequence = Number(ticketSequence);
                modifyTrustlineRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               modifyTrustlineRequest.TicketSequence = 'TICKET_SEQUENCE';
+               modifyTrustlineRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               modifyTrustlineRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(modifyTrustlineRequest, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async issueCurrencyRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async issueCurrencyRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let issueCurrencyRequest: any = {
@@ -222,20 +235,6 @@ export class SignTransactionUtilService {
                Fee: '10',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -249,13 +248,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                issueCurrencyRequest.TicketSequence = Number(ticketSequence);
                issueCurrencyRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               issueCurrencyRequest.TicketSequence = 'TICKET_SEQUENCE';
+               issueCurrencyRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               issueCurrencyRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(issueCurrencyRequest, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async modifyAccountFlagsRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async modifyAccountFlagsRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let modifyAccountSetRequest: any = {
@@ -266,20 +285,6 @@ export class SignTransactionUtilService {
                Flags: 0,
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -292,12 +297,32 @@ export class SignTransactionUtilService {
                // Override for ticket use
                modifyAccountSetRequest.TicketSequence = ticketSequence;
                modifyAccountSetRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               modifyAccountSetRequest.TicketSequence = 'TICKET_SEQUENCE';
+               modifyAccountSetRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               modifyAccountSetRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           return JSON.stringify(modifyAccountSetRequest, null, 2);
      }
 
-     async createTimeEscrowRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async createTimeEscrowRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let createTimeEscrowRequest: any = {
@@ -306,24 +331,10 @@ export class SignTransactionUtilService {
                Destination: 'rB59o63jhXxHU9RHDMUq2bypc8pW4m5f6s',
                Amount: '0',
                Fee: '10',
-               FinishAfter: '815102293',
-               CancelAfter: '815102343',
+               FinishAfter: 815102293,
+               CancelAfter: 815102343,
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (selectedTransaction === 'createTimeEscrowToken') {
@@ -344,13 +355,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                createTimeEscrowRequest.TicketSequence = Number(ticketSequence);
                createTimeEscrowRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               createTimeEscrowRequest.TicketSequence = 'TICKET_SEQUENCE';
+               createTimeEscrowRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               createTimeEscrowRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(createTimeEscrowRequest, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async finshTimeEscrowRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async finshTimeEscrowRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let finshTimeEscrowRequest: any = {
@@ -361,20 +392,6 @@ export class SignTransactionUtilService {
                OfferSequence: '0',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -387,13 +404,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                finshTimeEscrowRequest.TicketSequence = Number(ticketSequence);
                finshTimeEscrowRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               finshTimeEscrowRequest.TicketSequence = 'TICKET_SEQUENCE';
+               finshTimeEscrowRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               finshTimeEscrowRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(finshTimeEscrowRequest, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async createConditionalEscrowRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async createConditionalEscrowRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let createConditionalEscrowRequest: any = {
@@ -406,20 +443,6 @@ export class SignTransactionUtilService {
                CancelAfter: '815102343',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (selectedTransaction === 'createConditionEscrowToken') {
@@ -440,13 +463,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                createConditionalEscrowRequest.TicketSequence = Number(ticketSequence);
                createConditionalEscrowRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               createConditionalEscrowRequest.TicketSequence = 'TICKET_SEQUENCE';
+               createConditionalEscrowRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               createConditionalEscrowRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(createConditionalEscrowRequest, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async finsishConditionalEscrowRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async finsishConditionalEscrowRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let finsishConditionalEscrowRequest: any = {
@@ -459,20 +502,6 @@ export class SignTransactionUtilService {
                OfferSequence: '0',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -485,13 +514,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                finsishConditionalEscrowRequest.TicketSequence = Number(ticketSequence);
                finsishConditionalEscrowRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               finsishConditionalEscrowRequest.TicketSequence = 'TICKET_SEQUENCE';
+               finsishConditionalEscrowRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               finsishConditionalEscrowRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(finsishConditionalEscrowRequest, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async cancelEscrowRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async cancelEscrowRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let cancelEscrowRequestRequest: any = {
@@ -502,20 +551,6 @@ export class SignTransactionUtilService {
                OfferSequence: '0',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -528,13 +563,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                cancelEscrowRequestRequest.TicketSequence = Number(ticketSequence);
                cancelEscrowRequestRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               cancelEscrowRequestRequest.TicketSequence = 'TICKET_SEQUENCE';
+               cancelEscrowRequestRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               cancelEscrowRequestRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(cancelEscrowRequestRequest, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async createCheckRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async createCheckRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let createCheckRequestRequest: any = {
@@ -544,20 +599,6 @@ export class SignTransactionUtilService {
                Fee: '10',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (selectedTransaction === 'createCheck') {
@@ -580,13 +621,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                createCheckRequestRequest.TicketSequence = Number(ticketSequence);
                createCheckRequestRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               createCheckRequestRequest.TicketSequence = 'TICKET_SEQUENCE';
+               createCheckRequestRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               createCheckRequestRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(createCheckRequestRequest, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async cashCheckRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async cashCheckRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let cashCheckRequestRequest: any = {
@@ -597,20 +658,6 @@ export class SignTransactionUtilService {
                Fee: '10',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (selectedTransaction === 'cashCheck') {
@@ -633,13 +680,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                cashCheckRequestRequest.TicketSequence = Number(ticketSequence);
                cashCheckRequestRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               cashCheckRequestRequest.TicketSequence = 'TICKET_SEQUENCE';
+               cashCheckRequestRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               cashCheckRequestRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(cashCheckRequestRequest, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async cancelCheckRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async cancelCheckRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let cancelCheckRequestRequest: any = {
@@ -649,20 +716,6 @@ export class SignTransactionUtilService {
                Fee: '10',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -675,13 +728,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                cancelCheckRequestRequest.TicketSequence = Number(ticketSequence);
                cancelCheckRequestRequest.Sequence = 0;
+          } else if (isTicketEnabled) {
+               cancelCheckRequestRequest.TicketSequence = 'TICKET_SEQUENCE';
+               cancelCheckRequestRequest.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               cancelCheckRequestRequest.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(cancelCheckRequestRequest, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async createMPTRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async createMPTRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let mPTokenIssuanceCreateTx: any = {
@@ -692,20 +765,6 @@ export class SignTransactionUtilService {
                Flags: '0',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -718,13 +777,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                mPTokenIssuanceCreateTx.TicketSequence = Number(ticketSequence);
                mPTokenIssuanceCreateTx.Sequence = 0;
+          } else if (isTicketEnabled) {
+               mPTokenIssuanceCreateTx.TicketSequence = 'TICKET_SEQUENCE';
+               mPTokenIssuanceCreateTx.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               mPTokenIssuanceCreateTx.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(mPTokenIssuanceCreateTx, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async authorizeMPTRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async authorizeMPTRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let mPTokenAuthorizeTx: any = {
@@ -734,20 +813,6 @@ export class SignTransactionUtilService {
                Fee: '10',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -760,13 +825,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                mPTokenAuthorizeTx.TicketSequence = Number(ticketSequence);
                mPTokenAuthorizeTx.Sequence = 0;
+          } else if (isTicketEnabled) {
+               mPTokenAuthorizeTx.TicketSequence = 'TICKET_SEQUENCE';
+               mPTokenAuthorizeTx.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               mPTokenAuthorizeTx.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(mPTokenAuthorizeTx, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async unauthorizeMPTRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async unauthorizeMPTRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let mPTokenAuthorizeTx: any = {
@@ -777,20 +862,6 @@ export class SignTransactionUtilService {
                Fee: '10',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -803,13 +874,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                mPTokenAuthorizeTx.TicketSequence = Number(ticketSequence);
                mPTokenAuthorizeTx.Sequence = 0;
+          } else if (isTicketEnabled) {
+               mPTokenAuthorizeTx.TicketSequence = 'TICKET_SEQUENCE';
+               mPTokenAuthorizeTx.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               mPTokenAuthorizeTx.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(mPTokenAuthorizeTx, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async sendMPTRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async sendMPTRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let sendMptPaymentTx: any = {
@@ -823,20 +914,6 @@ export class SignTransactionUtilService {
                Fee: '10',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -849,13 +926,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                sendMptPaymentTx.TicketSequence = Number(ticketSequence);
                sendMptPaymentTx.Sequence = 0;
+          } else if (isTicketEnabled) {
+               sendMptPaymentTx.TicketSequence = 'TICKET_SEQUENCE';
+               sendMptPaymentTx.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               sendMptPaymentTx.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(sendMptPaymentTx, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async lockMPTRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async lockMPTRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let mPTokenIssuanceSetTx: any = {
@@ -866,20 +963,6 @@ export class SignTransactionUtilService {
                Fee: '10',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -892,13 +975,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                mPTokenIssuanceSetTx.TicketSequence = Number(ticketSequence);
                mPTokenIssuanceSetTx.Sequence = 0;
+          } else if (isTicketEnabled) {
+               mPTokenIssuanceSetTx.TicketSequence = 'TICKET_SEQUENCE';
+               mPTokenIssuanceSetTx.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               mPTokenIssuanceSetTx.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(mPTokenIssuanceSetTx, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async unlockMPTRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async unlockMPTRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let mPTokenIssuanceSetTx: any = {
@@ -909,20 +1012,6 @@ export class SignTransactionUtilService {
                Fee: '10',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -935,13 +1024,33 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                mPTokenIssuanceSetTx.TicketSequence = Number(ticketSequence);
                mPTokenIssuanceSetTx.Sequence = 0;
+          } else if (isTicketEnabled) {
+               mPTokenIssuanceSetTx.TicketSequence = 'TICKET_SEQUENCE';
+               mPTokenIssuanceSetTx.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               mPTokenIssuanceSetTx.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(mPTokenIssuanceSetTx, null, 2);
           return txString; // Set property instead of DOM
      }
 
-     async destroyMPTRequestText({ client, wallet, selectedTransaction, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
+     async destroyMPTRequestText({ client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence }: SignTransactionOptions): Promise<string> {
           const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
 
           let mPTokenIssuanceDestroyTx: any = {
@@ -951,20 +1060,6 @@ export class SignTransactionUtilService {
                Fee: '10',
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
           };
 
           if (isTicketEnabled && ticketSequence) {
@@ -977,6 +1072,26 @@ export class SignTransactionUtilService {
                // Overwrite fields for ticketed tx
                mPTokenIssuanceDestroyTx.TicketSequence = Number(ticketSequence);
                mPTokenIssuanceDestroyTx.Sequence = 0;
+          } else if (isTicketEnabled) {
+               mPTokenIssuanceDestroyTx.TicketSequence = 'TICKET_SEQUENCE';
+               mPTokenIssuanceDestroyTx.Sequence = 0;
+          }
+
+          if (isMemoEnable) {
+               mPTokenIssuanceDestroyTx.Memo = [
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+                    {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: 'text/plain',
+                         },
+                    },
+               ];
           }
 
           const txString = JSON.stringify(mPTokenIssuanceDestroyTx, null, 2);

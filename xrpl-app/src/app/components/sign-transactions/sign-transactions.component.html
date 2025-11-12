@@ -224,7 +224,7 @@
                                    <div class="switch-group" style="margin-top: 1em">
                                         <!-- Memo group -->
                                         <label class="switch">
-                                             <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
+                                             <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" (ngModelChange)="setMemoField()" />
                                              <span class="slider"></span>
                                              Add Memo
                                         </label>
@@ -250,7 +250,7 @@
                                         <!-- Use Ticket for tx -->
                                         @if (activeTab !== 'delete' && ticketArray.length > 0) {
                                         <label class="switch">
-                                             <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
+                                             <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" (ngModelChange)="setTicketField()" />
                                              <span class="slider"></span>
                                              Use Ticket
                                         </label>
@@ -265,9 +265,9 @@
                                    </div>
 
                                    <!-- Memo Field -->
-                                   @if (isMemoEnabled) {
-                                   <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-                                   }
+                                   <!-- @if (isMemoEnabled) { -->
+                                   <!-- <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea> -->
+                                   <!-- } -->
 
                                    <!-- Sign tx with Mult Sign address -->
                                    @if (useMultiSign) {
@@ -306,7 +306,7 @@
                                    }
 
                                    <!-- Get ticket to delete -->
-                                   @if (isTicket && activeTab !== 'delete') {
+                                   <!-- @if (isTicket && activeTab !== 'delete') {
                                    <div class="ticket-fields">
                                         <div class="form-group">
                                              <label>Ticket Sequence</label>
@@ -330,7 +330,7 @@
                                              }
                                         </div>
                                    </div>
-                                   }
+                                   } -->
 
                                    <!-- Action buttons -->
                                    @if(activeTab === 'getAccountDetails') {
@@ -339,7 +339,7 @@
                                         <!-- <button type="button" (click)="unsignedTransaction()" class="btn-primary">Unsigned Transaction</button> -->
                                         <button type="button" (click)="signedTransaction()" class="btn-primary">Signed Transaction</button>
                                         <button type="button" (click)="submitTransaction()" class="btn-primary">Submit Transaction</button>
-                                        <button type="button" (click)="signedTransaction()" class="btn-primary">Sign for Multi-Sign</button>
+                                        <button type="button" (click)="signForMultiSign()" class="btn-primary">Sign for Multi-Sign</button>
                                         <!-- <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button> -->
                                    </div>
                                    }
@@ -440,7 +440,7 @@
                                              </div>
                                         </div>
 
-                                        <div #signedEditable id="hashField" spellcheck="false" style="color: #669900" class="tx-json language-json editable" [ngClass]="{ 'success': isSuccess }" [textContent]="outputField"></div>
+                                        <div #signedEditable id="hashField" spellcheck="false" style="color: #669900" class="tx-json language-json editable" contenteditable="true" [ngClass]="{ 'success': isSuccess }" [textContent]="outputField"></div>
                                    </div>
                               </div>
                          </div>
