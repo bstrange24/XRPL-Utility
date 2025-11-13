@@ -319,12 +319,33 @@ th.resizable::after {
 
 .date-filter-container {
      display: flex;
-     gap: 8px;
+     gap: 6px;
      align-items: center;
      flex-wrap: wrap;
 }
 
-.date-input {
-     flex: 1;
-     min-width: 150px;
+.date-input.compact .mat-mdc-form-field-infix {
+     padding: 4px 0 !important;
+     min-height: 26px;
+}
+
+.date-input.compact .mat-mdc-form-field-label {
+     font-size: 0.82rem;
+     top: 14px;
+}
+
+.date-input.compact .mat-mdc-form-field-input-control {
+     font-size: 0.88rem;
+     padding-top: 8px;
+}
+
+.date-input.compact .mat-datepicker-toggle {
+     width: 28px;
+     height: 28px;
+}
+
+.date-input.compact .mat-icon-button {
+     width: 28px;
+     height: 28px;
+     line-height: 28px;
 }

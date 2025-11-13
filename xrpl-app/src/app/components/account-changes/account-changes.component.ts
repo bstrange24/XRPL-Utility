@@ -24,6 +24,7 @@ import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { LucideAngularModule } from 'lucide-angular';
 import { NgIcon } from '@ng-icons/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -39,6 +40,7 @@ interface BalanceChange {
      balanceBefore: number;
      balanceAfter: number;
      counterparty: string;
+     _searchIndex?: string;
 }
 
 @Component({
@@ -113,6 +115,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
      warningMessage: string | null = null;
      // Add to class properties
      dateRange: { start: Date | null; end: Date | null } = { start: null, end: null };
+     private searchSubject = new Subject<string>();
 
      private originalBalanceChanges: BalanceChange[] = []; // Cache full data
 
@@ -134,6 +137,12 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                     this.hasWallets = false;
                     return;
                }
+          });
+
+          // Debounce search input
+          this.searchSubject.pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(searchText => {
+               this.filterValue = searchText;
+               this.applyFilter(searchText);
           });
      }
 
@@ -190,8 +199,9 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
      }
 
      applyFilter(filterValue: string) {
-          this.filterValue = filterValue.trim().toLowerCase();
-          this.balanceChangesDataSource.filter = this.filterValue;
+          const trimmed = filterValue.trim().toLowerCase();
+          this.filterValue = trimmed;
+          this.balanceChangesDataSource.filter = trimmed; // ← Critical line
      }
 
      private readonly trackByFunction = (index: number, item: BalanceChange) => {
@@ -200,30 +210,30 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
 
      private setFilterPredicate() {
           this.balanceChangesDataSource.filterPredicate = (data: BalanceChange, filter: string) => {
-               const searchText = filter.toLowerCase().trim();
-               if (!searchText) return true;
+               const searchText = filter.trim();
+               if (!searchText) return this.isInDateRange(data.date);
 
-               const textMatch = data.type.toLowerCase().includes(searchText) || data.currency.toLowerCase().includes(searchText) || (data.counterparty || '').toLowerCase().includes(searchText) || data.hash.toLowerCase().includes(searchText) || data.change.toString().includes(searchText) || data.fees.toString().includes(searchText) || data.balanceBefore.toString().includes(searchText) || data.balanceAfter.toString().includes(searchText);
-
-               const dateStr = this.formatDateForSearch(data.date);
-               const dateMatch = dateStr.includes(searchText);
-
+               // Use pre-computed index
+               const matchesText = data._searchIndex?.includes(searchText) ?? false;
                const inDateRange = this.isInDateRange(data.date);
 
-               return (textMatch || dateMatch) && inDateRange;
+               return matchesText && inDateRange;
           };
      }
+
      // private setFilterPredicate() {
      //      this.balanceChangesDataSource.filterPredicate = (data: BalanceChange, filter: string) => {
-     //           const searchText = filter.toLowerCase();
+     //           const searchText = filter.toLowerCase().trim();
+     //           if (!searchText) return true;
 
-     //           // Text filter
-     //           const textMatch = data.type.toLowerCase().includes(searchText) || data.currency.toLowerCase().includes(searchText) || (data.counterparty || '').toLowerCase().includes(searchText);
+     //           const textMatch = data.type.toLowerCase().includes(searchText) || data.currency.toLowerCase().includes(searchText) || (data.counterparty || '').toLowerCase().includes(searchText) || data.hash.toLowerCase().includes(searchText) || data.change.toString().includes(searchText) || data.fees.toString().includes(searchText) || data.balanceBefore.toString().includes(searchText) || data.balanceAfter.toString().includes(searchText);
 
-     //           // Date filter
+     //           const dateStr = this.formatDateForSearch(data.date);
+     //           const dateMatch = dateStr.includes(searchText);
+
      //           const inDateRange = this.isInDateRange(data.date);
 
-     //           return textMatch && inDateRange;
+     //           return (textMatch || dateMatch) && inDateRange;
      //      };
      // }
 
@@ -528,22 +538,6 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                     const modified = node.ModifiedNode || node.CreatedNode || node.DeletedNode;
                     if (!modified) continue;
 
-                    // if (modified.LedgerEntryType === 'AccountRoot' && modified.FinalFields?.Account === address) {
-                    //      const prevBalanceDrops = modified.PreviousFields?.Balance ?? modified.FinalFields.Balance;
-                    //      const finalBalanceDrops = modified.FinalFields.Balance;
-
-                    //      const prevXrp = xrpl.dropsToXrp(prevBalanceDrops);
-                    //      const finalXrp = xrpl.dropsToXrp(finalBalanceDrops);
-                    //      const delta = this.utilsService.roundToEightDecimals(finalXrp - prevXrp);
-
-                    //      changes.push({
-                    //           fees: xrpl.dropsToXrp(fees),
-                    //           change: delta,
-                    //           currency: 'XRP',
-                    //           balanceBefore: this.utilsService.roundToEightDecimals(prevXrp),
-                    //           balanceAfter: this.utilsService.roundToEightDecimals(finalXrp),
-                    //      });
-                    // }
                     if (modified.LedgerEntryType === 'AccountRoot' && modified.FinalFields?.Account === address) {
                          const prevBalanceDrops = modified.PreviousFields?.Balance ?? modified.FinalFields.Balance;
                          const finalBalanceDrops = modified.FinalFields.Balance;
@@ -552,10 +546,10 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                          const finalXrp = xrpl.dropsToXrp(finalBalanceDrops);
                          const delta = this.utilsService.roundToEightDecimals(finalXrp - prevXrp);
 
-                         // ✅ Determine counterparty or source
+                         // Determine counterparty or source
                          let cp = 'N/A';
 
-                         // 🔸 Try to detect AMM pool details from meta.AffectedNodes
+                         // Try to detect AMM pool details from meta.AffectedNodes
                          const ammNode = meta.AffectedNodes.find((n: any) => {
                               const node = n.CreatedNode || n.ModifiedNode || n.DeletedNode;
                               return node?.LedgerEntryType === 'AMM';
@@ -760,6 +754,8 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                          balanceBefore: changeItem.balanceBefore,
                          balanceAfter: changeItem.balanceAfter,
                          counterparty,
+                         // NEW: build once, search fast
+                         _searchIndex: [type, changeItem.change, changeItem.currency, xrpl.dropsToXrp(fees), changeItem.balanceBefore, changeItem.balanceAfter, counterparty || '', hash, this.formatDateForSearch(date)].join(' ').toLowerCase(),
                     });
                }
           }
