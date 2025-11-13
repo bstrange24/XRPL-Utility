@@ -10,7 +10,7 @@ import { CreateAmmComponent } from './components/create-amm/create-amm.component
 import { TrustlinesComponent } from './components/trustlines/trustlines.component';
 import { DeleteAccountComponent } from './components/delete-account/delete-account.component';
 import { AccountConfiguratorComponent } from './components/account-configurator/account-configurator.component';
-import { CreateCredentialsComponent } from './components/create-credentials/create-credentials.component';
+import { CreateCredentialsComponent } from './components/credentials/credentials.component';
 import { CreateDidComponent } from './components/create-did/create-did.component';
 import { AccountChangesComponent } from './components/account-changes/account-changes.component';
 import { MptComponent } from './components/mpt/mpt.component';

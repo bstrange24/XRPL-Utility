@@ -1,5 +1,5 @@
 import { MatSortModule, MatSort } from '@angular/material/sort';
-import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
+import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
@@ -8,7 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, AfterViewChecked, NgZone, ViewChildren, QueryList } from '@angular/core';
+import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, NgZone, ViewChildren, QueryList } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -51,7 +51,7 @@ interface BalanceChange {
      templateUrl: './account-changes.component.html',
      styleUrl: './account-changes.component.css',
 })
-export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterViewChecked {
+export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      private destroy$ = new Subject<void>();
      @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
      @ViewChild('accountForm') accountForm!: NgForm;
@@ -89,11 +89,9 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
      isExpanded: boolean = false;
      wallets: any[] = [];
      selectedWalletIndex: number = 0;
-     currentWallet = { classicAddress: '', address: '', seed: '', name: undefined, balance: '0', ownerCount: undefined, xrpReserves: undefined, spendableXrp: undefined, showSecret: false, isIssuer: false };
+     currentWallet = { classicAddress: '', address: '', seed: '', name: undefined, balance: '0', ownerCount: undefined, xrpReserves: undefined, spendableXrp: undefined };
      private readonly accountLinesCache = new Map<string, any>();
      private readonly accountLinesCacheTime = new Map<string, number>();
-     private readonly transactionCache = new Map<string, any[]>();
-     private readonly filterCache = new Map<string, BalanceChange[]>();
      private readonly CACHE_EXPIRY = 30000;
      private scrollDebounce: any = null;
      private hasInitialized = false;
@@ -116,7 +114,10 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
      // Add to class properties
      dateRange: { start: Date | null; end: Date | null } = { start: null, end: null };
      private searchSubject = new Subject<string>();
-
+     // Replace any old paginator-dependent page size use with this constant
+     private readonly PAGE_SIZE = 10;
+     // Track seen tx hashes to avoid duplicates when appending
+     private readonly seenHashes = new Set<string>();
      private originalBalanceChanges: BalanceChange[] = []; // Cache full data
 
      constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly xrplTransactions: XrplTransactionService, private ngZone: NgZone, private walletGenerator: WalletGeneratorService, private walletManagerService: WalletManagerService) {}
@@ -144,6 +145,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                this.filterValue = searchText;
                this.applyFilter(searchText);
           });
+          console.log('paginator:', this.paginator, 'pageIndex:', this.paginator?.pageIndex, 'pageSize:', this.paginator?.pageSize, 'length:', this.paginator?.length);
      }
 
      ngOnDestroy() {
@@ -156,11 +158,19 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           if (this.hasInitialized) return;
           this.hasInitialized = true;
 
+          // Keep sort
           this.balanceChangesDataSource.sort = this.sort;
-          this.balanceChangesDataSource.paginator = this.paginator;
+
+          // We are using infinite scroll (no paginator) so do NOT attach paginator
+          // If paginator is present for any reason, do not rely on it.
+          if (this.paginator) {
+               console.log('Warning: paginator present but not used for infinite scroll.');
+          }
+
           (this.balanceChangesDataSource as any).trackByFunction = this.trackByFunction;
 
           if (this.selectedAccount) {
+               // initial load
                this.loadBalanceChanges(true);
           }
      }
@@ -199,9 +209,27 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
      }
 
      applyFilter(filterValue: string) {
-          const trimmed = filterValue.trim().toLowerCase();
+          const trimmed = (filterValue || '').trim().toLowerCase();
           this.filterValue = trimmed;
-          this.balanceChangesDataSource.filter = trimmed; // ← Critical line
+          this.balanceChangesDataSource.filter = trimmed;
+
+          // For infinite scroll, we *don't* have a MatPaginator controlling the page index.
+          // However, it's useful to show the first page of filtered results: reset scroll/viewport if present.
+          try {
+               // if using a virtual viewport, reset to top
+               if (this.viewport) {
+                    this.viewport.scrollToIndex(0);
+               } else {
+                    // fallback: try to scroll the table container to top
+                    const el = document.querySelector('.tx-table-container') as HTMLElement | null;
+                    if (el) el.scrollTop = 0;
+               }
+          } catch (e) {
+               // ignore errors from scrolling in tests / server-side
+          }
+
+          // Recalculate change detection so table updates immediately
+          this.cdr.detectChanges();
      }
 
      private readonly trackByFunction = (index: number, item: BalanceChange) => {
@@ -220,22 +248,6 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                return matchesText && inDateRange;
           };
      }
-
-     // private setFilterPredicate() {
-     //      this.balanceChangesDataSource.filterPredicate = (data: BalanceChange, filter: string) => {
-     //           const searchText = filter.toLowerCase().trim();
-     //           if (!searchText) return true;
-
-     //           const textMatch = data.type.toLowerCase().includes(searchText) || data.currency.toLowerCase().includes(searchText) || (data.counterparty || '').toLowerCase().includes(searchText) || data.hash.toLowerCase().includes(searchText) || data.change.toString().includes(searchText) || data.fees.toString().includes(searchText) || data.balanceBefore.toString().includes(searchText) || data.balanceAfter.toString().includes(searchText);
-
-     //           const dateStr = this.formatDateForSearch(data.date);
-     //           const dateMatch = dateStr.includes(searchText);
-
-     //           const inDateRange = this.isInDateRange(data.date);
-
-     //           return (textMatch || dateMatch) && inDateRange;
-     //      };
-     // }
 
      private formatDateForSearch(date: Date): string {
           const d = new Date(date);
@@ -272,18 +284,17 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           this.applyFilter(this.filterValue);
      }
 
-     onPageChange(event: any) {
-          const shouldLoadMore = event.pageIndex * event.pageSize >= this.balanceChanges.length;
-          if (this.hasMoreData && !this.loadingMore && shouldLoadMore) {
-               console.log('Loading more data for page:', event.pageIndex);
-               this.loadBalanceChanges(false);
-          }
-     }
+     onPageChange(event: PageEvent) {
+          const { pageIndex, pageSize } = event;
+          const totalLoaded = this.balanceChanges.length;
 
-     ngAfterViewChecked() {
-          if (this.result !== this.lastResult && this.resultField?.nativeElement) {
-               this.renderUiComponentsService.attachSearchListener(this.resultField.nativeElement);
-               this.lastResult = this.result;
+          // Calculate how many items this page would require
+          const requiredCount = (pageIndex + 1) * pageSize;
+
+          // Only load if we don't already have enough items
+          if (requiredCount > totalLoaded && this.hasMoreData && !this.loadingMore) {
+               console.log('Paginator requested more data for page', pageIndex);
+               this.loadBalanceChanges(false);
           }
      }
 
@@ -316,6 +327,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           this.isError = event.isError;
           this.isSuccess = event.isSuccess;
           this.isEditable = !this.isSuccess;
+          this.cdr.detectChanges();
      }
 
      toggleSecret(index: number) {
@@ -379,18 +391,32 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           this.clearWarning();
      }
 
-     onAccountChange() {
-          if (this.wallets.length === 0) return;
-          if (this.selectedWalletIndex < 0 || this.selectedWalletIndex >= this.wallets.length) {
-               throw new Error('Selected wallet index out of range');
+     async onAccountChange() {
+          if (this.wallets.length === 0) {
+               this.currentWallet = {
+                    classicAddress: '',
+                    address: '',
+                    seed: '',
+                    name: undefined,
+                    balance: '0',
+                    ownerCount: undefined,
+                    xrpReserves: undefined,
+                    spendableXrp: undefined,
+               };
+               return;
           }
+
+          const selected = this.wallets[this.selectedWalletIndex];
           this.currentWallet = {
-               ...this.wallets[this.selectedWalletIndex],
-               balance: this.currentWallet.balance || '0',
+               ...selected,
+               balance: selected.balance || '0',
+               ownerCount: selected.ownerCount || '0',
+               xrpReserves: selected.xrpReserves || '0',
+               spendableXrp: selected.spendableXrp || '0',
           };
 
-          console.log('isValidAddress result:', xrpl.isValidAddress(this.currentWallet.address));
           if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
+               this.clearWarning();
                this.loadBalanceChanges(true);
           } else if (this.currentWallet.address) {
                this.setError('Invalid XRP address');
@@ -398,7 +424,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
      }
 
      async loadBalanceChanges(reset = true) {
-          // ---- Prevent overlapping loads ----
+          // Prevent overlapping loads
           if (reset && this.loadingInitial) {
                console.log('loadBalanceChanges skipped (initial load in progress)');
                return;
@@ -409,25 +435,37 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           }
 
           reset ? (this.loadingInitial = true) : (this.loadingMore = true);
-          console.log('Entering loadBalanceChanges');
+
+          // Show spinner immediately - use the main spinner, not loadingMore
+          this.spinner = true;
+          this.spinnerMessage = 'Loading balance changes...';
+          const spinnerStartTime = Date.now();
+          const minSpinnerTime = 400;
+
+          // If resetting, clear local state and seenHashes
+          if (reset) {
+               this.balanceChanges = [];
+               this.originalBalanceChanges = [];
+               this.balanceChangesDataSource.data = [];
+               this.marker = undefined;
+               this.hasMoreData = true;
+               this.seenHashes.clear();
+          }
+
+          console.log('Entering loadBalanceChanges', reset ? '(reset)' : '(load more)');
           const startTime = Date.now();
 
           try {
                const address = this.currentWallet.address;
-               if (!address) return;
+               if (!address) {
+                    console.warn('No address set for loadBalanceChanges');
+                    return;
+               }
 
                const client = await this.xrplService.getClient();
 
+               // on initial load do some account-level bookkeeping (balances, lines, etc.)
                if (reset) {
-                    this.balanceChanges = [];
-                    this.balanceChangesDataSource.data = [];
-                    this.marker = undefined;
-                    this.hasMoreData = true;
-
-                    type EnvKey = keyof typeof AppConstants.XRPL_WIN_URL;
-                    const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
-                    this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
-
                     const [accountInfo, accountLines] = await Promise.all([this.xrplService.getAccountInfo(client, address, 'validated', ''), this.getCachedAccountLines(client, address)]);
 
                     this.currentBalance = xrpl.dropsToXrp(accountInfo.result.account_data.Balance);
@@ -453,34 +491,68 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                     return;
                }
 
-               const txResponse = await this.xrplService.getAccountTransactions(client, address, 300, this.marker);
+               // Use PAGE_SIZE constant. Supply marker for pagination if available
+               const txResponse = await this.xrplService.getAccountTransactions(client, address, this.PAGE_SIZE, this.marker);
 
-               if (!txResponse.result.transactions || txResponse.result.transactions.length === 0) {
+               // Defensive checks
+               const txs = txResponse?.result?.transactions ?? [];
+               if (!Array.isArray(txs) || txs.length === 0) {
                     this.hasMoreData = false;
+                    console.log('No transactions returned for marker; stopping further loads.');
                     return;
                }
 
-               console.log(`Total transactions:`, txResponse.result.transactions.length);
+               console.log(`Fetched ${txs.length} transactions from XRPL (marker: ${this.marker})`);
 
-               const processedTx = this.processTransactionsForBalanceChanges(txResponse.result.transactions, address);
+               const processedTx = this.processTransactionsForBalanceChanges(txs, address);
 
-               this.balanceChanges.push(...processedTx);
-               this.originalBalanceChanges = [...this.balanceChanges]; // Cache full
-               this.setFilterPredicate();
-               this.balanceChangesDataSource.data = [...this.balanceChanges];
+               // Deduplicate by hash to avoid appending same rows repeatedly
+               const newEntries: BalanceChange[] = [];
+               for (const entry of processedTx) {
+                    if (!entry || !entry.hash) continue;
+                    if (this.seenHashes.has(entry.hash)) {
+                         // skip duplicate
+                         continue;
+                    }
+                    this.seenHashes.add(entry.hash);
+                    newEntries.push(entry);
+               }
 
+               if (newEntries.length > 0) {
+                    this.balanceChanges.push(...newEntries);
+                    this.originalBalanceChanges = [...this.balanceChanges]; // cache full
+                    this.balanceChangesDataSource.data = [...this.balanceChanges];
+               } else {
+                    console.log('No new unique transactions to append (all fetched were duplicates).');
+               }
+
+               // Update marker and hasMoreData
                this.marker = txResponse.result.marker;
-               if (!this.marker) this.hasMoreData = false;
+               if (!this.marker) {
+                    this.hasMoreData = false;
+                    console.log('XRPL returned no marker -> reached end of ledger history for this query.');
+               }
           } catch (error) {
                console.error('Error loading tx:', error);
                this.setError('Failed to load balance changes');
           } finally {
-               if (reset) this.loadingInitial = false;
-               else this.loadingMore = false;
+               // Calculate remaining time to show spinner (minimum time total)
+               const elapsedSpinnerTime = Date.now() - spinnerStartTime;
+               const remainingSpinnerTime = Math.max(0, minSpinnerTime - elapsedSpinnerTime);
 
-               this.cdr.detectChanges();
-               this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving loadBalanceChanges in ${this.executionTime}ms`);
+               console.log(`Spinner shown for ${elapsedSpinnerTime}ms, waiting ${remainingSpinnerTime}ms more`);
+
+               // Wait for the remaining time before hiding spinner and updating loading flags
+               setTimeout(() => {
+                    // Hide spinner and update loading flags together
+                    this.spinner = false;
+                    reset ? (this.loadingInitial = false) : (this.loadingMore = false);
+
+                    this.cdr.detectChanges();
+
+                    this.executionTime = (Date.now() - startTime).toString();
+                    console.log(`Leaving loadBalanceChanges in ${this.executionTime}ms, totalRows=${this.balanceChanges.length}, hasMore=${this.hasMoreData}`);
+               }, remainingSpinnerTime);
           }
      }
 
@@ -764,28 +836,15 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           return processed;
      }
 
-     onScroll(index: number) {
-          if (!this.viewport) {
-               console.warn('onScroll: Viewport not initialized');
-               return;
-          }
+     onScroll(event: any): void {
+          const element = event.target;
+          const threshold = 150; // px before bottom to trigger load (tweakable)
 
-          // ---- Prevent new load if one is active ----
-          if (this.loadingInitial || this.loadingMore) return;
+          const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < threshold;
 
-          const total = this.balanceChangesDataSource.data.length;
-          const nearEnd = index >= total - 5 || (total === 0 && this.hasMoreData);
-
-          if (nearEnd && this.hasMoreData) {
-               console.log('Triggering load more on scroll');
-               if (this.scrollDebounce) clearTimeout(this.scrollDebounce);
-
-               // Debounce to prevent rapid triggers while scrolling
-               this.scrollDebounce = setTimeout(() => {
-                    if (!this.loadingMore && this.hasMoreData) {
-                         this.loadBalanceChanges(false);
-                    }
-               }, 300);
+          if (atBottom && this.hasMoreData && !this.loadingMore) {
+               console.log('Reached bottom — loading more transactions (infinite scroll)');
+               this.loadBalanceChanges(false);
           }
      }
 
