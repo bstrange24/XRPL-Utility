@@ -11,7 +11,8 @@
 .main-container {
      max-width: 1200px;
      margin: 0 auto;
-     padding: 0 1rem;
+     /* padding: 0 1rem; */
+     padding-right: 0.5rem;
      background-color: aliceblue;
 }
 
@@ -329,7 +330,7 @@ input[type='text']:focus {
      line-height: 1.4 !important;
 }
 
-.navbar-links > .dropdown {
+.navbar-links>.dropdown {
      display: inline-flex !important;
      align-items: center !important;
      height: auto !important;
@@ -945,18 +946,18 @@ input[type='text']:focus {
 }
 
 /* CHECKED STATE */
-input:checked + .slider {
+input:checked+.slider {
      background: #4caf50;
      /* green on */
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
      transform: translateX(14px);
      /* 34-20 = 14px travel */
 }
 
 /* FOCUS RING (still visible but tighter) */
-input:focus + .slider {
+input:focus+.slider {
      box-shadow: 0 0 0 2.5px rgba(76, 175, 80, 0.3);
 }
 
@@ -1294,14 +1295,14 @@ input:focus + .slider {
 }
 
 /* Top row: avatar + (address/balance/icons) side by side */
-.wallet-item > .wallet-avatar,
-.wallet-item > .wallet-top-row {
+.wallet-item>.wallet-avatar,
+.wallet-item>.wallet-top-row {
      display: flex;
      align-items: flex-start;
      gap: 0.75rem;
 }
 
-.wallet-item > .wallet-top-row {
+.wallet-item>.wallet-top-row {
      flex: 1;
      justify-content: space-between;
      min-width: 0;
@@ -1686,7 +1687,7 @@ input:focus + .slider {
      margin-right: 4px;
 }
 
-:not(pre) > code[class*='language-'],
+:not(pre)>code[class*='language-'],
 pre[class*='language-'] {
      background: #fff;
 }
@@ -2019,7 +2020,7 @@ app-root {
      margin-bottom: 0.85rem;
 }
 
-.flag-header-account > * {
+.flag-header-account>* {
      line-height: 18px !important;
 }
 
@@ -2141,7 +2142,7 @@ app-root {
      /* base size for the whole row */
 }
 
-.flag-header > * {
+.flag-header>* {
      line-height: 18px !important;
 }
 
@@ -2825,11 +2826,13 @@ app-root {
 .balance-changes-fieldset table {
      font-size: 0.84rem;
 }
+
 .hash-cell {
      display: flex;
      align-items: center;
      gap: 4px;
 }
+
 .link-btn,
 .copy-btn {
      background: none;
@@ -2837,8 +2840,19 @@ app-root {
      cursor: pointer;
      padding: 2px;
 }
+
 .link-btn svg,
 .copy-btn svg {
      width: 14px;
      height: 14px;
+}
+
+
+.clickable-row {
+     cursor: pointer;
+     transition: background 0.2s;
+}
+
+.clickable-row:hover {
+     background: rgba(255, 255, 255, 0.05);
 }

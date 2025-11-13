@@ -26,6 +26,8 @@ import { WalletManagerService } from '../../services/wallets/manager/wallet-mana
 import { Subject, takeUntil } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 import { NgIcon } from '@ng-icons/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core'; // Required for native date adapter
 
 interface BalanceChange {
      date: Date;
@@ -42,7 +44,7 @@ interface BalanceChange {
 @Component({
      selector: 'app-account-changes',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, ScrollingModule, MatProgressSpinnerModule, MatIconModule, MatTooltipModule, MatButtonModule, LucideAngularModule, NgIcon],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, ScrollingModule, MatProgressSpinnerModule, MatIconModule, MatTooltipModule, MatButtonModule, LucideAngularModule, NgIcon, MatDatepickerModule, MatNativeDateModule],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './account-changes.component.html',
      styleUrl: './account-changes.component.css',
@@ -99,7 +101,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
      paymentTx: any[] = [];
      txResult: any[] = [];
      txHash: string = '';
-     activeTab = 'send'; // default
+     activeTab = 'balance'; // default
      successMessage: string = '';
      encryptionType: string = '';
      private cachedReserves: any = null;
@@ -109,6 +111,10 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
      warningMessage: string | null = null;
+     // Add to class properties
+     dateRange: { start: Date | null; end: Date | null } = { start: null, end: null };
+
+     private originalBalanceChanges: BalanceChange[] = []; // Cache full data
 
      constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly xrplTransactions: XrplTransactionService, private ngZone: NgZone, private walletGenerator: WalletGeneratorService, private walletManagerService: WalletManagerService) {}
 
@@ -154,6 +160,13 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           this.isExpanded = !this.isExpanded;
      }
 
+     setTab(tab: string) {
+          this.activeTab = tab;
+          this.clearMessages();
+          this.clearFields(true);
+          this.clearWarning();
+     }
+
      selectWallet(index: number) {
           this.selectedWalletIndex = index;
           this.onAccountChange();
@@ -185,25 +198,41 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           return item.hash;
      };
 
+     private setFilterPredicate() {
+          this.balanceChangesDataSource.filterPredicate = (data: BalanceChange, filter: string) => {
+               const searchText = filter.toLowerCase().trim();
+               if (!searchText) return true;
+
+               const textMatch = data.type.toLowerCase().includes(searchText) || data.currency.toLowerCase().includes(searchText) || (data.counterparty || '').toLowerCase().includes(searchText) || data.hash.toLowerCase().includes(searchText) || data.change.toString().includes(searchText) || data.fees.toString().includes(searchText) || data.balanceBefore.toString().includes(searchText) || data.balanceAfter.toString().includes(searchText);
+
+               const dateStr = this.formatDateForSearch(data.date);
+               const dateMatch = dateStr.includes(searchText);
+
+               const inDateRange = this.isInDateRange(data.date);
+
+               return (textMatch || dateMatch) && inDateRange;
+          };
+     }
      // private setFilterPredicate() {
      //      this.balanceChangesDataSource.filterPredicate = (data: BalanceChange, filter: string) => {
      //           const searchText = filter.toLowerCase();
-     //           return data.type.toLowerCase().includes(searchText) || data.currency.toLowerCase().includes(searchText) || (data.counterparty || '').toLowerCase().includes(searchText);
+
+     //           // Text filter
+     //           const textMatch = data.type.toLowerCase().includes(searchText) || data.currency.toLowerCase().includes(searchText) || (data.counterparty || '').toLowerCase().includes(searchText);
+
+     //           // Date filter
+     //           const inDateRange = this.isInDateRange(data.date);
+
+     //           return textMatch && inDateRange;
      //      };
      // }
 
-     private setFilterPredicate() {
-          this.balanceChangesDataSource.filterPredicate = (data: BalanceChange, filter: string) => {
-               const searchText = filter.toLowerCase();
-
-               // Text filter
-               const textMatch = data.type.toLowerCase().includes(searchText) || data.currency.toLowerCase().includes(searchText) || (data.counterparty || '').toLowerCase().includes(searchText);
-
-               // Date filter
-               const inDateRange = this.isInDateRange(data.date);
-
-               return textMatch && inDateRange;
-          };
+     private formatDateForSearch(date: Date): string {
+          const d = new Date(date);
+          const month = d.toLocaleString('default', { month: 'short' });
+          const day = d.getDate();
+          const year = d.getFullYear();
+          return `${month} ${day}, ${year} ${year} ${day} ${month}`.toLowerCase();
      }
 
      private isInDateRange(date: Date): boolean {
@@ -272,14 +301,6 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           this.onAccountChange();
      }
 
-     // onWalletListChange(event: any[]) {
-     //      this.wallets = event;
-     //      if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
-     //           this.selectedWalletIndex = 0;
-     //      }
-     //      this.onAccountChange();
-     // }
-
      handleTransactionResult(event: { result: string; isError: boolean; isSuccess: boolean }) {
           this.result = event.result;
           this.isError = event.isError;
@@ -297,7 +318,6 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
                await this.refreshWallets(client, [walletAddress]);
-               // this.cdr.detectChanges();
           } catch (err) {
                this.setError('Failed to refresh balance');
           }
@@ -436,6 +456,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
 
                this.balanceChanges.push(...processedTx);
                this.originalBalanceChanges = [...this.balanceChanges]; // Cache full
+               this.setFilterPredicate();
                this.balanceChangesDataSource.data = [...this.balanceChanges];
 
                this.marker = txResponse.result.marker;
@@ -669,7 +690,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
 
                          // Shorten address form for UI readability
                          if (cp && cp !== 'N/A' && cp.length > 12 && !cp.includes('(')) {
-                              cp = `${cp.substring(0, 6)}...${cp.substring(cp.length - 4)}`;
+                              cp = `${cp.substring(0, 4)}...${cp.substring(cp.length - 4)}`;
                          }
 
                          changes.push({
@@ -688,7 +709,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                          let tokenBalanceBefore = 0;
                          let tokenBalanceAfter = 0;
                          counterparty = modified.FinalFields?.HighLimit?.issuer || modified.FinalFields?.LowLimit?.issuer || counterparty;
-                         counterparty = `${counterparty.substring(0, 6)}...${counterparty.substring(counterparty.length - 4)}`;
+                         counterparty = `${counterparty.substring(0, 4)}...${counterparty.substring(counterparty.length - 4)}`;
 
                          if (node.DeletedNode) {
                               const balanceField = modified.FinalFields?.Balance;
@@ -793,6 +814,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                case 'PaymentChannelClaim':
                case 'PaymentChannelCreate':
                case 'AMMDelete':
+               case 'CredentialDelete':
                     return '#f0874bff';
 
                case 'TicketCreate':
@@ -923,10 +945,10 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           navigator.clipboard.writeText(text).then(
                () => {
                     console.log('Copied:', text);
-                    // Optional: show a toast/snackbar
+                    this.showToastMessage('Tx Hash copied!');
                },
                err => {
-                    console.error('Clipboard copy failed:', err);
+                    this.showToastMessage('Clipboard copy failed:', err);
                }
           );
      }

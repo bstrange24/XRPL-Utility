@@ -1,20 +1,49 @@
+table {
+     width: 100%;
+     table-layout: auto;
+}
+
+th,
+td {
+     padding: 12px 8px;
+     text-align: left;
+     white-space: nowrap;
+     overflow: hidden;
+     text-overflow: ellipsis;
+}
+
+th.resizable {
+     min-width: 80px;
+     max-width: 300px;
+     resize: horizontal;
+     overflow: auto;
+}
+
+/* Optional: Add resize handle */
+th.resizable {
+     position: relative;
+}
+
+th.resizable::after {
+     content: '';
+     position: absolute;
+     right: 0;
+     top: 0;
+     bottom: 0;
+     width: 5px;
+     cursor: col-resize;
+}
+
 .balance-changes-fieldset {
-     margin: 5px 0;
-     padding: 10px;
+     /* margin: 5px 0; */
+     /* padding: 10px; */
      border-radius: 10px;
-     border: 1px solid #1a1c21;
+     /* border: 1px solid #1a1c21; */
      height: 80vh;
      display: flex;
      flex-direction: column;
      position: relative;
 }
-
-.balance-changes-fieldset>legend {
-     margin-top: 20px;
-     margin-left: 10px;
-     padding: 0 5px;
-}
-
 
 .table-container {
      font-size: 12px;
@@ -30,20 +59,20 @@
      overflow: auto;
      border-radius: 10px;
      border: 1px solid white;
+     background-color: white;
      padding: 0px;
-     background-color: #1a1c21;
 }
 
 .virtual-scroll-viewport {
      height: 100%;
      width: 100%;
-     background-color: #1a1c21 !important;
+     background-color: white !important;
      padding: 0;
      margin: 0;
 
-     ::-webkit-scrollbar {
+     /* ::-webkit-scrollbar {
           display: none;
-     }
+     } */
 
      scrollbar-width: none;
      -ms-overflow-style: none;
@@ -70,97 +99,33 @@
      padding: 5px;
 }
 
-.filter-form-field .mdc-text-field {
-     height: 30px;
-     padding: 0 4px;
-}
+
 
 .filter-form-field .mat-mdc-input-element {
      padding: 0px 0;
      font-size: 0.875rem;
 }
 
-:host ::ng-deep .mat-mdc-cell {
-     background-color: #1a1c21 !important;
-     color: white;
-     padding: 2px 6px;
-     font-size: 0.8rem;
-     line-height: 1.2;
-     text-align: center;
-     vertical-align: middle;
-}
 
-/* :host ::ng-deep .mat-mdc-cell {
-     background-color: #1a1c21 !important;
-     color: white;
-     padding: 2px 6px;
-     font-size: 0.8rem;
-     line-height: 1.2;
-     text-align: center;
-     vertical-align: middle;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-}
-
-:host ::ng-deep .mat-column-hash .mat-mdc-cell {
-     justify-content: center;
-} */
-
-:host ::ng-deep .mat-mdc-table {
-     background-color: #1a1c21 !important;
-}
-
-/* Header row */
-:host ::ng-deep .mat-mdc-header-row {
-     background-color: #1a1c21 !important;
-     min-height: 28px;
-}
-
-:host ::ng-deep .mat-mdc-row {
-     background-color: #1a1c21 !important;
-}
-
-/* Header cells */
-:host ::ng-deep .mat-mdc-header-cell {
-     background-color: #1a1c21 !important;
-     color: white;
-     line-height: 1.2;
-     height: 30px;
-     text-align: center;
-     vertical-align: middle;
-     font-size: 0.8rem;
-     padding: 0 6px;
-}
-
-
-
-:host ::ng-deep .mat-mdc-row:hover {
-     background-color: #1a1c21 !important;
-     min-height: 18px;
-}
 
 :host ::ng-deep .filter-form-field.mat-mdc-form-field {
-     display: block;
-     width: 100%;
-     font-size: 0.1rem;
+     /* Container */
+     --mat-form-field-container-height: 40px;
+     --mat-form-field-filled-container-color: white;
+     --mat-form-field-filled-hover-container-color: #f5f5f5;
+     --mat-form-field-filled-focus-active-indicator-color: #1976d2;
 
-     --mat-form-field-container-height: 1px;
-     --mat-form-field-filled-label-padding-top: 0px;
-     --mat-form-field-filled-label-padding-bottom: 0px;
+     /* Text & Label */
+     --mat-form-field-filled-input-text-color: #1a1a1a;
+     --mat-form-field-filled-label-text-color: #555;
+     --mat-form-field-filled-caret-color: #1976d2;
 
-
-     --mat-form-field-filled-container-color: #1a1c21;
-     --mat-form-field-filled-hover-container-color: #22252b;
-     --mat-form-field-filled-focus-active-indicator-color: #686868;
-     --mat-form-field-filled-hover-active-indicator-color: #686868;
-     --mat-form-field-filled-input-text-color: white;
-     --mat-form-field-filled-label-text-color: green;
-     --mat-form-field-filled-caret-color: orange;
+     /* Border */
+     --mat-form-field-filled-with-label-container-padding-bottom: 8px;
      --mat-form-field-filled-container-shape: 8px;
 }
 
-:host ::ng-deep .filter-form-field .mat-mdc-input-element {
+/* :host ::ng-deep .filter-form-field .mat-mdc-input-element {
      color: #fff;
      font-size: 0.1rem;
      line-height: 0.1;
@@ -171,325 +136,195 @@
 :host ::ng-deep .filter-form-field .mat-mdc-input-element::placeholder {
      color: #9aa3af;
      opacity: 1;
-}
-
-:host ::ng-deep .filter-form-field .mat-mdc-form-field-flex {
-     background-color: #1a1c21 !important;
-     border-radius: 8px;
-     padding: 0 4px;
-}
-
-.transaction-layout {
-     display: grid;
-     grid-template-columns: 2fr 1fr;
-     gap: 20px;
-     align-items: start;
-}
-
-.left-column {
-     display: flex;
-     flex-direction: column;
-     gap: 15px;
-}
-
-.right-column {
-     justify-self: start;
-     width: 100%;
-}
-
-.flags-layout {
-     display: grid;
-     grid-template-columns: 4fr 0.1fr 1fr;
-     gap: 20px;
-     align-items: start;
-}
-
-.flags-layout table {
-     flex: 1;
-}
-
-.button-container {
-     width: 100%;
-}
-
-table textarea {
-     resize: vertical;
-     height: 60px;
-}
-
-#flags,
-#meta td:first-child {
-     white-space: nowrap;
-     width: 150px;
-     padding-right: 10px;
-     text-align: right;
-     vertical-align: middle;
-}
-
-#flags,
-#meta td:last-child {
-     width: auto;
-}
-
-.switch {
-     position: relative;
-     display: inline-block;
-     width: 40px;
-     height: 20px;
-     padding: 10px;
-}
-
-.switch input {
-     opacity: 0;
-     width: 0;
-     height: 0;
-}
-
-
-.flag-row {
-     display: flex;
-     align-items: center;
-     justify-content: space-between;
-     margin: 6px 0;
-     /* spacing between rows */
-     padding: 4px 0;
-     /* optional inner padding */
-}
-
-/* span.tooltip {
-     display: flex;
-     align-items: center;
-     justify-content: space-between;
-     width: 165px;
-     margin-bottom: 5px;
-}
-
-span.tooltip.full-width {
-     width: 100%;
-}
-
-label.switch {
-     margin: 0;
 } */
 
-#flags {
-     border-collapse: collapse;
+:host ::ng-deep .filter-form-field .mat-mdc-input-element {
+     color: #1a1a1a !important;
+     font-size: 0.875rem;
+     padding: 0 8px;
 }
 
-#flags td:first-child {
-     width: 180px;
-     text-align: right;
-     padding-right: 10px;
-     vertical-align: top;
+:host ::ng-deep .filter-form-field .mat-mdc-input-element::placeholder {
+     color: #999;
 }
 
-#flags .form-row-td {
-     width: 150px;
-     text-align: right;
-     padding-right: 10px;
+/* 2. TABLE BACKGROUND & TEXT */
+:host ::ng-deep .mat-mdc-table {
+     background-color: white !important;
 }
 
-#flags input[type="text"],
-#flags select {
-     width: 300px;
-     height: 28px;
-}
-
-#meta {
-     border-collapse: collapse;
-}
-
-#meta td:first-child {
-     width: 180px;
-     /* consistent width for label cells */
-     text-align: right;
-     /* align label text to the right */
-     padding-right: 10px;
-     vertical-align: top;
-     /* keeps labels aligned to top if multiple controls in same row */
-}
-
-#meta .form-row-td {
-     width: 150px;
-     /* consistent label cell width */
-     text-align: right;
-     /* align label text to the right */
-     padding-right: 10px;
-     /* space between label and input */
-}
-
-#meta input[type="text"],
-#meta select {
-     width: 300px;
-     /* consistent input/dropdown width */
-     height: 28px;
-}
-
-.trustline-option {
-     display: flex;
-     justify-content: space-between;
-     /* text left, slider right */
-     align-items: center;
-     /* vertical centering */
-     width: 100%;
-     margin: 6px 0;
-     padding: 4px 0;
-}
-
-.trustline-option span {
-     text-align: left;
-}
-
-.trustline-option .switch {
-     margin-left: 10px;
-}
-
-.inner-table {
-     border-collapse: collapse;
-     width: 100%;
-}
-
-.inner-table th {
-     background: #f3f3f3;
-     text-align: left;
-     padding: 8px;
-     font-weight: 600;
-     border-bottom: 1px solid #ccc;
-}
-
-.inner-table td {
-     border: 1px solid #ddd;
-     padding: 6px 8px;
+/* :host ::ng-deep .mat-mdc-cell {
+     padding: 2px 6px;
+     font-size: 0.8rem;
+     line-height: 1.2;
+     text-align: center;
      vertical-align: middle;
 }
 
-.inner-table input,
-.inner-table select {
-     width: 100%;
-     padding: 5px;
-     box-sizing: border-box;
+:host ::ng-deep .mat-mdc-header-cell {
+     line-height: 1.2;
+     height: 30px;
+     text-align: center;
+     vertical-align: middle;
+     font-size: 0.8rem;
+     padding: 0 6px;
+} */
+
+:host ::ng-deep .mat-mdc-header-cell,
+:host ::ng-deep .mat-mdc-cell {
+     background-color: white !important;
+     color: #1a1a1a !important;
+     border-bottom: 1px solid #e0e0e0;
+     font-size: 0.78rem !important;
+     /* smaller */
+     line-height: 1.3 !important;
+     padding: 6px 4px !important;
+     /* tighter */
+     vertical-align: middle !important;
 }
 
-.account-section,
-.xrp-section {
-     width: 50%;
-     vertical-align: top;
+:host ::ng-deep .mat-mdc-header-row {
+     background-color: #f8f9fa !important;
+     font-weight: 600;
 }
 
-.account-section {
-     border-right: 1px solid #ccc;
+:host ::ng-deep .mat-mdc-row:hover {
+     background-color: #f5f5f5 !important;
 }
 
-/* Revert top-sections-wrapper to row for side-by-side layout */
-.top-sections-wrapper {
+/* :host ::ng-deep .mat-mdc-row:hover { */
+/* background-color: #1a1c21 !important; */
+/* min-height: 18px; */
+/* } */
+
+.hash-cell {
      display: flex;
-     flex-direction: row;
-     gap: 24px;
-     width: auto;
-     flex-wrap: nowrap;
-     align-items: flex-start;
+     align-items: center;
+     /* vertical center */
+     gap: 0.25em;
+     height: 100%;
+     font-family: monospace;
 }
 
-/* Adjust flex for children to fit content */
-.top-sections-wrapper>.top-section-left {
-     flex: 0 0 auto;
+.hash-text {
+     flex: 1;
      min-width: 0;
+     /* allows truncation */
+     overflow: hidden;
+     text-overflow: ellipsis;
+     white-space: nowrap;
 }
 
-.top-sections-wrapper>.top-section-right {
-     flex: 0 0 auto;
-     min-width: 0;
+.icon-btn {
+     background: none;
+     border: none;
+     padding: 2px;
+     cursor: pointer;
+     color: #555;
+     display: flex;
+     align-items: center;
+     justify-content: center;
 }
 
-/* Update transaction-layout to use auto for left column to fit content */
-.transaction-layout {
-     display: grid;
-     grid-template-columns: auto 1fr;
-     gap: 20px;
-     align-items: start;
+.icon-btn:hover {
+     color: #1976d2;
 }
 
-/* Keep or adjust max-width for result-container to shorten it */
-.result-container {
-     max-width: 1050px;
+:host ::ng-deep .mat-mdc-table .mat-mdc-header-row {
+     position: sticky;
+     top: 0;
+     z-index: 10;
+     background-color: #f8f9fa !important;
+     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* Ensure consistent sizing and right alignment for labels in all sections */
-#accountSelection td:first-child,
-#xrpDetails td:first-child,
-#flags td:first-child {
-     width: 180px;
-     text-align: right;
-     padding-right: 10px;
-     vertical-align: top;
+/* Optional: subtle bottom border under sticky header */
+:host ::ng-deep .mat-mdc-header-row::after {
+     content: '';
+     position: absolute;
+     bottom: 0;
+     left: 0;
+     right: 0;
+     height: 1px;
+     background: #e0e0e0;
 }
 
-#accountSelection input,
-#accountSelection select,
-#xrpDetails input,
-#xrpDetails select,
-#flags input[type="text"],
-#flags select,
-#flags textarea {
-     width: 300px;
-     box-sizing: border-box;
+:host ::ng-deep .mat-mdc-row:first-child .mat-mdc-cell {
+     padding-top: 8px;
 }
 
-#flags textarea {
-     height: 100px;
-}
-
-/* For switches and other non-input elements, ensure they fit */
-#flags td:last-child {
-     width: auto;
-}
-
-#selectedWalletField,
-#destinationFields,
-#currencyField,
-#escrowFinishTimeUnit,
-#escrowCancelTimeUnit,
-#checkExpirationTime {
-     background-color: #1a1c21;
-     border-radius: 10px;
-     margin-bottom: 10px;
-     height: 28px;
-     border: 1px solid white;
-}
-
-/* Target the multi-sign fieldset table cells specifically */
-.multisignAddressClass td:first-child {
-     width: 80px;
-     text-align: right;
-     padding-right: 10px;
-     padding-left: 0;
-     vertical-align: top;
-}
-
-.multisignAddressClass td:last-child {
-     width: auto;
-     padding-left: 10px;
-}
-
-/* Target the inner table in the multi-sign fieldset */
-#flags fieldset table {
+.account-changes-form-panel {
+     /* 1. Give it a fixed large width (adjust as you like) */
+     min-width: 1200px;
+     /* <-- makes the table visible without horizontal scroll */
+     max-width: 100%;
+     /* never overflow the viewport */
      width: 100%;
-     border-collapse: collapse;
-     margin: 0;
-     padding: 0;
+     /* stretch to fill the grid column */
+
+     /* 2. Optional – keep the panel scrollable internally if it gets *very* tall */
+     overflow-y: auto;
+     background-color: white;
+     border: 1px solid #e0e0e0;
 }
 
-#flags fieldset td:first-child {
-     width: 60px;
-     /* Shorter for compact labels like "Signers", "Seeds", "Quorum" */
-     text-align: right;
-     padding: 5px 10px 5px 0;
-     /* Zero left padding to hug the fieldset left border */
-     vertical-align: top;
+/* Move only the copy & url icons left by 4px */
+.hash-cell .icon-btn {
+     margin-left: -4px;
 }
 
-#flags fieldset td:last-child {
-     padding-left: 0;
-     /* Remove extra left padding on input cells */
-     width: auto;
+/* Keep the grid layout happy – make the right column grow */
+@media (min-width: 1000px) {
+     .content-wrapper {
+          grid-template-columns: 310px 1fr;
+          /* left stays 310px, right takes the rest */
+     }
+
+     .account-changes-form-panel {
+          /* Let the right column expand beyond the default 1fr limit */
+          min-width: 1200px;
+          width: auto;
+     }
+}
+
+/* Make filter match table width exactly */
+.filter-wrapper {
+     width: 100%;
+     /* padding: 0 8px; */
+     /* same as table cell padding */
+     box-sizing: border-box;
+     /* margin-bottom: 1px; */
+}
+
+.filter-wrapper .filter-form-field {
+     width: 100%;
+}
+
+/* Ensure form field fills container */
+.filter-wrapper .mat-mdc-form-field {
+     display: block;
+}
+
+
+.filter-controls {
+     display: flex;
+     flex-direction: column;
+     gap: 8px;
+     width: 100%;
+}
+
+.filter-form-field {
+     width: 100%;
+}
+
+.date-filter-container {
+     display: flex;
+     gap: 8px;
+     align-items: center;
+     flex-wrap: wrap;
+}
+
+.date-input {
+     flex: 1;
+     min-width: 150px;
 }
