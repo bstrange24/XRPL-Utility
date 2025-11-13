@@ -1,252 +1,296 @@
-<div id="navbar-container">
-     <app-navbar></app-navbar>
+<div class="banner">
+     <div class="banner-content">
+          <div id="navbar-container">
+               <app-navbar></app-navbar>
+          </div>
+     </div>
 </div>
-<form id="theForm">
-     <app-app-wallet-dynamic-input (walletListChange)="onWalletListChange($event)" (transactionResult)="handleTransactionResult($event)"></app-app-wallet-dynamic-input>
 
-     <fieldset>
-          <legend style="color: white">Transaction Information</legend>
+<!-- <app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange($event)" (transactionResult)="handleTransactionResult($event)"> </app-app-wallet-dynamic-input> -->
+<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
 
-          <div class="transaction-layout">
-               <div class="top-section-left">
-                    <div class="top-sections-wrapper">
-                         <div class="top-section-left">
-                              <table id="accountSelection">
-                                   <th></th>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Select the account to use for the transaction.">
-                                                  <label for="selectedWalletField">Select Account</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <select id="selectedWalletField" class="dropdownWallet" [(ngModel)]="selectedWalletIndex" (ngModelChange)="onAccountChange()" name="selectedWalletField">
-                                                  <option *ngFor="let wallet of wallets; let i = index" [value]="i">{{wallet.name || 'Wallet ' + (i+1)}} ({{wallet.address | slice:0:6}}...{{wallet.address | slice:-4}})</option>
-                                             </select>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Name of the currently selected account.">
-                                                  <label for="accountNameField">Name</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountNameField" [(ngModel)]="currentWallet.name" name="accountNameField" readonly />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Address of the currently selected account.">
-                                                  <label for="accountAddressField">Address</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountAddressField" [(ngModel)]="currentWallet.address" name="accountAddressField" readonly />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Seed of the currently selected account.">
-                                                  <label for="accountSeedField">Seed</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountSeedField" [(ngModel)]="currentWallet.seed" name="accountSeedField" readonly />
-                                        </td>
-                                   </tr>
-                              </table>
+<!-- ====================== MAIN LAYOUT ====================== -->
+<div class="main-container">
+     <div class="content-wrapper">
+          <!-- ====================== LEFT PANEL – WALLETS ====================== -->
+          <div class="wallets-panel">
+               <!-- Header + Generate -->
+               <div class="panel-header">
+                    <h2 class="panel-title">
+                         <lucide-icon name="wallet" size="25" style="padding-top: 5px"></lucide-icon>
+                         Accounts
+                    </h2>
+                    <button class="generate-btn" (click)="generateNewAccount()">+ Generate</button>
+               </div>
+
+               <p class="panel-subtitle">Generate {{environment}} accounts with XRP from the faucet.</p>
+
+               @if (hasWallets) { @for (wallet of wallets; track wallet.address; let i = $index) {
+               <div class="wallet-item" [class.selected]="selectedWalletIndex === i" (click)="selectWallet(i)">
+                    <!-- Name (editable) -->
+                    <div class="wallet-info">
+                         @if (editingIndex(i)) {
+                         <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
+                         } @else {
+                         <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i+1) }} </span>
+                         }
+                    </div>
+
+                    <!-- Address + Balance -->
+                    <div class="wallet-info">
+                         <div class="address-line">
+                              <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
+                              <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
                          </div>
 
-                         <div class="top-section-right">
-                              <table id="xrpDetails">
-                                   <th></th>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="XRP balance for the currently selected account.">
-                                                  <label for="xrpBalanceField">Spendable XRP Balance</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="xrpBalanceField" [(ngModel)]="currentWallet.balance" readonly name="xrpBalanceField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total account objects that require an XRP reserve.">
-                                                  <label for="ownerCountField">Owner Count</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="ownerCountField" [(ngModel)]="ownerCount" readonly name="ownerCountField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total number of XRP reserves. This includes the base reserve and any account objects that require a reserve.">
-                                                  <label for="totalXrpReservesField">Total XRP Reserves</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="totalXrpReservesField" [(ngModel)]="totalXrpReserves" readonly name="totalXrpReservesField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total Execution time in milli seconds.">
-                                                  <label for="totalExecutionTime">Total Execution Time</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="totalExecutionTime" [(ngModel)]="executionTime" readonly name="totalExecutionTime" />
-                                        </td>
-                                   </tr>
-                              </table>
+                         <!-- Icons -->
+                         <div class="wallet-actions">
+                              <button class="icon-btn refresh" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
+                                   <lucide-icon name="refresh-ccw"></lucide-icon>
+                              </button>
+
+                              <button class="icon-btn copy" (click)="copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
+                                   <lucide-icon name="copy"></lucide-icon>
+                              </button>
+
+                              <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
+                                   <lucide-icon name="trash-2"></lucide-icon>
+                              </button>
                          </div>
+                    </div>
+
+                    <!-- Secret (show / hide) -->
+                    <div class="secret-section">
+                         <div class="secret-header">
+                              <span class="secret-label">Secret Key:</span>
+                              <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
+                         </div>
+
+                         @if (wallet.showSecret) {
+                         <div class="secret-seed-container">
+                              <div class="secret-seed">{{ wallet.seed }}</div>
+                              <button class="copy-btn" (click)="copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
+                                   <lucide-icon name="copy" size="20"></lucide-icon>
+                              </button>
+                         </div>
+                         }
+                    </div>
+               </div>
+               }
+
+               <!-- Selected Account Summary -->
+               <div class="selected-account-card">
+                    <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
+                    <div class="summary-row">
+                         <span>Address:</span>
+                         <span>{{ currentWallet.address | slice:0:5 }}...{{ currentWallet.address | slice:-5 }}</span>
+                    </div>
+                    <div class="summary-row">
+                         <span>Balance:</span>
+                         <span class="highlight wallet-balance">{{ currentWallet.balance }} XRP</span>
+                    </div>
+                    <div class="summary-row">
+                         <span>Owner Count:</span>
+                         <span class="highlight wallet-balance">{{ currentWallet.ownerCount }}</span>
+                    </div>
+                    <div class="summary-row">
+                         <span>Xrp Reserves:</span>
+                         <span class="highlight wallet-balance">{{ currentWallet.xrpReserves }} XRP</span>
+                    </div>
+               </div>
+
+               } @else {
+               <div class="no-wallet-found">
+                    <lucide-icon name="wallet" size="40"></lucide-icon>
+                    <p>No accounts generated yet.</p>
+                    <p>Click "Generate" to create your first {{environment}} account</p>
+               </div>
+               }
+          </div>
+
+          <!-- ====================== RIGHT PANEL – BALANCE CHANGES ====================== -->
+          <div class="form-panel">
+               <!-- Sub-menu info (same look as Send-XRP) -->
+               <div class="submenu-info-text">
+                    <div class="green-button-submenu">
+                         <ng-icon name="heroChartBar" size="27" class="text-red-600"></ng-icon>
+                    </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">Balance Changes</h2>
+                         <p class="submenu-info-secondary-text">View historical balance changes for the selected account</p>
+                    </div>
+               </div>
+
+               <!-- Info / Warning panels (re-used from Send-XRP) -->
+               @if (infoMessage) {
+               <div class="info-panel">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-red-600"></ng-icon>
+                    <div class="info-text" [innerHTML]="infoMessage"></div>
+               </div>
+               } @if (warningMessage) {
+               <div class="warning-panel">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
+                    <div class="warning-text" [innerHTML]="warningMessage"></div>
+               </div>
+               }
+
+               <!-- Main button -->
+               <div class="button-row" style="margin-bottom: 1rem">
+                    <button type="button" class="btn-primary" (click)="loadBalanceChanges(true)">Get Balance Changes</button>
+                    <button type="button" class="btn-secondary" (click)="clearFields(true)">Clear</button>
+               </div>
+
+               <!-- Spinner (same as Send-XRP) -->
+               @if (spinner) {
+               <div class="spinner-row">
+                    <div class="spinner"></div>
+                    <span>{{ spinnerMessage || 'Loading...' }}</span>
+               </div>
+               }
+
+               <!-- Success / Error messages (same as Send-XRP) -->
+               @if (isSuccess && !isError) {
+               <div class="success-message">
+                    <lucide-icon name="check" size="20"></lucide-icon>
+                    <div class="success-text">{{ successMessage }}</div>
+               </div>
+               } @if (isError && result) {
+               <div class="tx-message error">
+                    <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
+                    <div class="tx-text">{{ result }}</div>
+               </div>
+               }
+
+               <!-- ====================== BALANCE CHANGES TABLE ====================== -->
+               <div class="balance-changes-fieldset">
+                    <div class="table-container" *ngIf="selectedWalletIndex !== null">
+                         <cdk-virtual-scroll-viewport itemSize="20" class="virtual-scroll-viewport" (scrolledIndexChange)="onScroll($event)">
+                              <mat-form-field appearance="fill" class="filter-form-field">
+                                   <input matInput placeholder="Filter by type, currency, or counterparty" [(ngModel)]="filterValue" [ngModelOptions]="{standalone:true}" (ngModelChange)="applyFilter($event)" />
+                              </mat-form-field>
+
+                              <!-- Add this above your mat-table -->
+                              <div class="date-filter-container">
+                                   <mat-form-field appearance="outline" class="date-input">
+                                        <mat-label>Start Date</mat-label>
+                                        <input matInput [matDatepicker]="startPicker" [(ngModel)]="dateRange.start" (ngModelChange)="applyDateFilter()" />
+                                        <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+                                        <mat-datepicker #startPicker></mat-datepicker>
+                                   </mat-form-field>
+
+                                   <mat-form-field appearance="outline" class="date-input">
+                                        <mat-label>End Date</mat-label>
+                                        <input matInput [matDatepicker]="endPicker" [(ngModel)]="dateRange.end" (ngModelChange)="applyDateFilter()" />
+                                        <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+                                        <mat-datepicker #endPicker></mat-datepicker>
+                                   </mat-form-field>
+
+                                   <button mat-icon-button (click)="clearDateFilter()" matTooltip="Clear date filter">
+                                        <mat-icon>clear</mat-icon>
+                                   </button>
+                              </div>
+
+                              <table mat-table [dataSource]="balanceChangesDataSource" class="mat-elevation-z8">
+                                   <!-- DATE -->
+                                   <ng-container matColumnDef="date">
+                                        <th mat-header-cell *matHeaderCellDef>Date</th>
+                                        <td mat-cell *matCellDef="let tx">
+                                             <code>{{ tx.date | date:'medium' }}</code>
+                                        </td>
+                                   </ng-container>
+
+                                   <!-- HASH -->
+                                   <ng-container matColumnDef="hash">
+                                        <th mat-header-cell *matHeaderCellDef>Tx Hash</th>
+                                        <td mat-cell *matCellDef="let tx">
+                                             <div class="hash-cell">
+                                                  <code>{{ tx.hash | slice:0:20 }}...</code>
+                                                  <button class="copy-btn" title="Copy hash" (click)="copyToClipboard(tx.hash)">
+                                                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                       </svg>
+                                                  </button>
+                                                  <a [href]="url + tx.hash" target="_blank" rel="noopener noreferrer" title="View on XRPLWin" class="link-btn">
+                                                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                                            <polyline points="15 3 21 3 21 9"></polyline>
+                                                            <line x1="10" y1="14" x2="21" y2="3"></line>
+                                                       </svg>
+                                                  </a>
+                                             </div>
+                                        </td>
+                                   </ng-container>
+
+                                   <!-- TYPE -->
+                                   <ng-container matColumnDef="type">
+                                        <th mat-header-cell *matHeaderCellDef>Type</th>
+                                        <td mat-cell *matCellDef="let tx">
+                                             <code [style.color]="getTypeColor(tx.type)">{{ tx.type }}</code>
+                                        </td>
+                                   </ng-container>
+
+                                   <!-- CHANGE -->
+                                   <ng-container matColumnDef="change">
+                                        <th mat-header-cell *matHeaderCellDef>Change</th>
+                                        <td mat-cell *matCellDef="let tx">
+                                             <code [class.positive]="tx.change>0" [class.negative]="tx.change<0"> {{ tx.change }} {{ tx.currency || 'XRP' }} </code>
+                                        </td>
+                                   </ng-container>
+
+                                   <!-- CURRENCY -->
+                                   <ng-container matColumnDef="currency">
+                                        <th mat-header-cell *matHeaderCellDef>Currency</th>
+                                        <td mat-cell *matCellDef="let tx">
+                                             <code>{{ tx.currency || 'XRP' }}</code>
+                                        </td>
+                                   </ng-container>
+
+                                   <!-- FEES -->
+                                   <ng-container matColumnDef="fees">
+                                        <th mat-header-cell *matHeaderCellDef>Fees</th>
+                                        <td mat-cell *matCellDef="let tx">
+                                             <code>{{ tx.fees }}</code>
+                                        </td>
+                                   </ng-container>
+
+                                   <!-- BALANCE BEFORE -->
+                                   <ng-container matColumnDef="balanceBefore">
+                                        <th mat-header-cell *matHeaderCellDef>Balance Before</th>
+                                        <td mat-cell *matCellDef="let tx">
+                                             <code>{{ tx.balanceBefore }} {{ tx.currency || 'XRP' }}</code>
+                                        </td>
+                                   </ng-container>
+
+                                   <!-- BALANCE AFTER -->
+                                   <ng-container matColumnDef="balanceAfter">
+                                        <th mat-header-cell *matHeaderCellDef>Balance After</th>
+                                        <td mat-cell *matCellDef="let tx">
+                                             <code>{{ tx.balanceAfter }} {{ tx.currency || 'XRP' }}</code>
+                                        </td>
+                                   </ng-container>
+
+                                   <!-- COUNTERPARTY -->
+                                   <ng-container matColumnDef="counterparty">
+                                        <th mat-header-cell *matHeaderCellDef>Counterparty</th>
+                                        <td mat-cell *matCellDef="let tx">
+                                             <code>{{ tx.counterparty || 'N/A' }}</code>
+                                        </td>
+                                   </ng-container>
+
+                                   <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                                   <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                              </table>
+                         </cdk-virtual-scroll-viewport>
+                    </div>
+
+                    <div *ngIf="selectedWalletIndex === null" class="no-wallet-found">
+                         <p>Select an account to view balance changes.</p>
                     </div>
                </div>
           </div>
+     </div>
+</div>
 
-          <div class="spinner-container">
-               <div id="spinner" [ngStyle]="{ display: spinner ? 'block' : 'none' }" class="spinner"></div>
-               <div *ngIf="spinner" class="spinner-text">{{ spinnerMessage || 'Loading...' }}</div>
-          </div>
-
-          <table style="text-align: left; width: 100%">
-               <th></th>
-               <tr>
-                    <td colspan="2">
-                         <button type="button" (click)="loadBalanceChanges()">Get Balance Changes</button>
-                    </td>
-               </tr>
-          </table>
-
-          <fieldset class="balance-changes-fieldset">
-               <!-- <legend style="color: white">Balance Changes History</legend> -->
-               <div class="table-container" *ngIf="selectedAccount">
-                    <cdk-virtual-scroll-viewport itemSize="20" class="virtual-scroll-viewport" (scrolledIndexChange)="onScroll($event)">
-                         <mat-form-field appearance="fill" class="filter-form-field">
-                              <input matInput placeholder="Filter by type, currency, or counterparty" [(ngModel)]="filterValue" [ngModelOptions]="{standalone: true}" (ngModelChange)="applyFilter($event)" />
-                         </mat-form-field>
-                         <table mat-table [dataSource]="balanceChangesDataSource" class="mat-elevation-z8">
-                              <ng-container matColumnDef="date">
-                                   <th mat-header-cell *matHeaderCellDef>Date</th>
-                                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-                                        <td mat-cell *matCellDef="let tx">
-                                             <div style="display: flex; align-items: center; gap: 4px">
-                                                  <code style="padding-right: 10px; padding-top: 16px"> {{ tx.date | date:'medium' }} </code>
-                                             </div>
-                                        </td>
-                                   </div>
-                              </ng-container>
-
-                              <ng-container matColumnDef="hash">
-                                   <th mat-header-cell *matHeaderCellDef>Tx Hash</th>
-                                   <td mat-cell *matCellDef="let tx">
-                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-                                             <code style="padding-right: 20px">{{ tx.hash | slice:0:20 }}...</code>
-                                             <!-- ✅ Copy button -->
-                                             <button class="copy-btn" title="Copy hash to clipboard" (click)="copyToClipboard(tx.hash)" style="background: none; border: 1px solid #ddd; cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; transition: all 0.2s ease">
-                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                                  </svg>
-                                             </button>
-                                             <!-- ✅ Redirect link -->
-                                             <a [href]="url + tx.hash" target="_blank" rel="noopener noreferrer" title="View transaction on XRPLWin" style="background: none; border: 1px solid #ddd; cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; text-decoration: none; color: inherit; transition: all 0.2s ease">
-                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                                       <polyline points="15 3 21 3 21 9"></polyline>
-                                                       <line x1="10" y1="14" x2="21" y2="3"></line>
-                                                  </svg>
-                                             </a>
-                                        </div>
-                                   </td>
-                              </ng-container>
-
-                              <ng-container matColumnDef="type">
-                                   <th mat-header-cell *matHeaderCellDef>Type</th>
-                                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-                                        <td mat-cell *matCellDef="let tx">
-                                             <div style="display: flex; align-items: center; gap: 4px">
-                                                  <code style="padding-right: 10px; padding-top: 16px" [style.color]="getTypeColor(tx.type)"> {{ tx.type }} </code>
-                                             </div>
-                                        </td>
-                                   </div>
-                              </ng-container>
-
-                              <ng-container matColumnDef="change">
-                                   <th mat-header-cell *matHeaderCellDef>Change</th>
-                                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-                                        <td mat-cell *matCellDef="let tx">
-                                             <div style="display: flex; align-items: center; gap: 4px">
-                                                  <code style="padding-right: 10px; padding-top: 16px" [class.positive]="tx.change > 0" [class.negative]="tx.change < 0"> {{ tx.change }} {{ tx.currency || 'XRP' }} </code>
-                                             </div>
-                                        </td>
-                                   </div>
-                              </ng-container>
-
-                              <ng-container matColumnDef="currency">
-                                   <th mat-header-cell *matHeaderCellDef>Currency</th>
-                                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-                                        <td mat-cell *matCellDef="let tx">
-                                             <div style="display: flex; align-items: center; gap: 4px">
-                                                  <code style="padding-right: 10px; padding-top: 16px" [class.positive]="tx.change > 0" [class.negative]="tx.change < 0"> {{ tx.currency || 'XRP' }} </code>
-                                             </div>
-                                        </td>
-                                   </div>
-                              </ng-container>
-
-                              <ng-container matColumnDef="fees">
-                                   <th mat-header-cell *matHeaderCellDef>Fees</th>
-                                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-                                        <td mat-cell *matCellDef="let tx">
-                                             <div style="display: flex; align-items: center; gap: 4px">
-                                                  <code style="padding-right: 10px; padding-top: 16px"> {{ tx.fees }} </code>
-                                             </div>
-                                        </td>
-                                   </div>
-                              </ng-container>
-
-                              <ng-container matColumnDef="balanceBefore">
-                                   <th mat-header-cell *matHeaderCellDef>Balance Before</th>
-                                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-                                        <td mat-cell *matCellDef="let tx">
-                                             <div style="display: flex; align-items: center; gap: 4px">
-                                                  <code style="padding-right: 10px; padding-top: 16px"> {{ tx.balanceBefore }} {{ tx.currency || 'XRP' }}</code>
-                                             </div>
-                                        </td>
-                                   </div>
-                              </ng-container>
-
-                              <ng-container matColumnDef="balanceAfter">
-                                   <th mat-header-cell *matHeaderCellDef>Balance After</th>
-                                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-                                        <td mat-cell *matCellDef="let tx">
-                                             <div style="display: flex; align-items: center; gap: 4px">
-                                                  <code style="padding-right: 10px; padding-top: 16px">{{ tx.balanceAfter }} {{ tx.currency || 'XRP' }}</code>
-                                             </div>
-                                        </td>
-                                   </div>
-                              </ng-container>
-
-                              <ng-container matColumnDef="counterparty">
-                                   <th mat-header-cell *matHeaderCellDef>Counterparty</th>
-                                   <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap">
-                                        <td mat-cell *matCellDef="let tx">
-                                             <div style="display: flex; align-items: center; gap: 4px">
-                                                  <code style="padding-right: 10px; padding-top: 16px">{{ tx.counterparty || 'N/A' }}</code>
-                                             </div>
-                                        </td>
-                                   </div>
-                              </ng-container>
-
-                              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                              <tr mat-row *matRowDef="let row; columns: displayedColumns;" style="min-height: 20px"></tr>
-                         </table>
-                    </cdk-virtual-scroll-viewport>
-               </div>
-               <div *ngIf="!selectedAccount">Select an account to view balance changes.</div>
-          </fieldset>
-     </fieldset>
-</form>
+<!-- Toast (same as Send-XRP) -->
+<div class="toast" [class.show]="showToast">{{ toastMessage }}</div>

@@ -8,7 +8,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, AfterViewChecked } from '@angular/core';
+import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, AfterViewChecked, NgZone, ViewChildren, QueryList } from '@angular/core';
+import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
@@ -20,6 +21,11 @@ import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
 import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
+import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
+import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
+import { Subject, takeUntil } from 'rxjs';
+import { LucideAngularModule } from 'lucide-angular';
+import { NgIcon } from '@ng-icons/core';
 
 interface BalanceChange {
      date: Date;
@@ -36,14 +42,22 @@ interface BalanceChange {
 @Component({
      selector: 'app-account-changes',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, ScrollingModule, MatProgressSpinnerModule, MatIconModule, MatTooltipModule, MatButtonModule],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, ScrollingModule, MatProgressSpinnerModule, MatIconModule, MatTooltipModule, MatButtonModule, LucideAngularModule, NgIcon],
+     animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './account-changes.component.html',
      styleUrl: './account-changes.component.css',
 })
 export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterViewChecked {
+     private destroy$ = new Subject<void>();
+     @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
+     @ViewChild('accountForm') accountForm!: NgForm;
+     @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
+     @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
+     @ViewChild('signers') signersRef!: ElementRef<HTMLTextAreaElement>;
+     @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
+     @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
      @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
-     @ViewChild('accountForm') accountForm!: NgForm;
      @ViewChild(MatSort) sort!: MatSort;
      @ViewChild(MatPaginator) paginator!: MatPaginator;
      selectedAccount: 'account1' | 'account2' | null = 'account1';
@@ -71,7 +85,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
      isExpanded: boolean = false;
      wallets: any[] = [];
      selectedWalletIndex: number = 0;
-     currentWallet = { name: '', address: '', seed: '', balance: '' };
+     currentWallet = { classicAddress: '', address: '', seed: '', name: undefined, balance: '0', ownerCount: undefined, xrpReserves: undefined, spendableXrp: undefined, showSecret: false, isIssuer: false };
      private readonly accountLinesCache = new Map<string, any>();
      private readonly accountLinesCacheTime = new Map<string, number>();
      private readonly transactionCache = new Map<string, any[]>();
@@ -80,8 +94,42 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
      private scrollDebounce: any = null;
      private hasInitialized = false;
      private loadingInitial = false;
+     showSecret: boolean = false;
+     environment: string = '';
+     paymentTx: any[] = [];
+     txResult: any[] = [];
+     txHash: string = '';
+     activeTab = 'send'; // default
+     successMessage: string = '';
+     encryptionType: string = '';
+     private cachedReserves: any = null;
+     hasWallets: boolean = true;
+     showToast: boolean = false;
+     toastMessage: string = '';
+     editingIndex!: (index: number) => boolean;
+     tempName: string = '';
+     warningMessage: string | null = null;
 
-     constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly xrplTransactions: XrplTransactionService) {}
+     constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly xrplTransactions: XrplTransactionService, private ngZone: NgZone, private walletGenerator: WalletGeneratorService, private walletManagerService: WalletManagerService) {}
+
+     ngOnInit() {
+          this.environment = this.xrplService.getNet().environment;
+          this.encryptionType = this.storageService.getInputValue('encryptionType');
+
+          this.editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
+
+          type EnvKey = keyof typeof AppConstants.XRPL_WIN_URL;
+          const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
+          this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
+
+          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
+               this.wallets = wallets;
+               if (!this.wallets) {
+                    this.hasWallets = false;
+                    return;
+               }
+          });
+     }
 
      ngOnDestroy() {
           if (this.scrollDebounce) {
@@ -106,6 +154,28 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           this.isExpanded = !this.isExpanded;
      }
 
+     selectWallet(index: number) {
+          this.selectedWalletIndex = index;
+          this.onAccountChange();
+     }
+
+     editName(i: number) {
+          this.walletManagerService.startEdit(i);
+          const wallet = this.wallets[i];
+          this.tempName = wallet.name || `Wallet ${i + 1}`;
+          setTimeout(() => this.nameInput?.nativeElement.focus(), 0);
+     }
+
+     saveName() {
+          this.walletManagerService.saveEdit(this.tempName);
+          this.tempName = '';
+     }
+
+     cancelEdit() {
+          this.walletManagerService.cancelEdit();
+          this.tempName = '';
+     }
+
      applyFilter(filterValue: string) {
           this.filterValue = filterValue.trim().toLowerCase();
           this.balanceChangesDataSource.filter = this.filterValue;
@@ -115,11 +185,52 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           return item.hash;
      };
 
+     // private setFilterPredicate() {
+     //      this.balanceChangesDataSource.filterPredicate = (data: BalanceChange, filter: string) => {
+     //           const searchText = filter.toLowerCase();
+     //           return data.type.toLowerCase().includes(searchText) || data.currency.toLowerCase().includes(searchText) || (data.counterparty || '').toLowerCase().includes(searchText);
+     //      };
+     // }
+
      private setFilterPredicate() {
           this.balanceChangesDataSource.filterPredicate = (data: BalanceChange, filter: string) => {
                const searchText = filter.toLowerCase();
-               return data.type.toLowerCase().includes(searchText) || data.currency.toLowerCase().includes(searchText) || (data.counterparty || '').toLowerCase().includes(searchText);
+
+               // Text filter
+               const textMatch = data.type.toLowerCase().includes(searchText) || data.currency.toLowerCase().includes(searchText) || (data.counterparty || '').toLowerCase().includes(searchText);
+
+               // Date filter
+               const inDateRange = this.isInDateRange(data.date);
+
+               return textMatch && inDateRange;
           };
+     }
+
+     private isInDateRange(date: Date): boolean {
+          if (!this.dateRange.start && !this.dateRange.end) return true;
+          const d = new Date(date);
+          d.setHours(0, 0, 0, 0);
+
+          if (this.dateRange.start) {
+               const start = new Date(this.dateRange.start);
+               start.setHours(0, 0, 0, 0);
+               if (d < start) return false;
+          }
+          if (this.dateRange.end) {
+               const end = new Date(this.dateRange.end);
+               end.setHours(23, 59, 59, 999);
+               if (d > end) return false;
+          }
+          return true;
+     }
+
+     applyDateFilter() {
+          this.applyFilter(this.filterValue); // Re-apply both filters
+     }
+
+     clearDateFilter() {
+          this.dateRange = { start: null, end: null };
+          this.applyFilter(this.filterValue);
      }
 
      onPageChange(event: any) {
@@ -137,19 +248,105 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           }
      }
 
-     onWalletListChange(event: any[]) {
-          this.wallets = event;
+     onWalletListChange(): void {
+          if (this.wallets.length <= 0) {
+               this.hasWallets = false;
+               return;
+          }
+
+          if (this.wallets.length === 1 && this.wallets[0].address === '') {
+               this.hasWallets = false;
+               return;
+          }
+
           if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
                this.selectedWalletIndex = 0;
+               this.refreshBalance(0);
+          } else {
+               (async () => {
+                    const client = await this.xrplService.getClient();
+                    await this.refreshWallets(client, [this.wallets[this.selectedWalletIndex].address]);
+               })();
           }
+
           this.onAccountChange();
      }
+
+     // onWalletListChange(event: any[]) {
+     //      this.wallets = event;
+     //      if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
+     //           this.selectedWalletIndex = 0;
+     //      }
+     //      this.onAccountChange();
+     // }
 
      handleTransactionResult(event: { result: string; isError: boolean; isSuccess: boolean }) {
           this.result = event.result;
           this.isError = event.isError;
           this.isSuccess = event.isSuccess;
           this.isEditable = !this.isSuccess;
+     }
+
+     toggleSecret(index: number) {
+          this.wallets[index].showSecret = !this.wallets[index].showSecret;
+     }
+
+     async refreshBalance(index: number) {
+          const wallet = this.wallets[index];
+          try {
+               const client = await this.xrplService.getClient();
+               const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
+               await this.refreshWallets(client, [walletAddress]);
+               // this.cdr.detectChanges();
+          } catch (err) {
+               this.setError('Failed to refresh balance');
+          }
+     }
+
+     copyAddress(address: string) {
+          navigator.clipboard.writeText(address).then(() => {
+               this.showToastMessage('Address copied to clipboard!');
+          });
+     }
+
+     private showToastMessage(message: string, duration: number = 2000) {
+          this.toastMessage = message;
+          this.showToast = true;
+          setTimeout(() => {
+               this.showToast = false;
+          }, duration);
+     }
+
+     copySeed(seed: string) {
+          navigator.clipboard
+               .writeText(seed)
+               .then(() => {
+                    this.showToastMessage('Seed copied to clipboard!');
+               })
+               .catch(err => {
+                    console.error('Failed to copy seed:', err);
+                    this.showToastMessage('Failed to copy. Please select and copy manually.');
+               });
+     }
+
+     deleteWallet(index: number) {
+          if (confirm('Delete this wallet? This cannot be undone.')) {
+               this.walletManagerService.deleteWallet(index);
+               if (this.selectedWalletIndex >= this.wallets.length) {
+                    this.selectedWalletIndex = Math.max(0, this.wallets.length - 1);
+               }
+               this.onAccountChange();
+          }
+     }
+
+     async generateNewAccount() {
+          this.updateSpinnerMessage(``);
+          this.showSpinnerWithDelay('Generating new wallet', 5000);
+          const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
+          const client = await this.xrplService.getClient();
+          this.refreshWallets(client, faucetWallet.address);
+          this.spinner = false;
+          this.clearWarning();
      }
 
      onAccountChange() {
@@ -238,6 +435,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                const processedTx = this.processTransactionsForBalanceChanges(txResponse.result.transactions, address);
 
                this.balanceChanges.push(...processedTx);
+               this.originalBalanceChanges = [...this.balanceChanges]; // Cache full
                this.balanceChangesDataSource.data = [...this.balanceChanges];
 
                this.marker = txResponse.result.marker;
@@ -637,6 +835,90 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
           }
      }
 
+     private async refreshWallets(client: xrpl.Client, addressesToRefresh?: string[]) {
+          console.log('Entering refreshWallets');
+          const REFRESH_THRESHOLD_MS = 3000;
+          const now = Date.now();
+
+          try {
+               // Determine which wallets to refresh
+               const walletsToUpdate = this.wallets.filter(w => {
+                    const needsUpdate = !w.lastUpdated || now - w.lastUpdated > REFRESH_THRESHOLD_MS;
+                    const inFilter = addressesToRefresh ? addressesToRefresh.includes(w.classicAddress ?? w.address) : true;
+                    return needsUpdate && inFilter;
+               });
+
+               if (!walletsToUpdate.length) {
+                    console.debug('No wallets need updating.');
+                    return;
+               }
+
+               console.debug(`Refreshing ${walletsToUpdate.length} wallet(s)...`);
+
+               //Fetch all accountInfo data in parallel (faster, single request per wallet)
+               const accountInfos = await Promise.all(walletsToUpdate.map(w => this.xrplService.getAccountInfo(client, w.classicAddress ?? w.address, 'validated', '')));
+
+               //Cache reserves (only once per session)
+               if (!this.cachedReserves) {
+                    this.cachedReserves = await this.utilsService.getXrplReserve(client);
+                    console.debug('Cached XRPL reserve data:', this.cachedReserves);
+               }
+
+               // Heavy computation outside Angular (no UI reflows)
+               this.ngZone.runOutsideAngular(async () => {
+                    const updatedWallets = await Promise.all(
+                         walletsToUpdate.map(async (wallet, i) => {
+                              try {
+                                   const accountInfo = accountInfos[i];
+                                   const address = wallet.classicAddress ?? wallet.address;
+
+                                   // --- Derive balance directly from accountInfo to avoid extra ledger call ---
+                                   const balanceInDrops = String(accountInfo.result.account_data.Balance);
+                                   const balanceXrp = xrpl.dropsToXrp(balanceInDrops); // returns string
+
+                                   // --- Get ownerCount + total reserve ---
+                                   const { ownerCount, totalXrpReserves } = await this.utilsService.updateOwnerCountAndReserves(client, accountInfo, address);
+
+                                   const spendable = parseFloat(String(balanceXrp)) - parseFloat(String(totalXrpReserves || '0'));
+
+                                   return {
+                                        ...wallet,
+                                        ownerCount,
+                                        xrpReserves: totalXrpReserves,
+                                        balance: spendable.toFixed(6),
+                                        spendableXrp: spendable.toFixed(6),
+                                        lastUpdated: now,
+                                   };
+                              } catch (err) {
+                                   console.error(`Error updating wallet ${wallet.address}:`, err);
+                                   return wallet;
+                              }
+                         })
+                    );
+
+                    console.log('updatedWallets', updatedWallets);
+                    // Apply updates inside Angular (UI updates + service sync)
+                    this.ngZone.run(() => {
+                         updatedWallets.forEach(updated => {
+                              const idx = this.wallets.findIndex(existing => (existing.classicAddress ?? existing.address) === (updated.classicAddress ?? updated.address));
+                              if (idx !== -1) {
+                                   this.walletManagerService.updateWallet(idx, updated);
+                              }
+                         });
+                         // Ensure Selected Account Summary refreshes
+                         if (this.selectedWalletIndex !== null && this.wallets[this.selectedWalletIndex]) {
+                              this.currentWallet = { ...this.wallets[this.selectedWalletIndex] };
+                         }
+                    });
+               });
+          } catch (error: any) {
+               console.error('Error in refreshWallets:', error);
+          } finally {
+               this.executionTime = (Date.now() - now).toString();
+               console.log(`Leaving refreshWallets in ${this.executionTime}ms`);
+          }
+     }
+
      copyToClipboard(text: string) {
           navigator.clipboard.writeText(text).then(
                () => {
@@ -647,6 +929,68 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit, AfterV
                     console.error('Clipboard copy failed:', err);
                }
           );
+     }
+
+     private clearMessages() {
+          const fadeDuration = 400; // ms
+          this.result = '';
+          this.isError = false;
+          this.isSuccess = false;
+          this.txHash = '';
+          this.txResult = [];
+          this.paymentTx = [];
+          this.successMessage = '';
+          this.cdr.detectChanges();
+     }
+
+     public get infoMessage(): string | null {
+          const tabConfig = {
+               send: {
+                    message: '',
+                    dynamicText: '', // Empty for no additional text
+                    showLink: false,
+               },
+          };
+
+          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
+          if (!config) return null;
+
+          const walletName = this.currentWallet.name || 'selected';
+
+          // Build the dynamic text part (with space if text exists)
+          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+
+          // return `The <code>${walletName}</code> wallet has ${dynamicText} ${config.message}`;
+          return null;
+     }
+
+     clearFields(clearAllFields: boolean) {
+          if (clearAllFields) {
+               this.clearMessages();
+               this.clearWarning();
+          }
+
+          this.cdr.detectChanges();
+     }
+
+     private setWarning(msg: string | null) {
+          this.warningMessage = msg;
+          this.cdr.detectChanges();
+     }
+
+     clearWarning() {
+          this.setWarning(null);
+     }
+
+     async showSpinnerWithDelay(message: string, delayMs: number = 200) {
+          this.spinner = true;
+          this.updateSpinnerMessage(message);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+     }
+
+     private updateSpinnerMessage(message: string) {
+          this.spinnerMessage = message;
+          this.cdr.detectChanges();
      }
 
      private setErrorProperties() {
