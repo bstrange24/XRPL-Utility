@@ -542,7 +542,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
                     console.error(`Transaction ${this.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-                    response.result.errorMessage = userMessage;
+                    (response.result as any).errorMessage = userMessage;
                     this.setError(userMessage);
                } else {
                     this.setSuccess(this.result);

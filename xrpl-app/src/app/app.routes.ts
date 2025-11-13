@@ -11,7 +11,7 @@ import { TrustlinesComponent } from './components/trustlines/trustlines.componen
 import { DeleteAccountComponent } from './components/delete-account/delete-account.component';
 import { AccountConfiguratorComponent } from './components/account-configurator/account-configurator.component';
 import { CreateCredentialsComponent } from './components/credentials/credentials.component';
-import { CreateDidComponent } from './components/create-did/create-did.component';
+import { DidComponent } from './components/did/did.component';
 import { AccountChangesComponent } from './components/account-changes/account-changes.component';
 import { MptComponent } from './components/mpt/mpt.component';
 import { PermissionedDomainComponent } from './components/permissioned-domain/permissioned-domain.component';
@@ -29,7 +29,7 @@ export const routes: Routes = [
      { path: 'delete-account', component: DeleteAccountComponent, data: { title: 'Account Delete' } },
      { path: 'account-configurator', component: AccountConfiguratorComponent, data: { title: 'Account Configurator' } },
      { path: 'create-credentials', component: CreateCredentialsComponent, data: { title: 'Account Credentials' } },
-     { path: 'create-did', component: CreateDidComponent, data: { title: 'Account DID' } },
+     { path: 'create-did', component: DidComponent, data: { title: 'Account DID' } },
      { path: 'permissioned-domain', component: PermissionedDomainComponent, data: { title: 'Permissioned Domain' } },
      { path: 'account-delegate', component: AccountDelegateComponent, data: { title: 'Account Delegate' } },
      { path: 'firewall', component: FirewallComponent, data: { title: 'Firewall' } },

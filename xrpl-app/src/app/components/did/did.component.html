@@ -105,64 +105,26 @@
           <div class="form-panel">
                <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'create'" (click)="setTab('create')">
+                    <button class="menu-btn active" [class.active]="activeTab === 'set'" (click)="setTab('set')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Create Credentials
+                         Set DID
                     </button>
-                    <button class="menu-btn active" [class.active]="activeTab === 'accept'" (click)="setTab('accept')">
-                         <lucide-icon name="copy-plus" size="20" style="padding-top: 5px"></lucide-icon>
-                         Accept Credentials
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'verify'" (click)="setTab('verify')">
-                         <lucide-icon name="shield-ellipsis" size="23" style="padding-top: 5px"></lucide-icon>
-                         Verify Credentials
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'delete'" (click)="setTab('delete')">
+                    <button class="menu-btn active" [class.active]="activeTab === 'delete'" (click)="setTab('delete')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Delete Credentials
+                         Delete DID
                     </button>
                </div>
 
                <!-- Create Menu -->
-               @if (activeTab === 'create') {
+               @if (activeTab === 'set') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
                               <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                          </div>
                          <div>
-                              <h2 class="submenu-info-main-text">Create Credentials</h2>
-                              <p class="submenu-info-secondary-text">Create Credentials to another XRPL adress</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Accept Menu -->
-               @if (activeTab === 'accept') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <lucide-icon name="copy-plus" size="27" style="padding-top: 5px"></lucide-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Accept Credentials</h2>
-                              <p class="submenu-info-secondary-text">Accept Credentials from another XRPL adress</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Verify Menu -->
-               @if (activeTab === 'verify') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="verify-button-submenu">
-                              <lucide-icon name="shield-ellipsis" size="27" style="padding-top: 5px"></lucide-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Verify Credentials</h2>
-                              <p class="submenu-info-secondary-text">Verify Credentials have been accepted by another XRPL adress</p>
+                              <h2 class="submenu-info-main-text">Set DID</h2>
+                              <p class="submenu-info-secondary-text">Set DID for the selected account.</p>
                          </div>
                     </div>
                </div>
@@ -176,8 +138,8 @@
                               <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
                          </div>
                          <div>
-                              <h2 class="submenu-info-main-text">Delete Credentials</h2>
-                              <p class="submenu-info-secondary-text">Delete Credentials to another XRPL adress</p>
+                              <h2 class="submenu-info-main-text">Delete DID</h2>
+                              <p class="submenu-info-secondary-text">Delete DID for the selected account.</p>
                          </div>
                     </div>
                </div>
@@ -200,145 +162,54 @@
                }
 
                <!-- Created Credentials -->
-               @if ((activeTab !== undefined) && existingCredentials.length > 0) {
+               @if ((activeTab !== undefined) && existingDid.length > 0) {
                <div class="outstanding-checks-panel">
                     <!-- Header – clickable to expand/collapse -->
-                    <div class="panel-header" (click)="toggleCreatedCredentials()" style="cursor: pointer; user-select: none">
+                    <div class="panel-header" (click)="toggleCreatedDids()" style="cursor: pointer; user-select: none">
                          <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
                               <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Created Credentials ({{ existingCredentials.length }})
+                              Created DID
                          </h3>
                     </div>
 
                     <!-- Collapsible content with smooth height animation -->
-                    <div class="credential-list-container" [class.collapsed]="createdCredentials">
-                         @if (!createdCredentials) {
+                    <div class="credential-list-container" [class.collapsed]="createdDids">
+                         @if (!createdDids) {
                          <div class="checks-list">
-                              @for (chk of existingCredentials; track chk.index) {
+                              @for (chk of existingDid; track chk.index) {
                               <div class="check-card">
                                    <div class="check-extras">
                                         <!-- CredentialType  -->
-                                        @if (chk.CredentialType) {
-                                        <span class="badge badge-invoice">Credential Type: {{ chk.CredentialType }} </span>
+                                        @if (chk.DIDDocument) {
+                                        <span class="badge badge-invoice">DID Document: {{ chk.DIDDocument }} </span>
                                         } @else {
-                                        <span class="badge badge-tag-not-set">Credential Type: Not set </span>
-                                        }
-
-                                        <!-- Expiration  -->
-                                        @if (chk.Expiration) {
-                                        <span class="badge badge-expire">Expires: {{ chk.Expiration }} </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set">Expires: Not set </span>
-                                        }
-
-                                        <!-- Issuer  -->
-                                        @if (chk.Issuer) {
-                                        <span class="badge badge-address">Issuer: {{ chk.Issuer }} </span>
-                                        } @else {
-                                        <span class="badge badge-address-not-set">Issuer: Not set </span>
-                                        }
-
-                                        <!-- Subject  -->
-                                        @if (chk.Subject) {
-                                        <span class="badge badge-address">Subject: {{ chk.Subject }} </span>
-                                        } @else {
-                                        <span class="badge badge-address-not-set">Subject: Not set </span>
+                                        <span class="badge badge-tag-not-set">DID Document: Not set </span>
                                         }
 
                                         <!-- URI  -->
                                         @if (chk.URI) {
-                                        <span class="badge badge-uri">URI: {{ chk.URI }} </span>
+                                        <span class="badge badge-expire">DID URI: {{ chk.URI }} </span>
                                         } @else {
-                                        <span class="badge badge-uri-not-set">URI: Not set </span>
+                                        <span class="badge badge-expire-not-set">DID URI: Not set </span>
                                         }
 
-                                        <!-- URI  -->
+                                        <!-- Index  -->
                                         @if (chk.index) {
-                                        <span class="badge badge-credential-index">Credential Index: {{ chk.index }} </span>
+                                        <span class="badge badge-credential-index">DID Index: {{ chk.index }} </span>
                                         } @else {
-                                        <span class="badge badge-credential-index-not-set">Credential Index: Not set </span>
-                                        }
-                                   </div>
-
-                                   <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyCredentialId(chk.index); $event.stopPropagation(); $event.preventDefault()" title="Copy Credential ID" type="button">
-                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}entry/` + chk.index" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
-                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
-                                             </a>
-                                        </button>
-                                   </div>
-                              </div>
-                              }
-                         </div>
-                         }
-                    </div>
-               </div>
-               }
-
-               <!-- Subject Credentials -->
-               @if ((activeTab !== undefined) && subjectCredentials.length > 0) {
-               <div class="outstanding-checks-panel">
-                    <!-- Header – clickable to expand/collapse -->
-                    <div class="panel-header" (click)="toggleSubjectCredentials()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Subject Credentials ({{ subjectCredentials.length }})
-                         </h3>
-                    </div>
-
-                    <!-- Collapsible content with smooth height animation -->
-                    <div class="credential-list-container" [class.collapsed]="subjectCredential">
-                         @if (!subjectCredential) {
-                         <div class="checks-list">
-                              @for (chk of subjectCredentials; track chk.index) {
-                              <div class="check-card">
-                                   <div class="check-extras">
-                                        <!-- CredentialType  -->
-                                        @if (chk.CredentialType) {
-                                        <span class="badge badge-invoice">Credential Type: {{ chk.CredentialType }} </span>
-                                        } @else {
-                                        <span class="badge badge-tag-not-set">Credential Type: Not set </span>
-                                        }
-
-                                        <!-- Expiration  -->
-                                        @if (chk.Expiration) {
-                                        <span class="badge badge-expire">Expires: {{ chk.Expiration }} </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set">Expires: Not set </span>
+                                        <span class="badge badge-credential-index-not-set">DID Index: Not set </span>
                                         }
 
                                         <!-- Issuer  -->
-                                        @if (chk.Issuer) {
-                                        <span class="badge badge-address">Issuer: {{ chk.Issuer }} </span>
+                                        @if (chk.Data) {
+                                        <span class="badge badge-address">DID Data: {{ chk.Data }} </span>
                                         } @else {
-                                        <span class="badge badge-address-not-set">Issuer: Not set </span>
-                                        }
-
-                                        <!-- Subject  -->
-                                        @if (chk.Subject) {
-                                        <span class="badge badge-address">Subject: {{ chk.Subject }} </span>
-                                        } @else {
-                                        <span class="badge badge-address-not-set">Subject: Not set </span>
-                                        }
-
-                                        <!-- URI  -->
-                                        @if (chk.URI) {
-                                        <span class="badge badge-uri">URI: {{ chk.URI }} </span>
-                                        } @else {
-                                        <span class="badge badge-uri-not-set">URI: Not set </span>
-                                        }
-
-                                        <!-- URI  -->
-                                        @if (chk.index) {
-                                        <span class="badge badge-credential-index">Credential Index: {{ chk.index }} </span>
-                                        } @else {
-                                        <span class="badge badge-credential-index-not-set">Credential Index: Not set </span>
+                                        <span class="badge badge-address-not-set">DID Data: Not set </span>
                                         }
                                    </div>
 
                                    <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyCredentialId(chk.index); $event.stopPropagation(); $event.preventDefault()" title="Copy Credential ID" type="button">
+                                        <button class="icon-btn copy-check-id" (click)="copyCredentialId(chk.index); $event.stopPropagation(); $event.preventDefault()" title="Copy DID ID" type="button">
                                              <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
                                              <a [href]="`${url}entry/` + chk.index" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
                                                   <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
@@ -358,59 +229,36 @@
                          <div [@tabTransition]="activeTab">
                               <div>
                                    <div class="form-row">
-                                        <!-- Subject -->
-                                        @if (activeTab === 'create' || activeTab === 'delete') {
+                                        <!-- DID Document -->
+                                        @if (activeTab === 'set') {
                                         <div class="form-group">
-                                             <label>Subject</label>
-                                             <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
-                                                  @for (dest of destinations; track dest.address; let i = $index) {
-                                                  <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
-                                                  }
-                                             </select>
-                                        </div>
-                                        }
-
-                                        <!-- Credential Type -->
-                                        @if (activeTab === 'create') {
-                                        <div class="form-group">
-                                             <label>Credential Expiration</label>
-                                             <input type="datetime-local" [(ngModel)]="credential.subject.expirationDate" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" />
+                                             <label>DID Document</label>
+                                             <textarea style="width: 100%; height: 200px; font-size: 0.95rem" id="didDocument" placeholder="DID Document" [(ngModel)]="didDetails.document" name="didDocument"></textarea>
                                         </div>
                                         }
                                    </div>
 
                                    <!-- Credential Type-->
                                    <div class="form-row">
-                                        @if (activeTab === 'create' || activeTab === 'accept' || activeTab === 'delete') {
+                                        @if (activeTab === 'set') {
                                         <div class="form-group">
-                                             <label>Credential Type</label>
-                                             <input type="text" [(ngModel)]="credential.credential_type" name="credential_type" />
+                                             <label>URI</label>
+                                             <input type="text" [(ngModel)]="didDetails.uri" placeholder="DID URI" name="uri" />
                                         </div>
                                         }
                                    </div>
 
                                    <!-- URI -->
                                    <div class="form-row">
-                                        @if (activeTab === 'create') {
+                                        @if (activeTab === 'set') {
                                         <div class="form-group">
-                                             <label>URI</label>
-                                             <input type="text" [(ngModel)]="credential.uri" name="uri" />
+                                             <label>DID Data</label>
+                                             <textarea style="width: 100%; height: 200px; font-size: 0.95rem" id="didData" placeholder="DID Data" [(ngModel)]="didDetails.data" name="didData"></textarea>
                                         </div>
                                         }
                                    </div>
-
-                                   <!-- Credential ID -->
-                                   @if (activeTab !== 'create' && (activeTab === 'delete' || activeTab === 'verify')) {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Credential ID</label>
-                                             <input type="text" id="credentialID" [(ngModel)]="credentialID" name="credentialID" />
-                                        </div>
-                                   </div>
-                                   }
                               </div>
 
-                              @if (activeTab !== 'verify') {
                               <!-- Swtich group -->
                               <div class="switch-group">
                                    <!-- Memo group -->
@@ -456,12 +304,12 @@
                               </div>
 
                               <!-- Memo Field -->
-                              @if (isMemoEnabled && activeTab !== 'verify') {
+                              @if (isMemoEnabled) {
                               <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
                               }
 
                               <!-- Sign tx with Mult Sign address -->
-                              @if (useMultiSign && activeTab !== 'verify') {
+                              @if (useMultiSign) {
                               <div class="multisign-grid">
                                    <div class="multisign-field">
                                         <label>Signers</label>
@@ -479,7 +327,7 @@
                               }
 
                               <!-- Sign tx with Regular key address -->
-                              @if (isRegularKeyAddress && activeTab !== 'verify') {
+                              @if (isRegularKeyAddress) {
                               <div class="regular-key-fields">
                                    <div class="form-row">
                                         <div class="form-group">
@@ -521,18 +369,14 @@
                                         }
                                    </div>
                               </div>
-                              }}
+                              }
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   @if (activeTab === 'create') {
-                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'#007bff','color':'white'}" (click)="createCredential()" class="btn-secondary">Create Credential</button>
-                                   } @else if (activeTab === 'accept') {
-                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'green','color':'white'}" (click)="acceptCredentials()" class="btn-secondary">Accept Credential</button>
+                                   @if (activeTab === 'set') {
+                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'#007bff','color':'white'}" (click)="setDid()" class="btn-secondary">Set DID</button>
                                    } @else if (activeTab === 'delete') {
-                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'red','color':'white'}" (click)="deleteCredentials()" class="btn-secondary">Delete Credential</button>
-                                   } @else if(activeTab === 'verify'){
-                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'#ff7f00','color':'white'}" (click)="verifyCredential(false)" class="btn-secondary">Verify Credential</button>
+                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'red','color':'white'}" (click)="deleteDid()" class="btn-secondary">Delete DID</button>
                                    }
                                    <button type="button" class="btn-primary" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                               </div>
@@ -600,7 +444,7 @@
                @if (paymentTx.length >0) {
                <div class="tx-preview-container">
                     <div class="tx-header">
-                         <h5 class="tx-title">Credential Transaction</h5>
+                         <h5 class="tx-title">DID Transaction</h5>
                          <div class="tx-actions">
                               <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
                                    <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
