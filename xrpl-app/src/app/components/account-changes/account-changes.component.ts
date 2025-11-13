@@ -275,6 +275,11 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           return true;
      }
 
+     clearFilter() {
+          this.filterValue = '';
+          this.applyFilter('');
+     }
+
      applyDateFilter() {
           this.applyFilter(this.filterValue); // Re-apply both filters
      }
@@ -424,6 +429,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      }
 
      async loadBalanceChanges(reset = true) {
+          this.clearMessages();
           // Prevent overlapping loads
           if (reset && this.loadingInitial) {
                console.log('loadBalanceChanges skipped (initial load in progress)');

@@ -99,7 +99,6 @@
                }
           </div>
 
-          <!-- Toast -->
           <div class="toast" [class.show]="showToast">{{ toastMessage }}</div>
 
           <!-- Right form -->
@@ -122,13 +121,16 @@
                     </div>
                </div>
 
-               <!-- Info / Warning panels (re-used from Send-XRP) -->
+               <!-- Dynamic info panel -->
                @if (infoMessage) {
                <div class="info-panel">
                     <ng-icon name="heroInformationCircle" size="20" class="text-red-600"></ng-icon>
                     <div class="info-text" [innerHTML]="infoMessage"></div>
                </div>
-               } @if (warningMessage) {
+               }
+
+               <!-- Dynamic warning panel  -->
+               @if (warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
                     <div class="warning-text" [innerHTML]="warningMessage"></div>
@@ -154,52 +156,41 @@
                     <div class="panel-body">
                          <!-- SEARCH & DATE FILTERS -->
                          <div class="controls-container">
-                              <!-- TEXT SEARCH -->
-                              <div class="filter-wrapper">
-                                   <mat-form-field appearance="fill" class="filter-form-field">
-                                        <input matInput placeholder="Search date, hash, type, amount, fees..." [(ngModel)]="filterValue" (ngModelChange)="applyFilter($event)" />
-                                   </mat-form-field>
-                              </div>
+                              <div>
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label for="startDate">Search date, hash, type, amount, fees...</label>
+                                             <div class="search-bar">
+                                                  <mat-icon class="search-icon">search</mat-icon>
+                                                  <input type="text" [(ngModel)]="filterValue" (input)="applyFilter($event.target.value)" placeholder="Search..." />
+                                                  <mat-icon *ngIf="filterValue" class="clear-icon" (click)="clearFilter()">close</mat-icon>
+                                             </div>
+                                        </div>
+                                        <div class="form-group">
+                                             <div class="date-filter-container">
+                                                  <div class="date-input-wrapper">
+                                                       <label for="startDate">Start Date</label>
+                                                       <input id="startDate" type="date" [(ngModel)]="dateRange.start" (change)="applyDateFilter()" class="date-input" />
+                                                  </div>
 
-                              <!-- DATE PICKERS -->
-                              <div class="date-filter-container">
-                                   <!-- <label>Start Date</label> -->
-                                   <!-- <input type="datetime-local" [(ngModel)]="dateRange.start" step="1" (focus)="applyDateFilter()" /> -->
+                                                  <div class="date-input-wrapper">
+                                                       <label for="endDate">End Date</label>
+                                                       <input id="endDate" type="date" [(ngModel)]="dateRange.end" (change)="applyDateFilter()" class="date-input" />
+                                                  </div>
 
-                                   <!-- <mat-form-field appearance="outline" class="date-input compact">
-                                        <mat-label>Start Date</mat-label>
-                                        <input matInput [matDatepicker]="startPicker" [(ngModel)]="dateRange.start" (ngModelChange)="applyDateFilter()" />
-                                        <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
-                                        <mat-datepicker #startPicker></mat-datepicker>
-                                   </mat-form-field> -->
-
-                                   <!-- <label>End Date</label> -->
-                                   <!-- <input type="datetime-local" [(ngModel)]="dateRange.end" step="1" (focus)="applyDateFilter()" /> -->
-
-                                   <!-- <mat-form-field appearance="outline" class="date-input compact">
-                                        <mat-label>End Date</mat-label>
-                                        <input matInput [matDatepicker]="endPicker" [(ngModel)]="dateRange.end" (ngModelChange)="applyDateFilter()" />
-                                        <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
-                                        <mat-datepicker #endPicker></mat-datepicker>
-                                   </mat-form-field> -->
-
-                                   <div class="date-input-wrapper">
-                                        <label for="startDate">Start Date</label>
-                                        <input id="startDate" type="date" [(ngModel)]="dateRange.start" (change)="applyDateFilter()" class="date-input" />
+                                                  <button mat-icon-button (click)="clearDateFilter()" matTooltip="Clear date filter" style="padding-top: 18px; background-color: transparent">
+                                                       <lucide-icon name="eraser" size="25"></lucide-icon>
+                                                  </button>
+                                             </div>
+                                        </div>
                                    </div>
-
-                                   <div class="date-input-wrapper">
-                                        <label for="endDate">End Date</label>
-                                        <input id="endDate" type="date" [(ngModel)]="dateRange.end" (change)="applyDateFilter()" class="date-input" />
-                                   </div>
-
-                                   <button mat-icon-button (click)="clearDateFilter()" matTooltip="Clear date filter">
-                                        <lucide-icon name="eraser" size="25"></lucide-icon>
-                                   </button>
-
-                                   <!-- Main button -->
-                                   <div class="button-row">
-                                        <button type="button" class="btn-primary" (click)="loadBalanceChanges(true)">Get Account Balance Changes</button>
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <div class="button-row-account-changes">
+                                                  <button type="button" class="btn-primary" (click)="loadBalanceChanges(true)">Get Account Balance Changes</button>
+                                             </div>
+                                        </div>
+                                        <div class="form-group"></div>
                                    </div>
                               </div>
                          </div>
