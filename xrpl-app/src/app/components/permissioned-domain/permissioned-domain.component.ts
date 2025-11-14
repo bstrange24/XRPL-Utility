@@ -107,7 +107,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      spinnerMessage: string = '';
      masterKeyDisabled: boolean = false;
      isSimulateEnabled: boolean = false;
-     credential = {
+     permissionedDomainObject = {
           version: '1.0',
           credential_type: 'KYCCredential',
           issuer: '',
@@ -485,8 +485,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
           const inputs: ValidationInputs = {
                seed: this.currentWallet.seed,
-               destination: this.credential.subject.destinationAddress,
-               credentialType: this.credential.credential_type,
+               destination: this.permissionedDomainObject.subject.destinationAddress,
+               credentialType: this.permissionedDomainObject.credential_type,
                isRegularKeyAddress: this.isRegularKeyAddress,
                regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
                regularKeySeed: this.isRegularKeyAddress ? this.regularKeySeed : undefined,
@@ -519,8 +519,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                     AcceptedCredentials: [
                          {
                               Credential: {
-                                   Issuer: this.credential.subject.destinationAddress,
-                                   CredentialType: Buffer.from(this.credential.credential_type || 'defaultCredentialType', 'utf8').toString('hex'),
+                                   Issuer: this.permissionedDomainObject.subject.destinationAddress,
+                                   CredentialType: Buffer.from(this.permissionedDomainObject.credential_type || 'defaultCredentialType', 'utf8').toString('hex'),
                               },
                          },
                     ],
@@ -739,7 +739,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
      private getExistingDid(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
           this.existingDid = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'DID')
+               .filter((obj: any) => obj.LedgerEntryType === 'Permissioned Domain' && obj.Owner === sender)
                .map((obj: any) => {
                     return {
                          index: obj.index,
@@ -1127,7 +1127,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      updateDestinations() {
           this.destinations = this.wallets.map(w => ({ name: w.name, address: w.address }));
           if (this.destinations.length > 0 && !this.destinationField) {
-               this.credential.subject.destinationAddress = this.destinations[0].address;
+               this.permissionedDomainObject.subject.destinationAddress = this.destinations[0].address;
           }
           this.ensureDefaultNotSelected();
      }
@@ -1135,9 +1135,9 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      private ensureDefaultNotSelected() {
           const currentAddress = this.currentWallet.address;
           if (currentAddress && this.destinations.length > 0) {
-               if (!this.credential.subject.destinationAddress || this.credential.subject.destinationAddress === currentAddress) {
+               if (!this.permissionedDomainObject.subject.destinationAddress || this.permissionedDomainObject.subject.destinationAddress === currentAddress) {
                     const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    this.credential.subject.destinationAddress = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
+                    this.permissionedDomainObject.subject.destinationAddress = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
                }
           }
           this.cdr.detectChanges();
@@ -1229,13 +1229,13 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           const tabConfig = {
                set: {
                     did: this.existingDid,
-                    getDescription: (count: number) => (count === 1 ? 'DID' : 'DID'),
+                    getDescription: (count: number) => (count === 1 ? 'Permissioned Domain' : 'Permissioned Domain'),
                     dynamicText: 'a', // Add dynamic text here
                     showLink: true,
                },
                delete: {
                     did: this.existingDid,
-                    getDescription: (count: number) => (count === 1 ? 'DID' : 'DID'),
+                    getDescription: (count: number) => (count === 1 ? 'Permissioned Domain' : 'Permissioned Domain'),
                     dynamicText: '', // Empty for no additional text
                     showLink: true,
                },
@@ -1264,7 +1264,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
           if (config.showLink && count > 0) {
                const link = `${this.url}entry/${this.existingDid[0].index}`;
-               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View DID in XRPL Win</a>`;
+               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Permissioned Domain in XRPL Win</a>`;
           }
 
           return message;
@@ -1291,7 +1291,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      }
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
-               this.credential.uri = '';
+               this.permissionedDomainObject.uri = '';
                this.isTicket = false;
                this.useMultiSign = false;
                this.isRegularKeyAddress = false;
