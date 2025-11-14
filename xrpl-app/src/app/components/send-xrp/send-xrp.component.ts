@@ -21,6 +21,7 @@ import { DownloadUtilService } from '../../services/download-util/download-util.
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
+import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -49,7 +50,7 @@ interface ValidationInputs {
 @Component({
      selector: 'app-send-xrp',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
@@ -253,6 +254,26 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           this.refreshWallets(client, faucetWallet.address);
           this.ui.spinner = false;
           this.ui.clearWarning();
+     }
+
+     dropWallet(event: CdkDragDrop<any[]>) {
+          moveItemInArray(this.wallets, event.previousIndex, event.currentIndex);
+
+          // Update your selectedWalletIndex if needed
+          if (this.selectedWalletIndex === event.previousIndex) {
+               this.selectedWalletIndex = event.currentIndex;
+          } else if (this.selectedWalletIndex > event.previousIndex && this.selectedWalletIndex <= event.currentIndex) {
+               this.selectedWalletIndex--;
+          } else if (this.selectedWalletIndex < event.previousIndex && this.selectedWalletIndex >= event.currentIndex) {
+               this.selectedWalletIndex++;
+          }
+
+          // Persist the new order to localStorage
+          this.saveWallets();
+
+          // Update destinations and account state
+          this.updateDestinations();
+          this.onAccountChange();
      }
 
      async onAccountChange() {

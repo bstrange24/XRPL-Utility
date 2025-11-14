@@ -26,59 +26,66 @@
 
                @if (hasWallets) {
                <div>
-                    <!-- List of wallets -->
-                    @for (wallet of wallets; track wallet.address; let i = $index) {
-                    <div class="wallet-item" [class.selected]="selectedWalletIndex === i">
-                         <!-- Wallet Info -->
-                         <div class="wallet-info">
-                              @if (editingIndex(i)) {
-                              <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
-                              } @else {
-                              <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
-                              }
+                    <div cdkDropList (cdkDropListDropped)="dropWallet($event)">
+                         <!-- List of wallets -->
+                         @for (wallet of wallets; track wallet.address; let i = $index) {
+                         <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
+                              <!-- Drag Handle (6-dot grip) -->
+                              <!-- <div class="drag-handle" cdkDragHandle>
+                                   <lucide-icon name="grip-vertical" size="20"></lucide-icon>
+                              </div> -->
+                              <!-- <div style="flex: 1"> -->
+                              <!-- Wallet Info -->
+                              <div class="wallet-info">
+                                   @if (editingIndex(i)) {
+                                   <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
+                                   } @else {
+                                   <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
+                                   }
+                              </div>
+
+                              <div class="wallet-info" (click)="selectWallet(i)">
+                                   <div class="address-line">
+                                        <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
+                                        <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
+                                   </div>
+
+                                   <!-- Icons -->
+                                   <div class="wallet-actions">
+                                        <button class="icon-btn refresh" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
+                                             <lucide-icon name="refresh-ccw"></lucide-icon>
+                                        </button>
+
+                                        <button class="icon-btn copy" (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
+                                             <lucide-icon name="copy"></lucide-icon>
+                                        </button>
+
+                                        <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
+                                             <lucide-icon name="trash-2"></lucide-icon>
+                                        </button>
+                                   </div>
+                              </div>
+
+                              <!-- Secret Key -->
+                              <div class="secret-section" (click)="selectWallet(i)">
+                                   <div class="secret-header">
+                                        <span class="secret-label">Secret Key:</span>
+                                        <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
+                                   </div>
+
+                                   @if (wallet.showSecret) {
+                                   <div class="secret-seed-container">
+                                        <div class="secret-seed">{{ wallet.seed }}</div>
+                                        <button class="copy-btn" (click)="copyUtilService.copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
+                                             <lucide-icon name="copy" size="20"></lucide-icon>
+                                        </button>
+                                   </div>
+                                   }
+                              </div>
+                              <!-- </div> -->
                          </div>
-
-                         <div class="wallet-info" (click)="selectWallet(i)">
-                              <div class="address-line">
-                                   <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
-                                   <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
-                              </div>
-
-                              <!-- Icons -->
-                              <div class="wallet-actions">
-                                   <button class="icon-btn refresh" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
-                                        <lucide-icon name="refresh-ccw"></lucide-icon>
-                                   </button>
-
-                                   <button class="icon-btn copy" (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
-                                        <lucide-icon name="copy"></lucide-icon>
-                                   </button>
-
-                                   <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
-                                        <lucide-icon name="trash-2"></lucide-icon>
-                                   </button>
-                              </div>
-                         </div>
-
-                         <!-- Secret Key -->
-                         <div class="secret-section" (click)="selectWallet(i)">
-                              <div class="secret-header">
-                                   <span class="secret-label">Secret Key:</span>
-                                   <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
-                              </div>
-
-                              <!-- Seed shown below the button -->
-                              @if (wallet.showSecret) {
-                              <div class="secret-seed-container">
-                                   <div class="secret-seed">{{ wallet.seed }}</div>
-                                   <button class="copy-btn" (click)="copyUtilService.copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
-                                        <lucide-icon name="copy" size="20"></lucide-icon>
-                                   </button>
-                              </div>
-                              }
-                         </div>
+                         }
                     </div>
-                    }
 
                     <!-- Selected Account Summary ==== -->
                     <div class="selected-account-card">

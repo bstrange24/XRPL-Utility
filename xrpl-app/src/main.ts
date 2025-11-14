@@ -8,7 +8,7 @@ import { Buffer } from 'buffer';
 import { provideHttpClient } from '@angular/common/http';
 import process from 'process';
 import { importProvidersFrom } from '@angular/core';
-import { LucideAngularModule, Cog, BanknoteArrowUp, BanknoteArrowDown, Trash2, DollarSign, TicketCheck, Check, Hourglass, Wallet, Send, ShieldCheck, Flag, Copy, FileTextIcon, ChevronDown, ChevronRight, BookOpenCheck, ArrowBigRight, RefreshCcw, SplitIcon, Signature, ShieldEllipsis, CopyPlus, Eraser } from 'lucide-angular';
+import { LucideAngularModule, Cog, BanknoteArrowUp, BanknoteArrowDown, Trash2, DollarSign, TicketCheck, Check, Hourglass, Wallet, Send, ShieldCheck, Flag, Copy, FileTextIcon, ChevronDown, ChevronRight, BookOpenCheck, ArrowBigRight, RefreshCcw, SplitIcon, Signature, ShieldEllipsis, CopyPlus, Eraser, GripVertical } from 'lucide-angular';
 import { provideIcons } from '@ng-icons/core';
 import { heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath, heroUserGroup, heroKey, heroChartBar } from '@ng-icons/heroicons/outline';
 
@@ -47,6 +47,7 @@ bootstrapApplication(AppComponent, {
                     ShieldEllipsis,
                     CopyPlus,
                     Eraser,
+                    GripVertical,
                })
           ),
           provideIcons({ heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath, heroUserGroup, heroKey, heroChartBar }),

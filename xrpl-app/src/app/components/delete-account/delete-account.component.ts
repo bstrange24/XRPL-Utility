@@ -22,6 +22,7 @@ import { DownloadUtilService } from '../../services/download-util/download-util.
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
+import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -47,8 +48,17 @@ interface ValidationInputs {
 @Component({
      selector: 'app-delete-account',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon],
-     animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule],
+     // animations: [
+     // trigger('tabTransition',
+     //      [transition('* => *',
+     //           [
+     //                style({ opacity: 0, transform: 'translateY(20px)' }),
+     //                animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
+     //           ])
+     //      ])
+     animations: [trigger('slideInOut', [transition(':enter', [style({ height: '0px', opacity: 0, overflow: 'hidden' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '*', opacity: 1 }))]), transition(':leave', [style({ height: '*', opacity: 1, overflow: 'hidden' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ height: '0px', opacity: 0 }))])])],
+     // ]],
      templateUrl: './delete-account.component.html',
      styleUrl: './delete-account.component.css',
 })
@@ -240,6 +250,13 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           }
      }
 
+     deleteWalletAfterDeleteTx(index: number) {
+          this.walletManagerService.deleteWallet(index);
+          if (this.selectedWalletIndex >= this.wallets.length) {
+               this.selectedWalletIndex = Math.max(0, this.wallets.length - 1);
+          }
+     }
+
      async generateNewAccount() {
           this.ui.updateSpinnerMessage(``);
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
@@ -248,6 +265,26 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           this.refreshWallets(client, faucetWallet.address);
           this.ui.spinner = false;
           this.ui.clearWarning();
+     }
+
+     dropWallet(event: CdkDragDrop<any[]>) {
+          moveItemInArray(this.wallets, event.previousIndex, event.currentIndex);
+
+          // Update your selectedWalletIndex if needed
+          if (this.selectedWalletIndex === event.previousIndex) {
+               this.selectedWalletIndex = event.currentIndex;
+          } else if (this.selectedWalletIndex > event.previousIndex && this.selectedWalletIndex <= event.currentIndex) {
+               this.selectedWalletIndex--;
+          } else if (this.selectedWalletIndex < event.previousIndex && this.selectedWalletIndex >= event.currentIndex) {
+               this.selectedWalletIndex++;
+          }
+
+          // Persist the new order to localStorage
+          this.saveWallets();
+
+          // Update destinations and account state
+          this.updateDestinations();
+          this.onAccountChange();
      }
 
      async onAccountChange() {
@@ -456,9 +493,10 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
                if (!this.ui.isSimulateEnabled) {
+                    this.deleteWalletAfterDeleteTx(this.selectedWalletIndex);
                     this.ui.successMessage = 'Wallet deleted successfully!';
 
-                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
+                    await this.refreshWallets(client, [this.destinationField]);
 
                     setTimeout(async () => {
                          try {
@@ -743,8 +781,9 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           this.selectedTicket = '';
           this.selectedSingleTicket = '';
           this.isTicket = false;
-          this.memoField = '';
+          this.selectedTicket = '';
           this.isMemoEnabled = false;
-          this.cdr.markForCheck();
+          this.memoField = '';
+          this.cdr.detectChanges();
      }
 }

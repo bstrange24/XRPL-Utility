@@ -1342,6 +1342,9 @@ input:focus+.slider {
      margin-right: -50vw;
      background-color: #007bff;
      color: white;
+     /* background: linear-gradient(135deg, #9c9efa 0%, #3674e9 100%); */
+     /* border-color: #6366f1; */
+     /* box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); */
 }
 
 .banner-content {
@@ -2855,4 +2858,99 @@ app-root {
 
 .clickable-row:hover {
      background: rgba(255, 255, 255, 0.05);
+}
+
+
+/* ==== DRAG & DROP LIST CONTAINER ==== */
+cdk-drop-list {
+     display: flex;
+     flex-direction: column;
+     gap: 10px;
+     padding: 8px 0;
+     border-radius: 12px;
+     background: rgba(255, 255, 255, 0.05);
+     backdrop-filter: blur(10px);
+     border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ==== INDIVIDUAL WALLET CARD ==== */
+.wallet-item {
+     background: rgba(255, 255, 255, 0.08);
+     border: 1px solid rgba(255, 255, 255, 0.12);
+     border-radius: 14px;
+     padding: 14px 16px;
+     cursor: grab;
+     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+     position: relative;
+     overflow: hidden;
+     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+     backdrop-filter: blur(8px);
+}
+
+.wallet-item:hover {
+     background: rgba(255, 255, 255, 0.12);
+     border-color: rgba(255, 255, 255, 0.2);
+     transform: translateY(-2px);
+     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.wallet-item.selected {
+     background: linear-gradient(135deg, #9c9efa 0%, #3674e9 100%);
+     border-color: #6366f1;
+     color: white;
+     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+.wallet-item.selected .wallet-balance,
+.wallet-item.selected .wallet-address,
+.wallet-item.selected .secret-label,
+.wallet-item.selected .show-toggle,
+.wallet-item.selected .clickable-name {
+     color: white !important;
+}
+
+/* ==== DRAG PREVIEW (when dragging) ==== */
+.cdk-drag-preview {
+     box-sizing: border-box;
+     border-radius: 14px;
+     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+     background: rgba(30, 30, 50, 0.95) !important;
+     border: 1px solid #6378f1;
+     transform: rotate(4deg) scale(1.02);
+     z-index: 9999;
+}
+
+/* ==== DRAG PLACEHOLDER (empty space while dragging) ==== */
+.cdk-drag-placeholder {
+     opacity: 0.15;
+     background: #6378f1;
+     border: 2px dashed rgba(255, 255, 255, 0.4);
+     border-radius: 14px;
+     transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* ==== DRAG ANIMATION (smooth movement) ==== */
+.cdk-drag-animating {
+     transition: transform 300ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* ==== DRAG HANDLE ICON (optional but recommended) ==== */
+.drag-handle {
+     cursor: grab;
+     opacity: 0.5;
+     transition: opacity 0.2s;
+     margin-right: 8px;
+}
+
+.drag-handle:hover {
+     opacity: 1;
+}
+
+.drag-handle:active {
+     cursor: grabbing;
+}
+
+/* Optional: subtle animation when item is dropped */
+.wallet-item.cdk-drag-animating {
+     transition: all 0.3s ease;
 }
