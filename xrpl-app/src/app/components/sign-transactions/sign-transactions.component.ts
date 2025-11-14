@@ -1485,7 +1485,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
           if (config.showLink && count > 0) {
                const link = `${this.url}account/${this.currentWallet.address}/checks`;
-               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View checks in XRPL Win</a>`;
+               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View checks on XRPL Win</a>`;
           }
 
           return message;

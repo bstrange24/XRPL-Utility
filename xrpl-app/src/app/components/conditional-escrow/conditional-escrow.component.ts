@@ -2283,9 +2283,9 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                }
 
                if (links.length === 1) {
-                    message += `<br>${links[0]} in XRPL Win`;
+                    message += `<br>${links[0]} on XRPL Win`;
                } else {
-                    message += `<br>${links.join(' | ')} in XRPL Win`;
+                    message += `<br>${links.join(' | ')} on XRPL Win`;
                }
           }
 
@@ -2329,7 +2329,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
      //      if (count > 0) {
      //           const link = `${this.url}account/${this.currentWallet.address}/escrows`;
-     //           message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View escrows in XRPL Win</a>`;
+     //           message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View escrows on XRPL Win</a>`;
      //      }
 
      //      return message;

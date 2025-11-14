@@ -18,6 +18,7 @@ import { WalletGeneratorService } from '../../services/wallets/generator/wallet-
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
+import { WithImplicitCoercion } from 'buffer';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -157,8 +158,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      showToast: boolean = false;
      toastMessage: string = '';
      // Controls whether the panel is expanded or collapsed
-     createdDids: boolean = true;
-     existingDid: any = [];
+     createdDomains: boolean = true;
+     createdPermissionedDomains: any = [];
      url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
@@ -364,8 +365,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           }
      }
 
-     toggleCreatedDids() {
-          this.createdDids = !this.createdDids;
+     toggleCreatedDomains() {
+          this.createdDomains = !this.createdDomains;
      }
 
      validateQuorum() {
@@ -426,34 +427,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                     return this.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
                }
 
-               // const permissionedDomainItems = delegateObjects.map((pd: any, index: number) => {
-               //      const domain = pd as PermissionedDomainInfo;
-               //      return {
-               //           key: `Permissioned Domain ${index + 1}`,
-               //           openByDefault: index === 0, // Open the first one by default
-               //           content: [
-               //                ...domain.AcceptedCredentials.flatMap((cred, cIndex) => [
-               //                     {
-               //                          key: `Credential Type`,
-               //                          value: Buffer.from(cred.Credential.CredentialType, 'hex').toString('utf8') || 'N/A',
-               //                     },
-               //                     {
-               //                          key: `Credential Issuer`,
-               //                          value: cred.Credential.Issuer || 'N/A',
-               //                     },
-               //                ]),
-               //                { key: 'Owner', value: domain.Owner || 'N/A' },
-               //                // { key: 'LedgerEntryType', value: domain.LedgerEntryType || 'N/A' },
-               //                { key: 'Domain ID', value: `<code>${domain.index}</code>` || 'N/A' },
-               //                { key: 'Flags', value: domain.LedgerEntryType === 'PermissionedDomain' ? 'None' : flagNames(domain.LedgerEntryType, domain.Flags ?? 0) },
-               //                { key: 'Sequence', value: domain.Sequence?.toString() || 'N/A' },
-               //                // { key: 'PreviousTxnID', value: domain.PreviousTxnID || 'N/A' },
-               //                // { key: 'PreviousTxnLgrSeq', value: domain.PreviousTxnLgrSeq?.toString() || 'N/A' },
-               //           ],
-               //      };
-               // });
-
-               this.getExistingDid(accountObjects, wallet.classicAddress);
+               this.getCreatedPermissionedDomains(accountObjects, wallet.classicAddress);
 
                await this.refreshWallets(client, [wallet.classicAddress]);
 
@@ -580,7 +554,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                     this.successMessage = 'Set Permissioned Domain successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    this.getExistingDid(updatedAccountObjects, wallet.classicAddress);
+                    this.getCreatedPermissionedDomains(updatedAccountObjects, wallet.classicAddress);
 
                     await this.refreshWallets(client, [wallet.classicAddress ?? wallet.address, this.destinationField]);
 
@@ -710,7 +684,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                     this.successMessage = 'Permissioned Domain deleted successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    this.getExistingDid(updatedAccountObjects, wallet.classicAddress);
+                    this.getCreatedPermissionedDomains(updatedAccountObjects, wallet.classicAddress);
 
                     await this.refreshWallets(client, [wallet.classicAddress]);
 
@@ -737,20 +711,32 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           }
      }
 
-     private getExistingDid(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
-          this.existingDid = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'Permissioned Domain' && obj.Owner === sender)
+     private getCreatedPermissionedDomains(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
+          this.createdPermissionedDomains = (checkObjects.result.account_objects ?? [])
+               .filter((obj: any) => obj.LedgerEntryType === 'PermissionedDomain' && obj.Owner === sender)
                .map((obj: any) => {
                     return {
                          index: obj.index,
-                         // CredentialType: obj.CredentialType ? this.decodeHex(obj.CredentialType) : 'Unknown Type',
-                         DIDDocument: obj.DIDDocument ? JSON.stringify(JSON.parse(Buffer.from(obj.DIDDocument, 'hex').toString('utf8')), null, 2) : 'N/A',
-                         Data: obj.Data ? JSON.stringify(JSON.parse(Buffer.from(obj.Data, 'hex').toString('utf8')), null, 2) : 'N/A',
-                         URI: obj.URI ? JSON.stringify(JSON.parse(Buffer.from(obj.URI, 'hex').toString('utf8')), null, 2) : 'N/A',
+                         AcceptedCredentials: obj.AcceptedCredentials
+                              ? JSON.stringify(
+                                     obj.AcceptedCredentials.map((item: { Credential: { CredentialType: WithImplicitCoercion<string> } }) => ({
+                                          ...item,
+                                          Credential: {
+                                               ...item.Credential,
+                                               CredentialType: Buffer.from(item.Credential.CredentialType, 'hex').toString('utf8'),
+                                          },
+                                     })),
+                                     null,
+                                     2
+                                )
+                              : 'N/A',
+
+                         Owner: obj.Owner,
+                         Sequence: obj.Sequence,
                     };
                })
                .sort((a, b) => a.index.localeCompare(b.index));
-          this.utilsService.logObjects('existingDid', this.existingDid);
+          this.utilsService.logObjects('createdPermissionedDomains', this.createdPermissionedDomains);
      }
 
      private async setTxOptionalFields(client: xrpl.Client, permissionDomainTx: any, wallet: xrpl.Wallet, accountInfo: any) {
@@ -1183,9 +1169,9 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           );
      }
 
-     copyCredentialId(checkId: string) {
+     copyPermissionedDomainId(checkId: string) {
           navigator.clipboard.writeText(checkId).then(() => {
-               this.showToastMessage('Credential Id copied!');
+               this.showToastMessage('Permissioned Domain ID copied!');
           });
      }
 
@@ -1228,13 +1214,13 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      public get infoMessage(): string | null {
           const tabConfig = {
                set: {
-                    did: this.existingDid,
+                    did: this.createdPermissionedDomains,
                     getDescription: (count: number) => (count === 1 ? 'Permissioned Domain' : 'Permissioned Domain'),
                     dynamicText: 'a', // Add dynamic text here
                     showLink: true,
                },
                delete: {
-                    did: this.existingDid,
+                    did: this.createdPermissionedDomains,
                     getDescription: (count: number) => (count === 1 ? 'Permissioned Domain' : 'Permissioned Domain'),
                     dynamicText: '', // Empty for no additional text
                     showLink: true,
@@ -1263,8 +1249,10 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           let message = `The <code>${walletName}</code> wallet has ${dynamicText} ${config.getDescription(count)}.`;
 
           if (config.showLink && count > 0) {
-               const link = `${this.url}entry/${this.existingDid[0].index}`;
-               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Permissioned Domain in XRPL Win</a>`;
+               for (const domains of this.createdPermissionedDomains) {
+                    const link = `${this.url}entry/${domains.index}`;
+                    message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Permissioned Domain on XRPL Win (Index: ${domains.index.slice(0, 8)}...${domains.index.slice(-8)})</a>`;
+               }
           }
 
           return message;
@@ -1296,9 +1284,13 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                this.useMultiSign = false;
                this.isRegularKeyAddress = false;
                this.domainId = '';
-               this.isSimulateEnabled = false;
           }
 
+          if (this.activeTab === 'delete') {
+               this.domainId = '';
+          }
+
+          this.isSimulateEnabled = false;
           this.selectedTicket = '';
           this.selectedSingleTicket = '';
           this.isTicket = false;

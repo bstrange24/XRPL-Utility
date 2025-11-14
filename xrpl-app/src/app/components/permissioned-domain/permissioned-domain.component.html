@@ -162,54 +162,54 @@
                }
 
                <!-- Created Credentials -->
-               @if ((activeTab !== undefined) && existingDid.length > 0) {
+               @if ((activeTab !== undefined) && createdPermissionedDomains.length > 0) {
                <div class="outstanding-checks-panel">
                     <!-- Header – clickable to expand/collapse -->
-                    <div class="panel-header" (click)="toggleCreatedDids()" style="cursor: pointer; user-select: none">
+                    <div class="panel-header" (click)="toggleCreatedDomains()" style="cursor: pointer; user-select: none">
                          <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
                               <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Created DID
+                              Created Permissioned Domain
                          </h3>
                     </div>
 
                     <!-- Collapsible content with smooth height animation -->
-                    <div class="credential-list-container" [class.collapsed]="createdDids">
-                         @if (!createdDids) {
+                    <div class="credential-list-container" [class.collapsed]="createdDomains">
+                         @if (!createdDomains) {
                          <div class="checks-list">
-                              @for (chk of existingDid; track chk.index) {
+                              @for (chk of createdPermissionedDomains; track chk.index) {
                               <div class="check-card">
                                    <div class="check-extras">
-                                        <!-- CredentialType  -->
-                                        @if (chk.DIDDocument) {
-                                        <span class="badge badge-invoice">DID Document: {{ chk.DIDDocument }} </span>
+                                        <!-- Owner  -->
+                                        @if (chk.Owner) {
+                                        <span class="badge badge-expire">Owner: {{ chk.Owner }} </span>
                                         } @else {
-                                        <span class="badge badge-tag-not-set">DID Document: Not set </span>
+                                        <span class="badge badge-expire-not-set">Owner: Not set </span>
                                         }
 
-                                        <!-- URI  -->
-                                        @if (chk.URI) {
-                                        <span class="badge badge-expire">DID URI: {{ chk.URI }} </span>
+                                        <!-- Sequence  -->
+                                        @if (chk.Sequence) {
+                                        <span class="badge badge-address">Sequence: {{ chk.Sequence }} </span>
                                         } @else {
-                                        <span class="badge badge-expire-not-set">DID URI: Not set </span>
+                                        <span class="badge badge-address-not-set">Sequence: Not set </span>
                                         }
 
-                                        <!-- Index  -->
+                                        <!-- index  -->
                                         @if (chk.index) {
-                                        <span class="badge badge-credential-index">DID Index: {{ chk.index }} </span>
+                                        <span class="badge badge-address">Index: {{ chk.index }} </span>
                                         } @else {
-                                        <span class="badge badge-credential-index-not-set">DID Index: Not set </span>
+                                        <span class="badge badge-address-not-set">Index: Not set </span>
                                         }
 
-                                        <!-- Issuer  -->
-                                        @if (chk.Data) {
-                                        <span class="badge badge-address">DID Data: {{ chk.Data }} </span>
+                                        <!-- AcceptedCredentials  -->
+                                        @if (chk.AcceptedCredentials) {
+                                        <span class="badge badge-invoice">Accepted Credentials: {{ chk.AcceptedCredentials }} </span>
                                         } @else {
-                                        <span class="badge badge-address-not-set">DID Data: Not set </span>
+                                        <span class="badge badge-tag-not-set">Accepted Credentials: Not set </span>
                                         }
                                    </div>
 
                                    <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyCredentialId(chk.index); $event.stopPropagation(); $event.preventDefault()" title="Copy DID ID" type="button">
+                                        <button class="icon-btn copy-check-id" (click)="copyPermissionedDomainId(chk.index); $event.stopPropagation(); $event.preventDefault()" title="Copy Permissioned Domain ID" type="button">
                                              <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
                                              <a [href]="`${url}entry/` + chk.index" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
                                                   <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
@@ -231,7 +231,7 @@
                                    <div class="form-row">
                                         <!-- DID Document -->
                                         @if (activeTab === 'set') {
-                                        <div class="form-group">
+                                        <div class="form-group" style="padding-bottom: 10px">
                                              <label for="destinationFields">Subject / Issuer</label>
                                              <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
                                                   @for (dest of destinations; track dest.address; let i = $index) {
@@ -254,7 +254,7 @@
 
                                    <!-- URI -->
                                    <div class="form-row">
-                                        @if (activeTab === 'set') {
+                                        @if (activeTab === 'delete') {
                                         <div class="form-group">
                                              <label for="domainId">Domain ID</label>
                                              <input type="text" [(ngModel)]="domainId" name="domainId" />

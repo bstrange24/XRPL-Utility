@@ -1251,7 +1251,7 @@ export class DidComponent implements OnInit, AfterViewInit {
 
           if (config.showLink && count > 0) {
                const link = `${this.url}entry/${this.existingDid[0].index}`;
-               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View DID in XRPL Win</a>`;
+               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View DID on XRPL Win</a>`;
           }
 
           return message;
