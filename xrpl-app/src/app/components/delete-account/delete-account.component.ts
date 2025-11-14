@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, NgZone, inject, afterRenderEffect, Injector } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -17,14 +17,17 @@ import { WalletGeneratorService } from '../../services/wallets/generator/wallet-
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
-import { TransactionUiService } from '../../services/transaction-ui.service';
-import { TransactionFormShellComponent } from '../transaction-form-shell/transaction-form-shell.component';
+import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
+import { DownloadUtilService } from '../../services/download-util/download-util.service';
+import { CopyUtilService } from '../../services/copy-util/copy-util.service';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
+import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 declare var Prism: any;
 
 interface ValidationInputs {
      senderAddress?: string;
      seed?: string;
-     account_info?: any;
+     accountInfo?: any;
      accountObjects?: any;
      destination?: string;
      destinationTag?: string;
@@ -44,7 +47,7 @@ interface ValidationInputs {
 @Component({
      selector: 'app-delete-account',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon, TransactionFormShellComponent],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './delete-account.component.html',
      styleUrl: './delete-account.component.css',
@@ -59,36 +62,26 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
      @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
      private readonly injector = inject(Injector);
-     result: string = '';
-     isError: boolean = false;
-     isSuccess: boolean = false;
-     isEditable: boolean = false;
-     ticketSequence: string = '';
+     executionTime: string = '';
+     destinationTagField: string = '';
+     memoField: string = '';
+     isMemoEnabled: boolean = false;
+     multiSignAddress: string = '';
+     multiSignSeeds: string = '';
+     signerQuorum: number = 0;
+     useMultiSign: boolean = false;
+     multiSigningEnabled: boolean = false;
+     regularKeySigningEnabled: boolean = false;
+     isRegularKeyAddress: boolean = false;
+     regularKeySeed: string = '';
+     regularKeyAddress: string = '';
      isTicket: boolean = false;
      ticketArray: string[] = [];
      selectedTickets: string[] = [];
      selectedSingleTicket: string = '';
      multiSelectMode: boolean = false;
      selectedTicket: string = '';
-     ownerCount: string = '';
-     totalXrpReserves: string = '';
-     executionTime: string = '';
-     destinationTagField: string = '';
-     signerQuorum: number = 0;
-     isMemoEnabled: boolean = false;
-     memoField: string = '';
-     useMultiSign: boolean = false;
-     isRegularKeyAddress: boolean = false;
-     regularKeyAddress: string = '';
-     regularKeySeed: string = '';
-     multiSignAddress: string = '';
-     multiSignSeeds: string = '';
-     multiSigningEnabled: boolean = false;
-     regularKeySigningEnabled: boolean = false;
-     spinner: boolean = false;
-     spinnerMessage: string = '';
      masterKeyDisabled: boolean = false;
-     isSimulateEnabled: boolean = false;
      destinationField: string = '';
      destinations: { name?: string; address: string }[] = [];
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
@@ -106,22 +99,27 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      };
      showSecret: boolean = false;
      environment: string = '';
-     paymentTx: any[] = [];
-     txResult: any[] = [];
-     txHash: string = '';
      activeTab = 'delete'; // default
-     successMessage: string = '';
      encryptionType: string = '';
-     private cachedReserves: any = null;
      hasWallets: boolean = true;
-     showToast: boolean = false;
-     toastMessage: string = '';
      url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
-     warningMessage: string | null = null;
 
-     constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly xrplTransactions: XrplTransactionService, private ngZone: NgZone, private walletGenerator: WalletGeneratorService, private walletManagerService: WalletManagerService, protected ui: TransactionUiService) {}
+     constructor(
+          private readonly xrplService: XrplService,
+          private readonly utilsService: UtilsService,
+          private readonly cdr: ChangeDetectorRef,
+          private readonly storageService: StorageService,
+          private readonly xrplTransactions: XrplTransactionService,
+          private walletGenerator: WalletGeneratorService,
+          private walletManagerService: WalletManagerService,
+          public ui: TransactionUiService,
+          public downloadUtilService: DownloadUtilService,
+          public copyUtilService: CopyUtilService,
+          private walletDataService: WalletDataService,
+          private validationService: ValidationService
+     ) {}
 
      ngOnInit() {
           this.environment = this.xrplService.getNet().environment;
@@ -165,10 +163,9 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
 
      setTab(tab: string) {
           this.activeTab = tab;
-          // this.ui.clearAllFields();
           this.clearFields(true);
-          this.clearFields(true);
-          this.clearWarning();
+          this.ui.clearMessages();
+          this.ui.clearWarning();
      }
 
      selectWallet(index: number) {
@@ -218,14 +215,6 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           this.onAccountChange();
      }
 
-     handleTransactionResult(event: { result: string; isError: boolean; isSuccess: boolean }) {
-          this.result = event.result;
-          this.isError = event.isError;
-          this.isSuccess = event.isSuccess;
-          this.isEditable = !this.isSuccess;
-          this.cdr.detectChanges();
-     }
-
      toggleSecret(index: number) {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
      }
@@ -236,37 +225,9 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
                await this.refreshWallets(client, [walletAddress]);
-               // this.cdr.detectChanges();
           } catch (err) {
-               // this.ui.setError('Failed to refresh balance');
-               this.setError('Failed to refresh balance');
+               this.ui.setError('Failed to refresh balance');
           }
-     }
-
-     copyAddress(address: string) {
-          navigator.clipboard.writeText(address).then(() => {
-               this.showToastMessage('Address copied to clipboard!');
-          });
-     }
-
-     private showToastMessage(message: string, duration: number = 2000) {
-          this.toastMessage = message;
-          this.showToast = true;
-          setTimeout(() => {
-               this.showToast = false;
-          }, duration);
-     }
-
-     copySeed(seed: string) {
-          navigator.clipboard
-               .writeText(seed)
-               .then(() => {
-                    this.showToastMessage('Seed copied to clipboard!');
-               })
-               .catch(err => {
-                    console.error('Failed to copy seed:', err);
-                    this.showToastMessage('Failed to copy. Please select and copy manually.');
-               });
      }
 
      deleteWallet(index: number) {
@@ -280,13 +241,13 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      }
 
      async generateNewAccount() {
-          this.updateSpinnerMessage(``);
-          this.showSpinnerWithDelay('Generating new wallet', 5000);
+          this.ui.updateSpinnerMessage(``);
+          this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
           const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
           const client = await this.xrplService.getClient();
           this.refreshWallets(client, faucetWallet.address);
-          this.spinner = false;
-          this.clearWarning();
+          this.ui.spinner = false;
+          this.ui.clearWarning();
      }
 
      async onAccountChange() {
@@ -314,12 +275,11 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           };
 
           if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
-               this.clearWarning();
+               this.ui.clearWarning();
                this.updateDestinations();
                await this.getAccountDetails();
           } else if (this.currentWallet.address) {
-               // this.ui.setError('Failed to refresh balance');
-               this.setError('Failed to refresh balance');
+               this.ui.setError('Failed to refresh balance');
           }
      }
 
@@ -339,9 +299,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                }
           } catch (error: any) {
-               console.log(`ERROR getting wallet in toggleMultiSign' ${error.message}`);
-               // this.ui.setError(`ERROR getting wallet in toggleMultiSign' ${error.message}`);
-               this.setError(`ERROR getting wallet in toggleMultiSign' ${error.message}`);
+               this.ui.setError(`ERROR getting wallet in toggleMultiSign' ${error.message}`);
           }
      }
 
@@ -362,9 +320,8 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      async getAccountDetails() {
           console.log('Entering getAccountDetails');
           const startTime = Date.now();
-          // this.ui.clearAllFields();
-          this.clearFields(false);
-          this.updateSpinnerMessage(``);
+          this.ui.clearMessages();
+          this.ui.updateSpinnerMessage(``);
 
           try {
                const client = await this.xrplService.getClient();
@@ -375,13 +332,12 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
 
                const inputs: ValidationInputs = {
                     seed: this.currentWallet.seed,
-                    account_info: accountInfo,
+                    accountInfo: accountInfo,
                };
 
-               const errors = await this.validateInputs(inputs, 'getAccountDetails');
+               const errors = await this.validationService.validate('AccountInfo', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    // return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
-                    return this.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
                }
 
                await this.refreshWallets(client, [wallet.classicAddress]);
@@ -398,10 +354,9 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                }, 0);
           } catch (error: any) {
                console.error('Error in getAccountDetails:', error);
-               // this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
-               this.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
-               this.spinner = false;
+               this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving getAccountDetails in ${this.executionTime}ms`);
           }
@@ -410,9 +365,8 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      async deleteAccount() {
           console.log('Entering deleteAccount');
           const startTime = Date.now();
-          // this.ui.clearAllFields();
-          this.clearFields(false);
-          this.updateSpinnerMessage(``);
+          this.ui.clearMessages();
+          this.ui.updateSpinnerMessage(``);
 
           const inputs: ValidationInputs = {
                seed: this.currentWallet.seed,
@@ -437,13 +391,13 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
                this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-               inputs.account_info = accountInfo;
+               inputs.accountInfo = accountInfo;
                inputs.accountObjects = accountObjects;
 
-               const errors = await this.validateInputs(inputs, 'deleteAccount');
+               const errors = await this.validationService.validate('AccountDelete', { inputs, client, accountInfo, accountObjects, currentLedger, serverInfo });
+
                if (errors.length > 0) {
-                    // return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
-                    return this.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
                }
 
                let accountDeleteTx: AccountDelete = {
@@ -457,19 +411,17 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, accountDeleteTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, accountDeleteTx, fee)) {
-                    // return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
-                    return this.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
                }
 
-               this.showSpinnerWithDelay(this.isSimulateEnabled ? 'Simulating Deleting Account (no changes will be made)...' : 'Submitting Delete Account to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Deleting Account (no changes will be made)...' : 'Submitting Delete Account to Ledger...', 200);
 
-               // this.ui.paymentTx.push(accountDeleteTx);
-               this.paymentTx.push(accountDeleteTx);
+               this.ui.paymentTx.push(accountDeleteTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled) {
                     response = await this.xrplTransactions.simulateTransaction(client, accountDeleteTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -477,58 +429,52 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, accountDeleteTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         // return this.ui.setError('ERROR: Failed to sign Payment transaction.');
-                         return this.setError('ERROR: Failed to sign Payment transaction.');
+                         return this.ui.setError('ERROR: Failed to sign Payment transaction.');
                     }
 
-                    // response = await this.xrplTransactions.submitTransaction(client, signedTx);
+                    response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
                this.utilsService.logObjects('response', response);
                this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.txResult.push(response.result);
-               this.updateTxResult(this.txResult);
+               this.ui.txResult.push(response.result);
+               this.updateTxResult(this.ui.txResult);
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    // this.ui.setError(userMessage);
-                    this.setError(userMessage);
+                    this.ui.setError(userMessage);
                } else {
-                    this.setSuccess(this.result);
+                    this.ui.setSuccess(this.ui.result);
                }
 
-               this.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
+               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.isSimulateEnabled) {
-                    this.successMessage = 'Wallet deleted successfully!';
-                    // const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+               if (!this.ui.isSimulateEnabled) {
+                    this.ui.successMessage = 'Wallet deleted successfully!';
+
                     await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
 
                     setTimeout(async () => {
                          try {
-                              // this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                               this.clearFields(false);
-                              // this.updateTickets(updatedAccountObjects);
-                              // await this.updateXrpBalance(client, updatedAccountInfo, wallet);
                          } catch (err) {
                               console.error('Error in post-tx cleanup:', err);
                          }
                     }, 0);
                } else {
-                    this.successMessage = 'Simulated Wallet delete successfully!';
+                    this.ui.successMessage = 'Simulated Wallet delete successfully!';
                }
           } catch (error: any) {
                console.error('Error in deleteAccount:', error);
-               // this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
-               this.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
-               this.spinner = false;
+               this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving deleteAccount in ${this.executionTime}ms`);
           }
@@ -538,8 +484,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           if (this.selectedSingleTicket) {
                const ticketExists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
                if (!ticketExists) {
-                    // this.ui.setError(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
-                    this.setError(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
+                    this.ui.setError(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
                }
                this.utilsService.setTicketSequence(deleteTx, this.selectedSingleTicket, true);
           } else {
@@ -628,87 +573,20 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      }
 
      private async refreshWallets(client: xrpl.Client, addressesToRefresh?: string[]) {
-          console.log('Entering refreshWallets');
-          const REFRESH_THRESHOLD_MS = 3000;
-          const now = Date.now();
+          console.log('Calling refreshWallets');
 
-          try {
-               // Determine which wallets to refresh
-               const walletsToUpdate = this.wallets.filter(w => {
-                    const needsUpdate = !w.lastUpdated || now - w.lastUpdated > REFRESH_THRESHOLD_MS;
-                    const inFilter = addressesToRefresh ? addressesToRefresh.includes(w.classicAddress ?? w.address) : true;
-                    return needsUpdate && inFilter;
-               });
-
-               if (!walletsToUpdate.length) {
-                    console.debug('No wallets need updating.');
-                    return;
+          await this.walletDataService.refreshWallets(
+               client,
+               this.wallets, // pass current wallet list
+               this.selectedWalletIndex, // pass selected index
+               addressesToRefresh,
+               (updatedWalletsList, newCurrentWallet) => {
+                    // This callback runs inside NgZone → UI updates safely
+                    this.currentWallet = { ...newCurrentWallet };
+                    // Optional: trigger change detection if needed
+                    this.cdr.markForCheck();
                }
-
-               console.debug(`Refreshing ${walletsToUpdate.length} wallet(s)...`);
-
-               //Fetch all accountInfo data in parallel (faster, single request per wallet)
-               const accountInfos = await Promise.all(walletsToUpdate.map(w => this.xrplService.getAccountInfo(client, w.classicAddress ?? w.address, 'validated', '')));
-
-               //Cache reserves (only once per session)
-               if (!this.cachedReserves) {
-                    this.cachedReserves = await this.utilsService.getXrplReserve(client);
-                    console.debug('Cached XRPL reserve data:', this.cachedReserves);
-               }
-
-               // Heavy computation outside Angular (no UI reflows)
-               this.ngZone.runOutsideAngular(async () => {
-                    const updatedWallets = await Promise.all(
-                         walletsToUpdate.map(async (wallet, i) => {
-                              try {
-                                   const accountInfo = accountInfos[i];
-                                   const address = wallet.classicAddress ?? wallet.address;
-
-                                   // --- Derive balance directly from accountInfo to avoid extra ledger call ---
-                                   const balanceInDrops = String(accountInfo.result.account_data.Balance);
-                                   const balanceXrp = xrpl.dropsToXrp(balanceInDrops); // returns string
-
-                                   // --- Get ownerCount + total reserve ---
-                                   const { ownerCount, totalXrpReserves } = await this.utilsService.updateOwnerCountAndReserves(client, accountInfo, address);
-
-                                   const spendable = parseFloat(String(balanceXrp)) - parseFloat(String(totalXrpReserves || '0'));
-
-                                   return {
-                                        ...wallet,
-                                        ownerCount,
-                                        xrpReserves: totalXrpReserves,
-                                        balance: spendable.toFixed(6),
-                                        spendableXrp: spendable.toFixed(6),
-                                        lastUpdated: now,
-                                   };
-                              } catch (err) {
-                                   console.error(`Error updating wallet ${wallet.address}:`, err);
-                                   return wallet;
-                              }
-                         })
-                    );
-
-                    console.log('updatedWallets', updatedWallets);
-                    // Apply updates inside Angular (UI updates + service sync)
-                    this.ngZone.run(() => {
-                         updatedWallets.forEach(updated => {
-                              const idx = this.wallets.findIndex(existing => (existing.classicAddress ?? existing.address) === (updated.classicAddress ?? updated.address));
-                              if (idx !== -1) {
-                                   this.walletManagerService.updateWallet(idx, updated);
-                              }
-                         });
-                         // Ensure Selected Account Summary refreshes
-                         if (this.selectedWalletIndex !== null && this.wallets[this.selectedWalletIndex]) {
-                              this.currentWallet = { ...this.wallets[this.selectedWalletIndex] };
-                         }
-                    });
-               });
-          } catch (error: any) {
-               console.error('Error in refreshWallets:', error);
-          } finally {
-               this.executionTime = (Date.now() - now).toString();
-               console.log(`Leaving refreshWallets in ${this.executionTime}ms`);
-          }
+          );
      }
 
      public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
@@ -767,209 +645,6 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           }
      }
 
-     private async validateInputs(inputs: ValidationInputs, action: string): Promise<string[]> {
-          const errors: string[] = [];
-
-          // Early return for empty inputs
-          if (!inputs || Object.keys(inputs).length === 0) {
-               return ['No inputs provided.'];
-          }
-          // --- Common validators ---
-          const isRequired = (value: string | null | undefined, fieldName: string): string | null => {
-               if (value == null || !this.utilsService.validateInput(value)) {
-                    return `${fieldName} cannot be empty.`;
-               }
-               return null;
-          };
-
-          const isValidXrpAddress = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidAddress(value)) {
-                    return `${fieldName} is invalid.`;
-               }
-               return null;
-          };
-
-          const isValidSecret = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidSecret(value)) {
-                    return `${fieldName} is invalid.`;
-               }
-               return null;
-          };
-
-          const isValidNumber = (value: string | undefined, fieldName: string, minValue?: number, allowEmpty: boolean = false): string | null => {
-               if (value === undefined || (allowEmpty && value === '')) return null; // Skip if undefined or empty (when allowed)
-               // Type-safe parse
-               const num = parseFloat(value as string);
-
-               if (isNaN(num) || !isFinite(num)) {
-                    return `${fieldName} must be a valid number.`;
-               }
-               if (minValue !== undefined && num <= minValue) {
-                    return `${fieldName} must be greater than ${minValue}.`;
-               }
-               return null;
-          };
-
-          const isValidSeed = (value: string | undefined): string | null => {
-               if (value) {
-                    const { type } = this.utilsService.detectXrpInputType(value);
-                    if (type === 'unknown') {
-                         return 'Account seed or mnemonic is invalid.';
-                    }
-               }
-               return null;
-          };
-
-          const isNotSelfPayment = (sender: string | undefined, receiver: string | undefined): string | null => {
-               if (sender && receiver && sender === receiver) {
-                    return `Sender and receiver cannot be the same`;
-               }
-               return null;
-          };
-
-          const validateMultiSign = (addressesStr: string | undefined, seedsStr: string | undefined): string | null => {
-               if (!addressesStr || !seedsStr) return null;
-               const addresses = this.utilsService.getMultiSignAddress(addressesStr);
-               const seeds = this.utilsService.getMultiSignSeeds(seedsStr);
-               if (addresses.length === 0) {
-                    return 'At least one signer address is required for multi-signing.';
-               }
-               if (addresses.length !== seeds.length) {
-                    return 'Number of signer addresses must match number of signer seeds.';
-               }
-               const invalidAddr = addresses.find((addr: string) => !xrpl.isValidAddress(addr));
-               if (invalidAddr) {
-                    return `Invalid signer address: ${invalidAddr}.`;
-               }
-               const invalidSeed = seeds.find((seed: string) => !xrpl.isValidSecret(seed));
-               if (invalidSeed) {
-                    return 'One or more signer seeds are invalid.';
-               }
-               return null;
-          };
-
-          // Action-specific config: required fields and custom rules
-          const checkDestinationTagRequirement = async (): Promise<string | null> => {
-               if (!inputs.destination) return null; // Skip if no destination provided
-               try {
-                    const client = await this.xrplService.getClient();
-                    const accountInfo = await this.xrplService.getAccountInfo(client, inputs.destination, 'validated', '');
-                    if (accountInfo.result.account_flags.requireDestinationTag && (!inputs.destinationTag || inputs.destinationTag.trim() === '')) {
-                         return `Receiver requires a Destination Tag for payment.`;
-                    }
-               } catch (err) {
-                    console.error('Failed to check destination tag requirement:', err);
-                    return `Could not validate destination account.`;
-               }
-               return null;
-          };
-
-          const checkAccountAge = (accountInfo: any): string | null => {
-               if (accountInfo.result.ledger_index < accountInfo.result.account_data.Sequence + 256) {
-                    const timeLeft = accountInfo.result.account_data.Sequence + 256 - accountInfo.result.ledger_index;
-                    return `Account cannot be deleted yet. You have to wait ${((timeLeft * 4) / 60).toFixed(2)} minutes`;
-               }
-               return null;
-          };
-
-          const checkExistingObjects = (accountObjects: any): string | null => {
-               if (accountObjects.result.account_objects.length) {
-                    let errorMessage = '';
-                    // Count entry types
-                    const counts = accountObjects.result.account_objects.reduce((acc: any, obj: any) => {
-                         const type = obj.LedgerEntryType;
-                         acc[type] = (acc[type] || 0) + 1;
-                         return acc;
-                    }, {} as Record<string, number>);
-
-                    // Display results
-                    Object.entries(counts).forEach(([type, count]) => {
-                         console.log(`${type}: ${count}`);
-                         errorMessage = errorMessage + `${type}: ${count}\n`;
-                    });
-                    return `Here are the blocking objects on the account.\n\n${errorMessage}\nRemove the objects and try to again.\n`;
-               }
-               return null;
-          };
-
-          // --- Action-specific config ---
-          const actionConfig: Record<
-               string,
-               {
-                    required: (keyof ValidationInputs)[];
-                    customValidators?: (() => string | null)[];
-                    asyncValidators?: (() => Promise<string | null>)[];
-               }
-          > = {
-               getAccountDetails: {
-                    required: ['seed'],
-                    customValidators: [() => isValidSeed(inputs.seed), () => (inputs.account_info === undefined || inputs.account_info === null ? `No account data found` : null)],
-                    asyncValidators: [],
-               },
-               deleteAccount: {
-                    required: ['seed', 'destination'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidXrpAddress(inputs.destination, 'Destination address'),
-                         () => isValidNumber(inputs.destinationTag, 'Destination Tag', 0, true), // Allow empty
-                         () => isNotSelfPayment(inputs.senderAddress, inputs.destination),
-                         () => (inputs.account_info === undefined || inputs.account_info === null ? `No account data found` : null),
-                         () => (inputs.accountObjects === undefined || inputs.accountObjects === null ? `No account objects found` : null),
-                         () => checkExistingObjects(inputs.accountObjects),
-                         () => checkAccountAge(inputs.account_info),
-                         () => (inputs.account_info.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                    ],
-                    asyncValidators: [checkDestinationTagRequirement],
-               },
-               default: { required: [], customValidators: [], asyncValidators: [] },
-          };
-
-          const config = actionConfig[action] || actionConfig['default'];
-
-          // --- Run required checks ---
-          config.required.forEach((field: keyof ValidationInputs) => {
-               const err = isRequired(inputs[field], field.charAt(0).toUpperCase() + field.slice(1));
-               if (err) errors.push(err);
-          });
-
-          // --- Run sync custom validators ---
-          config.customValidators?.forEach((validator: () => string | null) => {
-               const err = validator();
-               if (err) errors.push(err);
-          });
-
-          // --- Run async validators ---
-          if (config.asyncValidators) {
-               for (const validator of config.asyncValidators) {
-                    const err = await validator();
-                    if (err) errors.push(err);
-               }
-          }
-
-          // --- Always validate optional fields ---
-          const multiErr = validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds);
-          if (multiErr) errors.push(multiErr);
-
-          if (errors.length === 0 && inputs.useMultiSign && (inputs.multiSignAddresses === 'No Multi-Sign address configured for account' || inputs.multiSignSeeds === '')) {
-               errors.push('At least one signer address is required for multi-signing');
-          }
-
-          const regAddrErr = isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address');
-          if (regAddrErr && inputs.regularKeyAddress !== 'No RegularKey configured for account') errors.push(regAddrErr);
-
-          const regSeedErr = isValidSecret(inputs.regularKeySeed, 'Regular Key Seed');
-          if (regSeedErr) errors.push(regSeedErr);
-
-          return errors;
-     }
-
      updateDestinations() {
           this.destinations = this.wallets.map(w => ({ name: w.name, address: w.address }));
           if (this.destinations.length > 0 && !this.destinationField) {
@@ -1006,67 +681,28 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      }
 
      updateTxResult(tx: any) {
-          this.txResult = tx;
+          this.ui.txResult = tx;
           this.scheduleHighlight();
      }
 
      private scheduleHighlight() {
-          // Use the captured injector to run afterRenderEffect  safely
+          // Use the captured injector to run afterRenderEffect safely
           afterRenderEffect(
                () => {
-                    // if (this.ui.paymentTx && this.paymentJson?.nativeElement) {
-                    if (this.paymentTx && this.paymentJson?.nativeElement) {
-                         // const json = JSON.stringify(this.ui.paymentTx, null, 2);
-                         const json = JSON.stringify(this.paymentTx, null, 2);
+                    if (this.ui.paymentTx && this.paymentJson?.nativeElement) {
+                         const json = JSON.stringify(this.ui.paymentTx, null, 2);
                          this.paymentJson.nativeElement.textContent = json;
                          Prism.highlightElement(this.paymentJson.nativeElement);
                     }
-                    if (this.txResult && this.txResultJson?.nativeElement) {
-                         const json = JSON.stringify(this.txResult, null, 2);
+
+                    if (this.ui.txResult && this.txResultJson?.nativeElement) {
+                         const json = JSON.stringify(this.ui.txResult, null, 2);
                          this.txResultJson.nativeElement.textContent = json;
                          Prism.highlightElement(this.txResultJson.nativeElement);
                     }
                },
                { injector: this.injector }
           );
-     }
-
-     copyTx() {
-          // const json = JSON.stringify(this.ui.paymentTx, null, 2);
-          const json = JSON.stringify(this.paymentTx, null, 2);
-          navigator.clipboard.writeText(json).then(() => {
-               this.showToastMessage('Transaction JSON copied!');
-          });
-     }
-
-     downloadTx() {
-          // const json = JSON.stringify(this.ui.paymentTx, null, 2);
-          const json = JSON.stringify(this.paymentTx, null, 2);
-          const blob = new Blob([json], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `payment-tx-${Date.now()}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-     }
-
-     copyTxResult() {
-          const json = JSON.stringify(this.txResult, null, 2);
-          navigator.clipboard.writeText(json).then(() => {
-               this.showToastMessage('Transaction Result JSON copied!');
-          });
-     }
-
-     downloadTxResult() {
-          const json = JSON.stringify(this.txResult, null, 2);
-          const blob = new Blob([json], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `tx-result-${Date.now()}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
      }
 
      public get infoMessage(): string | null {
@@ -1090,16 +726,6 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           return null;
      }
 
-     // set a warning
-     private setWarning(msg: string | null) {
-          this.warningMessage = msg;
-          this.cdr.detectChanges();
-     }
-
-     clearWarning() {
-          this.setWarning(null);
-     }
-
      autoResize(textarea: HTMLTextAreaElement) {
           if (!textarea) return;
           textarea.style.height = 'auto'; // reset
@@ -1108,7 +734,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
 
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
-               this.isSimulateEnabled = false;
+               this.ui.isSimulateEnabled = false;
                this.useMultiSign = false;
                this.isRegularKeyAddress = false;
                this.destinationTagField = '';
@@ -1120,60 +746,5 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           this.memoField = '';
           this.isMemoEnabled = false;
           this.cdr.markForCheck();
-     }
-
-     private clearMessages() {
-          const fadeDuration = 400; // ms
-          this.result = '';
-          this.isError = false;
-          this.isSuccess = false;
-          this.txHash = '';
-          this.txResult = [];
-          this.paymentTx = [];
-          this.successMessage = '';
-          this.cdr.detectChanges();
-     }
-
-     async showSpinnerWithDelay(message: string, delayMs: number = 200) {
-          this.spinner = true;
-          this.updateSpinnerMessage(message);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-     }
-
-     private updateSpinnerMessage(message: string) {
-          this.spinnerMessage = message;
-          this.cdr.detectChanges();
-     }
-
-     private setErrorProperties() {
-          this.isSuccess = false;
-          this.isError = true;
-          this.spinner = false;
-     }
-
-     private setError(message: string) {
-          this.setErrorProperties();
-          this.handleTransactionResult({
-               result: `${message}`,
-               isError: this.isError,
-               isSuccess: this.isSuccess,
-          });
-     }
-
-     private setSuccessProperties() {
-          this.isSuccess = true;
-          this.isError = false;
-          this.spinner = false;
-          this.result = '';
-     }
-
-     private setSuccess(message: string) {
-          this.setSuccessProperties();
-          this.handleTransactionResult({
-               result: `${message}`,
-               isError: this.isError,
-               isSuccess: this.isSuccess,
-          });
-          this.cdr.detectChanges();
      }
 }
