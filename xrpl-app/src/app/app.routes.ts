@@ -15,7 +15,7 @@ import { DidComponent } from './components/did/did.component';
 import { AccountChangesComponent } from './components/account-changes/account-changes.component';
 import { MptComponent } from './components/mpt/mpt.component';
 import { PermissionedDomainComponent } from './components/permissioned-domain/permissioned-domain.component';
-import { AccountDelegateComponent } from './components/account-delegate/account-delegate.component';
+import { AccountDelegateComponent } from './components/delegate/delegate.component';
 import { FirewallComponent } from './components/firewall/firewall.component';
 import { NftOffersComponent } from './components/nft-offers/nft-offers.component';
 import { SignTransactionsComponent } from './components/sign-transactions/sign-transactions.component';

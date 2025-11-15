@@ -72,12 +72,12 @@ interface DelegateAction {
 }
 
 @Component({
-     selector: 'app-account-delegate',
+     selector: 'app-delegate',
      standalone: true,
      imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
-     templateUrl: './account-delegate.component.html',
-     styleUrl: './account-delegate.component.css',
+     templateUrl: './delegate.component.html',
+     styleUrl: './delegate.component.css',
 })
 export class AccountDelegateComponent implements OnInit, AfterViewInit {
      private destroy$ = new Subject<void>();
