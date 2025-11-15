@@ -124,13 +124,13 @@
 
                     <button class="menu-btn active" [class.active]="activeTab === 'authorize'" (click)="setTab('authorize')">
                          <!-- <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon> -->
-                         <lucide-angular name="shield-ellipsis" size="20" class="text-red-600"></lucide-angular>
+                         <lucide-angular name="shield-ellipsis" size="20" class="text-red-600" style="padding-top: 5px"></lucide-angular>
                          Authorize Firewall
                     </button>
 
                     <button class="menu-btn active" [class.active]="activeTab === 'unauthorize'" (click)="setTab('unauthorize')">
                          <!-- <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon> -->
-                         <lucide-angular name="shield-ban" size="20" class="text-red-600"></lucide-angular>
+                         <lucide-icon name="shield-ellipsis" size="23" style="padding-top: 5px"></lucide-icon>
                          Unauthorize Firewall
                     </button>
 
@@ -157,6 +157,7 @@
 
                <!-- Update firewall Menu -->
                @if (activeTab === 'modify') {
+
                <div>
                     <div class="submenu-info-text">
                          <div class="white-button-submenu">
@@ -174,8 +175,8 @@
                @if (activeTab === 'authorize') {
                <div>
                     <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <lucide-angular name="shield-ellipsis" size="27" class="text-red-600"></lucide-angular>
+                         <div class="verify-button-submenu">
+                              <lucide-angular name="shield-ellipsis" size="27" class="text-red-600" style="padding-top: 5px"></lucide-angular>
                          </div>
                          <div>
                               <h2 class="submenu-info-main-text">Authorize Wallet</h2>
@@ -439,11 +440,11 @@
                                    } @else if (activeTab === 'modify') {
                                    <button type="button" (click)="modifyFirewall()">Modify Firewall</button>
                                    } @else if (activeTab === 'authorize') {
-                                   <button type="button" (click)="authorizeFirewall('Y')">Authorize Firewall</button>
+                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'#ff7f00','color':'white'}" (click)="authorizeFirewall('Y')" class="btn-secondary">Authorize Firewall</button>
                                    } @else if (activeTab === 'unauthorize') {
                                    <button type="button" (click)="authorizeFirewall('N')">Unauthorize Firewall</button>
                                    } @else if (activeTab === 'delete') {
-                                   <button type="button" (click)="deleteFirewall()">Delete Firewall</button>
+                                   <button type="button" class="btn-primary-red" [ngStyle]="{ 'background-color':'red','color':'white'}" (click)="deleteFirewall()" class="btn-secondary">Delete Firewall</button>
                                    }
                                    <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>
