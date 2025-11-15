@@ -34,21 +34,13 @@
                               <!-- <div class="drag-handle" cdkDragHandle>
                                    <lucide-icon name="grip-vertical" size="20"></lucide-icon>
                               </div> -->
-                              <!-- <div style="flex: 1"> -->
+
                               <!-- Wallet Info -->
                               <div class="wallet-info">
                                    @if (editingIndex(i)) {
                                    <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
-                                   <label class="issuer-checkbox" title="Mark as issuer account">
-                                        <span class="issuer-label">Issuer</span>
-                                        <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" readonly />
-                                   </label>
                                    } @else {
                                    <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
-                                   <label class="issuer-checkbox" title="Mark as issuer account">
-                                        <span class="issuer-label">Issuer</span>
-                                        <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" readonly />
-                                   </label>
                                    }
                               </div>
 
@@ -76,10 +68,10 @@
 
                               <!-- Secret Key -->
                               <div class="secret-section" (click)="selectWallet(i)">
-                                   <div class="secret-header">
-                                        <span class="secret-label">Secret Key:</span>
-                                        <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
-                                   </div>
+                                   <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">
+                                        <lucide-icon [name]="wallet.showSecret ? 'eye-off' : 'eye'" size="16" style="padding-top: 5px"></lucide-icon>
+                                        <span>{{ wallet.showSecret ? 'Hide Secret' : 'Show Secret' }}</span>
+                                   </button>
 
                                    <!-- Seed shown below the button -->
                                    @if (wallet.showSecret) {
@@ -91,7 +83,6 @@
                                    </div>
                                    }
                               </div>
-                              <!-- </div> -->
                          </div>
                          }
                     </div>
@@ -315,8 +306,8 @@
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   <button type="submit" class="btn-primary">Send XRP</button>
-                                   <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                                   <button type="submit" class="btn-primary-green">Send XRP</button>
+                                   <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>
 
                               <!-- Spinner -->

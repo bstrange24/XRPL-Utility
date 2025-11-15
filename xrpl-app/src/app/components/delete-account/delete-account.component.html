@@ -34,7 +34,7 @@
                               <!-- <div class="drag-handle" cdkDragHandle>
                                    <lucide-icon name="grip-vertical" size="20"></lucide-icon>
                               </div> -->
-                              <!-- <div style="flex: 1"> -->
+
                               <!-- Wallet Info -->
                               <div class="wallet-info">
                                    @if (editingIndex(i)) {
@@ -68,11 +68,12 @@
 
                               <!-- Secret Key -->
                               <div class="secret-section" (click)="selectWallet(i)">
-                                   <div class="secret-header">
-                                        <span class="secret-label">Secret Key:</span>
-                                        <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
-                                   </div>
+                                   <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">
+                                        <lucide-icon [name]="wallet.showSecret ? 'eye-off' : 'eye'" size="16" style="padding-top: 5px"></lucide-icon>
+                                        <span>{{ wallet.showSecret ? 'Hide Secret' : 'Show Secret' }}</span>
+                                   </button>
 
+                                   <!-- Seed shown below the button -->
                                    @if (wallet.showSecret) {
                                    <div class="secret-seed-container">
                                         <div class="secret-seed">{{ wallet.seed }}</div>
@@ -82,7 +83,6 @@
                                    </div>
                                    }
                               </div>
-                              <!-- </div> -->
                          </div>
                          }
                     </div>
@@ -255,7 +255,7 @@
                               </div>
                               }
 
-                              <!-- Get ticket to delete -->
+                              <!-- Get ticket -->
                               @if (isTicket && activeTab !== 'delete') {
                               <div class="ticket-fields">
                                    <div class="form-group">
@@ -284,8 +284,8 @@
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   <button type="submit" class="btn-primary">Delete Wallet</button>
-                                   <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                                   <button type="submit" class="btn-primary-red">Delete Wallet</button>
+                                   <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>
 
                               <!-- Spinner -->
