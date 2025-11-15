@@ -123,17 +123,19 @@
                     </button>
 
                     <button class="menu-btn active" [class.active]="activeTab === 'authorize'" (click)="setTab('authorize')">
-                         <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon>
+                         <!-- <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon> -->
+                         <lucide-angular name="shield-ellipsis" size="20" class="text-red-600"></lucide-angular>
                          Authorize Firewall
                     </button>
 
                     <button class="menu-btn active" [class.active]="activeTab === 'unauthorize'" (click)="setTab('unauthorize')">
-                         <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon>
+                         <!-- <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon> -->
+                         <lucide-angular name="shield-ban" size="20" class="text-red-600"></lucide-angular>
                          Unauthorize Firewall
                     </button>
 
                     <button class="menu-btn active" [class.active]="activeTab === 'delete'" (click)="setTab('delete')">
-                         <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon>
+                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
                          Delete Firewall
                     </button>
                </div>
@@ -157,8 +159,8 @@
                @if (activeTab === 'modify') {
                <div>
                     <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroPaperAirplane" size="27" class="text-red-600"></ng-icon>
+                         <div class="white-button-submenu">
+                              <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
                          </div>
                          <div>
                               <h2 class="submenu-info-main-text">Modify Wallet</h2>
@@ -173,7 +175,7 @@
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
-                              <ng-icon name="heroPaperAirplane" size="27" class="text-red-600"></ng-icon>
+                              <lucide-angular name="shield-ellipsis" size="27" class="text-red-600"></lucide-angular>
                          </div>
                          <div>
                               <h2 class="submenu-info-main-text">Authorize Wallet</h2>
@@ -188,7 +190,8 @@
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
-                              <ng-icon name="heroPaperAirplane" size="27" class="text-red-600"></ng-icon>
+                              <!-- <ng-icon name="heroPaperAirplane" size="27" class="text-red-600"></ng-icon> -->
+                              <lucide-angular name="shield-ban"></lucide-angular>
                          </div>
                          <div>
                               <h2 class="submenu-info-main-text">Unauthorize Wallet</h2>
@@ -202,8 +205,8 @@
                @if (activeTab === 'delete') {
                <div>
                     <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroPaperAirplane" size="27" class="text-red-600"></ng-icon>
+                         <div class="red-button-submenu">
+                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
                          </div>
                          <div>
                               <h2 class="submenu-info-main-text">Delete Firewall</h2>
