@@ -162,7 +162,9 @@
                                         <div class="form-group">
                                              <label>Destination</label>
                                              <select [(ngModel)]="destinationField" name="destinationField">
-                                                  <option *ngFor="let d of destinations" [value]="d.address" [disabled]="d.address===currentWallet.address">{{ d.name || 'Wallet' }} ({{ d.address | slice:0:6 }}...{{ d.address | slice:-4 }})</option>
+                                                  @for (d of destinations; track d.address) {
+                                                  <option [value]="d.address" [disabled]="d.address===currentWallet.address">{{ d.name || 'Wallet' }} ({{ d.address | slice:0:6 }}...{{ d.address | slice:-4 }})</option>
+                                                  }
                                              </select>
                                         </div>
                                    </div>

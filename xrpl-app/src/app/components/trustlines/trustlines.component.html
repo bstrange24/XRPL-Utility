@@ -123,13 +123,13 @@
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'issueCurrency'" (click)="setTab('issueCurrency')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Issue Tokens
+                         Issue Currency
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'clawbackTokens'" (click)="setTab('clawbackTokens')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
                          Clawback Tokens
                     </button>
-                    <button class="menu-btn active" [class.active]="activeTab === 'addNewIssuers'" (click)="setTab('addNewIssuers')">
+                    <button class="menu-btn" [class.active]="activeTab === 'addNewIssuers'" (click)="setTab('addNewIssuers')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Add/Remove Issuers
                     </button>
