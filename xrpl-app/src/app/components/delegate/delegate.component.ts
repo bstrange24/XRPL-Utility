@@ -594,10 +594,16 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                this.utilsService.logAccountInfoObjects(accountInfo, null);
                this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-               const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
-
+               let destination = '';
                inputs.accountInfo = accountInfo;
-               inputs.formattedDestination = formattedDestination.address;
+               if (this.destinationField.includes('...')) {
+                    const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
+                    inputs.formattedDestination = formattedDestination.address;
+                    destination = formattedDestination.address;
+               } else {
+                    inputs.formattedDestination = this.destinationField;
+                    destination = this.destinationField;
+               }
 
                const errors = await this.validationService.validate('DelegateActions', { inputs, client, accountInfo, currentLedger, serverInfo });
                if (errors.length > 0) {
@@ -630,7 +636,7 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                const delegateSetTx: xrpl.DelegateSet = {
                     TransactionType: 'DelegateSet',
                     Account: wallet.classicAddress,
-                    Authorize: formattedDestination.address,
+                    Authorize: destination,
                     Permissions: permissions,
                     Fee: fee,
                     LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,

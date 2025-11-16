@@ -1,5 +1,5 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector } from '@angular/core';
-import { trigger, state, style, transition, animate, group, query } from '@angular/animations';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, NgZone, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
@@ -23,6 +23,8 @@ import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
+import { TemplatePortal } from '@angular/cdk/portal';
+import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -30,6 +32,7 @@ interface ValidationInputs {
      seed?: string;
      accountInfo?: any;
      amount?: string;
+     formattedDestination?: any;
      destination?: string;
      mptIssuanceIdField?: string;
      destinationTag?: string;
@@ -61,7 +64,7 @@ interface AccountFlags {
 @Component({
      selector: 'app-firewall',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule, OverlayModule],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './firewall.component.html',
      styleUrl: './firewall.component.css',
@@ -75,6 +78,9 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      @ViewChild('signers') signersRef!: ElementRef<HTMLTextAreaElement>;
      @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
      @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
+     private overlayRef: OverlayRef | null = null;
      private readonly injector = inject(Injector);
      result: string = '';
      // isError: boolean = false;
@@ -112,6 +118,11 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      destinationField: string = '';
      private knownDestinations: { [key: string]: string } = {};
      private whitelistAddress: { [key: string]: string } = {};
+     customDestinations: { name?: string; address: string }[] = [];
+     showDropdown = false;
+     dropdownOpen = false;
+     filteredDestinations: { name?: string; address: string }[] = [];
+     highlightedIndex = -1;
      // xrpOnly: string[] = [];
      whitelistAddresses: string[] = [];
      newWhitelistAddress: string = '';
@@ -133,12 +144,13 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      showManageTokens: boolean = false;
      showSecret: boolean = false;
      environment: string = '';
-     activeTab = 'create'; // default
+     activeTab: string = 'create'; // default
      encryptionType: string = '';
      hasWallets: boolean = true;
      url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
+     filterQuery: string = '';
 
      constructor(
           private readonly xrplService: XrplService,
@@ -152,7 +164,9 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           public downloadUtilService: DownloadUtilService,
           public copyUtilService: CopyUtilService,
           private walletDataService: WalletDataService,
-          private validationService: ValidationService
+          private validationService: ValidationService,
+          private overlay: Overlay,
+          private viewContainerRef: ViewContainerRef
      ) {}
 
      ngOnInit() {
@@ -172,6 +186,11 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     return;
                }
           });
+
+          // Load custom destinations from storage
+          const storedCustoms = this.storageService.get('customDestinations');
+          this.customDestinations = storedCustoms ? JSON.parse(storedCustoms) : [];
+          this.updateDestinations();
 
           // const storedDestinations = this.storageService.getKnownIssuers('destinations');
           // if (storedDestinations) {
@@ -397,7 +416,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     accountInfo: accountInfo,
                };
 
-               const errors = await this.validateInputs(inputs, 'getFirewallDetails');
+               const errors = await this.validationService.validate('AccountInfo', { inputs, client, accountInfo });
                if (errors.length > 0) {
                     return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
                }
@@ -527,7 +546,16 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                this.utilsService.logAccountInfoObjects(accountInfo, null);
                this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
+               let destination = '';
                inputs.accountInfo = accountInfo;
+               if (this.destinationField.includes('...')) {
+                    const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
+                    inputs.formattedDestination = formattedDestination.address;
+                    destination = formattedDestination.address;
+               } else {
+                    inputs.formattedDestination = this.destinationField;
+                    destination = this.destinationField;
+               }
 
                const errors = await this.validateInputs(inputs, 'createFirewall');
                if (errors.length > 0) {
@@ -623,6 +651,16 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
 
+                    // Add new destination if valid and not already present
+                    if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
+                         this.customDestinations.push({
+                              name: `Custom ${this.customDestinations.length + 1}`,
+                              address: this.destinationField,
+                         });
+                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+                         this.updateDestinations();
+                    }
+
                     setTimeout(async () => {
                          try {
                               this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
@@ -673,7 +711,16 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                this.utilsService.logAccountInfoObjects(accountInfo, null);
                this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
+               let destination = '';
                inputs.accountInfo = accountInfo;
+               if (this.destinationField.includes('...')) {
+                    const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
+                    inputs.formattedDestination = formattedDestination.address;
+                    destination = formattedDestination.address;
+               } else {
+                    inputs.formattedDestination = this.destinationField;
+                    destination = this.destinationField;
+               }
 
                const errors = await this.validateInputs(inputs, 'modifyFirewall');
                if (errors.length > 0) {
@@ -787,7 +834,16 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
                this.utilsService.logObjects('destObjects', destObjects);
 
+               let destination = '';
                inputs.accountInfo = accountInfo;
+               if (this.destinationField.includes('...')) {
+                    const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
+                    inputs.formattedDestination = formattedDestination.address;
+                    destination = formattedDestination.address;
+               } else {
+                    inputs.formattedDestination = this.destinationField;
+                    destination = this.destinationField;
+               }
 
                const errors = await this.validateInputs(inputs, 'authorizeFirewall');
                if (errors.length > 0) {
@@ -923,7 +979,16 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
                this.utilsService.logObjects('destObjects', destObjects);
 
+               let destination = '';
                inputs.accountInfo = accountInfo;
+               if (this.destinationField.includes('...')) {
+                    const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
+                    inputs.formattedDestination = formattedDestination.address;
+                    destination = formattedDestination.address;
+               } else {
+                    inputs.formattedDestination = this.destinationField;
+                    destination = this.destinationField;
+               }
 
                const errors = await this.validateInputs(inputs, 'deleteFirewall');
                if (errors.length > 0) {
@@ -1073,14 +1138,14 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           return tickets.sort((a, b) => a - b).map(String);
      }
 
-     private cleanUpSingleSelection() {
+     public cleanUpSingleSelection() {
           // Check if selected ticket still exists in available tickets
           if (this.selectedSingleTicket && !this.ticketArray.includes(this.selectedSingleTicket)) {
                this.selectedSingleTicket = ''; // Reset to "Select a ticket"
           }
      }
 
-     private cleanUpMultiSelection() {
+     public cleanUpMultiSelection() {
           // Filter out any selected tickets that no longer exist
           this.selectedTickets = this.selectedTickets.filter(ticket => this.ticketArray.includes(ticket));
      }
@@ -1408,10 +1473,11 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      }
 
      updateDestinations() {
-          this.destinations = this.wallets.map(w => ({ name: w.name, address: w.address }));
+          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
           if (this.destinations.length > 0 && !this.destinationField) {
-               this.destinationField = this.destinations[0].address;
+               // this.destinationField = this.destinations[0].address;
           }
+          this.storageService.set('destinations', this.destinations);
           this.ensureDefaultNotSelected();
      }
 
@@ -1420,7 +1486,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           if (currentAddress && this.destinations.length > 0) {
                if (!this.destinationField || this.destinationField === currentAddress) {
                     const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
+                    // this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
                }
           }
           this.cdr.detectChanges();
@@ -1584,5 +1650,106 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           this.isTicket = false;
           // this.isTicketEnabled = false;
           this.cdr.markForCheck();
+     }
+
+     openDropdown() {
+          if (this.overlayRef?.hasAttached()) return;
+
+          this.filteredDestinations = [...this.destinations];
+          this.highlightedIndex = 0;
+
+          const positionStrategy = this.overlay
+               .position()
+               .flexibleConnectedTo(this.dropdownOrigin)
+               .withPositions([
+                    {
+                         originX: 'start',
+                         originY: 'bottom',
+                         overlayX: 'start',
+                         overlayY: 'top',
+                         offsetY: 8,
+                    },
+               ])
+               .withPush(false);
+
+          this.overlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy,
+               scrollStrategy: this.overlay.scrollStrategies.close(),
+          });
+
+          const portal = new TemplatePortal(this.dropdownTemplate, this.viewContainerRef);
+          this.overlayRef.attach(portal);
+
+          // Close on backdrop click
+          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
+          this.dropdownOpen = true;
+     }
+
+     closeDropdown() {
+          if (this.overlayRef) {
+               this.overlayRef.detach();
+               this.overlayRef = null;
+          }
+          this.dropdownOpen = false;
+     }
+
+     toggleDropdown() {
+          this.overlayRef?.hasAttached() ? this.closeDropdown() : this.openDropdown();
+     }
+
+     onDestinationInput() {
+          this.filterQuery = this.destinationField; // Now filter based on typed value
+          this.filterDestinations();
+          this.showDropdown = true;
+     }
+
+     filterDestinations() {
+          const query = this.filterQuery.trim().toLowerCase();
+
+          if (query === '') {
+               this.filteredDestinations = [...this.destinations];
+          } else {
+               this.filteredDestinations = this.destinations.filter(d => d.address.toLowerCase().includes(query) || (d.name && d.name.toLowerCase().includes(query)));
+          }
+
+          this.highlightedIndex = this.filteredDestinations.length > 0 ? 0 : -1;
+     }
+
+     selectDestination(address: string) {
+          if (address === this.currentWallet.address) {
+               return; // Don't allow selecting self
+          }
+
+          // Find the destination object by address
+          const dest = this.destinations.find(d => d.address === address);
+
+          if (dest) {
+               const first = address.slice(0, 6);
+               const last = address.slice(-6);
+               this.destinationField = `${dest.name} (${first}...${last})`;
+          } else {
+               // Fallback (should not happen)
+               this.destinationField = `${address.slice(0, 6)}...${address.slice(-6)}`;
+          }
+
+          this.closeDropdown();
+          this.cdr.detectChanges();
+     }
+
+     onArrowDown() {
+          if (!this.showDropdown || this.filteredDestinations.length === 0) return;
+          this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredDestinations.length;
+     }
+
+     selectHighlighted() {
+          if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
+               const addr = this.filteredDestinations[this.highlightedIndex].address;
+               if (addr !== this.currentWallet.address) {
+                    this.destinationField = addr;
+                    this.closeDropdown(); // Also close on Enter
+               }
+          }
      }
 }

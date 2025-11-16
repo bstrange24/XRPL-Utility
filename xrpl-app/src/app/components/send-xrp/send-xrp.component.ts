@@ -440,10 +440,16 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                this.utilsService.logAccountInfoObjects(accountInfo, null);
                this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-               const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
-
+               let destination = '';
                inputs.accountInfo = accountInfo;
-               inputs.formattedDestination = formattedDestination.address;
+               if (this.destinationField.includes('...')) {
+                    const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
+                    inputs.formattedDestination = formattedDestination.address;
+                    destination = formattedDestination.address;
+               } else {
+                    inputs.formattedDestination = this.destinationField;
+                    destination = this.destinationField;
+               }
 
                const errors = await this.validationService.validate('Payment', { inputs, client, accountInfo, currentLedger, serverInfo });
                if (errors.length > 0) {
@@ -453,7 +459,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                let paymentTx: xrpl.Payment = {
                     TransactionType: 'Payment',
                     Account: wallet.classicAddress,
-                    Destination: formattedDestination.address,
+                    Destination: destination,
                     Amount: xrpl.xrpToDrops(this.amountField),
                     Fee: fee,
                     LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,

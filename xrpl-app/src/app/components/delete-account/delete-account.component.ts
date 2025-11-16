@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, NgZone, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -24,7 +24,7 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -32,6 +32,7 @@ interface ValidationInputs {
      seed?: string;
      accountInfo?: any;
      accountObjects?: any;
+     formattedDestination?: any;
      destination?: string;
      destinationTag?: string;
      isRegularKeyAddress?: boolean;
@@ -50,7 +51,7 @@ interface ValidationInputs {
 @Component({
      selector: 'app-delete-account',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule, OverlayModule],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './delete-account.component.html',
      styleUrl: './delete-account.component.css',
@@ -92,6 +93,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      destinations: { name?: string; address: string }[] = [];
      customDestinations: { name?: string; address: string }[] = [];
      showDropdown = false;
+     dropdownOpen = false;
      filteredDestinations: { name?: string; address: string }[] = [];
      highlightedIndex = -1;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
@@ -109,7 +111,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      };
      showSecret: boolean = false;
      environment: string = '';
-     activeTab = 'delete'; // default
+     activeTab: string = 'delete'; // default
      encryptionType: string = '';
      hasWallets: boolean = true;
      url: string = '';
@@ -436,13 +438,21 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
                this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
+               let destination = '';
                inputs.accountInfo = accountInfo;
-               inputs.accountObjects = accountObjects;
+               if (this.destinationField.includes('...')) {
+                    const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
+                    inputs.formattedDestination = formattedDestination.address;
+                    destination = formattedDestination.address;
+               } else {
+                    inputs.formattedDestination = this.destinationField;
+                    destination = this.destinationField;
+               }
 
                const errors = await this.validationService.validate('AccountDelete', { inputs, client, accountInfo, accountObjects, currentLedger, serverInfo });
 
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                let accountDeleteTx: AccountDelete = {
@@ -704,25 +714,18 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
           if (this.destinations.length > 0 && !this.destinationField) {
-               this.destinationField = this.destinations[0].address;
+               // this.destinationField = this.destinations[0].address;
           }
+          this.storageService.set('destinations', this.destinations);
           this.ensureDefaultNotSelected();
      }
-
-     // updateDestinations() {
-     //      this.destinations = this.wallets.map(w => ({ name: w.name, address: w.address }));
-     //      if (this.destinations.length > 0 && !this.destinationField) {
-     //           this.destinationField = this.destinations[0].address;
-     //      }
-     //      this.ensureDefaultNotSelected();
-     // }
 
      ensureDefaultNotSelected() {
           const currentAddress = this.currentWallet.address;
           if (currentAddress && this.destinations.length > 0) {
                if (!this.destinationField || this.destinationField === currentAddress) {
                     const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
+                    // this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
                }
           }
           this.cdr.detectChanges();
@@ -847,6 +850,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
 
           // Close on backdrop click
           this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
+          this.dropdownOpen = true;
      }
 
      closeDropdown() {
@@ -854,6 +858,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                this.overlayRef.detach();
                this.overlayRef = null;
           }
+          this.dropdownOpen = false;
      }
 
      toggleDropdown() {
@@ -880,13 +885,23 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
 
      selectDestination(address: string) {
           if (address === this.currentWallet.address) {
-               // Don't allow selecting self — optional: add toast or just ignore
-               return;
+               return; // Don't allow selecting self
           }
 
-          this.destinationField = address;
-          this.closeDropdown(); // THIS LINE IS THE MAGIC
-          this.cdr.detectChanges(); // Optional but safe
+          // Find the destination object by address
+          const dest = this.destinations.find(d => d.address === address);
+
+          if (dest) {
+               const first = address.slice(0, 6);
+               const last = address.slice(-6);
+               this.destinationField = `${dest.name} (${first}...${last})`;
+          } else {
+               // Fallback (should not happen)
+               this.destinationField = `${address.slice(0, 6)}...${address.slice(-6)}`;
+          }
+
+          this.closeDropdown();
+          this.cdr.detectChanges();
      }
 
      onArrowDown() {
@@ -903,14 +918,4 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                }
           }
      }
-
-     // selectHighlighted() {
-     //      if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
-     //           const addr = this.filteredDestinations[this.highlightedIndex].address;
-     //           if (addr !== this.currentWallet.address) {
-     //                this.destinationField = addr;
-     //           }
-     //      }
-     //      this.showDropdown = false;
-     // }
 }
