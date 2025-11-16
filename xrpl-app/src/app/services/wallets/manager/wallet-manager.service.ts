@@ -123,4 +123,25 @@ export class WalletManagerService {
      getTempName(): string {
           return this.tempName;
      }
+
+     getDestinationFromDisplay(displayString: string, destinations: any) {
+          // Extract the short form inside parentheses: r4sTo7...Vze2Jh
+          const match = displayString.match(/\((.+)\)/);
+          if (!match) return null;
+
+          const shortAddr = match[1]; // r4sTo7...Vze2Jh
+
+          // Loop all destinations and look for a match
+          for (const dest of destinations) {
+               const full = dest.address;
+               const first = full.slice(0, 6);
+               const last = full.slice(-6);
+
+               if (shortAddr === `${first}...${last}`) {
+                    return dest; // Found it
+               }
+          }
+
+          return null; // No match
+     }
 }

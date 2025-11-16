@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -23,6 +23,8 @@ import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
+import { TemplatePortal } from '@angular/cdk/portal';
+import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -77,6 +79,9 @@ export class MptComponent implements OnInit, AfterViewInit {
      @ViewChild('signers') signersRef!: ElementRef<HTMLTextAreaElement>;
      @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
      @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
+     private overlayRef: OverlayRef | null = null;
      private readonly injector = inject(Injector);
      result: string = '';
      isSuccess: boolean = false;
@@ -129,13 +134,17 @@ export class MptComponent implements OnInit, AfterViewInit {
           canLock: false,
           isRequireAuth: false,
           canEscrow: false,
+          canTrade: false,
           canClawback: false,
           canTransfer: false,
-          canTrade: false,
      };
      spinner: boolean = false;
      destinationField: string = '';
      destinations: { name?: string; address: string }[] = [];
+     customDestinations: { name?: string; address: string }[] = [];
+     showDropdown = false;
+     filteredDestinations: { name?: string; address: string }[] = [];
+     highlightedIndex = -1;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      isAuthorized: boolean = false;
      isUnauthorize: boolean = false;
@@ -161,6 +170,7 @@ export class MptComponent implements OnInit, AfterViewInit {
      url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
+     filterQuery: string = '';
 
      constructor(
           private readonly xrplService: XrplService,
@@ -174,7 +184,9 @@ export class MptComponent implements OnInit, AfterViewInit {
           public downloadUtilService: DownloadUtilService,
           public copyUtilService: CopyUtilService,
           private walletDataService: WalletDataService,
-          private validationService: ValidationService
+          private validationService: ValidationService,
+          private overlay: Overlay,
+          private viewContainerRef: ViewContainerRef
      ) {}
 
      ngOnInit() {
@@ -194,6 +206,11 @@ export class MptComponent implements OnInit, AfterViewInit {
                     return;
                }
           });
+
+          // Load custom destinations from storage
+          const storedCustoms = this.storageService.get('customDestinations');
+          this.customDestinations = storedCustoms ? JSON.parse(storedCustoms) : [];
+          this.updateDestinations();
      }
 
      ngAfterViewInit() {
@@ -564,6 +581,16 @@ export class MptComponent implements OnInit, AfterViewInit {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
                     await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
+
+                    // Add new destination if valid and not already present
+                    if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
+                         this.customDestinations.push({
+                              name: `Custom ${this.customDestinations.length + 1}`,
+                              address: this.destinationField,
+                         });
+                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+                         this.updateDestinations();
+                    }
 
                     setTimeout(async () => {
                          try {
@@ -1122,6 +1149,139 @@ export class MptComponent implements OnInit, AfterViewInit {
           }
      }
 
+     async clawbackMpt() {
+          console.log('Entering clawbackMpt');
+          const startTime = Date.now();
+          this.ui.clearMessages();
+          this.ui.updateSpinnerMessage(``);
+
+          const inputs: ValidationInputs = {
+               selectedAccount: this.currentWallet.address,
+               seed: this.currentWallet.seed,
+               senderAddress: this.currentWallet.address,
+               destination: this.destinationField,
+               assetScaleField: this.assetScaleField,
+               transferFeeField: this.flags.canTransfer ? this.transferFeeField : undefined,
+               tokenCountField: this.tokenCountField,
+               isRegularKeyAddress: this.isRegularKeyAddress,
+               regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
+               regularKeySeed: this.isRegularKeyAddress ? this.regularKeySeed : undefined,
+               useMultiSign: this.useMultiSign,
+               multiSignAddresses: this.useMultiSign ? this.multiSignAddress : undefined,
+               multiSignSeeds: this.useMultiSign ? this.multiSignSeeds : undefined,
+               isTicket: this.isTicket,
+               selectedTicket: this.selectedTicket,
+               selectedSingleTicket: this.selectedSingleTicket,
+          };
+
+          try {
+               const client = await this.xrplService.getClient();
+               const wallet = await this.getWallet();
+
+               const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
+
+               this.utilsService.logAccountInfoObjects(accountInfo, null);
+               this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+
+               inputs.accountInfo = accountInfo;
+
+               const errors = await this.validateInputs(inputs, 'clawback');
+               if (errors.length > 0) {
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+               }
+
+               // For clawback, you'll need additional fields like:
+               // - MPToken ID (the token to claw back)
+               // - Amount to claw back
+               // - From address (the holder's address)
+               const mptClawbackTx: any = {
+                    TransactionType: 'MPTokenClawback',
+                    Account: wallet.classicAddress,
+                    MPTokenID: this.mptIssuanceIdField,
+                    Amount: this.amountField,
+                    From: this.destinationField, // You'll need to add this field - address holding the tokens
+                    Fee: fee,
+                    Flags: 0, // Typically 0 for clawback unless specific flags are needed
+                    LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+               };
+
+               await this.setTxOptionalFields(client, mptClawbackTx, wallet, accountInfo, 'clawback');
+
+               if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, mptClawbackTx, fee)) {
+                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+               }
+
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating MPT Clawback (no changes will be made)...' : 'Submitting MPT Clawback to Ledger...', 200);
+
+               this.ui.paymentTx.push(mptClawbackTx);
+               this.updatePaymentTx();
+
+               let response: any;
+
+               if (this.ui.isSimulateEnabled) {
+                    response = await this.xrplTransactions.simulateTransaction(client, mptClawbackTx);
+               } else {
+                    const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
+
+                    const signedTx = await this.xrplTransactions.signTransaction(client, wallet, mptClawbackTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
+
+                    if (!signedTx) {
+                         return this.ui.setError('ERROR: Failed to sign Clawback transaction.');
+                    }
+
+                    response = await this.xrplTransactions.submitTransaction(client, signedTx);
+               }
+
+               this.utilsService.logObjects('response', response);
+               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+
+               this.ui.txResult.push(response.result);
+               this.updateTxResult(this.ui.txResult);
+
+               const isSuccess = this.utilsService.isTxSuccessful(response);
+               if (!isSuccess) {
+                    const resultMsg = this.utilsService.getTransactionResultMessage(response);
+                    const userMessage = 'Clawback transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
+
+                    console.error(`Clawback transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    (response.result as any).errorMessage = userMessage;
+                    this.ui.setError(userMessage);
+               } else {
+                    this.ui.setSuccess(this.ui.result);
+               }
+
+               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
+
+               if (!this.ui.isSimulateEnabled) {
+                    this.ui.successMessage = 'MPT clawback executed successfully!';
+
+                    const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+
+                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
+
+                    setTimeout(async () => {
+                         try {
+                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                              this.clearFields(false);
+                              this.updateTickets(updatedAccountObjects);
+                         } catch (err) {
+                              console.error('Error in post-tx cleanup:', err);
+                         }
+                    }, 0);
+               } else {
+                    this.ui.successMessage = 'Simulated MPT Clawback successfully!';
+               }
+          } catch (error: any) {
+               console.error('Error in clawbackMpt:', error);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving clawbackMpt in ${this.executionTime}ms`);
+          }
+     }
+
      private getExistingMpts(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           this.existingMpts = (checkObjects.result.account_objects ?? [])
                .filter((obj: any) => (obj.LedgerEntryType === 'MPTokenIssuance' || obj.LedgerEntryType === 'MPToken') && (obj.Account === classicAddress || obj.Issuer === classicAddress))
@@ -1214,6 +1374,28 @@ export class MptComponent implements OnInit, AfterViewInit {
                }
           }
           return activeFlags;
+     }
+
+     // Add this to your component class
+     decodeMptFlagsForUi(flags: number): string {
+          const flagDefinitions = [
+               { value: 2, name: 'canLock' },
+               { value: 4, name: 'isRequireAuth' },
+               { value: 8, name: 'canEscrow' },
+               { value: 10, name: 'canTrade' },
+               { value: 20, name: 'canTransfer' },
+               { value: 40, name: 'canClawback' },
+          ];
+
+          const activeFlags: string[] = [];
+
+          for (const flag of flagDefinitions) {
+               if ((flags & flag.value) === flag.value) {
+                    activeFlags.push(flag.name);
+               }
+          }
+
+          return activeFlags.length > 0 ? activeFlags.join(', ') : 'None';
      }
 
      private async setTxOptionalFields(client: xrpl.Client, mptTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
@@ -1411,12 +1593,21 @@ export class MptComponent implements OnInit, AfterViewInit {
      }
 
      updateDestinations() {
-          this.destinations = this.wallets.map(w => ({ name: w.name, address: w.address }));
+          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
           if (this.destinations.length > 0 && !this.destinationField) {
                this.destinationField = this.destinations[0].address;
           }
+          this.storageService.set('destinations', this.destinations);
           this.ensureDefaultNotSelected();
      }
+
+     // updateDestinations() {
+     //      this.destinations = this.wallets.map(w => ({ name: w.name, address: w.address }));
+     //      if (this.destinations.length > 0 && !this.destinationField) {
+     //           this.destinationField = this.destinations[0].address;
+     //      }
+     //      this.ensureDefaultNotSelected();
+     // }
 
      ensureDefaultNotSelected() {
           const currentAddress = this.currentWallet.address;
@@ -1740,5 +1931,94 @@ export class MptComponent implements OnInit, AfterViewInit {
           this.isTicketEnabled = false;
           this.ticketSequence = '';
           this.cdr.detectChanges();
+     }
+
+     openDropdown() {
+          if (this.overlayRef?.hasAttached()) return;
+
+          this.filteredDestinations = [...this.destinations];
+          this.highlightedIndex = 0;
+
+          const positionStrategy = this.overlay
+               .position()
+               .flexibleConnectedTo(this.dropdownOrigin)
+               .withPositions([
+                    {
+                         originX: 'start',
+                         originY: 'bottom',
+                         overlayX: 'start',
+                         overlayY: 'top',
+                         offsetY: 8,
+                    },
+               ])
+               .withPush(false);
+
+          this.overlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy,
+               scrollStrategy: this.overlay.scrollStrategies.close(),
+          });
+
+          const portal = new TemplatePortal(this.dropdownTemplate, this.viewContainerRef);
+          this.overlayRef.attach(portal);
+
+          // Close on backdrop click
+          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
+     }
+
+     closeDropdown() {
+          if (this.overlayRef) {
+               this.overlayRef.detach();
+               this.overlayRef = null;
+          }
+     }
+
+     toggleDropdown() {
+          this.overlayRef?.hasAttached() ? this.closeDropdown() : this.openDropdown();
+     }
+
+     onDestinationInput() {
+          this.filterQuery = this.destinationField; // Now filter based on typed value
+          this.filterDestinations();
+          this.showDropdown = true;
+     }
+
+     filterDestinations() {
+          const query = this.filterQuery.trim().toLowerCase();
+
+          if (query === '') {
+               this.filteredDestinations = [...this.destinations];
+          } else {
+               this.filteredDestinations = this.destinations.filter(d => d.address.toLowerCase().includes(query) || (d.name && d.name.toLowerCase().includes(query)));
+          }
+
+          this.highlightedIndex = this.filteredDestinations.length > 0 ? 0 : -1;
+     }
+
+     selectDestination(address: string) {
+          if (address === this.currentWallet.address) {
+               // Don't allow selecting self — optional: add toast or just ignore
+               return;
+          }
+
+          this.destinationField = address;
+          this.closeDropdown(); // THIS LINE IS THE MAGIC
+          this.cdr.detectChanges(); // Optional but safe
+     }
+
+     onArrowDown() {
+          if (!this.showDropdown || this.filteredDestinations.length === 0) return;
+          this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredDestinations.length;
+     }
+
+     selectHighlighted() {
+          if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
+               const addr = this.filteredDestinations[this.highlightedIndex].address;
+               if (addr !== this.currentWallet.address) {
+                    this.destinationField = addr;
+                    this.closeDropdown(); // Also close on Enter
+               }
+          }
      }
 }

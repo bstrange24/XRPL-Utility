@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -23,6 +23,8 @@ import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
+import { TemplatePortal } from '@angular/cdk/portal';
+import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -62,6 +64,9 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      @ViewChild('signers') signersRef!: ElementRef<HTMLTextAreaElement>;
      @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
      @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
+     private overlayRef: OverlayRef | null = null;
      private readonly injector = inject(Injector);
      executionTime: string = '';
      destinationTagField: string = '';
@@ -85,6 +90,10 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      masterKeyDisabled: boolean = false;
      destinationField: string = '';
      destinations: { name?: string; address: string }[] = [];
+     customDestinations: { name?: string; address: string }[] = [];
+     showDropdown = false;
+     filteredDestinations: { name?: string; address: string }[] = [];
+     highlightedIndex = -1;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      wallets: Wallet[] = [];
      selectedWalletIndex: number = 0;
@@ -106,6 +115,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
+     filterQuery: string = '';
 
      constructor(
           private readonly xrplService: XrplService,
@@ -119,7 +129,9 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           public downloadUtilService: DownloadUtilService,
           public copyUtilService: CopyUtilService,
           private walletDataService: WalletDataService,
-          private validationService: ValidationService
+          private validationService: ValidationService,
+          private overlay: Overlay,
+          private viewContainerRef: ViewContainerRef
      ) {}
 
      ngOnInit() {
@@ -139,6 +151,11 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                     return;
                }
           });
+
+          // Load custom destinations from storage
+          const storedCustoms = this.storageService.get('customDestinations');
+          this.customDestinations = storedCustoms ? JSON.parse(storedCustoms) : [];
+          this.updateDestinations();
      }
 
      ngAfterViewInit() {
@@ -489,6 +506,16 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [this.destinationField]);
 
+                    // Add new destination if valid and not already present
+                    if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
+                         this.customDestinations.push({
+                              name: `Custom ${this.customDestinations.length + 1}`,
+                              address: this.destinationField,
+                         });
+                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+                         this.updateDestinations();
+                    }
+
                     setTimeout(async () => {
                          try {
                               this.clearFields(false);
@@ -675,12 +702,20 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      }
 
      updateDestinations() {
-          this.destinations = this.wallets.map(w => ({ name: w.name, address: w.address }));
+          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
           if (this.destinations.length > 0 && !this.destinationField) {
                this.destinationField = this.destinations[0].address;
           }
           this.ensureDefaultNotSelected();
      }
+
+     // updateDestinations() {
+     //      this.destinations = this.wallets.map(w => ({ name: w.name, address: w.address }));
+     //      if (this.destinations.length > 0 && !this.destinationField) {
+     //           this.destinationField = this.destinations[0].address;
+     //      }
+     //      this.ensureDefaultNotSelected();
+     // }
 
      ensureDefaultNotSelected() {
           const currentAddress = this.currentWallet.address;
@@ -779,4 +814,103 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           this.memoField = '';
           this.cdr.detectChanges();
      }
+
+     openDropdown() {
+          if (this.overlayRef?.hasAttached()) return;
+
+          this.filteredDestinations = [...this.destinations];
+          this.highlightedIndex = 0;
+
+          const positionStrategy = this.overlay
+               .position()
+               .flexibleConnectedTo(this.dropdownOrigin)
+               .withPositions([
+                    {
+                         originX: 'start',
+                         originY: 'bottom',
+                         overlayX: 'start',
+                         overlayY: 'top',
+                         offsetY: 8,
+                    },
+               ])
+               .withPush(false);
+
+          this.overlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy,
+               scrollStrategy: this.overlay.scrollStrategies.close(),
+          });
+
+          const portal = new TemplatePortal(this.dropdownTemplate, this.viewContainerRef);
+          this.overlayRef.attach(portal);
+
+          // Close on backdrop click
+          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
+     }
+
+     closeDropdown() {
+          if (this.overlayRef) {
+               this.overlayRef.detach();
+               this.overlayRef = null;
+          }
+     }
+
+     toggleDropdown() {
+          this.overlayRef?.hasAttached() ? this.closeDropdown() : this.openDropdown();
+     }
+
+     onDestinationInput() {
+          this.filterQuery = this.destinationField; // Now filter based on typed value
+          this.filterDestinations();
+          this.showDropdown = true;
+     }
+
+     filterDestinations() {
+          const query = this.filterQuery.trim().toLowerCase();
+
+          if (query === '') {
+               this.filteredDestinations = [...this.destinations];
+          } else {
+               this.filteredDestinations = this.destinations.filter(d => d.address.toLowerCase().includes(query) || (d.name && d.name.toLowerCase().includes(query)));
+          }
+
+          this.highlightedIndex = this.filteredDestinations.length > 0 ? 0 : -1;
+     }
+
+     selectDestination(address: string) {
+          if (address === this.currentWallet.address) {
+               // Don't allow selecting self — optional: add toast or just ignore
+               return;
+          }
+
+          this.destinationField = address;
+          this.closeDropdown(); // THIS LINE IS THE MAGIC
+          this.cdr.detectChanges(); // Optional but safe
+     }
+
+     onArrowDown() {
+          if (!this.showDropdown || this.filteredDestinations.length === 0) return;
+          this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredDestinations.length;
+     }
+
+     selectHighlighted() {
+          if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
+               const addr = this.filteredDestinations[this.highlightedIndex].address;
+               if (addr !== this.currentWallet.address) {
+                    this.destinationField = addr;
+                    this.closeDropdown(); // Also close on Enter
+               }
+          }
+     }
+
+     // selectHighlighted() {
+     //      if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
+     //           const addr = this.filteredDestinations[this.highlightedIndex].address;
+     //           if (addr !== this.currentWallet.address) {
+     //                this.destinationField = addr;
+     //           }
+     //      }
+     //      this.showDropdown = false;
+     // }
 }

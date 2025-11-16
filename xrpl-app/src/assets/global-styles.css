@@ -3134,3 +3134,182 @@ cdk-drop-list {
 .wallet-item.selected .icon-btn.delete:hover svg {
      stroke: #fda4af;
 }
+
+.line-break {
+     width: 100%;
+     /* height: 1px; */
+     /* margin: 8px 0; */
+     background-color: #e0e0e0;
+}
+
+
+.combobox-container {
+     position: relative;
+     display: flex;
+     flex-direction: column;
+}
+
+.combobox-input {
+     width: 100%;
+     padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+     border: 1px solid #cbd5e1;
+     border-radius: 6px;
+     font-size: 0.95rem;
+     background: white;
+}
+
+.combobox-toggle {
+     position: absolute;
+     right: 8px;
+     top: 25%;
+     transform: translateY(-50%);
+     background: none;
+     border: none;
+     cursor: pointer;
+     padding: 4px;
+     color: #666;
+}
+
+.combobox-toggle:hover {
+     color: #333;
+}
+
+/* This wrapper creates a new containing block and forces GPU layer */
+.destination-combobox-wrapper {
+     position: relative;
+     display: inline-block;
+     width: 100%;
+
+     /* This is the magic: creates a new stacking context + GPU layer */
+     transform: translateZ(0);
+     -webkit-transform: translateZ(0);
+}
+
+/* Now dropdown can be absolute and escape clipping */
+.combobox-dropdown {
+     /* position: absolute !important; */
+     top: 100%;
+     left: 0;
+     right: 0;
+     margin-top: 8px;
+     max-height: 380px;
+     overflow-y: auto;
+     background: white;
+     border: 1px solid #cbd5e1;
+     border-radius: 12px;
+     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+     z-index: 99999;
+     padding: 8px 0;
+
+     /* These ensure no clipping */
+     transform: translateZ(0);
+     -webkit-transform: translateZ(0);
+     backface-visibility: hidden;
+
+     /* Clean scrollbar */
+     scrollbar-width: thin;
+     scrollbar-color: #94a3b8 #f8fafc;
+}
+
+.item-name {
+     font-weight: 600;
+     font-size: 0.95rem;
+     color: #1e40af;
+}
+
+.item-address {
+     font-family: 'Courier New', monospace;
+     font-size: 0.84rem;
+     color: #64748b;
+     margin-top: 2px;
+}
+
+.combobox-empty {
+     padding: 1rem;
+     text-align: center;
+     color: #94a3b8;
+     font-style: italic;
+}
+
+.combobox-dropdown::-webkit-scrollbar {
+     width: 10px;
+}
+
+.combobox-dropdown::-webkit-scrollbar-track {
+     background: #f8fafc;
+     border-radius: 10px;
+}
+
+.combobox-dropdown::-webkit-scrollbar-thumb {
+     background: #94a3b8;
+     border-radius: 10px;
+     border: 2px solid #f8fafc;
+}
+
+.combobox-dropdown::-webkit-scrollbar-thumb:hover {
+     background: #94a3b8;
+}
+
+.combobox-dropdown-portal {
+     max-height: 420px;
+     overflow-y: auto;
+     background: white;
+     border: 1px solid #cbd5e1;
+     border-radius: 12px;
+     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+     padding: 8px 0;
+     backdrop-filter: blur(10px);
+     scrollbar-width: thin;
+}
+
+.combobox-dropdown-overlay {
+     max-height: 420px;
+     overflow-y: auto;
+     background: white;
+     border: 1px solid #cbd5e1;
+     border-radius: 12px;
+     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+     padding: 8px 0;
+     min-width: 387px;
+     backdrop-filter: blur(12px);
+     width: calc(100% - 2px) !important;
+     box-sizing: border-box;
+     border-radius: 12px !important;
+     margin-top: 4px;
+}
+
+.combobox-item {
+     padding: 12px 16px;
+     cursor: pointer;
+     transition: background 0.15s;
+}
+
+.combobox-item:last-child {
+     border-bottom: none !important;
+}
+
+.combobox-item:hover,
+.combobox-item.highlighted {
+     background: #f0f7ff;
+}
+
+.combobox-item.disabled {
+     opacity: 0.5;
+     cursor: not-allowed;
+     background: #f9fafb;
+     color: #94a3b8;
+}
+
+.combobox-item.disabled:hover {
+     background: #f9fafb;
+}
+
+.self-badge {
+     margin-left: 8px;
+     background: #fef3c7;
+     color: #92400e;
+     padding: 2px 8px;
+     border-radius: 12px;
+     font-size: 0.7rem;
+     font-weight: 600;
+}

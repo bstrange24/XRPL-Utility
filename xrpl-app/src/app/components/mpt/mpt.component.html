@@ -116,25 +116,21 @@
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Create MPT
                     </button>
-                    <!-- <button class="menu-btn active" [class.active]="activeTab === 'authorize'" (click)="setTab('authorize')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Authorize MPT
-                    </button> -->
                     <button class="menu-btn active" [class.active]="activeTab === 'unauthorize'" (click)="setTab('unauthorize')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Authorize/Unauthorize MPT
+                         Auth/Unauth MPT
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'send'" (click)="setTab('send')">
                          <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon>
                          Send MPT
                     </button>
-                    <!-- <button class="menu-btn" [class.active]="activeTab === 'lock'" (click)="setTab('lock')">
-                         <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon>
-                         Lock MPT
-                    </button> -->
                     <button class="menu-btn" [class.active]="activeTab === 'lock'" (click)="setTab('lock')">
                          <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon>
                          Lock/Unlock MPT
+                    </button>
+                    <button class="menu-btn" [class.active]="activeTab === 'clawback'" (click)="setTab('clawback')">
+                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
+                         Clawback MPT
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'destroy'" (click)="setTab('destroy')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
@@ -172,21 +168,6 @@
                </div>
                }
 
-               <!-- Unauthorize Menu -->
-               <!-- @if (activeTab === 'unauthorize') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Unauthorize MPT Token</h2>
-                              <p class="submenu-info-secondary-text">Unauthorize MPT Tokens for the selected account.</p>
-                         </div>
-                    </div>
-               </div>
-               } -->
-
                <!-- Fund Menu -->
                @if (activeTab === 'send') {
                <div>
@@ -212,6 +193,21 @@
                          <div>
                               <h2 class="submenu-info-main-text">Lock/Unlock MPT</h2>
                               <p class="submenu-info-secondary-text">Lock/Unlock MPT so another XRPL address can't send it</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Close Menu -->
+               @if (activeTab === 'clawback') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="red-button-submenu">
+                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Clawback MPT</h2>
+                              <p class="submenu-info-secondary-text">Clawback a previously created MPT</p>
                          </div>
                     </div>
                </div>
@@ -281,15 +277,21 @@
                                         }
 
                                         <!-- Flags  -->
-                                        @if (chk.Flags) {
-                                        <span class="badge badge-expire"> Flags: {{ chk.Flags }} </span>
+                                        @if (chk.Flags !== undefined) {
+                                        <span class="badge badge-expire">
+                                             Flags: {{ decodeMptFlagsForUi(chk.Flags) }}
+                                             <span class="flag-original">({{ chk.Flags }})</span>
+                                        </span>
                                         } @else {
                                         <span class="badge badge-expire-not-set"> Flags: Not set </span>
                                         }
 
+                                        <!-- Line break between Flags and MPT Issuance ID -->
+                                        <div class="line-break"></div>
+
                                         <!-- MPT Issuance ID  -->
                                         @if (chk.mpt_issuance_id) {
-                                        <span class="badge badge-expire"> MPT Issuance ID: {{ chk.mpt_issuance_id }}</span>
+                                        <span class="badge badge-expire"> MPT Issuance ID: {{ chk.mpt_issuance_id | slice:0:6 }}...{{ chk.mpt_issuance_id | slice:-6 }}</span>
                                         } @else {
                                         <span class="badge badge-expire-not-set"> MPT Issuance ID: Not set </span>
                                         }
@@ -386,6 +388,44 @@
                                    @if (activeTab === 'authorize' || activeTab === 'unauthorize' || activeTab === 'destroy' || activeTab === 'lock' || activeTab === 'unlock') {
                                    <div class="form-row">
                                         <div class="form-group">
+                                             <label>Destination</label>
+
+                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
+                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
+
+                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
+                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                                                  </button>
+                                             </div>
+                                        </div>
+
+                                        <!-- Dropdown template -->
+                                        <ng-template #dropdownTemplate>
+                                             <div class="combobox-dropdown-overlay">
+                                                  @for (dest of filteredDestinations; track dest.address) {
+                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
+                                                       <div class="item-name">
+                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
+                                                            <span class="self-badge">Current Account</span>
+                                                            }
+                                                       </div>
+                                                       <!-- <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div> -->
+                                                       <div class="item-address">{{ dest.address }}</div>
+                                                  </div>
+                                                  } @empty {
+                                                  <div class="combobox-empty">No matching addresses</div>
+                                                  }
+                                             </div>
+                                        </ng-template>
+                                        <!-- <div class="form-group">
+                                             <label>Destination</label>
+                                             <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
+                                                  @for (dest of destinations; track dest.address; let i = $index) {
+                                                  <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
+                                                  }
+                                             </select>
+                                        </div> -->
+                                        <div class="form-group">
                                              <label>MPT Issuance ID</label>
                                              <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
                                         </div>
@@ -412,22 +452,76 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Destination</label>
+
+                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
+                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
+
+                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
+                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                                                  </button>
+                                             </div>
+                                        </div>
+
+                                        <!-- Dropdown template -->
+                                        <ng-template #dropdownTemplate>
+                                             <div class="combobox-dropdown-overlay">
+                                                  @for (dest of filteredDestinations; track dest.address) {
+                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
+                                                       <div class="item-name">
+                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
+                                                            <span class="self-badge">Current Account</span>
+                                                            }
+                                                       </div>
+                                                       <!-- <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div> -->
+                                                       <div class="item-address">{{ dest.address }}</div>
+                                                  </div>
+                                                  } @empty {
+                                                  <div class="combobox-empty">No matching addresses</div>
+                                                  }
+                                             </div>
+                                        </ng-template>
+                                        <!-- <div class="form-group">
+                                             <label>Destination</label>
+                                             <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
+                                                  @for (dest of destinations; track dest.address; let i = $index) {
+                                                  <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
+                                                  }
+                                             </select>
+                                        </div> -->
+                                   </div>
+                                   }
+
+                                   <!-- Clawback MPT sections -->
+                                   @if (activeTab === 'clawback') {
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Amount to Clawback</label>
+                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
+                                        </div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>MPT Issuance ID</label>
+                                             <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
+                                        </div>
+                                   </div>
+
+                                   <!-- Destination (create only) -->
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Destination</label>
                                              <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
                                                   @for (dest of destinations; track dest.address; let i = $index) {
                                                   <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
                                                   }
                                              </select>
                                         </div>
-
-                                        <div class="form-group">
-                                             <label>Destination Tag</label>
-                                             <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
-                                        </div>
                                    </div>
                                    }
                               </div>
 
-                              <!-- ==================== RIGHT: MPT FLAGS ==================== -->
+                              <!-- MPT Flags -->
                               @if (activeTab === 'create') {
                               <div class="tab-content-container flags-container" style="min-width: 550px">
                                    <div class="flags-wrapper">
@@ -654,18 +748,18 @@
                          <div class="button-row">
                               @if(activeTab === 'create') {
                               <button type="button" (click)="createMpt()" class="btn-primary">Create MPT</button>
-                              } @else if (activeTab === 'authorize') {
+                              } @else if (activeTab === 'authorize' || activeTab === 'unauthorize') {
                               <button type="button" (click)="authorizeMpt('Y')" class="btn-primary">Authorize MPT</button>
-                              } @else if (activeTab === 'unauthorize') {
                               <button type="button" (click)="authorizeMpt('N')" class="btn-primary">Unauthorize MPT</button>
                               } @else if (activeTab === 'send') {
-                              <button type="button" (click)="sendMpt()" class="btn-primary">Create MPT</button>
-                              } @else if (activeTab === 'lock') {
-                              <button type="button" (click)="setMptLockUnlock('Y')" class="btn-primary">Unauthorize MPT</button>
-                              } @else if (activeTab === 'unlock') {
-                              <button type="button" (click)="setMptLockUnlock('N')" class="btn-primary">Unauthorize MPT</button>
+                              <button type="button" (click)="sendMpt()" class="btn-primary">Send MPT</button>
+                              } @else if (activeTab === 'lock' || activeTab === 'unlock') {
+                              <button type="button" (click)="setMptLockUnlock('Y')" class="btn-primary">Lock MPT</button>
+                              <button type="button" (click)="setMptLockUnlock('N')" class="btn-primary">Unlock MPT</button>
+                              } @else if (activeTab === 'clawback') {
+                              <button type="button" (click)="clawbackMpt()" class="btn-primary">Clawback MPT</button>
                               } @else {
-                              <button type="button" (click)="destroyMpt()" class="btn-primary">Unauthorize MPT</button>
+                              <button type="button" (click)="destroyMpt()" class="btn-primary">Destroy MPT</button>
                               }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                          </div>
@@ -755,340 +849,3 @@
           </div>
      </div>
 </div>
-
-<!-- <div id="navbar-container">
-     <app-navbar></app-navbar>
-</div>
-<form id="theForm">
-     <app-app-wallet-dynamic-input (walletListChange)="onWalletListChange($event)" (transactionResult)="handleTransactionResult($event)"></app-app-wallet-dynamic-input>
-
-     <fieldset>
-          <legend style="color: white">Transaction Information</legend>
-
-                         <div class="top-section-right">
-                              <table id="xrpDetails">
-                                   <th></th>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Asset Scale for MPT token.">
-                                                  <label for="assetScaleField">Asset Scale</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="assetScaleField" size="41" placeholder="Value must be between 1 and 15" [(ngModel)]="assetScaleField" name="assetScaleField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Number of MPT tokens to issue.">
-                                                  <label for="tokenCountField">Maximum Tokens</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="tokenCountField" size="41" [(ngModel)]="tokenCountField" name="tokenCountField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Web identity.">
-                                                  <label for="transferFeeField">Transfer Fee</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="transferFeeField" size="41" placeholder="This will be a percentage" [(ngModel)]="transferFeeField" name="transferFeeField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Optional Memo to be sent with the payment.">
-                                                  <label for="metaDataField">Token Meta Data</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <textarea style="width: 300px; height: 200px" class="memoField" id="metaDataField" placeholder="Token Meta Data" [(ngModel)]="metaDataField" name="metaDataField"></textarea>
-                                        </td>
-                                   </tr>
-                              </table>
-                         </div>
-                    </div>
-
-                    <div class="spinner-container">
-                         <div id="spinner" [ngStyle]="{ display: spinner ? 'block' : 'none' }" class="spinner"></div>
-                         <div *ngIf="spinner" class="spinner-text">{{ spinnerMessage || 'Loading...' }}</div>
-                    </div>
-
-                    <div class="button-container">
-                         <table style="text-align: left; width: 100%">
-                              <th></th>
-                              <tr style="vertical-align: top">
-                                   <td colspan="2">
-                                        <button type="button" (click)="getMptDetails()">Get MPT Info</button>
-                                        <button type="button" (click)="createMpt()">Create MPT</button>
-                                        <button type="button" (click)="clearFields(true)">Clear Fields</button>
-                                   </td>
-                              </tr>
-                              <tr style="vertical-align: top">
-                                   <td colspan="2">
-                                        <div #resultField id="resultField" [attr.contenteditable]="isEditable" [ngClass]="{ error: isError, success: isSuccess }" class="result-container" [innerHTML]="result | sanitizeHtml"></div>
-                                   </td>
-                              </tr>
-                         </table>
-                    </div>
-               </div>
-
-               <div class="right-section">
-                    <table id="flags">
-                         <th></th>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Set MPT Flags.">
-                                        <label>MPT Flags</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isMptFlagModeEnabled" [(ngModel)]="isMptFlagModeEnabled" name="isMptFlagModeEnabled" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isMptFlagModeEnabled"></label>
-                              </td>
-                         </tr>
-                         <tr class="multisignAddressClass" *ngIf="isMptFlagModeEnabled">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Requires a destination tag for incoming payments">
-                                        <label for="isClawback">Can Clawback</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <label class="switch">
-                                        <input type="checkbox" id="isClawback" [(ngModel)]="flags.isClawback" name="isClawback" />
-                                        <span class="slider round"></span>
-                                   </label>
-                              </td>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Requires authorization">
-                                        <label for="isLock">Can Lock</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <label class="switch">
-                                        <input type="checkbox" id="isLock" [(ngModel)]="flags.isLock" name="isLock" />
-                                        <span class="slider round"></span>
-                                   </label>
-                              </td>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Discourages incoming XRP payments (not enforced)">
-                                        <label for="isRequireAuth">Require Auth</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <label class="switch">
-                                        <input type="checkbox" id="isRequireAuth" [(ngModel)]="flags.isRequireAuth" name="isRequireAuth" />
-                                        <span class="slider round"></span>
-                                   </label>
-                              </td>
-                         </tr>
-                         <tr class="multisignAddressClass" *ngIf="isMptFlagModeEnabled">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Disables the master key pair">
-                                        <label for="isTransferable">Can Transfer</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <label class="switch">
-                                        <input type="checkbox" id="isTransferable" [(ngModel)]="flags.isTransferable" name="isTransferable" />
-                                        <span class="slider round"></span>
-                                   </label>
-                              </td>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Prevents freezing trust lines">
-                                        <label for="isTradable">Can Trade</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <label class="switch">
-                                        <input type="checkbox" id="isTradable" [(ngModel)]="flags.isTradable" name="isTradable" />
-                                        <span class="slider round"></span>
-                                   </label>
-                              </td>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Freezes all trust lines">
-                                        <label for="isEscrow">Can Escrow</label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <label class="switch">
-                                        <input type="checkbox" id="isEscrow" [(ngModel)]="flags.isEscrow" name="isEscrow" />
-                                        <span class="slider round"></span>
-                                   </label>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Add memo to transaction.">
-                                        <label>Memo</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isMemoEnabled" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isMemoEnabled"></label>
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isMemoEnabled">
-                              <td>
-                                   <label for="memoField"></label>
-                              </td>
-                              <td>
-                                   <textarea class="memoField" style="width: 300px; height: 100px" id="memoField" placeholder="Seperate multiple memos by a comma." [(ngModel)]="memoField" name="memoField"></textarea>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td></td>
-                              <td *ngIf="masterKeyDisabled">
-                                   <span [style.color]="'red'">Master Key is disabled. Use multi-sign or regular key to sign transactions.</span>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to update add Multi-Sign Address">
-                                        <span [ngStyle]="{'color': multiSigningEnabled ? '#4CAF50' : 'white'}">Use Multi-Sign Address</span>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isMultiSignAddressData" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="isMultiSignAddressData" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isMultiSignAddressData"></label>
-                              </td>
-                         </tr>
-                         <tr *ngIf="useMultiSign">
-                              <td></td>
-                              <td>
-                                   <fieldset style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; width: fit-content">
-                                        <table style="border-collapse: collapse">
-                                             <tr class="multisignAddressClass" *ngIf="useMultiSign">
-                                                  <td>
-                                                       <span class="tooltip" tooltip-data="Comma-separated list of signer addresses (must be in the account's SignerList)">
-                                                            <label for="multiSignAddress">Signers</label>
-                                                       </span>
-                                                  </td>
-                                                  <td>
-                                                       <textarea class="memoField" style="width: 280px; height: 100px" id="multiSignAddress" placeholder="Comma-separated list of signer addresses" [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                                                  </td>
-                                             </tr>
-                                             <tr class="multisignAddressClass" *ngIf="useMultiSign">
-                                                  <td>
-                                                       <span class="tooltip" tooltip-data="Comma-separated list of signer seeds (must correspond to signer addresses)">
-                                                            <label for="multiSignSeeds">Seeds</label>
-                                                       </span>
-                                                  </td>
-                                                  <td>
-                                                       <textarea class="memoField" style="width: 280px; height: 100px" id="multiSignSeeds" placeholder="Comma-separated list of signer seeds" [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                                                  </td>
-                                             </tr>
-                                             <tr class="multisignAddressClass" *ngIf="useMultiSign">
-                                                  <td>
-                                                       <span class="tooltip" tooltip-data="Quorum amount for multi sign.">
-                                                            <label for="quorum">Quorum</label>
-                                                       </span>
-                                                  </td>
-                                                  <td>
-                                                       <input type="text" id="signerQuorumField" style="width: 50px; height: 28px" [(ngModel)]="signerQuorum" (ngModelChange)="validateQuorum()" name="signerQuorumField" readonly />
-                                                  </td>
-                                             </tr>
-                                        </table>
-                                   </fieldset>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to use Regular Key Address">
-                                        <label [ngStyle]="{'color': regularKeySigningEnabled ? '#4CAF50' : 'white'}">Use Regular Key</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isRegularKeyAddressData" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddressData" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isRegularKeyAddressData"></label>
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isRegularKeyAddress">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Regular Key Address to sign the transaction">
-                                        <label for="regularKeyAddress"></label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <input type="text" id="regularKeyAddress" size="41" id="regularKeyAddress" placeholder="Enter Regular Key Address" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isRegularKeyAddress">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Regular Key Seed to sign the transaction">
-                                        <label for="regularKeySeed"></label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <input type="text" id="regularKeySeed" size="41" id="regularKeySeed" placeholder="Enter Regular Key Seed" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to use a ticket sequence">
-                                        <label>Use Ticket Sequence</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isTicketEnabled" [(ngModel)]="isTicket" (ngModelChange)="toggleTicketSequence()" name="isTicketEnabled" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isTicketEnabled"></label>
-                              </td>
-                         </tr>
-                         <tr class="" *ngIf="isTicket">
-                              <td>
-                                   <span class="tooltip" tooltip-data="Enter ticket sequence to use for currently selected account">
-                                        <label for="ticketSequence"></label>
-                                   </span>
-                              </td>
-                              <td>
-                                   <div *ngIf="multiSelectMode; else singleSelect">
-                                        <select class="timeUnit" [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                             <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
-                                        </select>
-                                   </div>
-
-                                   <ng-template #singleSelect>
-                                        <select class="timeUnit" [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                             <option value="" disabled>Select a ticket</option>
-                                             <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
-                                        </select>
-                                   </ng-template>
-                              </td>
-                         </tr>
-                         <tr>
-                              <td>
-                                   <span class="tooltip" tooltip-data="Check this to simulate a send xrp transaction">
-                                        <label>Simulate Transaction</label>
-                                   </span>
-                              </td>
-                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                   <label class="switch">
-                                        <input type="checkbox" id="isSimulateEnabled" [(ngModel)]="isSimulateEnabled" (ngModelChange)="toggleTicketSequence()" name="isSimulateEnabled" />
-                                        <span class="slider round"></span>
-                                   </label>
-                                   <label for="isSimulateEnabled"></label>
-                              </td>
-                         </tr>
-                    </table>
-               </div>
-          </div>
-     </fieldset>
-</form> -->

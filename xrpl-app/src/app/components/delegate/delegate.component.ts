@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, NgZone, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -22,6 +22,8 @@ import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
+import { TemplatePortal } from '@angular/cdk/portal';
+import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -29,6 +31,7 @@ interface ValidationInputs {
      senderAddress?: string;
      accountInfo?: any;
      seed?: string;
+     formattedDestination?: any;
      destination?: string;
      amount?: string;
      sequence?: string;
@@ -88,6 +91,9 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
      @ViewChild('signers') signersRef!: ElementRef<HTMLTextAreaElement>;
      @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
      @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
+     private overlayRef: OverlayRef | null = null;
      private readonly injector = inject(Injector);
      selectedTickets: string[] = [];
      selectedSingleTicket: string = '';
@@ -114,8 +120,13 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
      rightActions: any;
      masterKeyDisabled: boolean = false;
      memoField: string = '';
-     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      destinations: { name?: string; address: string }[] = [];
+     customDestinations: { name?: string; address: string }[] = [];
+     showDropdown = false;
+     dropdownOpen = false;
+     filteredDestinations: { name?: string; address: string }[] = [];
+     highlightedIndex = -1;
+     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      wallets: Wallet[] = [];
      selectedWalletIndex: number = 0;
      currentWallet: Wallet = {
@@ -130,12 +141,15 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
      };
      showSecret: boolean = false;
      environment: string = '';
-     activeTab = 'delegate'; // default
+     activeTab: string = 'delegate'; // default
      encryptionType: string = '';
      hasWallets: boolean = true;
+     createdDelegations: boolean = true;
+     existingDelegations: any = [];
      url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
+     filterQuery: string = '';
 
      constructor(
           private readonly xrplService: XrplService,
@@ -149,7 +163,9 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           public downloadUtilService: DownloadUtilService,
           public copyUtilService: CopyUtilService,
           private walletDataService: WalletDataService,
-          private validationService: ValidationService
+          private validationService: ValidationService,
+          private overlay: Overlay,
+          private viewContainerRef: ViewContainerRef
      ) {}
 
      ngOnInit() {
@@ -172,6 +188,11 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                     return;
                }
           });
+
+          // Load custom destinations from storage
+          const storedCustoms = this.storageService.get('customDestinations');
+          this.customDestinations = storedCustoms ? JSON.parse(storedCustoms) : [];
+          this.updateDestinations();
      }
 
      ngAfterViewInit() {
@@ -337,6 +358,10 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           }
      }
 
+     toggleCreatedDelegations() {
+          this.createdDelegations = !this.createdDelegations;
+     }
+
      validateQuorum() {
           const totalWeight = this.signers.reduce((sum, s) => sum + (s.weight || 0), 0);
           if (this.signerQuorum > totalWeight) {
@@ -440,6 +465,8 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                if (errors.length > 0) {
                     return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
                }
+
+               this.getExistingDelegations(accountObjects, wallet.classicAddress);
 
                this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
                this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
@@ -567,12 +594,15 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                this.utilsService.logAccountInfoObjects(accountInfo, null);
                this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-               inputs.accountInfo = accountInfo;
+               const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
 
-               // const errors = await this.validateInputs(inputs, 'delegateActions');
-               // if (errors.length > 0) {
-               //      return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
-               // }
+               inputs.accountInfo = accountInfo;
+               inputs.formattedDestination = formattedDestination.address;
+
+               const errors = await this.validationService.validate('DelegateActions', { inputs, client, accountInfo, currentLedger, serverInfo });
+               if (errors.length > 0) {
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+               }
 
                let permissions: { Permission: { PermissionValue: string } }[] = [];
                if (delegate === 'clear') {
@@ -600,7 +630,7 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                const delegateSetTx: xrpl.DelegateSet = {
                     TransactionType: 'DelegateSet',
                     Account: wallet.classicAddress,
-                    Authorize: this.destinationField,
+                    Authorize: formattedDestination.address,
                     Permissions: permissions,
                     Fee: fee,
                     LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
@@ -660,6 +690,16 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
 
+                    // Add new destination if valid and not already present
+                    if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
+                         this.customDestinations.push({
+                              name: `Custom ${this.customDestinations.length + 1}`,
+                              address: this.destinationField,
+                         });
+                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+                         this.updateDestinations();
+                    }
+
                     setTimeout(async () => {
                          try {
                               this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
@@ -681,6 +721,24 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving delegateActions in ${this.executionTime}ms`);
           }
+     }
+
+     private getExistingDelegations(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
+          this.existingDelegations = (checkObjects.result.account_objects ?? [])
+               .filter((obj: any) => obj.LedgerEntryType === 'Credential' && obj.Issuer === sender)
+               .map((obj: any) => {
+                    return {
+                         index: obj.index,
+                         // CredentialType: obj.CredentialType ? this.decodeHex(obj.CredentialType) : 'Unknown Type',
+                         Expiration: obj.Expiration ? this.utilsService.fromRippleTime(obj.Expiration).est : 'N/A',
+                         Issuer: obj.Issuer,
+                         Subject: obj.Subject,
+                         // URI: this.decodeHex(obj.URI),
+                         Flags: this.utilsService.getCredentialStatus(obj.Flags),
+                    };
+               })
+               .sort((a, b) => a.Expiration.localeCompare(b.Expiration));
+          this.utilsService.logObjects('existingDelegations', this.existingDelegations);
      }
 
      private async setTxOptionalFields(client: xrpl.Client, delegateSetTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
@@ -845,10 +903,11 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
      }
 
      updateDestinations() {
-          this.destinations = this.wallets.map(w => ({ name: w.name, address: w.address }));
+          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
           if (this.destinations.length > 0 && !this.destinationField) {
-               this.destinationField = this.destinations[0].address;
+               // this.destinationField = this.destinations[0].address;
           }
+          this.storageService.set('destinations', this.destinations);
           this.ensureDefaultNotSelected();
      }
 
@@ -857,7 +916,7 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           if (currentAddress && this.destinations.length > 0) {
                if (!this.destinationField || this.destinationField === currentAddress) {
                     const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
+                    // this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
                }
           }
           this.cdr.detectChanges();
@@ -904,12 +963,19 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           );
      }
 
+     copyDelegateId(checkId: string) {
+          navigator.clipboard.writeText(checkId).then(() => {
+               this.ui.showToastMessage('Delegate Id copied!');
+          });
+     }
+
      public get infoMessage(): string | null {
           const tabConfig = {
-               send: {
-                    message: '',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: false,
+               delegate: {
+                    delegations: this.existingDelegations,
+                    getDescription: (count: number) => (count === 1 ? 'delegation' : 'delegations'),
+                    dynamicText: 'created', // Add dynamic text here
+                    showLink: true,
                },
           };
 
@@ -917,12 +983,19 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           if (!config) return null;
 
           const walletName = this.currentWallet.name || 'selected';
+          const count = config.delegations.length ? config.delegations.length : 0;
 
           // Build the dynamic text part (with space if text exists)
           const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
 
-          // return `The <code>${walletName}</code> wallet has ${dynamicText} ${config.message}`;
-          return null;
+          let message = `The <code>${walletName}</code> wallet has ${dynamicText}${count} ${config.getDescription(count)}.`;
+
+          // if (config.showLink && count > 0) {
+          //      const link = `${this.url}account/${this.currentWallet.address}/checks`;
+          //      message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View checks on XRPL Win</a>`;
+          // }
+
+          return message;
      }
 
      autoResize(textarea: HTMLTextAreaElement) {
@@ -951,5 +1024,106 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
 
      clearDelegateActions() {
           this.selected.clear();
+     }
+
+     openDropdown() {
+          if (this.overlayRef?.hasAttached()) return;
+
+          this.filteredDestinations = [...this.destinations];
+          this.highlightedIndex = 0;
+
+          const positionStrategy = this.overlay
+               .position()
+               .flexibleConnectedTo(this.dropdownOrigin)
+               .withPositions([
+                    {
+                         originX: 'start',
+                         originY: 'bottom',
+                         overlayX: 'start',
+                         overlayY: 'top',
+                         offsetY: 8,
+                    },
+               ])
+               .withPush(false);
+
+          this.overlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy,
+               scrollStrategy: this.overlay.scrollStrategies.close(),
+          });
+
+          const portal = new TemplatePortal(this.dropdownTemplate, this.viewContainerRef);
+          this.overlayRef.attach(portal);
+
+          // Close on backdrop click
+          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
+          this.dropdownOpen = true;
+     }
+
+     closeDropdown() {
+          if (this.overlayRef) {
+               this.overlayRef.detach();
+               this.overlayRef = null;
+          }
+          this.dropdownOpen = false;
+     }
+
+     toggleDropdown() {
+          this.overlayRef?.hasAttached() ? this.closeDropdown() : this.openDropdown();
+     }
+
+     onDestinationInput() {
+          this.filterQuery = this.destinationField; // Now filter based on typed value
+          this.filterDestinations();
+          this.showDropdown = true;
+     }
+
+     filterDestinations() {
+          const query = this.filterQuery.trim().toLowerCase();
+
+          if (query === '') {
+               this.filteredDestinations = [...this.destinations];
+          } else {
+               this.filteredDestinations = this.destinations.filter(d => d.address.toLowerCase().includes(query) || (d.name && d.name.toLowerCase().includes(query)));
+          }
+
+          this.highlightedIndex = this.filteredDestinations.length > 0 ? 0 : -1;
+     }
+
+     selectDestination(address: string) {
+          if (address === this.currentWallet.address) {
+               return; // Don't allow selecting self
+          }
+
+          // Find the destination object by address
+          const dest = this.destinations.find(d => d.address === address);
+
+          if (dest) {
+               const first = address.slice(0, 6);
+               const last = address.slice(-6);
+               this.destinationField = `${dest.name} (${first}...${last})`;
+          } else {
+               // Fallback (should not happen)
+               this.destinationField = `${address.slice(0, 6)}...${address.slice(-6)}`;
+          }
+
+          this.closeDropdown();
+          this.cdr.detectChanges();
+     }
+
+     onArrowDown() {
+          if (!this.showDropdown || this.filteredDestinations.length === 0) return;
+          this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredDestinations.length;
+     }
+
+     selectHighlighted() {
+          if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
+               const addr = this.filteredDestinations[this.highlightedIndex].address;
+               if (addr !== this.currentWallet.address) {
+                    this.destinationField = addr;
+                    this.closeDropdown(); // Also close on Enter
+               }
+          }
      }
 }

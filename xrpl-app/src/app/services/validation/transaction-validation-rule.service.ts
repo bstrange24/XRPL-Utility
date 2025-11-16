@@ -129,6 +129,24 @@ export class ValidationService {
           };
      }
 
+     private requireDestinationTagIfNeededNewDestination(): ValidatorFn {
+          return async ctx => {
+               const dest = ctx.inputs['formattedDestination'];
+               if (!dest || !ctx.client) return null;
+
+               try {
+                    const info = await this.xrplService.getAccountInfo(ctx.client, dest as string, 'validated', '');
+                    if (info.result.account_flags?.requireDestinationTag && !ctx.inputs['destinationTag']) {
+                         return 'Destination account requires a destination tag';
+                    }
+               } catch (err) {
+                    console.warn('Could not check destination tag requirement:', err);
+                    // Don't block transaction — just warn
+               }
+               return null;
+          };
+     }
+
      private shouldSkipNumericValidation = (value: string | undefined): boolean => {
           return value === undefined || value === null || value.trim() === '';
      };
@@ -251,23 +269,29 @@ export class ValidationService {
           // Payment
           this.registerRule({
                transactionType: 'Payment',
-               requiredFields: ['amount', 'destination'],
+               requiredFields: ['amount', 'formattedDestination'],
                validators: [
                     this.requireField('amount'),
-                    this.requireField('destination'),
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
-                    this.requireDestinationTagIfNeeded(),
+                    this.requireField('formattedDestination'),
+                    this.isValidAddress('formattedDestination'),
+                    this.notSelf('senderAddress', 'formattedDestination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
                     this.optionalNumeric('destinationTag', 0),
                     this.optionalNumeric('sourceTag', 0),
                     this.invoiceId(),
-                    this.requireDestinationTagIfNeeded(),
                     this.multiSign(),
                     ctx => {
                          const amount = Number(ctx.inputs['amount']);
                          return isNaN(amount) || amount <= 0 ? 'Amount must be a positive number' : null;
                     },
                ],
+          });
+
+          // Delegate Actions
+          this.registerRule({
+               transactionType: 'DelegateActions',
+               requiredFields: ['formattedDestination'],
+               validators: [this.requireField('formattedDestination'), this.isValidAddress('formattedDestination'), this.notSelf('senderAddress', 'formattedDestination'), this.requireDestinationTagIfNeededNewDestination(), this.invoiceId(), this.multiSign()],
           });
 
           // TrustSet

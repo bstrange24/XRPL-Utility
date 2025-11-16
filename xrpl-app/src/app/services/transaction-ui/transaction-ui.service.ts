@@ -4,6 +4,7 @@ import { Injectable } from '@angular/core';
 export class TransactionUiService {
      isSimulateEnabled = false;
      txHash: string | null = null;
+     txHashes: string[] = [];
      isError: boolean = false;
      isSuccess: boolean = false;
      result: string = '';
@@ -26,12 +27,14 @@ export class TransactionUiService {
 
           // Always clear hash when switching modes
           this.txHash = null;
+          this.txHashes = [];
 
           // Optional: clean up previous messages
           this.infoMessage = null;
           this.successMessage = null;
           this.warningMessage = null;
           this.errorMessage = null;
+          this.clearMessages();
      }
 
      clearMessages() {
@@ -39,6 +42,7 @@ export class TransactionUiService {
           this.isError = false;
           this.isSuccess = false;
           this.txHash = '';
+          this.txHashes = [];
           this.txResult = [];
           this.paymentTx = [];
           this.successMessage = '';
