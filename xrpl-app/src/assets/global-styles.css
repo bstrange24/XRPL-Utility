@@ -1007,6 +1007,25 @@ input:focus+.slider {
      background: linear-gradient(135deg, rgba(238, 126, 126, 0.7), rgba(245, 19, 19, 0.7));
 }
 
+.btn-primary-orange {
+     flex: 1;
+     padding: 0.75rem;
+     font-weight: 500;
+     border: none;
+     border-radius: 10px;
+     cursor: pointer;
+     transition: 0.2s;
+}
+
+.btn-primary-orange {
+     background-color: #ff7f00;
+     background: linear-gradient(135deg, rgba(240, 182, 106, 0.7), rgba(245, 147, 0, 0.925));
+}
+
+.btn-primary-red:orange {
+     background-color: #ff7f00;
+     background: linear-gradient(135deg, rgba(240, 182, 106, 0.7), rgba(245, 147, 0, 0.925));
+}
 
 .btn-primary-blue {
      flex: 1;
@@ -2629,6 +2648,7 @@ app-root {
 
 .blue-button-submenu {
      background-color: #007bff;
+     background: linear-gradient(135deg, #4f8bfc 50%, #002cbb 100%);
      width: 40px;
      height: 40px;
      border-radius: 10px;
@@ -2653,6 +2673,18 @@ app-root {
      background-color: rgba(250, 44, 44, 0.7);
      background: linear-gradient(135deg, rgba(243, 150, 150, 0.7), rgba(245, 19, 19, 0.7));
      /* background-color: red; */
+     width: 40px;
+     height: 40px;
+     border-radius: 10px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     flex-shrink: 0;
+}
+
+.orange-button-submenu {
+     background-color: #ff7f00;
+     background: linear-gradient(135deg, rgba(240, 182, 106, 0.7), rgba(245, 147, 0, 0.925));
      width: 40px;
      height: 40px;
      border-radius: 10px;

@@ -374,11 +374,11 @@
                               <!-- Action buttons -->
                               <div class="button-row">
                                    @if (activeTab === 'set') {
-                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'#007bff','color':'white'}" (click)="setDid()" class="btn-secondary">Set DID</button>
+                                   <button type="button" class="btn-primary-blue" (click)="setDid()">Set DID</button>
                                    } @else if (activeTab === 'delete') {
-                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'red','color':'white'}" (click)="deleteDid()" class="btn-secondary">Delete DID</button>
+                                   <button type="button" class="btn-primary-red" (click)="deleteDid()">Delete DID</button>
                                    }
-                                   <button type="button" class="btn-primary" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                                   <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>
                          </div>
 

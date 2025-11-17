@@ -556,8 +556,20 @@
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'cancel' ? 'red' : activeTab === 'cash'   ? 'green' : '#007bff'}">{{ activeTab === 'cancel' ? 'Cancel Check' : activeTab === 'cash' ? 'Cash Check' : 'Create Check' }}</button>
-                                   <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                                   @switch (activeTab) {
+                                   <!-- create buttons -->
+                                   @case ('create') {
+                                   <button type="button" class="btn-primary-blue" (click)="sendCheck()">Create Check</button>
+                                   }
+                                   <!-- cash buttons -->
+                                   @case ('cash') {
+                                   <button type="button" class="btn-primary-green" (click)="cashCheck()">Cash Check</button>
+                                   }
+                                   <!-- cancel buttons -->
+                                   @case ('cancel') {
+                                   <button type="button" class="btn-primary-red" (click)="cancelCheck()">Cancel Check</button>
+                                   } }
+                                   <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>
 
                               <!-- Spinner -->

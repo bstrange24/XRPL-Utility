@@ -603,11 +603,21 @@
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   <button type="submit" class="btn-primary" [ngStyle]="{ 'background-color': activeTab === 'cancel' ? 'red' : activeTab === 'finish' ? 'green' : '#007bff'}">{{ activeTab === 'cancel' ? 'Cancel Escrow' : activeTab === 'finish' ? 'Finish Escrow' : 'Create Escrow' }}</button>
-                                   @if (activeTab === 'create') {
-                                   <button type="submit" class="btn-primary" [ngStyle]="{ 'background-color': 'green' }" (click)="getCondition(); $event.preventDefault();">Generate Condition</button>
+                                   @switch (activeTab) {
+                                   <!-- create buttons -->
+                                   @case ('create') {
+                                   <button type="button" class="btn-primary-blue" (click)="createConditionalEscrow()">Create Escrow</button>
+                                   <button type="button" class="btn-primary-green" (click)="getCondition(); $event.preventDefault();">Generate Condition</button>
                                    }
-                                   <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                                   <!-- finish buttons -->
+                                   @case ('finish') {
+                                   <button type="button" class="btn-primary-green" (click)="finishEscrow()">Finish Escrow</button>
+                                   }
+                                   <!-- claim buttons -->
+                                   @case ('cancel') {
+                                   <button type="button" class="btn-primary-red" (click)="cancelEscrow()">Cancel Escrow</button>
+                                   } }
+                                   <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>
                          </div>
 

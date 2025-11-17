@@ -276,12 +276,8 @@
                                                   }
                                              </select>
                                         </div> -->
-                                        }
-                                   </div>
 
-                                   <!-- Credential Type-->
-                                   <div class="form-row">
-                                        @if (activeTab === 'set') {
+                                        <!-- Credential Type-->
                                         <div class="form-group">
                                              <label>Credential Type</label>
                                              <input type="text" [(ngModel)]="permissionedDomainObject.credential_type" name="credential_type" />
@@ -415,11 +411,11 @@
                               <!-- Action buttons -->
                               <div class="button-row">
                                    @if (activeTab === 'set') {
-                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'#007bff','color':'white'}" (click)="setPermissionedDomain()" class="btn-secondary">Set Permissioned Domain</button>
+                                   <button type="button" class="btn-primary-blue" (click)="setPermissionedDomain()">Set Permissioned Domain</button>
                                    } @else if (activeTab === 'delete') {
-                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'red','color':'white'}" (click)="deletePermissionedDomain()" class="btn-secondary">Delete Permissioned Domain</button>
+                                   <button type="button" class="btn-primary-red" (click)="deletePermissionedDomain()">Delete Permissioned Domain</button>
                                    }
-                                   <button type="button" class="btn-primary" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                               </div>
                          </div>
 

@@ -572,9 +572,25 @@
 
                          <!-- Action buttons -->
                          <div class="button-row">
-                              <button type="submit" class="btn-primary" [ngStyle]="{'background-color': activeTab === 'close' ? 'red' : activeTab === 'claim' || activeTab === 'fund' ? 'green' : '#007bff'}">{{ activeTab === 'close' ? 'Close Channel' : activeTab === 'claim' ? 'Claim/Renew Channel' : activeTab === 'fund' ? 'Fund Channel' : 'Create Channel' }}</button>
-                              <button type="button" *ngIf="activeTab === 'claim'" class="btn-primary" (click)="generateCreatorClaimSignature()">Generate Claim Signature</button>
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                              @switch (activeTab) {
+                              <!-- create buttons -->
+                              @case ('create') {
+                              <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()">Create Channel</button>
+                              }
+                              <!-- close buttons -->
+                              @case ('close') {
+                              <button type="button" class="btn-primary-red" (click)="handlePaymentChannelAction()">Close Channel</button>
+                              }
+                              <!-- claim buttons -->
+                              @case ('claim') {
+                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()">Claim/Renew Channel</button>
+                              <button type="button" class="btn-primary-blue" (click)="generateCreatorClaimSignature()">Generate Claim Signature</button>
+                              }
+                              <!-- fund buttons -->
+                              @case ('fund') {
+                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()">Fund Channel</button>
+                              } }
+                              <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>
 
                          <!-- Spinner -->

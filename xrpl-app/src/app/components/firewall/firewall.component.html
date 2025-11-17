@@ -175,7 +175,7 @@
                @if (activeTab === 'authorize') {
                <div>
                     <div class="submenu-info-text">
-                         <div class="verify-button-submenu">
+                         <div class="orange-button-submenu">
                               <lucide-angular name="shield-ellipsis" size="27" class="text-red-600" style="padding-top: 5px"></lucide-angular>
                          </div>
                          <div>
@@ -490,13 +490,13 @@
                                    @if (activeTab === 'create') {
                                    <button type="button" class="btn-primary-blue" (click)="createFirewall()">Create Firewall</button>
                                    } @else if (activeTab === 'modify') {
-                                   <button type="button" (click)="modifyFirewall()">Modify Firewall</button>
+                                   <button type="button" class="btn-primary-blue" (click)="modifyFirewall()">Modify Firewall</button>
                                    } @else if (activeTab === 'authorize') {
-                                   <button type="button" class="btn-primary" [ngStyle]="{ 'background-color':'#ff7f00','color':'white'}" (click)="authorizeFirewall('Y')" class="btn-secondary">Authorize Firewall</button>
+                                   <button type="button" class="btn-primary-orange" (click)="authorizeFirewall('Y')">Authorize Firewall</button>
                                    } @else if (activeTab === 'unauthorize') {
-                                   <button type="button" (click)="authorizeFirewall('N')">Unauthorize Firewall</button>
+                                   <button type="button" class="btn-primary-green" (click)="authorizeFirewall('N')">Unauthorize Firewall</button>
                                    } @else if (activeTab === 'delete') {
-                                   <button type="button" class="btn-primary-red" [ngStyle]="{ 'background-color':'red','color':'white'}" (click)="deleteFirewall()" class="btn-secondary">Delete Firewall</button>
+                                   <button type="button" class="btn-primary-red" (click)="deleteFirewall()">Delete Firewall</button>
                                    }
                                    <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>
