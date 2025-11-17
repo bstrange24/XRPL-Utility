@@ -24,7 +24,9 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
+import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
+import { DropdownItem } from '../../models/dropdown-item.model';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -84,7 +86,6 @@ export class MptComponent implements OnInit, AfterViewInit {
      private overlayRef: OverlayRef | null = null;
      private readonly injector = inject(Injector);
      result: string = '';
-     isSuccess: boolean = false;
      ticketSequence: string = '';
      isTicket: boolean = false;
      isTicketEnabled: boolean = false;
@@ -115,7 +116,6 @@ export class MptComponent implements OnInit, AfterViewInit {
      multiSigningEnabled: boolean = false;
      regularKeySigningEnabled: boolean = false;
      amountField: string = '';
-     isSimulateEnabled: boolean = false;
      masterKeyDisabled: boolean = false;
      totalFlagsValue = 0;
      totalFlagsHex = '0x0';
@@ -143,6 +143,7 @@ export class MptComponent implements OnInit, AfterViewInit {
      destinations: { name?: string; address: string }[] = [];
      customDestinations: { name?: string; address: string }[] = [];
      showDropdown = false;
+     dropdownOpen = false;
      filteredDestinations: { name?: string; address: string }[] = [];
      highlightedIndex = -1;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
@@ -186,7 +187,8 @@ export class MptComponent implements OnInit, AfterViewInit {
           private walletDataService: WalletDataService,
           private validationService: ValidationService,
           private overlay: Overlay,
-          private viewContainerRef: ViewContainerRef
+          private viewContainerRef: ViewContainerRef,
+          private destinationDropdownService: DestinationDropdownService
      ) {}
 
      ngOnInit() {
@@ -211,6 +213,27 @@ export class MptComponent implements OnInit, AfterViewInit {
           const storedCustoms = this.storageService.get('customDestinations');
           this.customDestinations = storedCustoms ? JSON.parse(storedCustoms) : [];
           this.updateDestinations();
+
+          // Ensure service knows the list
+          this.destinationDropdownService.setItems(this.destinations);
+
+          // Subscribe to filtered list updates
+          this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
+               this.filteredDestinations = list;
+               // keep selection sane
+               this.highlightedIndex = list.length > 0 ? 0 : -1;
+               this.cdr.detectChanges();
+          });
+
+          // Subscribe to open/close state from service
+          this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
+               this.dropdownOpen = open;
+               if (open) {
+                    this.openDropdownInternal(); // create + attach overlay (component-owned)
+               } else {
+                    this.closeDropdownInternal(); // detach overlay (component-owned)
+               }
+          });
      }
 
      ngAfterViewInit() {
@@ -227,24 +250,6 @@ export class MptComponent implements OnInit, AfterViewInit {
      trackByWalletAddress(index: number, wallet: Wallet): string {
           return wallet.address;
      }
-
-     // onSubmit() {
-     //      if (this.activeTab === 'create') {
-     //           this.createMpt();
-     //      } else if (this.activeTab === 'authorize') {
-     //           this.authorizeMpt('Y');
-     //      } else if (this.activeTab === 'unauthorize') {
-     //           this.authorizeMpt('N');
-     //      } else if (this.activeTab === 'lock') {
-     //           this.setMptLockUnlock('Y');
-     //      } else if (this.activeTab === 'lock') {
-     //           this.setMptLockUnlock('N');
-     //      } else if (this.activeTab === 'destroy') {
-     //           this.destroyMpt();
-     //      } else {
-     //           this.sendMpt();
-     //      }
-     // }
 
      setTab(tab: string) {
           this.activeTab = tab;
@@ -1595,26 +1600,18 @@ export class MptComponent implements OnInit, AfterViewInit {
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
           if (this.destinations.length > 0 && !this.destinationField) {
-               this.destinationField = this.destinations[0].address;
+               // this.destinationField = this.destinations[0].address;
           }
           this.storageService.set('destinations', this.destinations);
           this.ensureDefaultNotSelected();
      }
-
-     // updateDestinations() {
-     //      this.destinations = this.wallets.map(w => ({ name: w.name, address: w.address }));
-     //      if (this.destinations.length > 0 && !this.destinationField) {
-     //           this.destinationField = this.destinations[0].address;
-     //      }
-     //      this.ensureDefaultNotSelected();
-     // }
 
      ensureDefaultNotSelected() {
           const currentAddress = this.currentWallet.address;
           if (currentAddress && this.destinations.length > 0) {
                if (!this.destinationField || this.destinationField === currentAddress) {
                     const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
+                    // this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
                }
           }
           this.cdr.detectChanges();
@@ -1934,11 +1931,38 @@ export class MptComponent implements OnInit, AfterViewInit {
      }
 
      openDropdown() {
+          // update service items (in case destinations changed)
+          this.destinationDropdownService.setItems(this.destinations);
+          // prepare filtered list
+          this.destinationDropdownService.filter(this.destinationField || '');
+          // tell service to open -> subscription above will attach overlay
+          this.destinationDropdownService.openDropdown();
+     }
+
+     // Called by outside click / programmatic close
+     closeDropdown() {
+          this.destinationDropdownService.closeDropdown();
+     }
+
+     // Called by chevron toggle
+     toggleDropdown() {
+          // make sure the service has current items first
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.toggleDropdown();
+     }
+
+     // Called on input typing
+     onDestinationInput() {
+          this.filterQuery = this.destinationField || '';
+          this.destinationDropdownService.filter(this.filterQuery);
+          this.destinationDropdownService.openDropdown(); // ensure open while typing
+     }
+
+     private openDropdownInternal() {
+          // If already attached, do nothing
           if (this.overlayRef?.hasAttached()) return;
 
-          this.filteredDestinations = [...this.destinations];
-          this.highlightedIndex = 0;
-
+          // position strategy (your existing logic)
           const positionStrategy = this.overlay
                .position()
                .flexibleConnectedTo(this.dropdownOrigin)
@@ -1964,24 +1988,16 @@ export class MptComponent implements OnInit, AfterViewInit {
           this.overlayRef.attach(portal);
 
           // Close on backdrop click
-          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
+          this.overlayRef.backdropClick().subscribe(() => {
+               this.destinationDropdownService.closeDropdown(); // close via service so subscribers sync
+          });
      }
 
-     closeDropdown() {
+     private closeDropdownInternal() {
           if (this.overlayRef) {
                this.overlayRef.detach();
                this.overlayRef = null;
           }
-     }
-
-     toggleDropdown() {
-          this.overlayRef?.hasAttached() ? this.closeDropdown() : this.openDropdown();
-     }
-
-     onDestinationInput() {
-          this.filterQuery = this.destinationField; // Now filter based on typed value
-          this.filterDestinations();
-          this.showDropdown = true;
      }
 
      filterDestinations() {
@@ -1997,14 +2013,19 @@ export class MptComponent implements OnInit, AfterViewInit {
      }
 
      selectDestination(address: string) {
-          if (address === this.currentWallet.address) {
-               // Don't allow selecting self — optional: add toast or just ignore
-               return;
+          if (address === this.currentWallet.address) return;
+
+          const dest = this.destinations.find(d => d.address === address);
+          if (dest) {
+               // show "Name (rABC12...DEF456)"
+               this.destinationField = this.destinationDropdownService.formatDisplay(dest);
+          } else {
+               this.destinationField = `${address.slice(0, 6)}...${address.slice(-6)}`;
           }
 
-          this.destinationField = address;
-          this.closeDropdown(); // THIS LINE IS THE MAGIC
-          this.cdr.detectChanges(); // Optional but safe
+          // close via service so subscribers remain in sync
+          this.destinationDropdownService.closeDropdown();
+          this.cdr.detectChanges();
      }
 
      onArrowDown() {

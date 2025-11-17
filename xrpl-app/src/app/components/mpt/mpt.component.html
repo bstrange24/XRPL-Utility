@@ -121,11 +121,12 @@
                          Auth/Unauth MPT
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'send'" (click)="setTab('send')">
-                         <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon>
+                         <ng-icon name="heroBanknotes" size="20" class="text-red-600"></ng-icon>
                          Send MPT
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'lock'" (click)="setTab('lock')">
-                         <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon>
+                         <!-- <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon> -->
+                         <ng-icon name="heroLockOpen" size="20" class="text-red-600"></ng-icon>
                          Lock/Unlock MPT
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'clawback'" (click)="setTab('clawback')">
@@ -173,7 +174,8 @@
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
-                              <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon>
+                              <!-- <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon> -->
+                              <ng-icon name="heroBanknotes" size="27" class="text-red-600"></ng-icon>
                          </div>
                          <div>
                               <h2 class="submenu-info-main-text">Send MPT</h2>
@@ -187,8 +189,8 @@
                @if (activeTab === 'lock' || activeTab === 'unlock') {
                <div>
                     <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon>
+                         <div class="blue-button-submenu">
+                              <ng-icon name="heroLockOpen" size="27" class="text-red-600"></ng-icon>
                          </div>
                          <div>
                               <h2 class="submenu-info-main-text">Lock/Unlock MPT</h2>
@@ -409,22 +411,15 @@
                                                             <span class="self-badge">Current Account</span>
                                                             }
                                                        </div>
-                                                       <!-- <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div> -->
-                                                       <div class="item-address">{{ dest.address }}</div>
+                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
+                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
                                                   </div>
                                                   } @empty {
                                                   <div class="combobox-empty">No matching addresses</div>
                                                   }
                                              </div>
                                         </ng-template>
-                                        <!-- <div class="form-group">
-                                             <label>Destination</label>
-                                             <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
-                                                  @for (dest of destinations; track dest.address; let i = $index) {
-                                                  <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
-                                                  }
-                                             </select>
-                                        </div> -->
+
                                         <div class="form-group">
                                              <label>MPT Issuance ID</label>
                                              <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
@@ -472,22 +467,14 @@
                                                             <span class="self-badge">Current Account</span>
                                                             }
                                                        </div>
-                                                       <!-- <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div> -->
-                                                       <div class="item-address">{{ dest.address }}</div>
+                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
+                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
                                                   </div>
                                                   } @empty {
                                                   <div class="combobox-empty">No matching addresses</div>
                                                   }
                                              </div>
                                         </ng-template>
-                                        <!-- <div class="form-group">
-                                             <label>Destination</label>
-                                             <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
-                                                  @for (dest of destinations; track dest.address; let i = $index) {
-                                                  <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
-                                                  }
-                                             </select>
-                                        </div> -->
                                    </div>
                                    }
 
@@ -511,12 +498,34 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Destination</label>
-                                             <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
-                                                  @for (dest of destinations; track dest.address; let i = $index) {
-                                                  <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
-                                                  }
-                                             </select>
+
+                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
+                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
+
+                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
+                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                                                  </button>
+                                             </div>
                                         </div>
+
+                                        <!-- Dropdown template -->
+                                        <ng-template #dropdownTemplate>
+                                             <div class="combobox-dropdown-overlay">
+                                                  @for (dest of filteredDestinations; track dest.address) {
+                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
+                                                       <div class="item-name">
+                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
+                                                            <span class="self-badge">Current Account</span>
+                                                            }
+                                                       </div>
+                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
+                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
+                                                  </div>
+                                                  } @empty {
+                                                  <div class="combobox-empty">No matching addresses</div>
+                                                  }
+                                             </div>
+                                        </ng-template>
                                    </div>
                                    }
                               </div>
@@ -541,7 +550,7 @@
                                                   <span class="flag-title">MPTCanLock</span>
                                              </div>
                                              <div class="flag-value">0x00000002 tfMPTCanLock</div>
-                                             <div class="flag-desc">If set, indicates that the MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way.</div>
+                                             <div class="flag-desc">The MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way.</div>
                                         </div>
                                         }
 
@@ -556,7 +565,7 @@
                                                   <span class="flag-title">MPTRequireAuth</span>
                                              </div>
                                              <div class="flag-value">0x00000004 tfMPTRequireAuth</div>
-                                             <div class="flag-desc">If set, indicates that individual holders must be authorized. This enables issuers to limit who can hold their assets.</div>
+                                             <div class="flag-desc">Individual holders must be authorized. This enables issuers to limit who can hold their assets.</div>
                                         </div>
                                         }
 
@@ -571,7 +580,7 @@
                                                   <span class="flag-title">MPTCanEscrow</span>
                                              </div>
                                              <div class="flag-value">0x00000008 tfMPTCanEscrow</div>
-                                             <div class="flag-desc">If set, indicates that individual holders can place their balances into an escrow.</div>
+                                             <div class="flag-desc">Individual holders can place their balances into an escrow.</div>
                                         </div>
                                         }
 
@@ -586,7 +595,7 @@
                                                   <span class="flag-title">MPTCanTrade</span>
                                              </div>
                                              <div class="flag-value">0x00000010 tfMPTCanTrade</div>
-                                             <div class="flag-desc">If set, indicates that individual holders can trade their balances using the XRP Ledger DEX or AMM.</div>
+                                             <div class="flag-desc">Individual holders can trade their balances using the XRP Ledger DEX or AMM.</div>
                                         </div>
                                         }
 
@@ -601,7 +610,7 @@
                                                   <span class="flag-title">MPTCanTransfer</span>
                                              </div>
                                              <div class="flag-value">0x00000020 tfMPTCanTransfer</div>
-                                             <div class="flag-desc">If set, indicates that tokens may be transferred to other accounts that are not the issuer.</div>
+                                             <div class="flag-desc">Tokens may be transferred to other accounts that are not the issuer.</div>
                                         </div>
                                         }
 
@@ -616,7 +625,7 @@
                                                   <span class="flag-title">MPTCanClawback</span>
                                              </div>
                                              <div class="flag-value">0x00000040 tfMPTCanClawback</div>
-                                             <div class="flag-desc">If set, indicates that the issuer may use the Clawback transaction to clawback value from individual holders.</div>
+                                             <div class="flag-desc">The issuer may use the Clawback transaction to clawback value from individual holders.</div>
                                         </div>
                                         }
 
@@ -747,21 +756,21 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if(activeTab === 'create') {
-                              <button type="button" (click)="createMpt()" class="btn-primary">Create MPT</button>
+                              <button type="button" (click)="createMpt()" class="btn-primary-blue">Create MPT</button>
                               } @else if (activeTab === 'authorize' || activeTab === 'unauthorize') {
-                              <button type="button" (click)="authorizeMpt('Y')" class="btn-primary">Authorize MPT</button>
-                              <button type="button" (click)="authorizeMpt('N')" class="btn-primary">Unauthorize MPT</button>
+                              <button type="button" (click)="authorizeMpt('Y')" class="btn-primary-orange">Authorize MPT</button>
+                              <button type="button" (click)="authorizeMpt('N')" class="btn-primary-blue">Unauthorize MPT</button>
                               } @else if (activeTab === 'send') {
-                              <button type="button" (click)="sendMpt()" class="btn-primary">Send MPT</button>
+                              <button type="button" (click)="sendMpt()" class="btn-primary-green">Send MPT</button>
                               } @else if (activeTab === 'lock' || activeTab === 'unlock') {
-                              <button type="button" (click)="setMptLockUnlock('Y')" class="btn-primary">Lock MPT</button>
-                              <button type="button" (click)="setMptLockUnlock('N')" class="btn-primary">Unlock MPT</button>
+                              <button type="button" (click)="setMptLockUnlock('Y')" class="btn-primary-orange">Lock MPT</button>
+                              <button type="button" (click)="setMptLockUnlock('N')" class="btn-primary-blue">Unlock MPT</button>
                               } @else if (activeTab === 'clawback') {
-                              <button type="button" (click)="clawbackMpt()" class="btn-primary">Clawback MPT</button>
+                              <button type="button" (click)="clawbackMpt()" class="btn-primary-red">Clawback MPT</button>
                               } @else {
-                              <button type="button" (click)="destroyMpt()" class="btn-primary">Destroy MPT</button>
+                              <button type="button" (click)="destroyMpt()" class="btn-primary-red">Destroy MPT</button>
                               }
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                              <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>
 
                          <!-- Spinner -->

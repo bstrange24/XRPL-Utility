@@ -2776,7 +2776,11 @@ app-root {
 .issuer-label {
      font-size: 0.9rem;
      white-space: nowrap;
-     color: #007bff;
+     background-color: rgba(12, 34, 235, 0.7);
+     background: linear-gradient(135deg, #4f8bfc 50%, #5254b1 100%);
+     /* color: #007bff; */
+     color: white;
+     /* background-color: #000000; */
 }
 
 .clickable-name {

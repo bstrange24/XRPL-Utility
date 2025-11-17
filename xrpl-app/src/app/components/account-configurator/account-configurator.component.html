@@ -34,13 +34,13 @@
                               @if (editingIndex(i)) {
                               <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
                               <label class="issuer-checkbox" title="Mark as issuer account">
-                                   <span class="issuer-label">Issuer</span>
+                                   <!-- <span class="issuer-label">Issuer</span> -->
                                    <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" (change)="onIssuerChange(i, $event)" />
                               </label>
                               } @else {
                               <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
                               <label class="issuer-checkbox" title="Mark as issuer account">
-                                   <span class="issuer-label">Issuer</span>
+                                   <!-- <span class="issuer-label">Issuer</span> -->
                                    <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" (change)="onIssuerChange(i, $event)" />
                               </label>
                               }
