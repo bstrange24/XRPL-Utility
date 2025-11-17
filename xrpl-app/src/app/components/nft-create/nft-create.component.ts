@@ -60,11 +60,11 @@ interface AccountFlags {
 }
 
 @Component({
-     selector: 'app-create-nft',
+     selector: 'app-nft-create',
      standalone: true,
      imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, SanitizeHtmlPipe],
-     templateUrl: './create-nft.component.html',
-     styleUrl: './create-nft.component.css',
+     templateUrl: './nft-create.component.html',
+     styleUrl: './nft-create.component.css',
 })
 export class CreateNftComponent implements AfterViewChecked {
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;

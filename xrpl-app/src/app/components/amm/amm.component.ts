@@ -84,11 +84,11 @@ interface Section {
 type CurrencyAmount = CurrencyAmountXRP | CurrencyAmountToken;
 
 @Component({
-     selector: 'app-create-amm',
+     selector: 'app-amm',
      standalone: true,
      imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, SanitizeHtmlPipe, MatTableModule, MatSortModule, MatPaginatorModule, MatButtonModule],
-     templateUrl: './create-amm.component.html',
-     styleUrl: './create-amm.component.css',
+     templateUrl: './amm.component.html',
+     styleUrl: './amm.component.css',
 })
 export class CreateAmmComponent implements AfterViewChecked {
      dataSource = new MatTableDataSource<any>();

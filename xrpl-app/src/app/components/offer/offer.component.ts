@@ -101,11 +101,11 @@ type CustomBookOffer = Partial<Omit<BookOffer, 'TakerGets' | 'TakerPays'>> & {
      rate?: BigNumber;
 };
 @Component({
-     selector: 'app-create-offer',
+     selector: 'app-offer',
      standalone: true,
      imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, SanitizeHtmlPipe, MatTableModule, MatSortModule, MatPaginatorModule, MatButtonModule],
-     templateUrl: './create-offer.component.html',
-     styleUrl: './create-offer.component.css',
+     templateUrl: './offer.component.html',
+     styleUrl: './offer.component.css',
      encapsulation: ViewEncapsulation.None,
 })
 export class CreateOfferComponent implements AfterViewChecked {

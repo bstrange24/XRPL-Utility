@@ -4,9 +4,9 @@ import { CreateTimeEscrowComponent } from './components/time-escrow/time-escrow.
 import { CreateConditionalEscrowComponent } from './components/conditional-escrow/conditional-escrow.component';
 import { SendChecksComponent } from './components/checks/checks.component';
 import { CreateTicketsComponent } from './components/tickets/tickets.component';
-import { CreateOfferComponent } from './components/create-offer/create-offer.component';
-import { CreateNftComponent } from './components/create-nft/create-nft.component';
-import { CreateAmmComponent } from './components/create-amm/create-amm.component';
+import { CreateOfferComponent } from './components/offer/offer.component';
+import { CreateNftComponent } from './components/nft-create/nft-create.component';
+import { CreateAmmComponent } from './components/amm/amm.component';
 import { TrustlinesComponent } from './components/trustlines/trustlines.component';
 import { DeleteAccountComponent } from './components/delete-account/delete-account.component';
 import { AccountConfiguratorComponent } from './components/account-configurator/account-configurator.component';
