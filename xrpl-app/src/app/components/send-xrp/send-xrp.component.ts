@@ -24,6 +24,8 @@ import { ValidationService } from '../../services/validation/transaction-validat
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
+import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
+import { DropdownItem } from '../../models/dropdown-item.model';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -95,11 +97,13 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
      selectedTicket: string = '';
      masterKeyDisabled: boolean = false;
      destinationField: string = '';
-     destinations: { name?: string; address: string }[] = [];
+     // destinations: { name?: string; address: string }[] = [];
+     destinations: DropdownItem[] = [];
      customDestinations: { name?: string; address: string }[] = [];
-     showDropdown = false;
-     dropdownOpen = false;
-     filteredDestinations: { name?: string; address: string }[] = [];
+     showDropdown: boolean = false;
+     dropdownOpen: boolean = false;
+     // filteredDestinations: { name?: string; address: string }[] = [];
+     filteredDestinations: DropdownItem[] = [];
      highlightedIndex = -1;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      wallets: Wallet[] = [];
@@ -138,7 +142,8 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           private walletDataService: WalletDataService,
           private validationService: ValidationService,
           private overlay: Overlay,
-          private viewContainerRef: ViewContainerRef
+          private viewContainerRef: ViewContainerRef,
+          private destinationDropdownService: DestinationDropdownService
      ) {}
 
      ngOnInit() {
@@ -163,6 +168,27 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           const storedCustoms = this.storageService.get('customDestinations');
           this.customDestinations = storedCustoms ? JSON.parse(storedCustoms) : [];
           this.updateDestinations();
+
+          // Ensure service knows the list
+          this.destinationDropdownService.setItems(this.destinations);
+
+          // Subscribe to filtered list updates
+          this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
+               this.filteredDestinations = list;
+               // keep selection sane
+               this.highlightedIndex = list.length > 0 ? 0 : -1;
+               this.cdr.detectChanges();
+          });
+
+          // Subscribe to open/close state from service
+          this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
+               this.dropdownOpen = open;
+               if (open) {
+                    this.openDropdownInternal(); // create + attach overlay (component-owned)
+               } else {
+                    this.closeDropdownInternal(); // detach overlay (component-owned)
+               }
+          });
      }
 
      ngAfterViewInit() {
@@ -835,11 +861,38 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
      }
 
      openDropdown() {
+          // update service items (in case destinations changed)
+          this.destinationDropdownService.setItems(this.destinations);
+          // prepare filtered list
+          this.destinationDropdownService.filter(this.destinationField || '');
+          // tell service to open -> subscription above will attach overlay
+          this.destinationDropdownService.openDropdown();
+     }
+
+     // Called by outside click / programmatic close
+     closeDropdown() {
+          this.destinationDropdownService.closeDropdown();
+     }
+
+     // Called by chevron toggle
+     toggleDropdown() {
+          // make sure the service has current items first
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.toggleDropdown();
+     }
+
+     // Called on input typing
+     onDestinationInput() {
+          this.filterQuery = this.destinationField || '';
+          this.destinationDropdownService.filter(this.filterQuery);
+          this.destinationDropdownService.openDropdown(); // ensure open while typing
+     }
+
+     private openDropdownInternal() {
+          // If already attached, do nothing
           if (this.overlayRef?.hasAttached()) return;
 
-          this.filteredDestinations = [...this.destinations];
-          this.highlightedIndex = 0;
-
+          // position strategy (your existing logic)
           const positionStrategy = this.overlay
                .position()
                .flexibleConnectedTo(this.dropdownOrigin)
@@ -865,26 +918,16 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           this.overlayRef.attach(portal);
 
           // Close on backdrop click
-          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
-          this.dropdownOpen = true;
+          this.overlayRef.backdropClick().subscribe(() => {
+               this.destinationDropdownService.closeDropdown(); // close via service so subscribers sync
+          });
      }
 
-     closeDropdown() {
+     private closeDropdownInternal() {
           if (this.overlayRef) {
                this.overlayRef.detach();
                this.overlayRef = null;
           }
-          this.dropdownOpen = false;
-     }
-
-     toggleDropdown() {
-          this.overlayRef?.hasAttached() ? this.closeDropdown() : this.openDropdown();
-     }
-
-     onDestinationInput() {
-          this.filterQuery = this.destinationField; // Now filter based on typed value
-          this.filterDestinations();
-          this.showDropdown = true;
      }
 
      filterDestinations() {
@@ -900,23 +943,18 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
      }
 
      selectDestination(address: string) {
-          if (address === this.currentWallet.address) {
-               return; // Don't allow selecting self
-          }
+          if (address === this.currentWallet.address) return;
 
-          // Find the destination object by address
           const dest = this.destinations.find(d => d.address === address);
-
           if (dest) {
-               const first = address.slice(0, 6);
-               const last = address.slice(-6);
-               this.destinationField = `${dest.name} (${first}...${last})`;
+               // show "Name (rABC12...DEF456)"
+               this.destinationField = this.destinationDropdownService.formatDisplay(dest);
           } else {
-               // Fallback (should not happen)
                this.destinationField = `${address.slice(0, 6)}...${address.slice(-6)}`;
           }
 
-          this.closeDropdown();
+          // close via service so subscribers remain in sync
+          this.destinationDropdownService.closeDropdown();
           this.cdr.detectChanges();
      }
 

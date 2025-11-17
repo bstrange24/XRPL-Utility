@@ -225,10 +225,7 @@
                </div>
                }
 
-               <!-- Check ID (cash / cancel) -->
-               @if (activeTab !== 'addNewIssuers') {
-               <!-- Cancellable checks dropdown -->
-               <!-- ==================== EXISTING IOUs ==================== -->
+               <!-- Existing IOUs -->
                @if (activeTab !== 'addNewIssuers' && existingIOUs.length > 0) {
                <div class="outstanding-checks-panel">
                     <div class="panel-header" (click)="toggleOutstandingIOU()" style="cursor: pointer; user-select: none">
@@ -260,7 +257,111 @@
                          }
                     </div>
                </div>
-               } }
+               }
+
+               <!-- Existing MPTs -->
+               @if (activeTab !== 'addNewIssuers' && existingMpts.length > 0) {
+               <div class="outstanding-checks-panel">
+                    <!-- Header – clickable to expand/collapse -->
+                    <div class="panel-header" (click)="toggleExistingMpts()" style="cursor: pointer; user-select: none">
+                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
+                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
+                              Existing MPTs ({{ existingMpts.length }})
+                         </h3>
+                    </div>
+
+                    <!-- Collapsible content with smooth height animation -->
+                    <div class="checks-list-container" [style.max-height]="existingMptsCollapsed ? '0': (existingMpts.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
+                         @if (!existingMptsCollapsed) {
+                         <div class="checks-list">
+                              @for (chk of existingMpts; track chk.id) {
+                              <div class="check-card">
+                                   <div class="check-extras">
+                                        <!-- LedgerEntryType  -->
+                                        @if (chk.LedgerEntryType) {
+                                        <span class="badge badge-expire"> LedgerEntryType: {{ chk.LedgerEntryType }} </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> LedgerEntryType: Not set </span>
+                                        }
+
+                                        <!-- Issuer  -->
+                                        @if (chk.Issuer) {
+                                        <span class="badge badge-expire"> Issuer: {{ chk.Issuer }} </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> Issuer: Not set </span>
+                                        }
+
+                                        <!-- Flags  -->
+                                        @if (chk.Flags !== undefined) {
+                                        <span class="badge badge-expire">
+                                             Flags: {{ decodeMptFlagsForUi(chk.Flags) }}
+                                             <span class="flag-original">({{ chk.Flags }})</span>
+                                        </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> Flags: Not set </span>
+                                        }
+
+                                        <!-- Line break between Flags and MPT Issuance ID -->
+                                        <div class="line-break"></div>
+
+                                        <!-- MPT Issuance ID  -->
+                                        @if (chk.mpt_issuance_id) {
+                                        <span class="badge badge-expire"> MPT Issuance ID: {{ chk.mpt_issuance_id | slice:0:6 }}...{{ chk.mpt_issuance_id | slice:-6 }}</span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> MPT Issuance ID: Not set </span>
+                                        }
+
+                                        <!-- AssetScale  -->
+                                        @if (chk.AssetScale) {
+                                        <span class="badge badge-tag"> AssetScale: {{ chk.AssetScale }} </span>
+                                        } @else {
+                                        <span class="badge badge-tag-not-set"> AssetScale: Not set </span>
+                                        }
+
+                                        <!-- MaximumAmount  -->
+                                        @if (chk.MaximumAmount) {
+                                        <span class="badge badge-invoice"> MaximumAmount: {{ chk.MaximumAmount }} </span>
+                                        } @else {
+                                        <span class="badge badge-invoice-not-set"> MaximumAmount: Not set</span>
+                                        }
+
+                                        <!-- OutstandingAmount  -->
+                                        @if (chk.OutstandingAmount) {
+                                        <span class="badge badge-invoice"> OutstandingAmount: {{ chk.OutstandingAmount }} </span>
+                                        } @else {
+                                        <span class="badge badge-invoice-not-set"> OutstandingAmount: Not set</span>
+                                        }
+
+                                        <!-- TransferFee  -->
+                                        @if (chk.TransferFee) {
+                                        <span class="badge badge-invoice"> TransferFee: {{ chk.TransferFee }} </span>
+                                        } @else {
+                                        <span class="badge badge-invoice-not-set"> TransferFee: Not set</span>
+                                        }
+
+                                        <!-- MPTokenMetadata  -->
+                                        @if (chk.MPTokenMetadata) {
+                                        <span class="badge badge-invoice"> MPTokenMetadata: {{ chk.MPTokenMetadata | slice:0:6 }}...{{ chk.MPTokenMetadata | slice:-6 }}</span>
+                                        } @else {
+                                        <span class="badge badge-invoice-not-set"> MPTokenMetadata: Not set</span>
+                                        }
+                                   </div>
+
+                                   <div class="button-group">
+                                        <button class="icon-btn copy-check-id" (click)="copyMptId(chk.mpt_issuance_id); $event.stopPropagation(); $event.preventDefault()" title="Copy MPT Issuance ID" type="button">
+                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                             <a [href]="`${url}mpt/` + chk.mpt_issuance_id" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
+                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
+                                             </a>
+                                        </button>
+                                   </div>
+                              </div>
+                              }
+                         </div>
+                         }
+                    </div>
+               </div>
+               }
 
                <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
                     <div [@tabTransition]="activeTab">
