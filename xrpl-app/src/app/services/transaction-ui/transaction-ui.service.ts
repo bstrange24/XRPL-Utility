@@ -49,7 +49,7 @@ export class TransactionUiService {
      }
 
      // set a warning
-     private setWarning(msg: string | null) {
+     setWarning(msg: string | null) {
           this.warningMessage = msg;
      }
 

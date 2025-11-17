@@ -113,7 +113,7 @@
                <!-- Menu bar -->
                <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab === 'setTrustline'" (click)="setTab('setTrustline')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
+                         <ng-icon name="heroAdjustmentsVertical" size="20" class="text-red-600"></ng-icon>
                          Set Trustline
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'removeTrustline'" (click)="setTab('removeTrustline')">
@@ -139,7 +139,7 @@
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                              <ng-icon name="heroAdjustmentsVertical" size="27" class="text-red-600"></ng-icon>
                          </div>
                          <div>
                               <h2 class="submenu-info-main-text">Set Trustline</h2>
@@ -610,37 +610,18 @@
 
                          <!-- Action buttons -->
                          <div class="button-row">
-                              <button
-                                   type="submit"
-                                   class="btn-primary"
-                                   [ngStyle]="{'background-color': 
-                              activeTab === 'removeTrustline' || 
-                              activeTab === 'clawbackTokens' ? 'red' :
-                              activeTab === 'issueCurrency'  ? 'green' :'#007bff'}"
-                              >
-                                   {{ activeTab === 'setTrustline' ? 'Set Trustline' : activeTab === 'removeTrustline' ? 'Remove Trustline' : activeTab === 'issueCurrency' ? 'Issue Currency' : activeTab === 'clawbackTokens' ? 'Clawback Tokens' : activeTab === 'addNewIssuers' ? 'Add Issuer' : '' }}
-                              </button>
+                              @if(activeTab === 'setTrustline') {
+                              <button type="button" (click)="setTrustLine()" class="btn-primary-blue">Set Trustline</button>
+                              } @else if (activeTab === 'removeTrustline') {
+                              <button type="button" (click)="removeTrustline()" class="btn-primary-red">Remove Trustline</button>
+                              } @else if (activeTab === 'issueCurrency') {
+                              <button type="button" (click)="issueCurrency()" class="btn-primary-green">Issue Currency</button>
+                              } @else if (activeTab === 'clawbackTokens') {
+                              <button type="button" (click)="clawbackTokens()" class="btn-primary-red">Clawback Tokens</button>
+                              } @else if (activeTab === 'addNewIssuers') {
+                              <button type="button" (click)="addToken(newCurrency, newIssuer)" class="btn-primary-blue">Add Issuer</button>
+                              }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
-
-                              <!--@if(activeTab === 'setTrustline') {
-                              <button type="button" (click)="setTrustLine()" class="btn-primary">Set Trustline</button>
-                              }
-                              @else if (activeTab === 'removeTrustline') {
-                              <button type="button" (click)="removeTrustline()" class="btn-primary">Remove Trustline</button>
-                              } 
-                              @else if (activeTab === 'issueCurrency') {
-                              <button type="button" (click)="issueCurrency()" class="btn-primary">Issue Currency</button>
-                              } 
-                              @else if (activeTab === 'clawbackTokens') {
-                              <button type="button" (click)="clawbackTokens()" class="btn-primary">Clawback Tokens</button>
-                              } 
-                              @else if (activeTab === 'addNewIssuers') {
-                              <button type="button" (click)="addToken()" class="btn-primary">Add Issuer</button>
-                              } 
-                              @else {
-                              <button type="button" (click)="destroyMpt()" class="btn-primary">Destroy MPT</button>
-                              }
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button> -->
                          </div>
 
                          <!-- Spinner -->

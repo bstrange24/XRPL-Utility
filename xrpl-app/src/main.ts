@@ -10,7 +10,7 @@ import process from 'process';
 import { importProvidersFrom } from '@angular/core';
 import { LucideAngularModule, Cog, BanknoteArrowUp, BanknoteArrowDown, Trash2, DollarSign, TicketCheck, Check, Hourglass, Wallet, Send, ShieldCheck, Flag, Copy, FileTextIcon, ChevronDown, ChevronRight, BookOpenCheck, ArrowBigRight, RefreshCcw, SplitIcon, Signature, ShieldEllipsis, CopyPlus, Eraser, GripVertical, Eye, EyeOff, CircleCheck, ShieldBan } from 'lucide-angular';
 import { provideIcons } from '@ng-icons/core';
-import { heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath, heroUserGroup, heroKey, heroChartBar, heroEye, heroEyeSlash } from '@ng-icons/heroicons/outline';
+import { heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath, heroUserGroup, heroKey, heroChartBar, heroEye, heroEyeSlash, heroAdjustmentsVertical } from '@ng-icons/heroicons/outline';
 
 // Make Buffer and process available globally
 (window as any).Buffer = Buffer;
@@ -54,6 +54,6 @@ bootstrapApplication(AppComponent, {
                     ShieldBan,
                })
           ),
-          provideIcons({ heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath, heroUserGroup, heroKey, heroChartBar, heroEye, heroEyeSlash }),
+          provideIcons({ heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath, heroUserGroup, heroKey, heroChartBar, heroEye, heroEyeSlash, heroAdjustmentsVertical }),
      ],
 }).catch(err => console.error(err));

@@ -621,8 +621,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           const inputs: ValidationInputs = {
                seed: this.currentWallet.seed,
                amount: this.amountField,
-               destination: this.destinationField,
-               destinationTag: this.destinationTagField,
                isRegularKeyAddress: this.isRegularKeyAddress,
                regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
                regularKeySeed: this.isRegularKeyAddress ? this.regularKeySeed : undefined,
@@ -689,7 +687,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
                }
 
-               this.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Setting Trustline (no changes will be made)...' : 'Submitting to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Setting Trustline (no changes will be made)...' : 'Submitting to Ledger...', 200);
 
                this.paymentTx.push(trustSetTx);
                this.updatePaymentTx();
@@ -872,7 +870,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
                }
 
-               this.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Removing Trustline (no changes will be made)...' : 'Submitting to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Removing Trustline (no changes will be made)...' : 'Submitting to Ledger...', 200);
 
                // STORE IT FOR DISPLAY
                this.paymentTx.push(trustSetTx);
@@ -1071,7 +1069,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                //      return this.ui.setError('ERROR: Not enough IOU balance for this transaction');
                // }
 
-               this.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Currency Issuance (no changes will be made)...' : 'Submitting Currency Issuance to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Currency Issuance (no changes will be made)...' : 'Submitting Currency Issuance to Ledger...', 200);
 
                // STORE IT FOR DISPLAY
                this.paymentTx.push(paymentTx);
@@ -1407,7 +1405,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
           try {
                if (Object.keys(this.knownTrustLinesIssuers).length <= 1) {
-                    this.setWarning(`No issuers found. Check the issuer checkbox in the wallet section or add an issuer in the Add Issuer tab.`);
+                    this.ui.setWarning(`No issuers found. Check the issuer checkbox in the wallet section or add an issuer in the Add Issuer tab.`);
                     this.ensureDefaultNotSelected();
                     return;
                }
@@ -1495,7 +1493,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                }
 
                if (this.issuers.length === 0) {
-                    this.setWarning(`No issuers found. Check the issuer checkbox in the wallet section or add an issuer in the Add Issuer tab.`);
+                    this.ui.setWarning(`No issuers found. Check the issuer checkbox in the wallet section or add an issuer in the Add Issuer tab.`);
                }
 
                this.ensureDefaultNotSelected();
@@ -2004,11 +2002,10 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     asyncValidators: [],
                },
                setTrustLine: {
-                    required: ['seed', 'amount', 'destination'],
+                    required: ['seed', 'amount'],
                     customValidators: [
                          () => isValidSeed(inputs.seed),
                          () => isValidNumber(inputs.amount, 'Amount', 0),
-                         () => isValidXrpAddress(inputs.destination, 'Destination'),
                          () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
                          () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
                          () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
@@ -2447,25 +2444,10 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           return this.utilsService.convertXRPLTime(timestamp);
      }
 
-     private setWarning(msg: string | null) {
-          this.warningMessage = msg;
-          this.cdr.detectChanges();
-     }
-
-     clearWarning() {
-          this.setWarning(null);
-     }
-
      autoResize(textarea: HTMLTextAreaElement) {
           if (!textarea) return;
           textarea.style.height = 'auto'; // reset
           textarea.style.height = textarea.scrollHeight + 'px'; // expand
-     }
-
-     async showSpinnerWithDelay(message: string, delayMs: number = 200) {
-          this.ui.spinner = true;
-          this.ui.updateSpinnerMessage(message);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
      }
 
      addToken(newToken: string, newIssuerAddress: any) {
