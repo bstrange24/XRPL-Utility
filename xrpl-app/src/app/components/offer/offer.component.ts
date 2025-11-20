@@ -332,8 +332,7 @@ export class CreateOfferComponent implements AfterViewChecked {
 
                this.updateSpinnerMessage(`Getting Offers`);
 
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, offersResponse, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountOffers(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
@@ -397,17 +396,13 @@ export class CreateOfferComponent implements AfterViewChecked {
                this.clickToCopyService.attachCopy(this.resultField.nativeElement);
 
                // Non-critical UI updates — let main render complete first
-               setTimeout(async () => {
-                    try {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                         this.currentWallet.balance = await this.updateXrpBalance(client, accountInfo, wallet);
-                    } catch (err) {
-                         console.error('Error in deferred UI updates for offers:', err);
-                    }
-               }, 0);
+               this.currentWallet.balance = await this.updateXrpBalance(client, accountInfo, wallet);
+               Promise.resolve().then(() => {
+                    this.refreshUIData(wallet, accountInfo, accountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.clearFields(false);
+                    this.updateTickets(accountObjects);
+               });
           } catch (error: any) {
                console.error('Error in getOffers:', error);
                this.setError(`ERROR: ${error.message || 'Unknown error'}`);
@@ -444,8 +439,7 @@ export class CreateOfferComponent implements AfterViewChecked {
           try {
                this.updateSpinnerMessage(`Getting Order Book`);
 
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
@@ -631,17 +625,13 @@ export class CreateOfferComponent implements AfterViewChecked {
                this.clickToCopyService.attachCopy(this.resultField.nativeElement);
 
                // DEFER: Non-critical UI updates — let main render complete first
-               setTimeout(async () => {
-                    try {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                         this.currentWallet.balance = await this.updateXrpBalance(client, accountInfo, wallet);
-                    } catch (err) {
-                         console.error('Error updating balance after order book render:', err);
-                    }
-               }, 0);
+               this.currentWallet.balance = await this.updateXrpBalance(client, accountInfo, wallet);
+               Promise.resolve().then(() => {
+                    this.refreshUIData(wallet, accountInfo, accountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.clearFields(false);
+                    this.updateTickets(accountObjects);
+               });
           } catch (error: any) {
                console.error('Error in getOrderBook:', error);
                this.setError(`ERROR: ${error.message || 'Unknown error'}`);
@@ -683,8 +673,7 @@ export class CreateOfferComponent implements AfterViewChecked {
                     this.resultField.nativeElement.innerHTML = '';
                }
 
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, initialXrpBalance, trustLines, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), client.getXrpBalance(wallet.classicAddress), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -1180,16 +1169,12 @@ export class CreateOfferComponent implements AfterViewChecked {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                              this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+                    Promise.resolve().then(() => {
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
                }
           } catch (error: any) {
                console.error('Error:', error);
@@ -1232,9 +1217,9 @@ export class CreateOfferComponent implements AfterViewChecked {
                     this.resultField.nativeElement.innerHTML = '';
                }
 
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
-               const [accountInfo, fee] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client)]);
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+
+               const [accountInfo, fee, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
 
                inputs.account_info = accountInfo;
@@ -1289,7 +1274,7 @@ export class CreateOfferComponent implements AfterViewChecked {
 
                          await this.setTxOptionalFields(client, offerCancelTx, wallet, accountInfo, 'cancelOffer');
 
-                         if (await this.utilsService.isInsufficientXrpBalance(client, accountInfo, '0', wallet.classicAddress, offerCancelTx, fee)) {
+                         if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, offerCancelTx, fee)) {
                               return this.setError('ERROR: Insufficient XRP to complete transaction');
                          }
 
@@ -1401,16 +1386,12 @@ export class CreateOfferComponent implements AfterViewChecked {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                              this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+                    Promise.resolve().then(() => {
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
                }
           } catch (error: any) {
                console.error('Error:', error);
@@ -1869,8 +1850,7 @@ export class CreateOfferComponent implements AfterViewChecked {
           const known = this.knownIssuers[this.weWantCurrencyField] || [];
           this.weWantIssuerField = known.length > 0 ? known[0] : '';
 
-          const client = await this.xrplService.getClient();
-          const wallet = await this.getWallet();
+          const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
           const [accountInfo, balanceResponse] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
 
@@ -1918,8 +1898,7 @@ export class CreateOfferComponent implements AfterViewChecked {
                return this.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
           }
 
-          const client = await this.xrplService.getClient();
-          const wallet = await this.getWallet();
+          const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
           // PHASE 1: PARALLELIZE — fetch account info + fee + ledger index
           const [accountInfo, balanceResponse] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
@@ -2012,9 +1991,8 @@ export class CreateOfferComponent implements AfterViewChecked {
           try {
                this.spinner = true;
 
-               const client = await this.xrplService.getClient();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
                const environment = this.xrplService.getNet().environment;
-               const wallet = await this.getWallet();
 
                const [accountInfo, balanceResponse, fee] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client)]);
 
@@ -2233,8 +2211,7 @@ export class CreateOfferComponent implements AfterViewChecked {
                return this.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
           }
 
-          const client = await this.xrplService.getClient();
-          const wallet = await this.getWallet();
+          const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
           const [accountInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', '')]);
 

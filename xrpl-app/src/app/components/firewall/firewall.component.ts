@@ -25,6 +25,8 @@ import { ValidationService } from '../../services/validation/transaction-validat
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
+import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
+import { DropdownItem } from '../../models/dropdown-item.model';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -82,12 +84,9 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
      private overlayRef: OverlayRef | null = null;
      private readonly injector = inject(Injector);
-     result: string = '';
-     // isError: boolean = false;
-     // isSuccess: boolean = false;
-     // isEditable: boolean = false;
+     selectedFirewall: string | null = null; // stores NFTokenID
+     tempNameFirewallId: string | null = null; // stores NFTokenID
      isTicket: boolean = false;
-     // isTicketEnabled: boolean = false;
      ticketArray: string[] = [];
      selectedTickets: string[] = [];
      selectedSingleTicket: string = '';
@@ -121,7 +120,8 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      customDestinations: { name?: string; address: string }[] = [];
      showDropdown = false;
      dropdownOpen = false;
-     filteredDestinations: { name?: string; address: string }[] = [];
+     // filteredDestinations: { name?: string; address: string }[] = [];
+     filteredDestinations: DropdownItem[] = [];
      highlightedIndex = -1;
      // xrpOnly: string[] = [];
      whitelistAddresses: string[] = [];
@@ -140,13 +140,16 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           xrpReserves: undefined,
           spendableXrp: undefined,
      };
-     destinations: { name?: string; address: string }[] = [];
+     // destinations: { name?: string; address: string }[] = [];
+     destinations: DropdownItem[] = [];
      showManageTokens: boolean = false;
      showSecret: boolean = false;
      environment: string = '';
      activeTab: string = 'create'; // default
      encryptionType: string = '';
      hasWallets: boolean = true;
+     existingFirewalls: any = [];
+     existingFirewallsCollapsed: boolean = true;
      url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
@@ -166,7 +169,9 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           private walletDataService: WalletDataService,
           private validationService: ValidationService,
           private overlay: Overlay,
-          private viewContainerRef: ViewContainerRef
+          private viewContainerRef: ViewContainerRef,
+          private destinationDropdownService: DestinationDropdownService,
+          private ngZone: NgZone
      ) {}
 
      ngOnInit() {
@@ -192,6 +197,27 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           this.customDestinations = storedCustoms ? JSON.parse(storedCustoms) : [];
           this.updateDestinations();
 
+          // Ensure service knows the list
+          this.destinationDropdownService.setItems(this.destinations);
+
+          // Subscribe to filtered list updates
+          this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
+               this.filteredDestinations = list;
+               // keep selection sane
+               this.highlightedIndex = list.length > 0 ? 0 : -1;
+               this.cdr.detectChanges();
+          });
+
+          // Subscribe to open/close state from service
+          this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
+               this.dropdownOpen = open;
+               if (open) {
+                    this.openDropdownInternal(); // create + attach overlay (component-owned)
+               } else {
+                    this.closeDropdownInternal(); // detach overlay (component-owned)
+               }
+          });
+
           // const storedDestinations = this.storageService.getKnownIssuers('destinations');
           // if (storedDestinations) {
           //      const knownWhitelistAddress = this.storageService.getKnownWhitelistAddress('knownWhitelistAddress');
@@ -205,6 +231,11 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           //      }
           // }
           // this.onAccountChange();
+     }
+
+     onSelectPermissionedDomain(firewallId: string | null) {
+          this.selectedFirewall = firewallId;
+          this.tempNameFirewallId = firewallId ?? '';
      }
 
      ngAfterViewInit() {
@@ -230,6 +261,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      }
 
      selectWallet(index: number) {
+          if (this.selectedWalletIndex === index) return; // ← Add this guard!
           this.selectedWalletIndex = index;
           this.onAccountChange();
      }
@@ -265,12 +297,6 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
           if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
                this.selectedWalletIndex = 0;
-               this.refreshBalance(0);
-          } else {
-               (async () => {
-                    const client = await this.xrplService.getClient();
-                    await this.refreshWallets(client, [this.wallets[this.selectedWalletIndex].address, this.destinationField ? this.destinationField : '']);
-               })();
           }
 
           this.onAccountChange();
@@ -285,7 +311,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           try {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               await this.refreshWallets(client, [walletAddress]);
+               await this.refreshWallets(client, [walletAddress]).catch(console.error);
           } catch (err) {
                this.ui.setError('Failed to refresh balance');
           }
@@ -364,6 +390,10 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           }
      }
 
+     toggleExistingFirewalls() {
+          this.existingFirewallsCollapsed = !this.existingFirewallsCollapsed;
+     }
+
      validateQuorum() {
           const totalWeight = this.signers.reduce((sum, s) => sum + (s.weight || 0), 0);
           if (this.signerQuorum > totalWeight) {
@@ -405,8 +435,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           this.ui.updateSpinnerMessage(``);
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
@@ -444,69 +473,65 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                // };
 
                // Prepare data structure
-               const data = {
-                    sections: [{}],
-               };
+               // const data = {
+               //      sections: [{}],
+               // };
 
-               // Filter MPT-related objects
-               const mptObjects = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPTokenIssuance' || obj.LedgerEntryType === 'MPToken');
-               if (mptObjects.length <= 0) {
-                    data.sections.push({
-                         title: 'Firewall Details',
-                         openByDefault: true,
-                         content: [{ key: 'Status', value: `No Firewall found for <code>${wallet.classicAddress}</code>` }],
-                    });
-               } else {
-                    // Sort by Sequence (oldest first)
-                    const sortedMPT = [...mptObjects].sort((a, b) => {
-                         const seqA = (a as any).Sequence ?? Number.MAX_SAFE_INTEGER;
-                         const seqB = (b as any).Sequence ?? Number.MAX_SAFE_INTEGER;
-                         return seqA - seqB;
-                    });
+               // // Filter MPT-related objects
+               // const mptObjects = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPTokenIssuance' || obj.LedgerEntryType === 'MPToken');
+               // if (mptObjects.length <= 0) {
+               //      data.sections.push({
+               //           title: 'Firewall Details',
+               //           openByDefault: true,
+               //           content: [{ key: 'Status', value: `No Firewall found for <code>${wallet.classicAddress}</code>` }],
+               //      });
+               // } else {
+               //      // Sort by Sequence (oldest first)
+               //      const sortedMPT = [...mptObjects].sort((a, b) => {
+               //           const seqA = (a as any).Sequence ?? Number.MAX_SAFE_INTEGER;
+               //           const seqB = (b as any).Sequence ?? Number.MAX_SAFE_INTEGER;
+               //           return seqA - seqB;
+               //      });
 
-                    data.sections.push({
-                         title: `Firewall (${mptObjects.length})`,
-                         openByDefault: true,
-                         subItems: sortedMPT.map((mpt, counter) => {
-                              const { LedgerEntryType, PreviousTxnID, index } = mpt;
-                              // TicketSequence and Flags may not exist on all AccountObject types
-                              const ticketSequence = (mpt as any).TicketSequence;
-                              const flags = (mpt as any).Flags;
-                              const mptIssuanceId = (mpt as any).mpt_issuance_id || (mpt as any).MPTokenIssuanceID;
-                              return {
-                                   key: `MPT ${counter + 1} (ID: ${index.slice(0, 8)}...)`,
-                                   openByDefault: false,
-                                   content: [
-                                        { key: 'MPT Issuance ID', value: `<code>${mptIssuanceId}</code>` },
-                                        { key: 'Ledger Entry Type', value: LedgerEntryType },
-                                        { key: 'Previous Txn ID', value: `<code>${PreviousTxnID}</code>` },
-                                        ...(ticketSequence ? [{ key: 'Ticket Sequence', value: String(ticketSequence) }] : []),
-                                        ...(flags !== undefined ? [{ key: 'Flags', value: this.utilsService.getMptFlagsReadable(Number(flags)) }] : []),
-                                        // Optionally display custom fields if present
-                                        ...((mpt as any)['MPTAmount'] ? [{ key: 'MPTAmount', value: String((mpt as any)['MPTAmount']) }] : []),
-                                        ...((mpt as any)['MPTokenMetadata'] ? [{ key: 'MPTokenMetadata', value: xrpl.convertHexToString((mpt as any)['MPTokenMetadata']) }] : []),
-                                        ...((mpt as any)['MaximumAmount'] ? [{ key: 'MaximumAmount', value: String((mpt as any)['MaximumAmount']) }] : []),
-                                        ...((mpt as any)['OutstandingAmount'] ? [{ key: 'OutstandingAmount', value: String((mpt as any)['OutstandingAmount']) }] : []),
-                                        ...((mpt as any)['TransferFee'] ? [{ key: 'TransferFee', value: String((mpt as any)['TransferFee']) }] : []),
-                                        ...((mpt as any)['MPTIssuanceID'] ? [{ key: 'MPTIssuanceID', value: String((mpt as any)['MPTIssuanceID']) }] : []),
-                                   ],
-                              };
-                         }),
-                    });
-               }
+               //      data.sections.push({
+               //           title: `Firewall (${mptObjects.length})`,
+               //           openByDefault: true,
+               //           subItems: sortedMPT.map((mpt, counter) => {
+               //                const { LedgerEntryType, PreviousTxnID, index } = mpt;
+               //                // TicketSequence and Flags may not exist on all AccountObject types
+               //                const ticketSequence = (mpt as any).TicketSequence;
+               //                const flags = (mpt as any).Flags;
+               //                const mptIssuanceId = (mpt as any).mpt_issuance_id || (mpt as any).MPTokenIssuanceID;
+               //                return {
+               //                     key: `MPT ${counter + 1} (ID: ${index.slice(0, 8)}...)`,
+               //                     openByDefault: false,
+               //                     content: [
+               //                          { key: 'MPT Issuance ID', value: `<code>${mptIssuanceId}</code>` },
+               //                          { key: 'Ledger Entry Type', value: LedgerEntryType },
+               //                          { key: 'Previous Txn ID', value: `<code>${PreviousTxnID}</code>` },
+               //                          ...(ticketSequence ? [{ key: 'Ticket Sequence', value: String(ticketSequence) }] : []),
+               //                          ...(flags !== undefined ? [{ key: 'Flags', value: this.utilsService.getMptFlagsReadable(Number(flags)) }] : []),
+               //                          // Optionally display custom fields if present
+               //                          ...((mpt as any)['MPTAmount'] ? [{ key: 'MPTAmount', value: String((mpt as any)['MPTAmount']) }] : []),
+               //                          ...((mpt as any)['MPTokenMetadata'] ? [{ key: 'MPTokenMetadata', value: xrpl.convertHexToString((mpt as any)['MPTokenMetadata']) }] : []),
+               //                          ...((mpt as any)['MaximumAmount'] ? [{ key: 'MaximumAmount', value: String((mpt as any)['MaximumAmount']) }] : []),
+               //                          ...((mpt as any)['OutstandingAmount'] ? [{ key: 'OutstandingAmount', value: String((mpt as any)['OutstandingAmount']) }] : []),
+               //                          ...((mpt as any)['TransferFee'] ? [{ key: 'TransferFee', value: String((mpt as any)['TransferFee']) }] : []),
+               //                          ...((mpt as any)['MPTIssuanceID'] ? [{ key: 'MPTIssuanceID', value: String((mpt as any)['MPTIssuanceID']) }] : []),
+               //                     ],
+               //                };
+               //           }),
+               //      });
+               // }
 
-               this.ui.setSuccess(this.result);
+               // this.ui.setSuccess(this.ui.result);
 
-               setTimeout(async () => {
-                    try {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                    } catch (err) {
-                         console.error('Error in deferred UI updates:', err);
-                    }
-               }, 0);
+               Promise.resolve().then(() => {
+                    this.refreshUIData(wallet, accountInfo, accountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.clearFields(false);
+                    this.updateTickets(accountObjects);
+               });
           } catch (error: any) {
                console.error('Error in getFirewallDetails:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
@@ -539,8 +564,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -649,28 +673,19 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
                     // Add new destination if valid and not already present
-                    if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
-                         this.customDestinations.push({
-                              name: `Custom ${this.customDestinations.length + 1}`,
-                              address: this.destinationField,
-                         });
-                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
-                         this.updateDestinations();
-                    }
+                    this.addNewDestinationFromUser();
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    Promise.resolve().then(() => {
+                         this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
+               } else {
+                    this.ui.successMessage = 'Simulated Create Firewall successfully!';
                }
           } catch (error: any) {
                console.error('Error in createFirewall:', error);
@@ -685,7 +700,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      async modifyFirewall() {
           console.log('Entering modifyFirewall');
           const startTime = Date.now();
-          this.ui.setSuccessProperties();
+          this.ui.clearMessages();
           this.ui.updateSpinnerMessage(``);
 
           const inputs: ValidationInputs = {
@@ -704,8 +719,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -746,11 +760,14 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                // Optional fields
                await this.setTxOptionalFields(client, mPTokenAuthorizeTx, wallet, accountInfo);
 
-               if (await this.utilsService.isInsufficientXrpBalance(client, accountInfo, '0', wallet.classicAddress, mPTokenAuthorizeTx, fee)) {
+               if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, mPTokenAuthorizeTx, fee)) {
                     return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
                }
 
-               this.ui.updateSpinnerMessage(this.ui.isSimulateEnabled ? 'Simulating MPT Authorize (no changes will be made)...' : 'Submitting to Ledger...');
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating MPT Authorize (no changes will be made)...' : 'Submitting to Ledger...', 200);
+
+               this.ui.paymentTx.push(mPTokenAuthorizeTx);
+               this.updatePaymentTx();
 
                let response: any;
 
@@ -768,30 +785,44 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
+               this.utilsService.logObjects('response', response);
+               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+
+               this.ui.txResult.push(response.result);
+               this.updateTxResult(this.ui.txResult);
+
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-                    response.result.errorMessage = userMessage;
+                    (response.result as any).errorMessage = userMessage;
+                    this.ui.setError(userMessage);
+               } else {
+                    this.ui.setSuccess(this.ui.result);
                }
 
-               this.ui.setSuccess(this.result);
+               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
                if (!this.ui.isSimulateEnabled) {
+                    this.ui.successMessage = 'Modified Firewall successfully!';
+
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    // Add new destination if valid and not already present
+                    this.addNewDestinationFromUser();
+
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
+
+                    Promise.resolve().then(() => {
+                         this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
+               } else {
+                    this.ui.successMessage = 'Simulated Modify Firewall successfully!';
                }
           } catch (error: any) {
                console.error('Error:', error);
@@ -806,7 +837,8 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      async authorizeFirewall(authorizeFlag: 'Y' | 'N') {
           console.log('Entering authorizeFirewall');
           const startTime = Date.now();
-          this.ui.setSuccessProperties();
+          this.ui.clearMessages();
+          this.ui.updateSpinnerMessage(``);
 
           const inputs: ValidationInputs = {
                seed: this.currentWallet.seed,
@@ -826,8 +858,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, destObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, this.destinationField, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -924,23 +955,31 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
+                    this.ui.setError(userMessage);
+               } else {
+                    this.ui.setSuccess(this.ui.result);
                }
 
-               this.ui.setSuccess(this.result);
+               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
                if (!this.ui.isSimulateEnabled) {
+                    this.ui.successMessage = 'Authorized Firewall successfully!';
+
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    // Add new destination if valid and not already present
+                    this.addNewDestinationFromUser();
+
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
+
+                    Promise.resolve().then(() => {
+                         this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
+               } else {
+                    this.ui.successMessage = 'Simulated Authorize Firewall successfully!';
                }
           } catch (error: any) {
                console.error('Error:', error);
@@ -955,7 +994,8 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      async deleteFirewall() {
           console.log('Entering deleteFirewall');
           const startTime = Date.now();
-          this.ui.setSuccessProperties();
+          this.ui.clearMessages();
+          this.ui.updateSpinnerMessage(``);
 
           const inputs: ValidationInputs = {
                seed: this.currentWallet.seed,
@@ -971,8 +1011,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, destObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, this.destinationField, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -1040,24 +1079,32 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-                    response.result.errorMessage = userMessage;
+                    (response.result as any).errorMessage = userMessage;
+                    this.ui.setError(userMessage);
+               } else {
+                    this.ui.setSuccess(this.ui.result);
                }
 
-               this.ui.setSuccess(this.result);
+               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
                if (!this.ui.isSimulateEnabled) {
+                    this.ui.successMessage = 'Deleted Firewall successfully!';
+
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    // Add new destination if valid and not already present
+                    this.addNewDestinationFromUser();
+
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
+
+                    Promise.resolve().then(() => {
+                         this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
+               } else {
+                    this.ui.successMessage = 'Simulated Delete Firewall successfully!';
                }
           } catch (error: any) {
                console.error('Error in deleteFirewall:', error);
@@ -1066,6 +1113,47 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving deleteFirewall in ${this.executionTime}ms`);
+          }
+     }
+
+     private getExistingNfts(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+          const nftPages = (checkObjects.result.account_objects ?? []).filter((obj: any) => obj.LedgerEntryType === 'NFTokenPage');
+
+          // Flatten all NFTokens from all pages
+          const allNfts = nftPages.flatMap((page: any) => {
+               return page.NFTokens.map((entry: any) => {
+                    const nft = entry.NFToken;
+
+                    return {
+                         LedgerEntryType: page.LedgerEntryType,
+                         PageIndex: page.index,
+                         NFTokenID: nft.NFTokenID,
+                         Flags: nft.Flags ?? 0,
+                         Issuer: nft.Issuer,
+                         Taxon: nft.NFTaxon,
+                         TransferFee: nft.TransferFee,
+                         Sequence: nft.Sequence,
+                         URI_hex: nft.URI,
+                         URI: nft.URI ? this.utilsService.decodeHex(nft.URI) : null,
+                    };
+               });
+          });
+
+          this.existingFirewalls = allNfts;
+
+          this.utilsService.logObjects('existingFirewalls', this.existingFirewalls);
+
+          return this.existingFirewalls;
+     }
+
+     private addNewDestinationFromUser() {
+          if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
+               this.customDestinations.push({
+                    name: `Custom ${this.customDestinations.length + 1}`,
+                    address: this.destinationField,
+               });
+               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+               this.updateDestinations();
           }
      }
 
@@ -1239,7 +1327,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
           // Early return for empty inputs
           if (!inputs || Object.keys(inputs).length === 0) {
-               return ['No inputs provided'];
+               return ['No inputs provided.'];
           }
 
           // --- Shared skip helper ---
@@ -1250,21 +1338,21 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           // --- Common validators ---
           const isRequired = (value: string | null | undefined, fieldName: string): string | null => {
                if (value == null || !this.utilsService.validateInput(value)) {
-                    return `${fieldName} cannot be empty`;
+                    return `${fieldName} cannot be empty.`;
                }
                return null;
           };
 
           const isValidXrpAddress = (value: string | undefined, fieldName: string): string | null => {
                if (value && !xrpl.isValidAddress(value)) {
-                    return `${fieldName} is invalid`;
+                    return `${fieldName} is invalid.`;
                }
                return null;
           };
 
           const isValidSecret = (value: string | undefined, fieldName: string): string | null => {
                if (value && !xrpl.isValidSecret(value)) {
-                    return `${fieldName} is invalid`;
+                    return `${fieldName} is invalid.`;
                }
                return null;
           };
@@ -1306,18 +1394,18 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                const addresses = this.utilsService.getMultiSignAddress(addressesStr);
                const seeds = this.utilsService.getMultiSignSeeds(seedsStr);
                if (addresses.length === 0) {
-                    return 'At least one signer address is required for multi-signing';
+                    return 'At least one signer address is required for multi-signing.';
                }
                if (addresses.length !== seeds.length) {
-                    return 'Number of signer addresses must match number of signer seeds';
+                    return 'Number of signer addresses must match number of signer seeds.';
                }
                const invalidAddr = addresses.find((addr: string) => !xrpl.isValidAddress(addr));
                if (invalidAddr) {
-                    return `Invalid signer address: ${invalidAddr}`;
+                    return `Invalid signer address: ${invalidAddr}.`;
                }
                const invalidSeed = seeds.find((seed: string) => !xrpl.isValidSecret(seed));
                if (invalidSeed) {
-                    return 'One or more signer seeds are invalid';
+                    return 'One or more signer seeds are invalid.';
                }
                return null;
           };
@@ -1459,15 +1547,15 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           const multiErr = validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds);
           if (multiErr) errors.push(multiErr);
 
-          if (errors.length === 0 && inputs.useMultiSign && (inputs.multiSignAddresses === 'No Multi-Sign address configured for account' || inputs.multiSignSeeds === '')) {
-               errors.push('At least one signer address is required for multi-signing');
-          }
-
           const regAddrErr = isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address');
           if (regAddrErr && inputs.regularKeyAddress !== 'No RegularKey configured for account') errors.push(regAddrErr);
 
           const regSeedErr = isValidSecret(inputs.regularKeySeed, 'Regular Key Seed');
           if (regSeedErr) errors.push(regSeedErr);
+
+          if (errors.length == 0 && inputs.useMultiSign && (inputs.multiSignAddresses === 'No Multi-Sign address configured for account' || inputs.multiSignSeeds === '')) {
+               errors.push('At least one signer address is required for multi-signing');
+          }
 
           return errors;
      }
@@ -1602,11 +1690,42 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           return combined;
      }
 
+     copyFirewallID(id: string) {
+          navigator.clipboard.writeText(id).then(() => {
+               this.ui.showToastMessage('MPT Issuance ID copied!');
+          });
+     }
+
      public get infoMessage(): string | null {
           const tabConfig = {
-               send: {
-                    message: '',
-                    dynamicText: '', // Empty for no additional text
+               create: {
+                    firewall: this.existingFirewalls,
+                    getDescription: (count: number) => (count === 1 ? 'Firewall' : 'Firewalls'),
+                    dynamicText: 'created', // Empty for no additional text
+                    showLink: false,
+               },
+               modify: {
+                    firewall: this.existingFirewalls,
+                    getDescription: (count: number) => (count === 1 ? 'Firewall' : 'Firewalls'),
+                    dynamicText: 'created', // Empty for no additional text
+                    showLink: false,
+               },
+               authorize: {
+                    firewall: this.existingFirewalls,
+                    getDescription: (count: number) => (count === 1 ? 'Firewall' : 'Firewalls'),
+                    dynamicText: 'created',
+                    showLink: false,
+               },
+               unauthorize: {
+                    firewall: this.existingFirewalls,
+                    getDescription: (count: number) => (count === 1 ? 'Firewall' : 'Firewalls'),
+                    dynamicText: 'created',
+                    showLink: false,
+               },
+               delete: {
+                    firewall: this.existingFirewalls,
+                    getDescription: (count: number) => (count === 1 ? 'Firewall' : 'Firewalls'),
+                    dynamicText: 'created',
                     showLink: false,
                },
           };
@@ -1615,12 +1734,19 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           if (!config) return null;
 
           const walletName = this.currentWallet.name || 'selected';
+          const count = config.firewall.length;
 
           // Build the dynamic text part (with space if text exists)
           const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
 
-          // return `The <code>${walletName}</code> wallet has ${dynamicText} ${config.message}`;
-          return null;
+          let message = `The <code>${walletName}</code> wallet has ${dynamicText}${count} ${config.getDescription(count)}.`;
+
+          if (config.showLink && count > 0) {
+               const link = `${this.url}account/${this.currentWallet.address}/checks`;
+               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View checks on XRPL Win</a>`;
+          }
+
+          return message;
      }
 
      autoResize(textarea: HTMLTextAreaElement) {
@@ -1631,7 +1757,6 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
-               this.ui.isSimulateEnabled = false;
                this.useMultiSign = false;
                this.isRegularKeyAddress = false;
                this.isMptFlagModeEnabled = false;
@@ -1653,11 +1778,38 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      }
 
      openDropdown() {
+          // update service items (in case destinations changed)
+          this.destinationDropdownService.setItems(this.destinations);
+          // prepare filtered list
+          this.destinationDropdownService.filter(this.destinationField || '');
+          // tell service to open -> subscription above will attach overlay
+          this.destinationDropdownService.openDropdown();
+     }
+
+     // Called by outside click / programmatic close
+     closeDropdown() {
+          this.destinationDropdownService.closeDropdown();
+     }
+
+     // Called by chevron toggle
+     toggleDropdown() {
+          // make sure the service has current items first
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.toggleDropdown();
+     }
+
+     // Called on input typing
+     onDestinationInput() {
+          this.filterQuery = this.destinationField || '';
+          this.destinationDropdownService.filter(this.filterQuery);
+          this.destinationDropdownService.openDropdown(); // ensure open while typing
+     }
+
+     private openDropdownInternal() {
+          // If already attached, do nothing
           if (this.overlayRef?.hasAttached()) return;
 
-          this.filteredDestinations = [...this.destinations];
-          this.highlightedIndex = 0;
-
+          // position strategy (your existing logic)
           const positionStrategy = this.overlay
                .position()
                .flexibleConnectedTo(this.dropdownOrigin)
@@ -1683,26 +1835,16 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           this.overlayRef.attach(portal);
 
           // Close on backdrop click
-          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
-          this.dropdownOpen = true;
+          this.overlayRef.backdropClick().subscribe(() => {
+               this.destinationDropdownService.closeDropdown(); // close via service so subscribers sync
+          });
      }
 
-     closeDropdown() {
+     private closeDropdownInternal() {
           if (this.overlayRef) {
                this.overlayRef.detach();
                this.overlayRef = null;
           }
-          this.dropdownOpen = false;
-     }
-
-     toggleDropdown() {
-          this.overlayRef?.hasAttached() ? this.closeDropdown() : this.openDropdown();
-     }
-
-     onDestinationInput() {
-          this.filterQuery = this.destinationField; // Now filter based on typed value
-          this.filterDestinations();
-          this.showDropdown = true;
      }
 
      filterDestinations() {
@@ -1718,23 +1860,18 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      }
 
      selectDestination(address: string) {
-          if (address === this.currentWallet.address) {
-               return; // Don't allow selecting self
-          }
+          if (address === this.currentWallet.address) return;
 
-          // Find the destination object by address
           const dest = this.destinations.find(d => d.address === address);
-
           if (dest) {
-               const first = address.slice(0, 6);
-               const last = address.slice(-6);
-               this.destinationField = `${dest.name} (${first}...${last})`;
+               // show "Name (rABC12...DEF456)"
+               this.destinationField = this.destinationDropdownService.formatDisplay(dest);
           } else {
-               // Fallback (should not happen)
                this.destinationField = `${address.slice(0, 6)}...${address.slice(-6)}`;
           }
 
-          this.closeDropdown();
+          // close via service so subscribers remain in sync
+          this.destinationDropdownService.closeDropdown();
           this.cdr.detectChanges();
      }
 

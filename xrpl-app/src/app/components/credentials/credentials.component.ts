@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, NgZone, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -11,7 +11,6 @@ import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { InfoMessageConstants } from '../../core/info-message.constants';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
@@ -32,8 +31,10 @@ declare var Prism: any;
 interface ValidationInputs {
      seed?: string;
      accountInfo?: any;
-     destination?: string;
-     credentialID?: string;
+     destination?: any;
+     credentialID?: any;
+     // formattedDestination?: string;
+     domainId?: string;
      credentialType?: string;
      date?: string;
      isRegularKeyAddress?: boolean;
@@ -70,7 +71,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
      private overlayRef: OverlayRef | null = null;
      private readonly injector = inject(Injector);
-     result: string = '';
+     selectedCredentials: string | null = null;
      currencyField: string = '';
      currencyBalanceField: string = '';
      amountField: string = '';
@@ -81,7 +82,6 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
      regularKeySeed: string = '';
      useMultiSign: boolean = false;
      multiSignAddress: string = '';
-     isUpdateMetaData: boolean = false;
      multiSignSeeds: string = '';
      signerQuorum: number = 0;
      multiSigningEnabled: boolean = false;
@@ -120,12 +120,10 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           uri: 'ipfs://bafybeiexamplehash',
      };
      destinationField: string = '';
-     // destinations: { name?: string; address: string }[] = [];
      destinations: DropdownItem[] = [];
      customDestinations: { name?: string; address: string }[] = [];
      showDropdown: boolean = false;
      dropdownOpen: boolean = false;
-     // filteredDestinations: { name?: string; address: string }[] = [];
      filteredDestinations: DropdownItem[] = [];
      highlightedIndex = -1;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
@@ -218,6 +216,11 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           });
      }
 
+     onSelectCredentials(credentialId: string | null) {
+          this.selectedCredentials = credentialId;
+          this.credentialID = credentialId ?? '';
+     }
+
      ngAfterViewInit() {
           setTimeout(() => {
                this.textareas.forEach(ta => this.autoResize(ta.nativeElement));
@@ -247,12 +250,14 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
      setTab(tab: string) {
           this.activeTab = tab;
+          this.selectedCredentials = null;
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
      }
 
      selectWallet(index: number) {
+          if (this.selectedWalletIndex === index) return; // ← Add this guard!
           this.selectedWalletIndex = index;
           this.onAccountChange();
      }
@@ -288,12 +293,6 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
           if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
                this.selectedWalletIndex = 0;
-               this.refreshBalance(0);
-          } else {
-               (async () => {
-                    const client = await this.xrplService.getClient();
-                    await this.refreshWallets(client, [this.wallets[this.selectedWalletIndex].address, this.destinationField ? this.destinationField : '']);
-               })();
           }
 
           this.onAccountChange();
@@ -308,7 +307,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           try {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               await this.refreshWallets(client, [walletAddress]);
+               await this.refreshWallets(client, [walletAddress]).catch(console.error);
           } catch (err) {
                this.ui.setError('Failed to refresh balance');
           }
@@ -436,37 +435,30 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           this.ui.updateSpinnerMessage(``);
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-               this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
+               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
-               const inputs: ValidationInputs = {
-                    seed: this.currentWallet.seed,
-                    accountInfo: accountInfo,
-               };
+               const inputs: ValidationInputs = { seed: this.currentWallet.seed, accountInfo: accountInfo };
 
                const errors = await this.validationService.validate('AccountInfo', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                this.getExistingCredentials(accountObjects, wallet.classicAddress);
                this.getSubjectCredentials(accountObjects, wallet.classicAddress);
 
-               await this.refreshWallets(client, [wallet.classicAddress]);
+               await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-               setTimeout(async () => {
-                    try {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                    } catch (err) {
-                         console.error('Error in deferred UI updates:', err);
-                    }
-               }, 0);
+               this.refreshUIData(wallet, accountInfo, accountObjects);
+               this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+
+               this.updateTickets(accountObjects);
+
+               this.clearFields(false);
+               this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getCredentialsForAccount:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
@@ -500,18 +492,21 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
-               this.utilsService.logAccountInfoObjects(accountInfo, null);
-               this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+               // this.utilsService.logAccountInfoObjects(accountInfo, null);
+               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-               inputs.accountInfo = accountInfo;
+               const isShortForm = this.destinationField.includes('...');
+               const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
 
-               const errors = this.validateInputs(inputs, 'createCredential');
+               inputs.destination = resolvedDestination;
+               inputs.date = this.credential.subject.expirationDate;
+
+               const errors = await this.validationService.validate('CredentialCreate', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                console.debug('expirationDate:', this.credential.subject.expirationDate);
@@ -555,8 +550,8 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               this.utilsService.logObjects('response', response);
-               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               // this.utilsService.logObjects('response', response);
+               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -577,33 +572,21 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
                if (!this.ui.isSimulateEnabled) {
                     this.ui.successMessage = 'Created credential successfully!';
+
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
                     this.getExistingCredentials(updatedAccountObjects, wallet.classicAddress);
                     this.getSubjectCredentials(updatedAccountObjects, wallet.classicAddress);
 
-                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
+                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
-                    // Add new destination if valid and not already present
-                    if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
-                         this.customDestinations.push({
-                              name: `Custom ${this.customDestinations.length + 1}`,
-                              address: this.destinationField,
-                         });
-                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
-                         this.updateDestinations();
-                    }
+                    this.addNewDestinationFromUser();
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Setting Credential  successfully!';
                }
@@ -639,18 +622,17 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'credential'), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
-               this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
-               this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
+               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
                inputs.accountInfo = accountInfo;
 
-               const errors = this.validateInputs(inputs, 'deleteCredentials');
+               const errors = await this.validationService.validate('CredentialDelete', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                const credentialFound = accountObjects.result.account_objects.find((line: any) => {
@@ -699,8 +681,8 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               this.utilsService.logObjects('response', response);
-               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               // this.utilsService.logObjects('response', response);
+               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -714,39 +696,28 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                     response.result.errorMessage = userMessage;
                     this.ui.setError(userMessage);
                } else {
-                    this.ui.setSuccess(this.result);
+                    this.ui.setSuccess(this.ui.result);
                }
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
                if (!this.ui.isSimulateEnabled) {
                     this.ui.successMessage = 'Credential removed successfully!';
+
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
                     this.getExistingCredentials(updatedAccountObjects, wallet.classicAddress);
                     this.getSubjectCredentials(updatedAccountObjects, wallet.classicAddress);
 
-                    await this.refreshWallets(client, [wallet.classicAddress]);
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    // Add new destination if valid and not already present
-                    if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
-                         this.customDestinations.push({
-                              name: `Custom ${this.customDestinations.length + 1}`,
-                              address: this.destinationField,
-                         });
-                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
-                         this.updateDestinations();
-                    }
+                    this.addNewDestinationFromUser();
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                }
           } catch (error: any) {
                console.error('Error:', error);
@@ -767,6 +738,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           const inputs: ValidationInputs = {
                seed: this.currentWallet.seed,
                credentialType: this.credential.credential_type,
+               credentialID: this.credentialID,
                isRegularKeyAddress: this.isRegularKeyAddress,
                regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
                regularKeySeed: this.isRegularKeyAddress ? this.regularKeySeed : undefined,
@@ -779,18 +751,17 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'credential'), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
-               this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
-               this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
+               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
                inputs.accountInfo = accountInfo;
 
-               const errors = this.validateInputs(inputs, 'acceptCredentials');
+               const errors = await this.validationService.validate('CredentialAccept', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                const credentialFound = accountObjects.result.account_objects.find((line: any) => {
@@ -841,8 +812,8 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               this.utilsService.logObjects('response', response);
-               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               // this.utilsService.logObjects('response', response);
+               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -856,40 +827,28 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                     (response.result as any).errorMessage = userMessage;
                     this.ui.setError(userMessage);
                } else {
-                    this.ui.setSuccess(this.result);
+                    this.ui.setSuccess(this.ui.result);
                }
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
                if (!this.ui.isSimulateEnabled) {
                     this.ui.successMessage = 'Credential accepted successfully!';
+
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
                     this.getExistingCredentials(updatedAccountObjects, wallet.classicAddress);
                     this.getSubjectCredentials(updatedAccountObjects, wallet.classicAddress);
 
-                    await this.refreshWallets(client, [wallet.classicAddress]);
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    // Add new destination if valid and not already present
-                    if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
-                         this.customDestinations.push({
-                              name: `Custom ${this.customDestinations.length + 1}`,
-                              address: this.destinationField,
-                         });
-                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
-                         this.updateDestinations();
-                    }
+                    this.addNewDestinationFromUser();
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Check create successfully!';
                }
@@ -926,21 +885,17 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const mode = this.ui.isSimulateEnabled ? 'simulating' : 'verifying';
-               this.ui.updateSpinnerMessage(`Verifing Credentials (${mode})...`);
-
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', '')]);
-               this.utilsService.logAccountInfoObjects(accountInfo, null);
+               // this.utilsService.logAccountInfoObjects(accountInfo, null);
 
                inputs.accountInfo = accountInfo;
 
-               const errors = this.validateInputs(inputs, 'verifyCredential');
+               const errors = await this.validationService.validate('CredentialVerify', { inputs, client, accountInfo });
                if (errors.length > 0) {
                     this.ui.isSuccess = false;
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                // Encode credentialType as uppercase hex, if needed
@@ -954,7 +909,6 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
                if (credentialTypeHex.length % 2 !== 0 || !AppConstants.CREDENTIAL_REGEX.test(credentialTypeHex)) {
                     // Hexadecimal is always 2 chars per byte, so an odd length is invalid.
-                    this.ui.paymentTx = [];
                     this.ui.setError(`Credential type must be 128 characters as hexadecimal.`);
                     return;
                }
@@ -972,24 +926,22 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                console.info('Looking up credential...');
                console.info(`Found: `, ledgerEntryRequest);
 
-               this.ui.paymentTx.push(ledgerEntryRequest);
-               // this.updatePaymentTx();
-
                let xrplResponse;
                try {
                     xrplResponse = await client.request(ledgerEntryRequest as any);
                } catch (error: any) {
                     if (error.data?.error === 'entryNotFound') {
                          console.info('Credential was not found');
-                         this.ui.paymentTx = [];
                          this.ui.setError(`Credential not found.`);
                          return;
                     } else {
-                         this.ui.paymentTx = [];
                          this.ui.setError(`Failed to check credential: ${error.message || 'Unknown error'}`);
                          return;
                     }
                }
+
+               this.ui.paymentTx.push(ledgerEntryRequest);
+               // this.updatePaymentTx();
 
                this.ui.txResult.push(xrplResponse);
                this.updateTxResult(this.ui.txResult);
@@ -1000,7 +952,6 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                // Check if the credential has been accepted
                if (!(credential.Flags & AppConstants.LSF_ACCEPTED)) {
                     console.info('Credential is not accepted.');
-                    this.ui.paymentTx = [];
                     this.ui.setError('Credential is not accepted.');
                     return;
                }
@@ -1018,7 +969,6 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                               ledger_index: 'validated',
                          });
                     } catch (error: any) {
-                         this.ui.paymentTx = [];
                          this.ui.setError(`Failed to check credential: ${error.message || 'Unknown error'}`);
                          return;
                     }
@@ -1028,7 +978,6 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
                     if (new Date(closeTime) > new Date(expirationTime)) {
                          console.info('Credential is expired.');
-                         this.ui.paymentTx = [];
                          this.ui.setError(`Credential is expired.`);
                          return;
                     }
@@ -1039,8 +988,8 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
                // Credential has passed all checks
                console.info('Credential is verified.');
+               this.ui.setSuccess(this.ui.result);
                this.ui.successMessage = 'Credential is verified.';
-               this.ui.setSuccess(this.result);
                return true;
           } catch (error: any) {
                console.error('Error:', error);
@@ -1098,6 +1047,17 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           this.utilsService.logObjects('subjectCredentials', this.subjectCredentials);
      }
 
+     private addNewDestinationFromUser() {
+          if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
+               this.customDestinations.push({
+                    name: `Custom ${this.customDestinations.length + 1}`,
+                    address: this.destinationField,
+               });
+               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+               this.updateDestinations();
+          }
+     }
+
      private async setTxOptionalFields(client: xrpl.Client, credentialTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (txType === 'createCredential') {
                if (this.credential.uri) {
@@ -1124,7 +1084,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
      }
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
-          this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
+          // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
 
           this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
           this.refreshUiAccountInfo(updatedAccountInfo);
@@ -1265,194 +1225,6 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           }
      }
 
-     private validateInputs(inputs: ValidationInputs, action: string): string[] {
-          const errors: string[] = [];
-
-          // Early return for empty inputs
-          if (!inputs || Object.keys(inputs).length === 0) {
-               return ['No inputs provided.'];
-          }
-
-          // --- Shared skip helper ---
-          const shouldSkipNumericValidation = (value: string | undefined): boolean => {
-               return value === undefined || value === null || value.trim() === '';
-          };
-
-          // --- Common validators ---
-          const isRequired = (value: string | null | undefined, fieldName: string): string | null => {
-               if (value == null || !this.utilsService.validateInput(value)) {
-                    return `${fieldName} cannot be empty.`;
-               }
-               return null;
-          };
-
-          const isValidXrpAddress = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidAddress(value)) {
-                    return `${fieldName} is invalid.`;
-               }
-               return null;
-          };
-
-          const isValidSecret = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidSecret(value)) {
-                    return `${fieldName} is invalid.`;
-               }
-               return null;
-          };
-
-          const isValidSeed = (value: string | undefined): string | null => {
-               if (value) {
-                    const { type, value: detectedValue } = this.utilsService.detectXrpInputType(value);
-                    if (detectedValue === 'unknown') {
-                         return 'Account seed is invalid';
-                    }
-               }
-               return null;
-          };
-
-          const isValidNumber = (value: string | undefined, fieldName: string, minValue?: number): string | null => {
-               if (value === undefined) return null; // Not required
-               const num = parseFloat(value);
-               if (isNaN(num) || !isFinite(num)) {
-                    return `${fieldName} must be a valid number`;
-               }
-               if (minValue !== undefined && num <= minValue) {
-                    return `${fieldName} must be greater than ${minValue}`;
-               }
-               return null;
-          };
-
-          const isValidDate = (value: string | undefined): string | null => {
-               if (value && (!this.utilsService.validateInput(value) || !this.utilsService.isValidDate(value))) {
-                    return 'Expiration Date is invalid';
-               }
-               return null;
-          };
-
-          const validateMultiSign = (addressesStr: string | undefined, seedsStr: string | undefined): string | null => {
-               if (!addressesStr || !seedsStr) return null;
-               const addresses = this.utilsService.getMultiSignAddress(addressesStr);
-               const seeds = this.utilsService.getMultiSignSeeds(seedsStr);
-               if (addresses.length === 0) {
-                    return 'At least one signer address is required for multi-signing.';
-               }
-               if (addresses.length !== seeds.length) {
-                    return 'Number of signer addresses must match number of signer seeds.';
-               }
-               const invalidAddr = addresses.find((addr: string) => !xrpl.isValidAddress(addr));
-               if (invalidAddr) {
-                    return `Invalid signer address: ${invalidAddr}.`;
-               }
-               const invalidSeed = seeds.find((seed: string) => !xrpl.isValidSecret(seed));
-               if (invalidSeed) {
-                    return 'One or more signer seeds are invalid.';
-               }
-               return null;
-          };
-
-          // Action-specific config: required fields and custom rules
-          const actionConfig: Record<string, { required: (keyof ValidationInputs)[]; customValidators?: (() => string | null)[] }> = {
-               getCredentialsForAccount: {
-                    required: ['seed'],
-                    customValidators: [() => isValidSeed(inputs.seed), () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null)],
-               },
-               createCredential: {
-                    required: ['seed', 'destination', 'credentialType', 'date'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidXrpAddress(inputs.destination, 'Destination address'),
-                         () => isValidDate(inputs.date),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                    ],
-               },
-               deleteCredentials: {
-                    required: ['seed', 'credentialID', 'credentialType'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                    ],
-               },
-               acceptCredentials: {
-                    required: ['seed', 'credentialType'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                    ],
-               },
-               verifyCredential: {
-                    required: ['seed', 'destination', 'credentialID', 'credentialType'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidXrpAddress(inputs.destination, 'Destination address'),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                    ],
-               },
-               default: { required: [], customValidators: [] },
-          };
-
-          const config = actionConfig[action] || actionConfig['default'];
-
-          // --- Run required checks ---
-          config.required.forEach((field: keyof ValidationInputs) => {
-               const err = isRequired(inputs[field], field.charAt(0).toUpperCase() + field.slice(1));
-               if (err) errors.push(err);
-          });
-
-          // --- Run sync custom validators ---
-          config.customValidators?.forEach((validator: () => string | null) => {
-               const err = validator();
-               if (err) errors.push(err);
-          });
-
-          // --- Always validate optional fields ---
-          const multiErr = validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds);
-          if (multiErr) errors.push(multiErr);
-
-          if (errors.length === 0 && inputs.useMultiSign && (inputs.multiSignAddresses === 'No Multi-Sign address configured for account' || inputs.multiSignSeeds === '')) {
-               errors.push('At least one signer address is required for multi-signing');
-          }
-
-          const regAddrErr = isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address');
-          if (regAddrErr && inputs.regularKeyAddress !== 'No RegularKey configured for account') errors.push(regAddrErr);
-
-          const regSeedErr = isValidSecret(inputs.regularKeySeed, 'Regular Key Seed');
-          if (regSeedErr) errors.push(regSeedErr);
-
-          return errors;
-     }
-
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
           if (this.destinations.length > 0 && !this.destinationField) {
@@ -1538,21 +1310,35 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
      public get infoMessage(): string | null {
           const tabConfig = {
                create: {
+                    primary: 'existing', // issuer view (what this wallet created)
                     credentials: this.existingCredentials,
+                    subjectCredentials: this.subjectCredentials,
                     getDescription: (count: number) => (count === 1 ? 'credential' : 'credentials'),
-                    dynamicText: 'created', // Add dynamic text here
+                    dynamicText: 'created',
                     showLink: true,
                },
-               cash: {
-                    credentials: [],
-                    getDescription: (count: number) => (count === 1 ? 'check that can be cashed' : 'checks that can be cashed'),
-                    dynamicText: '', // Empty for no additional text
+               accept: {
+                    primary: 'subject', // accept -> items where this wallet is the subject
+                    credentials: this.existingCredentials,
+                    subjectCredentials: this.subjectCredentials,
+                    getDescription: (count: number) => (count === 1 ? 'credential that can be accepted' : 'credentials that can be accepted'),
+                    dynamicText: '',
                     showLink: true,
                },
-               cancel: {
-                    credentials: [],
-                    getDescription: (count: number) => (count === 1 ? 'check that can be cancelled' : 'checks that can be cancelled'),
-                    dynamicText: '', // Dynamic text before the count
+               verify: {
+                    primary: 'existing', // typically you verify credentials addressed by you (created)
+                    credentials: this.existingCredentials,
+                    subjectCredentials: this.subjectCredentials,
+                    getDescription: (count: number) => (count === 1 ? 'credential that can be verified' : 'credentials that can be verified'),
+                    dynamicText: '',
+                    showLink: true,
+               },
+               delete: {
+                    primary: 'existing', // delete typically refers to credentials you issued
+                    credentials: this.existingCredentials,
+                    subjectCredentials: this.subjectCredentials,
+                    getDescription: (count: number) => (count === 1 ? 'credential that can be deleted' : 'credentials that can be deleted'),
+                    dynamicText: '',
                     showLink: true,
                },
           };
@@ -1561,22 +1347,49 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           if (!config) return null;
 
           const walletName = this.currentWallet.name || 'selected';
-          const count = config.credentials.length ? config.credentials.length : 0;
 
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+          // Use the tab-specific "primary" list for counts and links
+          const primaryList = config.primary === 'subject' ? config.subjectCredentials ?? [] : config.credentials ?? [];
+          const secondaryList = config.primary === 'subject' ? config.credentials ?? [] : config.subjectCredentials ?? [];
 
-          let message = `The <code>${walletName}</code> wallet has ${dynamicText}${count} ${config.getDescription(count)}.`;
+          const primaryCount = primaryList.length;
+          const secondaryCount = secondaryList.length;
 
-          // if (config.showLink && count > 0) {
-          //      const link = `${this.url}account/${this.currentWallet.address}/checks`;
-          //      message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View checks on XRPL Win</a>`;
-          // }
+          // If both are empty
+          if (primaryCount === 0 && secondaryCount === 0) {
+               return `The <code>${walletName}</code> wallet has no credentials.`;
+          }
+
+          // Build message header
+          let message = `The <code>${walletName}</code> wallet has:`;
+
+          // Primary section (depends on tab: accept -> subject, create/delete -> existing)
+          if (primaryCount > 0) {
+               message += `<br><strong>${primaryCount}</strong> ${config.getDescription(primaryCount)}.`;
+               if (config.showLink) {
+                    for (const c of primaryList) {
+                         const link = `${this.url}entry/${c.index}`;
+                         message += `<br><a href="${link}" target="_blank" class="xrpl-win-link">View Credential (ID: ${c.index.slice(0, 8)}...${c.index.slice(-8)})</a>`;
+                    }
+               }
+          }
+
+          // Secondary section (optional additional info)
+          if (secondaryCount > 0) {
+               // Use a different label so it's clearer which list is which
+               const secondaryLabel = config.primary === 'subject' ? 'issued by this wallet' : 'addressed to this wallet';
+               message += `<br><strong>${secondaryCount}</strong> ${secondaryLabel}.`;
+               if (config.showLink) {
+                    for (const s of secondaryList) {
+                         const link = `${this.url}entry/${s.index}`;
+                         message += `<br><a href="${link}" target="_blank" class="xrpl-win-link">View Credential (ID: ${s.index.slice(0, 8)}...${s.index.slice(-8)})</a>`;
+                    }
+               }
+          }
 
           return message;
      }
 
-     // set a warning
      formatXrplTimestamp(timestamp: number): string {
           return this.utilsService.convertXRPLTime(timestamp);
      }
@@ -1589,12 +1402,14 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
-               this.ui.isSimulateEnabled = false;
                this.credentialID = '';
                this.useMultiSign = false;
                this.isRegularKeyAddress = false;
+               this.ui.clearMessages();
+               this.ui.clearWarning();
           }
 
+          this.credentialID = '';
           this.selectedTicket = '';
           this.selectedSingleTicket = '';
           this.isTicket = false;

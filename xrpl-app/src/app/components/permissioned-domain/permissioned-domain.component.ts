@@ -1,18 +1,16 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, NgZone, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
 import { PermissionedDomainSet, PermissionedDomainDelete } from 'xrpl';
-import { flagNames } from 'flagnames';
 import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { InfoMessageConstants } from '../../core/info-message.constants';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
@@ -36,8 +34,9 @@ interface ValidationInputs {
      seed?: string;
      accountInfo?: any;
      accountObjects?: any;
-     formattedDestination?: any;
-     destination?: string;
+     subject?: any;
+     // destination?: any;
+     // formattedDestination?: string;
      domainId?: string;
      credentialType?: string;
      date?: string;
@@ -92,7 +91,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
      private overlayRef: OverlayRef | null = null;
      private readonly injector = inject(Injector);
-     result: string = '';
+     selectedPermissionedDomain: string | null = null; // stores NFTokenID
      isTicket: boolean = false;
      ticketArray: string[] = [];
      selectedTickets: string[] = [];
@@ -115,7 +114,6 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      credentialType: string = '';
      subject: string = '';
      masterKeyDisabled: boolean = false;
-     isSimulateEnabled: boolean = false;
      permissionedDomainObject = {
           version: '1.0',
           credential_type: 'KYCCredential',
@@ -138,12 +136,10 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           uri: 'ipfs://bafybeiexamplehash',
      };
      destinationField: string = '';
-     // destinations: { name?: string; address: string }[] = [];
      destinations: DropdownItem[] = [];
      customDestinations: { name?: string; address: string }[] = [];
      showDropdown: boolean = false;
      dropdownOpen: boolean = false;
-     // filteredDestinations: { name?: string; address: string }[] = [];
      filteredDestinations: DropdownItem[] = [];
      highlightedIndex = -1;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
@@ -162,10 +158,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      showSecret: boolean = false;
      environment: string = '';
      activeTab: string = 'set'; // default
-     private cachedReserves: any = null;
      encryptionType: string = '';
      hasWallets: boolean = true;
-     // Controls whether the panel is expanded or collapsed
      createdDomains: boolean = true;
      createdPermissionedDomains: any = [];
      url: string = '';
@@ -188,8 +182,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           private validationService: ValidationService,
           private overlay: Overlay,
           private viewContainerRef: ViewContainerRef,
-          private destinationDropdownService: DestinationDropdownService,
-          private ngZone: NgZone
+          private destinationDropdownService: DestinationDropdownService
      ) {}
 
      ngOnInit() {
@@ -237,6 +230,11 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           });
      }
 
+     onSelectPermissionedDomain(domainId: string | null) {
+          this.selectedPermissionedDomain = domainId;
+          this.domainId = domainId ?? '';
+     }
+
      ngAfterViewInit() {
           setTimeout(() => {
                this.textareas.forEach(ta => this.autoResize(ta.nativeElement));
@@ -262,12 +260,14 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
      setTab(tab: string) {
           this.activeTab = tab;
+          this.selectedPermissionedDomain = null;
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
      }
 
      selectWallet(index: number) {
+          if (this.selectedWalletIndex === index) return; // ← Add this guard!
           this.selectedWalletIndex = index;
           this.onAccountChange();
      }
@@ -303,12 +303,6 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
           if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
                this.selectedWalletIndex = 0;
-               this.refreshBalance(0);
-          } else {
-               (async () => {
-                    const client = await this.xrplService.getClient();
-                    await this.refreshWallets(client, [this.wallets[this.selectedWalletIndex].address, this.destinationField ? this.destinationField : '']);
-               })();
           }
 
           this.onAccountChange();
@@ -323,7 +317,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           try {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               await this.refreshWallets(client, [walletAddress]);
+               await this.refreshWallets(client, [walletAddress]).catch(console.error);
           } catch (err) {
                this.ui.setError('Failed to refresh balance');
           }
@@ -447,36 +441,29 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           this.ui.updateSpinnerMessage(``);
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-               this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
+               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
-               const inputs: ValidationInputs = {
-                    seed: this.currentWallet.seed,
-                    accountInfo: accountInfo,
-               };
+               const inputs: ValidationInputs = { seed: this.currentWallet.seed, accountInfo: accountInfo };
 
                const errors = await this.validationService.validate('AccountInfo', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                this.getCreatedPermissionedDomains(accountObjects, wallet.classicAddress);
 
-               await this.refreshWallets(client, [wallet.classicAddress]);
+               await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-               setTimeout(async () => {
-                    try {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                    } catch (err) {
-                         console.error('Error in deferred UI updates:', err);
-                    }
-               }, 0);
+               this.refreshUIData(wallet, accountInfo, accountObjects);
+               this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+
+               this.updateTickets(accountObjects);
+
+               this.clearFields(false);
+               this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getPermissionedDomainForAccount:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
@@ -495,7 +482,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
           const inputs: ValidationInputs = {
                seed: this.currentWallet.seed,
-               destination: this.permissionedDomainObject.subject.destinationAddress,
+               senderAddress: this.currentWallet.classicAddress,
+               subject: this.permissionedDomainObject.subject.destinationAddress,
                credentialType: this.permissionedDomainObject.credential_type,
                isRegularKeyAddress: this.isRegularKeyAddress,
                regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
@@ -509,27 +497,20 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
-               this.utilsService.logAccountInfoObjects(accountInfo, null);
-               this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+               // this.utilsService.logAccountInfoObjects(accountInfo, null);
+               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-               let destination = '';
-               inputs.accountInfo = accountInfo;
-               if (this.destinationField.includes('...')) {
-                    const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
-                    inputs.formattedDestination = formattedDestination.address;
-                    destination = formattedDestination.address;
-               } else {
-                    inputs.formattedDestination = this.destinationField;
-                    destination = this.destinationField;
-               }
+               const isShortForm = this.destinationField.includes('...');
+               const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
 
-               const errors = this.validateInputs(inputs, 'setPermissionedDomain');
+               inputs.subject = resolvedDestination;
+
+               const errors = await this.validationService.validate('PermissionedDomainSet', { inputs, client, accountInfo, currentLedger, serverInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                const permissionedDomainTx: PermissionedDomainSet = {
@@ -574,8 +555,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               this.utilsService.logObjects('response', response);
-               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               // this.utilsService.logObjects('response', response);
+               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -596,32 +577,20 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
                if (!this.ui.isSimulateEnabled) {
                     this.ui.successMessage = 'Set Permissioned Domain successfully!';
+
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
                     this.getCreatedPermissionedDomains(updatedAccountObjects, wallet.classicAddress);
 
-                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
+                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
-                    // Add new destination if valid and not already present
-                    if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
-                         this.customDestinations.push({
-                              name: `Custom ${this.customDestinations.length + 1}`,
-                              address: this.destinationField,
-                         });
-                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
-                         this.updateDestinations();
-                    }
+                    this.addNewDestinationFromUser();
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Set Permissioned Domain successfully!';
                }
@@ -654,18 +623,17 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'permissioned_domain'), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
-               this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
-               this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
+               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
                inputs.accountInfo = accountInfo;
 
-               const errors = this.validateInputs(inputs, 'deletePermissionedDomain');
+               const errors = await this.validationService.validate('PermissionedDomainDelete', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                const permissionDomainFound = accountObjects.result.account_objects.find((line: any) => {
@@ -692,14 +660,14 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.isSimulateEnabled ? 'Simulating Deleting Permissioned Domain (no changes will be made)...' : 'Submitting Delete Permissioned Domain to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Deleting Permissioned Domain (no changes will be made)...' : 'Submitting Delete Permissioned Domain to Ledger...', 200);
 
                this.ui.paymentTx.push(permissionedDomainDeleteTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled) {
                     response = await this.xrplTransactions.simulateTransaction(client, permissionedDomainDeleteTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -713,8 +681,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               this.utilsService.logObjects('response', response);
-               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               // this.utilsService.logObjects('response', response);
+               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -724,33 +692,29 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     this.ui.setError(userMessage);
                } else {
-                    this.ui.setSuccess(this.result);
+                    this.ui.setSuccess(this.ui.result);
                }
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled) {
                     this.ui.successMessage = 'Permissioned Domain deleted successfully!';
+
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
                     this.getCreatedPermissionedDomains(updatedAccountObjects, wallet.classicAddress);
 
-                    await this.refreshWallets(client, [wallet.classicAddress]);
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Permisioned Domain removal successfully!';
                }
@@ -792,11 +756,22 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           this.utilsService.logObjects('createdPermissionedDomains', this.createdPermissionedDomains);
      }
 
+     private addNewDestinationFromUser() {
+          if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
+               this.customDestinations.push({
+                    name: `Custom ${this.customDestinations.length + 1}`,
+                    address: this.destinationField,
+               });
+               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+               this.updateDestinations();
+          }
+     }
+
      private async setTxOptionalFields(client: xrpl.Client, permissionDomainTx: any, wallet: xrpl.Wallet, accountInfo: any) {
           if (this.selectedSingleTicket) {
                const ticketExists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
                if (!ticketExists) {
-                    return this.ui.setError(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
+                    this.ui.setError(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
                }
                this.utilsService.setTicketSequence(permissionDomainTx, this.selectedSingleTicket, true);
           } else {
@@ -812,7 +787,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      }
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
-          this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
+          // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
 
           this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
           this.refreshUiAccountInfo(updatedAccountInfo);
@@ -953,149 +928,6 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           }
      }
 
-     private validateInputs(inputs: ValidationInputs, action: string): string[] {
-          const errors: string[] = [];
-
-          // Early return for empty inputs
-          if (!inputs || Object.keys(inputs).length === 0) {
-               return ['No inputs provided.'];
-          }
-          // --- Common validators ---
-          const isRequired = (value: string | null | undefined, fieldName: string): string | null => {
-               if (value == null || !this.utilsService.validateInput(value)) {
-                    return `${fieldName} cannot be empty.`;
-               }
-               return null;
-          };
-
-          const isValidXrpAddress = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidAddress(value)) {
-                    return `${fieldName} is invalid.`;
-               }
-               return null;
-          };
-
-          const isValidSecret = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidSecret(value)) {
-                    return `${fieldName} is invalid.`;
-               }
-               return null;
-          };
-
-          const isValidSeed = (value: string | undefined): string | null => {
-               if (value) {
-                    const { type, value: detectedValue } = this.utilsService.detectXrpInputType(value);
-                    if (detectedValue === 'unknown') {
-                         return 'Account seed is invalid';
-                    }
-               }
-               return null;
-          };
-
-          const isValidNumber = (value: string | undefined, fieldName: string, minValue?: number): string | null => {
-               if (value === undefined) return null; // Not required
-               const num = parseFloat(value);
-               if (isNaN(num) || !isFinite(num)) {
-                    return `${fieldName} must be a valid number`;
-               }
-               if (minValue !== undefined && num <= minValue) {
-                    return `${fieldName} must be greater than ${minValue}`;
-               }
-               return null;
-          };
-
-          const validateMultiSign = (addressesStr: string | undefined, seedsStr: string | undefined): string | null => {
-               if (!addressesStr || !seedsStr) return null;
-               const addresses = this.utilsService.getMultiSignAddress(addressesStr);
-               const seeds = this.utilsService.getMultiSignSeeds(seedsStr);
-               if (addresses.length === 0) {
-                    return 'At least one signer address is required for multi-signing.';
-               }
-               if (addresses.length !== seeds.length) {
-                    return 'Number of signer addresses must match number of signer seeds.';
-               }
-               const invalidAddr = addresses.find((addr: string) => !xrpl.isValidAddress(addr));
-               if (invalidAddr) {
-                    return `Invalid signer address: ${invalidAddr}.`;
-               }
-               const invalidSeed = seeds.find((seed: string) => !xrpl.isValidSecret(seed));
-               if (invalidSeed) {
-                    return 'One or more signer seeds are invalid.';
-               }
-               return null;
-          };
-
-          // Action-specific config: required fields and custom rules
-          const actionConfig: Record<string, { required: (keyof ValidationInputs)[]; customValidators?: (() => string | null)[] }> = {
-               getPermissionedDomainForAccount: {
-                    required: ['seed'],
-                    customValidators: [() => isValidSeed(inputs.seed), () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null)],
-               },
-               setPermissionedDomain: {
-                    required: ['seed', 'destination', 'credentialType'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidXrpAddress(inputs.destination, 'Destination address'),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                    ],
-               },
-               deletePermissionedDomain: {
-                    required: ['seed', 'domainId'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                    ],
-               },
-               default: { required: [], customValidators: [] },
-          };
-
-          const config = actionConfig[action] || actionConfig['default'];
-
-          // --- Run required checks ---
-          config.required.forEach((field: keyof ValidationInputs) => {
-               const err = isRequired(inputs[field], field.charAt(0).toUpperCase() + field.slice(1));
-               if (err) errors.push(err);
-          });
-
-          // Run custom validators
-          config.customValidators?.forEach((validator: () => string | null) => {
-               const err = validator();
-               if (err) errors.push(err);
-          });
-
-          // Always validate optional fields if provided
-          const multiErr = validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds);
-          if (multiErr) errors.push(multiErr);
-
-          const regAddrErr = isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address');
-          if (regAddrErr && inputs.regularKeyAddress !== 'No RegularKey configured for account') errors.push(regAddrErr);
-
-          const regSeedErr = isValidSecret(inputs.regularKeySeed, 'Regular Key Seed');
-          if (regSeedErr) errors.push(regSeedErr);
-
-          if (errors.length == 0 && inputs.useMultiSign && (inputs.multiSignAddresses === 'No Multi-Sign address configured for account' || inputs.multiSignSeeds === '')) {
-               errors.push('At least one signer address is required for multi-signing');
-          }
-
-          return errors;
-     }
-
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
           if (this.destinations.length > 0 && !this.destinationField) {
@@ -1166,44 +998,39 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      public get infoMessage(): string | null {
           const tabConfig = {
                set: {
-                    did: this.createdPermissionedDomains,
-                    getDescription: (count: number) => (count === 1 ? 'Permissioned Domain' : 'Permissioned Domain'),
-                    dynamicText: 'a', // Add dynamic text here
+                    permissionedDomain: this.createdPermissionedDomains,
+                    getDescription: (count: number) => (count === 1 ? 'Permissioned Domain' : 'Permissioned Domains'),
+                    dynamicText: '', // Add dynamic text here
                     showLink: true,
                },
                delete: {
-                    did: this.createdPermissionedDomains,
-                    getDescription: (count: number) => (count === 1 ? 'Permissioned Domain' : 'Permissioned Domain'),
+                    permissionedDomain: this.createdPermissionedDomains,
+                    getDescription: (count: number) => (count === 1 ? 'Permissioned Domain' : 'Permissioned Domains'),
                     dynamicText: '', // Empty for no additional text
                     showLink: true,
                },
-               // cancel: {
-               //      did: this.cancellableChecks,
-               //      getDescription: (count: number) => (count === 1 ? 'check that can be cancelled' : 'checks that can be cancelled'),
-               //      dynamicText: '', // Dynamic text before the count
-               //      showLink: true,
-               // },
           };
 
           const config = tabConfig[this.activeTab as keyof typeof tabConfig];
           if (!config) return null;
 
           const walletName = this.currentWallet.name || 'selected';
-          const count = config.did.length ? config.did.length : 0;
-
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+          const count = config.permissionedDomain.length ? config.permissionedDomain.length : 0;
 
           if (count === 0) {
-               return `The <code>${walletName}</code> wallet has no ${config.getDescription(count)}.`;
+               return `The <code>${walletName}</code> wallet has no permissioned domains.`;
           }
 
-          let message = `The <code>${walletName}</code> wallet has ${dynamicText} ${config.getDescription(count)}.`;
+          // Build message header
+          let message = `The <code>${walletName}</code> wallet has:`;
 
-          if (config.showLink && count > 0) {
-               for (const domains of this.createdPermissionedDomains) {
-                    const link = `${this.url}entry/${domains.index}`;
-                    message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Permissioned Domain on XRPL Win (Index: ${domains.index.slice(0, 8)}...${domains.index.slice(-8)})</a>`;
+          if (count > 0) {
+               message += `<br><strong>${count}</strong> ${config.getDescription(count)}.`;
+               if (config.showLink) {
+                    for (const domains of this.createdPermissionedDomains) {
+                         const link = `${this.url}entry/${domains.index}`;
+                         message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Permissioned Domain on XRPL Win (Domain ID: ${domains.index.slice(0, 8)}...${domains.index.slice(-8)})</a>`;
+                    }
                }
           }
 
@@ -1224,17 +1051,17 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
                this.permissionedDomainObject.uri = '';
-               this.isTicket = false;
                this.useMultiSign = false;
                this.isRegularKeyAddress = false;
                this.domainId = '';
+               this.ui.clearMessages();
+               this.ui.clearWarning();
           }
 
           if (this.activeTab === 'delete') {
                this.domainId = '';
           }
 
-          this.isSimulateEnabled = false;
           this.selectedTicket = '';
           this.selectedSingleTicket = '';
           this.isTicket = false;

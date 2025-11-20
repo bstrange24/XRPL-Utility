@@ -12,7 +12,7 @@ import { DeleteAccountComponent } from './components/delete-account/delete-accou
 import { AccountConfiguratorComponent } from './components/account-configurator/account-configurator.component';
 import { CreateCredentialsComponent } from './components/credentials/credentials.component';
 import { DidComponent } from './components/did/did.component';
-import { AccountChangesComponent } from './components/account-changes/account-changes.component';
+import { AccountChangesComponent } from './components/account-balance-changes/account-balance-changes.component';
 import { MptComponent } from './components/mpt/mpt.component';
 import { PermissionedDomainComponent } from './components/permissioned-domain/permissioned-domain.component';
 import { AccountDelegateComponent } from './components/delegate/delegate.component';
@@ -25,7 +25,7 @@ import { SendXrpModernComponent } from './components/send-xrp/send-xrp.component
 
 export const routes: Routes = [
      { path: '', redirectTo: '/account-configurator', pathMatch: 'full' },
-     { path: 'account-changes', component: AccountChangesComponent, data: { title: 'Account Changes' } },
+     { path: 'account-balance-changes', component: AccountChangesComponent, data: { title: 'Account Changes' } },
      { path: 'delete-account', component: DeleteAccountComponent, data: { title: 'Account Delete' } },
      { path: 'account-configurator', component: AccountConfiguratorComponent, data: { title: 'Account Configurator' } },
      { path: 'create-credentials', component: CreateCredentialsComponent, data: { title: 'Account Credentials' } },

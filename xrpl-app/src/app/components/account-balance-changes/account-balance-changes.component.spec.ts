@@ -1,7 +1,7 @@
 import { fakeAsync, tick } from '@angular/core/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatTableDataSource } from '@angular/material/table';
-import { AccountChangesComponent } from './account-changes.component';
+import { AccountChangesComponent } from './account-balance-changes.component';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';

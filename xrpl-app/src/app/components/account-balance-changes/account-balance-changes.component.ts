@@ -1,34 +1,44 @@
+import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, ViewChildren, QueryList, ViewContainerRef, afterRenderEffect, TemplateRef, Injector, inject } from '@angular/core';
+import { trigger, style, transition, animate } from '@angular/animations';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core'; // Required for native date adapter
 import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, NgZone, ViewChildren, QueryList } from '@angular/core';
-import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
-import { UtilsService } from '../../services/util-service/utils.service';
 import * as xrpl from 'xrpl';
-import { StorageService } from '../../services/local-storage/storage.service';
-import { NavbarComponent } from '../navbar/navbar.component';
 import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
-import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
+import { UtilsService } from '../../services/util-service/utils.service';
+import { StorageService } from '../../services/local-storage/storage.service';
 import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
+import { NavbarComponent } from '../navbar/navbar.component';
+import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
-import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
+import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { LucideAngularModule } from 'lucide-angular';
 import { NgIcon } from '@ng-icons/core';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core'; // Required for native date adapter
+import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
+import { DownloadUtilService } from '../../services/download-util/download-util.service';
+import { CopyUtilService } from '../../services/copy-util/copy-util.service';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
+import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
+import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
+import { TemplatePortal } from '@angular/cdk/portal';
+import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
+import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
+import { DropdownItem } from '../../models/dropdown-item.model';
+declare var Prism: any;
 
 interface BalanceChange {
      date: Date;
@@ -46,10 +56,10 @@ interface BalanceChange {
 @Component({
      selector: 'app-account-changes',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, ScrollingModule, MatProgressSpinnerModule, MatIconModule, MatTooltipModule, MatButtonModule, LucideAngularModule, NgIcon, MatDatepickerModule, MatNativeDateModule],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, ScrollingModule, MatProgressSpinnerModule, MatIconModule, MatTooltipModule, MatButtonModule, LucideAngularModule, NgIcon, MatDatepickerModule, MatNativeDateModule, LucideAngularModule, NgIcon, DragDropModule, OverlayModule],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
-     templateUrl: './account-changes.component.html',
-     styleUrl: './account-changes.component.css',
+     templateUrl: './account-balance-changes.component.html',
+     styleUrl: './account-balance-changes.component.css',
 })
 export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      private destroy$ = new Subject<void>();
@@ -63,8 +73,11 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      @ViewChild(MatSort) sort!: MatSort;
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
+     private overlayRef: OverlayRef | null = null;
+     private readonly injector = inject(Injector);
      @ViewChild(MatPaginator) paginator!: MatPaginator;
-     selectedAccount: 'account1' | 'account2' | null = 'account1';
      displayedColumns: string[] = ['date', 'hash', 'type', 'change', 'currency', 'fees', 'balanceBefore', 'balanceAfter', 'counterparty'];
      balanceChanges: BalanceChange[] = [];
      balanceChangesDataSource = new MatTableDataSource<BalanceChange>(this.balanceChanges);
@@ -75,36 +88,37 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      currencyBalances: Map<string, number> = new Map();
      lastResult: string = '';
      result: string = '';
-     isError: boolean = false;
-     isSuccess: boolean = false;
-     isEditable: boolean = false;
-     ownerCount: string = '';
-     totalXrpReserves: string = '';
      executionTime: string = '';
      isMessageKey: boolean = false;
-     spinnerMessage: string = '';
-     spinner: boolean = false;
      url: string = '';
      filterValue: string = '';
      isExpanded: boolean = false;
-     wallets: any[] = [];
+     wallets: Wallet[] = [];
      selectedWalletIndex: number = 0;
-     currentWallet = { classicAddress: '', address: '', seed: '', name: undefined, balance: '0', ownerCount: undefined, xrpReserves: undefined, spendableXrp: undefined };
+     currentWallet: Wallet = {
+          classicAddress: '',
+          address: '',
+          seed: '',
+          name: undefined,
+          balance: '0',
+          ownerCount: undefined,
+          xrpReserves: undefined,
+          spendableXrp: undefined,
+     };
      private readonly accountLinesCache = new Map<string, any>();
      private readonly accountLinesCacheTime = new Map<string, number>();
      private readonly CACHE_EXPIRY = 30000;
      private scrollDebounce: any = null;
      private hasInitialized = false;
      private loadingInitial = false;
+     ownerCount: string = '';
+     xrpReserves: string = '';
+     totalXrpReserves: string = '';
      showSecret: boolean = false;
      environment: string = '';
-     paymentTx: any[] = [];
-     txResult: any[] = [];
-     txHash: string = '';
      activeTab = 'balance'; // default
      successMessage: string = '';
      encryptionType: string = '';
-     private cachedReserves: any = null;
      hasWallets: boolean = true;
      showToast: boolean = false;
      toastMessage: string = '';
@@ -120,7 +134,23 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      private readonly seenHashes = new Set<string>();
      private originalBalanceChanges: BalanceChange[] = []; // Cache full data
 
-     constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly cdr: ChangeDetectorRef, private readonly storageService: StorageService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly xrplTransactions: XrplTransactionService, private ngZone: NgZone, private walletGenerator: WalletGeneratorService, private walletManagerService: WalletManagerService) {}
+     constructor(
+          private readonly xrplService: XrplService,
+          private readonly utilsService: UtilsService,
+          private readonly cdr: ChangeDetectorRef,
+          private readonly storageService: StorageService,
+          private readonly xrplTransactions: XrplTransactionService,
+          private walletGenerator: WalletGeneratorService,
+          private walletManagerService: WalletManagerService,
+          public ui: TransactionUiService,
+          public downloadUtilService: DownloadUtilService,
+          public copyUtilService: CopyUtilService,
+          private walletDataService: WalletDataService,
+          private validationService: ValidationService,
+          private overlay: Overlay,
+          private viewContainerRef: ViewContainerRef,
+          private destinationDropdownService: DestinationDropdownService
+     ) {}
 
      ngOnInit() {
           this.environment = this.xrplService.getNet().environment;
@@ -169,10 +199,10 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
           (this.balanceChangesDataSource as any).trackByFunction = this.trackByFunction;
 
-          if (this.selectedAccount) {
-               // initial load
-               this.loadBalanceChanges(true);
-          }
+          // if (this.selectedAccount) {
+          // initial load
+          // this.loadBalanceChanges(true);
+          // }
      }
 
      toggleExpanded() {
@@ -181,12 +211,13 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
      setTab(tab: string) {
           this.activeTab = tab;
-          this.clearMessages();
+          this.ui.clearMessages();
           this.clearFields(true);
           this.clearWarning();
      }
 
      selectWallet(index: number) {
+          if (this.selectedWalletIndex === index) return; // ← Add this guard!
           this.selectedWalletIndex = index;
           this.onAccountChange();
      }
@@ -316,23 +347,9 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
           if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
                this.selectedWalletIndex = 0;
-               this.refreshBalance(0);
-          } else {
-               (async () => {
-                    const client = await this.xrplService.getClient();
-                    await this.refreshWallets(client, [this.wallets[this.selectedWalletIndex].address]);
-               })();
           }
 
           this.onAccountChange();
-     }
-
-     handleTransactionResult(event: { result: string; isError: boolean; isSuccess: boolean }) {
-          this.result = event.result;
-          this.isError = event.isError;
-          this.isSuccess = event.isSuccess;
-          this.isEditable = !this.isSuccess;
-          this.cdr.detectChanges();
      }
 
      toggleSecret(index: number) {
@@ -344,36 +361,10 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           try {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               await this.refreshWallets(client, [walletAddress]);
+               await this.refreshWallets(client, [walletAddress]).catch(console.error);
           } catch (err) {
-               this.setError('Failed to refresh balance');
+               this.ui.setError('Failed to refresh balance');
           }
-     }
-
-     copyAddress(address: string) {
-          navigator.clipboard.writeText(address).then(() => {
-               this.showToastMessage('Address copied to clipboard!');
-          });
-     }
-
-     private showToastMessage(message: string, duration: number = 2000) {
-          this.toastMessage = message;
-          this.showToast = true;
-          setTimeout(() => {
-               this.showToast = false;
-          }, duration);
-     }
-
-     copySeed(seed: string) {
-          navigator.clipboard
-               .writeText(seed)
-               .then(() => {
-                    this.showToastMessage('Seed copied to clipboard!');
-               })
-               .catch(err => {
-                    console.error('Failed to copy seed:', err);
-                    this.showToastMessage('Failed to copy. Please select and copy manually.');
-               });
      }
 
      deleteWallet(index: number) {
@@ -387,13 +378,31 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      }
 
      async generateNewAccount() {
-          this.updateSpinnerMessage(``);
-          this.showSpinnerWithDelay('Generating new wallet', 5000);
+          this.ui.updateSpinnerMessage(``);
+          this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
           const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
           const client = await this.xrplService.getClient();
           this.refreshWallets(client, faucetWallet.address);
-          this.spinner = false;
-          this.clearWarning();
+          this.ui.spinner = false;
+          this.ui.clearWarning();
+     }
+
+     dropWallet(event: CdkDragDrop<any[]>) {
+          moveItemInArray(this.wallets, event.previousIndex, event.currentIndex);
+
+          // Update your selectedWalletIndex if needed
+          if (this.selectedWalletIndex === event.previousIndex) {
+               this.selectedWalletIndex = event.currentIndex;
+          } else if (this.selectedWalletIndex > event.previousIndex && this.selectedWalletIndex <= event.currentIndex) {
+               this.selectedWalletIndex--;
+          } else if (this.selectedWalletIndex < event.previousIndex && this.selectedWalletIndex >= event.currentIndex) {
+               this.selectedWalletIndex++;
+          }
+
+          // Persist the new order to localStorage
+          this.saveWallets();
+
+          this.onAccountChange();
      }
 
      async onAccountChange() {
@@ -421,15 +430,15 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           };
 
           if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
-               this.clearWarning();
+               this.ui.clearWarning();
                this.loadBalanceChanges(true);
           } else if (this.currentWallet.address) {
-               this.setError('Invalid XRP address');
+               this.ui.setError('Failed to refresh balance');
           }
      }
 
      async loadBalanceChanges(reset = true) {
-          this.clearMessages();
+          this.ui.clearMessages();
           // Prevent overlapping loads
           if (reset && this.loadingInitial) {
                console.log('loadBalanceChanges skipped (initial load in progress)');
@@ -443,8 +452,8 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           reset ? (this.loadingInitial = true) : (this.loadingMore = true);
 
           // Show spinner immediately - use the main spinner, not loadingMore
-          this.spinner = true;
-          this.spinnerMessage = 'Loading balance changes...';
+          this.ui.spinner = true;
+          this.ui.spinnerMessage = 'Loading balance changes...';
           const spinnerStartTime = Date.now();
           const minSpinnerTime = 400;
 
@@ -540,7 +549,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                }
           } catch (error) {
                console.error('Error loading tx:', error);
-               this.setError('Failed to load balance changes');
+               this.ui.setError('Failed to load balance changes');
           } finally {
                // Calculate remaining time to show spinner (minimum time total)
                const elapsedSpinnerTime = Date.now() - spinnerStartTime;
@@ -551,7 +560,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                // Wait for the remaining time before hiding spinner and updating loading flags
                setTimeout(() => {
                     // Hide spinner and update loading flags together
-                    this.spinner = false;
+                    this.ui.spinner = false;
                     reset ? (this.loadingInitial = false) : (this.loadingMore = false);
 
                     this.cdr.detectChanges();
@@ -918,112 +927,74 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           }
      }
 
-     private async refreshWallets(client: xrpl.Client, addressesToRefresh?: string[]) {
-          console.log('Entering refreshWallets');
-          const REFRESH_THRESHOLD_MS = 3000;
-          const now = Date.now();
-
-          try {
-               // Determine which wallets to refresh
-               const walletsToUpdate = this.wallets.filter(w => {
-                    const needsUpdate = !w.lastUpdated || now - w.lastUpdated > REFRESH_THRESHOLD_MS;
-                    const inFilter = addressesToRefresh ? addressesToRefresh.includes(w.classicAddress ?? w.address) : true;
-                    return needsUpdate && inFilter;
-               });
-
-               if (!walletsToUpdate.length) {
-                    console.debug('No wallets need updating.');
-                    return;
-               }
-
-               console.debug(`Refreshing ${walletsToUpdate.length} wallet(s)...`);
-
-               //Fetch all accountInfo data in parallel (faster, single request per wallet)
-               const accountInfos = await Promise.all(walletsToUpdate.map(w => this.xrplService.getAccountInfo(client, w.classicAddress ?? w.address, 'validated', '')));
-
-               //Cache reserves (only once per session)
-               if (!this.cachedReserves) {
-                    this.cachedReserves = await this.utilsService.getXrplReserve(client);
-                    console.debug('Cached XRPL reserve data:', this.cachedReserves);
-               }
-
-               // Heavy computation outside Angular (no UI reflows)
-               this.ngZone.runOutsideAngular(async () => {
-                    const updatedWallets = await Promise.all(
-                         walletsToUpdate.map(async (wallet, i) => {
-                              try {
-                                   const accountInfo = accountInfos[i];
-                                   const address = wallet.classicAddress ?? wallet.address;
-
-                                   // --- Derive balance directly from accountInfo to avoid extra ledger call ---
-                                   const balanceInDrops = String(accountInfo.result.account_data.Balance);
-                                   const balanceXrp = xrpl.dropsToXrp(balanceInDrops); // returns string
-
-                                   // --- Get ownerCount + total reserve ---
-                                   const { ownerCount, totalXrpReserves } = await this.utilsService.updateOwnerCountAndReserves(client, accountInfo, address);
-
-                                   const spendable = parseFloat(String(balanceXrp)) - parseFloat(String(totalXrpReserves || '0'));
-
-                                   return {
-                                        ...wallet,
-                                        ownerCount,
-                                        xrpReserves: totalXrpReserves,
-                                        balance: spendable.toFixed(6),
-                                        spendableXrp: spendable.toFixed(6),
-                                        lastUpdated: now,
-                                   };
-                              } catch (err) {
-                                   console.error(`Error updating wallet ${wallet.address}:`, err);
-                                   return wallet;
-                              }
-                         })
-                    );
-
-                    console.log('updatedWallets', updatedWallets);
-                    // Apply updates inside Angular (UI updates + service sync)
-                    this.ngZone.run(() => {
-                         updatedWallets.forEach(updated => {
-                              const idx = this.wallets.findIndex(existing => (existing.classicAddress ?? existing.address) === (updated.classicAddress ?? updated.address));
-                              if (idx !== -1) {
-                                   this.walletManagerService.updateWallet(idx, updated);
-                              }
-                         });
-                         // Ensure Selected Account Summary refreshes
-                         if (this.selectedWalletIndex !== null && this.wallets[this.selectedWalletIndex]) {
-                              this.currentWallet = { ...this.wallets[this.selectedWalletIndex] };
-                         }
-                    });
-               });
-          } catch (error: any) {
-               console.error('Error in refreshWallets:', error);
-          } finally {
-               this.executionTime = (Date.now() - now).toString();
-               console.log(`Leaving refreshWallets in ${this.executionTime}ms`);
+     private async getWallet() {
+          const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
+          if (!wallet) {
+               throw new Error('ERROR: Wallet could not be created or is undefined');
           }
+          return wallet;
+     }
+
+     saveWallets() {
+          this.storageService.set('wallets', JSON.stringify(this.wallets));
+     }
+
+     updatePaymentTx() {
+          this.scheduleHighlight();
+     }
+
+     updateTxResult(tx: any) {
+          this.ui.txResult = tx;
+          this.scheduleHighlight();
+     }
+
+     private scheduleHighlight() {
+          // Use the captured injector to run afterRenderEffect safely
+          afterRenderEffect(
+               () => {
+                    if (this.ui.paymentTx && this.paymentJson?.nativeElement) {
+                         const json = JSON.stringify(this.ui.paymentTx, null, 2);
+                         this.paymentJson.nativeElement.textContent = json;
+                         Prism.highlightElement(this.paymentJson.nativeElement);
+                    }
+
+                    if (this.ui.txResult && this.txResultJson?.nativeElement) {
+                         const json = JSON.stringify(this.ui.txResult, null, 2);
+                         this.txResultJson.nativeElement.textContent = json;
+                         Prism.highlightElement(this.txResultJson.nativeElement);
+                    }
+               },
+               { injector: this.injector }
+          );
+     }
+
+     private async refreshWallets(client: xrpl.Client, addressesToRefresh?: string[]) {
+          console.log('Calling refreshWallets');
+
+          await this.walletDataService.refreshWallets(
+               client,
+               this.wallets, // pass current wallet list
+               this.selectedWalletIndex, // pass selected index
+               addressesToRefresh,
+               (updatedWalletsList, newCurrentWallet) => {
+                    // This callback runs inside NgZone → UI updates safely
+                    this.currentWallet = { ...newCurrentWallet };
+                    // Optional: trigger change detection if needed
+                    this.cdr.markForCheck();
+               }
+          );
      }
 
      copyToClipboard(text: string) {
           navigator.clipboard.writeText(text).then(
                () => {
                     console.log('Copied:', text);
-                    this.showToastMessage('Tx Hash copied!');
+                    this.ui.showToastMessage('Tx Hash copied!');
                },
                err => {
-                    this.showToastMessage('Clipboard copy failed:', err);
+                    this.ui.showToastMessage('Clipboard copy failed:', err);
                }
           );
-     }
-
-     private clearMessages() {
-          const fadeDuration = 400; // ms
-          this.result = '';
-          this.isError = false;
-          this.isSuccess = false;
-          this.txHash = '';
-          this.txResult = [];
-          this.paymentTx = [];
-          this.successMessage = '';
-          this.cdr.detectChanges();
      }
 
      public get infoMessage(): string | null {
@@ -1049,61 +1020,14 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
-               this.clearMessages();
+               this.ui.clearMessages();
                this.clearWarning();
           }
 
           this.cdr.detectChanges();
      }
 
-     private setWarning(msg: string | null) {
-          this.warningMessage = msg;
-          this.cdr.detectChanges();
-     }
-
      clearWarning() {
-          this.setWarning(null);
-     }
-
-     async showSpinnerWithDelay(message: string, delayMs: number = 200) {
-          this.spinner = true;
-          this.updateSpinnerMessage(message);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-     }
-
-     private updateSpinnerMessage(message: string) {
-          this.spinnerMessage = message;
-          this.cdr.detectChanges();
-     }
-
-     private setErrorProperties() {
-          this.isSuccess = false;
-          this.isError = true;
-          this.spinner = false;
-     }
-
-     private setError(message: string) {
-          this.setErrorProperties();
-          this.handleTransactionResult({
-               result: `${message}`,
-               isError: this.isError,
-               isSuccess: this.isSuccess,
-          });
-     }
-
-     private setSuccessProperties() {
-          this.isSuccess = true;
-          this.isError = false;
-          this.spinner = true;
-          this.result = '';
-     }
-
-     private setSuccess(message: string) {
-          this.setSuccessProperties();
-          this.handleTransactionResult({
-               result: `${message}`,
-               isError: this.isError,
-               isSuccess: this.isSuccess,
-          });
+          this.ui.setWarning(null);
      }
 }

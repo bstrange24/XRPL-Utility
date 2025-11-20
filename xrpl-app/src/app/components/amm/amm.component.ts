@@ -296,8 +296,7 @@ export class CreateAmmComponent implements AfterViewChecked {
                }
                this.updateSpinnerMessage(`Getting AMM Pool Info`);
 
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const asset = this.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.weWantCurrencyField), this.weWantIssuerField);
                const asset2 = this.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.weSpendCurrencyField), this.weSpendIssuerField);
@@ -404,17 +403,13 @@ export class CreateAmmComponent implements AfterViewChecked {
                this.clickToCopyService.attachCopy(this.resultField.nativeElement);
 
                // DEFER: Non-critical UI updates — let main render complete first
-               setTimeout(async () => {
-                    try {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                         this.currentWallet.balance = await this.updateXrpBalance(client, accountInfo, wallet);
-                    } catch (err) {
-                         console.error('Error in deferred UI updates for AMM:', err);
-                    }
-               }, 0);
+               this.currentWallet.balance = await this.updateXrpBalance(client, accountInfo, wallet);
+               Promise.resolve().then(() => {
+                    this.refreshUIData(wallet, accountInfo, accountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.clearFields(false);
+                    this.updateTickets(accountObjects);
+               });
           } catch (error: any) {
                console.error('Error in getAMMPoolInfo:', error);
                this.setError(`ERROR: ${error.message || 'Unknown error'}`);
@@ -461,8 +456,7 @@ export class CreateAmmComponent implements AfterViewChecked {
                     this.resultField.nativeElement.innerHTML = '';
                }
 
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
@@ -583,15 +577,11 @@ export class CreateAmmComponent implements AfterViewChecked {
 
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                              this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+                    Promise.resolve().then(() => {
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
                }
           } catch (error: any) {
                console.error('Error in createAMM:', error);
@@ -638,8 +628,7 @@ export class CreateAmmComponent implements AfterViewChecked {
                     this.resultField.nativeElement.innerHTML = '';
                }
 
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
@@ -760,17 +749,13 @@ export class CreateAmmComponent implements AfterViewChecked {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              await Promise.all([this.onWeSpendCurrencyChange(false), this.onWeWantCurrencyChange(false), this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true)]);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                              this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    await Promise.all([this.onWeSpendCurrencyChange(false), this.onWeWantCurrencyChange(false), this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true)]);
+                    this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+                    Promise.resolve().then(() => {
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
                }
           } catch (error: any) {
                console.error('Error in depositToAMM:', error);
@@ -815,8 +800,7 @@ export class CreateAmmComponent implements AfterViewChecked {
                     this.resultField.nativeElement.innerHTML = '';
                }
 
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
@@ -978,17 +962,13 @@ export class CreateAmmComponent implements AfterViewChecked {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true)]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              await Promise.all([this.onWeSpendCurrencyChange(false), this.onWeWantCurrencyChange(false), this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true)]);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                              this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 3);
+                    await Promise.all([this.onWeSpendCurrencyChange(false), this.onWeWantCurrencyChange(false), this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true)]);
+                    this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+                    Promise.resolve().then(() => {
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
                }
           } catch (error: any) {
                console.error('Error in withdrawlTokenFromAMM:', error);
@@ -1032,8 +1012,7 @@ export class CreateAmmComponent implements AfterViewChecked {
                     this.resultField.nativeElement.innerHTML = '';
                }
 
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
@@ -1133,16 +1112,12 @@ export class CreateAmmComponent implements AfterViewChecked {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                              this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+                    Promise.resolve().then(() => {
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
                }
           } catch (error: any) {
                console.error('Error in clawbackFromAMM:', error);
@@ -1177,8 +1152,7 @@ export class CreateAmmComponent implements AfterViewChecked {
                     this.resultField.nativeElement.innerHTML = '';
                }
 
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                // PARALLELIZE — fetch account info + account objects together
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
@@ -1251,17 +1225,13 @@ export class CreateAmmComponent implements AfterViewChecked {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              await Promise.all([this.onWeSpendCurrencyChange(false), this.onWeWantCurrencyChange(false)]);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                              this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    await Promise.all([this.onWeSpendCurrencyChange(false), this.onWeWantCurrencyChange(false)]);
+                    this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+                    Promise.resolve().then(() => {
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
                }
           } catch (error: any) {
                console.error('Error in swapViaAMM:', error);
@@ -1296,8 +1266,7 @@ export class CreateAmmComponent implements AfterViewChecked {
                     this.resultField.nativeElement.innerHTML = '';
                }
 
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -1365,16 +1334,12 @@ export class CreateAmmComponent implements AfterViewChecked {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                              this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.currentWallet.balance = await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+                    Promise.resolve().then(() => {
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
                }
           } catch (error: any) {
                console.error('Error in deleteAMM:', error);
@@ -1400,8 +1365,7 @@ export class CreateAmmComponent implements AfterViewChecked {
           }
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, balanceResponse] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -1456,8 +1420,7 @@ export class CreateAmmComponent implements AfterViewChecked {
           }
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, balanceResponse] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);

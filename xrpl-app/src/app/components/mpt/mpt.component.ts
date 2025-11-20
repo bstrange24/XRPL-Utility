@@ -11,7 +11,6 @@ import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { InfoMessageConstants } from '../../core/info-message.constants';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
@@ -67,7 +66,7 @@ interface AccountFlags {
 @Component({
      selector: 'app-mpt',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule],
+     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule, OverlayModule],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './mpt.component.html',
      styleUrl: './mpt.component.css',
@@ -85,7 +84,6 @@ export class MptComponent implements OnInit, AfterViewInit {
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
      private overlayRef: OverlayRef | null = null;
      private readonly injector = inject(Injector);
-     result: string = '';
      ticketSequence: string = '';
      isTicket: boolean = false;
      isTicketEnabled: boolean = false;
@@ -138,14 +136,8 @@ export class MptComponent implements OnInit, AfterViewInit {
           canClawback: false,
           canTransfer: false,
      };
-     spinner: boolean = false;
      destinationField: string = '';
      destinations: { name?: string; address: string }[] = [];
-     customDestinations: { name?: string; address: string }[] = [];
-     showDropdown = false;
-     dropdownOpen = false;
-     filteredDestinations: { name?: string; address: string }[] = [];
-     highlightedIndex = -1;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      isAuthorized: boolean = false;
      isUnauthorize: boolean = false;
@@ -172,6 +164,11 @@ export class MptComponent implements OnInit, AfterViewInit {
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
      filterQuery: string = '';
+     customDestinations: { name?: string; address: string }[] = [];
+     showDropdown: boolean = false;
+     dropdownOpen: boolean = false;
+     filteredDestinations: DropdownItem[] = [];
+     highlightedIndex = -1;
 
      constructor(
           private readonly xrplService: XrplService,
@@ -259,6 +256,7 @@ export class MptComponent implements OnInit, AfterViewInit {
      }
 
      selectWallet(index: number) {
+          if (this.selectedWalletIndex === index) return; // ← Add this guard!
           this.selectedWalletIndex = index;
           this.onAccountChange();
      }
@@ -294,12 +292,6 @@ export class MptComponent implements OnInit, AfterViewInit {
 
           if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
                this.selectedWalletIndex = 0;
-               this.refreshBalance(0);
-          } else {
-               (async () => {
-                    const client = await this.xrplService.getClient();
-                    await this.refreshWallets(client, [this.wallets[this.selectedWalletIndex].address, this.destinationField ? this.destinationField : '']);
-               })();
           }
 
           this.onAccountChange();
@@ -314,7 +306,7 @@ export class MptComponent implements OnInit, AfterViewInit {
           try {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               await this.refreshWallets(client, [walletAddress]);
+               await this.refreshWallets(client, [walletAddress]).catch(console.error);
           } catch (err) {
                this.ui.setError('Failed to refresh balance');
           }
@@ -389,7 +381,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                this.getMptDetails();
                this.updateDestinations();
           } else if (this.currentWallet.address) {
-               this.ui.setError('Failed to refresh balance');
+               this.ui.setError('Invalid XRP address');
           }
      }
 
@@ -438,36 +430,28 @@ export class MptComponent implements OnInit, AfterViewInit {
           this.ui.updateSpinnerMessage(``);
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-               this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
+               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
-               const inputs: ValidationInputs = {
-                    seed: this.currentWallet.seed,
-                    accountInfo: accountInfo,
-               };
+               const inputs: ValidationInputs = { seed: this.currentWallet.seed, accountInfo: accountInfo };
 
                const errors = await this.validationService.validate('AccountInfo', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                this.getExistingMpts(accountObjects, wallet.classicAddress);
 
-               await this.refreshWallets(client, [wallet.classicAddress]);
+               await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-               setTimeout(async () => {
-                    try {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                    } catch (err) {
-                         console.error('Error in deferred UI updates:', err);
-                    }
-               }, 0);
+               this.refreshUIData(wallet, accountInfo, accountObjects);
+               this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+               this.updateTickets(accountObjects);
+
+               this.clearFields(false);
+               this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getMptDetails:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
@@ -505,13 +489,16 @@ export class MptComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
-               this.utilsService.logAccountInfoObjects(accountInfo, null);
-               this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+               // this.utilsService.logAccountInfoObjects(accountInfo, null);
+               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
+               const isShortForm = this.destinationField.includes('...');
+               const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
+
+               inputs.destination = resolvedDestination;
                inputs.accountInfo = accountInfo;
 
                const errors = await this.validateInputs(inputs, 'create');
@@ -560,8 +547,8 @@ export class MptComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               this.utilsService.logObjects('response', response);
-               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               // this.utilsService.logObjects('response', response);
+               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -585,28 +572,15 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
+                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
-                    // Add new destination if valid and not already present
-                    if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
-                         this.customDestinations.push({
-                              name: `Custom ${this.customDestinations.length + 1}`,
-                              address: this.destinationField,
-                         });
-                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
-                         this.updateDestinations();
-                    }
+                    this.addNewDestinationFromUser();
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Create MPT successfully!';
                }
@@ -644,8 +618,7 @@ export class MptComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -694,8 +667,8 @@ export class MptComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               this.utilsService.logObjects('response', response);
-               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               // this.utilsService.logObjects('response', response);
+               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -723,18 +696,13 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    await this.refreshWallets(client, [wallet.classicAddress]);
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     if (authorizeFlag === 'Y') {
                          this.ui.successMessage = 'Simulated authorized MPT successfully!';
@@ -746,7 +714,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                console.error('Error:', error);
                return this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
-               this.spinner = false;
+               this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving authorizeMpt in ${this.executionTime}ms`);
           }
@@ -774,8 +742,7 @@ export class MptComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, mptokenObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -834,8 +801,8 @@ export class MptComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               this.utilsService.logObjects('response', response);
-               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               // this.utilsService.logObjects('response', response);
+               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -862,16 +829,14 @@ export class MptComponent implements OnInit, AfterViewInit {
                     }
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
+
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     if (locked === 'Y') {
                          this.ui.successMessage = 'Simulated Lock MPT successfully!';
@@ -883,7 +848,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                console.error('Error:', error);
                return this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
-               this.spinner = false;
+               this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving setMptLocked in ${this.executionTime}ms`);
           }
@@ -915,13 +880,17 @@ export class MptComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+
+               const isShortForm = this.destinationField.includes('...');
+               const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
+
+               inputs.destination = resolvedDestination;
 
                const [accountInfo, accountObjects, destObjects, fee, currentLedger, serverInfo] = await Promise.all([
                     this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
                     this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''),
-                    this.xrplService.getAccountObjects(client, this.destinationField, 'validated', ''),
+                    this.xrplService.getAccountObjects(client, resolvedDestination, 'validated', ''),
                     this.xrplService.calculateTransactionFee(client),
                     this.xrplService.getLastLedgerIndex(client),
                     this.xrplService.getXrplServerInfo(client, 'current', ''),
@@ -939,7 +908,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                // Check if destination can hold the MPT
                if (!destObjects?.result?.account_objects) {
-                    return this.ui.setError(`ERROR: Unable to fetch account objects for destination ${this.destinationField}`);
+                    return this.ui.setError(`ERROR: Unable to fetch account objects for destination ${resolvedDestination}`);
                }
 
                const walletMptTokens = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPTokenIssuance');
@@ -953,7 +922,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === this.mptIssuanceIdField);
 
                if (!authorized) {
-                    return this.ui.setError(`ERROR: Destination ${this.destinationField} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField}). Please ensure authorization has been completed.`);
+                    return this.ui.setError(`ERROR: Destination ${resolvedDestination} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField}). Please ensure authorization has been completed.`);
                }
 
                if (walletMptToken) {
@@ -973,7 +942,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                          mpt_issuance_id: this.mptIssuanceIdField,
                          value: this.amountField,
                     },
-                    Destination: this.destinationField,
+                    Destination: resolvedDestination,
                     LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
                     Fee: fee,
                };
@@ -1028,18 +997,13 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
+                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated MPT payment successfully!';
                }
@@ -1047,7 +1011,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                console.error('Error:', error);
                return this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
-               this.spinner = false;
+               this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving sendMpt in ${this.executionTime}ms`);
           }
@@ -1075,8 +1039,7 @@ export class MptComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, destObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -1133,22 +1096,20 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                if (!this.ui.isSimulateEnabled) {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
+
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                }
           } catch (error: any) {
                console.error('Error:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
-               this.spinner = false;
+               this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving destroyMpt in ${this.executionTime}ms`);
           }
@@ -1180,14 +1141,17 @@ export class MptComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
 
                this.utilsService.logAccountInfoObjects(accountInfo, null);
                this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
+               const isShortForm = this.destinationField.includes('...');
+               const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
+
+               inputs.destination = resolvedDestination;
                inputs.accountInfo = accountInfo;
 
                const errors = await this.validateInputs(inputs, 'clawback');
@@ -1204,7 +1168,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                     Account: wallet.classicAddress,
                     MPTokenID: this.mptIssuanceIdField,
                     Amount: this.amountField,
-                    From: this.destinationField, // You'll need to add this field - address holding the tokens
+                    From: resolvedDestination, // You'll need to add this field - address holding the tokens
                     Fee: fee,
                     Flags: 0, // Typically 0 for clawback unless specific flags are needed
                     LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
@@ -1246,9 +1210,9 @@ export class MptComponent implements OnInit, AfterViewInit {
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
-                    const userMessage = 'Clawback transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
+                    const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Clawback transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     this.ui.setError(userMessage);
                } else {
@@ -1262,18 +1226,13 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
+                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated MPT Clawback successfully!';
                }
@@ -1403,11 +1362,22 @@ export class MptComponent implements OnInit, AfterViewInit {
           return activeFlags.length > 0 ? activeFlags.join(', ') : 'None';
      }
 
+     private addNewDestinationFromUser() {
+          if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
+               this.customDestinations.push({
+                    name: `Custom ${this.customDestinations.length + 1}`,
+                    address: this.destinationField,
+               });
+               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+               this.updateDestinations();
+          }
+     }
+
      private async setTxOptionalFields(client: xrpl.Client, mptTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (this.selectedSingleTicket) {
                const ticketExists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
                if (!ticketExists) {
-                    this.ui.setError(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
+                    return this.ui.setError(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
                }
                this.utilsService.setTicketSequence(mptTx, this.selectedSingleTicket, true);
           } else {
@@ -1456,7 +1426,7 @@ export class MptComponent implements OnInit, AfterViewInit {
      }
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
-          this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
+          // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
 
           this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
           this.refreshUiAccountInfo(updatedAccountInfo);
@@ -1623,28 +1593,28 @@ export class MptComponent implements OnInit, AfterViewInit {
           // --- Common validators ---
           const isRequired = (value: string | null | undefined, fieldName: string): string | null => {
                if (value == null || !this.utilsService.validateInput(value)) {
-                    return `${fieldName} cannot be empty`;
+                    return `${fieldName} cannot be empty.`;
                }
                return null;
           };
 
           const isValidXrpAddress = (value: string | undefined, fieldName: string): string | null => {
                if (value && !xrpl.isValidAddress(value)) {
-                    return `${fieldName} is invalid`;
+                    return `${fieldName} is invalid.`;
                }
                return null;
           };
 
           const isValidSecret = (value: string | undefined, fieldName: string): string | null => {
                if (value && !xrpl.isValidSecret(value)) {
-                    return `${fieldName} is invalid`;
+                    return `${fieldName} is invalid.`;
                }
                return null;
           };
 
           const isNotSelfPayment = (sender: string | undefined, receiver: string | undefined): string | null => {
                if (sender && receiver && sender === receiver) {
-                    return `Sender and receiver cannot be the same`;
+                    return `Sender and receiver cannot be the same.`;
                }
                return null;
           };
@@ -1679,18 +1649,18 @@ export class MptComponent implements OnInit, AfterViewInit {
                const addresses = this.utilsService.getMultiSignAddress(addressesStr);
                const seeds = this.utilsService.getMultiSignSeeds(seedsStr);
                if (addresses.length === 0) {
-                    return 'At least one signer address is required for multi-signing';
+                    return 'At least one signer address is required for multi-signing.';
                }
                if (addresses.length !== seeds.length) {
-                    return 'Number of signer addresses must match number of signer seeds';
+                    return 'Number of signer addresses must match number of signer seeds.';
                }
                const invalidAddr = addresses.find((addr: string) => !xrpl.isValidAddress(addr));
                if (invalidAddr) {
-                    return `Invalid signer address: ${invalidAddr}`;
+                    return `Invalid signer address: ${invalidAddr}.`;
                }
                const invalidSeed = seeds.find((seed: string) => !xrpl.isValidSecret(seed));
                if (invalidSeed) {
-                    return 'One or more signer seeds are invalid';
+                    return 'One or more signer seeds are invalid.';
                }
                return null;
           };
@@ -1702,11 +1672,11 @@ export class MptComponent implements OnInit, AfterViewInit {
                     const client = await this.xrplService.getClient();
                     const accountInfo = await this.xrplService.getAccountInfo(client, inputs.destination, 'validated', '');
                     if (accountInfo.result.account_flags.requireDestinationTag && (!inputs.destinationTag || inputs.destinationTag.trim() === '')) {
-                         return `ERROR: Receiver requires a Destination Tag for payment`;
+                         return `Receiver requires a Destination Tag for payment.`;
                     }
                } catch (err) {
                     console.error('Failed to check destination tag requirement:', err);
-                    return `Could not validate destination account`;
+                    return `Could not validate destination account.`;
                }
                return null;
           };
@@ -1839,35 +1809,6 @@ export class MptComponent implements OnInit, AfterViewInit {
           navigator.clipboard.writeText(json).then(() => {
                this.ui.showToastMessage('Transaction JSON copied!');
           });
-     }
-
-     downloadTx() {
-          const json = JSON.stringify(this.ui.paymentTx, null, 2);
-          const blob = new Blob([json], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `payment-tx-${Date.now()}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-     }
-
-     copyTxResult() {
-          const json = JSON.stringify(this.ui.txResult, null, 2);
-          navigator.clipboard.writeText(json).then(() => {
-               this.ui.showToastMessage('Transaction Result JSON copied!');
-          });
-     }
-
-     downloadTxResult() {
-          const json = JSON.stringify(this.ui.txResult, null, 2);
-          const blob = new Blob([json], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `tx-result-${Date.now()}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
      }
 
      public get infoMessage(): string | null {

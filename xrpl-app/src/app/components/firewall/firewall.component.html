@@ -118,7 +118,7 @@
                     </button>
 
                     <button class="menu-btn active" [class.active]="activeTab === 'modify'" (click)="setTab('modify')">
-                         <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
+                         <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
                          Modify Firewall
                     </button>
 
@@ -230,6 +230,67 @@
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
                     <div class="warning-text" [innerHTML]="ui.warningMessage"></div>
+               </div>
+               }
+
+               <!-- Existing NFTs on selected account -->
+               @if (existingFirewalls.length > 0) {
+               <div class="outstanding-checks-panel">
+                    <div class="panel-header" (click)="toggleExistingFirewalls()" style="cursor: pointer; user-select: none">
+                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
+                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
+                              Existing NFTs ({{ existingFirewalls.length }})
+                         </h3>
+                    </div>
+
+                    <div class="checks-list-container" [style.max-height]="existingFirewallsCollapsed ? '0': (existingFirewalls.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
+                         @if (!existingFirewallsCollapsed) {
+                         <div class="checks-list">
+                              @for (chk of existingFirewalls; track chk.NFTokenID) {
+                              <div class="check-card">
+                                   <div class="check-extras">
+                                        @if (chk.LedgerEntryType) {
+                                        <span class="badge badge-expire"> LedgerEntryType: {{ chk.LedgerEntryType }} </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> LedgerEntryType: Not set </span>
+                                        } @if (chk.NFTokenID) {
+                                        <span class="badge badge-expire"> NFTokenID: {{ chk.NFTokenID }} </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> NFTokenID: Not set </span>
+                                        }
+                                        <!-- @if (chk.Flags !== undefined && chk.Flags !== 0) {
+                                        <span class="badge badge-expire">
+                                             Flags: @for (f of decodeNftFlags(chk.Flags); track f) {
+                                             <span class="flag-item">{{ f }}</span>
+                                             }
+                                             <span class="flag-original">({{ chk.Flags }})</span>
+                                        </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> Flags: Not set </span>
+                                        } -->
+
+                                        <div class="line-break"></div>
+
+                                        @if (chk.URI) {
+                                        <span class="badge badge-tag"> URI: {{ chk.URI }} </span>
+                                        } @else {
+                                        <span class="badge badge-tag-not-set"> URI: Not set </span>
+                                        }
+                                   </div>
+
+                                   <div class="button-group">
+                                        <button class="icon-btn copy-check-id" (click)="copyFirewallID(chk.NFTokenID); $event.stopPropagation(); $event.preventDefault()" title="Copy MPT Issuance ID" type="button">
+                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                             <a [href]="`${url}mpt/` + chk.NFTokenID" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
+                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
+                                             </a>
+                                        </button>
+                                   </div>
+                              </div>
+                              }
+                         </div>
+                         }
+                    </div>
                </div>
                }
 

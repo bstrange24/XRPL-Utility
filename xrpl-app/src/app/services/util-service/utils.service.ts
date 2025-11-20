@@ -1358,7 +1358,8 @@ export class UtilsService {
 
      getFlagName(value: string): string {
           // 1. Try AppConstants.FLAGS
-          const appFlag = AppConstants.FLAGS.find(f => f.value.toString() === value)?.name;
+          // const appFlag = AppConstants.FLAGS.find(f => f.value.toString() === value)?.name;
+          const appFlag = AppConstants.FLAGS.find(f => f.value === Number(value))?.label;
           if (appFlag) {
                return appFlag;
           }
@@ -1617,58 +1618,6 @@ export class UtilsService {
           }
 
           return null; // Sufficient balances
-     }
-
-     async isInsufficientXrpBalance(client: xrpl.Client, accountInfo: any, amountXrp: string, address: string, txObject: any, feeDrops: string = '10'): Promise<boolean> {
-          try {
-               // Validate inputs
-               if (!amountXrp || isNaN(parseFloat(amountXrp)) || parseFloat(amountXrp) < 0) {
-                    throw new Error('Invalid amount: must be a non-negative number');
-               }
-
-               let amountDrops = 0n;
-
-               // Define transaction types that involve sending XRP
-               const xrpTransferTypes = new Set(['Payment', 'EscrowCreate', 'EscrowFinish', 'EscrowCancel', 'CheckCreate', 'CheckCash', 'CheckCancel', 'PaymentChannelCreate', 'PaymentChannelFund', 'PaymentChannelClaim', 'OfferCreate', 'OfferCancel', 'AMMCreate', 'AMMDeposit', 'AMMWithdraw']);
-
-               // Calculate amountDrops only for transactions that involve sending XRP
-               if (txObject?.TransactionType && xrpTransferTypes.has(txObject.TransactionType)) {
-                    if (txObject?.Amount && typeof txObject.Amount === 'string') {
-                         // XRP to XRP
-                         amountDrops = BigInt(txObject.Amount);
-                    } else if (typeof amountXrp === 'string' && !isNaN(Number(amountXrp))) {
-                         amountDrops = BigInt(xrpl.xrpToDrops(amountXrp));
-                    }
-               } else {
-                    amountDrops = 0n; // No XRP transfer for non-payment transactions
-               }
-
-               // Get account info to calculate reserves
-               const balanceDrops = BigInt(accountInfo.result.account_data.Balance);
-
-               // Get server info for reserve requirements
-               const serverInfo = await this.xrplService.getXrplServerInfo(client, 'current', '');
-               const baseReserveDrops = BigInt(xrpl.xrpToDrops(serverInfo.result.info.validated_ledger?.reserve_base_xrp || 10));
-               const incReserveDrops = BigInt(xrpl.xrpToDrops(serverInfo.result.info.validated_ledger?.reserve_inc_xrp || 0.2));
-               const ownerCount = BigInt(accountInfo.result.account_data.OwnerCount || 0);
-
-               // Calculate total reserve (base + incremental)
-               let totalReserveDrops = baseReserveDrops + ownerCount * incReserveDrops;
-
-               if (txObject && this.increasesOwnerCount(txObject)) {
-                    totalReserveDrops += incReserveDrops;
-               }
-
-               // Include transaction fee
-               const fee = BigInt(feeDrops);
-
-               // Check if balance is sufficient
-               const requiredDrops = amountDrops + fee + totalReserveDrops;
-               return balanceDrops < requiredDrops; // Return true if insufficient balance
-          } catch (error: any) {
-               console.error('Error checking XRP balance:', error);
-               throw new Error(`Failed to check balance: ${error.message || 'Unknown error'}`);
-          }
      }
 
      isInsufficientXrpBalance1(serverInfo: any, accountInfo: any, amountXrp: string, address: string, txObject: any, feeDrops: string = '10'): boolean {

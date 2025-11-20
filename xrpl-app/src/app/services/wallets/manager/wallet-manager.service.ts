@@ -7,6 +7,8 @@ export interface Wallet {
      classicAddress: string;
      address: string;
      seed: string;
+     mnemonic?: string;
+     secretNumbers?: string;
      balance?: string;
      ownerCount?: string;
      xrpReserves?: string;

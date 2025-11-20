@@ -113,7 +113,7 @@
                <!-- Menu bar -->
                <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab === 'delegate'" (click)="setTab('delegate')">
-                         <ng-icon name="heroArrowUturnLeft" size="20" class="text-red-600" color="green"></ng-icon>
+                         <ng-icon name="heroArrowUturnLeft" size="20" class="text-red-600"></ng-icon>
                          Delegate Actions
                     </button>
                </div>
@@ -223,6 +223,7 @@
                     </div>
                </div>
                }
+
                <form #theForm="ngForm" class="send-form">
                     <div [@tabTransition]="activeTab">
                          <div class="tab-content-container">
@@ -517,27 +518,3 @@
           </div>
      </div>
 </div>
-
-<!-- 
-                                   
-
-                    <div class="button-container">
-                         <table style="text-align: left; width: 100%">
-                              <th></th>
-                              <tr>
-                                   <td colspan="2">
-                                        <button type="button" (click)="getAccountDetails()">Get Account Info</button>
-                                        <button type="button" (click)="delegateActions('delegate')">Delegate Actions</button>
-                                        <button type="button" (click)="delegateActions('clear')">Clear Delegate Actions</button>
-                                        <button type="button" (click)="clearFields(true)">Clear Fields</button>
-                                   </td>
-                              </tr>
-                              <tr>
-                                   <td colspan="2">
-                                        <div #resultField id="resultField" [attr.contenteditable]="isEditable" [ngClass]="{ error: isError, success: isSuccess }" class="result-container" [innerHTML]="result | sanitizeHtml"></div>
-                                   </td>
-                              </tr>
-                         </table>
-                    </div>
-               </div>
- -->

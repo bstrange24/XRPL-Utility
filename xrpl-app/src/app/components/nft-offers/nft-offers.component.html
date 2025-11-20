@@ -1,4 +1,987 @@
-<div id="navbar-container">
+<div class="banner">
+     <div class="banner-content">
+          <div id="navbar-container">
+               <app-navbar></app-navbar>
+          </div>
+     </div>
+</div>
+
+<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+
+<!-- Main content. Centered with 2 columns -->
+<div class="main-container">
+     <div class="content-wrapper">
+          <!-- Left Wallet panel ==== -->
+          <div class="wallets-panel">
+               <!-- Header with title + Generate button -->
+               <div class="panel-header">
+                    <h2 class="panel-title">
+                         <lucide-icon name="wallet" size="25" style="padding-top: 5px"></lucide-icon>
+                         Accounts
+                    </h2>
+                    <button class="generate-btn" (click)="generateNewAccount()">+ Generate</button>
+               </div>
+
+               <p class="panel-subtitle">Generate {{environment}} accounts with XRP from the faucet.</p>
+
+               @if (hasWallets) {
+               <div>
+                    <div cdkDropList (cdkDropListDropped)="dropWallet($event)">
+                         <!-- List of wallets -->
+                         @for (wallet of wallets; track wallet.address; let i = $index) {
+                         <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
+                              <!-- Drag Handle (6-dot grip) -->
+                              <!-- <div class="drag-handle" cdkDragHandle>
+                                   <lucide-icon name="grip-vertical" size="20"></lucide-icon>
+                              </div> -->
+
+                              <!-- Wallet Info -->
+                              <div class="wallet-info">
+                                   @if (editingIndex(i)) {
+                                   <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
+                                   } @else {
+                                   <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
+                                   }
+                              </div>
+
+                              <div class="wallet-info" (click)="selectWallet(i)">
+                                   <div class="address-line">
+                                        <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
+                                        <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
+                                   </div>
+
+                                   <!-- Icons -->
+                                   <div class="wallet-actions">
+                                        <button class="icon-btn refresh" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
+                                             <lucide-icon name="refresh-ccw"></lucide-icon>
+                                        </button>
+
+                                        <button class="icon-btn copy" (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
+                                             <lucide-icon name="copy"></lucide-icon>
+                                        </button>
+
+                                        <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
+                                             <lucide-icon name="trash-2"></lucide-icon>
+                                        </button>
+                                   </div>
+                              </div>
+
+                              <!-- Secret Key -->
+                              <div class="secret-section" (click)="selectWallet(i)">
+                                   <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">
+                                        <lucide-icon [name]="wallet.showSecret ? 'eye-off' : 'eye'" size="16" style="padding-top: 5px"></lucide-icon>
+                                        <span>{{ wallet.showSecret ? 'Hide Secret' : 'Show Secret' }}</span>
+                                   </button>
+
+                                   <!-- Seed shown below the button -->
+                                   @if (wallet.showSecret) {
+                                   <div class="secret-seed-container">
+                                        <div class="secret-seed">{{ wallet.seed }}</div>
+                                        <button class="copy-btn" (click)="copyUtilService.copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
+                                             <lucide-icon name="copy" size="20"></lucide-icon>
+                                        </button>
+                                   </div>
+                                   }
+                              </div>
+                         </div>
+                         }
+                    </div>
+
+                    <!-- Selected Account Summary ==== -->
+                    <div class="selected-account-card">
+                         <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
+                         <div class="summary-row"><span>Address:</span> <span>{{ currentWallet.address | slice:0:5 }}...{{ currentWallet.address | slice:-5 }}</span></div>
+                         <div class="summary-row"><span>Balance:</span> <span class="highlight wallet-balance">{{ currentWallet.balance }} XRP</span></div>
+                         <div class="summary-row"><span>Owner Count:</span> <span class="highlight wallet-balance">{{ currentWallet.ownerCount }}</span></div>
+                         <div class="summary-row"><span>Xrp Reserves:</span> <span class="highlight wallet-balance">{{ currentWallet.xrpReserves }} XRP</span></div>
+                    </div>
+               </div>
+               } @else {
+               <!-- This block shows if hasWallets is false -->
+               <div class="no-wallet-found">
+                    <lucide-icon name="wallet" size="40"></lucide-icon>
+                    <p>No accounts generated yet.</p>
+                    <p>Click "Generate" to create your first {{environment}} account</p>
+               </div>
+               }
+          </div>
+
+          <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div>
+
+          <!-- Right form -->
+          <div class="form-panel">
+               <!-- Menu bar -->
+               <div class="menu-bar">
+                    <button class="menu-btn" [class.active]="activeTab === 'sell'" (click)="setTab('sell')">
+                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
+                         Sell NFT
+                    </button>
+                    <button class="menu-btn" [class.active]="activeTab === 'buy'" (click)="setTab('buy')">
+                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
+                         Buy NFT
+                    </button>
+                    <button class="menu-btn" [class.active]="activeTab === 'sellOffer'" (click)="setTab('sellOffer')">
+                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
+                         Sell NFT Offer
+                    </button>
+                    <button class="menu-btn" [class.active]="activeTab === 'buyOffer'" (click)="setTab('buyOffer')">
+                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
+                         Buy NFT Offer
+                    </button>
+                    <button class="menu-btn" [class.active]="activeTab === 'cancelOffer'" (click)="setTab('cancelOffer')">
+                         <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
+                         Cancel Offer
+                    </button>
+               </div>
+
+               <!-- Sell NFT Menu -->
+               @if (activeTab === 'sell') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="blue-button-submenu">
+                              <!-- <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon> -->
+                              <!-- <ng-icon name="heroBanknotes" size="27" class="text-red-600"></ng-icon> -->
+                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Sell NFT</h2>
+                              <p class="submenu-info-secondary-text">Sell an NFT on the market.</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Buy NFT Menu -->
+               @if (activeTab === 'buy') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="green-button-submenu">
+                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Buy NFT</h2>
+                              <p class="submenu-info-secondary-text">Buy an NFT from the market.</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Sell Offer Menu -->
+               @if (activeTab === 'sellOffer') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="blue-button-submenu">
+                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Sell NFT Offer</h2>
+                              <p class="submenu-info-secondary-text">Create an offer to sell an NFT.</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Buy Offer Menu -->
+               @if (activeTab === 'buyOffer') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="green-button-submenu">
+                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Buy NFT Offer</h2>
+                              <p class="submenu-info-secondary-text">Create an offer to buy an NFT.</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Cancel Offer Menu -->
+               @if (activeTab === 'cancelOffer') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="red-button-submenu">
+                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Cancel NFT Offer</h2>
+                              <p class="submenu-info-secondary-text">Cancel and existing NFT offer.</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Dynamic info panel -->
+               @if (infoMessage) {
+               <div class="info-panel">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-red-600"></ng-icon>
+                    <div class="info-text" [innerHTML]="infoMessage"></div>
+               </div>
+               }
+
+               <!-- Dynamic warning panel  -->
+               @if (ui.warningMessage) {
+               <div class="warning-panel">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
+                    <div class="warning-text" [innerHTML]="ui.warningMessage"></div>
+               </div>
+               }
+
+               <!-- @if (selectedNft) {
+               <div class="nft-details" style="margin-top: 1rem">
+                    <h4>NFT Details</h4>
+
+                    @for (n of existingNfts; track n.NFTokenID) { @if (n.NFTokenID === selectedNft) {
+                    <div class="detail-card">
+                         <p><strong>NFT ID:</strong> {{ n.NFTokenID }}</p>
+                         <p><strong>URI:</strong> {{ n.URI ?? 'none' }}</p>
+                         <p><strong>Flags:</strong> {{ decodeNftFlags(n.Flags).join(', ') }}</p>
+                    </div>
+                    } }
+               </div>
+               } -->
+
+               <!-- Existing NFTs on selected account -->
+               @if (existingNfts.length > 10000) {
+               <div class="outstanding-checks-panel">
+                    <div class="panel-header" (click)="toggleExistingNfts()" style="cursor: pointer; user-select: none">
+                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
+                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
+                              Existing NFTs ({{ existingNfts.length }})
+                         </h3>
+                    </div>
+
+                    <div class="checks-list-container" [style.max-height]="existingNftsCollapsed ? '0': (existingNfts.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
+                         @if (!existingNftsCollapsed) {
+                         <div class="checks-list">
+                              @for (chk of existingNfts; track chk.NFTokenID) {
+                              <div class="check-card">
+                                   <div class="check-extras">
+                                        @if (chk.LedgerEntryType) {
+                                        <span class="badge badge-expire"> LedgerEntryType: {{ chk.LedgerEntryType }} </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> LedgerEntryType: Not set </span>
+                                        } @if (chk.NFTokenID) {
+                                        <span class="badge badge-expire"> NFTokenID: {{ chk.NFTokenID }} </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> NFTokenID: Not set </span>
+                                        } @if (chk.Flags !== undefined && chk.Flags !== 0) {
+                                        <span class="badge badge-expire">
+                                             Flags: @for (f of decodeNftFlags(chk.Flags); track f) {
+                                             <span class="flag-item">{{ f }}</span>
+                                             }
+                                             <span class="flag-original">({{ chk.Flags }})</span>
+                                        </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> Flags: Not set </span>
+                                        }
+
+                                        <div class="line-break"></div>
+
+                                        @if (chk.URI) {
+                                        <span class="badge badge-tag"> URI: {{ chk.URI }} </span>
+                                        } @else {
+                                        <span class="badge badge-tag-not-set"> URI: Not set </span>
+                                        }
+                                   </div>
+
+                                   <div class="button-group">
+                                        <button class="icon-btn copy-check-id" (click)="copyNFTokenID(chk.NFTokenID); $event.stopPropagation(); $event.preventDefault()" title="Copy NFT Token ID" type="button">
+                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                             <a [href]="`${url}account/` + currentWallet.address + `/nfts`" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
+                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
+                                             </a>
+                                        </button>
+                                   </div>
+                              </div>
+                              }
+                         </div>
+                         }
+                    </div>
+               </div>
+               }
+
+               <!-- Existing Sell offers on selected account -->
+               @if (existingSellOffers.length > 0) {
+               <div class="outstanding-checks-panel">
+                    <div class="panel-header" (click)="toggleExistingSellOffers()" style="cursor: pointer; user-select: none">
+                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
+                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
+                              Existing Sell Offers ({{ existingSellOffers.length }})
+                         </h3>
+                    </div>
+
+                    <div class="checks-list-container" [style.max-height]="existingSellOffersCollapsed ? '0': (existingSellOffers.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
+                         @if (!existingSellOffersCollapsed) {
+                         <div class="checks-list">
+                              @for (offer of existingSellOffers; track offer.OfferIndex) {
+                              <div class="check-card">
+                                   <div class="check-extras">
+                                        @if (offer.LedgerEntryType) {
+                                        <span class="badge badge-expire"> LedgerEntryType: {{ offer.LedgerEntryType }} </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> LedgerEntryType: Not set </span>
+                                        } @if (offer.NFTokenID) {
+                                        <span class="badge badge-expire"> NFTokenID: {{ offer.NFTokenID }} </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> NFTokenID: Not set </span>
+                                        } @if (offer.Flags !== undefined && offer.Flags !== 0) {
+                                        <span class="badge badge-expire">
+                                             Flags: @for (f of decodeOfferFlags(offer.Flags); track f) {
+                                             <span>{{ f }}</span>
+                                             }
+                                             <span class="flag-original"> ({{ offer.Flags }})</span>
+                                        </span>
+                                        } @else {
+                                        <span class="badge badge-expire-not-set"> Flags: Not set </span>
+                                        }
+
+                                        <div class="line-break"></div>
+
+                                        @if (offer.IsSellOffer) {
+                                        <span class="badge badge-tag"> Is Sell Offer: {{ offer.IsSellOffer }} </span>
+                                        } @else {
+                                        <span class="badge badge-tag-not-set"> Is Sell Offer: Not set </span>
+                                        } @if (offer.OfferIndex) {
+                                        <span class="badge badge-tag"> Offer Index: {{ offer.OfferIndex }} </span>
+                                        } @else {
+                                        <span class="badge badge-tag-not-set"> Offer Index: Not set </span>
+                                        } @if (offer.AmountXRP) {
+                                        <span class="badge badge-tag"> Amount: {{ offer.AmountXRP }} XRP</span>
+                                        } @else {
+                                        <span class="badge badge-tag-not-set"> XRP Amount: Not set </span>
+                                        } @if (offer.Owner) {
+                                        <span class="badge badge-tag"> Owner: {{ offer.Owner }}</span>
+                                        } @else {
+                                        <span class="badge badge-tag-not-set"> Owner: Not set </span>
+                                        }
+                                   </div>
+
+                                   <div class="button-group">
+                                        <button class="icon-btn copy-check-id" (click)="copyNFTokenID(offer.NFTokenID); $event.stopPropagation(); $event.preventDefault()" title="Copy NFT Token ID" type="button">
+                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                             <a [href]="`${url}account/` + currentWallet.address + `/nfts`" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
+                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
+                                             </a>
+                                        </button>
+                                   </div>
+                              </div>
+                              }
+                         </div>
+                         }
+                    </div>
+               </div>
+               }
+
+               <form #theForm="ngForm" class="send-form">
+                    <div [@tabTransition]="activeTab">
+                         <div class="tab-content-columns">
+                              <!-- ==================== LEFT: FORM FIELDS ==================== -->
+                              <div class="tab-content-container form-fields-container">
+                                   <!-- Sell -->
+                                   @if(activeTab === 'sell') {
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Currency Code</label>
+                                             <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="toggleIssuerField()" name="currencyField">
+                                                  <option *ngFor="let curr of currencies" [value]="curr">{{curr}}</option>
+                                             </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                             <label>Amount</label>
+                                             <input type="text" id="amountField" [(ngModel)]="amountField" name="amountField" [placeholder]="currencyFieldDropDownValue === 'XRP' ? 'Amount in XRP' : 'Currency amount'" />
+                                        </div>
+                                   </div>
+
+                                   @if(currencyFieldDropDownValue !== 'XRP') {
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Issuer</label>
+                                             <select id="issuerField" [(ngModel)]="selectedIssuer" name="issuerField" (ngModelChange)="this.toggleIssuerField()">
+                                                  <option value="" disabled selected>Select an issuer</option>
+                                                  <option *ngFor="let iss of currencyIssuers; let i = index" [value]="iss.address">{{iss.name || 'Wallet ' + (i + 1)}} ({{iss.address | slice:0:6}}...{{iss.address | slice:-4}})</option>
+                                             </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                             <label for="tokenBalance">Currency Balance</label>
+                                             <input type="text" id="tokenBalance" [(ngModel)]="tokenBalance" readonly name="tokenBalance" />
+                                        </div>
+                                   </div>
+                                   }
+
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Offer Expiration</label>
+                                             <input type="text" id="escrowCancelTimeField" placeholder="Enter time" [(ngModel)]="expirationField" name="escrowCancelTimeField" />
+                                        </div>
+
+                                        <div class="form-group">
+                                             <label>Cancel Time Unit</label>
+                                             <select id="expirationTimeUnit" [(ngModel)]="expirationTimeUnit" name="expirationTimeUnit">
+                                                  <option value="seconds">Seconds</option>
+                                                  <option value="minutes">Minutes</option>
+                                                  <option value="hours">Hours</option>
+                                                  <option value="days">Days</option>
+                                             </select>
+                                        </div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             @if (existingNfts.length > 0) {
+                                             <label for="nftSelect">NFT Token ID</label>
+                                             <div>
+                                                  <select id="nftSelect" name="nftSelect" [(ngModel)]="selectedNft" (ngModelChange)="onSelectNft($event)">
+                                                       <option [ngValue]="null">Select an NFT</option>
+
+                                                       @for (nft of existingNfts; track nft.NFTokenID) {
+                                                       <option [ngValue]="nft.NFTokenID">{{ nft.NFTokenID | slice:0:20 }}... ({{ nft.URI ?? 'No URI' }})</option>
+                                                       }
+                                                  </select>
+                                             </div>
+                                             }
+                                        </div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <div class="form-group" style="padding-top: 0.8em">
+                                             <label>NFT Token Id</label>
+                                             <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
+                                        </div>
+                                   </div>
+
+                                   <!-- <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="The NFT offer will expire after the expiration date. This is in hours.">
+                                                  <label for="expirationField">Offer Expiration</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <input type="text" id="expirationField" [(ngModel)]="expirationField" name="expirationField" />
+                                             <select class="timeUnit" style="width: 100px" id="expirationDateTimeUnit" [(ngModel)]="expirationDateTimeUnit" name="expirationDateTimeUnit">
+                                                  <option value="seconds">Seconds</option>
+                                                  <option value="minutes">Minutes</option>
+                                                  <option value="hours">Hours</option>
+                                                  <option value="days">Days</option>
+                                             </select>
+                                        </td>
+                                   </tr>
+                                   <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="NFT offer index used to cancel sell offers.">
+                                                  <label for="nftIndexField">Offer Index</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <textarea class="memoField" style="width: 300px; height: 100px" type="text" id="memoField" placeholder="" [(ngModel)]="nftIndexField" name="nftIndexField"></textarea>
+                                        </td>
+                                   </tr>
+                                   <tr class="multisignAddressClass">
+                                        <td>
+                                             <span class="tooltip" tooltip-data="NFT Id to use for transactions.">
+                                                  <label for="memoField">NFT Token Id</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <textarea class="memoField" style="width: 300px; height: 100px" type="text" id="memoField" placeholder="" [(ngModel)]="nftIdField" name="nftIdField"></textarea>
+                                        </td>
+                                   </tr>
+
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Offer Expiration</label>
+                                             <input type="text" id="escrowCancelTimeField" placeholder="Enter time" [(ngModel)]="expirationField" name="escrowCancelTimeField" />
+                                        </div>
+
+                                        <div class="form-group">
+                                             <label>Cancel Time Unit</label>
+                                             <select id="expirationTimeUnit" [(ngModel)]="expirationTimeUnit" name="expirationTimeUnit">
+                                                  <option value="seconds">Seconds</option>
+                                                  <option value="minutes">Minutes</option>
+                                                  <option value="hours">Hours</option>
+                                                  <option value="days">Days</option>
+                                             </select>
+                                        </div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>URI</label>
+                                             <input type="text" [(ngModel)]="initialURIField" name="initialURIField" placeholder="" />
+                                        </div>
+
+                                        <div class="form-group">
+                                             <label>Amount</label>
+                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
+                                        </div>
+                                   </div> -->
+
+                                   }
+
+                                   <!-- Buy -->
+                                   @if(activeTab === 'buy') {
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Offer Index</label>
+                                             <input type="text" id="nftIndexField" [(ngModel)]="nftIndexField" name="nftIndexField" [placeholder]="" />
+                                        </div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <div class="form-group" style="padding-top: 0.4em">
+                                             <label>NFT Token Id</label>
+                                             <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
+                                        </div>
+                                   </div>
+
+                                   <!-- <tr>
+                                        <td>
+                                             <span class="tooltip" tooltip-data="NFT offer index used to cancel sell offers.">
+                                                  <label for="nftIndexField">Offer Index</label>
+                                             </span>
+                                        </td>
+                                        <td>
+                                             <textarea class="memoField" style="width: 300px; height: 100px" type="text" id="memoField" placeholder="" [(ngModel)]="nftIndexField" name="nftIndexField"></textarea>
+                                        </td>
+                                   </tr> -->
+                                   }
+
+                                   <!-- Buy/Sell offer -->
+                                   @if (activeTab === 'buyOffer' || activeTab === 'sellOffer') {
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Currency Code</label>
+                                             <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="toggleIssuerField()" name="currencyField">
+                                                  <option *ngFor="let curr of currencies" [value]="curr">{{curr}}</option>
+                                             </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                             <label>Amount</label>
+                                             <input type="text" id="amountField" [(ngModel)]="amountField" name="amountField" [placeholder]="currencyFieldDropDownValue === 'XRP' ? 'Amount in XRP' : 'Currency amount'" />
+                                        </div>
+                                   </div>
+
+                                   @if(currencyFieldDropDownValue !== 'XRP') {
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Issuer</label>
+                                             <select id="issuerField" [(ngModel)]="selectedIssuer" name="issuerField" (ngModelChange)="this.toggleIssuerField()">
+                                                  <option value="" disabled selected>Select an issuer</option>
+                                                  <option *ngFor="let iss of currencyIssuers; let i = index" [value]="iss.address">{{iss.name || 'Wallet ' + (i + 1)}} ({{iss.address | slice:0:6}}...{{iss.address | slice:-4}})</option>
+                                             </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                             <label for="tokenBalance">Currency Balance</label>
+                                             <input type="text" id="tokenBalance" [(ngModel)]="tokenBalance" readonly name="tokenBalance" />
+                                        </div>
+                                   </div>
+                                   }
+
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Offer Expiration</label>
+                                             <input type="text" id="escrowCancelTimeField" placeholder="Enter time" [(ngModel)]="expirationField" name="escrowCancelTimeField" />
+                                        </div>
+
+                                        <div class="form-group">
+                                             <label>Cancel Time Unit</label>
+                                             <select id="expirationTimeUnit" [(ngModel)]="expirationTimeUnit" name="expirationTimeUnit">
+                                                  <option value="seconds">Seconds</option>
+                                                  <option value="minutes">Minutes</option>
+                                                  <option value="hours">Hours</option>
+                                                  <option value="days">Days</option>
+                                             </select>
+                                        </div>
+                                   </div>
+
+                                   @if ( activeTab === 'buyOffer') {
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Owner</label>
+                                             <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
+                                        </div>
+                                        <div class="form-group"></div>
+                                   </div>
+                                   }
+
+                                   <!-- Sell Offer settings -->
+                                   @if ( activeTab === 'sellOffer') {
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Destination</label>
+                                             <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
+                                        </div>
+                                        <div class="form-group"></div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             @if (existingNfts.length > 0) {
+                                             <label for="nftSelect">NFT Token ID</label>
+                                             <div>
+                                                  <select id="nftSelect" name="nftSelect" [(ngModel)]="selectedNft" (ngModelChange)="onSelectNft($event)">
+                                                       <option [ngValue]="null">Select an NFT</option>
+
+                                                       @for (nft of existingNfts; track nft.NFTokenID) {
+                                                       <option [ngValue]="nft.NFTokenID">{{ nft.NFTokenID | slice:0:20 }}... ({{ nft.URI ?? 'No URI' }})</option>
+                                                       }
+                                                  </select>
+                                             </div>
+                                             }
+                                        </div>
+                                   </div>
+                                   }
+
+                                   <div class="form-row">
+                                        <div class="form-group" style="padding-top: 0.8em">
+                                             <label>NFT Token Id</label>
+                                             <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
+                                        </div>
+                                   </div>
+
+                                   <!-- <div class="form-row">
+                                        <div class="form-group" style="padding-top: 0.8em">
+                                             <label>NFT Offer Index</label>
+                                             <input type="text" [(ngModel)]="nftIndexField" name="nftIndexField" placeholder="" />
+                                        </div>
+                                   </div> -->
+
+                                   }
+
+                                   <!-- Cancel offer -->
+                                   @if (activeTab === 'cancelOffer') {
+                                   <!-- <div class="form-row">
+                                        <div class="form-group">
+                                             @if (existingNfts.length > 0) {
+                                             <label for="nftSelect">NFT Token ID</label>
+                                             <div>
+                                                  <select id="nftSelect" name="nftSelect" [(ngModel)]="selectedNft" (ngModelChange)="onSelectNft($event)">
+                                                       <option [ngValue]="null">Select an NFT Token ID to cancel</option>
+
+                                                       @for (nft of existingNfts; track nft.NFTokenID) {
+                                                       <option [ngValue]="nft.NFTokenID">{{ nft.NFTokenID | slice:0:20 }}... ({{ nft.URI ?? 'No URI' }})</option>
+                                                       }
+                                                  </select>
+                                             </div>
+                                             }
+                                        </div>
+                                   </div> -->
+
+                                   <div class="form-row">
+                                        <div class="form-group" style="margin-top: 0.8em">
+                                             @if (existingSellOffers.length > 0) {
+                                             <label for="selectedNftOfferIndex">Offer Index</label>
+                                             <div>
+                                                  <select id="selectedNftOfferIndex" name="selectedNftOfferIndex" [(ngModel)]="selectedNftOfferIndex" (ngModelChange)="onSelectNftOfferIndex($event)">
+                                                       <option [ngValue]="null">Select an NFT Offer Index to cancel</option>
+
+                                                       @for (nft of existingSellOffers; track nft.OfferIndex) {
+                                                       <option [ngValue]="nft.OfferIndex">Offer Index ({{ nft.OfferIndex | slice:0:20 }}) ... NFT Token ID ({{ nft.NFTokenID | slice:0:20 }})</option>
+                                                       }
+                                                  </select>
+                                             </div>
+                                             }
+                                        </div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <div class="form-group" style="padding-top: 0.8em">
+                                             <label>NFT Offer Index</label>
+                                             <input type="text" [(ngModel)]="nftIndexField" name="nftIndexField" placeholder="" />
+                                        </div>
+                                   </div>
+                                   }
+                              </div>
+
+                              <!-- MPT Flags -->
+                              <!-- @if (activeTab === 'create') {
+                              <div class="tab-content-container flags-container" style="min-width: 425px">
+                                   <div class="flags-wrapper">
+                                        <div class="token-flags-header">
+                                             <lucide-icon name="flag" size="20"></lucide-icon>
+                                             <span class="token-flags-title">NFT Flags</span>
+                                        </div>
+
+                                        @if (activeTab === 'create') {
+                                        <div class="flag-item-account-flags" [class.enabled]="nftFlags.burnableNft" (click)="toggleFlag('burnableNft')">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" id="canLock" name="canLock" [checked]="nftFlags.burnableNft" class="flag-checkbox" />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                  </svg>
+                                                  <span class="flag-title">Burnable</span>
+                                             </div>
+                                             <div class="flag-value">0x00000001 tfBurnable</div>
+                                             <div class="flag-desc">The minted token may be burned by the issuer even if the issuer does not currently hold the token. The current holder of the token may always burn it.</div>
+                                        </div>
+                                        } @if (activeTab === 'create') {
+                                        <div class="flag-item-account-flags" [class.enabled]="nftFlags.onlyXrpNft" (click)="toggleFlag('onlyXrpNft')">
+                                             <div class="flag-header">
+                                                  <input type="checkbox" [checked]="nftFlags.onlyXrpNft" class="flag-checkbox" disabled />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                  </svg>
+                                                  <span class="flag-title">OnlyXRP</span>
+                                             </div>
+                                             <div class="flag-value">0x00000002 tfOnlyXRP</div>
+                                             <div class="flag-desc">Indicates that the token may only be offered or sold for XRP.</div>
+                                        </div>
+                                        }
+                                        @if (activeTab === 'create') {
+                                        <div class="flag-item" [class.enabled]="nftFlags.transferableNft" (click)="toggleFlag('transferableNft')">
+                                             <div class="flag-header">
+                                                  <input type="checkbox" [checked]="nftFlags.transferableNft" class="flag-checkbox" disabled />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                  </svg>
+                                                  <span class="flag-title">Transferable</span>
+                                             </div>
+                                             <div class="flag-value">0x00000008 tfTransferable</div>
+                                             <div class="flag-desc">Indicates that this NFT can be transferred. This flag has no effect if the token is being transferred from the issuer or to the issuer.</div>
+                                        </div>
+                                        } @if (activeTab === 'create') {
+                                        <div class="flag-item" [class.enabled]="nftFlags.mutableNft" (click)="toggleFlag('mutableNft')">
+                                             <div class="flag-header">
+                                                  <input type="checkbox" [checked]="nftFlags.mutableNft" class="flag-checkbox" disabled />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                  </svg>
+                                                  <span class="flag-title">Mutable</span>
+                                             </div>
+                                             <div class="flag-value">0x00000010 tfMutable</div>
+                                             <div class="flag-desc">Indicates that this NFT's URI can be modified.</div>
+                                        </div>
+                                        }@if (activeTab === 'create') {
+                                        <div class="flags-total">
+                                             <span class="total-label">Total Flags Value:</span>
+                                             <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
+                                        </div>
+                                        }
+                                   </div>
+                              </div>
+                              } -->
+                         </div>
+
+                         <!-- Switches -->
+                         <div class="switch-group">
+                              <!-- Memo group -->
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
+                                   <span class="slider"></span>
+                                   Add Memo
+                              </label>
+
+                              <!-- Multi Signing Enabled group -->
+                              @if (multiSigningEnabled) {
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
+                                   <span class="slider"></span>
+                                   Use Multi-Sign
+                              </label>
+                              }
+
+                              <!-- Regular Key Signing Enabled-->
+                              @if (regularKeySigningEnabled) {
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
+                                   <span class="slider"></span>
+                                   Use Regular Key
+                              </label>
+                              }
+
+                              <!-- Use Ticket for tx -->
+                              @if (activeTab !== 'delete' && ticketArray.length > 0) {
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
+                                   <span class="slider"></span>
+                                   Use Ticket
+                              </label>
+                              }
+
+                              <!-- Simulate tx -->
+                              <label class="switch">
+                                   <input type="checkbox" [(ngModel)]="ui.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="ui.toggleSimulate($event)" />
+                                   <span class="slider"></span>
+                                   Simulate
+                              </label>
+                         </div>
+
+                         <!-- Memo Field -->
+                         @if (isMemoEnabled) {
+                         <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
+                         }
+
+                         <!-- Sign tx with Mult Sign address -->
+                         @if (useMultiSign) {
+                         <div class="multisign-grid">
+                              <div class="multisign-field">
+                                   <label>Signers</label>
+                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly (ngModelChange)="autoResize(signers)"></textarea>
+                              </div>
+                              <div class="multisign-field">
+                                   <label>Seeds</label>
+                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly (ngModelChange)="autoResize(seeds)"></textarea>
+                              </div>
+                              <div class="multisign-field quorum-field">
+                                   <label>Quorum</label>
+                                   <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Sign tx with Regular key address -->
+                         @if (isRegularKeyAddress) {
+                         <div class="regular-key-fields">
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Regular Key Address</label>
+                                        <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+                                   </div>
+                              </div>
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Regular Key Seed</label>
+                                        <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Get ticket to delete -->
+                         @if (isTicket && activeTab !== 'delete') {
+                         <div class="ticket-fields">
+                              <div class="form-group">
+                                   <label>Ticket Sequence</label>
+                                   @if (multiSelectMode) {
+                                   <div>
+                                        <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
+                                             @for (ticket of ticketArray; track ticket) {
+                                             <option [value]="ticket">{{ ticket }}</option>
+                                             }
+                                        </select>
+                                   </div>
+                                   } @else {
+                                   <div>
+                                        <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
+                                             <option value="" disabled>Select a ticket</option>
+                                             @for (ticket of ticketArray; track ticket) {
+                                             <option [value]="ticket">{{ ticket }}</option>
+                                             }
+                                        </select>
+                                   </div>
+                                   }
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Action buttons -->
+                         <div class="button-row">
+                              @if(activeTab === 'buy') {
+                              <button type="button" (click)="buyNFT()" class="btn-primary-green">Buy NFT</button>
+                              } @else if (activeTab === 'sell') {
+                              <button type="button" (click)="sellNFT()" class="btn-primary-blue">Sell NFT</button>
+                              } @else if (activeTab === 'buyOffer') {
+                              <button type="button" (click)="createOffer('Buy')" class="btn-primary-green">Buy NFT Offer</button>
+                              }@else if (activeTab === 'sellOffer') {
+                              <button type="button" (click)="createOffer('Sell')" class="btn-primary-blue">Sell NFT Offer</button>
+                              }@else if (activeTab === 'cancelOffer') {
+                              <button type="button" (click)="cancelOffer()" class="btn-primary-red">Cancel NFT Offer</button>
+                              }
+                              <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
+                         </div>
+
+                         <!-- Spinner -->
+                         @if (ui.spinner) {
+                         <div class="spinner-row">
+                              <div class="spinner"></div>
+                              <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
+                         </div>
+                         }
+
+                         <!-- Success message -->
+                         @if (ui.isSuccess && !ui.isError) {
+                         <div class="success-message">
+                              <lucide-icon name="check" size="20"></lucide-icon>
+                              <div class="success-text">
+                                   @if (ui.txHash && !ui.isSimulateEnabled) {
+                                   <span>{{ui.successMessage}}</span><br /><br />
+                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
+                                   } @else {
+                                   <span>{{ui.successMessage}}</span>
+                                   }
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Error message -->
+                         @if (ui.isError && ui.result) {
+                         <div class="tx-message error">
+                              <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
+                              <div class="tx-text">
+                                   <!-- Display Tx Hash if we are not in simulation mode-->
+                                   @if (ui.txHash && !ui.isSimulateEnabled) {
+                                   <span>{{ ui.result }}</span><br />
+                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
+                                   } @else {
+                                   <span>{{ ui.result }}</span>
+                                   }
+                              </div>
+                         </div>
+                         }
+                    </div>
+               </form>
+
+               <!-- Tx Preview -->
+               @if (ui.paymentTx.length >0) {
+               <div class="tx-preview-container">
+                    <div class="tx-header">
+                         <h5 class="tx-title">Payment Transaction</h5>
+                         <div class="tx-actions">
+                              <button class="copy-btn" (click)="copyUtilService.copyTx()" title="Copy JSON">
+                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                   Copy
+                              </button>
+                              <button class="download-btn" (click)="downloadUtilService.downloadTx()" title="Download JSON">
+                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+                                   Download
+                              </button>
+                         </div>
+                    </div>
+
+                    <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
+               </div>
+               }
+
+               <!-- Tx Result Preview -->
+               @if (ui.txResult.length >0) {
+               <div class="tx-preview-container">
+                    <div class="tx-header">
+                         <h3 class="tx-title">Transaction Result</h3>
+                         <div class="tx-actions">
+                              <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
+                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                   Copy
+                              </button>
+                              <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
+                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+                                   Download
+                              </button>
+                         </div>
+                    </div>
+
+                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
+               </div>
+               }
+          </div>
+     </div>
+</div>
+
+<!--
+ <div id="navbar-container">
      <app-navbar></app-navbar>
 </div>
 <form id="theForm">
@@ -10,94 +993,6 @@
           <div class="transaction-layout">
                <div class="top-section-left">
                     <div class="top-sections-wrapper">
-                         <div class="top-section-left">
-                              <table id="accountSelection">
-                                   <th></th>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Select the account to use for the transaction.">
-                                                  <label for="selectedWalletField">Select Account</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <select id="selectedWalletField" class="dropdownWallet" [(ngModel)]="selectedWalletIndex" (ngModelChange)="onAccountChange()" name="selectedWalletField">
-                                                  <option *ngFor="let wallet of wallets; let i = index" [value]="i">{{wallet.name || 'Wallet ' + (i+1)}} ({{wallet.address | slice:0:6}}...{{wallet.address | slice:-4}})</option>
-                                             </select>
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Name of the currently selected account.">
-                                                  <label for="accountNameField">Name</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountNameField" [(ngModel)]="currentWallet.name" name="accountNameField" readonly />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Address of the currently selected account.">
-                                                  <label for="accountAddressField">Address</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountAddressField" [(ngModel)]="currentWallet.address" name="accountAddressField" readonly />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Seed of the currently selected account.">
-                                                  <label for="accountSeedField">Seed</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="accountSeedField" [(ngModel)]="currentWallet.seed" name="accountSeedField" readonly />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="XRP balance for the currently selected account.">
-                                                  <label for="xrpBalanceField">Spendable XRP Balance</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="xrpBalanceField" [(ngModel)]="currentWallet.balance" readonly name="xrpBalanceField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total account objects that require an XRP reserve.">
-                                                  <label for="ownerCountField">Owner Count</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="ownerCountField" [(ngModel)]="ownerCount" readonly name="ownerCountField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total number of XRP reserves. This includes the base reserve and any account objects that require a reserve.">
-                                                  <label for="totalXrpReservesField">Total XRP Reserves</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="totalXrpReservesField" [(ngModel)]="totalXrpReserves" readonly name="totalXrpReservesField" />
-                                        </td>
-                                   </tr>
-                                   <tr>
-                                        <td>
-                                             <span class="tooltip" tooltip-data="Total Execution time in milli seconds.">
-                                                  <label for="totalExecutionTime">Total Execution Time</label>
-                                             </span>
-                                        </td>
-                                        <td>
-                                             <input type="text" id="totalExecutionTime" [(ngModel)]="executionTime" readonly name="totalExecutionTime" />
-                                        </td>
-                                   </tr>
-                              </table>
-                         </div>
-
                          <div class="top-section-right">
                               <table id="xrpDetails">
                                    <th></th>
@@ -175,7 +1070,7 @@
                                    <tr class="multisignAddressClass">
                                         <td>
                                              <span class="tooltip" tooltip-data="NFT Id to use for transactions.">
-                                                  <label for="memoField">Nft Token Id</label>
+                                                  <label for="memoField">NFT Token Id</label>
                                              </span>
                                         </td>
                                         <td>
@@ -184,11 +1079,6 @@
                                    </tr>
                               </table>
                          </div>
-                    </div>
-
-                    <div class="spinner-container">
-                         <div id="spinner" [ngStyle]="{ display: spinner ? 'block' : 'none' }" class="spinner"></div>
-                         <div *ngIf="spinner" class="spinner-text">{{ spinnerMessage || 'Loading...' }}</div>
                     </div>
 
                     <div class="button-container">
@@ -215,50 +1105,7 @@
                                         <button type="button" (click)="cancelOffer()">Cancel NFT Sell Offer</button>
                                    </td>
                               </tr>
-                              <tr>
-                                   <td colspan="2">
-                                        <div #resultField id="resultField" [attr.contenteditable]="isEditable" [ngClass]="{ error: isError, success: isSuccess }" class="result-container" [innerHTML]="result | sanitizeHtml"></div>
-                                   </td>
-                              </tr>
                          </table>
-                         <!-- <details class="account-flag-info">
-                              <summary>NFT Flag Info</summary>
-                              <fieldset class="flag-fieldset">
-                                   <div class="flag-table">
-                                        <div class="flag-row flag-header">
-                                             <div class="flag-cell">Flag Name</div>
-                                             <div class="flag-cell">Hex Value</div>
-                                             <div class="flag-cell">Decimal Value</div>
-                                             <div class="flag-cell">Description</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">tfBurnable</div>
-                                             <div class="flag-cell">0x00000001</div>
-                                             <div class="flag-cell">1</div>
-                                             <div class="flag-cell">Allows anyone to burn the NFT if they hold it.</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">tfOnlyXRP</div>
-                                             <div class="flag-cell">0x00000002</div>
-                                             <div class="flag-cell">2</div>
-                                             <div class="flag-cell">NFT can only be bought/sold using XRP (no issued tokens).</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">tfTransferable</div>
-                                             <div class="flag-cell">0x00000008</div>
-                                             <div class="flag-cell">8</div>
-                                             <div class="flag-cell">Allows the NFT to be transferred to others.</div>
-                                        </div>
-                                        <div class="flag-row">
-                                             <div class="flag-cell">tfMutable</div>
-                                             <div class="flag-cell">0x00000010</div>
-                                             <div class="flag-cell">16</div>
-                                             <div class="flag-cell">The URI field of the minted NFToken can be updated using the NFTokenModify transaction.</div>
-                                        </div>
-                                   </div>
-                                   <p class="nft-note">Note: Each NFT offer reserves 0.2 XRP on your account until accepted or canceled.</p>
-                              </fieldset>
-                         </details> -->
                     </div>
                </div>
 
@@ -266,7 +1113,7 @@
                     <table id="flags"></table>
                     <table id="meta">
                          <th></th>
-                         <!-- <tr>
+                         <tr>
                               <td>
                                    <span class="tooltip" tooltip-data="Address authorized mint NFT's">
                                         <label for="issuerAddressField">NFT Issuer</label>
@@ -275,8 +1122,8 @@
                               <td>
                                    <input type="text" id="issuerAddressField" [(ngModel)]="issuerAddressField" name="issuerAddressField" />
                               </td>
-                         </tr> -->
-                         <!-- <tr>
+                         </tr>
+                         <tr>
                               <td>
                                    <label for="destinationFields">Destination</label>
                               </td>
@@ -286,9 +1133,8 @@
                                    </select>
                                    <br />
                                    <input type="text" placeholder="Enter new destination" [(ngModel)]="newDestination" name="newDestination" />
-                                   <button type="button" (click)="addDestination()">Add</button>
                               </td>
-                         </tr> -->
+                         </tr>
                          <tr>
                               <td>
                                    <span class="tooltip" tooltip-data="Add memo to transaction.">
@@ -425,13 +1271,6 @@
                                    </span>
                               </td>
                               <td>
-                                   <!-- <div class="selection-mode">
-                                        <label>
-                                             <input type="checkbox" [(ngModel)]="multiSelectMode" [ngModelOptions]="{standalone: true}" />
-                                             Multiple Selection
-                                        </label>
-                                   </div> -->
-
                                    <div *ngIf="multiSelectMode; else singleSelect">
                                         <select class="timeUnit" [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
                                              <option *ngFor="let ticket of ticketArray" [value]="ticket">{{ticket}}</option>
@@ -464,4 +1303,4 @@
                </div>
           </div>
      </fieldset>
-</form>
+</form> -->

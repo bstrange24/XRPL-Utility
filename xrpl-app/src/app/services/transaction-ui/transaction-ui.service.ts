@@ -15,6 +15,7 @@ export class TransactionUiService {
 
      paymentTx: any[] = [];
      txResult: any[] = [];
+     txErrorHashes: any[] = [];
 
      infoMessage: string | null = null;
      successMessage: string | null = null;
@@ -44,6 +45,7 @@ export class TransactionUiService {
           this.txHash = '';
           this.txHashes = [];
           this.txResult = [];
+          this.txErrorHashes = [];
           this.paymentTx = [];
           this.successMessage = '';
      }

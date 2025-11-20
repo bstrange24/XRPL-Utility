@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
 
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
@@ -26,59 +26,66 @@
 
                @if (hasWallets) {
                <div>
-                    <!-- List of wallets -->
-                    @for (wallet of wallets; track wallet.address; let i = $index) {
-                    <div class="wallet-item" [class.selected]="selectedWalletIndex === i">
-                         <!-- Wallet Info -->
-                         <div class="wallet-info">
-                              @if (editingIndex(i)) {
-                              <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
-                              } @else {
-                              <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
-                              }
+                    <div cdkDropList (cdkDropListDropped)="dropWallet($event)">
+                         <!-- List of wallets -->
+                         @for (wallet of wallets; track wallet.address; let i = $index) {
+                         <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
+                              <!-- Drag Handle (6-dot grip) -->
+                              <!-- <div class="drag-handle" cdkDragHandle>
+                                   <lucide-icon name="grip-vertical" size="20"></lucide-icon>
+                              </div> -->
+
+                              <!-- Wallet Info -->
+                              <div class="wallet-info">
+                                   @if (editingIndex(i)) {
+                                   <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
+                                   } @else {
+                                   <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
+                                   }
+                              </div>
+
+                              <div class="wallet-info" (click)="selectWallet(i)">
+                                   <div class="address-line">
+                                        <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
+                                        <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
+                                   </div>
+
+                                   <!-- Icons -->
+                                   <div class="wallet-actions">
+                                        <button class="icon-btn refresh" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
+                                             <lucide-icon name="refresh-ccw"></lucide-icon>
+                                        </button>
+
+                                        <button class="icon-btn copy" (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
+                                             <lucide-icon name="copy"></lucide-icon>
+                                        </button>
+
+                                        <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
+                                             <lucide-icon name="trash-2"></lucide-icon>
+                                        </button>
+                                   </div>
+                              </div>
+
+                              <!-- Secret Key -->
+                              <div class="secret-section" (click)="selectWallet(i)">
+                                   <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">
+                                        <lucide-icon [name]="wallet.showSecret ? 'eye-off' : 'eye'" size="16" style="padding-top: 5px"></lucide-icon>
+                                        <span>{{ wallet.showSecret ? 'Hide Secret' : 'Show Secret' }}</span>
+                                   </button>
+
+                                   <!-- Seed shown below the button -->
+                                   @if (wallet.showSecret) {
+                                   <div class="secret-seed-container">
+                                        <div class="secret-seed">{{ wallet.seed }}</div>
+                                        <button class="copy-btn" (click)="copyUtilService.copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
+                                             <lucide-icon name="copy" size="20"></lucide-icon>
+                                        </button>
+                                   </div>
+                                   }
+                              </div>
                          </div>
-
-                         <div class="wallet-info" (click)="selectWallet(i)">
-                              <div class="address-line">
-                                   <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
-                                   <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
-                              </div>
-
-                              <!-- Icons -->
-                              <div class="wallet-actions">
-                                   <button class="icon-btn refresh" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
-                                        <lucide-icon name="refresh-ccw"></lucide-icon>
-                                   </button>
-
-                                   <button class="icon-btn copy" (click)="copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
-                                        <lucide-icon name="copy"></lucide-icon>
-                                   </button>
-
-                                   <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
-                                        <lucide-icon name="trash-2"></lucide-icon>
-                                   </button>
-                              </div>
-                         </div>
-
-                         <!-- Secret Key -->
-                         <div class="secret-section" (click)="selectWallet(i)">
-                              <div class="secret-header">
-                                   <span class="secret-label">Secret Key:</span>
-                                   <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">{{ wallet.showSecret ? 'Hide' : 'Show' }}</button>
-                              </div>
-
-                              <!-- Seed shown below the button -->
-                              @if (wallet.showSecret) {
-                              <div class="secret-seed-container">
-                                   <div class="secret-seed">{{ wallet.seed }}</div>
-                                   <button class="copy-btn" (click)="copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
-                                        <lucide-icon name="copy" size="20"></lucide-icon>
-                                   </button>
-                              </div>
-                              }
-                         </div>
+                         }
                     </div>
-                    }
 
                     <!-- Selected Account Summary ==== -->
                     <div class="selected-account-card">
@@ -99,7 +106,7 @@
                }
           </div>
 
-          <div class="toast" [class.show]="showToast">{{ toastMessage }}</div>
+          <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div>
 
           <!-- Right form -->
           <div class="form-panel">
@@ -173,10 +180,10 @@
                }
 
                <!-- Dynamic warning panel  -->
-               @if (warningMessage) {
+               @if (ui.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="warningMessage"></div>
+                    <div class="warning-text" [innerHTML]="ui.warningMessage"></div>
                </div>
                }
 
@@ -359,12 +366,41 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label>Destination</label>
+
+                                        <div class="combobox-container" (clickOutside)="closeDropdown()">
+                                             <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
+
+                                             <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
+                                                  <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                                             </button>
+                                        </div>
+                                   </div>
+
+                                   <!-- Dropdown template -->
+                                   <ng-template #dropdownTemplate>
+                                        <div class="combobox-dropdown-overlay">
+                                             @for (dest of filteredDestinations; track dest.address) {
+                                             <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
+                                                  <div class="item-name">
+                                                       {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
+                                                       <span class="self-badge">Current Account</span>
+                                                       }
+                                                  </div>
+                                                  <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
+                                             </div>
+                                             } @empty {
+                                             <div class="combobox-empty">No matching addresses</div>
+                                             }
+                                        </div>
+                                   </ng-template>
+                                   <!-- <div class="form-group">
+                                        <label>Destination</label>
                                         <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
                                              @for (dest of destinations; track dest.address; let i = $index) {
                                              <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
                                              }
                                         </select>
-                                   </div>
+                                   </div> -->
                                    <div class="form-group">
                                         <label>Destination Tag</label>
                                         <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
@@ -527,7 +563,7 @@
 
                                    <!-- Simulate tx -->
                                    <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isSimulateEnabled" name="isSimulateEnabled" />
+                                        <input type="checkbox" [(ngModel)]="ui.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="ui.toggleSimulate($event)" />
                                         <span class="slider"></span>
                                         Simulate
                                    </label>
@@ -574,7 +610,7 @@
                               </div>
                               }
 
-                              <!-- Get ticket to delete -->
+                              <!-- Get ticket -->
                               @if (isTicket) {
                               <div class="ticket-fields">
                                    <div class="form-group">
@@ -621,40 +657,57 @@
                               </div>
                          </div>
 
-                         <!-- Spinner / Messages -->
-                         @if (spinner) {
+                         <!-- Spinner -->
+                         @if (ui.spinner) {
                          <div class="spinner-row">
                               <div class="spinner"></div>
-                              <span>{{ spinnerMessage || 'Loading...' }}</span>
+                              <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
                          </div>
                          }
 
                          <!-- Success message -->
-                         @if (isSuccess && !isError) {
+                         @if (ui.isSuccess && !ui.isError) {
                          <div class="success-message">
                               <lucide-icon name="check" size="20"></lucide-icon>
                               <div class="success-text">
-                                   @if (txHash && !isSimulateEnabled) {
-                                   <span>{{successMessage}}</span><br /><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
+                                   @if (ui.txHash && !ui.isSimulateEnabled) {
+                                   <span>{{ui.successMessage}}</span><br /><br />
+                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
                                    } @else {
-                                   <span>{{successMessage}}</span>
+                                   <span>{{ui.successMessage}}</span>
+                                   }
+
+                                   <!-- Multiple Hashes -->
+                                   @if (ui.txHashes.length > 1 && !ui.isSimulateEnabled) {
+                                   <div class="tx-hashes">
+                                        @for (hash of ui.txHashes; track hash; let i = $index) {
+                                        <div class="tx-hash-item">
+                                             Transaction {{ i + 1 }} hash:
+                                             <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
+                                        </div>
+                                        }
+                                   </div>
+                                   }
+
+                                   <!-- Single hash -->
+                                   @if (ui.txHashes.length === 1 && !ui.isSimulateEnabled) {
+                                   <span>Transaction hash: <a [href]="url + 'tx/' + ui.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHashes[0] }} </a></span>
                                    }
                               </div>
                          </div>
                          }
 
                          <!-- Error message -->
-                         @if (isError && result) {
+                         @if (ui.isError && ui.result) {
                          <div class="tx-message error">
                               <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
                               <div class="tx-text">
                                    <!-- Display Tx Hash if we are not in simulation mode-->
-                                   @if (txHash && !isSimulateEnabled) {
-                                   <span>{{ result }}</span><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txHash }} </a></span>
+                                   @if (ui.txHash && !ui.isSimulateEnabled) {
+                                   <span>{{ ui.result }}</span><br />
+                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
                                    } @else {
-                                   <span>{{ result }}</span>
+                                   <span>{{ ui.result }}</span>
                                    }
                               </div>
                          </div>
@@ -663,16 +716,16 @@
                </form>
 
                <!-- Tx Preview -->
-               @if (paymentTx.length >0) {
+               @if (ui.paymentTx.length >0) {
                <div class="tx-preview-container">
                     <div class="tx-header">
                          <h5 class="tx-title">Escrow Transaction</h5>
                          <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyTx()" title="Copy JSON">
+                              <button class="copy-btn" (click)="copyUtilService.copyTx()" title="Copy JSON">
                                    <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
                                    Copy
                               </button>
-                              <button class="download-btn" (click)="downloadTx()" title="Download JSON">
+                              <button class="download-btn" (click)="downloadUtilService.downloadTx()" title="Download JSON">
                                    <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
                                    Download
                               </button>
@@ -684,16 +737,16 @@
                }
 
                <!-- Tx Result Preview -->
-               @if (txResult.length >0) {
+               @if (ui.txResult.length >0) {
                <div class="tx-preview-container">
                     <div class="tx-header">
                          <h3 class="tx-title">Transaction Result</h3>
                          <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyTxResult()" title="Copy JSON">
+                              <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
                                    <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
                                    Copy
                               </button>
-                              <button class="download-btn" (click)="downloadTxResult()" title="Download JSON">
+                              <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
                                    <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
                                    Download
                               </button>

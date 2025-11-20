@@ -33,7 +33,7 @@ interface ValidationInputs {
      senderAddress?: string;
      accountInfo?: any;
      seed?: string;
-     formattedDestination?: any;
+     // formattedDestination?: any;
      destination?: string;
      amount?: string;
      sequence?: string;
@@ -170,7 +170,8 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           private validationService: ValidationService,
           private overlay: Overlay,
           private viewContainerRef: ViewContainerRef,
-          private destinationDropdownService: DestinationDropdownService
+          private destinationDropdownService: DestinationDropdownService,
+          private ngZone: NgZone
      ) {}
 
      ngOnInit() {
@@ -250,6 +251,7 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
      }
 
      selectWallet(index: number) {
+          if (this.selectedWalletIndex === index) return; // ← Add this guard!
           this.selectedWalletIndex = index;
           this.onAccountChange();
      }
@@ -285,12 +287,6 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
 
           if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
                this.selectedWalletIndex = 0;
-               this.refreshBalance(0);
-          } else {
-               (async () => {
-                    const client = await this.xrplService.getClient();
-                    await this.refreshWallets(client, [this.wallets[this.selectedWalletIndex].address, this.destinationField ? this.destinationField : '']);
-               })();
           }
 
           this.onAccountChange();
@@ -305,7 +301,7 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           try {
                const client = await this.xrplService.getClient();
                const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               await this.refreshWallets(client, [walletAddress]);
+               await this.refreshWallets(client, [walletAddress]).catch(console.error);
           } catch (err) {
                this.ui.setError('Failed to refresh balance');
           }
@@ -476,8 +472,7 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           this.ui.updateSpinnerMessage(``);
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
@@ -500,89 +495,85 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                const selectedActions = this.getSelectedActions();
                console.log(`Selected Actions: `, selectedActions);
 
-               type Section = {
-                    title: string;
-                    openByDefault: boolean;
-                    content?: { key: string; value: string }[];
-                    subItems?: {
-                         key: string;
-                         openByDefault: boolean;
-                         content: { key: string; value: string }[];
-                    }[];
-               };
-               const data: { sections: Section[] } = {
-                    sections: [],
-               };
+               // type Section = {
+               //      title: string;
+               //      openByDefault: boolean;
+               //      content?: { key: string; value: string }[];
+               //      subItems?: {
+               //           key: string;
+               //           openByDefault: boolean;
+               //           content: { key: string; value: string }[];
+               //      }[];
+               // };
+               // const data: { sections: Section[] } = {
+               //      sections: [],
+               // };
 
-               // Filter delegates once
-               const delegateObjects = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'Delegate' && obj.Authorize === this.destinationField);
-               if (!delegateObjects || delegateObjects.length === 0) {
-                    // No delegates found → show "no permissioned domains"
-                    // Clear all selected sliders when no delegates
-                    this.selected.clear();
+               // // Filter delegates once
+               // const delegateObjects = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'Delegate' && obj.Authorize === this.destinationField);
+               // if (!delegateObjects || delegateObjects.length === 0) {
+               //      // No delegates found → show "no permissioned domains"
+               //      // Clear all selected sliders when no delegates
+               //      this.selected.clear();
 
-                    data.sections.push({
-                         title: 'Permissioned Domain',
-                         openByDefault: true,
-                         content: [
-                              {
-                                   key: 'Status',
-                                   value: `No permissioned domains found between <code>${wallet.classicAddress}</code> and <code>${this.destinationField}</code>`,
-                              },
-                         ],
-                    });
-               } else {
-                    this.selected.clear();
+               //      data.sections.push({
+               //           title: 'Permissioned Domain',
+               //           openByDefault: true,
+               //           content: [
+               //                {
+               //                     key: 'Status',
+               //                     value: `No permissioned domains found between <code>${wallet.classicAddress}</code> and <code>${this.destinationField}</code>`,
+               //                },
+               //           ],
+               //      });
+               // } else {
+               //      this.selected.clear();
 
-                    delegateObjects.forEach((delegate: any) => {
-                         (delegate.Permissions as XRPLPermissionEntry[])?.forEach((p: XRPLPermissionEntry) => {
-                              const matchingAction = this.actions.find(a => a.key === p.Permission?.PermissionValue);
-                              if (matchingAction) {
-                                   this.selected.add(matchingAction.id);
-                              }
-                         });
-                    });
+               //      delegateObjects.forEach((delegate: any) => {
+               //           (delegate.Permissions as XRPLPermissionEntry[])?.forEach((p: XRPLPermissionEntry) => {
+               //                const matchingAction = this.actions.find(a => a.key === p.Permission?.PermissionValue);
+               //                if (matchingAction) {
+               //                     this.selected.add(matchingAction.id);
+               //                }
+               //           });
+               //      });
 
-                    this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
-                    this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
+               //      this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
+               //      this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
 
-                    this.cdr.detectChanges();
+               //      this.cdr.detectChanges();
 
-                    // Build delegate items
-                    const delegateItems = delegateObjects.map((delegate: any, index: number) => {
-                         return {
-                              key: `Delegate ${index + 1}`,
-                              openByDefault: index === 0,
-                              content: [
-                                   { key: 'Owner', value: delegate.Account || 'N/A' },
-                                   { key: 'Authorized', value: delegate.Authorize || 'N/A' },
-                                   ...delegate.Permissions.flatMap((p: any, pIndex: number) => [
-                                        {
-                                             key: `Permission ${pIndex + 1}`,
-                                             value: p.Permission?.PermissionValue || 'N/A',
-                                        },
-                                   ]),
-                              ],
-                         };
-                    });
+               //      // Build delegate items
+               //      const delegateItems = delegateObjects.map((delegate: any, index: number) => {
+               //           return {
+               //                key: `Delegate ${index + 1}`,
+               //                openByDefault: index === 0,
+               //                content: [
+               //                     { key: 'Owner', value: delegate.Account || 'N/A' },
+               //                     { key: 'Authorized', value: delegate.Authorize || 'N/A' },
+               //                     ...delegate.Permissions.flatMap((p: any, pIndex: number) => [
+               //                          {
+               //                               key: `Permission ${pIndex + 1}`,
+               //                               value: p.Permission?.PermissionValue || 'N/A',
+               //                          },
+               //                     ]),
+               //                ],
+               //           };
+               //      });
 
-                    data.sections.push({
-                         title: `Permissioned Domain (${delegateObjects.length})`,
-                         openByDefault: true,
-                         subItems: delegateItems,
-                    });
-               }
+               //      data.sections.push({
+               //           title: `Permissioned Domain (${delegateObjects.length})`,
+               //           openByDefault: true,
+               //           subItems: delegateItems,
+               //      });
+               // }
 
-               setTimeout(async () => {
-                    try {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                    } catch (err) {
-                         console.error('Error in deferred UI updates:', err);
-                    }
-               }, 0);
+               Promise.resolve().then(() => {
+                    this.refreshUIData(wallet, accountInfo, accountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.clearFields(false);
+                    this.updateTickets(accountObjects);
+               });
           } catch (error: any) {
                console.error('Error in getAccountDetails:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
@@ -613,23 +604,30 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.utilsService.logAccountInfoObjects(accountInfo, null);
                this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-               let destination = '';
                inputs.accountInfo = accountInfo;
-               if (this.destinationField.includes('...')) {
-                    const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
-                    inputs.formattedDestination = formattedDestination.address;
-                    destination = formattedDestination.address;
-               } else {
-                    inputs.formattedDestination = this.destinationField;
-                    destination = this.destinationField;
-               }
+
+               const isShortForm = this.destinationField.includes('...');
+               const resolved = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
+
+               inputs.destination = resolved;
+               const destination = resolved;
+
+               // let destination = '';
+               // inputs.accountInfo = accountInfo;
+               // if (this.destinationField.includes('...')) {
+               //      const formattedDestination = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations);
+               //      destination = formattedDestination.address;
+               //      inputs.destination = formattedDestination.address;
+               // } else {
+               //      destination = this.destinationField;
+               //      inputs.destination = this.destinationField;
+               // }
 
                const errors = await this.validationService.validate('DelegateActions', { inputs, client, accountInfo, currentLedger, serverInfo });
                if (errors.length > 0) {
@@ -717,30 +715,22 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
 
                if (!this.ui.isSimulateEnabled) {
                     this.ui.successMessage = 'Delegate action successfully!';
+
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    await this.refreshWallets(client, [wallet.classicAddress, this.destinationField]);
+                    this.getExistingDelegations(updatedAccountObjects, wallet.classicAddress);
+
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
                     // Add new destination if valid and not already present
-                    if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
-                         this.customDestinations.push({
-                              name: `Custom ${this.customDestinations.length + 1}`,
-                              address: this.destinationField,
-                         });
-                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
-                         this.updateDestinations();
-                    }
+                    this.addNewDestinationFromUser();
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    Promise.resolve().then(() => {
+                         this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
                } else {
                     this.ui.successMessage = 'Simulated Delegate action successfully!';
                }
@@ -770,6 +760,17 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                })
                .sort((a, b) => a.Expiration.localeCompare(b.Expiration));
           this.utilsService.logObjects('existingDelegations', this.existingDelegations);
+     }
+
+     private addNewDestinationFromUser() {
+          if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
+               this.customDestinations.push({
+                    name: `Custom ${this.customDestinations.length + 1}`,
+                    address: this.destinationField,
+               });
+               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+               this.updateDestinations();
+          }
      }
 
      private async setTxOptionalFields(client: xrpl.Client, delegateSetTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {

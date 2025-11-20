@@ -30,11 +30,6 @@
                          <!-- List of wallets -->
                          @for (wallet of wallets; track wallet.address; let i = $index) {
                          <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
-                              <!-- Drag Handle (6-dot grip) -->
-                              <!-- <div class="drag-handle" cdkDragHandle>
-                                   <lucide-icon name="grip-vertical" size="20"></lucide-icon>
-                              </div> -->
-
                               <!-- Wallet Info -->
                               <div class="wallet-info">
                                    @if (editingIndex(i)) {
@@ -169,7 +164,7 @@
                }
 
                <!-- Created Credentials -->
-               @if ((activeTab !== undefined) && createdPermissionedDomains.length > 0) {
+               @if ((activeTab !== undefined) && createdPermissionedDomains.length > 10000) {
                <div class="outstanding-checks-panel">
                     <!-- Header – clickable to expand/collapse -->
                     <div class="panel-header" (click)="toggleCreatedDomains()" style="cursor: pointer; user-select: none">
@@ -234,67 +229,73 @@
                <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab">
-                              <div>
-                                   <div class="form-row">
-                                        <!-- Subkect / Issuer -->
-                                        @if (activeTab === 'set') {
-                                        <div class="form-group">
-                                             <label>Subject/Issuer</label>
+                              <div class="form-row">
+                                   <!-- Subject / Issuer -->
+                                   @if (activeTab === 'set') {
+                                   <div class="form-group">
+                                        <label>Subject</label>
 
-                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
+                                        <div class="combobox-container" (clickOutside)="closeDropdown()">
+                                             <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
 
-                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                                  </button>
-                                             </div>
+                                             <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
+                                                  <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                                             </button>
                                         </div>
+                                   </div>
 
-                                        <!-- Dropdown template -->
-                                        <ng-template #dropdownTemplate>
-                                             <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations; track dest.address) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
-                                                       <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
-                                                            <span class="self-badge">Current Account</span>
-                                                            }
-                                                       </div>
-                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
+                                   <!-- Destination Dropdown template -->
+                                   <ng-template #dropdownTemplate>
+                                        <div class="combobox-dropdown-overlay">
+                                             @for (dest of filteredDestinations; track dest.address) {
+                                             <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
+                                                  <div class="item-name">
+                                                       {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
+                                                       <span class="self-badge">Current Account</span>
+                                                       }
                                                   </div>
-                                                  } @empty {
-                                                  <div class="combobox-empty">No matching addresses</div>
-                                                  }
+                                                  <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
                                              </div>
-                                        </ng-template>
-                                        <!-- <div class="form-group" style="padding-bottom: 10px">
-                                             <label for="destinationFields">Subject / Issuer</label>
-                                             <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
-                                                  @for (dest of destinations; track dest.address; let i = $index) {
-                                                  <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
+                                             } @empty {
+                                             <div class="combobox-empty">No matching addresses</div>
+                                             }
+                                        </div>
+                                   </ng-template>
+
+                                   <!-- Credential Type-->
+                                   <div class="form-group">
+                                        <label>Credential Type</label>
+                                        <input type="text" [(ngModel)]="permissionedDomainObject.credential_type" name="credential_type" />
+                                   </div>
+                                   }
+                              </div>
+
+                              <!-- Permissioned Domain Dropdown -->
+                              @if (activeTab === 'delete') { @if (createdPermissionedDomains.length > 0) {
+                              <div class="form-row" style="margin-bottom: 0.8em">
+                                   <div class="form-group">
+                                        <label for="permissionedDomainSelect">Select Permissioned Domain:</label>
+                                        <div>
+                                             <select id="permissionedDomainSelect" name="permissionedDomainSelect" [(ngModel)]="selectedPermissionedDomain" (ngModelChange)="onSelectPermissionedDomain($event)">
+                                                  <option [ngValue]="null">Select an Permissioned Domain</option>
+
+                                                  @for (permissionedDomain of createdPermissionedDomains; track permissionedDomain.index) {
+                                                  <option [ngValue]="permissionedDomain.index">{{ permissionedDomain.index }}</option>
                                                   }
                                              </select>
-                                        </div> -->
-
-                                        <!-- Credential Type-->
-                                        <div class="form-group">
-                                             <label>Credential Type</label>
-                                             <input type="text" [(ngModel)]="permissionedDomainObject.credential_type" name="credential_type" />
                                         </div>
-                                        }
-                                   </div>
-
-                                   <!-- URI -->
-                                   <div class="form-row">
-                                        @if (activeTab === 'delete') {
-                                        <div class="form-group">
-                                             <label for="domainId">Domain ID</label>
-                                             <input type="text" [(ngModel)]="domainId" name="domainId" />
-                                        </div>
-                                        }
                                    </div>
                               </div>
+                              }
+
+                              <!-- Domain ID -->
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label for="domainId">Domain ID</label>
+                                        <input type="text" [(ngModel)]="domainId" name="domainId" />
+                                   </div>
+                              </div>
+                              }
 
                               <!-- Switches -->
                               <div class="switch-group">
@@ -440,7 +441,7 @@
                                    }
 
                                    <!-- Multiple Hashes -->
-                                   @if (ui.txHashes.length > 1 && !isSimulateEnabled) {
+                                   @if (ui.txHashes.length > 1 && !ui.isSimulateEnabled) {
                                    <div class="tx-hashes">
                                         @for (hash of ui.txHashes; track hash; let i = $index) {
                                         <div class="tx-hash-item">
@@ -452,7 +453,7 @@
                                    }
 
                                    <!-- Single hash -->
-                                   @if (ui.txHashes.length === 1 && !isSimulateEnabled) {
+                                   @if (ui.txHashes.length === 1 && !ui.isSimulateEnabled) {
                                    <span>Transaction hash: <a [href]="url + 'tx/' + ui.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHashes[0] }} </a></span>
                                    }
                               </div>

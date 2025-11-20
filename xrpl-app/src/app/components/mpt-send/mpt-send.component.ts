@@ -292,18 +292,15 @@ export class MptSendComponent implements AfterViewChecked {
                this.setSuccess(this.result);
                this.clickToCopyService.attachCopy(this.resultField.nativeElement);
 
+               await this.updateXrpBalance(client, accountInfo, wallet);
+
                // DEFER: Non-critical UI updates — let main render complete first
-               setTimeout(async () => {
-                    try {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                         await this.updateXrpBalance(client, accountInfo, wallet);
-                    } catch (err) {
-                         console.error('Error in deferred UI updates for MPT:', err);
-                    }
-               }, 0);
+               Promise.resolve().then(() => {
+                    this.refreshUIData(wallet, accountInfo, accountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.clearFields(false);
+                    this.updateTickets(accountObjects);
+               });
           } catch (error: any) {
                console.error('Error in getMptDetails:', error);
                this.setError(`ERROR: ${error.message || 'Unknown error'}`);
@@ -409,15 +406,12 @@ export class MptSendComponent implements AfterViewChecked {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                              await this.updateXrpBalance(client, updatedAccountInfo, wallet);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+
+                    Promise.resolve().then(() => {
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
                }
           } catch (error: any) {
                console.error('Error:', error);
@@ -562,15 +556,12 @@ export class MptSendComponent implements AfterViewChecked {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
 
-                    setTimeout(async () => {
-                         try {
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                              await this.updateXrpBalance(client, updatedAccountInfo, wallet);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    await this.updateXrpBalance(client, updatedAccountInfo, wallet);
+
+                    Promise.resolve().then(() => {
+                         this.clearFields(false);
+                         this.updateTickets(updatedAccountObjects);
+                    });
                }
           } catch (error: any) {
                console.error('Error:', error);
