@@ -234,7 +234,7 @@
                }
 
                <!-- Existing IOUs -->
-               @if (activeTab !== 'addNewIssuers' && existingIOUs.length > 0) {
+               @if (activeTab !== 'addNewIssuers' && existingIOUs.length > 10000) {
                <div class="outstanding-checks-panel">
                     <div class="panel-header" (click)="toggleOutstandingIOU()" style="cursor: pointer; user-select: none">
                          <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
@@ -268,7 +268,7 @@
                }
 
                <!-- Existing MPTs -->
-               @if (activeTab !== 'addNewIssuers' && existingMpts.length > 0) {
+               @if (activeTab !== 'addNewIssuers' && existingMpts.length > 10000) {
                <div class="outstanding-checks-panel">
                     <!-- Header – clickable to expand/collapse -->
                     <div class="panel-header" (click)="toggleExistingMpts()" style="cursor: pointer; user-select: none">
@@ -381,7 +381,7 @@
                                         <div class="form-group">
                                              <label>Currency Code</label>
                                              <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="toggleIssuerField()" name="currencyField">
-                                                  @for (curr of currencies; track curr) {
+                                                  @for (curr of availableCurrencies; track curr) {
                                                   <option [value]="curr">{{ curr }}</option>
                                                   }
                                              </select>
@@ -472,7 +472,8 @@
                                         <div class="form-group">
                                              <label>Currency</label>
                                              <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" name="currencyField">
-                                                  @for (curr of currencies; track curr) {
+                                                  <option value="">-- Select Issuer --</option>
+                                                  @for (curr of availableCurrencies; track curr) {
                                                   <option [value]="curr">{{ curr }}</option>
                                                   }
                                              </select>

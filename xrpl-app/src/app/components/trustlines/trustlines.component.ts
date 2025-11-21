@@ -126,13 +126,12 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      regularKeySeed: string = '';
      regularKeyAddress: string = '';
      masterKeyDisabled: boolean = false;
-     knownTrustLinesIssuers: { [key: string]: string[] } = { XRP: [] };
+     private knownTrustLinesIssuers: { [key: string]: string[] } = { XRP: [] };
      issuerToRemove: string = '';
      currencies: string[] = [];
      userAddedCurrencyFieldDropDownValue: string[] = [];
      userAddedissuerFields: string = '';
      allKnownIssuers: string[] = [];
-     // storedIssuers: string[] = [];
      storedIssuers: IssuerItem[] = [];
      selectedIssuer: string = '';
      newCurrency: string = '';
@@ -160,8 +159,8 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      dropdownOpen = false;
      filteredDestinations: DropdownItem[] = [];
      highlightedIndex = -1;
-     private lastCurrency: string = '';
-     private lastIssuer: string = '';
+     lastCurrency: string = '';
+     lastIssuer: string = '';
      trustlineFlags: Record<string, boolean> = { ...AppConstants.TRUSTLINE.FLAGS };
      trustlineFlagList = AppConstants.TRUSTLINE.FLAG_LIST;
      flagMap = AppConstants.TRUSTLINE.FLAG_MAP;
@@ -191,7 +190,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      totalFlagsValue = 0;
      totalFlagsHex = '0x0';
      filterQuery: string = '';
-     private highlightPending = false;
      private accountDataCache = new Map<
           string,
           {
@@ -232,8 +230,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      ngOnInit() {
           this.getKnownIssuersFromLocalStorage();
 
-          this.updateCurrencies();
-          // this.currencyFieldDropDownValue = 'CTZ';
           this.environment = this.xrplService.getNet().environment;
           this.encryptionType = this.storageService.getInputValue('encryptionType');
 
@@ -303,10 +299,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           this.issuerFieldSubject.next(); // ← instead of toggleIssuerField()
      }
 
-     // onDestinationInputChange() {
-     //     this.destinationInputSubject.next(this.destinationField || '');
-     // }
-
      private getKnownIssuersFromLocalStorage() {
           const knownIssuersObj = this.storageService.getKnownIssuers('knownIssuers');
 
@@ -323,10 +315,12 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                }
                this.knownTrustLinesIssuers = knownIssuersObj;
 
-               if (Object.keys(this.knownTrustLinesIssuers).length > 1) {
-                    // this.currencyFieldDropDownValue = 'CTZ';
-                    this.currencyFieldDropDownValue = Object.keys(this.knownTrustLinesIssuers)[1];
+               if (Object.keys(this.knownTrustLinesIssuers).length > 0) {
+                    this.currencyFieldDropDownValue = Object.keys(this.knownTrustLinesIssuers)[0];
                }
+
+               // This is the key line
+               this.updateCurrencies(); // ← Triggers auto-select + sorting
           }
      }
 
@@ -356,9 +350,8 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
           this.activeTab = tab;
 
-          if (Object.keys(this.knownTrustLinesIssuers).length > 1 && this.issuerFields === '') {
-               // this.currencyFieldDropDownValue = 'CTZ';
-               this.currencyFieldDropDownValue = Object.keys(this.knownTrustLinesIssuers)[1];
+          if (Object.keys(this.knownTrustLinesIssuers).length > 0 && this.issuerFields === '') {
+               this.currencyFieldDropDownValue = Object.keys(this.knownTrustLinesIssuers)[0];
           }
 
           // === 1. Handle flag state FIRST ===
@@ -550,8 +543,10 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           };
 
           if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
+               this.accountDataCache.clear();
                this.ui.clearWarning();
                this.updateDestinations();
+               await this.getTrustlinesForAccount();
                await this.onCurrencyChange();
           } else if (this.currentWallet.address) {
                this.ui.setError('Invalid XRP address');
@@ -633,6 +628,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                const tokenBalance = await this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '');
                const parsedBalances = this.parseAllGatewayBalances(tokenBalance, wallet);
                this.currencyBalanceField = parsedBalances?.[this.currencyFieldDropDownValue]?.[this.issuerFields] ?? '0';
+               this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance });
 
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
@@ -1372,385 +1368,90 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      }
 
      async toggleIssuerField(): Promise<void> {
-          console.log('Entering toggleIssuerField');
-          const startTime = Date.now();
-
+          console.log('toggleIssuerField → currency:', this.currencyFieldDropDownValue);
           this.ui.clearMessages();
-          this.ui.spinner = true;
 
           try {
-               // Early exit if no currency selected
                if (!this.currencyFieldDropDownValue) {
-                    this.issuerFields = '';
                     this.issuers = [];
-                    this.currencyBalanceField = '0';
-                    this.gatewayBalance = '0';
+                    this.issuerFields = '';
                     this.ui.setWarning('Please select a currency first.');
+                    this.ui.spinner = false;
                     return;
                }
 
                const currency = this.currencyFieldDropDownValue;
-               const knownIssuersForCurrency = this.knownTrustLinesIssuers[currency] || [];
+               const knownIssuersForThisCurrency = this.knownTrustLinesIssuers[currency] || [];
 
-               // 1. Get client & wallet for balances
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
-
-               // 2. Fetch/cache account data
-               const cache = this.getCachedAccountData(this.currentWallet.address);
-               let accountObjects: xrpl.AccountObjectsResponse;
-               let gatewayBalances: xrpl.GatewayBalancesResponse;
-
-               if (cache?.accountObjects && cache?.tokenBalance) {
-                    console.log('Using cached account data');
-                    accountObjects = cache.accountObjects;
-                    gatewayBalances = cache.tokenBalance;
-               } else {
-                    console.log('Fetching fresh account data...');
-                    [gatewayBalances, accountObjects] = await Promise.all([this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-                    this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance: gatewayBalances });
-               }
-
-               // 3. BUILD FULL ISSUER LIST — including external ones!
+               // Build issuer list — ONLY from knownTrustLinesIssuers[currency]
                const issuerEntries: { name: string; address: string }[] = [];
 
-               // Add wallets that are marked as issuer OR appear in known issuers
-               for (const w of this.wallets) {
-                    if (xrpl.isValidAddress(w.address) && (w.isIssuer || knownIssuersForCurrency.includes(w.address))) {
-                         issuerEntries.push({
-                              name: w.name || `Wallet (${w.address.slice(0, 6)}...)`,
-                              address: w.address,
-                         });
-                    }
+               for (const addr of knownIssuersForThisCurrency) {
+                    if (!xrpl.isValidAddress(addr)) continue;
+
+                    // Try to get nice name
+                    const wallet = this.wallets.find(w => w.address === addr);
+                    const custom = this.customDestinations.find(d => d.address === addr);
+
+                    const name = wallet?.name || custom?.name || currency || `Issuer (${addr.slice(0, 8)}...)`;
+
+                    issuerEntries.push({ name, address: addr });
                }
 
-               // Add EXTERNAL issuers (not in wallet list) from knownTrustLinesIssuers
-               for (const addr of knownIssuersForCurrency) {
-                    // Skip if already added from wallet list
-                    if (issuerEntries.some(e => e.address === addr)) continue;
-
-                    // Try to resolve name from custom destinations or fallback
-                    const knownDest = this.customDestinations.find(d => d.address === addr);
-                    const displayName = knownDest?.name || `External Issuer (${addr.slice(0, 8)}...)`;
-
-                    issuerEntries.push({
-                         name: displayName,
-                         address: addr,
-                    });
-               }
-
-               // Sort by name for consistent UX
+               // Sort by name
                this.issuers = issuerEntries.sort((a, b) => a.name.localeCompare(b.name));
 
-               console.log(`Found ${this.issuers.length} issuers for ${currency}:`, this.issuers);
-
-               // 4. Auto-select issuer
-               if (!this.issuerFields || !this.issuers.some(i => i.address === this.issuerFields)) {
-                    // Prefer: known order → first wallet issuer → first external
-                    this.issuerFields = this.issuers[0]?.address || '';
-               }
-
-               // 5. Warning if none
-               if (this.issuers.length === 0) {
-                    this.ui.setWarning(`No issuers found for <strong>${currency}</strong>.<br>` + `Add one in the "Add New Issuers" tab or mark a wallet as issuer.`);
-                    this.issuerFields = '';
-               } else {
+               // Auto-select first issuer
+               if (this.issuers.length > 0) {
+                    if (!this.issuerFields || !this.issuers.some(i => i.address === this.issuerFields)) {
+                         this.issuerFields = this.issuers[0].address;
+                    }
                     this.ui.clearWarning();
-               }
-
-               // 6. Update balances
-               await this.updateCurrencyBalance(gatewayBalances, wallet);
-
-               const encodedCurr = this.utilsService.encodeIfNeeded(currency);
-               const totalObligation = Number(gatewayBalances.result.obligations?.[encodedCurr] || 0);
-               this.gatewayBalance = this.utilsService.formatTokenBalance(totalObligation.toString(), 18);
-
-               // 7. Remove tab flags
-               if (this.activeTab === 'removeTrustline') {
-                    this.setRemoveFlagsBasedOnExistingTrustline(accountObjects);
-               }
-
-               // 8. Refresh trustlines only on real change
-               const currencyChanged = this.lastCurrency !== currency;
-               const issuerChanged = this.lastIssuer !== this.issuerFields;
-
-               if (currencyChanged || issuerChanged) {
-                    this.lastCurrency = currency;
-                    this.lastIssuer = this.issuerFields;
-
-                    this.getExistingMpts(accountObjects, wallet.classicAddress);
-                    this.getExistingIOUs(accountObjects, wallet.classicAddress);
-                    await this.getTrustlinesForAccount();
-               }
-
-               this.ensureDefaultNotSelected();
-               this.cdr.detectChanges();
-          } catch (error: any) {
-               console.error('Error in toggleIssuerField:', error);
-               this.ui.setError(`Failed to load trustline data: ${error.message || 'Network error'}`);
-               this.currencyBalanceField = '0';
-               this.gatewayBalance = '0';
-          } finally {
-               this.ui.spinner = false;
-               console.log(`Leaving toggleIssuerField in ${Date.now() - startTime}ms`);
-          }
-     }
-
-     async toggleIssuerField2(): Promise<void> {
-          console.log('Entering toggleIssuerField');
-          const startTime = Date.now();
-
-          this.ui.clearMessages();
-          this.ui.spinner = true;
-
-          try {
-               if (Object.keys(this.knownTrustLinesIssuers).length <= 1) {
-                    this.ui.setWarning(`No issuers found. Check the issuer checkbox in the wallet section or add an issuer in the Add Issuer tab.`);
-                    this.ensureDefaultNotSelected();
-                    return;
-               }
-
-               // 1. Early exit if no currency selected
-               if (!this.currencyFieldDropDownValue) {
-                    this.issuerFields = '';
-                    this.issuers = [];
-                    this.currencyBalanceField = '0';
-                    this.gatewayBalance = '0';
-                    this.ui.setWarning('Please select a currency first.');
-                    return;
-               }
-
-               // 2. Get client & wallet (still needed for balances)
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
-
-               // 3. Use cache if available (8-second window)
-               const cache = this.getCachedAccountData(this.currentWallet.address);
-               let accountObjects: xrpl.AccountObjectsResponse;
-               let gatewayBalances: xrpl.GatewayBalancesResponse;
-
-               if (cache?.accountObjects && cache?.tokenBalance) {
-                    console.log('Using cached account data');
-                    accountObjects = cache.accountObjects;
-                    gatewayBalances = cache.tokenBalance;
                } else {
-                    console.log('Fetching fresh account data...');
-                    [gatewayBalances, accountObjects] = await Promise.all([this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-                    this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance: gatewayBalances });
-               }
-
-               // 4. FAST ISSUER DETECTION — No more N+1 requests!
-               const currency = this.currencyFieldDropDownValue;
-               const knownIssuersForCurrency = this.knownTrustLinesIssuers[currency] || [];
-
-               this.issuers = this.wallets
-                    .filter(w => xrpl.isValidAddress(w.address) && (w.isIssuer || knownIssuersForCurrency.includes(w.address)))
-                    .map(w => ({
-                         name: w.name || `Wallet (${w.address.slice(0, 6)}...)`,
-                         address: w.address,
-                    }))
-                    .sort((a, b) => a.name.localeCompare(b.name)); // nice UX
-
-               console.log(
-                    `Found ${this.issuers.length} issuers for ${currency}:`,
-                    this.issuers.map(i => i.address)
-               );
-
-               // 5. Auto-select issuer if field is empty or invalid
-               if (!this.issuerFields || !this.issuers.some(i => i.address === this.issuerFields)) {
-                    const preferredIssuer = knownIssuersForCurrency.find(addr => this.issuers.some(i => i.address === addr)) || this.issuers[0]?.address || '';
-
-                    this.issuerFields = preferredIssuer;
-               }
-
-               // 6. Show warning if no issuers found
-               if (this.issuers.length === 0) {
-                    this.ui.setWarning(`No issuers found for <strong>${currency}</strong>.<br>` + `Mark a wallet as "Issuer" or add one in the "Add New Issuers" tab.`);
-                    this.issuerFields = '';
-               } else {
-                    this.ui.clearWarning();
-               }
-
-               // 7. Update balances (fast, already fetched)
-               await this.updateCurrencyBalance(gatewayBalances, wallet);
-
-               // Total gateway balance (optional display)
-               const encodedCurr = this.utilsService.encodeIfNeeded(currency);
-               let totalObligation = 0;
-               if (gatewayBalances.result.obligations?.[encodedCurr]) {
-                    totalObligation = Number(gatewayBalances.result.obligations[encodedCurr]);
-               }
-               this.gatewayBalance = this.utilsService.formatTokenBalance(totalObligation.toString(), 18);
-
-               // 8. Update UI flags for remove tab
-               if (this.activeTab === 'removeTrustline') {
-                    this.setRemoveFlagsBasedOnExistingTrustline(accountObjects);
-               }
-
-               // 9. Track changes for future optimizations
-               const currencyChanged = this.lastCurrency !== currency;
-               const issuerChanged = this.lastIssuer !== this.issuerFields;
-               if (currencyChanged || issuerChanged) {
-                    this.lastCurrency = currency;
-                    this.lastIssuer = this.issuerFields;
-               }
-
-               // 10. Refresh trustlines & balances (only if needed)
-               if (currencyChanged || issuerChanged) {
-                    this.getExistingMpts(accountObjects, wallet.classicAddress);
-                    this.getExistingIOUs(accountObjects, wallet.classicAddress);
-                    await this.getTrustlinesForAccount(); // only once!
-               }
-
-               this.ensureDefaultNotSelected();
-               this.cdr.detectChanges();
-          } catch (error: any) {
-               console.error('Error in toggleIssuerField:', error);
-               this.ui.setError(`Failed to load trustline data: ${error.message || 'Network error'}`);
-               this.currencyBalanceField = '0';
-               this.gatewayBalance = '0';
-          } finally {
-               this.ui.spinner = false;
-               console.log(`Leaving toggleIssuerField in ${Date.now() - startTime}ms`);
-          }
-     }
-
-     async toggleIssuerField1(): Promise<void> {
-          console.log('Entering toggleIssuerField');
-          const startTime = Date.now();
-
-          const cache = this.getCachedAccountData(this.currentWallet.address);
-
-          try {
-               if (Object.keys(this.knownTrustLinesIssuers).length <= 1) {
-                    this.ui.setWarning(`No issuers found. Check the issuer checkbox in the wallet section or add an issuer in the Add Issuer tab.`);
-                    this.ensureDefaultNotSelected();
-                    return;
-               }
-
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
-               let accountObjects;
-               let gatewayBalances;
-
-               const cache = this.getCachedAccountData(this.currentWallet.address);
-               if (cache?.accountObjects && cache?.tokenBalance) {
-                    console.log('Using cache...');
-                    // Use cached
-                    accountObjects = cache.accountObjects;
-                    gatewayBalances = cache.tokenBalance;
-               } else {
-                    // Fetch and cache
-                    console.log('Not using cache...');
-                    [gatewayBalances, accountObjects] = await Promise.all([this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-                    this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance: gatewayBalances });
-               }
-
-               // const [gatewayBalances, accountObjects] = await Promise.all([this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-
-               let balanceTotal = 0;
-               const currency = this.utilsService.formatCurrencyForDisplay(this.currencyFieldDropDownValue);
-
-               if (gatewayBalances.result.assets) {
-                    for (const [issuer, currencies] of Object.entries(gatewayBalances.result.assets)) {
-                         for (const { currency: cur, value } of currencies) {
-                              if (this.utilsService.formatCurrencyForDisplay(cur) === currency) {
-                                   balanceTotal += Number(value);
-                              }
-                         }
+                    if (currency !== 'XRP') {
+                         this.issuerFields = '';
+                         this.ui.setWarning(`No issuers configured for <strong>${currency}</strong>`);
                     }
                }
 
-               this.gatewayBalance = this.utilsService.formatTokenBalance(balanceTotal.toString(), 18);
+               try {
+                    const wallet = await this.getWallet();
+                    const cache = this.getCachedAccountData(this.currentWallet.address);
 
-               const encodedCurr = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
-               const issuerPromises = this.wallets
-                    .filter(w => xrpl.isValidAddress(w.address))
-                    .map(async w => {
-                         try {
-                              const tokenBalance = await this.xrplService.getTokenBalance(client, w.address, 'validated', '');
-                              const hasObligation = tokenBalance.result.obligations?.[encodedCurr];
+                    let accountObjects: xrpl.AccountObjectsResponse;
+                    let gatewayBalances: xrpl.GatewayBalancesResponse;
 
-                              if (hasObligation && hasObligation !== '0') {
-                                   return { name: w.name, address: w.address };
-                              } else if (w.isIssuer === true) {
-                                   return { name: w.name, address: w.address };
-                              }
-                         } catch (err) {
-                              console.warn(`Issuer check failed for ${w.address}:`, err);
-                         }
-                         return null;
-                    });
-
-               const issuerResults = await Promise.all(issuerPromises);
-
-               // Step 1: filter out nulls
-               const nonNullIssuers = issuerResults.filter((i): i is { name: string; address: string } => {
-                    const isValid = i !== null;
-                    console.debug('Filtering null:', i, '->', isValid);
-                    return isValid;
-               });
-
-               // Step 2: remove duplicates by address
-               const uniqueIssuers = nonNullIssuers.filter((candidate, index, self) => {
-                    const firstIndex = self.findIndex(c => c.address === candidate.address);
-                    const isUnique = index === firstIndex;
-                    console.debug('Checking uniqueness:', candidate, 'Index:', index, 'First index:', firstIndex, 'Unique?', isUnique);
-                    return isUnique;
-               });
-
-               console.debug('Unique issuers:', uniqueIssuers);
-
-               this.issuers = uniqueIssuers;
-
-               const knownIssuers = this.knownTrustLinesIssuers[this.currencyFieldDropDownValue] || [];
-
-               if (!this.issuerFields || !this.issuers.some(iss => iss.address === this.issuerFields)) {
-                    let newIssuer = '';
-
-                    // Find the first matching known issuer that exists in available issuers
-                    const matchedKnownIssuer = knownIssuers.find(known => this.issuers.some(iss => iss.address === known));
-
-                    if (matchedKnownIssuer) {
-                         newIssuer = matchedKnownIssuer;
-                    } else if (this.issuers.length > 0) {
-                         newIssuer = this.issuers[0].address;
+                    if (cache?.accountObjects && cache?.tokenBalance) {
+                         accountObjects = cache.accountObjects;
+                         gatewayBalances = cache.tokenBalance;
                     } else {
-                         newIssuer = '';
+                         const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                         [gatewayBalances, accountObjects] = await Promise.all([this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+                         this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance: gatewayBalances });
                     }
 
-                    this.issuerFields = newIssuer;
+                    // const gatewayBalances = cache?.tokenBalance || (await this.xrplService.getTokenBalance(await this.xrplService.getClient(), wallet.classicAddress, 'validated', ''));
+                    await this.updateCurrencyBalance(gatewayBalances, wallet);
+               } catch (e) {
+                    console.warn('Balance update failed in toggleIssuerField', e);
                }
 
-               if (this.issuers.length === 0) {
-                    this.ui.setWarning(`No issuers found. Check the issuer checkbox in the wallet section or add an issuer in the Add Issuer tab.`);
-               }
-
-               this.ensureDefaultNotSelected();
-
-               await this.updateCurrencyBalance(gatewayBalances, wallet);
-
-               if (this.activeTab === 'removeTrustline') {
-                    this.setRemoveFlagsBasedOnExistingTrustline(accountObjects); // re-check
-               }
-
-               const currencyChanged = this.lastCurrency !== this.currencyFieldDropDownValue;
-               const issuerChanged = this.lastIssuer !== this.issuerFields;
-               if (currencyChanged || issuerChanged) {
-                    this.lastCurrency = this.currencyFieldDropDownValue;
-                    this.lastIssuer = this.issuerFields;
-               }
-
-               await this.getTrustlinesForAccount();
+               this.cdr.detectChanges();
           } catch (error: any) {
-               this.currencyBalanceField = '0';
-               this.gatewayBalance = '0';
                console.error('Error in toggleIssuerField:', error);
-               this.ui.setError(`ERROR: Failed to fetch balance - ${error.message || 'Unknown error'}`);
+               this.ui.setError('Failed to load issuers');
+               this.issuers = [];
+               this.issuerFields = '';
           } finally {
                this.ui.spinner = false;
-               console.log(`Leaving toggleIssuerField in ${(Date.now() - startTime).toString()}ms`);
           }
+     }
+
+     // Only used in Trustlines template
+     get availableCurrencies(): string[] {
+          const all = Object.keys(this.knownTrustLinesIssuers);
+          // Remove XRP only on Trustlines page
+          return all.filter(currency => currency !== 'XRP');
      }
 
      private addNewDestinationFromUser() {
@@ -1928,7 +1629,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           }
      }
 
-     // 2. UI flag display — completely separate logic per tab
      private updateTrustLineFlagsInUI(accountObjects: xrpl.AccountObjectsResponse, wallet: xrpl.Wallet) {
           // Start clean
           Object.keys(this.flags).forEach(k => (this.flags[k as keyof typeof this.flags] = false));
@@ -1964,42 +1664,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           this.updateFlagTotal();
      }
 
-     private updateTrustLineFlagsInUI1(accountObjects: xrpl.AccountObjectsResponse, wallet: xrpl.Wallet) {
-          const currency = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
-          const rippleState = accountObjects.result.account_objects.find(obj => obj.LedgerEntryType === 'RippleState' && obj.Balance?.currency === currency && (obj.LowLimit.issuer === wallet.classicAddress || obj.HighLimit.issuer === wallet.classicAddress)) as xrpl.LedgerEntry.RippleState | undefined;
-
-          if (!rippleState) {
-               if (this.activeTab !== 'removeTrustline') {
-                    this.clearFlagsValue();
-               }
-               return;
-          }
-
-          const flagsNumber = rippleState.Flags ?? 0;
-          const isLowSide = rippleState.LowLimit.issuer === wallet.classicAddress;
-
-          const ledgerMap = AppConstants.TRUSTLINE.LEDGER_FLAG_MAP;
-
-          // Auth flags
-          this.flags.tfSetfAuth = isLowSide ? !!(flagsNumber & ledgerMap.lsfLowAuth) : !!(flagsNumber & ledgerMap.lsfHighAuth);
-
-          // NoRipple is shared — only one flag
-          this.flags.tfSetNoRipple = !!(flagsNumber & ledgerMap.lsfNoRipple);
-          this.flags.tfClearNoRipple = !this.flags.tfSetNoRipple;
-
-          // Freeze flags
-          this.flags.tfSetFreeze = isLowSide ? !!(flagsNumber & ledgerMap.lsfLowFreeze) : !!(flagsNumber & ledgerMap.lsfHighFreeze);
-
-          this.flags.tfClearFreeze = false; // You can't "clear" freeze on the other side
-
-          // DeepFreeze doesn't exist on regular trustlines (only on MPTs)
-          this.flags.tfSetDeepFreeze = false;
-          this.flags.tfClearDeepFreeze = false;
-
-          this.updateFlagTotal();
-     }
-
-     // 1. Smart detection used when entering Remove tab
      private setRemoveFlagsBasedOnExistingTrustline(accountObjects: xrpl.AccountObjectsResponse) {
           // Reset everything that can block removal
           this.flags.tfClearNoRipple = false;
@@ -2031,83 +1695,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           // → So we deliberately DO NOT touch it here
 
           this.updateFlagTotal();
-     }
-
-     private setRemoveFlagsBasedOnExistingTrustline1(accountObjects: xrpl.AccountObjectsResponse) {
-          // Reset all clear flags first
-          this.flags.tfClearNoRipple = false;
-          this.flags.tfClearFreeze = false;
-          this.flags.tfClearDeepFreeze = false;
-
-          if (!this.currencyFieldDropDownValue || !this.issuerFields) {
-               return;
-          }
-
-          const encodedCurrency = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
-          const walletAddress = this.currentWallet.classicAddress || this.currentWallet.address;
-
-          // Find RippleState (regular IOU trustline)
-          const rippleState = accountObjects.result.account_objects.find((obj: any) => {
-               return obj.LedgerEntryType === 'RippleState' && obj.Balance?.currency === encodedCurrency && (obj.LowLimit.issuer === walletAddress || obj.HighLimit.issuer === walletAddress) && (obj.LowLimit.issuer === this.issuerFields || obj.HighLimit.issuer === this.issuerFields);
-          }) as xrpl.LedgerEntry.RippleState | undefined;
-
-          if (rippleState) {
-               const flags = rippleState.Flags ?? 0;
-               const isLowSide = rippleState.LowLimit.issuer === walletAddress;
-
-               // NoRipple is shared — only one bit
-               if (flags & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfNoRipple) {
-                    this.flags.tfClearNoRipple = true;
-               }
-
-               // Freeze: check correct side
-               if (isLowSide) {
-                    if (flags & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfLowFreeze) {
-                         this.flags.tfClearFreeze = true;
-                    }
-               } else {
-                    if (flags & AppConstants.TRUSTLINE.LEDGER_FLAG_MAP.lsfHighFreeze) {
-                         this.flags.tfClearFreeze = true;
-                    }
-               }
-
-               // DeepFreeze doesn't exist on RippleState → skip
-          }
-
-          // Future: Add MPToken support (if you ever allow removing MPTs)
-          // const mpt = accountObjects.result.account_objects.find(...);
-          // if (mpt && (mpt.Flags & 0x00400000)) this.flags.tfClearDeepFreeze = true;
-
-          // Always recalc total
-          this.updateFlagTotal();
-     }
-
-     private debugTrustlineFlags(rippleState: xrpl.LedgerEntry.RippleState, wallet: xrpl.Wallet) {
-          const flagsNumber: number = rippleState.Flags ?? 0;
-          const isLowAddress = wallet.classicAddress === rippleState.LowLimit.issuer;
-          const ledgerMap = AppConstants.TRUSTLINE.LEDGER_FLAG_MAP;
-
-          console.debug('Trustline Debug\n -----------------------------------------');
-          console.debug('Currency:', rippleState.Balance.currency);
-          console.debug('You are the', isLowAddress ? 'LOW side' : 'HIGH side');
-          console.debug('Flags (decimal):', flagsNumber, ' hex:', '0x' + flagsNumber.toString(16));
-
-          if (isLowAddress) {
-               console.debug('LowAuth:', !!(flagsNumber & ledgerMap.lsfLowAuth));
-               console.debug('LowNoRipple:', !!(flagsNumber & ledgerMap.lsfNoRipple)); // Adjusted
-               console.debug('LowFreeze:', !!(flagsNumber & ledgerMap.lsfLowFreeze));
-          } else {
-               console.debug('HighAuth:', !!(flagsNumber & ledgerMap.lsfHighAuth));
-               console.debug('HighNoRipple:', !!(flagsNumber & ledgerMap.lsfNoRipple)); // Adjusted
-               console.debug('HighFreeze:', !!(flagsNumber & ledgerMap.lsfHighFreeze));
-          }
-          console.debug('-----------------------------------------');
-     }
-
-     private decodeRippleStateFlags(flags: number): string[] {
-          return Object.entries(AppConstants.TRUSTLINE.LEDGER_FLAG_MAP)
-               .filter(([_, bit]) => (flags & bit) !== 0)
-               .map(([name]) => name);
      }
 
      toggleFlag(key: 'tfSetfAuth' | 'tfSetNoRipple' | 'tfClearNoRipple' | 'tfSetFreeze' | 'tfClearFreeze' | 'tfSetDeepFreeze' | 'tfClearDeepFreeze') {
@@ -2147,45 +1734,12 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          // this.issuers = this.wallets.map(w => ({ name: w.name, address: w.address }));
-          if (this.destinations.length > 0 && !this.destinationField) {
-               // this.destinationField = this.destinations[0].address;
-          }
           this.storageService.set('destinations', this.destinations);
-          this.ensureDefaultNotSelected();
-     }
-
-     ensureDefaultNotSelected() {
-          const currentAddress = this.currentWallet.address;
-          if (currentAddress && this.destinations.length > 0) {
-               if (!this.destinationField || this.destinationField === currentAddress) {
-                    const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    // this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
-               }
-          }
-          if (currentAddress && this.issuers.length > 0) {
-               if (!this.issuerFields) {
-                    const nonSelectedIss = this.issuers.find(i => i.address !== currentAddress);
-                    this.issuerFields = nonSelectedIss ? nonSelectedIss.address : this.issuers[0].address;
-               }
-          }
-          this.cdr.detectChanges();
      }
 
      onTokenChange(): void {
           const issuers = this.knownTrustLinesIssuers[this.tokenToRemove] || [];
-
-          if (issuers.length > 0) {
-               // Auto-select the first issuer
-               this.issuerToRemove = issuers[0];
-          } else {
-               // No issuers found
-               this.issuerToRemove = '';
-          }
-     }
-
-     get currencyOptions(): string[] {
-          return Object.values(this.currencies).filter(key => key !== 'XRP');
+          this.issuerToRemove = issuers.length > 0 ? issuers[0] : '';
      }
 
      clearFields(clearAllFields: boolean) {
@@ -2210,43 +1764,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           } else {
                this.currencyBalanceField = '0';
           }
-     }
-
-     private updateGatewayBalance(gatewayBalances: xrpl.GatewayBalancesResponse, wallet: xrpl.Wallet, issuer?: string) {
-          const result = gatewayBalances.result;
-          const displayCurrency = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
-          let balance = '0';
-
-          // --- Case 1: This account is the gateway (it issues IOUs)
-          if (result.obligations && Object.keys(result.obligations).length > 0) {
-               if (result.obligations[displayCurrency]) {
-                    // Obligations do NOT have an issuer field (they’re from this gateway)
-                    balance = this.utilsService.formatTokenBalance(result.obligations[displayCurrency], 18);
-               }
-          }
-
-          // --- Case 2: This account holds assets issued BY someone else
-          else if (result.assets && Object.keys(result.assets).length > 0) {
-               let foundBalance: string | null = null;
-
-               // result.assets looks like: { [issuer]: [{ currency, value }, ...] }
-               for (const [issuerAddress, assetArray] of Object.entries(result.assets)) {
-                    assetArray.forEach(asset => {
-                         if (asset.currency === displayCurrency) {
-                              // If an issuer filter is provided, match it
-                              if (!issuer || issuerAddress === issuer) {
-                                   foundBalance = asset.value;
-                              }
-                         }
-                    });
-               }
-
-               if (foundBalance !== null) {
-                    balance = this.utilsService.formatTokenBalance(foundBalance, 18);
-               }
-          }
-
-          this.gatewayBalance = balance;
      }
 
      private parseAllGatewayBalances(gatewayBalances: xrpl.GatewayBalancesResponse, wallet: xrpl.Wallet) {
@@ -2303,13 +1820,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           return null;
      }
 
-     private setCachedAccountData(
-          address: string,
-          data: Partial<{
-               accountObjects: xrpl.AccountObjectsResponse;
-               tokenBalance: xrpl.GatewayBalancesResponse;
-          }>
-     ) {
+     private setCachedAccountData(address: string, data: Partial<{ accountObjects: xrpl.AccountObjectsResponse; tokenBalance: xrpl.GatewayBalancesResponse }>) {
           const existing = this.accountDataCache.get(address) || { timestamp: Date.now() };
           this.accountDataCache.set(address, { ...existing, ...data, timestamp: Date.now() });
      }
@@ -2545,53 +2056,91 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           }
      }
 
-     removeToken(tokenToRemove: string, removeIssuerAddress: any) {
-          if (tokenToRemove && removeIssuerAddress) {
-               // const issuer = removeIssuerAddress.address.trim();
-               // tokenToRemove = this.utilsService.encodeIfNeeded(tokenToRemove);
+     removeToken(tokenToRemove: string, removeIssuerAddress?: any) {
+          if (!tokenToRemove) {
+               this.ui.setError('Select a token to remove');
+               return;
+          }
 
-               let issuer;
-               if (removeIssuerAddress.address) {
+          const currency = tokenToRemove.trim();
+          if (!this.knownTrustLinesIssuers[currency]) {
+               this.ui.setError(`Currency ${currency} not found`);
+               return;
+          }
+
+          if (!removeIssuerAddress) {
+               // Remove entire currency (and all its issuers)
+               delete this.knownTrustLinesIssuers[currency];
+               this.ui.setSuccess(`Removed currency ${currency} and all its issuers`);
+          } else {
+               // Remove only one specific issuer
+               let issuer: string;
+               if (typeof removeIssuerAddress === 'string') {
+                    issuer = removeIssuerAddress.trim();
+               } else if (removeIssuerAddress?.address) {
                     issuer = removeIssuerAddress.address.trim();
                } else {
-                    issuer = removeIssuerAddress.trim();
+                    this.ui.setError('Invalid issuer');
+                    return;
                }
 
-               if (this.knownTrustLinesIssuers[tokenToRemove]) {
-                    this.knownTrustLinesIssuers[tokenToRemove] = this.knownTrustLinesIssuers[tokenToRemove].filter(addr => addr !== issuer);
+               // Filter out only this issuer
+               const beforeCount = this.knownTrustLinesIssuers[currency].length;
+               this.knownTrustLinesIssuers[currency] = this.knownTrustLinesIssuers[currency].filter(addr => addr !== issuer);
 
-                    // Remove the currency entirely if no issuers remain
-                    if (this.knownTrustLinesIssuers[tokenToRemove].length === 0) {
-                         delete this.knownTrustLinesIssuers[tokenToRemove];
-                    }
-
-                    delete this.knownTrustLinesIssuers[tokenToRemove];
-                    this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers);
-
-                    this.getKnownIssuersFromLocalStorage();
-
-                    this.updateCurrencies();
-                    // this.onCurrencyChange();
-                    this.ui.setSuccess(`Removed issuer ${issuer} from ${tokenToRemove}`);
+               if (this.knownTrustLinesIssuers[currency].length === 0) {
+                    // Only delete the currency if NO issuers remain
+                    delete this.knownTrustLinesIssuers[currency];
+                    this.ui.setSuccess(`Removed ${currency} (no issuers left)`);
                } else {
-                    this.ui.setError(`Currency ${tokenToRemove} not found`);
+                    this.ui.setSuccess(`Removed issuer ${issuer.slice(0, 8)}... from ${currency}`);
                }
-          } else if (tokenToRemove) {
-               // Remove entire token and all issuers
-               delete this.knownTrustLinesIssuers[tokenToRemove];
-               this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers);
-               this.updateCurrencies();
-               // this.onCurrencyChange();
-               this.ui.setSuccess(`Removed all issuers for ${tokenToRemove}`);
-          } else {
-               this.ui.setError('Select a token to remove');
           }
+
+          // === Critical: Save + Refresh UI ===
+          this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers);
+          this.getKnownIssuersFromLocalStorage(); // ← reloads storedIssuers
+
+          // === Force issuer dropdown to refresh ===
+          this.currencyFieldDropDownValue = ''; // ← temporary reset
+          this.issuerFields = '';
+          this.issuers = [];
+
+          // Re-select currency if it still exists
+          if (this.knownTrustLinesIssuers[currency]) {
+               this.currencyFieldDropDownValue = currency;
+          }
+
+          this.updateCurrencies();
+          this.onCurrencyChange();
+
+          this.cdr.detectChanges();
      }
 
      private updateCurrencies() {
-          this.currencies = [...Object.keys(this.knownTrustLinesIssuers)];
-          this.currencies.sort((a, b) => a.localeCompare(b));
-          // this.currencyFieldDropDownValue = 'CTZ';
+          // Get all currencies except XRP
+          const allCurrencies = Object.keys(this.knownTrustLinesIssuers);
+          const filtered = allCurrencies.filter(c => c !== 'XRP');
+
+          // Sort alphabetically
+          this.currencies = filtered.sort((a, b) => a.localeCompare(b));
+
+          // AUTO-SELECT FIRST CURRENCY — SAFE WAY
+          if (this.currencies.length > 0) {
+               // Only set if nothing is selected OR current selection is invalid/removed
+               const shouldSelectFirst = !this.currencyFieldDropDownValue || !this.currencies.includes(this.currencyFieldDropDownValue);
+
+               if (shouldSelectFirst) {
+                    this.currencyFieldDropDownValue = this.currencies[0];
+                    // Trigger issuer load — but do it in next tick so binding is ready
+                    Promise.resolve().then(() => this.onCurrencyChange());
+               }
+          } else {
+               // No currencies left
+               this.currencyFieldDropDownValue = '';
+               this.issuerFields = '';
+               this.issuers = [];
+          }
      }
 
      private canRemoveTrustline(line: any): { canRemove: boolean; reasons: string[] } {
