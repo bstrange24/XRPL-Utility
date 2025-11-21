@@ -472,134 +472,139 @@
 
                               <!-- ==================== RIGHT: PAYMENT CHANNEL FLAGS ==================== -->
                               @if (activeTab === 'setTrustline' || activeTab === 'removeTrustline') {
-                              <!-- <div class="tab-content-container flags-container"> -->
                               <div class="flags-wrapper">
-                                   <!-- Flags header -->
+                                   <!-- Header -->
                                    <div class="token-flags-header">
                                         <lucide-icon name="flag" size="20"></lucide-icon>
                                         <span class="token-flags-title">Trustline Flags</span>
                                    </div>
 
-                                   <!-- tfSetfAuth -->
-                                   @if (activeTab === 'setTrustline' || activeTab === 'removeTrustline') {
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.tfSetfAuth" (click)="toggleFlag('tfSetfAuth')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" [checked]="flags.tfSetfAuth" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">SetfAuth</span>
-                                                  </div>
-                                                  <div class="flag-value">0x00010000</div>
-                                                  <div class="flag-desc">Authorize the other party to hold currency issued by this account. (No effect unless using the <code>asfRequireAuth</code> AccountSet flag.) Cannot be unset.</div>
+                                   <!-- ======================================== -->
+                                   <!-- SET TRUSTLINE TAB — Only "Set" flags     -->
+                                   <!-- ======================================== -->
+                                   @if (activeTab === 'setTrustline') {
+                                   <div class="form-row-account-flags">
+                                        <!-- tfSetfAuth -->
+                                        <div class="flag-item-account-flags" [class.enabled]="flags.tfSetfAuth" (click)="toggleFlag('tfSetfAuth')">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" [checked]="flags.tfSetfAuth" class="flag-checkbox" />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M9 12l2 2 4-4" />
+                                                       <circle cx="12" cy="12" r="10" />
+                                                  </svg>
+                                                  <span class="flag-title">SetfAuth</span>
                                              </div>
-
-                                             <!-- tfSetNoRipple -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.tfSetNoRipple" (click)="toggleFlag('tfSetNoRipple')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" [checked]="flags.tfSetNoRipple" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">SetNoRipple</span>
-                                                  </div>
-                                                  <div class="flag-value">0x00020000</div>
-                                                  <div class="flag-desc">Enable the No Ripple flag, which blocks rippling between two trust lines of the same currency if this flag is enabled on both.</div>
-                                             </div>
+                                             <div class="flag-value">0x00010000</div>
+                                             <div class="flag-desc">Authorize issuer to hold your tokens (requires asfRequireAuth on issuer).</div>
                                         </div>
-                                   </div>
 
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <!-- tfClearNoRipple -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.tfClearNoRipple" (click)="toggleFlag('tfClearNoRipple')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" [checked]="flags.tfClearNoRipple" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">ClearNoRipple</span>
-                                                  </div>
-                                                  <div class="flag-value">0x00040000</div>
-                                                  <div class="flag-desc">Disable the No Ripple flag, allowing rippling on this trust line.</div>
+                                        <!-- tfSetNoRipple -->
+                                        <div class="flag-item-account-flags" [class.enabled]="flags.tfSetNoRipple" (click)="toggleFlag('tfSetNoRipple')">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" [checked]="flags.tfSetNoRipple" class="flag-checkbox" />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                                  </svg>
+                                                  <span class="flag-title">SetNoRipple</span>
                                              </div>
-
-                                             <!-- tfSetFreeze -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.tfSetFreeze" (click)="toggleFlag('tfSetFreeze')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" [checked]="flags.tfSetFreeze" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">SetFreeze</span>
-                                                  </div>
-                                                  <div class="flag-value">0x00100000</div>
-                                                  <div class="flag-desc">Freeze the trust line.</div>
-                                             </div>
+                                             <div class="flag-value">0x00020000</div>
+                                             <div class="flag-desc">Block rippling on this trustline.</div>
                                         </div>
-                                   </div>
 
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <!-- tfClearFreeze -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.tfClearFreeze" (click)="toggleFlag('tfClearFreeze')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" [checked]="flags.tfClearFreeze" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">ClearFreeze</span>
-                                                  </div>
-                                                  <div class="flag-value">0x00200000</div>
-                                                  <div class="flag-desc">Unfreeze the trust line.</div>
+                                        <!-- tfSetFreeze -->
+                                        <div class="flag-item-account-flags" [class.enabled]="flags.tfSetFreeze" (click)="toggleFlag('tfSetFreeze')">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" [checked]="flags.tfSetFreeze" class="flag-checkbox" />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M12 2v20M2 12h20" />
+                                                  </svg>
+                                                  <span class="flag-title">SetFreeze</span>
                                              </div>
-
-                                             <!-- tfSetDeepFreeze -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.tfSetDeepFreeze" (click)="toggleFlag('tfSetDeepFreeze')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" [checked]="flags.tfSetDeepFreeze" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">SetDeepFreeze</span>
-                                                  </div>
-                                                  <div class="flag-value">0x00400000</div>
-                                                  <div class="flag-desc">Deep-Freeze the trustline -- disallow sending and receiving the said IssuedCurrency. Allowed only if the trustline is already regularly frozen, or if tfSetFreeze is set in the same transaction.</div>
-                                             </div>
+                                             <div class="flag-value">0x00100000</div>
+                                             <div class="flag-desc">Freeze the trustline (prevent transfers).</div>
                                         </div>
-                                   </div>
 
-                                   <div>
-                                        <div class="form-row-account-flags">
-                                             <!-- tfClearDeepFreeze -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.tfClearDeepFreeze" (click)="toggleFlag('tfClearDeepFreeze')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" [checked]="flags.tfClearDeepFreeze" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">SetDeepFreeze</span>
-                                                  </div>
-                                                  <div class="flag-value">0x00800000</div>
-                                                  <div class="flag-desc">Clear a Deep-Frozen trustline</div>
+                                        <!-- tfSetDeepFreeze -->
+                                        <div class="flag-item-account-flags" [class.enabled]="flags.tfSetDeepFreeze" (click)="toggleFlag('tfSetDeepFreeze')">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" [checked]="flags.tfSetDeepFreeze" class="flag-checkbox" />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M12 2v20M2 12h20M5 5l14 14M5 19l14-14" />
+                                                  </svg>
+                                                  <span class="flag-title">SetDeepFreeze</span>
                                              </div>
-
-                                             <div class="flag-item-account-flags">
-                                                  <!-- TOTAL FLAGS VALUE -->
-                                                  @if (activeTab === 'setTrustline'|| activeTab === 'removeTrustline') {
-                                                  <div class="flags-total">
-                                                       <span class="total-label">Total Flags Value:</span>
-                                                       <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
-                                                  </div>
-                                                  }
-                                             </div>
+                                             <div class="flag-value">0x00400000</div>
+                                             <div class="flag-desc">Deep-Freeze (block sending & receiving). Requires freeze first.</div>
                                         </div>
                                    </div>
                                    }
+
+                                   <!-- ======================================== -->
+                                   <!-- REMOVE TRUSTLINE TAB — Only "Clear" flags -->
+                                   <!-- ======================================== -->
+                                   @if (activeTab === 'removeTrustline') {
+                                   <div class="form-row-account-flags">
+                                        <!-- tfClearNoRipple -->
+                                        <div class="flag-item-account-flags" [class.enabled]="flags.tfClearNoRipple">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" [checked]="flags.tfClearNoRipple" [disabled]="true" class="flag-checkbox" />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M18 6L6 18M6 6l12 12" />
+                                                  </svg>
+                                                  <span class="flag-title">ClearNoRipple</span>
+                                                  @if (flags.tfClearNoRipple) {
+                                                  <span class="required-hint">(Required)</span>
+                                                  }
+                                             </div>
+                                             <div class="flag-value">0x00040000</div>
+                                             <div class="flag-desc">Required to remove trustline when NoRipple is enabled.</div>
+                                        </div>
+
+                                        <!-- tfClearFreeze -->
+                                        <div class="flag-item-account-flags" [class.enabled]="flags.tfClearFreeze">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" [checked]="flags.tfClearFreeze" [disabled]="true" class="flag-checkbox" />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M12 2v20M2 12h20" />
+                                                  </svg>
+                                                  <span class="flag-title">ClearFreeze</span>
+                                                  @if (flags.tfClearFreeze) {
+                                                  <span class="required-hint">(Required)</span>
+                                                  }
+                                             </div>
+                                             <div class="flag-value">0x00200000</div>
+                                             <div class="flag-desc">Required to remove a frozen trustline.</div>
+                                        </div>
+
+                                        <!-- tfClearDeepFreeze -->
+                                        <div class="flag-item-account-flags" [class.enabled]="flags.tfClearDeepFreeze">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" [checked]="flags.tfClearDeepFreeze" [disabled]="true" class="flag-checkbox" />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M12 2v20M2 12h20M5 5l14 14M5 19l14-14" />
+                                                  </svg>
+                                                  <span class="flag-title">ClearDeepFreeze</span>
+                                                  @if (flags.tfClearDeepFreeze) {
+                                                  <span class="required-hint">(Required)</span>
+                                                  }
+                                             </div>
+                                             <div class="flag-value">0x00800000</div>
+                                             <div class="flag-desc">Required to remove a deep-frozen trustline.</div>
+                                        </div>
+                                   </div>
+
+                                   <!-- Optional: Info box about zero-limit trustlines -->
+                                   <div class="info-box" style="margin-top: 16px; font-size: 0.9em; opacity: 0.9"><strong>Note:</strong> Setting limit to 0 removes ability to hold balance. The trustline remains in the ledger (normal XRPL behavior). Some wallets hide zero-limit lines.</div>
+                                   }
+
+                                   <!-- ======================================== -->
+                                   <!-- TOTAL FLAGS VALUE — Always visible -->
+                                   <!-- ======================================== -->
+                                   <div class="flags-total" style="margin-top: 20px; padding: 12px; background: rgba(0, 0, 0, 0.05); border-radius: 8px">
+                                        <span class="total-label">Total Flags Value:</span>
+                                        <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
+                                   </div>
                               </div>
-                              <!-- </div> -->
                               }
                          </div>
 
@@ -778,7 +783,7 @@
                @if (ui.paymentTx.length >0) {
                <div class="tx-preview-container">
                     <div class="tx-header">
-                         <h5 class="tx-title">Ticket Transaction</h5>
+                         <h5 class="tx-title">Trustline Transaction</h5>
                          <div class="tx-actions">
                               <button class="copy-btn" (click)="copyUtilService.copyTx()" title="Copy JSON">
                                    <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>

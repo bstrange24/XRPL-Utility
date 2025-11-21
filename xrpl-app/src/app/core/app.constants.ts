@@ -289,11 +289,18 @@ export const AppConstants = {
           },
           LEDGER_FLAG_MAP: {
                lsfLowAuth: 0x00010000,
-               lsfHighAuth: 0x00040000,
-               lsfNoRipple: 0x00020000,
-               lsfLowFreeze: 0x00400000,
-               lsfHighFreeze: 0x00800000,
+               lsfNoRipple: 0x00020000, // ← shared flag
+               lsfLowFreeze: 0x00100000,
+               lsfHighFreeze: 0x00200000,
+               lsfHighAuth: 0x00080000,
           },
+          // LEDGER_FLAG_MAP: {
+          //      lsfLowAuth: 0x00010000,
+          //      lsfHighAuth: 0x00040000,
+          //      lsfNoRipple: 0x00020000,
+          //      lsfLowFreeze: 0x00400000,
+          //      lsfHighFreeze: 0x00800000,
+          // },
           CONFLICTS: {
                tfSetNoRipple: ['tfClearNoRipple'],
                tfClearNoRipple: ['tfSetNoRipple'],

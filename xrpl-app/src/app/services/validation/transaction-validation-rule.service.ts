@@ -755,7 +755,7 @@ export class ValidationService {
           // RemoveTrustline
           this.registerRule({
                transactionType: 'RemoveTrustline',
-               requiredFields: ['currency', 'issuer', 'limit'],
+               requiredFields: ['currency', 'issuer'],
                validators: [
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -765,7 +765,6 @@ export class ValidationService {
                          return null;
                     },
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
-                    ctx => (Number(ctx.inputs['limit']) < 0 ? 'Trust limit cannot be negative' : null),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
