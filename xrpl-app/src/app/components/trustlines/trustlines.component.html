@@ -472,19 +472,18 @@
 
                               <!-- ==================== RIGHT: PAYMENT CHANNEL FLAGS ==================== -->
                               @if (activeTab === 'setTrustline' || activeTab === 'removeTrustline') {
-                              <div class="flags-wrapper">
-                                   <!-- Header -->
-                                   <div class="token-flags-header">
-                                        <lucide-icon name="flag" size="20"></lucide-icon>
-                                        <span class="token-flags-title">Trustline Flags</span>
-                                   </div>
+                              <div class="tab-content-container flags-container" style="min-width: 570px">
+                                   <div class="flags-wrapper">
+                                        <!-- Header -->
+                                        <div class="token-flags-header">
+                                             <lucide-icon name="flag" size="20"></lucide-icon>
+                                             <span class="token-flags-title">Trustline Flags</span>
+                                        </div>
 
-                                   <!-- ======================================== -->
-                                   <!-- SET TRUSTLINE TAB — Only "Set" flags     -->
-                                   <!-- ======================================== -->
-                                   @if (activeTab === 'setTrustline') {
-                                   <div class="form-row-account-flags">
+                                        <!-- Set Trustline tab — Only "Set" flags -->
+                                        @if (activeTab === 'setTrustline') {
                                         <!-- tfSetfAuth -->
+                                        <!-- <div class="form-row-account-flags"> -->
                                         <div class="flag-item-account-flags" [class.enabled]="flags.tfSetfAuth" (click)="toggleFlag('tfSetfAuth')">
                                              <div class="flag-header-account">
                                                   <input type="checkbox" [checked]="flags.tfSetfAuth" class="flag-checkbox" />
@@ -495,7 +494,7 @@
                                                   <span class="flag-title">SetfAuth</span>
                                              </div>
                                              <div class="flag-value">0x00010000</div>
-                                             <div class="flag-desc">Authorize issuer to hold your tokens (requires asfRequireAuth on issuer).</div>
+                                             <div class="flag-desc">Authorize the other party to hold currency issued by this account. (No effect unless using the <code>asfRequireAuth</code> AccountSet flag.) Cannot be unset.</div>
                                         </div>
 
                                         <!-- tfSetNoRipple -->
@@ -508,7 +507,7 @@
                                                   <span class="flag-title">SetNoRipple</span>
                                              </div>
                                              <div class="flag-value">0x00020000</div>
-                                             <div class="flag-desc">Block rippling on this trustline.</div>
+                                             <div class="flag-desc">Enable the No Ripple flag, which blocks rippling between two trust lines of the same currency if this flag is enabled on both.</div>
                                         </div>
 
                                         <!-- tfSetFreeze -->
@@ -536,14 +535,14 @@
                                              <div class="flag-value">0x00400000</div>
                                              <div class="flag-desc">Deep-Freeze (block sending & receiving). Requires freeze first.</div>
                                         </div>
-                                   </div>
-                                   }
+                                        <!-- </div> -->
+                                        }
 
-                                   <!-- ======================================== -->
-                                   <!-- REMOVE TRUSTLINE TAB — Only "Clear" flags -->
-                                   <!-- ======================================== -->
-                                   @if (activeTab === 'removeTrustline') {
-                                   <div class="form-row-account-flags">
+                                        <!-- ======================================== -->
+                                        <!-- REMOVE TRUSTLINE TAB — Only "Clear" flags -->
+                                        <!-- ======================================== -->
+                                        @if (activeTab === 'removeTrustline') {
+                                        <!-- <div class="form-row-account-flags"> -->
                                         <!-- tfClearNoRipple -->
                                         <div class="flag-item-account-flags" [class.enabled]="flags.tfClearNoRipple">
                                              <div class="flag-header-account">
@@ -591,18 +590,19 @@
                                              <div class="flag-value">0x00800000</div>
                                              <div class="flag-desc">Required to remove a deep-frozen trustline.</div>
                                         </div>
-                                   </div>
+                                        <!-- </div> -->
 
-                                   <!-- Optional: Info box about zero-limit trustlines -->
-                                   <div class="info-box" style="margin-top: 16px; font-size: 0.9em; opacity: 0.9"><strong>Note:</strong> Setting limit to 0 removes ability to hold balance. The trustline remains in the ledger (normal XRPL behavior). Some wallets hide zero-limit lines.</div>
-                                   }
+                                        <!-- Optional: Info box about zero-limit trustlines -->
+                                        <div class="info-box" style="margin-top: 16px; font-size: 0.9em; opacity: 0.9"><strong>Note:</strong> Setting limit to 0 removes ability to hold balance. The trustline remains in the ledger (normal XRPL behavior). This app hides zero-limit lines.</div>
+                                        }
 
-                                   <!-- ======================================== -->
-                                   <!-- TOTAL FLAGS VALUE — Always visible -->
-                                   <!-- ======================================== -->
-                                   <div class="flags-total" style="margin-top: 20px; padding: 12px; background: rgba(0, 0, 0, 0.05); border-radius: 8px">
-                                        <span class="total-label">Total Flags Value:</span>
-                                        <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
+                                        <!-- ======================================== -->
+                                        <!-- TOTAL FLAGS VALUE — Always visible -->
+                                        <!-- ======================================== -->
+                                        <div class="flags-total" style="margin-top: 20px; padding: 12px; background: rgba(0, 0, 0, 0.05); border-radius: 8px">
+                                             <span class="total-label">Total Flags Value:</span>
+                                             <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
+                                        </div>
                                    </div>
                               </div>
                               }

@@ -338,44 +338,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           }
      }
 
-     async setTab1(tab: string) {
-          this.activeTab = tab;
-
-          if (this.activeTab !== 'addNewIssuers') {
-               const client = await this.xrplService.getClient();
-               const accountObjects = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', '');
-               this.getExistingMpts(accountObjects, this.currentWallet.address);
-               this.getExistingIOUs(accountObjects, this.currentWallet.address);
-               this.toggleIssuerField();
-               if (this.activeTab !== 'removeTrustline') {
-                    this.clearFlagsValue();
-               }
-               this.ui.clearMessages();
-               this.clearFields(true);
-          }
-
-          if (this.activeTab !== 'addNewIssuers' && this.activeTab === 'removeTrustline') {
-               this.amountField = '0';
-          }
-
-          if (this.activeTab === 'addNewIssuers') {
-               if (this.newCurrency && this.newIssuer) {
-                    this.addToken(this.newCurrency, this.newIssuer);
-               }
-          }
-
-          // Auto-enable required flags when removing trustline
-          if (this.activeTab === 'removeTrustline') {
-               this.flags.tfClearNoRipple = true;
-               this.flags.tfClearFreeze = true;
-               this.flags.tfClearDeepFreeze = true; // optional: also clear deep freeze
-          } else {
-               // Optional: reset to false when leaving remove tab (or leave as-is)
-               this.flags.tfClearNoRipple = false;
-               this.flags.tfClearFreeze = false;
-          }
-     }
-
      async onIssuerChange(index: number, event: Event) {
           this.ui.warningMessage = '';
           const checked = (event.target as HTMLInputElement).checked;
