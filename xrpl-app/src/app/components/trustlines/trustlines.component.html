@@ -39,16 +39,16 @@
                               <div class="wallet-info">
                                    @if (editingIndex(i)) {
                                    <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
-                                   <label class="issuer-checkbox" title="Mark as issuer account">
-                                        <!-- <span class="issuer-label">Issuer</span> -->
-                                        <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" (change)="onIssuerChange(i, $event)" />
-                                   </label>
+                                   <!-- <label class="issuer-checkbox" title="Mark as issuer account"> -->
+                                   <!-- <span class="issuer-label">Issuer</span> -->
+                                   <!-- <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" (change)="onIssuerChange(i, $event)" /> -->
+                                   <!-- </label> -->
                                    } @else {
                                    <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
-                                   <label class="issuer-checkbox" title="Mark as issuer account">
-                                        <!-- <span class="issuer-label">Issuer</span> -->
-                                        <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" (change)="onIssuerChange(i, $event)" />
-                                   </label>
+                                   <!-- <label class="issuer-checkbox" title="Mark as issuer account"> -->
+                                   <!-- <span class="issuer-label">Issuer</span> -->
+                                   <!-- <input type="checkbox" [(ngModel)]="wallet.isIssuer" (click)="$event.stopPropagation()" (change)="onIssuerChange(i, $event)" /> -->
+                                   <!-- </label> -->
                                    }
                               </div>
 
@@ -389,7 +389,7 @@
 
                                         <div class="form-group">
                                              <label>Issuer</label>
-                                             <select id="issuerFields" [(ngModel)]="issuerFields" name="issuerFields">
+                                             <select id="issuerFields" [(ngModel)]="issuerFields" (ngModelChange)="toggleIssuerField()" name="issuerFields">
                                                   @for (iss of issuers; track iss.address; let i = $index) {
                                                   <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
                                                   }
@@ -406,7 +406,7 @@
 
                                         <div class="form-group">
                                              <label>Currency Balance</label>
-                                             <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly placeholder="e.g. 10.5" />
+                                             <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly placeholder="" />
                                         </div>
                                    </div>
                                    }
@@ -465,6 +465,28 @@
                                         <div class="form-group">
                                              <label>Add New Issuer</label>
                                              <input type="text" [(ngModel)]="newIssuer" name="newIssuer" />
+                                        </div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Currency</label>
+                                             <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" name="currencyField">
+                                                  @for (curr of currencies; track curr) {
+                                                  <option [value]="curr">{{ curr }}</option>
+                                                  }
+                                             </select>
+                                        </div>
+
+                                        <div class="form-group">
+                                             <label>Issuer</label>
+                                             <select id="storedIssuers" [(ngModel)]="selectedIssuer" name="storedIssuers">
+                                                  <option value="">-- Select Issuer --</option>
+
+                                                  @for (iss of storedIssuers; track iss.address) {
+                                                  <option [value]="iss.address">{{ iss.name }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
+                                                  }
+                                             </select>
                                         </div>
                                    </div>
                                    }
@@ -733,7 +755,8 @@
                               } @else if (activeTab === 'clawbackTokens') {
                               <button type="button" (click)="clawbackTokens()" class="btn-primary-red">Clawback Tokens</button>
                               } @else if (activeTab === 'addNewIssuers') {
-                              <button type="button" (click)="addToken(newCurrency, newIssuer)" class="btn-primary-blue">Add Issuer</button>
+                              <button type="button" (click)="addToken(newCurrency, newIssuer, true)" class="btn-primary-blue">Add Currency/Issuer</button>
+                              <button type="button" (click)="removeToken(currencyFieldDropDownValue, selectedIssuer)" class="btn-primary-red">Remove Currency/Issuer</button>
                               }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                          </div>
