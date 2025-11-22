@@ -158,151 +158,105 @@
                     <div class="panel-body">
                          <!-- SEARCH & DATE FILTERS -->
                          <div class="controls-container">
-                              <div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="startDate">Search date, hash, type, amount, fees...</label>
-                                             <div class="search-bar">
-                                                  <mat-icon class="search-icon">search</mat-icon>
-                                                  <input type="text" [(ngModel)]="filterValue" (input)="applyFilter($event.target.value)" placeholder="Search..." />
-                                                  <mat-icon *ngIf="filterValue" class="clear-icon" (click)="clearFilter()">close</mat-icon>
-                                             </div>
-                                        </div>
-                                        <div class="form-group">
-                                             <div class="date-filter-container">
-                                                  <div class="date-input-wrapper">
-                                                       <label for="startDate">Start Date</label>
-                                                       <input id="startDate" type="date" [(ngModel)]="dateRange.start" (change)="applyDateFilter()" class="date-input" />
-                                                  </div>
-
-                                                  <div class="date-input-wrapper">
-                                                       <label for="endDate">End Date</label>
-                                                       <input id="endDate" type="date" [(ngModel)]="dateRange.end" (change)="applyDateFilter()" class="date-input" />
-                                                  </div>
-
-                                                  <button mat-icon-button (click)="clearDateFilter()" matTooltip="Clear date filter" style="padding-top: 18px; background-color: transparent">
-                                                       <lucide-icon name="eraser" size="25"></lucide-icon>
-                                                  </button>
-                                             </div>
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Search date, hash, type, amount, fees...</label>
+                                        <div class="search-bar">
+                                             <mat-icon class="search-icon">search</mat-icon>
+                                             <input type="text" [(ngModel)]="filterValue" (input)="onSearchInput($event.target.value)" placeholder="Search transactions..." />
+                                             <mat-icon *ngIf="filterValue" class="clear-icon" (click)="clearFilter()">close</mat-icon>
                                         </div>
                                    </div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <div class="button-row-account-changes">
-                                                  <button type="button" class="btn-primary-blue" (click)="loadBalanceChanges(true)">Get Account Balance Changes</button>
+
+                                   <div class="form-group date-filter-group">
+                                        <div class="date-filter-container">
+                                             <div class="date-input-wrapper">
+                                                  <label>Start Date</label>
+                                                  <input type="date" [(ngModel)]="dateRange.start" (change)="applyDateFilter()" class="date-input" />
                                              </div>
+
+                                             <div class="date-input-wrapper">
+                                                  <label>End Date</label>
+                                                  <input type="date" [(ngModel)]="dateRange.end" (change)="applyDateFilter()" class="date-input" />
+                                             </div>
+
+                                             <button mat-icon-button (click)="clearDateFilter()" matTooltip="Clear date filter" class="clear-date-btn">
+                                                  <lucide-icon name="eraser" size="22"></lucide-icon>
+                                             </button>
                                         </div>
-                                        <div class="form-group"></div>
+                                   </div>
+                              </div>
+
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <div class="button-row-account-changes">
+                                             <button type="button" class="btn-primary-blue" style="margin: 0em" (click)="loadBalanceChanges(true)" [disabled]="loadingInitial">
+                                                  <!-- <lucide-icon name="refresh-cw" size="18" style="margin-right: 8px"></lucide-icon> -->
+                                                  {{ loadingInitial ? 'Loading...' : 'Refresh Balance Changes' }}
+                                             </button>
+                                        </div>
                                    </div>
                               </div>
                          </div>
 
-                         <!-- TABLE -->
-                         <!-- <div class="table-container"> -->
-                         <div class="tx-table-container" (scroll)="onScroll($event)" style="max-height: 600px; overflow-y: auto">
-                              <table mat-table [dataSource]="balanceChangesDataSource" matSort class="mat-elevation-z2">
-                                   <!-- DATE -->
-                                   <ng-container matColumnDef="date">
-                                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="resizable">Date</th>
-                                        <td mat-cell *matCellDef="let element">{{ element.date | date:'medium' }}</td>
-                                   </ng-container>
-
-                                   <!-- HASH -->
-                                   <ng-container matColumnDef="hash">
-                                        <th mat-header-cell *matHeaderCellDef class="col-hash">Tx Hash</th>
-                                        <td mat-cell *matCellDef="let tx" class="col-hash">
-                                             <div class="hash-cell">
-                                                  <code class="hash-text">{{ tx.hash | slice:0:8 }}...{{ tx.hash.slice(-8) }}</code>
-                                                  <button class="icon-btn copy" (click)="copyToClipboard(tx.hash); $event.stopPropagation()" matTooltip="Copy hash">
-                                                       <ng-icon name="heroClipboardDocumentList" size="14" class="text-red-600"></ng-icon>
-                                                  </button>
-                                                  <a class="icon-btn link" [href]="url + 'tx/' + tx.hash" target="_blank" matTooltip="Open on XRPLWin">
-                                                       <ng-icon name="heroArrowTopRightOnSquare" size="14" class="text-red-600"></ng-icon>
-                                                  </a>
-                                             </div>
-                                        </td>
-                                   </ng-container>
-
-                                   <!-- TYPE -->
-                                   <ng-container matColumnDef="type">
-                                        <th mat-header-cell *matHeaderCellDef>Type</th>
-                                        <td mat-cell *matCellDef="let tx">
-                                             <code [style.color]="getTypeColor(tx.type)"><strong>{{ tx.type }}</strong></code>
-                                        </td>
-                                   </ng-container>
-
-                                   <!-- CHANGE -->
-                                   <ng-container matColumnDef="change">
-                                        <th mat-header-cell *matHeaderCellDef>Change</th>
-                                        <td mat-cell *matCellDef="let tx">
-                                             <code [class.positive]="tx.change > 0" [class.negative]="tx.change < 0"> {{ tx.change }} {{ tx.currency || 'XRP' }} </code>
-                                        </td>
-                                   </ng-container>
-
-                                   <!-- CURRENCY -->
-                                   <ng-container matColumnDef="currency">
-                                        <th mat-header-cell *matHeaderCellDef>Currency</th>
-                                        <td mat-cell *matCellDef="let tx">
-                                             <code>{{ tx.currency || 'XRP' }}</code>
-                                        </td>
-                                   </ng-container>
-
-                                   <!-- FEES -->
-                                   <ng-container matColumnDef="fees">
-                                        <th mat-header-cell *matHeaderCellDef>Fees</th>
-                                        <td mat-cell *matCellDef="let tx">
-                                             <code>{{ tx.fees }}</code>
-                                        </td>
-                                   </ng-container>
-
-                                   <!-- BALANCE BEFORE -->
-                                   <ng-container matColumnDef="balanceBefore">
-                                        <th mat-header-cell *matHeaderCellDef>Balance Before</th>
-                                        <td mat-cell *matCellDef="let tx">
-                                             <code>{{ tx.balanceBefore }} {{ tx.currency || 'XRP' }}</code>
-                                        </td>
-                                   </ng-container>
-
-                                   <!-- BALANCE AFTER -->
-                                   <ng-container matColumnDef="balanceAfter">
-                                        <th mat-header-cell *matHeaderCellDef>Balance After</th>
-                                        <td mat-cell *matCellDef="let tx">
-                                             <code>{{ tx.balanceAfter }} {{ tx.currency || 'XRP' }}</code>
-                                        </td>
-                                   </ng-container>
-
-                                   <!-- COUNTERPARTY -->
-                                   <ng-container matColumnDef="counterparty">
-                                        <th mat-header-cell *matHeaderCellDef class="col-counterparty">Counterparty</th>
-                                        <td mat-cell *matCellDef="let tx" class="col-counterparty">
-                                             <code>{{ tx.counterparty || 'N/A' }}</code>
-                                        </td>
-                                   </ng-container>
-
-                                   <!-- HEADER & ROWS -->
-                                   <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-                                   <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-                                   <!-- END OF DATA -->
-                                   @if (!hasMoreData && balanceChanges.length > 0) {
-                                   <tr class="mat-row">
-                                        <td [attr.colspan]="displayedColumns.length" class="no-more-row">
-                                             <em>No more transactions</em>
-                                        </td>
-                                   </tr>
-                                   }
-                              </table>
+                         <!-- Sticky Header -->
+                         <div class="table-header row">
+                              <div class="col date">Date</div>
+                              <div class="col hash">Transaction</div>
+                              <div class="col type">Type</div>
+                              <div class="col change">Change</div>
+                              <div class="col fees">Fee</div>
+                              <div class="col counterparty">Counterparty</div>
                          </div>
-                         <!-- </div> -->
-                         <!-- Optional loading spinner -->
-                         @if (loadingMore) {
-                         <mat-progress-spinner mode="indeterminate" diameter="32" strokeWidth="4"></mat-progress-spinner>
-                         <span class="loading-more-text">Loading more transactions…</span>
-                         }
+
+                         <!-- VIRTUAL SCROLL TABLE -->
+                         <div class="virtual-table-container">
+                              <cdk-virtual-scroll-viewport itemSize="68" class="viewport" (scroll)="onScroll($event)">
+                                   <!-- Rows -->
+                                   <div *cdkVirtualFor="let change of balanceChanges; trackBy: trackByHash" class="data-row row">
+                                        <div class="col date" matTooltip="{{ change.date | date:'medium' }}">{{ change.date | date:'MMM d, y HH:mm' }}</div>
+
+                                        <div class="col hash">
+                                             <a [href]="url + 'transactions/' + change.hash" target="_blank" class="tx-link"> {{ change.hash.slice(0, 12) }}...{{ change.hash.slice(-6) }} </a>
+                                             <button mat-icon-button class="copy-btn" (click)="copyToClipboard(change.hash)" matTooltip="Copy hash">
+                                                  <lucide-icon name="copy" size="16"></lucide-icon>
+                                             </button>
+                                        </div>
+
+                                        <div class="col type" [style.color]="getTypeColor(change.type)">{{ change.type }}</div>
+
+                                        <div class="col change" [class.positive]="change.change > 0" [class.negative]="change.change < 0">
+                                             <strong> {{ change.change > 0 ? '+' : '' }}{{ change.change | number:'1.2-8' }} </strong>
+                                             <span class="currency">{{ change.currency }}</span>
+                                        </div>
+
+                                        <div class="col fees">-{{ change.fees | number:'1.6-6' }} XRP</div>
+
+                                        <div class="col counterparty" style="padding-left: 0.5em" matTooltip="{{ change.counterparty }}">{{ change.counterparty }}</div>
+                                   </div>
+
+                                   <!-- Loading More -->
+                                   <div class="loading-row row" *ngIf="loadingMore">
+                                        <mat-spinner diameter="28"></mat-spinner>
+                                        <span>Loading more transactions...</span>
+                                   </div>
+
+                                   <!-- No Data -->
+                                   <div class="empty-row row" *ngIf="!loadingInitial && balanceChanges.length === 0">
+                                        <p>No balance changes found for this account.</p>
+                                   </div>
+
+                                   <!-- End of History -->
+                                   <div class="end-row row" *ngIf="!hasMoreData && balanceChanges.length > 0 && !loadingMore">
+                                        <p>You've reached the end of transaction history.</p>
+                                   </div>
+                              </cdk-virtual-scroll-viewport>
+                         </div>
                     </div>
                     } @else {
                     <div class="empty-state">
-                         <p>Select an account to view balance changes.</p>
+                         <lucide-icon name="wallet" size="48"></lucide-icon>
+                         <p>Select an account from the left panel to view balance changes.</p>
                     </div>
                     }
                </div>

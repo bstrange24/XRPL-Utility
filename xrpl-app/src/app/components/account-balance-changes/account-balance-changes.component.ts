@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, ViewChildren, QueryList, ViewContainerRef, afterRenderEffect, TemplateRef, Injector, inject } from '@angular/core';
+import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, ViewChildren, QueryList, ViewContainerRef, afterRenderEffect, TemplateRef, Injector, inject, TrackByFunction } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
@@ -80,7 +80,8 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      @ViewChild(MatPaginator) paginator!: MatPaginator;
      displayedColumns: string[] = ['date', 'hash', 'type', 'change', 'currency', 'fees', 'balanceBefore', 'balanceAfter', 'counterparty'];
      balanceChanges: BalanceChange[] = [];
-     balanceChangesDataSource = new MatTableDataSource<BalanceChange>(this.balanceChanges);
+     // balanceChangesDataSource = new MatTableDataSource<BalanceChange>(this.balanceChanges);
+     trackByHash = (index: number, item: BalanceChange) => item.hash;
      loadingMore: boolean = false;
      hasMoreData: boolean = true;
      marker: any = undefined;
@@ -110,7 +111,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      private readonly CACHE_EXPIRY = 30000;
      private scrollDebounce: any = null;
      private hasInitialized = false;
-     private loadingInitial = false;
+     loadingInitial = false;
      ownerCount: string = '';
      xrpReserves: string = '';
      totalXrpReserves: string = '';
@@ -129,10 +130,14 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      dateRange: { start: Date | null; end: Date | null } = { start: null, end: null };
      private searchSubject = new Subject<string>();
      // Replace any old paginator-dependent page size use with this constant
-     private readonly PAGE_SIZE = 10;
+     private readonly PAGE_SIZE = 25;
      // Track seen tx hashes to avoid duplicates when appending
      private readonly seenHashes = new Set<string>();
      private originalBalanceChanges: BalanceChange[] = []; // Cache full data
+
+     onSearchInput(value: string) {
+          this.searchSubject.next(value);
+     }
 
      constructor(
           private readonly xrplService: XrplService,
@@ -189,7 +194,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           this.hasInitialized = true;
 
           // Keep sort
-          this.balanceChangesDataSource.sort = this.sort;
+          // this.balanceChangesDataSource.sort = this.sort;
 
           // We are using infinite scroll (no paginator) so do NOT attach paginator
           // If paginator is present for any reason, do not rely on it.
@@ -197,7 +202,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                console.log('Warning: paginator present but not used for infinite scroll.');
           }
 
-          (this.balanceChangesDataSource as any).trackByFunction = this.trackByFunction;
+          // (this.balanceChangesDataSource as any).trackByFunction = this.trackByFunction;
 
           // if (this.selectedAccount) {
           // initial load
@@ -242,24 +247,19 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      applyFilter(filterValue: string) {
           const trimmed = (filterValue || '').trim().toLowerCase();
           this.filterValue = trimmed;
-          this.balanceChangesDataSource.filter = trimmed;
 
-          // For infinite scroll, we *don't* have a MatPaginator controlling the page index.
-          // However, it's useful to show the first page of filtered results: reset scroll/viewport if present.
-          try {
-               // if using a virtual viewport, reset to top
-               if (this.viewport) {
-                    this.viewport.scrollToIndex(0);
-               } else {
-                    // fallback: try to scroll the table container to top
-                    const el = document.querySelector('.tx-table-container') as HTMLElement | null;
-                    if (el) el.scrollTop = 0;
-               }
-          } catch (e) {
-               // ignore errors from scrolling in tests / server-side
+          if (!trimmed && !this.dateRange.start && !this.dateRange.end) {
+               this.balanceChanges = [...this.originalBalanceChanges];
+          } else {
+               this.balanceChanges = this.originalBalanceChanges.filter(item => {
+                    const matchesText = !trimmed || (item._searchIndex?.includes(trimmed) ?? false);
+                    const inDateRange = this.isInDateRange(item.date);
+                    return matchesText && inDateRange;
+               });
           }
 
-          // Recalculate change detection so table updates immediately
+          // Scroll to top on filter
+          this.viewport?.scrollToIndex(0);
           this.cdr.detectChanges();
      }
 
@@ -267,18 +267,18 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           return item.hash;
      };
 
-     private setFilterPredicate() {
-          this.balanceChangesDataSource.filterPredicate = (data: BalanceChange, filter: string) => {
-               const searchText = filter.trim();
-               if (!searchText) return this.isInDateRange(data.date);
+     // private setFilterPredicate() {
+     //      this.balanceChangesDataSource.filterPredicate = (data: BalanceChange, filter: string) => {
+     //           const searchText = filter.trim();
+     //           if (!searchText) return this.isInDateRange(data.date);
 
-               // Use pre-computed index
-               const matchesText = data._searchIndex?.includes(searchText) ?? false;
-               const inDateRange = this.isInDateRange(data.date);
+     //           // Use pre-computed index
+     //           const matchesText = data._searchIndex?.includes(searchText) ?? false;
+     //           const inDateRange = this.isInDateRange(data.date);
 
-               return matchesText && inDateRange;
-          };
-     }
+     //           return matchesText && inDateRange;
+     //      };
+     // }
 
      private formatDateForSearch(date: Date): string {
           const d = new Date(date);
@@ -461,7 +461,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           if (reset) {
                this.balanceChanges = [];
                this.originalBalanceChanges = [];
-               this.balanceChangesDataSource.data = [];
+               // this.balanceChangesDataSource.data = [];
                this.marker = undefined;
                this.hasMoreData = true;
                this.seenHashes.clear();
@@ -498,7 +498,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                     const balance = (await client.getXrpBalance(address)) - Number.parseFloat(totalXrpReserves || '0');
                     this.currentWallet.balance = balance.toString();
 
-                    this.setFilterPredicate();
+                    // this.setFilterPredicate();
                }
 
                if (!this.hasMoreData) {
@@ -535,10 +535,15 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
                if (newEntries.length > 0) {
                     this.balanceChanges.push(...newEntries);
-                    this.originalBalanceChanges = [...this.balanceChanges]; // cache full
-                    this.balanceChangesDataSource.data = [...this.balanceChanges];
-               } else {
-                    console.log('No new unique transactions to append (all fetched were duplicates).');
+                    this.originalBalanceChanges = [...this.balanceChanges]; // keep full cache
+
+                    // CRITICAL: Trigger array reference change so *cdkVirtualFor sees it
+                    this.balanceChanges = [...this.balanceChanges];
+
+                    // Optional: scroll to top on reset
+                    if (reset && this.viewport) {
+                         setTimeout(() => this.viewport.scrollToIndex(0), 0);
+                    }
                }
 
                // Update marker and hasMoreData
@@ -771,7 +776,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
                          // Shorten address form for UI readability
                          if (cp && cp !== 'N/A' && cp.length > 12 && !cp.includes('(')) {
-                              cp = `${cp.substring(0, 4)}...${cp.substring(cp.length - 4)}`;
+                              cp = `${cp.substring(0, 6)}...${cp.substring(cp.length - 6)}`;
                          }
 
                          changes.push({
@@ -790,7 +795,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                          let tokenBalanceBefore = 0;
                          let tokenBalanceAfter = 0;
                          counterparty = modified.FinalFields?.HighLimit?.issuer || modified.FinalFields?.LowLimit?.issuer || counterparty;
-                         counterparty = `${counterparty.substring(0, 4)}...${counterparty.substring(counterparty.length - 4)}`;
+                         counterparty = `${counterparty.substring(0, 6)}...${counterparty.substring(counterparty.length - 6)}`;
 
                          if (node.DeletedNode) {
                               const balanceField = modified.FinalFields?.Balance;
@@ -851,15 +856,17 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           return processed;
      }
 
-     onScroll(event: any): void {
+     onScroll(event: any) {
+          if (this.loadingMore || !this.hasMoreData) return;
+
           const element = event.target;
-          const threshold = 150; // px before bottom to trigger load (tweakable)
+          const atBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 200;
 
-          const atBottom = element.scrollHeight - element.scrollTop - element.clientHeight < threshold;
-
-          if (atBottom && this.hasMoreData && !this.loadingMore) {
-               console.log('Reached bottom — loading more transactions (infinite scroll)');
-               this.loadBalanceChanges(false);
+          if (atBottom) {
+               clearTimeout(this.scrollDebounce);
+               this.scrollDebounce = setTimeout(() => {
+                    this.loadBalanceChanges(false);
+               }, 100);
           }
      }
 

@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef, NgZone, ChangeDetectionStrategy } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -11,12 +11,12 @@ import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-tr
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
-import { InfoMessageConstants } from '../../core/info-message.constants';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -99,11 +99,9 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
      private overlayRef: OverlayRef | null = null;
+     private issuerFieldSubject = new Subject<void>();
+     private destinationInputSubject = new Subject<string>();
      private readonly injector = inject(Injector);
-     // result: string = '';
-     // isError: boolean = false;
-     // isSuccess: boolean = false;
-     // isEditable: boolean = false;
      ticketArray: string[] = [];
      selectedTickets: string[] = [];
      selectedSingleTicket: string = '';
@@ -113,8 +111,6 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
      paymentChannelCancelAfterTimeUnit: string = 'seconds';
      channelIDField: string = '';
      settleDelayField: string = '';
-     // ownerCount: string = '';
-     // totalXrpReserves: string = '';
      executionTime: string = '';
      amountField: string = '';
      destinationField: string = '';
@@ -144,16 +140,12 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
      signerQuorum: number = 0;
      multiSigningEnabled: boolean = false;
      regularKeySigningEnabled: boolean = false;
-     // spinner: boolean = false;
-     // spinnerMessage: string = '';
      masterKeyDisabled: boolean = false;
-     // isSimulateEnabled: boolean = false;
      authorizedWalletAddress: string = '';
      authorizedWallets: { name?: string; address: string }[] = [];
-     // destinations: { name?: string; address: string }[] = [];
      wallets: Wallet[] = [];
      selectedWalletIndex: number = 0;
-     authorizedWalletIndex: number = 1; // Default to second wallet
+     authorizedWalletIndex: number = 1;
      currentWallet: Wallet = {
           classicAddress: '',
           address: '',
@@ -173,13 +165,9 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
      ];
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      environment: string = '';
-     // paymentTx: any[] = [];
-     // txResult: any[] = [];
-     // txHash: string = '';
      activeTab = 'create'; // default
      private cachedReserves: any = null;
      hasWallets = true;
-     // successMessage: string = '';
      encryptionType: string = '';
      flags = {
           renew: false,
@@ -192,8 +180,6 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
           renew: 0x00010000,
           close: 0x00020000,
      };
-     // showToast: boolean = false;
-     // toastMessage: string = '';
      walletPaymentChannelCount: number = 0;
      url = '';
      editingIndex!: (index: number) => boolean;
@@ -208,7 +194,6 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
      private _lastTab: string | undefined;
      private _lastExisting: any[] = [];
      private _lastReceivable: any[] = [];
-     // warningMessage: string | null = null;
 
      constructor(
           private readonly xrplService: XrplService,
@@ -311,7 +296,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
      }
 
      selectWallet(index: number) {
-          if (this.selectedWalletIndex === index) return; // ← Add this guard!
+          if (this.selectedWalletIndex === index) return;
           this.selectedWalletIndex = index;
           this.onAccountChange();
      }
@@ -400,7 +385,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
           const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
           const client = await this.xrplService.getClient();
-          this.refreshWallets(client, faucetWallet.address);
+          this.refreshWallets(client, [faucetWallet.address]);
           this.ui.spinner = false;
           this.ui.clearWarning();
      }
@@ -455,7 +440,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                this.ensureDefaultAuthorizedWallet();
                await this.getPaymentChannels();
           } else if (this.currentWallet.address) {
-               this.ui.setError('Failed to refresh balance');
+               this.ui.setError('Invalid XRP address');
           }
      }
 
@@ -528,9 +513,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
 
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-
                this.updateTickets(accountObjects);
-
                this.clearFields(false);
                this.cdr.detectChanges();
           } catch (error: any) {
@@ -809,7 +792,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -1263,7 +1246,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                     // This callback runs inside NgZone → UI updates safely
                     this.currentWallet = { ...newCurrentWallet };
                     // Optional: trigger change detection if needed
-                    this.cdr.markForCheck();
+                    this.cdr.detectChanges();
                }
           );
      }
@@ -1606,16 +1589,6 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
           return errors;
      }
 
-     ensureDefaultNotSelected() {
-          const currentAddress = this.currentWallet.address;
-          if (currentAddress && this.destinations.length > 0) {
-               if (!this.destinationField || this.destinationField === currentAddress) {
-                    const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    // this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
-               }
-          }
-     }
-
      private ensureDefaultAuthorizedWallet() {
           if (this.wallets.length <= 1) {
                this.authorizedWalletAddress = '';
@@ -1634,20 +1607,9 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
           this.authorizedWallets = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          if (this.destinations.length > 0 && !this.destinationField) {
-               // this.destinationField = this.destinations[0].address;
-          }
           this.storageService.set('destinations', this.destinations);
-          this.ensureDefaultNotSelected();
           this.ensureDefaultAuthorizedWallet();
      }
-
-     // updateDestinations() {
-     //      this.destinations = this.wallets.map(w => ({ name: w.name, address: w.address }));
-     //      this.authorizedWallets = this.wallets.map(w => ({ name: w.name, address: w.address }));
-     //      this.ensureDefaultNotSelected();
-     //      this.ensureDefaultAuthorizedWallet();
-     // }
 
      private async getWallet() {
           const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
