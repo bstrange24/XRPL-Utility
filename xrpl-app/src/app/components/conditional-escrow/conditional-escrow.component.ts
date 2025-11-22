@@ -402,7 +402,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                this.getExistingIOUs(accountObjects, this.currentWallet.address);
           }
 
-          if (this.currencyFieldDropDownValue !== 'XRP') {
+          if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT') {
                this.toggleIssuerField();
           }
 
@@ -540,7 +540,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                this.ui.clearWarning();
                this.updateDestinations();
                await this.getEscrows();
-               if (this.currencyFieldDropDownValue !== 'XRP') {
+               if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT') {
                     await this.onCurrencyChange();
                }
           } else if (this.currentWallet.address) {
@@ -738,7 +738,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                          }
                     }
                } else if (this.currencyFieldDropDownValue !== 'MPT') {
-                    if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, escrowCreateTx, this.destinationField)) {
+                    if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, escrowCreateTx, resolvedDestination)) {
                          return this.ui.setError('ERROR: Not enough IOU balance for this transaction');
                     }
                }
@@ -797,7 +797,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                     this.addNewDestinationFromUser();
 
-                    if (this.currencyFieldDropDownValue !== 'XRP') {
+                    if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT') {
                          await this.updateCurrencyBalance(gatewayBalances, wallet);
                          await this.toggleIssuerField();
                     }
@@ -909,7 +909,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                          }
                     }
                } else if (this.currencyFieldDropDownValue !== 'MPT') {
-                    // if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, escrowFinishTx, this.destinationField)) {
+                    // if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, escrowFinishTx, resolvedDestination)) {
                     //      return this.ui.setError('ERROR: Not enough IOU balance for this transaction');
                     // }
                }
@@ -966,7 +966,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress, this.escrowOwnerField]).catch(console.error);
 
-                    if (this.currencyFieldDropDownValue !== 'XRP') {
+                    if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT') {
                          await this.updateCurrencyBalance(gatewayBalances, wallet);
                          await this.toggleIssuerField();
                     }
@@ -1137,7 +1137,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                          this.getExistingIOUs(updatedAccountObjects, wallet.classicAddress);
                     }
 
-                    if (this.currencyFieldDropDownValue !== 'XRP') {
+                    if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT') {
                          await this.updateCurrencyBalance(gatewayBalances, wallet);
                          await this.toggleIssuerField();
                     }
@@ -1510,7 +1510,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                          value: this.amountField,
                     };
                     escrowTx.Amount = curr;
-               } else if (this.currencyFieldDropDownValue !== 'XRP') {
+               } else if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT') {
                     const curr: xrpl.IssuedCurrencyAmount = {
                          currency: this.currencyFieldDropDownValue.length > 3 ? this.utilsService.encodeCurrencyCode(this.currencyFieldDropDownValue) : this.currencyFieldDropDownValue,
                          issuer: this.issuerFields,

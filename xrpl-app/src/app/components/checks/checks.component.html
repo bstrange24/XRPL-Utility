@@ -255,17 +255,16 @@
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab">
                               @switch (activeTab) { @case ('create') {
-                              <!-- Currency + Amount (shared with cash) -->
+                              <!-- Currency + Amount -->
                               <div class="form-row">
                                    <div class="form-group">
                                         <label>Currency Code</label>
                                         <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="toggleIssuerField()" name="currencyField">
-                                             @for (curr of currencies; track curr) {
+                                             @for (curr of availableCurrencies; track curr) {
                                              <option [value]="curr">{{ curr }}</option>
                                              }
                                         </select>
                                    </div>
-
                                    <div class="form-group">
                                         <label>Amount</label>
                                         <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
@@ -277,14 +276,12 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label>Issuer</label>
-                                        <select id="issuerField" [(ngModel)]="selectedIssuer" name="issuerField" (ngModelChange)="toggleIssuerField()">
-                                             <option value="" disabled selected>Select an issuer</option>
+                                        <select id="issuerFields" [(ngModel)]="issuerFields" (ngModelChange)="toggleIssuerField()" name="issuerFields">
                                              @for (iss of issuers; track iss.address; let i = $index) {
                                              <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
                                              }
                                         </select>
                                    </div>
-
                                    <div class="form-group">
                                         <label>Currency Balance</label>
                                         <input type="text" [(ngModel)]="tokenBalance" name="tokenBalance" readonly />
@@ -323,15 +320,6 @@
                                              }
                                         </div>
                                    </ng-template>
-                                   <!-- <div class="form-group">
-                                             <label>Destination</label>
-                                             <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
-                                                  @for (dest of destinations; track dest.address; let i = $index) {
-                                                  <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
-                                                  }
-                                             </select>
-                                        </div> -->
-
                                    <div class="form-group">
                                         <label>Destination Tag</label>
                                         <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
@@ -376,7 +364,7 @@
                                    <div class="form-group">
                                         <label>Currency Code</label>
                                         <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="toggleIssuerField()" name="currencyField">
-                                             @for (curr of currencies; track curr) {
+                                             @for (curr of availableCurrencies; track curr) {
                                              <option [value]="curr">{{ curr }}</option>
                                              }
                                         </select>
