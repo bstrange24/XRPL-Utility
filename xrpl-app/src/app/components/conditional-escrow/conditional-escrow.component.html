@@ -256,7 +256,7 @@
                          <div class="checks-list">
                               @for (chk of exsitingMpt; track chk.mpt_issuance_id) {
                               <div class="check-card">
-                                   <div class="check-amount">MPT Amount: {{ chk.MPTAmount }} <strong>MPT Issuance ID: {{ chk.mpt_issuance_id }}</strong></div>
+                                   <div class="check-amount">LedgerEntryType: {{ chk.LedgerEntryType }} MPT Amount: {{ chk.MPTAmount }} <strong>MPT Issuance ID: {{ chk.mpt_issuance_id }}</strong></div>
 
                                    <div class="button-group">
                                         <button class="icon-btn copy-check-id" (click)="copyMptIssuanceIdHash(chk.mpt_issuance_id); $event.stopPropagation(); $event.preventDefault()" title="Copy MPT Issuance ID" type="button">
@@ -322,7 +322,7 @@
                                    <div class="form-group">
                                         <label>Currency Code</label>
                                         <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="toggleIssuerField()" name="currencyField">
-                                             @for (curr of currencies; track curr) {
+                                             @for (curr of availableCurrencies; track curr) {
                                              <option [value]="curr">{{ curr }}</option>
                                              }
                                         </select>
@@ -338,8 +338,7 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label>Issuer</label>
-                                        <select id="issuerField" [(ngModel)]="selectedIssuer" name="issuerField" (ngModelChange)="toggleIssuerField()">
-                                             <option value="" disabled selected>Select an issuer</option>
+                                        <select id="issuerFields" [(ngModel)]="issuerFields" (ngModelChange)="toggleIssuerField()" name="issuerFields">
                                              @for (iss of issuers; track iss.address; let i = $index) {
                                              <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
                                              }
@@ -393,14 +392,6 @@
                                              }
                                         </div>
                                    </ng-template>
-                                   <!-- <div class="form-group">
-                                        <label>Destination</label>
-                                        <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
-                                             @for (dest of destinations; track dest.address; let i = $index) {
-                                             <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
-                                             }
-                                        </select>
-                                   </div> -->
                                    <div class="form-group">
                                         <label>Destination Tag</label>
                                         <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
@@ -494,7 +485,7 @@
                                         <label>Available Escrows to finish</label>
                                         <select [(ngModel)]="selectedEscrow" name="selectedEscrow" class="form-control" (ngModelChange)="onEscrowSelect($event)">
                                              <option [ngValue]="null" disabled>Select an escrow to finish</option>
-                                             @for (chk of expiredOrFulfilledEscrows; track chk.Sequence) {
+                                             @for (chk of expiredOrFulfilledEscrows; track chk.Sender) {
                                              <option [ngValue]="chk">Amount in {{ formatIOUXrpAmountUI(chk.Amount) }} from {{ chk.Sender }}</option>
                                              }
                                         </select>
@@ -647,7 +638,7 @@
                                    }
                                    <!-- finish buttons -->
                                    @case ('finish') {
-                                   <button type="button" class="btn-primary-green" (click)="finishEscrow()">Finish Escrow</button>
+                                   <button type="button" class="btn-primary-green" (click)="finishConditionalEscrow()">Finish Escrow</button>
                                    }
                                    <!-- claim buttons -->
                                    @case ('cancel') {

@@ -422,7 +422,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      }
 
      selectWallet(index: number) {
-          if (this.selectedWalletIndex === index) return; // ← Add this guard!
+          if (this.selectedWalletIndex === index) return;
           this.selectedWalletIndex = index;
           this.onAccountChange();
      }
@@ -630,6 +630,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                this.currencyBalanceField = parsedBalances?.[this.currencyFieldDropDownValue]?.[this.issuerFields] ?? '0';
                this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance });
 
+               await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTrustLineFlagsInUI(accountObjects, wallet);
@@ -1089,6 +1090,8 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                if (this.ui.isSimulateEnabled) {
                     response = await this.xrplTransactions.simulateTransaction(client, paymentTx);
                } else {
+                    const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
+
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, paymentTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
@@ -1155,6 +1158,8 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
           const inputs: ValidationInputs = {
                seed: this.currentWallet.seed,
+               issuer: this.issuerFields,
+               currency: this.currencyFieldDropDownValue,
                amount: this.amountField,
                destination: this.destinationField,
                isRegularKeyAddress: this.isRegularKeyAddress,
@@ -1169,8 +1174,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           };
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects, trustLines, serverInfo, fee, currentLedger] = await Promise.all([
                     this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
@@ -1180,7 +1184,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     this.xrplService.calculateTransactionFee(client),
                     this.xrplService.getLastLedgerIndex(client),
                ]);
-
                // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
                // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
                // this.utilsService.logObjects('trustLines', trustLines);
@@ -1430,7 +1433,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                          this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance: gatewayBalances });
                     }
 
-                    // const gatewayBalances = cache?.tokenBalance || (await this.xrplService.getTokenBalance(await this.xrplService.getClient(), wallet.classicAddress, 'validated', ''));
                     await this.updateCurrencyBalance(gatewayBalances, wallet);
                } catch (e) {
                     console.warn('Balance update failed in toggleIssuerField', e);

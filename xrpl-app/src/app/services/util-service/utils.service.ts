@@ -986,7 +986,7 @@ export class UtilsService {
                if (now >= FinishAfter) {
                     canFinish = true;
                } else {
-                    reasonFinish = `Escrow can only be finished after ${this.convertXRPLTime(FinishAfter)}, current time is ${this.convertXRPLTime(now)}.`;
+                    reasonFinish = `Escrow can only be finished after: ${this.convertXRPLTime(FinishAfter)} The current time is: ${this.convertXRPLTime(now)}.`;
                }
           } else {
                reasonFinish = `No FinishAfter time defined.`;
@@ -1001,7 +1001,7 @@ export class UtilsService {
                          reasonCancel = `The Escrow has expired and can only be cancelled. Only the escrow owner (${owner}) can cancel this escrow.`;
                     }
                } else {
-                    reasonCancel = `Escrow can only be canceled after ${this.convertXRPLTime(CancelAfter)}, current time is ${this.convertXRPLTime(now)}.`;
+                    reasonCancel = `Escrow can only be canceled after: ${this.convertXRPLTime(CancelAfter)} The Current time is: ${this.convertXRPLTime(now)}.`;
                }
           } else {
                reasonCancel = `No CancelAfter time defined.`;

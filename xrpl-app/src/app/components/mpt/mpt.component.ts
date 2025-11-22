@@ -1391,14 +1391,12 @@ export class MptComponent implements OnInit, AfterViewInit {
                this.utilsService.setMemoField(mptTx, this.memoField);
           }
 
-          if (this.assetScaleField) {
+          if (this.assetScaleField && this.activeTab === 'create') {
                const assetScale = parseInt(this.assetScaleField);
                if (assetScale < 0 || assetScale > 15) {
                     return this.ui.setError('ERROR: Tick size must be between 3 and 15.');
                }
                mptTx.AssetScale = assetScale;
-          } else {
-               mptTx.AssetScale = 0;
           }
 
           if (this.flags.canTransfer) {
@@ -1409,18 +1407,14 @@ export class MptComponent implements OnInit, AfterViewInit {
                          return this.ui.setError('ERROR: Transfer Fee must be a number between 0 and 50,000 (for 0% to 50%).');
                     }
                     mptTx.TransferFee = transferFee;
-               } else {
-                    mptTx.TransferFee = 0;
                }
           }
 
-          if (this.tokenCountField) {
+          if (this.tokenCountField && this.activeTab === 'create') {
                mptTx.MaximumAmount = this.tokenCountField;
-          } else {
-               mptTx.MaximumAmount = '10';
           }
 
-          if (this.metaDataField) {
+          if (this.metaDataField && this.activeTab === 'create') {
                mptTx.MPTokenMetadata = xrpl.convertStringToHex(this.metaDataField);
           }
      }

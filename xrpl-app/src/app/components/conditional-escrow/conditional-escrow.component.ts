@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef, NgZone, ChangeDetectionStrategy } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -15,6 +15,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -36,6 +37,7 @@ interface ValidationInputs {
      destination?: string;
      conditionField?: string;
      fulfillment?: string;
+     finishTime?: string;
      escrowSequence?: string;
      cancelTime?: string;
      sequence?: string;
@@ -96,6 +98,7 @@ interface RippleState {
 }
 
 interface MPToken {
+     LedgerEntryType?: string;
      index?: string;
      mpt_issuance_id?: string;
      MPTokenIssuanceID?: string;
@@ -106,6 +109,11 @@ interface MPToken {
      OutstandingAmount?: string | number;
      TransferFee?: string | number;
      MPTokenMetadata?: string;
+}
+
+interface IssuerItem {
+     name: string;
+     address: string;
 }
 
 @Component({
@@ -128,8 +136,15 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
      private overlayRef: OverlayRef | null = null;
+     private issuerFieldSubject = new Subject<void>();
+     private destinationInputSubject = new Subject<string>();
      private readonly injector = inject(Injector);
      currencyFieldDropDownValue: string = 'XRP';
+     destinationField: string = '';
+     issuerFields: string = '';
+     currencyBalanceField: string = '';
+     gatewayBalance: string = '0';
+     amountField: string = '';
      ticketSequence: string = '';
      isTicket: boolean = false;
      ticketArray: string[] = [];
@@ -138,8 +153,6 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      multiSelectMode: boolean = false;
      selectedTicket: string = '';
      executionTime: string = '';
-     amountField: string = '';
-     destinationField: string = '';
      destinationTagField: string = '';
      escrowFinishTimeField: string = '';
      escrowFinishTimeUnit: string = 'seconds';
@@ -162,17 +175,19 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      signerQuorum: number = 0;
      multiSigningEnabled: boolean = false;
      regularKeySigningEnabled: boolean = false;
-     issuers: { name?: string; address: string }[] = [];
      masterKeyDisabled: boolean = false;
      tokenBalance: string = '0';
-     gatewayBalance: string = '0';
-     knownTrustLinesIssuers: { [key: string]: string[] } = { XRP: [] };
+     private knownTrustLinesIssuers: { [key: string]: string[] } = { XRP: [] };
      issuerToRemove: string = '';
      currencies: string[] = [];
+     userAddedCurrencyFieldDropDownValue: string[] = [];
+     userAddedissuerFields: string = '';
+     allKnownIssuers: string[] = [];
+     storedIssuers: IssuerItem[] = [];
+     selectedIssuer: string = '';
      newCurrency: string = '';
      newIssuer: string = '';
      tokenToRemove: string = '';
-     selectedIssuer: string = '';
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      escrowCancelDateTimeField: string = '';
      escrowFinishDateTimeField: string = '';
@@ -189,9 +204,14 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           spendableXrp: undefined,
      };
      destinations: { name?: string; address: string }[] = [];
-     currencyIssuers: { name?: string; address: string }[] = [];
-     private lastCurrency: string = '';
-     private lastIssuer: string = '';
+     issuers: { name?: string; address: string }[] = [];
+     customDestinations: { name?: string; address: string }[] = [];
+     showDropdown = false;
+     dropdownOpen = false;
+     filteredDestinations: DropdownItem[] = [];
+     highlightedIndex = -1;
+     lastCurrency: string = '';
+     lastIssuer: string = '';
      showManageTokens: boolean = false;
      environment: string = '';
      activeTab: string = 'create'; // default
@@ -213,11 +233,14 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
      filterQuery: string = '';
-     customDestinations: { name?: string; address: string }[] = [];
-     showDropdown: boolean = false;
-     dropdownOpen: boolean = false;
-     filteredDestinations: DropdownItem[] = [];
-     highlightedIndex = -1;
+     private accountDataCache = new Map<
+          string,
+          {
+               accountObjects?: xrpl.AccountObjectsResponse;
+               tokenBalance?: xrpl.GatewayBalancesResponse;
+               timestamp: number;
+          }
+     >();
 
      constructor(
           private readonly xrplService: XrplService,
@@ -238,12 +261,8 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      ) {}
 
      ngOnInit() {
-          const storedIssuers = this.storageService.getKnownIssuers('knownIssuers');
-          if (storedIssuers) {
-               this.knownTrustLinesIssuers = storedIssuers;
-          }
-          this.updateCurrencies();
-          this.currencyFieldDropDownValue = 'XRP'; // Set default to XRP
+          this.getKnownIssuersFromLocalStorage();
+
           this.environment = this.xrplService.getNet().environment;
           this.encryptionType = this.storageService.getInputValue('encryptionType');
 
@@ -259,6 +278,16 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     this.hasWallets = false;
                     return;
                }
+          });
+
+          // Debounce issuer/currency changes → 200ms
+          this.issuerFieldSubject.pipe(debounceTime(200), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(() => this.toggleIssuerField());
+
+          // Debounce destination input
+          this.destinationInputSubject.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => {
+               this.filterQuery = query;
+               this.destinationDropdownService.filter(query);
+               this.destinationDropdownService.openDropdown();
           });
 
           // Load custom destinations from storage
@@ -299,6 +328,35 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           this.destroy$.complete();
      }
 
+     async onCurrencyChange() {
+          this.issuerFieldSubject.next(); // ← instead of toggleIssuerField()
+     }
+
+     private getKnownIssuersFromLocalStorage() {
+          const knownIssuersObj = this.storageService.getKnownIssuers('knownIssuers');
+
+          this.storedIssuers = [];
+
+          if (knownIssuersObj) {
+               for (const currency in knownIssuersObj) {
+                    for (const address of knownIssuersObj[currency]) {
+                         this.storedIssuers.push({
+                              name: currency,
+                              address: address,
+                         });
+                    }
+               }
+               this.knownTrustLinesIssuers = knownIssuersObj;
+
+               if (Object.keys(this.knownTrustLinesIssuers).length > 0) {
+                    this.currencyFieldDropDownValue = Object.keys(this.knownTrustLinesIssuers)[0];
+               }
+
+               // This is the key line
+               this.updateCurrencies(); // ← Triggers auto-select + sorting
+          }
+     }
+
      trackByWalletAddress(index: number, wallet: Wallet): string {
           return wallet.address;
      }
@@ -314,7 +372,22 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      }
 
      async setTab(tab: string) {
+          console.log('Entering setTab');
+          const startTime = Date.now();
+
+          const previousTab = this.activeTab;
           this.activeTab = tab;
+
+          // Only clear messages when actually changing tabs
+          if (previousTab !== tab) {
+               this.ui.clearMessages();
+               this.ui.clearWarning();
+          }
+
+          if (Object.keys(this.knownTrustLinesIssuers).length > 0 && this.issuerFields === '') {
+               this.currencyFieldDropDownValue = Object.keys(this.knownTrustLinesIssuers)[0];
+          }
+
           if (this.activeTab === 'cancel' || this.activeTab === 'finish') {
                const client = await this.xrplService.getClient();
                const escrowObjects = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', 'escrow');
@@ -324,28 +397,25 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           if (this.activeTab === 'create') {
                const client = await this.xrplService.getClient();
                const accountObjects = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', '');
-               const escrowObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['Escrow']);
-               this.getExistingEscrows(escrowObjects, this.currentWallet.address);
-               const mptObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['MPToken']);
-               this.utilsService.logObjects('mptObjects', mptObjects);
-               this.getExistingMpts(mptObjects, this.currentWallet.address);
-               const trustlineObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['RippleState']);
-               this.utilsService.logObjects('trustlineObjects', trustlineObjects);
-               this.getExistingIOUs(trustlineObjects, this.currentWallet.address);
+               this.getExistingEscrows(accountObjects, this.currentWallet.address);
+               this.getExistingMpts(accountObjects, this.currentWallet.address);
+               this.getExistingIOUs(accountObjects, this.currentWallet.address);
           }
 
           if (this.currencyFieldDropDownValue !== 'XRP') {
                this.toggleIssuerField();
           }
 
-          this.clearFields(true);
           this.resetEscrowSelection();
-          this.ui.clearMessages();
-          this.ui.clearWarning();
+
+          this.clearFields(true);
+
+          this.executionTime = (Date.now() - startTime).toString();
+          console.log(`Leaving setTab in ${this.executionTime}ms`);
      }
 
      selectWallet(index: number) {
-          if (this.selectedWalletIndex === index) return; // ← Add this guard!
+          if (this.selectedWalletIndex === index) return;
           this.selectedWalletIndex = index;
           this.onAccountChange();
      }
@@ -358,7 +428,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      }
 
      saveName() {
-          this.walletManagerService.saveEdit(this.tempName); // ← PASS IT!
+          this.walletManagerService.saveEdit(this.tempName);
           this.tempName = '';
           this.updateDestinations();
      }
@@ -416,7 +486,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
           const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
           const client = await this.xrplService.getClient();
-          this.refreshWallets(client, faucetWallet.address);
+          this.refreshWallets(client, [faucetWallet.address]);
           this.ui.spinner = false;
           this.ui.clearWarning();
      }
@@ -466,10 +536,13 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           };
 
           if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
+               this.accountDataCache.clear();
                this.ui.clearWarning();
                this.updateDestinations();
-               this.ensureDefaultNotSelected();
                await this.getEscrows();
+               if (this.currencyFieldDropDownValue !== 'XRP') {
+                    await this.onCurrencyChange();
+               }
           } else if (this.currentWallet.address) {
                this.ui.setError('Invalid XRP address');
           }
@@ -545,7 +618,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                this.getExistingIOUs(accountObjects, this.currentWallet.address);
                this.getExpiredOrFulfilledEscrows(client, accountObjects, wallet.classicAddress);
 
-               if (this.currencyFieldDropDownValue !== 'XRP' && this.selectedIssuer !== '') {
+               if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT' && this.selectedIssuer !== '') {
                     const tokenBalance = await this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '');
                     console.debug('Token Balance:', tokenBalance.result);
 
@@ -556,6 +629,8 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     } else {
                          this.tokenBalance = '0';
                     }
+
+                    this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance });
                }
 
                await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
@@ -563,9 +638,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                this.refreshUIData(wallet, accountInfo, accountObjects);
                // this.getEscrowOwnerAddress();
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-
                this.updateTickets(accountObjects);
-
                this.clearFields(false);
                this.cdr.detectChanges();
           } catch (error: any) {
@@ -590,6 +663,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                amount: this.amountField,
                destination: this.destinationField,
                conditionField: this.escrowConditionField,
+               finishTime: this.escrowFinishTimeField,
                cancelTime: this.escrowCancelTimeField,
                destinationTag: this.destinationTagField,
                selectedIssuer: this.selectedIssuer,
@@ -619,7 +693,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                inputs.destination = resolvedDestination;
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'create');
+               const errors = await this.validationService.validate('CreateTimeBasedEscrow', { inputs, client, accountInfo });
                if (errors.length > 0) {
                     return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
@@ -629,11 +703,22 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                console.log(`finishUnit: ${this.escrowFinishTimeUnit} cancelUnit: ${this.escrowCancelTimeUnit}`);
                console.log(`finishTime: ${this.utilsService.convertXRPLTime(finishAfterTime)} cancelTime: ${this.utilsService.convertXRPLTime(cancelAfterTime)}`);
 
+               // Build amount object depending on currency
+               const amountToCash =
+                    this.currencyFieldDropDownValue === AppConstants.XRP_CURRENCY
+                         ? xrpl.xrpToDrops(this.amountField)
+                         : {
+                                value: this.amountField,
+                                currency: this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue),
+                                issuer: this.issuerFields,
+                           };
+
                let escrowCreateTx: xrpl.EscrowCreate = {
                     TransactionType: 'EscrowCreate',
                     Account: wallet.address,
-                    Amount: xrpl.xrpToDrops(this.amountField),
+                    Amount: amountToCash,
                     Destination: resolvedDestination,
+                    FinishAfter: finishAfterTime,
                     CancelAfter: cancelAfterTime,
                     Condition: this.escrowConditionField,
                     Fee: fee,
@@ -692,7 +777,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -701,17 +786,10 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                if (!this.ui.isSimulateEnabled) {
                     this.ui.successMessage = 'Created escrow successfully!';
+
                     const [updatedAccountInfo, updatedAccountObjects, gatewayBalances] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
 
                     await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
-
-                    // Filter specific types using the helper
-                    // const escrowObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['Escrow']);
-                    // this.utilsService.logObjects('escrowObjects', escrowObjects);
-                    // const mptObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['MPToken']);
-                    // this.utilsService.logObjects('mptObjects', mptObjects);
-                    // const trustlineObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['RippleState']);
-                    // this.utilsService.logObjects('trustlineObjects', trustlineObjects);
 
                     this.getExistingEscrows(updatedAccountObjects, wallet.classicAddress);
                     this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
@@ -752,7 +830,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                seed: this.currentWallet.seed,
                conditionField: this.escrowConditionField,
                fulfillment: this.escrowFulfillmentField,
-               escrowSequence: this.escrowSequenceNumberField,
+               escrowSequence: this.escrowSequenceNumberField.toString(),
                isRegularKeyAddress: this.isRegularKeyAddress,
                regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
                regularKeySeed: this.isRegularKeyAddress ? this.regularKeySeed : undefined,
@@ -786,14 +864,11 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                // this.utilsService.logEscrowObjects(escrowObjects, escrow);
                // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-               const isShortForm = this.destinationField.includes('...');
-               const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
-
-               inputs.destination = resolvedDestination;
+               inputs.destination = this.escrowOwnerField;
                inputs.accountInfo = accountInfo;
                inputs.escrow_objects = escrowObjects;
 
-               const errors = await this.validateInputs(inputs, 'finish');
+               const errors = await this.validationService.validate('FinishTimeBasedEscrow', { inputs, client, accountInfo });
                if (errors.length > 0) {
                     return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
@@ -803,11 +878,11 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                const escrowStatus = this.utilsService.checkEscrowStatus({ FinishAfter: escrow.FinshAfter ? Number(escrow.FinshAfter) : undefined, CancelAfter: escrow.CancelAfter ? Number(escrow.CancelAfter) : undefined, Condition: this.escrowConditionField, owner: this.escrowOwnerField }, currentRippleTime, wallet.classicAddress, 'finishEscrow', this.escrowFulfillmentField);
 
                if (!escrowStatus.canFinish && !escrowStatus.canCancel) {
-                    return this.ui.setError(`ERROR:\n${escrowStatus.reasonCancel}\n${escrowStatus.reasonFinish}`);
+                    return this.ui.setError(`\n${escrowStatus.reasonCancel}\n${escrowStatus.reasonFinish}`);
                }
 
                if (!escrowStatus.canFinish) {
-                    return this.ui.setError(`ERROR: ${escrowStatus.reasonFinish}`);
+                    return this.ui.setError(`${escrowStatus.reasonFinish}`);
                }
 
                let escrowFinishTx: xrpl.EscrowFinish = {
@@ -834,9 +909,9 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                          }
                     }
                } else if (this.currencyFieldDropDownValue !== 'MPT') {
-                    if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, escrowFinishTx, this.destinationField)) {
-                         return this.ui.setError('ERROR: Not enough IOU balance for this transaction');
-                    }
+                    // if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, escrowFinishTx, this.destinationField)) {
+                    //      return this.ui.setError('ERROR: Not enough IOU balance for this transaction');
+                    // }
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Finishing Conditional Escrow (no changes will be made)...' : 'Submitting Finish Conditional Escrow to Ledger...', 200);
@@ -873,7 +948,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -885,21 +960,11 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                     const [updatedAccountInfo, updatedAccountObjects, gatewayBalances] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
 
-                    // Filter specific types using the helper
-                    // const escrowObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['Escrow']);
-                    // this.utilsService.logObjects('escrowObjects', escrowObjects);
-                    // const mptObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['MPToken']);
-                    // this.utilsService.logObjects('mptObjects', mptObjects);
-                    // const trustlineObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['RippleState']);
-                    // this.utilsService.logObjects('trustlineObjects', trustlineObjects);
-
                     this.getExistingEscrows(updatedAccountObjects, wallet.classicAddress);
                     this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
                     this.getExistingIOUs(updatedAccountObjects, wallet.classicAddress);
 
-                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
-
-                    this.addNewDestinationFromUser();
+                    await this.refreshWallets(client, [wallet.classicAddress, this.escrowOwnerField]).catch(console.error);
 
                     if (this.currencyFieldDropDownValue !== 'XRP') {
                          await this.updateCurrencyBalance(gatewayBalances, wallet);
@@ -959,9 +1024,9 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                inputs.accountInfo = accountInfo;
                inputs.escrow_objects = escrowObjects;
 
-               const errors = await this.validateInputs(inputs, 'cancel');
+               const errors = await this.validationService.validate('CancelTimeBasedEscrow', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                let foundSequenceNumber = false;
@@ -990,12 +1055,14 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                // Check if the escrow can be canceled based on the CancelAfter time
                const currentRippleTime = await this.xrplService.getCurrentRippleTime(client);
-               const escrowStatus = this.utilsService.checkEscrowStatus({ FinishAfter: escrow.FinshAfter ? Number(escrow.FinshAfter) : undefined, CancelAfter: escrow.CancelAfter ? Number(escrow.CancelAfter) : undefined, Condition: this.escrowConditionField, owner: escrowOwner }, currentRippleTime, wallet.classicAddress, 'finishEscrow', this.escrowFulfillmentField);
-               console.log(`escrowStatus: `, escrowStatus);
+               // Ensure FinishAfter and CancelAfter are numbers
+               const finishAfterNum = escrow.FinshAfter !== undefined ? Number(escrow.FinshAfter) : undefined;
+               const cancelAfterNum = escrow.CancelAfter !== undefined ? Number(escrow.CancelAfter) : undefined;
+               const escrowStatus = this.utilsService.checkTimeBasedEscrowStatus({ FinishAfter: finishAfterNum, CancelAfter: cancelAfterNum, owner: escrowOwner }, currentRippleTime, wallet.classicAddress, 'cancelEscrow');
 
-               // if (!escrowStatus.canFinish) {
-               // return this.setError(`ERROR: ${escrowStatus.reasonFinish}`);
-               // }
+               if (!escrowStatus.canCancel) {
+                    return this.ui.setError(`${escrowStatus.reasonCancel}`);
+               }
 
                let escrowCancelTx: xrpl.EscrowCancel = {
                     TransactionType: 'EscrowCancel',
@@ -1046,7 +1113,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -1058,27 +1125,24 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                     const [updatedAccountInfo, updatedAccountObjects, gatewayBalances] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
 
-                    // Filter specific types using the helper
-                    // const escrowObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['Escrow']);
-                    // this.utilsService.logObjects('escrowObjects', escrowObjects);
-                    // const mptObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['MPToken']);
-                    // this.utilsService.logObjects('mptObjects', mptObjects);
-                    // const trustlineObjects = this.xrplService.filterAccountObjectsByTypes(updatedAccountObjects, ['RippleState']);
-                    // this.utilsService.logObjects('trustlineObjects', trustlineObjects);
+                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
-                    this.getExistingEscrows(updatedAccountObjects, wallet.classicAddress);
-                    this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
-                    this.getExistingIOUs(updatedAccountObjects, wallet.classicAddress);
+                    // Re-fetch and update the "Available Escrows to cancel" list
+                    this.getExpiredOrFulfilledEscrows(client, updatedAccountObjects, wallet.classicAddress);
 
-                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination, escrowOwner]).catch(console.error);
-
-                    this.addNewDestinationFromUser();
+                    // Refresh existingEscrow list (this powers the infoMessage on the Create tab, but also keeps data consistent)
+                    if (this.activeTab === 'cancel') {
+                         this.getExistingEscrows(updatedAccountObjects, wallet.classicAddress);
+                         this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
+                         this.getExistingIOUs(updatedAccountObjects, wallet.classicAddress);
+                    }
 
                     if (this.currencyFieldDropDownValue !== 'XRP') {
                          await this.updateCurrencyBalance(gatewayBalances, wallet);
                          await this.toggleIssuerField();
                     }
 
+                    this.resetEscrowSelection();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1104,6 +1168,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                          obj.LedgerEntryType === 'Escrow' &&
                          obj.Account === classicAddress &&
                          // Only condition-based escrows:
+                         (obj.FinishAfter || obj.CancelAfter) &&
                          !!obj.Condition
                )
                .map((obj: any): EscrowDataForUI => {
@@ -1138,11 +1203,12 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
      private getExistingMpts(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string): MPToken[] {
           this.exsitingMpt = (escrowObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'MPToken' && obj.Account === classicAddress)
+               .filter((obj: any) => (obj.LedgerEntryType === 'MPToken' || obj.LedgerEntryType === 'MPTokenIssuance') && (obj.Account === classicAddress || obj.Issuer === classicAddress))
                .map((obj: any): MPToken => {
                     return {
-                         MPTAmount: obj.MPTAmount,
-                         mpt_issuance_id: obj.MPTokenIssuanceID,
+                         LedgerEntryType: obj.LedgerEntryType,
+                         MPTAmount: obj.MaximumAmount ? obj.MaximumAmount : obj.MPTAmount,
+                         mpt_issuance_id: obj.mpt_issuance_id ? obj.mpt_issuance_id : obj.MPTokenIssuanceID,
                     };
                })
                .sort((a, b) => {
@@ -1294,117 +1360,104 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           this.utilsService.logObjects('expiredOrFulfilledEscrows', this.expiredOrFulfilledEscrows);
      }
 
-     async toggleIssuerField() {
-          console.log('Entering onCurrencyChange');
-          const startTime = Date.now();
+     async toggleIssuerField(): Promise<void> {
+          console.log('toggleIssuerField → currency:', this.currencyFieldDropDownValue);
+          // this.ui.clearMessages();
 
           try {
-               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-
-               const [gatewayBalances] = await Promise.all([this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
-
-               // Calculate total balance for selected currency
-               let balanceTotal: number = 0;
-
-               if (gatewayBalances.result.assets && Object.keys(gatewayBalances.result.assets).length > 0) {
-                    for (const [issuer, currencies] of Object.entries(gatewayBalances.result.assets)) {
-                         for (const { currency, value } of currencies) {
-                              if (this.utilsService.formatCurrencyForDisplay(currency) === this.currencyFieldDropDownValue) {
-                                   balanceTotal += Number(value);
-                              }
-                         }
-                    }
-                    this.gatewayBalance = this.utilsService.formatTokenBalance(balanceTotal.toString(), 18);
-               } else {
-                    this.gatewayBalance = '0';
+               if (!this.currencyFieldDropDownValue) {
+                    this.issuers = [];
+                    this.issuerFields = '';
+                    this.ui.setWarning('Please select a currency first.');
+                    this.ui.spinner = false;
+                    return;
                }
 
-               const encodedCurr = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
-               const issuerPromises = this.wallets
-                    .filter(w => xrpl.isValidAddress(w.address))
-                    .map(async w => {
-                         try {
-                              const tokenBalance = await this.xrplService.getTokenBalance(client, w.address, 'validated', '');
-                              const hasObligation = tokenBalance.result.obligations?.[encodedCurr];
+               const currency = this.currencyFieldDropDownValue;
+               const knownIssuersForThisCurrency = this.knownTrustLinesIssuers[currency] || [];
 
-                              if (hasObligation && hasObligation !== '0') {
-                                   return { name: w.name, address: w.address };
-                              } else if (w.isIssuer === true) {
-                                   return { name: w.name, address: w.address };
-                              }
-                         } catch (err) {
-                              console.warn(`Issuer check failed for ${w.address}:`, err);
-                         }
-                         return null;
-                    });
+               // Build issuer list — ONLY from knownTrustLinesIssuers[currency]
+               const issuerEntries: { name: string; address: string }[] = [];
 
-               const issuerResults = await Promise.all(issuerPromises);
+               for (const addr of knownIssuersForThisCurrency) {
+                    if (!xrpl.isValidAddress(addr)) continue;
 
-               // Step 1: filter out nulls
-               const nonNullIssuers = issuerResults.filter((i): i is { name: string; address: string } => {
-                    const isValid = i !== null;
-                    console.debug('Filtering null:', i, '->', isValid);
-                    return isValid;
-               });
+                    // Try to get nice name
+                    const wallet = this.wallets.find(w => w.address === addr);
+                    const custom = this.customDestinations.find(d => d.address === addr);
 
-               // Step 2: remove duplicates by address
-               const uniqueIssuers = nonNullIssuers.filter((candidate, index, self) => {
-                    const firstIndex = self.findIndex(c => c.address === candidate.address);
-                    const isUnique = index === firstIndex;
-                    console.debug('Checking uniqueness:', candidate, 'Index:', index, 'First index:', firstIndex, 'Unique?', isUnique);
-                    return isUnique;
-               });
+                    const name = wallet?.name || custom?.name || currency || `Issuer (${addr.slice(0, 8)}...)`;
 
-               console.debug('Unique issuers:', uniqueIssuers);
+                    issuerEntries.push({ name, address: addr });
+               }
 
-               this.issuers = uniqueIssuers;
+               // Sort by name
+               this.issuers = issuerEntries.sort((a, b) => a.name.localeCompare(b.name));
 
-               const knownIssuers = this.knownTrustLinesIssuers[this.currencyFieldDropDownValue] || [];
+               // Auto-select first issuer
+               if (this.issuers.length > 0) {
+                    if (!this.issuerFields || !this.issuers.some(i => i.address === this.issuerFields)) {
+                         this.issuerFields = this.issuers[0].address;
+                    }
+                    this.ui.clearWarning();
+               } else {
+                    if (currency !== 'XRP' && currency !== 'MPT') {
+                         this.issuerFields = '';
+                         this.ui.setWarning(`No issuers configured for <strong>${currency}</strong>`);
+                    }
+               }
 
-               if (!this.selectedIssuer || !this.issuers.some(iss => iss.address === this.selectedIssuer)) {
-                    let newIssuer = '';
+               try {
+                    const wallet = await this.getWallet();
+                    const cache = this.getCachedAccountData(this.currentWallet.address);
 
-                    // Find the first matching known issuer that exists in available issuers
-                    const matchedKnownIssuer = knownIssuers.find(known => this.issuers.some(iss => iss.address === known));
+                    let accountObjects: xrpl.AccountObjectsResponse;
+                    let gatewayBalances: xrpl.GatewayBalancesResponse;
 
-                    if (matchedKnownIssuer) {
-                         newIssuer = matchedKnownIssuer;
-                    } else if (this.issuers.length > 0) {
-                         newIssuer = this.issuers[0].address;
+                    if (cache?.accountObjects && cache?.tokenBalance) {
+                         accountObjects = cache.accountObjects;
+                         gatewayBalances = cache.tokenBalance;
                     } else {
-                         newIssuer = '';
+                         const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                         [gatewayBalances, accountObjects] = await Promise.all([this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+                         this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance: gatewayBalances });
                     }
 
-                    this.selectedIssuer = newIssuer;
-               }
-
-               if (this.issuers.length === 0) {
-                    console.warn(`No issuers found among wallets for currency: ${this.currencyFieldDropDownValue}`);
-               }
-
-               if (this.currencyFieldDropDownValue === 'XRP') {
-                    this.destinationField = this.wallets[1]?.address || ''; // Default to first wallet address for XRP
-               } else {
-                    const currencyChanged = this.lastCurrency !== this.currencyFieldDropDownValue;
-                    const issuerChanged = this.lastIssuer !== this.selectedIssuer;
-                    if (currencyChanged || issuerChanged) {
-                         this.lastCurrency = this.currencyFieldDropDownValue;
-                         this.lastIssuer = this.selectedIssuer;
-                    }
                     await this.updateCurrencyBalance(gatewayBalances, wallet);
+               } catch (e) {
+                    console.warn('Balance update failed in toggleIssuerField', e);
                }
-               this.ensureDefaultNotSelected();
+
+               this.cdr.detectChanges();
           } catch (error: any) {
-               this.tokenBalance = '0';
-               this.gatewayBalance = '0';
-               console.error('Error in onCurrencyChange:', error);
-               this.ui.setError(`ERROR: Failed to fetch balance - ${error.message || 'Unknown error'}`);
+               console.error('Error in toggleIssuerField:', error);
+               this.ui.setError('Failed to load issuers');
+               this.issuers = [];
+               this.issuerFields = '';
           } finally {
                this.ui.spinner = false;
-               this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving onCurrencyChange in ${this.executionTime}ms`);
           }
      }
+
+     get availableCurrencies(): string[] {
+          const baseCurrencies = Object.keys(this.knownTrustLinesIssuers).filter(c => c !== '' && c !== 'MPT'); // Exclude XRP and MPT by default
+
+          // On the Create Escrow tab → always include MPT (and XRP if you want)
+          if (this.activeTab === 'create') {
+               const currencies = ['XRP', 'MPT', ...baseCurrencies];
+               return [...new Set(currencies)].sort(); // dedupe + sort
+          }
+
+          // On ANY other tab (especially Create Trustline) → MPT is NOT allowed
+          return baseCurrencies.sort();
+     }
+
+     // Only used in Trustlines template
+     // get availableCurrencies(): string[] {
+     //      const all = Object.keys(this.knownTrustLinesIssuers);
+     //      // Remove XRP only on Trustlines page
+     //      return all.filter(currency => currency !== '');
+     // }
 
      private addNewDestinationFromUser() {
           if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
@@ -1418,55 +1471,56 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      }
 
      private async setTxOptionalFields(client: xrpl.Client, escrowTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
-               if (this.selectedSingleTicket) {
-                    const ticketExists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
-                    if (!ticketExists) {
-                         return this.ui.setError(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
+          if (this.selectedSingleTicket) {
+               const ticketExists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
+               if (!ticketExists) {
+                    this.ui.setError(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
+               }
+               this.utilsService.setTicketSequence(escrowTx, this.selectedSingleTicket, true);
+          } else {
+               if (this.multiSelectMode && this.selectedTickets.length > 0) {
+                    console.log('Setting multiple tickets:', this.selectedTickets);
+                    this.utilsService.setTicketSequence(escrowTx, accountInfo.result.account_data.Sequence, false);
+               }
+          }
+
+          if (this.destinationTagField && parseInt(this.destinationTagField) > 0) {
+               this.utilsService.setDestinationTag(escrowTx, this.destinationTagField);
+          }
+          if (this.memoField) {
+               this.utilsService.setMemoField(escrowTx, this.memoField);
+          }
+
+          if (txType === 'create') {
+               if (this.currencyFieldDropDownValue === 'MPT') {
+                    const isShortForm = this.destinationField.includes('...');
+                    const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
+                    const accountObjects = await this.xrplService.getAccountObjects(client, resolvedDestination, 'validated', '');
+                    const mptTokens = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPToken');
+                    console.debug(`Destination MPT Tokens:`, mptTokens);
+                    console.debug('MPT Issuance ID:', this.mptIssuanceIdField);
+                    const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === this.mptIssuanceIdField);
+
+                    if (!authorized) {
+                         throw new Error(`Destination ${resolvedDestination} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField}). Please ensure authorization has been completed.`);
                     }
-                    this.utilsService.setTicketSequence(escrowTx, this.selectedSingleTicket, true);
+
+                    const curr: xrpl.MPTAmount = {
+                         mpt_issuance_id: this.mptIssuanceIdField,
+                         value: this.amountField,
+                    };
+                    escrowTx.Amount = curr;
+               } else if (this.currencyFieldDropDownValue !== 'XRP') {
+                    const curr: xrpl.IssuedCurrencyAmount = {
+                         currency: this.currencyFieldDropDownValue.length > 3 ? this.utilsService.encodeCurrencyCode(this.currencyFieldDropDownValue) : this.currencyFieldDropDownValue,
+                         issuer: this.issuerFields,
+                         value: this.amountField,
+                    };
+                    escrowTx.Amount = curr;
                } else {
-                    if (this.multiSelectMode && this.selectedTickets.length > 0) {
-                         console.log('Setting multiple tickets:', this.selectedTickets);
-                         this.utilsService.setTicketSequence(escrowTx, accountInfo.result.account_data.Sequence, false);
-                    }
+                    escrowTx.Amount = xrpl.xrpToDrops(this.amountField);
                }
-
-               if (this.destinationTagField && parseInt(this.destinationTagField) > 0) {
-                    this.utilsService.setDestinationTag(escrowTx, this.destinationTagField);
-               }
-               if (this.memoField) {
-                    this.utilsService.setMemoField(escrowTx, this.memoField);
-               }
-
-               if (txType === 'create') {
-                    if (this.currencyFieldDropDownValue === 'MPT') {
-                         const accountObjects = await this.xrplService.getAccountObjects(client, this.destinationField, 'validated', '');
-                         const mptTokens = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPToken');
-                         console.debug(`Destination MPT Tokens:`, mptTokens);
-                         console.debug('MPT Issuance ID:', this.mptIssuanceIdField);
-                         const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === this.mptIssuanceIdField);
-
-                         if (!authorized) {
-                              throw new Error(`Destination ${this.destinationField} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField}). Please ensure authorization has been completed.`);
-                         }
-
-                         const curr: xrpl.MPTAmount = {
-                              mpt_issuance_id: this.mptIssuanceIdField,
-                              value: this.amountField,
-                         };
-                         escrowTx.Amount = curr;
-                    } else if (this.currencyFieldDropDownValue !== 'XRP') {
-                         const curr: xrpl.IssuedCurrencyAmount = {
-                              currency: this.currencyFieldDropDownValue.length > 3 ? this.utilsService.encodeCurrencyCode(this.currencyFieldDropDownValue) : this.currencyFieldDropDownValue,
-                              issuer: this.selectedIssuer,
-                              value: this.amountField,
-                         };
-                         escrowTx.Amount = curr;
-                    } else {
-                         escrowTx.Amount = xrpl.xrpToDrops(this.amountField);
-                    }
-               }
-
+          }
      }
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
@@ -1550,7 +1604,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     // This callback runs inside NgZone → UI updates safely
                     this.currentWallet = { ...newCurrentWallet };
                     // Optional: trigger change detection if needed
-                    this.cdr.markForCheck();
+                    this.cdr.detectChanges();
                }
           );
      }
@@ -1613,272 +1667,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          if (this.destinations.length > 0 && !this.destinationField) {
-               // this.destinationField = this.destinations[0].address;
-          }
           this.storageService.set('destinations', this.destinations);
-          this.ensureDefaultNotSelected();
-     }
-
-     ensureDefaultNotSelected() {
-          const currentAddress = this.currentWallet.address;
-          if (currentAddress && this.destinations.length > 0) {
-               if (!this.destinationField || this.destinationField === currentAddress) {
-                    const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    // this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
-               }
-          }
-          if (currentAddress && this.currencyIssuers.length > 0) {
-               if (!this.selectedIssuer || this.selectedIssuer === currentAddress) {
-                    const nonSelectedIss = this.currencyIssuers.find(i => i.address !== currentAddress);
-                    // this.selectedIssuer = nonSelectedIss ? nonSelectedIss.address : this.currencyIssuers[0].address;
-               }
-          }
-          this.cdr.detectChanges();
-     }
-
-     private async validateInputs(inputs: ValidationInputs, action: string): Promise<string[]> {
-          const errors: string[] = [];
-
-          // Early return for empty inputs
-          if (!inputs || Object.keys(inputs).length === 0) {
-               return ['No inputs provided.'];
-          }
-
-          // --- Shared skip helper ---
-          const shouldSkipNumericValidation = (value: string | undefined): boolean => {
-               return value === undefined || value === null || value.trim() === '';
-          };
-
-          // --- Common validators ---
-          const isRequired = (value: string | null | undefined, fieldName: string): string | null => {
-               if (value == null || !this.utilsService.validateInput(value)) {
-                    return `${fieldName} cannot be empty.`;
-               }
-               return null;
-          };
-
-          const isValidXrpAddress = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidAddress(value)) {
-                    return `${fieldName} is invalid.`;
-               }
-               return null;
-          };
-
-          const isValidSecret = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidSecret(value)) {
-                    return `${fieldName} is invalid.`;
-               }
-               return null;
-          };
-
-          const isNotSelfPayment = (sender: string | undefined, receiver: string | undefined): string | null => {
-               if (sender && receiver && sender === receiver) {
-                    return `Sender and receiver cannot be the same.`;
-               }
-               return null;
-          };
-
-          const isValidNumber = (value: string | undefined, fieldName: string, minValue?: number, allowEmpty: boolean = false): string | null => {
-               // Skip number validation if value is empty — required() will handle it
-               if (shouldSkipNumericValidation(value) || (allowEmpty && value === '')) return null;
-
-               // Type-safe parse
-               const num = parseFloat(value as string);
-
-               if (isNaN(num) || !isFinite(num)) {
-                    return `${fieldName} must be a valid number.`;
-               }
-               if (minValue !== undefined && num <= minValue) {
-                    return `${fieldName} must be greater than ${minValue}.`;
-               }
-               return null;
-          };
-
-          const isValidSeed = (value: string | undefined): string | null => {
-               if (value) {
-                    const { type } = this.utilsService.detectXrpInputType(value);
-                    if (type === 'unknown') {
-                         return 'Account seed or mnemonic is invalid.';
-                    }
-               }
-               return null;
-          };
-
-          const isValidCondition = (value: string | undefined): string | null => {
-               if (value && !this.utilsService.validateCondition(value)) {
-                    return 'Escrow condition is invalid';
-               }
-               return null;
-          };
-
-          const isValidFulfillment = (value: string | undefined, condition: string | undefined): string | null => {
-               if (value && !this.utilsService.validateFulfillment(value, condition ?? '')) {
-                    return 'Escrow fulfillment is invalid';
-               }
-               return null;
-          };
-
-          const validateMultiSign = (addressesStr: string | undefined, seedsStr: string | undefined): string | null => {
-               if (!addressesStr || !seedsStr) return null;
-               const addresses = this.utilsService.getMultiSignAddress(addressesStr);
-               const seeds = this.utilsService.getMultiSignSeeds(seedsStr);
-               if (addresses.length === 0) {
-                    return 'At least one signer address is required for multi-signing.';
-               }
-               if (addresses.length !== seeds.length) {
-                    return 'Number of signer addresses must match number of signer seeds.';
-               }
-               const invalidAddr = addresses.find((addr: string) => !xrpl.isValidAddress(addr));
-               if (invalidAddr) {
-                    return `Invalid signer address: ${invalidAddr}.`;
-               }
-               const invalidSeed = seeds.find((seed: string) => !xrpl.isValidSecret(seed));
-               if (invalidSeed) {
-                    return 'One or more signer seeds are invalid.';
-               }
-               return null;
-          };
-
-          // Action-specific config: required fields and custom rules
-          const checkDestinationTagRequirement = async (): Promise<string | null> => {
-               if (!inputs.destination) return null; // Skip if no destination provided
-               try {
-                    const client = await this.xrplService.getClient();
-                    const accountInfo = await this.xrplService.getAccountInfo(client, inputs.destination, 'validated', '');
-                    if (accountInfo.result.account_flags.requireDestinationTag && (!inputs.destinationTag || inputs.destinationTag.trim() === '')) {
-                         return `Receiver requires a Destination Tag for payment.`;
-                    }
-               } catch (err) {
-                    console.error('Failed to check destination tag requirement:', err);
-                    return `Could not validate destination account.`;
-               }
-               return null;
-          };
-
-          // --- Action-specific config ---
-          const actionConfig: Record<
-               string,
-               {
-                    required: (keyof ValidationInputs)[];
-                    customValidators?: (() => string | null)[];
-                    asyncValidators?: (() => Promise<string | null>)[];
-               }
-          > = {
-               getEscrowOwnerAddress: {
-                    required: ['senderAddress'],
-                    customValidators: [() => isValidXrpAddress(inputs.senderAddress, 'Account not found'), () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null)],
-                    asyncValidators: [],
-               },
-               toggleIssuerField: {
-                    required: ['seed'],
-                    customValidators: [() => isValidSeed(inputs.seed), () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null)],
-                    asyncValidators: [],
-               },
-               get: {
-                    required: ['seed'],
-                    customValidators: [() => isValidSeed(inputs.seed), () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null)],
-                    asyncValidators: [],
-               },
-               create: {
-                    required: ['seed', 'amount', 'destination', 'conditionField', 'cancelTime'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidNumber(inputs.amount, 'XRP Amount', 0),
-                         () => isValidXrpAddress(inputs.destination, 'Destination'),
-                         () => isValidNumber(inputs.cancelTime, 'Escrow cancel time', 0),
-                         () => isValidCondition(inputs.conditionField),
-                         () => isValidNumber(inputs.destinationTag, 'Destination Tag', 0, true),
-                         () => isNotSelfPayment(inputs.senderAddress, inputs.destination),
-                         () => (inputs.currency !== 'XRP' && inputs.currency !== 'MPT' && !inputs.selectedIssuer ? 'Issuer is required for non-XRP currencies' : null),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                    ],
-                    asyncValidators: [checkDestinationTagRequirement],
-               },
-               finish: {
-                    required: ['seed', 'escrowSequence', 'conditionField', 'fulfillment'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidNumber(String(inputs.escrowSequence), 'Escrow sequence number', 0),
-                         () => isValidCondition(inputs.conditionField),
-                         () => isValidFulfillment(inputs.fulfillment, inputs.conditionField),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                    ],
-                    asyncValidators: [],
-               },
-               cancel: {
-                    required: ['seed', 'escrowSequence'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidNumber(String(inputs.escrowSequence), 'Escrow sequence number', 0),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                    ],
-                    asyncValidators: [],
-               },
-               default: { required: [], customValidators: [], asyncValidators: [] },
-          };
-
-          const config = actionConfig[action] || actionConfig['default'];
-
-          // --- Run required checks ---
-          config.required.forEach((field: keyof ValidationInputs) => {
-               const err = isRequired(inputs[field], field.charAt(0).toUpperCase() + field.slice(1));
-               if (err) errors.push(err);
-          });
-
-          // --- Run sync custom validators ---
-          config.customValidators?.forEach((validator: () => string | null) => {
-               const err = validator();
-               if (err) errors.push(err);
-          });
-
-          // --- Run async validators ---
-          if (config.asyncValidators) {
-               for (const validator of config.asyncValidators) {
-                    const err = await validator();
-                    if (err) errors.push(err);
-               }
-          }
-
-          // --- Always validate optional fields ---
-          const multiErr = validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds);
-          if (multiErr) errors.push(multiErr);
-
-          if (errors.length === 0 && inputs.useMultiSign && (inputs.multiSignAddresses === 'No Multi-Sign address configured for account' || inputs.multiSignSeeds === '')) {
-               errors.push('At least one signer address is required for multi-signing');
-          }
-
-          const regAddrErr = isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address');
-          if (regAddrErr && inputs.regularKeyAddress !== 'No RegularKey configured for account') errors.push(regAddrErr);
-
-          const regSeedErr = isValidSecret(inputs.regularKeySeed, 'Regular Key Seed');
-          if (regSeedErr) errors.push(regSeedErr);
-
-          return errors;
      }
 
      onEscrowSelect(selected: any) {
@@ -1889,57 +1678,46 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      }
 
      async getEscrowOwnerAddress() {
-          const inputs: ValidationInputs = {
-               senderAddress: this.currentWallet.address,
-          };
-
-          const senderAddress = inputs.senderAddress || '';
-          if (!senderAddress) {
-               this.escrowOwnerField = '';
-               return;
-          }
+          console.log('Entering getEscrowOwnerAddress');
+          const startTime = Date.now();
 
           try {
                const client = await this.xrplService.getClient();
-               const escrowsTx = await this.xrplService.getAccountObjects(client, senderAddress, 'validated', 'escrow');
+               const accountInfo = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', '');
+               // this.utilsService.logObjects('accountInfo', accountInfo);
 
-               // Optional: Simplify debug log — avoid expensive stringify
-               this.utilsService.logObjects('escrowsTx', escrowsTx);
+               const inputs: ValidationInputs = { seed: this.currentWallet.seed, senderAddress: this.currentWallet.address, accountInfo: accountInfo };
 
-               inputs.accountInfo = escrowsTx;
-
-               const errors = await this.validateInputs(inputs, 'getEscrowOwnerAddress');
+               const errors = await this.validationService.validate('EscrowOwner', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
-               const escrowObjects = escrowsTx.result.account_objects;
+               const escrowObjects = accountInfo.result.account_objects;
                if (escrowObjects.length === 0) {
-                    this.escrowOwnerField = senderAddress;
+                    this.escrowOwnerField = this.currentWallet.address;
                     return;
                }
 
                const targetSequence = Number(this.escrowSequenceNumberField);
                if (isNaN(targetSequence)) {
-                    this.escrowOwnerField = senderAddress;
+                    this.escrowOwnerField = this.currentWallet.address;
                     return;
                }
 
-               const txPromises = escrowObjects.map(escrow => {
+               const txPromises = escrowObjects.map(async escrow => {
                     const previousTxnID = escrow.PreviousTxnID;
                     if (typeof previousTxnID !== 'string') {
                          return Promise.resolve({ escrow, sequence: null });
                     }
-                    return this.xrplService
-                         .getTxData(client, previousTxnID)
-                         .then(sequenceTx => {
-                              const offerSequence = sequenceTx.result.tx_json.Sequence;
-                              return { escrow, sequence: offerSequence ?? null };
-                         })
-                         .catch(err => {
-                              console.error(`Failed to fetch tx ${previousTxnID}:`, err.message || err);
-                              return { escrow, sequence: null };
-                         });
+                    try {
+                         const sequenceTx = await this.xrplService.getTxData(client, previousTxnID);
+                         const offerSequence = sequenceTx.result.tx_json.Sequence;
+                         return { escrow, sequence: offerSequence ?? null };
+                    } catch (err: any) {
+                         console.error(`Failed to fetch tx ${previousTxnID}:`, err.message || err);
+                         return { escrow, sequence: null };
+                    }
                });
 
                const results = await Promise.all(txPromises);
@@ -1948,19 +1726,23 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                if (match && 'Account' in match.escrow) {
                     this.escrowOwnerField = match.escrow.Account;
                } else {
-                    this.escrowOwnerField = senderAddress; // safe fallback
+                    this.escrowOwnerField = this.currentWallet.address; // safe fallback
                }
           } catch (error: any) {
                console.error('Error in getEscrowOwnerAddress:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
-               this.escrowOwnerField = senderAddress; // safe fallback
+               this.escrowOwnerField = this.currentWallet.address; // safe fallback
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving getEscrowOwnerAddress in ${this.executionTime}ms`);
           }
      }
 
      private async updateCurrencyBalance(gatewayBalance: xrpl.GatewayBalancesResponse, wallet: xrpl.Wallet) {
           const parsedBalances = this.parseAllGatewayBalances(gatewayBalance, wallet);
           if (parsedBalances && Object.keys(parsedBalances).length > 0) {
-               this.tokenBalance = parsedBalances[this.currencyFieldDropDownValue]?.[wallet.classicAddress] ?? parsedBalances[this.currencyFieldDropDownValue]?.[this.selectedIssuer] ?? '0';
+               this.tokenBalance = parsedBalances[this.currencyFieldDropDownValue]?.[wallet.classicAddress] ?? parsedBalances[this.currencyFieldDropDownValue]?.[this.issuerFields] ?? '0';
           } else {
                this.tokenBalance = '0';
           }
@@ -2011,6 +1793,20 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           return grouped;
      }
 
+     private getCachedAccountData(address: string) {
+          const cached = this.accountDataCache.get(address);
+          if (cached && Date.now() - cached.timestamp < 8000) {
+               // 8 sec cache
+               return cached;
+          }
+          return null;
+     }
+
+     private setCachedAccountData(address: string, data: Partial<{ accountObjects: xrpl.AccountObjectsResponse; tokenBalance: xrpl.GatewayBalancesResponse }>) {
+          const existing = this.accountDataCache.get(address) || { timestamp: Date.now() };
+          this.accountDataCache.set(address, { ...existing, ...data, timestamp: Date.now() });
+     }
+
      private async getWallet() {
           const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
           if (!wallet) {
@@ -2033,7 +1829,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      }
 
      private scheduleHighlight() {
-          // Use the captured injector to run afterRenderEffect  safely
+          // Use the captured injector to run afterRenderEffect safely
           afterRenderEffect(
                () => {
                     if (this.ui.paymentTx && this.paymentJson?.nativeElement) {
@@ -2041,6 +1837,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                          this.paymentJson.nativeElement.textContent = json;
                          Prism.highlightElement(this.paymentJson.nativeElement);
                     }
+
                     if (this.ui.txResult && this.txResultJson?.nativeElement) {
                          const json = JSON.stringify(this.ui.txResult, null, 2);
                          this.txResultJson.nativeElement.textContent = json;
@@ -2069,113 +1866,152 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           });
      }
 
+     // public get infoMessage(): string | null {
+     //      // ------------------------------------------------------------------
+     //      // 1. Decide which data belongs to the current tab
+     //      // ------------------------------------------------------------------
+     //      let escrows: any[] = [];
+     //      let description = '';
+     //      let showEscrowLink = false;
+
+     //      if (this.activeTab === 'create') {
+     //           escrows = this.existingEscrow; // escrows I own
+     //           description = 'on the ledger';
+     //           showEscrowLink = escrows.length > 0;
+     //      } else if (this.activeTab === 'cancel') {
+     //           escrows = this.expiredOrFulfilledEscrows.filter(
+     //                (e: { Sender: string }) =>
+     //                     // On Cancel tab we are the Owner → only show escrows we created
+     //                     e.Sender === this.currentWallet.address
+     //           );
+     //           description = 'that can be cancelled';
+     //           showEscrowLink = escrows.length > 0;
+     //      } else if (this.activeTab === 'finish') {
+     //           escrows = this.expiredOrFulfilledEscrows.filter(
+     //                (e: { Destination: string }) =>
+     //                     // On Finish tab we are the Destination → only show escrows sent to us
+     //                     e.Destination === this.currentWallet.address
+     //           );
+     //           description = 'that can be finished';
+     //           showEscrowLink = escrows.length > 0;
+     //      }
+
+     //      const walletName = this.currentWallet.name || 'selected';
+     //      const escrowCount = escrows.length;
+
+     //      // ------------------------------------------------------------------
+     //      // 2. Build the message – **never mention IOUs/MPTs on Cancel/Finish**
+     //      // ------------------------------------------------------------------
+     //      if (escrowCount === 0) {
+     //           return `The <code>${walletName}</code> wallet has no escrows ${description}.`;
+     //      }
+
+     //      const escrowWord = escrowCount === 1 ? 'escrow' : 'escrows';
+     //      let message = `The <code>${walletName}</code> wallet has ${escrowCount} ${escrowWord} ${description}.`;
+
+     //      if (showEscrowLink) {
+     //           message += `<br><a href="${this.url}account/${this.currentWallet.address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Escrows on XRPL Win</a>`;
+     //      }
+
+     //      return message;
+     // }
+
      public get infoMessage(): string | null {
-          const tabConfig = {
-               create: {
-                    escrows: this.existingEscrow,
-                    mpts: this.exsitingMpt,
-                    ious: this.existingIOUs,
-                    description: 'on the ledger',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: false,
-               },
-               finish: {
-                    escrows: this.expiredOrFulfilledEscrows,
-                    mpts: [], // Add appropriate MPT array if needed
-                    ious: [], // Add appropriate IOU array if needed
-                    description: 'that can be finished',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: false,
-               },
-               cancel: {
-                    escrows: this.expiredOrFulfilledEscrows,
-                    mpts: [], // Add appropriate MPT array if needed
-                    ious: [], // Add appropriate IOU array if needed
-                    description: 'that can be cancelled',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: false,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
-
           const walletName = this.currentWallet.name || 'selected';
-          const escrowCount = config.escrows.length;
-          const mptCount = config.mpts.length;
-          const iouCount = config.ious.length;
-          const totalCount = escrowCount + mptCount + iouCount;
 
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+          // ==================================================================
+          // 1. CREATE TAB → show everything (escrows + IOUs + MPTs)
+          // ==================================================================
+          if (this.activeTab === 'create') {
+               const escrowCount = this.existingEscrow.length;
+               const iouCount = this.existingIOUs.length;
+               const mptCount = this.exsitingMpt.length;
 
-          // Build the item list
-          const itemParts = [];
-          if (escrowCount > 0) {
-               const escrowText = escrowCount === 1 ? 'escrow' : 'escrows';
-               itemParts.push(`${escrowCount} ${escrowText}`);
-          }
-          if (mptCount > 0) {
-               const mptText = mptCount === 1 ? 'MPT' : 'MPTs';
-               itemParts.push(`${mptCount} ${mptText}`);
-          }
-          if (iouCount > 0) {
-               const iouText = iouCount === 1 ? 'IOU' : 'IOUs';
-               itemParts.push(`${iouCount} ${iouText}`);
-          }
+               const parts: string[] = [];
+               if (escrowCount > 0) parts.push(`${escrowCount} escrow${escrowCount > 1 ? 's' : ''}`);
+               if (iouCount > 0) parts.push(`${iouCount} IOU${iouCount > 1 ? 's' : ''}`);
+               if (mptCount > 0) parts.push(`${mptCount} MPT${mptCount > 1 ? 's' : ''}`);
 
-          // Format the item list
-          let itemList = '';
-          if (itemParts.length === 1) {
-               itemList = itemParts[0];
-          } else if (itemParts.length === 2) {
-               itemList = itemParts.join(' and ');
-          } else if (itemParts.length === 3) {
-               itemList = `${itemParts[0]}, ${itemParts[1]}, and ${itemParts[2]}`;
-          }
-
-          let message = `The <code>${walletName}</code> wallet has ${dynamicText}${itemList} ${config.description}.`;
-
-          if (totalCount > 0) {
-               const links = [];
-               if (escrowCount > 0) {
-                    links.push(`<a href="${this.url}account/${this.currentWallet.address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Escrows</a>`);
-               }
-               if (mptCount > 0) {
-                    links.push(`<a href="${this.url}account/${this.currentWallet.address}/mpts/owned" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View MPTs</a>`);
-               }
-               if (iouCount > 0) {
-                    links.push(`<a href="${this.url}account/${this.currentWallet.address}/tokens" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View IOUs</a>`);
+               if (parts.length === 0) {
+                    return `The <code>${walletName}</code> wallet has no escrows, IOUs or MPTs yet.`;
                }
 
-               if (links.length === 1) {
-                    message += `<br>${links[0]} on XRPL Win`;
-               } else {
+               let message = `The <code>${walletName}</code> wallet has ${this.formatParts(parts)} on the ledger.`;
+
+               // Add links
+               const links: string[] = [];
+               if (escrowCount > 0) links.push(`<a href="${this.url}account/${this.currentWallet.address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Escrows</a>`);
+               if (mptCount > 0) links.push(`<a href="${this.url}account/${this.currentWallet.address}/mpts/owned" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View MPTs</a>`);
+               if (iouCount > 0) links.push(`<a href="${this.url}account/${this.currentWallet.address}/tokens" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View IOUs</a>`);
+
+               if (links.length > 0) {
                     message += `<br>${links.join(' | ')} on XRPL Win`;
                }
+
+               return message;
           }
 
+          // ==================================================================
+          // 2. CANCEL & FINISH TABS → show ONLY real cancellable/finishable escrows
+          // ==================================================================
+          let relevantEscrows: any[] = [];
+          let action: string = '';
+
+          if (this.activeTab === 'cancel') {
+               // Only escrows where WE are the owner AND CancelAfter has passed
+               relevantEscrows = this.expiredOrFulfilledEscrows.filter((e: { Sender: string }) => e.Sender === this.currentWallet.address);
+               action = 'cancelled';
+          } else if (this.activeTab === 'finish') {
+               // Only escrows where WE are the destination (and either FinishAfter passed or no CancelAfter)
+               relevantEscrows = this.expiredOrFulfilledEscrows.filter((e: { Destination: string }) => e.Destination === this.currentWallet.address);
+               action = 'finished';
+          }
+
+          const count = relevantEscrows.length;
+
+          if (count === 0) {
+               return `The <code>${walletName}</code> wallet has no escrows that can be ${action}.`;
+          }
+
+          const escrowWord = count === 1 ? 'escrow' : 'escrows';
+          let message = `The <code>${walletName}</code> wallet has ${count} ${escrowWord} that can be ${action}.`;
+
+          message += `<br><a href="${this.url}account/${this.currentWallet.address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Escrows on XRPL Win</a>`;
+
           return message;
+     }
+
+     // Helper to nicely join parts like "1 escrow", "2 IOUs", and "1 MPT"
+     private formatParts(parts: string[]): string {
+          if (parts.length === 1) return parts[0];
+          if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
+          return `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
      }
 
      // public get infoMessage(): string | null {
      //      const tabConfig = {
      //           create: {
      //                escrows: this.existingEscrow,
+     //                mpts: this.exsitingMpt,
+     //                ious: this.existingIOUs,
      //                description: 'on the ledger',
      //                dynamicText: '', // Empty for no additional text
      //                showLink: false,
      //           },
      //           finish: {
      //                escrows: this.expiredOrFulfilledEscrows,
+     //                mpts: this.exsitingMpt,
+     //                ious: this.existingIOUs,
      //                description: 'that can be finished',
-     //                dynamicText: '', // Empty for no additional text
+     //                dynamicText: '',
      //                showLink: false,
      //           },
      //           cancel: {
      //                escrows: this.expiredOrFulfilledEscrows,
+     //                mpts: this.exsitingMpt,
+     //                ious: this.existingIOUs,
      //                description: 'that can be cancelled',
-     //                dynamicText: '', // Empty for no additional text
+     //                dynamicText: '',
      //                showLink: false,
      //           },
      //      };
@@ -2184,18 +2020,60 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      //      if (!config) return null;
 
      //      const walletName = this.currentWallet.name || 'selected';
-     //      const count = config.escrows.length;
+     //      const escrowCount = config.escrows.length;
+     //      const mptCount = config.mpts.length;
+     //      const iouCount = config.ious.length;
+     //      const totalCount = escrowCount + mptCount + iouCount;
 
      //      // Build the dynamic text part (with space if text exists)
      //      const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
 
-     //      const escrowText = count === 1 ? 'escrow' : 'escrows';
+     //      // Build the item list
+     //      const itemParts = [];
+     //      if (escrowCount > 0) {
+     //           const escrowText = escrowCount === 1 ? 'escrow' : 'escrows';
+     //           itemParts.push(`${escrowCount} ${escrowText}`);
+     //      }
+     //      if (mptCount > 0) {
+     //           const mptText = mptCount === 1 ? 'MPT' : 'MPTs';
+     //           itemParts.push(`${mptCount} ${mptText}`);
+     //      }
+     //      if (iouCount > 0) {
+     //           const iouText = iouCount === 1 ? 'IOU' : 'IOUs';
+     //           itemParts.push(`${iouCount} ${iouText}`);
+     //      }
 
-     //      let message = `The <code>${walletName}</code> wallet has ${dynamicText}${count} ${escrowText} ${config.description}.`;
+     //      // Format the item list
+     //      let itemList = '';
+     //      if (itemParts.length === 1) {
+     //           itemList = itemParts[0];
+     //      } else if (itemParts.length === 2) {
+     //           itemList = itemParts.join(' and ');
+     //      } else if (itemParts.length === 3) {
+     //           itemList = `${itemParts[0]}, ${itemParts[1]}, and ${itemParts[2]}`;
+     //      }
 
-     //      if (count > 0) {
-     //           const link = `${this.url}account/${this.currentWallet.address}/escrows`;
-     //           message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View escrows on XRPL Win</a>`;
+     //      let message = `The <code>${walletName}</code> wallet has ${dynamicText}${itemList} ${config.description}.`;
+
+     //      if (totalCount > 0) {
+     //           const links = [];
+     //           if (escrowCount > 0) {
+     //                links.push(`<a href="${this.url}account/${this.currentWallet.address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Escrows on XRPL Win</a>`);
+     //           }
+     //           if (mptCount > 0) {
+     //                links.push(`<a href="${this.url}account/${this.currentWallet.address}/mpts/owned" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View MPTs on XRPL Win</a>`);
+     //           }
+     //           if (iouCount > 0) {
+     //                links.push(`<a href="${this.url}account/${this.currentWallet.address}/tokens" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View IOUs on XRPL Win</a>`);
+     //           }
+
+     //           if (links.length === 1) {
+     //                message += `<br>${links[0]}`;
+     //           } else {
+     //                message += `<br>${links.join(' | ')}`;
+     //           }
+     //      } else {
+     //           message = `The <code>${walletName}</code> wallet has no Escrows, IOU's or MPT's.`;
      //      }
 
      //      return message;
@@ -2245,15 +2123,6 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           return this.utilsService.convertXRPLTime(timestamp);
      }
 
-     // private setWarning(msg: string | null) {
-     //      this.warningMessage = msg;
-     //      this.cdr.detectChanges();
-     // }
-
-     // clearWarning() {
-     //      this.setWarning(null);
-     // }
-
      autoResize(textarea: HTMLTextAreaElement) {
           if (!textarea) return;
           textarea.style.height = 'auto'; // reset
@@ -2268,9 +2137,10 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                this.escrowFinishTimeField = '';
           }
 
+          this.escrowSequenceNumberField = '';
+          this.escrowOwnerField = '';
           this.amountField = '';
           this.destinationTagField = '';
-          this.escrowSequenceNumberField = '';
           this.isMemoEnabled = false;
           this.memoField = '';
           this.ticketSequence = '';
@@ -2285,102 +2155,35 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
      }
 
      private updateCurrencies() {
-          this.currencies = [...Object.keys(this.knownTrustLinesIssuers)];
-          this.currencies.push('MPT');
-          this.currencies.sort((a, b) => a.localeCompare(b));
+          // Get all currencies except XRP
+          const allCurrencies = Object.keys(this.knownTrustLinesIssuers);
+          const filtered = allCurrencies.filter(c => c !== 'XRP');
+          allCurrencies.push('MPT');
+
+          // Sort alphabetically
+          this.currencies = filtered.sort((a, b) => a.localeCompare(b));
+
+          // AUTO-SELECT FIRST CURRENCY — SAFE WAY
+          if (this.currencies.length > 0) {
+               // Only set if nothing is selected OR current selection is invalid/removed
+               const shouldSelectFirst = !this.currencyFieldDropDownValue || !this.currencies.includes(this.currencyFieldDropDownValue);
+
+               if (shouldSelectFirst) {
+                    this.currencyFieldDropDownValue = this.currencies[0];
+                    // Trigger issuer load — but do it in next tick so binding is ready
+                    Promise.resolve().then(() => this.onCurrencyChange());
+               }
+          } else {
+               // No currencies left
+               this.currencyFieldDropDownValue = '';
+               this.issuerFields = '';
+               this.issuers = [];
+          }
      }
 
      onTokenChange(): void {
           const issuers = this.knownTrustLinesIssuers[this.tokenToRemove] || [];
-
-          if (issuers.length > 0) {
-               // Auto-select the first issuer
-               this.issuerToRemove = issuers[0];
-          } else {
-               // No issuers found
-               this.issuerToRemove = '';
-          }
-     }
-
-     addToken() {
-          if (this.newCurrency && this.newCurrency.trim() && this.newIssuer && this.newIssuer.trim()) {
-               const currency = this.newCurrency.trim();
-               const issuer = this.newIssuer.trim();
-
-               // Validate currency code
-               if (!this.utilsService.isValidCurrencyCode(currency)) {
-                    this.ui.setError('Invalid currency code: Must be 3-20 characters or valid hex');
-                    return;
-               }
-
-               // Validate XRPL address
-               if (!xrpl.isValidAddress(issuer)) {
-                    this.ui.setError('Invalid issuer address');
-                    return;
-               }
-
-               // Initialize array if not present
-               if (!this.knownTrustLinesIssuers[currency]) {
-                    this.knownTrustLinesIssuers[currency] = [];
-               }
-
-               // Check for duplicates
-               if (this.knownTrustLinesIssuers[currency].includes(issuer)) {
-                    this.ui.setError(`Issuer ${issuer} already exists for ${currency}`);
-                    return;
-               }
-
-               // Add new issuer
-               this.knownTrustLinesIssuers[currency].push(issuer);
-
-               // Persist and update
-               this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers);
-               this.updateCurrencies();
-
-               this.newCurrency = '';
-               this.newIssuer = '';
-               this.ui.setSuccess(`Added issuer ${issuer} for ${currency}`);
-               this.cdr.detectChanges();
-          } else {
-               this.ui.setError('Currency code and issuer address are required');
-          }
-
-          this.ui.spinner = false;
-     }
-
-     removeToken() {
-          if (this.tokenToRemove && this.issuerToRemove) {
-               const currency = this.tokenToRemove;
-               const issuer = this.issuerToRemove;
-
-               if (this.knownTrustLinesIssuers[currency]) {
-                    this.knownTrustLinesIssuers[currency] = this.knownTrustLinesIssuers[currency].filter(addr => addr !== issuer);
-
-                    // Remove the currency entirely if no issuers remain
-                    if (this.knownTrustLinesIssuers[currency].length === 0) {
-                         delete this.knownTrustLinesIssuers[currency];
-                    }
-
-                    this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers);
-                    this.updateCurrencies();
-                    this.ui.setSuccess(`Removed issuer ${issuer} from ${currency}`);
-                    this.cdr.detectChanges();
-               } else {
-                    this.ui.setError(`Currency ${currency} not found`);
-               }
-          } else if (this.tokenToRemove) {
-               // Remove entire token and all issuers
-               delete this.knownTrustLinesIssuers[this.tokenToRemove];
-               this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers);
-               this.updateCurrencies();
-               this.ui.setSuccess(`Removed all issuers for ${this.tokenToRemove}`);
-               this.tokenToRemove = '';
-               this.cdr.detectChanges();
-          } else {
-               this.ui.setError('Select a token to remove');
-          }
-
-          this.ui.spinner = false;
+          this.issuerToRemove = issuers.length > 0 ? issuers[0] : '';
      }
 
      getCondition() {

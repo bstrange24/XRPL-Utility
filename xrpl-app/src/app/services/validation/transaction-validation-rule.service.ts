@@ -814,7 +814,7 @@ export class ValidationService {
           // ClawbackTokens
           this.registerRule({
                transactionType: 'ClawbackTokens',
-               requiredFields: ['currency', 'issuer', 'limit'],
+               requiredFields: ['currency', 'issuer', 'amount'],
                validators: [
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -824,7 +824,7 @@ export class ValidationService {
                          return null;
                     },
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
-                    ctx => (Number(ctx.inputs['limit']) < 0 ? 'Trust limit cannot be negative' : null),
+                    ctx => (Number(ctx.inputs['amount']) < 0 ? 'Trust amount cannot be negative' : null),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -838,6 +838,141 @@ export class ValidationService {
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
                     this.isValidAddress('issuer'),
+               ],
+          });
+
+          // EscrowOwner
+          this.registerRule({
+               transactionType: 'EscrowOwner',
+               requiredFields: ['destination'],
+               validators: [
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    this.isValidAddress('destination'),
+               ],
+          });
+
+          // CreateTimeBasedEscrow
+          this.registerRule({
+               transactionType: 'CreateTimeBasedEscrow',
+               requiredFields: ['seed', 'amount', 'destination', 'finishTime', 'cancelTime'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Destination address valid
+                    this.isValidAddress('destination'),
+                    this.notSelf('senderAddress', 'destination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
+
+                    this.optionalNumeric('finishTime', 0),
+                    this.optionalNumeric('cancelTime', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+
+                    this.invoiceId(),
+               ],
+          });
+
+          // FinishTimeBasedEscrow
+          this.registerRule({
+               transactionType: 'FinishTimeBasedEscrow',
+               requiredFields: ['seed', 'escrowSequence'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    this.notSelf('senderAddress', 'destination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
+
+                    this.optionalNumeric('escrowSequence', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+
+                    this.invoiceId(),
+               ],
+          });
+
+          // CancelTimeBasedEscrow
+          this.registerRule({
+               transactionType: 'CancelTimeBasedEscrow',
+               requiredFields: ['seed', 'escrowSequence'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    this.notSelf('senderAddress', 'destination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
+
+                    this.optionalNumeric('escrowSequence', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+
+                    this.invoiceId(),
                ],
           });
      }
