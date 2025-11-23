@@ -1,5 +1,5 @@
 .app-scale {
-     transform: scale(0.9);
+     /* transform: scale(0.9); */
      transform-origin: top left;
      width: 111.111%;
      box-sizing: border-box;
@@ -241,7 +241,7 @@ input[type='text']:focus {
 .network .dropdown-menu {
      position: absolute;
      top: 100%;
-     left: 0;
+     /* left: 0; */
      background-color: #1a1c21;
      border: 1px solid #ccc;
      min-width: 160px;
@@ -349,7 +349,7 @@ input[type='text']:focus {
      display: none;
      position: absolute;
      top: 100%;
-     left: 0;
+     /* left: 0; */
      background-color: #1a1c21;
      border: 1px solid #ccc;
      min-width: 160px;
@@ -1456,7 +1456,7 @@ input:focus+.slider {
 }
 
 .banner-content {
-     max-width: 1200px;
+     max-width: 1425px;
      margin: 0 auto;
 }
 

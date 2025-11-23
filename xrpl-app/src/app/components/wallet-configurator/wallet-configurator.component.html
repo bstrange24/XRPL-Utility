@@ -270,8 +270,11 @@
                     </label>
                </div>
 
-               <!-- Optional: Info box about zero-limit trustlines -->
+               @if (activeTab === 'generate') {
                <div class="info-box" style="margin-top: 16px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Generating a new Mnemonic or Secret Numbers wallet will always be SECP256K1 encryption.</div>
+               } @if (activeTab === 'derive') {
+               <div class="info-box" style="margin-top: 16px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Deriving a new Mnemonic or Secret Numbers wallet will always be SECP256K1 encryption.</div>
+               }
 
                <!-- Tx Preview -->
                @if (ui.paymentTx.length >0) {
