@@ -1002,7 +1002,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                }
 
                if (!this.ui.isSimulateEnabled) {
-                    this.ui.successMessage = 'XRP payment sent successfully!';
+                    this.ui.successMessage = 'MPT sent successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 

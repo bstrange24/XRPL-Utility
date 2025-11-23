@@ -310,7 +310,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
 
      onSubmit() {
           if (this.activeTab === 'create') {
-               this.sendCheck();
+               this.createCheck();
           } else if (this.activeTab === 'cash') {
                this.cashCheck();
           } else if (this.activeTab === 'cancel') {
@@ -601,8 +601,8 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
           }
      }
 
-     async sendCheck() {
-          console.log('Entering sendCheck');
+     async createCheck() {
+          console.log('Entering createCheck');
           const startTime = Date.now();
           this.ui.clearMessages();
           this.ui.updateSpinnerMessage(``);
@@ -651,7 +651,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                inputs.accountInfo = accountInfo;
                inputs.destination = resolvedDestination;
 
-               const errors = await this.validateInputs(inputs, 'sendCheck');
+               const errors = await this.validateInputs(inputs, 'createCheck');
                if (errors.length > 0) {
                     return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
                }
@@ -771,12 +771,12 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     this.ui.successMessage = 'Simulated Check create successfully!';
                }
           } catch (error: any) {
-               console.error('Error in sendCheck:', error);
+               console.error('Error in createCheck:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving sendCheck in ${this.executionTime}ms`);
+               console.log(`Leaving createCheck in ${this.executionTime}ms`);
           }
      }
 
@@ -818,10 +818,10 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                // this.utilsService.logObjects('checkObjects', checkObjects);
                // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-               const isShortForm = this.destinationField.includes('...');
-               const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
+               // const isShortForm = this.destinationField.includes('...');
+               // const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
 
-               inputs.destination = resolvedDestination;
+               // inputs.destination = resolvedDestination;
                inputs.accountInfo = accountInfo;
 
                const errors = await this.validateInputs(inputs, 'cashCheck');
@@ -870,7 +870,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                          }
                     }
                } else if (this.currencyFieldDropDownValue !== 'MPT') {
-                    if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, checkCashTx, resolvedDestination)) {
+                    if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, checkCashTx, this.issuerFields)) {
                          return this.ui.setError('ERROR: Not enough IOU balance for this transaction');
                     }
                }
@@ -920,7 +920,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     this.ui.successMessage = 'Check cashed successfully!';
                     const [updatedAccountInfo, updatedAccountObjects, gatewayBalances] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
 
-                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
                     this.getCashableChecks(updatedAccountObjects, wallet.classicAddress);
                     this.getExistingChecks(updatedAccountObjects, wallet.classicAddress);
@@ -1597,7 +1597,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     customValidators: [() => isValidSeed(inputs.seed)],
                     asyncValidators: [],
                },
-               sendCheck: {
+               createCheck: {
                     required: ['seed', 'destination', 'amount'],
                     customValidators: [
                          () => isValidSeed(inputs.seed),
@@ -1612,7 +1612,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     asyncValidators: [checkDestinationTagRequirement, checkDisallowIncomingCheck],
                },
                cashCheck: {
-                    required: ['seed', 'destination', 'amount', 'checkId'],
+                    required: ['seed', 'amount', 'checkId'],
                     customValidators: [() => isValidSeed(inputs.seed), () => isValidXrpAddress(inputs.destination, 'Destination'), () => isValidNumber(inputs.amount, 'Amount', 0), () => isRequired(inputs.checkId, 'Check ID'), () => isNotSelfPayment(inputs.senderAddress, inputs.destination)],
                     asyncValidators: [checkDestinationTagRequirement],
                },

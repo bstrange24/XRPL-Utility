@@ -997,63 +997,63 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
                const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
 
-               const accountFlags = accountInfo.result.account_data.Flags;
-               const asfDefaultRipple = 0x00800000;
+               // const accountFlags = accountInfo.result.account_data.Flags;
+               // const asfDefaultRipple = 0x00800000;
 
-               if ((accountFlags & asfDefaultRipple) === 0) {
-                    // Need to enable DefaultRipple first
-                    const accountSetTx: xrpl.AccountSet = {
-                         TransactionType: 'AccountSet',
-                         Account: wallet.classicAddress,
-                         SetFlag: 8, // asfDefaultRipple
-                         Fee: fee,
-                         LastLedgerSequence: lastLedgerIndex + AppConstants.LAST_LEDGER_ADD_TIME,
-                    };
+               // if ((accountFlags & asfDefaultRipple) === 0) {
+               //      // Need to enable DefaultRipple first
+               //      const accountSetTx: xrpl.AccountSet = {
+               //           TransactionType: 'AccountSet',
+               //           Account: wallet.classicAddress,
+               //           SetFlag: 8, // asfDefaultRipple
+               //           Fee: fee,
+               //           LastLedgerSequence: lastLedgerIndex + AppConstants.LAST_LEDGER_ADD_TIME,
+               //      };
 
-                    await this.setTxOptionalFields(client, accountSetTx, wallet, accountInfo);
+               //      await this.setTxOptionalFields(client, accountSetTx, wallet, accountInfo);
 
-                    if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, accountSetTx, fee)) {
-                         return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
-                    }
+               //      if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, accountSetTx, fee)) {
+               //           return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+               //      }
 
-                    // this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Set Default Ripple (no changes will be made)...' : 'Submitting Set Default Ripple to Ledger...', 200);
+               //      // this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Set Default Ripple (no changes will be made)...' : 'Submitting Set Default Ripple to Ledger...', 200);
 
-                    // this.ui.paymentTx.push(accountSetTx);
-                    // this.updatePaymentTx();
+               //      // this.ui.paymentTx.push(accountSetTx);
+               //      // this.updatePaymentTx();
 
-                    let response: any;
+               //      let response: any;
 
-                    if (this.ui.isSimulateEnabled) {
-                         response = await this.xrplTransactions.simulateTransaction(client, accountSetTx);
-                    } else {
-                         const signedTx = await this.xrplTransactions.signTransaction(client, wallet, accountSetTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
+               //      if (this.ui.isSimulateEnabled) {
+               //           response = await this.xrplTransactions.simulateTransaction(client, accountSetTx);
+               //      } else {
+               //           const signedTx = await this.xrplTransactions.signTransaction(client, wallet, accountSetTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
-                         if (!signedTx) {
-                              return this.ui.setError('ERROR: Failed to sign AccountSet transaction.');
-                         }
+               //           if (!signedTx) {
+               //                return this.ui.setError('ERROR: Failed to sign AccountSet transaction.');
+               //           }
 
-                         const response = await this.xrplTransactions.submitTransaction(client, signedTx);
+               //           const response = await this.xrplTransactions.submitTransaction(client, signedTx);
 
-                         // this.utilsService.logObjects('response', response);
-                         // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               //           // this.utilsService.logObjects('response', response);
+               //           // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-                         // this.ui.txResult.push(response.result);
-                         // this.updateTxResult(this.ui.txResult);
+               //           // this.ui.txResult.push(response.result);
+               //           // this.updateTxResult(this.ui.txResult);
 
-                         const isSuccess = this.utilsService.isTxSuccessful(response);
-                         if (!isSuccess) {
-                              const resultMsg = this.utilsService.getTransactionResultMessage(response);
-                              const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
+               //           const isSuccess = this.utilsService.isTxSuccessful(response);
+               //           if (!isSuccess) {
+               //                const resultMsg = this.utilsService.getTransactionResultMessage(response);
+               //                const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                              console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-                              (response.result as any).errorMessage = userMessage;
-                              this.ui.setError(userMessage);
-                              return;
-                         }
-                    }
-                    // Update lastLedgerIndex for next transaction
-                    lastLedgerIndex = await this.xrplService.getLastLedgerIndex(client);
-               }
+               //                console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+               //                (response.result as any).errorMessage = userMessage;
+               //                this.ui.setError(userMessage);
+               //                return;
+               //           }
+               //      }
+               //      // Update lastLedgerIndex for next transaction
+               //      lastLedgerIndex = await this.xrplService.getLastLedgerIndex(client);
+               // }
 
                // PHASE 4: Prepare Payment transaction for currency issuance
                const curr = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
