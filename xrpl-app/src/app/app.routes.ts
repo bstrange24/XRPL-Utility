@@ -22,12 +22,14 @@ import { SignTransactionsComponent } from './components/sign-transactions/sign-t
 import { MptSendComponent } from './components/mpt-send/mpt-send.component';
 import { MptLockDestroyComponent } from './components/mpt-lock-destroy/mpt-lock-destroy.component';
 import { SendXrpModernComponent } from './components/send-xrp/send-xrp.component';
+import { WalletConfiguratorComponent } from './components/wallet-configurator/wallet-configurator.component';
 
 export const routes: Routes = [
      { path: '', redirectTo: '/account-configurator', pathMatch: 'full' },
      { path: 'account-balance-changes', component: AccountChangesComponent, data: { title: 'Account Changes' } },
      { path: 'delete-account', component: DeleteAccountComponent, data: { title: 'Account Delete' } },
      { path: 'account-configurator', component: AccountConfiguratorComponent, data: { title: 'Account Configurator' } },
+     { path: 'wallet-configurator', component: WalletConfiguratorComponent, data: { title: 'Wallet Configurator' } },
      { path: 'create-credentials', component: CreateCredentialsComponent, data: { title: 'Account Credentials' } },
      { path: 'create-did', component: DidComponent, data: { title: 'Account DID' } },
      { path: 'permissioned-domain', component: PermissionedDomainComponent, data: { title: 'Permissioned Domain' } },

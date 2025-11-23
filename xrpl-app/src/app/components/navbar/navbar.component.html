@@ -20,6 +20,8 @@
      <nav id="navbar" class="navbar">
           <div class="navbar-container">
                <div class="navbar-links">
+                    <a routerLink="/wallet-configurator" routerLinkActive="active" (click)="setActiveLink('/wallet-configurator')">Wallets</a>
+
                     <div class="dropdown accounts-dropdown" [ngClass]="{ active: isAccountsDropdownActive }">
                          <a href="#" class="dropdown-toggle" aria-label="Toggle Accounts dropdown" (click)="toggleAccountsDropdown($event)">Accounts ▾</a>
                          <div class="dropdown-menu">

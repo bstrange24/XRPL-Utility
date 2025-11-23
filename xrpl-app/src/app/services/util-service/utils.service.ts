@@ -885,6 +885,31 @@ export class UtilsService {
           return div.textContent || div.innerText || '';
      }
 
+     async getWallet1(seed: string, algorithm: 'ed25519' | 'secp256k1'): Promise<xrpl.Wallet> {
+          const result = this.detectXrpInputType(seed);
+          // Map string algorithm to xrpl's expected type (ECDSA enum or undefined)
+          const options: { algorithm?: xrpl.ECDSA } = {};
+          if (algorithm === 'secp256k1') {
+               options.algorithm = xrpl.ECDSA.secp256k1;
+          }
+          // For 'ed25519', leave algorithm undefined (xrpl defaults to Ed25519)
+          try {
+               if (result.type === 'seed') {
+                    return xrpl.Wallet.fromSeed(result.value, options);
+               } else if (result.type === 'mnemonic') {
+                    // Use Wallet.fromMnemonic (assuming it's a static method like fromSeed)
+                    return xrpl.Wallet.fromMnemonic(result.value, options);
+               } else if (result.type === 'secret_numbers') {
+                    // Assuming walletFromSecretNumbers is imported/available; adjust if needed
+                    return walletFromSecretNumbers(result.value, options);
+               } else {
+                    throw new Error('Invalid input format');
+               }
+          } catch (error) {
+               throw new Error('Invalid input or algorithm mismatch');
+          }
+     }
+
      async getWallet(seed: string): Promise<xrpl.Wallet> {
           const savedEncryptionType = this.storageService.getInputValue('encryptionType');
           const result = this.detectXrpInputType(seed);

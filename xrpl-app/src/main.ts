@@ -10,7 +10,7 @@ import process from 'process';
 import { importProvidersFrom } from '@angular/core';
 import { LucideAngularModule, Cog, BanknoteArrowUp, BanknoteArrowDown, Trash2, DollarSign, TicketCheck, Check, Hourglass, Wallet, Send, ShieldCheck, Flag, Copy, FileTextIcon, ChevronDown, ChevronRight, BookOpenCheck, ArrowBigRight, RefreshCcw, SplitIcon, Signature, ShieldEllipsis, CopyPlus, Eraser, GripVertical, Eye, EyeOff, CircleCheck, ShieldBan, CornerUpLeft } from 'lucide-angular';
 import { provideIcons } from '@ng-icons/core';
-import { heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath, heroUserGroup, heroKey, heroChartBar, heroEye, heroEyeSlash, heroAdjustmentsVertical, heroLockOpen, heroLockClosed, heroBanknotes } from '@ng-icons/heroicons/outline';
+import { heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath, heroUserGroup, heroKey, heroChartBar, heroEye, heroEyeSlash, heroAdjustmentsVertical, heroLockOpen, heroLockClosed, heroBanknotes, heroWallet } from '@ng-icons/heroicons/outline';
 
 // Make Buffer and process available globally
 (window as any).Buffer = Buffer;
@@ -55,6 +55,6 @@ bootstrapApplication(AppComponent, {
                     CornerUpLeft,
                })
           ),
-          provideIcons({ heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath, heroUserGroup, heroKey, heroChartBar, heroEye, heroEyeSlash, heroAdjustmentsVertical, heroLockOpen, heroLockClosed, heroBanknotes }),
+          provideIcons({ heroInformationCircle, heroExclamationCircle, heroExclamationTriangle, heroUsers, heroClipboardDocumentList, heroArrowDownOnSquareStack, heroArrowTopRightOnSquare, heroCurrencyDollar, heroTrash, heroPlusCircle, heroPaperAirplane, heroTicket, heroClock, heroQueueList, heroArrowUturnLeft, heroArrowPath, heroUserGroup, heroKey, heroChartBar, heroEye, heroEyeSlash, heroAdjustmentsVertical, heroLockOpen, heroLockClosed, heroBanknotes, heroWallet }),
      ],
 }).catch(err => console.error(err));

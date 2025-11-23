@@ -157,22 +157,22 @@ export class XrplService {
      }
 
      // Generate account from Family Seed
-     async generateWalletFromFamilySeed(environment: string, algorithm: string) {
+     async generateWalletFromFamilySeed(environment: string, algorithm: string = 'ed25519') {
           const url = `${this.proxyServer}/api/create-wallet/family-seed/`;
           const wallet = await firstValueFrom(this.http.post<any>(url, { environment, algorithm }));
           return wallet;
      }
 
      // Derive account from Family Seed
-     async deriveWalletFromFamilySeed(familySeed: string) {
-          const url = `${this.proxyServer}/api/derive/family-seed/${encodeURIComponent(familySeed)}`;
+     async deriveWalletFromFamilySeed(familySeed: string, algorithm: string = 'ed25519') {
+          const url = `${this.proxyServer}/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
           console.log(`deriveWalletFromFamilySeed ${url}`);
           const wallet = await firstValueFrom(this.http.get<any>(url));
           return wallet;
      }
 
      // Generate account from Mnemonic
-     async generateWalletFromMnemonic(environment: string, algorithm: string) {
+     async generateWalletFromMnemonic(environment: string, algorithm: string = 'ed25519') {
           const url = `${this.proxyServer}/api/create-wallet/mnemonic/`;
           const body = { environment, algorithm };
           const wallet = await firstValueFrom(this.http.post<any>(url, body));
@@ -180,15 +180,15 @@ export class XrplService {
      }
 
      // Derive account from Mnemonic
-     async deriveWalletFromMnemonic(mnemonic: string) {
-          const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}`;
+     async deriveWalletFromMnemonic(mnemonic: string, algorithm: string = 'ed25519') {
+          const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
           console.log(`deriveWalletFromMnemonic ${url}`);
           const wallet = await firstValueFrom(this.http.get<any>(url));
           return wallet;
      }
 
      // Generate account from Secret Numbers
-     async generateWalletFromSecretNumbers(environment: string, algorithm: string) {
+     async generateWalletFromSecretNumbers(environment: string, algorithm: string = 'ed25519') {
           const url = `${this.proxyServer}/api/create-wallet/secret-numbers/`;
           const body = { environment, algorithm };
           const wallet = await firstValueFrom(this.http.post<any>(url, body));
@@ -196,10 +196,16 @@ export class XrplService {
      }
 
      // Derive account from Secret Numbers
-     async deriveWalletFromSecretNumbers(secretNumbers: string) {
-          const url = `${this.proxyServer}/api/derive/secret-numbers/${encodeURIComponent(secretNumbers)}`;
-          console.log(`deriveWalletFromSecretNumbers ${url}`);
-          const wallet = await firstValueFrom(this.http.get<any>(url));
+     async deriveWalletFromSecretNumbers(secretNumbers: string[], algorithm: string = 'ed25519') {
+          const url = `${this.proxyServer}/api/derive/secretNumbers`;
+          console.log(`deriveWalletFromSecretNumbers with ${secretNumbers.length} numbers`);
+
+          const body = {
+               secretNumbers: secretNumbers,
+               algorithm: algorithm,
+          };
+
+          const wallet = await firstValueFrom(this.http.post<any>(url, body));
           return wallet;
      }
 

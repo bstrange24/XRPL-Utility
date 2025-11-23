@@ -3,6 +3,7 @@ const axios = require('axios');
 const cors = require('cors');
 const accountlib = require('xrpl-accountlib');
 const xrpl = require('xrpl');
+const { Wallet } = require('xrpl');
 
 const app = express();
 app.use(cors());
@@ -61,11 +62,14 @@ app.post('/api/create-wallet/family-seed', async (req, res) => {
      }
 });
 
-// Get wallet created from a family seed
-app.get('/api/derive/family-seed/:value', async (req, res) => {
+// Derive wallet created from a family seed
+app.get('/api/derive/family-seed/:familySeed', async (req, res) => {
      try {
-          console.log(`seed ${req.params.value}`);
-          const derive_account_with_seed = accountlib.derive.familySeed(req.params.value);
+          const { familySeed } = req.params;
+          const { algorithm } = req.query; // Get algorithm from query params
+
+          console.log(`seed ${familySeed}, algorithm ${algorithm} `);
+          const derive_account_with_seed = accountlib.derive.familySeed(familySeed, { algorithm: algorithm });
           console.log(`account ${derive_account_with_seed}`);
           res.json(derive_account_with_seed);
      } catch (err) {
@@ -77,10 +81,11 @@ app.get('/api/derive/family-seed/:value', async (req, res) => {
 // Create wallet from mnemonic
 app.post('/api/create-wallet/mnemonic', async (req, res) => {
      try {
+          console.log(`req.body ${JSON.stringify(req.body, null, '\t')}`);
           const { environment, algorithm = 'ed25519' } = req.body;
+
           console.log(`Generating account from mnemonic`);
-          console.log(`environment: ${environment}`);
-          console.log(`algorithm: ${algorithm}`);
+          console.log(`environment ${environment}, algorithm ${algorithm}`);
 
           const generatedWallet = accountlib.generate.mnemonic({ algorithm: algorithm });
           console.log(`account ${JSON.stringify(generatedWallet, null, 2)}`);
@@ -120,8 +125,11 @@ app.post('/api/create-wallet/mnemonic', async (req, res) => {
 // Get wallet created from a mnemonic
 app.get('/api/derive/mnemonic/:mnemonic', async (req, res) => {
      try {
-          console.log(`mnemonic ${req.params.mnemonic}`);
-          const derive_account_with_mnemonic = accountlib.derive.mnemonic(req.params.mnemonic);
+          const { mnemonic } = req.params;
+          const { algorithm } = req.query; // Get algorithm from query params
+
+          console.log(`seed ${mnemonic}, algorithm ${algorithm} `);
+          const derive_account_with_mnemonic = accountlib.derive.mnemonic(mnemonic, { algorithm: algorithm });
           console.log(`account ${derive_account_with_mnemonic}`);
           res.json(derive_account_with_mnemonic);
      } catch (err) {
@@ -134,9 +142,9 @@ app.get('/api/derive/mnemonic/:mnemonic', async (req, res) => {
 app.post('/api/create-wallet/secret-numbers', async (req, res) => {
      try {
           const { environment, algorithm = 'ed25519' } = req.body;
+
           console.log(`Generating account from secret numbers`);
-          console.log(`environment: ${environment}`);
-          console.log(`algorithm: ${algorithm}`);
+          console.log(`environment ${environment}, algorithm ${algorithm}`);
 
           // Generate secret-numbers wallet
           const generatedWallet = accountlib.generate.secretNumbers({ algorithm: algorithm });
@@ -175,16 +183,18 @@ app.post('/api/create-wallet/secret-numbers', async (req, res) => {
 });
 
 // Get wallet created from a secret numbers
-app.get('/api/derive/secret-numbers/:value', async (req, res) => {
+app.post('/api/derive/secretNumbers', async (req, res) => {
      try {
-          console.log(`secret_numbers ${req.params.value}`);
-          const nums = req.params.value?.split(','); // comma-separated string
-          const derive_account_with_secret_numbers = accountlib.derive.secretNumbers(nums);
+          const { secretNumbers, algorithm } = req.body;
+
+          console.log(`secretNumbers:`, secretNumbers, `algorithm: ${algorithm}`);
+
+          const derive_account_with_secret_numbers = accountlib.derive.secretNumbers(secretNumbers);
           console.log(`account ${JSON.stringify(derive_account_with_secret_numbers, null, '\t')}`);
           res.json(derive_account_with_secret_numbers);
      } catch (err) {
           console.error(err);
-          res.status(500).json({ error: 'Failed to fetch from XPMarket' });
+          res.status(500).json({ error: 'Failed to derive account from secret numbers' });
      }
 });
 

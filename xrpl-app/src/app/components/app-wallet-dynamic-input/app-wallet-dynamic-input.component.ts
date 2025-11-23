@@ -228,7 +228,7 @@ export class AppWalletDynamicInputComponent {
                // Handle error, e.g., alert or log
                return;
           }
-          const wallet = await this.xrplService.deriveWalletFromFamilySeed(seed);
+          const wallet = await this.xrplService.deriveWalletFromFamilySeed(seed, '');
           this.wallets[index] = {
                ...this.wallets[index],
                address: wallet.address,
@@ -268,7 +268,7 @@ export class AppWalletDynamicInputComponent {
           if (!mnemonic) {
                return;
           }
-          const wallet = await this.xrplService.deriveWalletFromMnemonic(mnemonic);
+          const wallet = await this.xrplService.deriveWalletFromMnemonic(mnemonic, '');
           this.wallets[index] = {
                ...this.wallets[index],
                address: wallet.address,
@@ -308,7 +308,7 @@ export class AppWalletDynamicInputComponent {
           if (!secretNumbers) {
                return;
           }
-          const wallet = await this.xrplService.deriveWalletFromSecretNumbers(secretNumbers);
+          const wallet = await this.xrplService.deriveWalletFromSecretNumbers(secretNumbers, '');
           this.wallets[index] = {
                ...this.wallets[index],
                address: wallet.address,

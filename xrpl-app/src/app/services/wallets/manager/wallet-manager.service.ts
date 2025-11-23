@@ -16,6 +16,8 @@ export interface Wallet {
      showSecret?: boolean;
      lastUpdated?: any;
      isIssuer?: boolean;
+     algorithm?: 'ed25519' | 'secp256k1';
+     encryptionAlgorithm?: string | '';
 }
 
 @Injectable({

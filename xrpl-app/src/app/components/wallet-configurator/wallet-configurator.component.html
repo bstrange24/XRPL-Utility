@@ -1,0 +1,319 @@
+<div class="banner">
+     <div class="banner-content">
+          <div id="navbar-container">
+               <app-navbar></app-navbar>
+          </div>
+     </div>
+</div>
+
+<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+
+<!-- Main content. Centered with 2 columns -->
+<div class="main-container">
+     <div class="content-wrapper">
+          <!-- Left Wallet panel ==== -->
+          <div class="wallets-panel">
+               <!-- Header with title + Generate button -->
+               <div class="panel-header">
+                    <h2 class="panel-title">
+                         <lucide-icon name="wallet" size="25" style="padding-top: 5px"></lucide-icon>
+                         Accounts
+                    </h2>
+                    <button class="generate-btn" (click)="generateNewAccount()">+ Generate</button>
+               </div>
+
+               <p class="panel-subtitle">Generate {{environment}} accounts with XRP from the faucet.</p>
+
+               @if (hasWallets) {
+               <div>
+                    <div cdkDropList (cdkDropListDropped)="dropWallet($event)">
+                         <!-- List of wallets -->
+                         @for (wallet of wallets; track i; let i = $index){
+                         <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
+                              <!-- Wallet Info -->
+                              <div class="wallet-info">
+                                   @if (editingIndex(i)) {
+                                   <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
+                                   } @else {
+                                   <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
+                                   }
+                              </div>
+
+                              <div class="wallet-info" (click)="selectWallet(i)">
+                                   <div class="address-line">
+                                        <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
+                                        <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
+                                   </div>
+
+                                   <!-- Icons -->
+                                   <div class="wallet-actions">
+                                        <button class="icon-btn refresh" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
+                                             <lucide-icon name="refresh-ccw"></lucide-icon>
+                                        </button>
+
+                                        <button class="icon-btn copy" (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
+                                             <lucide-icon name="copy"></lucide-icon>
+                                        </button>
+
+                                        <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
+                                             <lucide-icon name="trash-2"></lucide-icon>
+                                        </button>
+                                   </div>
+                              </div>
+
+                              <!-- Secret Key -->
+                              <div class="secret-section" (click)="selectWallet(i)">
+                                   <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">
+                                        <lucide-icon [name]="wallet.showSecret ? 'eye-off' : 'eye'" size="16" style="padding-top: 5px"></lucide-icon>
+                                        <span>{{ wallet.showSecret ? 'Hide Secret' : 'Show Secret' }}</span>
+                                   </button>
+
+                                   <!-- Seed shown below the button -->
+                                   @if (wallet.showSecret) {
+                                   <div class="secret-seed-container">
+                                        <div class="secret-seed">{{ wallet.seed }}</div>
+                                        <button class="copy-btn" (click)="copyUtilService.copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
+                                             <lucide-icon name="copy" size="20"></lucide-icon>
+                                        </button>
+                                   </div>
+                                   }
+                              </div>
+                         </div>
+                         }
+                    </div>
+
+                    <!-- Selected Account Summary ==== -->
+                    <div class="selected-account-card">
+                         <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
+                         <div class="summary-row"><span>Address:</span> <span>{{ currentWallet.address | slice:0:5 }}...{{ currentWallet.address | slice:-5 }}</span></div>
+                         <div class="summary-row"><span>Balance:</span> <span class="highlight wallet-balance">{{ currentWallet.balance }} XRP</span></div>
+                         <div class="summary-row"><span>Owner Count:</span> <span class="highlight wallet-balance">{{ currentWallet.ownerCount }}</span></div>
+                         <div class="summary-row"><span>Xrp Reserves:</span> <span class="highlight wallet-balance">{{ currentWallet.xrpReserves }} XRP</span></div>
+                    </div>
+               </div>
+               } @else {
+               <!-- This block shows if hasWallets is false -->
+               <div class="no-wallet-found">
+                    <lucide-icon name="wallet" size="40"></lucide-icon>
+                    <p>No accounts generated yet.</p>
+                    <p>Click "Generate" to create your first {{environment}} account</p>
+               </div>
+               }
+          </div>
+
+          <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div>
+
+          <!-- Right form -->
+          <div class="form-panel">
+               <!-- Menu bar -->
+               <div class="menu-bar">
+                    <button class="menu-btn active" [class.active]="activeTab === 'generate'" (click)="setTab('generate')">
+                         <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
+                         Generate New Wallet
+                    </button>
+                    <button class="menu-btn active" [class.active]="activeTab === 'derive'" (click)="setTab('derive')">
+                         <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
+                         Derive Existing Wallet
+                    </button>
+               </div>
+
+               <!-- Configure Menu -->
+               @if (activeTab === 'generate') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="green-button-submenu">
+                              <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">New Wallet Configurator</h2>
+                              <p class="submenu-info-secondary-text">Generate a new XRPL Wallet on {{environment}}</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Derive Menu -->
+               @if (activeTab === 'derive') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="blue-button-submenu">
+                              <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Derive Wallet</h2>
+                              <p class="submenu-info-secondary-text">Derive an existing XRPL Wallet on {{environment}}</p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Dynamic info panel -->
+               @if (infoMessage) {
+               <div class="info-panel">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-red-600"></ng-icon>
+                    <div class="info-text" [innerHTML]="infoMessage"></div>
+               </div>
+               }
+
+               <!-- Dynamic warning panel  -->
+               @if (ui.warningMessage) {
+               <div class="warning-panel">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
+                    <div class="warning-text" [innerHTML]="ui.warningMessage"></div>
+               </div>
+               }
+
+               <form #theForm="ngForm" class="send-form">
+                    <div class="tab-content-container">
+                         <div [@tabTransition]="activeTab">
+                              <!-- Amount and Destination -->
+                              @if (activeTab === 'derive') {
+                              <div>
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Seed</label>
+                                             <input type="text" [(ngModel)]="seed" name="seed" placeholder="" />
+                                        </div>
+                                   </div>
+                              </div>
+
+                              <div>
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Mnemonic</label>
+                                             <input type="text" [(ngModel)]="mnemonic" name="mnemonic" placeholder="" />
+                                        </div>
+                                   </div>
+                              </div>
+
+                              <div>
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Secret Numbers</label>
+                                             <input type="text" [(ngModel)]="secretNumbers" name="secretNumbers" placeholder="" />
+                                        </div>
+                                   </div>
+                              </div>
+                              }
+
+                              <!-- Action buttons -->
+                              @if (activeTab === 'generate') {
+                              <div class="button-row">
+                                   <button type="submit" class="btn-primary-blue" (click)="generateNewAccount()">Generate Wallet from seed</button>
+                                   <button type="submit" class="btn-primary-green" (click)="generateNewWalletFromMnemonic()">Generate Wallet from Mnemonic</button>
+                                   <button type="submit" class="btn-primary-orange" (click)="generateNewWalletFromSecretNumbers()">Generate Wallet from Secret Numbers</button>
+                              </div>
+                              } @if (activeTab === 'derive') {
+                              <div class="button-row">
+                                   <button type="submit" class="btn-primary-blue" (click)="deriveWalletFromFamilySeed()">Derive From Secret</button>
+                                   <button type="submit" class="btn-primary-green" (click)="deriveWalletFromMnemonic()">Derive From Mnemonic</button>
+                                   <button type="submit" class="btn-primary-orange" (click)="deriveWalletFromSecretNumbers()">Derive From Secret Numbers</button>
+                              </div>
+                              }
+
+                              <!-- Spinner -->
+                              @if (ui.spinner) {
+                              <div class="spinner-row">
+                                   <div class="spinner"></div>
+                                   <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
+                              </div>
+                              }
+
+                              <!-- Success message -->
+                              @if (ui.isSuccess && !ui.isError) {
+                              <div class="success-message">
+                                   <lucide-icon name="check" size="20"></lucide-icon>
+                                   <div class="success-text">
+                                        @if (ui.txHash && !ui.isSimulateEnabled) {
+                                        <span>{{ui.successMessage}}</span><br /><br />
+                                        <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
+                                        } @else {
+                                        <span>{{ui.successMessage}}</span>
+                                        }
+                                   </div>
+                              </div>
+                              }
+
+                              <!-- Error message -->
+                              @if (ui.isError && ui.result) {
+                              <div class="tx-message error">
+                                   <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
+                                   <div class="tx-text">
+                                        <!-- Display Tx Hash if we are not in simulation mode-->
+                                        @if (ui.txHash && !ui.isSimulateEnabled) {
+                                        <span>{{ ui.result }}</span><br />
+                                        <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
+                                        } @else {
+                                        <span>{{ ui.result }}</span>
+                                        }
+                                   </div>
+                              </div>
+                              }
+                         </div>
+                    </div>
+               </form>
+
+               <!-- Switches -->
+               <div class="switch-group">
+                    <!-- ED25519 group -->
+                    <label class="switch">
+                         <input type="checkbox" [(ngModel)]="ed25519_encryption_type" name="ed25519_encryption_type" (change)="onEd25519Change()" />
+                         <span class="slider"></span>
+                         ED25519 Encryption
+                    </label>
+
+                    <!-- SECP256K1 group -->
+                    <label class="switch">
+                         <input type="checkbox" [(ngModel)]="secp256k1_encryption_type" name="secp256k1_encryption_type" (change)="onSecp256k1Change()" />
+                         <span class="slider"></span>
+                         SECP256K1 Encryption
+                    </label>
+               </div>
+
+               <!-- Optional: Info box about zero-limit trustlines -->
+               <div class="info-box" style="margin-top: 16px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Generating a new Mnemonic or Secret Numbers wallet will always be SECP256K1 encryption.</div>
+
+               <!-- Tx Preview -->
+               @if (ui.paymentTx.length >0) {
+               <div class="tx-preview-container">
+                    <div class="tx-header">
+                         <h5 class="tx-title">Payment Transaction</h5>
+                         <div class="tx-actions">
+                              <button class="copy-btn" (click)="copyUtilService.copyTx()" title="Copy JSON">
+                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                   Copy
+                              </button>
+                              <button class="download-btn" (click)="downloadUtilService.downloadTx()" title="Download JSON">
+                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+                                   Download
+                              </button>
+                         </div>
+                    </div>
+
+                    <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
+               </div>
+               }
+
+               <!-- Tx Result Preview -->
+               @if (ui.txResult.length >0) {
+               <div class="tx-preview-container">
+                    <div class="tx-header">
+                         <h3 class="tx-title">Transaction Result</h3>
+                         <div class="tx-actions">
+                              <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
+                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                   Copy
+                              </button>
+                              <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
+                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+                                   Download
+                              </button>
+                         </div>
+                    </div>
+
+                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
+               </div>
+               }
+          </div>
+     </div>
+</div>
