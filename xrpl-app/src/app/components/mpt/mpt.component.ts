@@ -63,6 +63,11 @@ interface AccountFlags {
      canEscrow: boolean;
 }
 
+export interface MPTAmount {
+     mpt_issuance_id: string;
+     value: string;
+}
+
 @Component({
      selector: 'app-mpt',
      standalone: true,
@@ -119,6 +124,7 @@ export class MptComponent implements OnInit, AfterViewInit {
      totalFlagsHex = '0x0';
      existingMpts: any = [];
      existingMptsCollapsed = true;
+     selectedMpt: any = null;
 
      private flagValues = {
           canLock: 0x00000002,
@@ -301,6 +307,13 @@ export class MptComponent implements OnInit, AfterViewInit {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
      }
 
+     onMptSelect(selected: any) {
+          if (selected) {
+               this.mptIssuanceIdField = selected.mpt_issuance_id;
+               // this.escrowOwnerField = selected.Sender; // or selected.Account depending on your data
+          }
+     }
+
      async refreshBalance(index: number) {
           const wallet = this.wallets[index];
           try {
@@ -379,6 +392,7 @@ export class MptComponent implements OnInit, AfterViewInit {
           if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
                this.ui.clearWarning();
                this.getMptDetails();
+               this.clearFields(true);
                this.updateDestinations();
           } else if (this.currentWallet.address) {
                this.ui.setError('Invalid XRP address');
@@ -994,6 +1008,8 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
+                    this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
+
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1094,6 +1110,8 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
+
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1154,16 +1172,20 @@ export class MptComponent implements OnInit, AfterViewInit {
                //      return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                // }
 
+               const amount: MPTAmount = {
+                    value: this.amountField,
+                    mpt_issuance_id: this.mptIssuanceIdField,
+               };
+
                // For clawback, you'll need additional fields like:
                // - MPToken ID (the token to claw back)
                // - Amount to claw back
                // - From address (the holder's address)
-               const mptClawbackTx: any = {
-                    TransactionType: 'MPTokenClawback',
+               const mptClawbackTx: xrpl.Clawback = {
+                    TransactionType: 'Clawback',
                     Account: wallet.classicAddress,
-                    MPTokenID: this.mptIssuanceIdField,
-                    Amount: this.amountField,
-                    From: resolvedDestination, // You'll need to add this field - address holding the tokens
+                    Amount: amount,
+                    Holder: resolvedDestination,
                     Fee: fee,
                     Flags: 0, // Typically 0 for clawback unless specific flags are needed
                     LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
@@ -1223,6 +1245,8 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
+                    this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
+
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1246,16 +1270,19 @@ export class MptComponent implements OnInit, AfterViewInit {
                .filter((obj: any) => (obj.LedgerEntryType === 'MPTokenIssuance' || obj.LedgerEntryType === 'MPToken') && (obj.Account === classicAddress || obj.Issuer === classicAddress))
                .map((obj: any) => {
                     return {
-                         LedgerEntryType: obj.LedgerEntryType,
-                         id: obj.index,
-                         mpt_issuance_id: obj.mpt_issuance_id,
-                         TransferFee: obj.TransferFee,
-                         OutstandingAmount: obj.OutstandingAmount,
-                         MaximumAmount: obj.MaximumAmount,
-                         MPTokenMetadata: obj.MPTokenMetadata,
-                         Issuer: obj.Issuer,
+                         AssetScale: obj.AssetScale ? obj.AssetScale : 'N/A',
                          Flags: obj.Flags,
-                         AssetScale: obj.AssetScale,
+                         Issuer: obj.Issuer ? obj.Issuer : 'N/A',
+                         LedgerEntryType: obj.LedgerEntryType,
+                         MPTokenMetadata: obj.MPTokenMetadata ? obj.MPTokenMetadata : 'N/A',
+                         MaximumAmount: obj.MaximumAmount ? obj.MaximumAmount : 'N/A',
+                         MPTAmount: obj.MPTAmount ? obj.MPTAmount : 'N/A',
+                         MPTokenIssuanceID: obj.MPTokenIssuanceID ? obj.MPTokenIssuanceID : 'N/A',
+                         OutstandingAmount: obj.OutstandingAmount ? obj.OutstandingAmount : 'N/A',
+                         Account: obj.Account ? obj.Account : 'N/A',
+                         TransferFee: obj.TransferFee ? obj.TransferFee : 'N/A',
+                         id: obj.index ? obj.index : 'N/A',
+                         mpt_issuance_id: obj.mpt_issuance_id ? obj.mpt_issuance_id : 'N/A',
                     };
                })
                .sort((a, b) => {
@@ -1826,10 +1853,6 @@ export class MptComponent implements OnInit, AfterViewInit {
 
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
-               this.ui.isSimulateEnabled = false;
-               this.useMultiSign = false;
-               this.isRegularKeyAddress = false;
-               this.isMptFlagModeEnabled = false;
                this.tokenCountField = '';
                this.assetScaleField = '';
                this.transferFeeField = '';
@@ -1850,6 +1873,12 @@ export class MptComponent implements OnInit, AfterViewInit {
           this.isMemoEnabled = false;
           this.memoField = '';
           this.useMultiSign = false;
+
+          // if (this.activeTab === 'clawback') {
+          this.selectedMpt = null;
+          this.amountField = '';
+          this.mptIssuanceIdField = '';
+          // }
 
           this.isTicket = false;
           this.isTicketEnabled = false;

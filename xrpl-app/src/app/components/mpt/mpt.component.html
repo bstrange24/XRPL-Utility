@@ -272,10 +272,8 @@
                                         }
 
                                         <!-- Issuer  -->
-                                        @if (chk.Issuer) {
+                                        @if (chk.MPToken === 'MPTokenIssuance' && chk.Issuer) {
                                         <span class="badge badge-expire"> Issuer: {{ chk.Issuer }} </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> Issuer: Not set </span>
                                         }
 
                                         <!-- Flags  -->
@@ -292,45 +290,48 @@
                                         <div class="line-break"></div>
 
                                         <!-- MPT Issuance ID  -->
-                                        @if (chk.mpt_issuance_id) {
+                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.mpt_issuance_id) {
                                         <span class="badge badge-expire"> MPT Issuance ID: {{ chk.mpt_issuance_id | slice:0:6 }}...{{ chk.mpt_issuance_id | slice:-6 }}</span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> MPT Issuance ID: Not set </span>
+                                        }
+
+                                        <!-- MPToken Issuance ID  -->
+                                        @if (chk.LedgerEntryType === 'MPToken' && chk.MPTokenIssuanceID) {
+                                        <span class="badge badge-expire"> MPToken Issuance ID: {{ chk.MPTokenIssuanceID}}</span>
                                         }
 
                                         <!-- AssetScale  -->
-                                        @if (chk.AssetScale) {
+                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.AssetScale) {
                                         <span class="badge badge-tag"> AssetScale: {{ chk.AssetScale }} </span>
-                                        } @else {
-                                        <span class="badge badge-tag-not-set"> AssetScale: Not set </span>
                                         }
 
                                         <!-- MaximumAmount  -->
-                                        @if (chk.MaximumAmount) {
+                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.MaximumAmount) {
                                         <span class="badge badge-invoice"> MaximumAmount: {{ chk.MaximumAmount }} </span>
-                                        } @else {
-                                        <span class="badge badge-invoice-not-set"> MaximumAmount: Not set</span>
                                         }
 
                                         <!-- OutstandingAmount  -->
-                                        @if (chk.OutstandingAmount) {
+                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.OutstandingAmount) {
                                         <span class="badge badge-invoice"> OutstandingAmount: {{ chk.OutstandingAmount }} </span>
-                                        } @else {
-                                        <span class="badge badge-invoice-not-set"> OutstandingAmount: Not set</span>
+                                        }
+
+                                        <!-- MPTAmount  -->
+                                        @if (chk.LedgerEntryType === 'MPToken' && chk.MPTAmount) {
+                                        <span class="badge badge-invoice"> MPTAmount: {{ chk.MPTAmount }} </span>
                                         }
 
                                         <!-- TransferFee  -->
-                                        @if (chk.TransferFee) {
+                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.TransferFee) {
                                         <span class="badge badge-invoice"> TransferFee: {{ chk.TransferFee }} </span>
-                                        } @else {
-                                        <span class="badge badge-invoice-not-set"> TransferFee: Not set</span>
                                         }
 
                                         <!-- MPTokenMetadata  -->
-                                        @if (chk.MPTokenMetadata) {
+                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.MPTokenMetadata) {
                                         <span class="badge badge-invoice"> MPTokenMetadata: {{ chk.MPTokenMetadata | slice:0:6 }}...{{ chk.MPTokenMetadata | slice:-6 }}</span>
-                                        } @else {
-                                        <span class="badge badge-invoice-not-set"> MPTokenMetadata: Not set</span>
+                                        }
+
+                                        <!-- Account  -->
+                                        @if (chk.LedgerEntryType === 'MPToken' && chk.Account) {
+                                        <span class="badge badge-invoice"> Account: {{ chk.Account }}</span>
                                         }
                                    </div>
 
@@ -387,7 +388,7 @@
                                    }
 
                                    <!-- MPT IssuanceId sections -->
-                                   @if (activeTab === 'authorize' || activeTab === 'unauthorize' || activeTab === 'destroy' || activeTab === 'lock' || activeTab === 'unlock') {
+                                   @if (activeTab === 'authorize' || activeTab === 'unauthorize' || activeTab === 'lock' || activeTab === 'unlock') {
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Destination</label>
@@ -478,24 +479,17 @@
                                    </div>
                                    }
 
+                                   <!-- Clawback/Destroy MPT sections -->
+                                   @if (activeTab === 'clawback' || activeTab === 'destroy') {
                                    <!-- Clawback MPT sections -->
-                                   @if (activeTab === 'clawback') {
+                                   @if(activeTab === 'clawback') {
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Amount to Clawback</label>
                                              <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
                                         </div>
-                                   </div>
 
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>MPT Issuance ID</label>
-                                             <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
-                                        </div>
-                                   </div>
-
-                                   <!-- Destination (create only) -->
-                                   <div class="form-row">
+                                        <!-- Destination -->
                                         <div class="form-group">
                                              <label>Destination</label>
 
@@ -528,6 +522,29 @@
                                         </ng-template>
                                    </div>
                                    }
+
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>MPT Issuance ID</label>
+                                             <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
+                                        </div>
+                                   </div>
+
+                                   @if (existingMpts.length > 0) {
+                                   <div class="form-row">
+                                        <div class="form-group" style="margin-bottom: 1em">
+                                             <label>Available Escrows to cancel</label>
+                                             <select [(ngModel)]="selectedMpt" name="selectedMpt" class="form-control" (ngModelChange)="onMptSelect($event)">
+                                                  <option [ngValue]="null" disabled>Select an MPT to Clawback</option>
+                                                  @for (chk of existingMpts; track chk.Sequence) {
+                                                  <!-- Make sure we have an issuer -->
+                                                  @if (chk.LedgerEntryType === 'MPTokenIssuance') {
+                                                  <option [ngValue]="chk">MPT Issuance ID: {{chk.mpt_issuance_id}} Outstanding Amount {{ chk.OutstandingAmount }}</option>
+                                                  } }
+                                             </select>
+                                        </div>
+                                   </div>
+                                   } }
                               </div>
 
                               <!-- MPT Flags -->
