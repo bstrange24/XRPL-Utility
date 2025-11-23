@@ -485,7 +485,6 @@ export class MptComponent implements OnInit, AfterViewInit {
                isTicket: this.isTicket,
                selectedTicket: this.selectedTicket,
                selectedSingleTicket: this.selectedSingleTicket,
-               // flags: this.flags,
           };
 
           try {
@@ -495,13 +494,9 @@ export class MptComponent implements OnInit, AfterViewInit {
                // this.utilsService.logAccountInfoObjects(accountInfo, null);
                // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-               const isShortForm = this.destinationField.includes('...');
-               const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
-
-               inputs.destination = resolvedDestination;
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'create');
+               const errors = await this.validationService.validate('MptCreate', { inputs, client, accountInfo });
                if (errors.length > 0) {
                     return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
@@ -514,7 +509,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                const mPTokenIssuanceCreateTx: MPTokenIssuanceCreate = {
                     TransactionType: 'MPTokenIssuanceCreate',
                     Account: wallet.classicAddress,
-                    MaximumAmount: this.tokenCountField,
+                    // MaximumAmount: this.tokenCountField,
                     Fee: fee,
                     Flags: v_flags,
                     LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
@@ -572,7 +567,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
                     this.addNewDestinationFromUser();
 
@@ -626,10 +621,10 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'authorize');
-               if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
-               }
+               // const errors = await this.validateInputs(inputs, 'authorize');
+               // if (errors.length > 0) {
+               //      return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+               // }
 
                const mPTokenAuthorizeTx: xrpl.MPTokenAuthorize = {
                     TransactionType: 'MPTokenAuthorize',
@@ -751,10 +746,10 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'setMptLocked');
-               if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
-               }
+               // const errors = await this.validateInputs(inputs, 'setMptLocked');
+               // if (errors.length > 0) {
+               //      return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+               // }
 
                this.lockedUnlock = locked;
 
@@ -901,10 +896,10 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'send');
-               if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
-               }
+               // const errors = await this.validateInputs(inputs, 'send');
+               // if (errors.length > 0) {
+               //      return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+               // }
 
                // Check if destination can hold the MPT
                if (!destObjects?.result?.account_objects) {
@@ -1048,10 +1043,10 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'delete');
-               if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
-               }
+               // const errors = await this.validateInputs(inputs, 'delete');
+               // if (errors.length > 0) {
+               //      return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+               // }
 
                const mPTokenIssuanceDestroyTx: xrpl.MPTokenIssuanceDestroy = {
                     TransactionType: 'MPTokenIssuanceDestroy',
@@ -1154,10 +1149,10 @@ export class MptComponent implements OnInit, AfterViewInit {
                inputs.destination = resolvedDestination;
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'clawback');
-               if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-               }
+               // const errors = await this.validateInputs(inputs, 'clawback');
+               // if (errors.length > 0) {
+               //      return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+               // }
 
                // For clawback, you'll need additional fields like:
                // - MPToken ID (the token to claw back)
@@ -1250,13 +1245,6 @@ export class MptComponent implements OnInit, AfterViewInit {
           this.existingMpts = (checkObjects.result.account_objects ?? [])
                .filter((obj: any) => (obj.LedgerEntryType === 'MPTokenIssuance' || obj.LedgerEntryType === 'MPToken') && (obj.Account === classicAddress || obj.Issuer === classicAddress))
                .map((obj: any) => {
-                    // ...(flags !== undefined ? [{ key: 'Flags', value: this.utilsService.getMptFlagsReadable(Number(flags)) }] : []),
-                    // ...((mpt as any)['MPTAmount'] ? [{ key: 'MPTAmount', value: String((mpt as any)['MPTAmount']) }] : []),
-                    // ...((mpt as any)['MPTokenMetadata'] ? [{ key: 'MPTokenMetadata', value: xrpl.convertHexToString((mpt as any)['MPTokenMetadata']) }] : []),
-                    // ...((mpt as any)['MaximumAmount'] ? [{ key: 'MaximumAmount', value: String((mpt as any)['MaximumAmount']) }] : []),
-                    // ...((mpt as any)['OutstandingAmount'] ? [{ key: 'OutstandingAmount', value: String((mpt as any)['OutstandingAmount']) }] : []),
-                    // ...((mpt as any)['TransferFee'] ? [{ key: 'TransferFee', value: (Number((mpt as any)['TransferFee']) / 1000).toFixed(3) + ' %' }] : []),
-                    // ...((mpt as any)['MPTIssuanceID'] ? [{ key: 'MPTIssuanceID', value: String((mpt as any)['MPTIssuanceID']) }] : []),
                     return {
                          LedgerEntryType: obj.LedgerEntryType,
                          id: obj.index,
@@ -1377,7 +1365,7 @@ export class MptComponent implements OnInit, AfterViewInit {
           if (this.selectedSingleTicket) {
                const ticketExists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
                if (!ticketExists) {
-                    return this.ui.setError(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
+                    throw new Error(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
                }
                this.utilsService.setTicketSequence(mptTx, this.selectedSingleTicket, true);
           } else {
@@ -1394,17 +1382,21 @@ export class MptComponent implements OnInit, AfterViewInit {
           if (this.assetScaleField && this.activeTab === 'create') {
                const assetScale = parseInt(this.assetScaleField);
                if (assetScale < 0 || assetScale > 15) {
-                    return this.ui.setError('ERROR: Tick size must be between 3 and 15.');
+                    throw new Error('Tick size must be between 3 and 15.');
                }
                mptTx.AssetScale = assetScale;
           }
 
           if (this.flags.canTransfer) {
+               // In setTxOptionalFields
+               if (!this.transferFeeField?.trim() && this.flags.canTransfer) {
+                    throw new Error('Transfer Fee is required when CanTransfer is enabled');
+               }
                if (this.transferFeeField) {
                     // TransferFee is in 1/1000th of a percent (basis points / 10), so for 1%, input 1000
                     const transferFee = parseInt(this.transferFeeField);
                     if (isNaN(transferFee) || transferFee < 0 || transferFee > 50000) {
-                         return this.ui.setError('ERROR: Transfer Fee must be a number between 0 and 50,000 (for 0% to 50%).');
+                         throw new Error('Transfer Fee must be a number between 0 and 50,000 (for 0% to 50%).');
                     }
                     mptTx.TransferFee = transferFee;
                }
@@ -1581,175 +1573,175 @@ export class MptComponent implements OnInit, AfterViewInit {
           this.cdr.detectChanges();
      }
 
-     private async validateInputs(inputs: ValidationInputs, action: string): Promise<string[]> {
-          const errors: string[] = [];
+     // private async validateInputs(inputs: ValidationInputs, action: string): Promise<string[]> {
+     //      const errors: string[] = [];
 
-          // --- Common validators ---
-          const isRequired = (value: string | null | undefined, fieldName: string): string | null => {
-               if (value == null || !this.utilsService.validateInput(value)) {
-                    return `${fieldName} cannot be empty.`;
-               }
-               return null;
-          };
+     //      // --- Common validators ---
+     //      const isRequired = (value: string | null | undefined, fieldName: string): string | null => {
+     //           if (value == null || !this.utilsService.validateInput(value)) {
+     //                return `${fieldName} cannot be empty.`;
+     //           }
+     //           return null;
+     //      };
 
-          const isValidXrpAddress = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidAddress(value)) {
-                    return `${fieldName} is invalid.`;
-               }
-               return null;
-          };
+     //      const isValidXrpAddress = (value: string | undefined, fieldName: string): string | null => {
+     //           if (value && !xrpl.isValidAddress(value)) {
+     //                return `${fieldName} is invalid.`;
+     //           }
+     //           return null;
+     //      };
 
-          const isValidSecret = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidSecret(value)) {
-                    return `${fieldName} is invalid.`;
-               }
-               return null;
-          };
+     //      const isValidSecret = (value: string | undefined, fieldName: string): string | null => {
+     //           if (value && !xrpl.isValidSecret(value)) {
+     //                return `${fieldName} is invalid.`;
+     //           }
+     //           return null;
+     //      };
 
-          const isNotSelfPayment = (sender: string | undefined, receiver: string | undefined): string | null => {
-               if (sender && receiver && sender === receiver) {
-                    return `Sender and receiver cannot be the same.`;
-               }
-               return null;
-          };
+     //      const isNotSelfPayment = (sender: string | undefined, receiver: string | undefined): string | null => {
+     //           if (sender && receiver && sender === receiver) {
+     //                return `Sender and receiver cannot be the same.`;
+     //           }
+     //           return null;
+     //      };
 
-          const isValidNumber = (value: string | undefined, fieldName: string, minValue?: number, maxValue?: number, allowEmpty: boolean = false): string | null => {
-               if (value === undefined || (allowEmpty && value === '')) return null; // Skip if undefined or empty (when allowed)
-               const num = parseFloat(value);
-               if (isNaN(num) || !isFinite(num)) {
-                    return `${fieldName} must be a valid number`;
-               }
-               if (minValue !== undefined && num < minValue) {
-                    return `${fieldName} must be greater than or equal to ${minValue}`;
-               }
-               if (maxValue !== undefined && num > maxValue) {
-                    return `${fieldName} must be less than or equal to ${maxValue}`;
-               }
-               return null;
-          };
+     //      const isValidNumber = (value: string | undefined, fieldName: string, minValue?: number, maxValue?: number, allowEmpty: boolean = false): string | null => {
+     //           if (value === undefined || (allowEmpty && value === '')) return null; // Skip if undefined or empty (when allowed)
+     //           const num = parseFloat(value);
+     //           if (isNaN(num) || !isFinite(num)) {
+     //                return `${fieldName} must be a valid number`;
+     //           }
+     //           if (minValue !== undefined && num < minValue) {
+     //                return `${fieldName} must be greater than or equal to ${minValue}`;
+     //           }
+     //           if (maxValue !== undefined && num > maxValue) {
+     //                return `${fieldName} must be less than or equal to ${maxValue}`;
+     //           }
+     //           return null;
+     //      };
 
-          const isValidSeed = (value: string | undefined): string | null => {
-               if (value) {
-                    const { value: detectedValue } = this.utilsService.detectXrpInputType(value);
-                    if (detectedValue === 'unknown') {
-                         return 'Account seed is invalid';
-                    }
-               }
-               return null;
-          };
+     //      const isValidSeed = (value: string | undefined): string | null => {
+     //           if (value) {
+     //                const { value: detectedValue } = this.utilsService.detectXrpInputType(value);
+     //                if (detectedValue === 'unknown') {
+     //                     return 'Account seed is invalid';
+     //                }
+     //           }
+     //           return null;
+     //      };
 
-          const validateMultiSign = (addressesStr: string | undefined, seedsStr: string | undefined): string | null => {
-               if (!addressesStr || !seedsStr) return null;
-               const addresses = this.utilsService.getMultiSignAddress(addressesStr);
-               const seeds = this.utilsService.getMultiSignSeeds(seedsStr);
-               if (addresses.length === 0) {
-                    return 'At least one signer address is required for multi-signing.';
-               }
-               if (addresses.length !== seeds.length) {
-                    return 'Number of signer addresses must match number of signer seeds.';
-               }
-               const invalidAddr = addresses.find((addr: string) => !xrpl.isValidAddress(addr));
-               if (invalidAddr) {
-                    return `Invalid signer address: ${invalidAddr}.`;
-               }
-               const invalidSeed = seeds.find((seed: string) => !xrpl.isValidSecret(seed));
-               if (invalidSeed) {
-                    return 'One or more signer seeds are invalid.';
-               }
-               return null;
-          };
+     //      const validateMultiSign = (addressesStr: string | undefined, seedsStr: string | undefined): string | null => {
+     //           if (!addressesStr || !seedsStr) return null;
+     //           const addresses = this.utilsService.getMultiSignAddress(addressesStr);
+     //           const seeds = this.utilsService.getMultiSignSeeds(seedsStr);
+     //           if (addresses.length === 0) {
+     //                return 'At least one signer address is required for multi-signing.';
+     //           }
+     //           if (addresses.length !== seeds.length) {
+     //                return 'Number of signer addresses must match number of signer seeds.';
+     //           }
+     //           const invalidAddr = addresses.find((addr: string) => !xrpl.isValidAddress(addr));
+     //           if (invalidAddr) {
+     //                return `Invalid signer address: ${invalidAddr}.`;
+     //           }
+     //           const invalidSeed = seeds.find((seed: string) => !xrpl.isValidSecret(seed));
+     //           if (invalidSeed) {
+     //                return 'One or more signer seeds are invalid.';
+     //           }
+     //           return null;
+     //      };
 
-          // --- Async validator: check if destination account requires a destination tag ---
-          const checkDestinationTagRequirement = async (): Promise<string | null> => {
-               if (!inputs.destination) return null; // Skip if no destination provided
-               try {
-                    const client = await this.xrplService.getClient();
-                    const accountInfo = await this.xrplService.getAccountInfo(client, inputs.destination, 'validated', '');
-                    if (accountInfo.result.account_flags.requireDestinationTag && (!inputs.destinationTag || inputs.destinationTag.trim() === '')) {
-                         return `Receiver requires a Destination Tag for payment.`;
-                    }
-               } catch (err) {
-                    console.error('Failed to check destination tag requirement:', err);
-                    return `Could not validate destination account.`;
-               }
-               return null;
-          };
+     //      // --- Async validator: check if destination account requires a destination tag ---
+     //      const checkDestinationTagRequirement = async (): Promise<string | null> => {
+     //           if (!inputs.destination) return null; // Skip if no destination provided
+     //           try {
+     //                const client = await this.xrplService.getClient();
+     //                const accountInfo = await this.xrplService.getAccountInfo(client, inputs.destination, 'validated', '');
+     //                if (accountInfo.result.account_flags.requireDestinationTag && (!inputs.destinationTag || inputs.destinationTag.trim() === '')) {
+     //                     return `Receiver requires a Destination Tag for payment.`;
+     //                }
+     //           } catch (err) {
+     //                console.error('Failed to check destination tag requirement:', err);
+     //                return `Could not validate destination account.`;
+     //           }
+     //           return null;
+     //      };
 
-          // --- Action-specific config ---
-          const actionConfig: Record<
-               string,
-               {
-                    required: (keyof ValidationInputs)[];
-                    customValidators?: (() => string | null)[];
-                    asyncValidators?: (() => Promise<string | null>)[];
-               }
-          > = {
-               get: {
-                    required: ['seed'],
-                    customValidators: [() => isValidSeed(inputs.seed)],
-                    asyncValidators: [],
-               },
-               create: {
-                    required: ['seed'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidNumber(inputs.assetScaleField, 'Asset scale', 0, 15),
-                         () => isValidNumber(inputs.transferFeeField, 'Transfer fee', 0, 50000),
-                         () => isValidNumber(inputs.tokenCountField, 'Token count', 0),
-                         // () => isNotSelfPayment(inputs.senderAddress, inputs.destination),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                    ],
-                    asyncValidators: [checkDestinationTagRequirement],
-               },
-               default: { required: [], customValidators: [], asyncValidators: [] },
-          };
+     //      // --- Action-specific config ---
+     //      const actionConfig: Record<
+     //           string,
+     //           {
+     //                required: (keyof ValidationInputs)[];
+     //                customValidators?: (() => string | null)[];
+     //                asyncValidators?: (() => Promise<string | null>)[];
+     //           }
+     //      > = {
+     //           get: {
+     //                required: ['seed'],
+     //                customValidators: [() => isValidSeed(inputs.seed)],
+     //                asyncValidators: [],
+     //           },
+     //           create: {
+     //                required: ['seed'],
+     //                customValidators: [
+     //                     () => isValidSeed(inputs.seed),
+     //                     () => isValidNumber(inputs.assetScaleField, 'Asset scale', 0, 15),
+     //                     () => isValidNumber(inputs.transferFeeField, 'Transfer fee', 0, 50000),
+     //                     () => isValidNumber(inputs.tokenCountField, 'Token count', 0),
+     //                     // () => isNotSelfPayment(inputs.senderAddress, inputs.destination),
+     //                     () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
+     //                     () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
+     //                     () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
+     //                     () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
+     //                     () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
+     //                     () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
+     //                     () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
+     //                     () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
+     //                     () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
+     //                ],
+     //                asyncValidators: [checkDestinationTagRequirement],
+     //           },
+     //           default: { required: [], customValidators: [], asyncValidators: [] },
+     //      };
 
-          const config = actionConfig[action] || actionConfig['default'];
+     //      const config = actionConfig[action] || actionConfig['default'];
 
-          // --- Run required checks ---
-          config.required.forEach((field: keyof ValidationInputs) => {
-               const err = isRequired(inputs[field], field.charAt(0).toUpperCase() + field.slice(1));
-               if (err) errors.push(err);
-          });
+     //      // --- Run required checks ---
+     //      config.required.forEach((field: keyof ValidationInputs) => {
+     //           const err = isRequired(inputs[field], field.charAt(0).toUpperCase() + field.slice(1));
+     //           if (err) errors.push(err);
+     //      });
 
-          // Run custom validators
-          config.customValidators?.forEach((validator: () => string | null) => {
-               const err = validator();
-               if (err) errors.push(err);
-          });
+     //      // Run custom validators
+     //      config.customValidators?.forEach((validator: () => string | null) => {
+     //           const err = validator();
+     //           if (err) errors.push(err);
+     //      });
 
-          // --- Run async validators ---
-          if (config.asyncValidators) {
-               for (const validator of config.asyncValidators) {
-                    const err = await validator();
-                    if (err) errors.push(err);
-               }
-          }
+     //      // --- Run async validators ---
+     //      if (config.asyncValidators) {
+     //           for (const validator of config.asyncValidators) {
+     //                const err = await validator();
+     //                if (err) errors.push(err);
+     //           }
+     //      }
 
-          // Always validate optional fields if provided (e.g., multi-sign, regular key)
-          const multiErr = validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds);
-          if (multiErr) errors.push(multiErr);
+     //      // Always validate optional fields if provided (e.g., multi-sign, regular key)
+     //      const multiErr = validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds);
+     //      if (multiErr) errors.push(multiErr);
 
-          const regAddrErr = isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address');
-          if (regAddrErr && inputs.regularKeyAddress !== 'No RegularKey configured for account') errors.push(regAddrErr);
+     //      const regAddrErr = isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address');
+     //      if (regAddrErr && inputs.regularKeyAddress !== 'No RegularKey configured for account') errors.push(regAddrErr);
 
-          const regSeedErr = isValidSecret(inputs.regularKeySeed, 'Regular Key Seed');
-          if (regSeedErr) errors.push(regSeedErr);
+     //      const regSeedErr = isValidSecret(inputs.regularKeySeed, 'Regular Key Seed');
+     //      if (regSeedErr) errors.push(regSeedErr);
 
-          if (errors.length == 0 && inputs.useMultiSign && (inputs.multiSignAddresses === 'No Multi-Sign address configured for account' || inputs.multiSignSeeds === '')) {
-               errors.push('At least one signer address is required for multi-signing');
-          }
+     //      if (errors.length == 0 && inputs.useMultiSign && (inputs.multiSignAddresses === 'No Multi-Sign address configured for account' || inputs.multiSignSeeds === '')) {
+     //           errors.push('At least one signer address is required for multi-signing');
+     //      }
 
-          return errors;
-     }
+     //      return errors;
+     // }
 
      private async getWallet() {
           const wallet = await this.utilsService.getWallet(this.currentWallet.seed);

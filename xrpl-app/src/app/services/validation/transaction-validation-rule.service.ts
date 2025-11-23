@@ -120,6 +120,23 @@ export class ValidationService {
           return this.numeric(field, { min, allowEmpty: true });
      }
 
+     private isValidNumber(value: string | undefined, fieldName: string, minValue?: number, maxValue?: number, allowEmpty: boolean = false): ValidatorFn {
+          return async ctx => {
+               if (value === undefined || (allowEmpty && value === '')) return null; // Skip if undefined or empty (when allowed)
+               const num = parseFloat(value);
+               if (isNaN(num) || !isFinite(num)) {
+                    return `${fieldName} must be a valid number`;
+               }
+               if (minValue !== undefined && num < minValue) {
+                    return `${fieldName} must be greater than or equal to ${minValue}`;
+               }
+               if (maxValue !== undefined && num > maxValue) {
+                    return `${fieldName} must be less than or equal to ${maxValue}`;
+               }
+               return null;
+          };
+     }
+
      private requireDestinationTagIfNeeded(): ValidatorFn {
           return async ctx => {
                const dest = ctx.inputs['destination'];
@@ -973,6 +990,60 @@ export class ValidationService {
                     this.multiSign(),
 
                     this.invoiceId(),
+               ],
+          });
+
+          // MptCreate
+          this.registerRule({
+               transactionType: 'MptCreate',
+               requiredFields: ['seed'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    this.optionalNumeric('tokenCountField', 0),
+
+                    ctx => {
+                         if (ctx.inputs['assetScaleField']) {
+                              this.isValidNumber('assetScaleField', 'Asset scale', 0, 15);
+                         }
+                         return null;
+                    },
+
+                    ctx => {
+                         if (ctx.inputs['transferFeeField']) {
+                              this.isValidNumber('transferFeeField', 'Transfer fee', 0, 50000);
+                         }
+                         return null;
+                    },
+
+                    ctx => {
+                         if (ctx.inputs['tokenCountField']) {
+                              this.isValidNumber('tokenCountField', 'Transfer fee', 0);
+                         }
+                         return null;
+                    },
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
                ],
           });
      }
