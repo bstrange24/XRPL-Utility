@@ -13,7 +13,8 @@
      margin: 0 auto;
      /* padding: 0 1rem; */
      padding-right: 0.5rem;
-     background-color: aliceblue;
+     /* background-color: aliceblue; */
+     background-color: white;
 }
 
 html {
@@ -605,7 +606,8 @@ input[type='text']:focus {
 }
 
 .wallet-item {
-     background: aliceblue;
+     /* background: aliceblue; */
+     background-color: white;
      border: 1px solid #e5e7eb;
      border-radius: 10px;
      padding: 1rem;
@@ -2024,7 +2026,8 @@ app-root {
      display: block;
      margin: 0;
      padding: 0;
-     background-color: aliceblue;
+     /* background-color: aliceblue; */
+     background-color: white;
 }
 
 /* -------------------------------------------------
@@ -2314,7 +2317,8 @@ app-root {
      bottom: 20px;
      left: 50%;
      transform: translateX(-50%) translateY(100%);
-     background-color: aliceblue;
+     /* background-color: aliceblue; */
+     background-color: white;
      color: black;
      padding: 10px 20px;
      border-radius: 6px;
@@ -2730,7 +2734,8 @@ app-root {
      line-height: 1;
      /* margin-top: 0.5em; */
      /* no extra margin */
-     background-color: aliceblue;
+     /* background-color: aliceblue; */
+     background-color: white;
      /* padding-top: 10px; */
 }
 
