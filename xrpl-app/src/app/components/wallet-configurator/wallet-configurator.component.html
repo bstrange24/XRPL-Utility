@@ -125,7 +125,7 @@
                               <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
                          </div>
                          <div>
-                              <h2 class="submenu-info-main-text">New Wallet Configurator</h2>
+                              <h2 class="submenu-info-main-text">New Wallet Generator</h2>
                               <p class="submenu-info-secondary-text">Generate a new XRPL Wallet on {{environment}}</p>
                          </div>
                     </div>
@@ -199,15 +199,15 @@
                               <!-- Action buttons -->
                               @if (activeTab === 'generate') {
                               <div class="button-row">
-                                   <button type="submit" class="btn-primary-blue" (click)="generateNewAccount()">Generate Wallet from seed</button>
-                                   <button type="submit" class="btn-primary-green" (click)="generateNewWalletFromMnemonic()">Generate Wallet from Mnemonic</button>
-                                   <button type="submit" class="btn-primary-orange" (click)="generateNewWalletFromSecretNumbers()">Generate Wallet from Secret Numbers</button>
+                                   <button type="button" (click)="generateNewAccount()" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Generate Wallet from Family Seed' }}</button>
+                                   <button type="button" (click)="generateNewWalletFromMnemonic()" class="btn-primary-green" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Generate Wallet from Mnemonic' }}</button>
+                                   <button type="button" (click)="generateNewWalletFromSecretNumbers()" class="btn-primary-orange" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Generate Wallet from Secret Numbers' }}</button>
                               </div>
                               } @if (activeTab === 'derive') {
                               <div class="button-row">
-                                   <button type="submit" class="btn-primary-blue" (click)="deriveWalletFromFamilySeed()">Derive From Secret</button>
-                                   <button type="submit" class="btn-primary-green" (click)="deriveWalletFromMnemonic()">Derive From Mnemonic</button>
-                                   <button type="submit" class="btn-primary-orange" (click)="deriveWalletFromSecretNumbers()">Derive From Secret Numbers</button>
+                                   <button type="button" (click)="deriveWalletFromFamilySeed()" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
+                                   <button type="button" (click)="deriveWalletFromMnemonic()" class="btn-primary-green" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
+                                   <button type="button" (click)="deriveWalletFromSecretNumbers()" class="btn-primary-orange" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Derive Wallet from Secret Numbers' }}</button>
                               </div>
                               }
 
