@@ -30,11 +30,6 @@
                          <!-- List of wallets -->
                          @for (wallet of wallets; track wallet.address; let i = $index) {
                          <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
-                              <!-- Drag Handle (6-dot grip) -->
-                              <!-- <div class="drag-handle" cdkDragHandle>
-                                   <lucide-icon name="grip-vertical" size="20"></lucide-icon>
-                              </div> -->
-
                               <!-- Wallet Info -->
                               <div class="wallet-info">
                                    @if (editingIndex(i)) {
@@ -558,20 +553,14 @@
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   @switch (activeTab) {
-                                   <!-- create buttons -->
-                                   @case ('create') {
-                                   <button type="button" class="btn-primary-blue" (click)="sendCheck()">Create Check</button>
-                                   }
-                                   <!-- cash buttons -->
-                                   @case ('cash') {
-                                   <button type="button" class="btn-primary-green" (click)="cashCheck()">Cash Check</button>
-                                   }
-                                   <!-- cancel buttons -->
-                                   @case ('cancel') {
-                                   <button type="button" class="btn-primary-red" (click)="cancelCheck()">Cancel Check</button>
+                                   @switch (activeTab) { @case ('create') {
+                                   <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create Check' }}</button>
+                                   } @case ('cash') {
+                                   <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Cash Check' }}</button>
+                                   } @case ('cancel') {
+                                   <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Cancel Check' }}</button>
                                    } }
-                                   <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
+                                   <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields" [disabled]="ui.spinner">Clear Fields</button>
                               </div>
                          </div>
 

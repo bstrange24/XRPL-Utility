@@ -30,11 +30,6 @@
                          <!-- List of wallets -->
                          @for (wallet of wallets; track wallet.address; let i = $index) {
                          <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
-                              <!-- Drag Handle (6-dot grip) -->
-                              <!-- <div class="drag-handle" cdkDragHandle>
-                                   <lucide-icon name="grip-vertical" size="20"></lucide-icon>
-                              </div> -->
-
                               <!-- Wallet Info -->
                               <div class="wallet-info">
                                    @if (editingIndex(i)) {
@@ -351,11 +346,12 @@
                                    @switch (activeTab) {
                                    <!-- create buttons -->
                                    @case ('create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createTicket()">Create Ticket</button>
+                                   <button type="button" class="btn-primary-blue" (click)="createTicket()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create Ticket' }}</button>
+
                                    }
                                    <!-- delete buttons -->
                                    @case ('delete') {
-                                   <button type="button" class="btn-primary-red" (click)="deleteTicket()">Delete Ticket</button>
+                                   <button type="button" class="btn-primary-red" (click)="deleteTicket()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Delete Ticket' }}</button>
                                    } }
                                    <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>

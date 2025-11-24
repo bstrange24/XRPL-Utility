@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef, ChangeDetectionStrategy } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -116,7 +116,6 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
      environment: string = '';
      encryptionType: string = '';
      activeTab: string = 'create';
-     private cachedReserves: any = null;
      hasWallets: boolean = true;
      walletTicketCount = 0;
      url: string = '';
@@ -395,7 +394,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
+               this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
                const inputs: ValidationInputs = {
                     seed: this.currentWallet.seed,
@@ -457,8 +456,8 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
-               // this.utilsService.logAccountInfoObjects(accountInfo, null);
-               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+               this.utilsService.logAccountInfoObjects(accountInfo, null);
+               this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
                inputs.accountInfo = accountInfo;
 
@@ -502,8 +501,8 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               // this.utilsService.logObjects('response', response);
-               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               this.utilsService.logObjects('response', response);
+               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -706,7 +705,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
      }
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
-          // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
+          this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
 
           this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
           this.refreshUiAccountInfo(updatedAccountInfo);
@@ -866,22 +865,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
 
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          if (this.destinations.length > 0 && !this.destinationField) {
-               // this.destinationField = this.destinations[0].address;
-          }
           this.storageService.set('destinations', this.destinations);
-          this.ensureDefaultNotSelected();
-     }
-
-     ensureDefaultNotSelected() {
-          const currentAddress = this.currentWallet.address;
-          if (currentAddress && this.destinations.length > 0) {
-               if (!this.destinationField || this.destinationField === currentAddress) {
-                    const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    // this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
-               }
-          }
-          this.cdr.detectChanges();
      }
 
      private async validateInputs(inputs: ValidationInputs, action: string): Promise<string[]> {

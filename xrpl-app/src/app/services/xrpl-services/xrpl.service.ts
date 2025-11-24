@@ -125,10 +125,6 @@ export class XrplService {
           }
      }
 
-     // private knownCreationDates: { [key: string]: Date } = {
-     //      'PHNIX:rDFXbW2ZZCG5WgPtqwNiA2xZokLMm9ivmN': new Date('2024-12-03T00:00:00Z'),
-     // };
-
      private formatTokenAge(fromDate: Date): string {
           const now = new Date();
           const diffMs = now.getTime() - fromDate.getTime();
@@ -235,30 +231,6 @@ export class XrplService {
                }
           }
           return null;
-     }
-
-     async getTokenCreationDateFromXPMarket(currency: string, issuer: string): Promise<Date> {
-          const key = `${currency}:${issuer}`;
-          const now = Date.now();
-
-          const cached = this.tokenCache.get(key);
-          if (cached && now - cached.checkedAt < 24 * 60 * 60 * 1000) {
-               return Promise.resolve(cached.createdAt);
-          }
-
-          try {
-               const observable = this.getTokenInfo(currency, issuer);
-               const data: any = await firstValueFrom(observable);
-               const createdAtStr: string | undefined = data?.inception;
-               const createdAt = createdAtStr ? new Date(createdAtStr) : new Date(0);
-               this.tokenCache.set(key, { createdAt, checkedAt: now });
-               return createdAt;
-          } catch (err: any) {
-               console.error('Error getting token info:', err);
-               const fallbackDate = new Date();
-               this.tokenCache.set(key, { createdAt: fallbackDate, checkedAt: now });
-               return fallbackDate;
-          }
      }
 
      async getTokenCreationDateService(currency: string, issuer: string, client: xrpl.Client): Promise<Date> {
@@ -607,11 +579,6 @@ export class XrplService {
           };
      }
 
-     // filterAccountObjectsByTypes(accountObjectsResponse: xrpl.AccountObjectsResponse, types: string[]) {
-     //      const objects = accountObjectsResponse.result.account_objects ?? [];
-     //      return objects.filter((obj: any) => types.includes(obj.LedgerEntryType));
-     // }
-
      async getAMMInfo(client: Client, asset: any, asset2: any, account: string, ledgerIndex: xrpl.LedgerIndex): Promise<any> {
           try {
                const response = await client.request({
@@ -895,22 +862,6 @@ export class XrplService {
           }
      }
 
-     // async getTokenBalance(client: Client, address: string, ledgerIndex: xrpl.LedgerIndex, type: string) {
-     //      try {
-     //           const response = await client.request({
-     //                command: 'gateway_balances',
-     //                account: address,
-     //                ledger_index: ledgerIndex,
-     //                // hotwallet: ['rLAm8JW7rmFhMNGW9AbviLh22Pn9oHdU3F'],
-     //           });
-     //           return response;
-     //      } catch (error: any) {
-     //           console.error('Error fetching gateway_balances:', error);
-     //           // return [] as any;
-     //           throw new Error(`Failed to fetch gateway_balances: ${error.message || 'Unknown error'}`);
-     //      }
-     // }
-
      async getAccountOffers(client: Client, address: string, ledgerIndex: xrpl.LedgerIndex, type: string) {
           try {
                const response = await client.request({
@@ -1030,6 +981,27 @@ export class XrplService {
           } catch (error: any) {
                console.error('Error checking ticket: ', error);
                return false; // Return false if there's an error fetching tickets
+          }
+     }
+
+     async getCheckByCheckId(client: Client, checkId: string, ledgerIndex: xrpl.LedgerIndex): Promise<any> {
+          try {
+               const response = await client.request({
+                    command: 'ledger_entry',
+                    index: checkId,
+                    ledger_index: ledgerIndex,
+               });
+
+               if (response.result.node) {
+                    console.log('Check found:', response.result.node);
+                    return response.result.node;
+               } else {
+                    console.log('Check not found');
+                    return null;
+               }
+          } catch (error: any) {
+               console.error('Error fetching Check ID:', error);
+               return null;
           }
      }
 

@@ -544,17 +544,8 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
           try {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
-               const [accountInfo, checkObjects, accountObjects, tokenBalance, mptAccountTokens] = await Promise.all([
-                    this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
-                    this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'check'),
-                    this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''),
-                    this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', ''),
-                    this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'mptoken'),
-               ]);
-               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
-               // this.utilsService.logObjects('checkObjects', checkObjects);
-               // this.utilsService.logObjects('tokenBalance', tokenBalance);
-               // this.utilsService.logObjects('mptAccountTokens', mptAccountTokens);
+               const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+               this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
                const inputs: ValidationInputs = { seed: this.currentWallet.seed, accountInfo: accountInfo };
 
@@ -643,10 +634,10 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     this.xrplService.getLastLedgerIndex(client),
                     this.xrplService.getXrplServerInfo(client, 'current', ''),
                ]);
-               // this.utilsService.logAccountInfoObjects(accountInfo, null);
-               // this.utilsService.logObjects('trustLines', trustLines);
-               // this.utilsService.logObjects('destinationAccountInfo', destinationAccountInfo);
-               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+               this.utilsService.logAccountInfoObjects(accountInfo, null);
+               this.utilsService.logObjects('trustLines', trustLines);
+               this.utilsService.logObjects('destinationAccountInfo', destinationAccountInfo);
+               this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
                inputs.accountInfo = accountInfo;
                inputs.destination = resolvedDestination;
@@ -708,7 +699,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     }
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Sending Check (no changes will be made)...' : 'Submitting Send Check to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create Check (no changes will be made)...' : 'Submitting Create Check to Ledger...', 200);
 
                this.ui.paymentTx.push(checkCreateTx);
                this.updatePaymentTx();
@@ -729,8 +720,8 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               // this.utilsService.logObjects('response', response);
-               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               this.utilsService.logObjects('response', response);
+               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -768,7 +759,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     this.clearFields(false);
                     this.cdr.detectChanges();
                } else {
-                    this.ui.successMessage = 'Simulated Check create successfully!';
+                    this.ui.successMessage = 'Simulated Create Check successfully!';
                }
           } catch (error: any) {
                console.error('Error in createCheck:', error);
@@ -788,7 +779,6 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
 
           const inputs: ValidationInputs = {
                seed: this.currentWallet.seed,
-               destination: this.destinationField,
                amount: this.amountField,
                checkId: this.checkIdField,
                isRegularKeyAddress: this.isRegularKeyAddress,
@@ -813,20 +803,29 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     this.xrplService.getLastLedgerIndex(client),
                     this.xrplService.getXrplServerInfo(client, 'current', ''),
                ]);
-               // this.utilsService.logAccountInfoObjects(accountInfo, null);
-               // this.utilsService.logObjects('trustLines', trustLines);
-               // this.utilsService.logObjects('checkObjects', checkObjects);
-               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+               this.utilsService.logAccountInfoObjects(accountInfo, null);
+               this.utilsService.logObjects('trustLines', trustLines);
+               this.utilsService.logObjects('checkObjects', checkObjects);
+               this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-               // const isShortForm = this.destinationField.includes('...');
-               // const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
-
-               // inputs.destination = resolvedDestination;
                inputs.accountInfo = accountInfo;
 
                const errors = await this.validateInputs(inputs, 'cashCheck');
                if (errors.length > 0) {
                     return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+               }
+
+               const checkObject = await this.xrplService.getCheckByCheckId(client, this.checkIdField, 'validated');
+               if (checkObject) {
+                    console.log('checkObject: ', checkObject);
+                    if (checkObject.Expiration) {
+                         const currentRippleTime = await this.xrplService.getCurrentRippleTime(client);
+                         if (currentRippleTime >= checkObject.Expiration) {
+                              return this.ui.setError(`Transaction or object has expired.`);
+                         }
+                    }
+               } else {
+                    return this.ui.setError(`No check found with Check ID ${this.checkIdField}`);
                }
 
                if (this.currencyFieldDropDownValue !== AppConstants.XRP_CURRENCY) {
@@ -857,7 +856,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
                });
 
-               await this.setTxOptionalFields(client, checkCashTx, wallet, accountInfo, 'finish');
+               await this.setTxOptionalFields(client, checkCashTx, wallet, accountInfo, 'cash');
 
                if (this.currencyFieldDropDownValue === AppConstants.XRP_CURRENCY) {
                     if (this.amountField || this.amountField === '') {
@@ -896,8 +895,8 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               // this.utilsService.logObjects('response', response);
-               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               this.utilsService.logObjects('response', response);
+               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -1014,8 +1013,8 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               // this.utilsService.logObjects('response', response);
-               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               this.utilsService.logObjects('response', response);
+               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                this.ui.txResult.push(response.result);
                this.updateTxResult(this.ui.txResult);
@@ -1613,7 +1612,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                },
                cashCheck: {
                     required: ['seed', 'amount', 'checkId'],
-                    customValidators: [() => isValidSeed(inputs.seed), () => isValidXrpAddress(inputs.destination, 'Destination'), () => isValidNumber(inputs.amount, 'Amount', 0), () => isRequired(inputs.checkId, 'Check ID'), () => isNotSelfPayment(inputs.senderAddress, inputs.destination)],
+                    customValidators: [() => isValidSeed(inputs.seed), () => isValidNumber(inputs.amount, 'Amount', 0), () => isRequired(inputs.checkId, 'Check ID')],
                     asyncValidators: [checkDestinationTagRequirement],
                },
                cancelCheck: {
