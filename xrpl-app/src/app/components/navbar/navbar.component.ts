@@ -1,4 +1,4 @@
-import { Component, OnInit, EventEmitter, Output } from '@angular/core';
+import { Component, OnInit, EventEmitter, Output, Injectable } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { StorageService } from '../../services/local-storage/storage.service';
@@ -12,6 +12,16 @@ import { debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import * as xrpl from 'xrpl';
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
+
+@Injectable({ providedIn: 'root' })
+export class NetworkService {
+     private networkChangedSource = new Subject<string>();
+     networkChanged$ = this.networkChangedSource.asObservable();
+
+     announceNetworkChange(network: string) {
+          this.networkChangedSource.next(network);
+     }
+}
 
 @Component({
      selector: 'app-navbar',
@@ -41,7 +51,7 @@ export class NavbarComponent implements OnInit {
      transactionInput = '';
      spinner = false;
 
-     constructor(private readonly storageService: StorageService, private readonly utilsService: UtilsService, private readonly xrplService: XrplService, private readonly router: Router, private readonly datePipe: DatePipe, private readonly renderUiComponentsService: RenderUiComponentsService) {}
+     constructor(private readonly storageService: StorageService, private readonly utilsService: UtilsService, private readonly xrplService: XrplService, private readonly router: Router, private readonly datePipe: DatePipe, private readonly renderUiComponentsService: RenderUiComponentsService, private networkService: NetworkService) {}
 
      ngOnInit() {
           // Initialize network
@@ -178,11 +188,30 @@ export class NavbarComponent implements OnInit {
      }
 
      selectNetwork(network: string) {
+          const normalized = network.toLowerCase();
           this.selectedNetwork = network.charAt(0).toUpperCase() + network.slice(1);
-          this.networkColor = this.storageService.getNetworkColor(network.toLowerCase());
-          this.storageService.setNet(this.storageService['networkServers'][network.toLowerCase()], network.toLowerCase());
+          this.networkColor = this.storageService.getNetworkColor(normalized);
+
+          // THIS IS KEY: Update stored network + reconnect client
+          this.storageService.setNet(this.storageService['networkServers'][normalized], normalized);
+
+          // Reconnect XRPL client to new network
+          this.xrplService.disconnect().then(() => {
+               this.xrplService.getClient();
+          });
+
+          // THIS IS THE MAGIC: Notify everyone that network changed
+          this.networkService.announceNetworkChange(normalized);
+
           this.isNetworkDropdownOpen = false;
      }
+
+     // selectNetwork(network: string) {
+     //      this.selectedNetwork = network.charAt(0).toUpperCase() + network.slice(1);
+     //      this.networkColor = this.storageService.getNetworkColor(network.toLowerCase());
+     //      this.storageService.setNet(this.storageService['networkServers'][network.toLowerCase()], network.toLowerCase());
+     //      this.isNetworkDropdownOpen = false;
+     // }
 
      setActiveLink(link: string) {
           this.storageService.setActiveNavLink(link);

@@ -28,7 +28,7 @@ export class WalletGeneratorService {
           const wallet = await this.generateWalletFromFamilySeed(environment, encryptionType);
 
           // Delay (e.g. for faucet)
-          await this.utilsService.sleep(5000);
+          await this.utilsService.sleep(6000);
           console.log('Generated wallet:', wallet);
 
           // Get current wallets to calculate next name
@@ -106,7 +106,7 @@ export class WalletGeneratorService {
           const wallet = await this.generateWalletFromMnemonic(environment, encryptionType);
 
           // Optional delay (e.g. for faucet)
-          await this.utilsService.sleep(5000);
+          await this.utilsService.sleep(6000);
           console.log('Generated wallet:', wallet);
 
           // Get current wallets to calculate next name
@@ -180,7 +180,7 @@ export class WalletGeneratorService {
           const wallet = await this.generateWalletFromSecretNumbers(environment, encryptionType);
 
           // Optional delay (e.g. for faucet)
-          await this.utilsService.sleep(5000);
+          await this.utilsService.sleep(6000);
           console.log('Generated wallet:', wallet);
 
           // Get current wallets to calculate next name

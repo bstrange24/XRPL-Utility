@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef, ChangeDetectionStrategy } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -272,6 +272,8 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                await this.refreshWallets(client, [faucetWallet.address]);
                this.ui.spinner = false;
                this.ui.clearWarning();
+               this.ui.txResult.push(faucetWallet);
+               this.updateTxResult(this.ui.txResult);
           } catch (error: any) {
                console.error('Error in generateNewAccount:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
@@ -533,7 +535,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                          // This callback runs inside NgZone → UI updates safely
                          this.currentWallet = { ...newCurrentWallet };
                          // Optional: trigger change detection if needed
-                         this.cdr.markForCheck();
+                         this.cdr.detectChanges();
                     }
                );
           } catch (error: any) {

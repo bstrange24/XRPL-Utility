@@ -391,9 +391,11 @@
                                                        </div>
 
                                                        <div class="form-group remove-group">
-                                                            <button type="button" (click)="removeSigner(i)" class="btn-danger btn-sm" *ngIf="signers.length > 1" title="Remove this signer">
+                                                            @if (signers.length > 1) {
+                                                            <button type="button" (click)="removeSigner(i)" class="btn-danger btn-sm" title="Remove this signer">
                                                                  <lucide-icon name="trash-2" size="16"></lucide-icon>
                                                             </button>
+                                                            }
                                                        </div>
                                                   </div>
                                              </fieldset>
