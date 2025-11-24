@@ -885,13 +885,15 @@ export class UtilsService {
           return div.textContent || div.innerText || '';
      }
 
-     async getWallet1(seed: string, algorithm: 'ed25519' | 'secp256k1'): Promise<xrpl.Wallet> {
+     async getWalletWithEncryptionAlgorithm(seed: string, algorithm: 'ed25519' | 'secp256k1'): Promise<xrpl.Wallet> {
           const result = this.detectXrpInputType(seed);
+
           // Map string algorithm to xrpl's expected type (ECDSA enum or undefined)
           const options: { algorithm?: xrpl.ECDSA } = {};
           if (algorithm === 'secp256k1') {
                options.algorithm = xrpl.ECDSA.secp256k1;
           }
+
           // For 'ed25519', leave algorithm undefined (xrpl defaults to Ed25519)
           try {
                if (result.type === 'seed') {

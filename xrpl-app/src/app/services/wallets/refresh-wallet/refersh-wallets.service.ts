@@ -1,6 +1,4 @@
-// wallet-data.service.ts
 import { Injectable, NgZone } from '@angular/core';
-
 import * as xrpl from 'xrpl';
 import { UtilsService } from '../../util-service/utils.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
@@ -97,6 +95,8 @@ export class WalletDataService {
           } catch (error: any) {
                console.error('Error in refreshWallets:', error);
                throw new Error(error.message);
+          } finally {
+               console.log(`Leaving refreshWallets in ${(Date.now() - now).toString()}ms`);
           }
      }
 }

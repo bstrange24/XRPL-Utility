@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { StorageService } from '../../local-storage/storage.service';
+import { NetworkService } from '../../../components/navbar/navbar.component';
 
 export interface Wallet {
      name?: string;
@@ -26,16 +27,30 @@ export interface Wallet {
 export class WalletManagerService {
      private walletsSubject = new BehaviorSubject<Wallet[]>([]);
      public wallets$ = this.walletsSubject.asObservable();
+
      private editingIndex: number | null = null; // Wallet name change state
      private tempName = '';
+     private currentNetwork = 'devnet';
 
-     constructor(private storageService: StorageService) {
+     constructor(private storageService: StorageService, private networkService: NetworkService) {
+          const net = this.storageService.getNet();
+          this.currentNetwork = net?.environment || 'devnet';
+
           this.loadFromStorage();
+
+          // Listen for network switches
+          this.networkService.networkChanged$.subscribe(network => {
+               this.currentNetwork = network;
+               this.loadFromStorage(); // This clears old network wallets instantly
+          });
      }
 
      /** Load wallets from localStorage */
      private loadFromStorage(): void {
-          const stored = this.storageService.get('wallets');
+          // const stored = this.storageService.get('wallets');
+          const key = `wallets_${this.currentNetwork}`;
+          const stored = this.storageService.get(key);
+
           if (stored) {
                try {
                     const parsed = JSON.parse(stored);
@@ -44,18 +59,26 @@ export class WalletManagerService {
                     console.error('Failed to parse wallets from storage', e);
                     this.walletsSubject.next([]);
                }
+          } else {
+               this.walletsSubject.next([]);
           }
+     }
+
+     private saveToStorage(wallets: Wallet[]): void {
+          const key = `wallets_${this.currentNetwork}`;
+          this.storageService.set(key, JSON.stringify(wallets));
+     }
+
+     /** Update wallets and persist */
+
+     updateWallets(wallets: Wallet[]): void {
+          this.walletsSubject.next(wallets);
+          this.saveToStorage(wallets);
      }
 
      /** Get current wallets (snapshot) */
      getWallets(): Wallet[] {
           return this.walletsSubject.value;
-     }
-
-     /** Update wallets and persist */
-     updateWallets(wallets: Wallet[]): void {
-          this.walletsSubject.next(wallets);
-          this.storageService.set('wallets', JSON.stringify(wallets));
      }
 
      /** Add a new wallet */

@@ -33,7 +33,6 @@ interface ValidationInputs {
      accountInfo?: any;
      accountObjects?: any;
      destination?: any;
-     // formattedDestination?: string;
      destinationTag?: string;
      amount?: string;
      sourceTag?: string;
@@ -153,12 +152,28 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
           this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
 
+          let prevWalletCount = this.wallets?.length || 0; // Track previous count
+
           this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
-               this.wallets = wallets;
-               if (!this.wallets) {
-                    this.hasWallets = false;
-                    return;
+               this.wallets = wallets || [];
+               this.hasWallets = this.wallets.length > 0;
+
+               const currentCount = this.wallets.length;
+
+               // Only reset selection + call onAccountChange() if list changed (e.g., network switch)
+               if (currentCount !== prevWalletCount) {
+                    // Reset index if invalid
+                    if (this.selectedWalletIndex >= currentCount) {
+                         this.selectedWalletIndex = currentCount > 0 ? 0 : -1;
+                    }
+
+                    this.onAccountChange(); // Now safe — only on real changes
+                    this.updateDestinations();
+                    this.clearFields(true);
                }
+
+               // Update prev for next emit
+               prevWalletCount = currentCount;
           });
 
           // Load custom destinations from storage
@@ -240,24 +255,6 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           this.tempName = '';
      }
 
-     onWalletListChange(): void {
-          if (this.wallets.length <= 0) {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length === 1 && this.wallets[0].address === '') {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
-               this.selectedWalletIndex = 0;
-          }
-
-          this.onAccountChange();
-     }
-
      toggleSecret(index: number) {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
      }
@@ -284,13 +281,29 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
      }
 
      async generateNewAccount() {
-          this.ui.updateSpinnerMessage(``);
+          console.log('Entering generateNewAccount');
+          const startTime = Date.now();
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-          const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, faucetWallet.address);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
+
+          try {
+               // Default to ed25519
+               this.encryptionType = AppConstants.ENCRYPTION.ED25519;
+               console.log('encryptionType: ', this.encryptionType);
+               const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
+               const client = await this.xrplService.getClient();
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+               this.ui.txResult.push(faucetWallet);
+               this.updateTxResult(this.ui.txResult);
+          } catch (error: any) {
+               console.error('Error in generateNewAccount:', error);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateNewAccount in ${this.executionTime}ms`);
+          }
      }
 
      dropWallet(event: CdkDragDrop<any[]>) {
@@ -306,7 +319,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           }
 
           // Persist the new order to localStorage
-          this.saveWallets();
+          this.walletManagerService.setWallets(this.wallets); // ← this saves + updates observable
 
           // Update destinations and account state
           this.updateDestinations();
@@ -390,7 +403,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
+               this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
                const inputs: ValidationInputs = { seed: this.currentWallet.seed, accountInfo: accountInfo };
 
@@ -729,43 +742,16 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
 
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          if (this.destinations.length > 0 && !this.destinationField) {
-               // this.destinationField = this.destinations[0].address;
-          }
           this.storageService.set('destinations', this.destinations);
-          this.ensureDefaultNotSelected();
-     }
-
-     ensureDefaultNotSelected() {
-          const currentAddress = this.currentWallet.address;
-          if (currentAddress && this.destinations.length > 0) {
-               if (!this.destinationField || this.destinationField === currentAddress) {
-                    const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    // this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
-               }
-          }
-          this.cdr.detectChanges();
      }
 
      private async getWallet() {
           const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
-          const wallet = await this.utilsService.getWallet1(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) {
                throw new Error('ERROR: Wallet could not be created or is undefined');
           }
           return wallet;
-     }
-
-     // private async getWallet() {
-     //      const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
-     //      if (!wallet) {
-     //           throw new Error('ERROR: Wallet could not be created or is undefined');
-     //      }
-     //      return wallet;
-     // }
-
-     saveWallets() {
-          this.storageService.set('wallets', JSON.stringify(this.wallets));
      }
 
      updatePaymentTx() {
@@ -832,6 +818,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                this.invoiceIdField = '';
                this.destinationTagField = '';
                this.sourceTagField = '';
+               this.destinationField = '';
                this.ui.clearMessages();
                this.ui.clearWarning();
           }
