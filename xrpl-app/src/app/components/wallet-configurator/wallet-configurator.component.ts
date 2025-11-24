@@ -609,10 +609,6 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
           return null;
      }
 
-     sleep(ms: number) {
-          return new Promise(resolve => setTimeout(resolve, ms));
-     }
-
      autoResize(textarea: HTMLTextAreaElement) {
           if (!textarea) return;
           textarea.style.height = 'auto'; // reset

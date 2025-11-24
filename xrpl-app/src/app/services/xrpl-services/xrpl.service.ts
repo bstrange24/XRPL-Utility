@@ -152,86 +152,86 @@ export class XrplService {
           return this.http.get<any>(url);
      }
 
-     // Generate account from Family Seed
-     async generateWalletFromFamilySeed(environment: string, algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/create-wallet/family-seed/`;
-          const wallet = await firstValueFrom(this.http.post<any>(url, { environment, algorithm }));
-          return wallet;
-     }
+     // // Generate account from Family Seed
+     // async generateWalletFromFamilySeed(environment: string, algorithm: string = 'ed25519') {
+     //      const url = `${this.proxyServer}/api/create-wallet/family-seed/`;
+     //      const wallet = await firstValueFrom(this.http.post<any>(url, { environment, algorithm }));
+     //      return wallet;
+     // }
 
-     // Derive account from Family Seed
-     async deriveWalletFromFamilySeed(familySeed: string, algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
-          console.log(`deriveWalletFromFamilySeed ${url}`);
-          const wallet = await firstValueFrom(this.http.get<any>(url));
-          return wallet;
-     }
+     // // Derive account from Family Seed
+     // async deriveWalletFromFamilySeed(familySeed: string, algorithm: string = 'ed25519') {
+     //      const url = `${this.proxyServer}/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
+     //      console.log(`deriveWalletFromFamilySeed ${url}`);
+     //      const wallet = await firstValueFrom(this.http.get<any>(url));
+     //      return wallet;
+     // }
 
-     // Generate account from Mnemonic
-     async generateWalletFromMnemonic(environment: string, algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/create-wallet/mnemonic/`;
-          const body = { environment, algorithm };
-          const wallet = await firstValueFrom(this.http.post<any>(url, body));
-          return wallet;
-     }
+     // // Generate account from Mnemonic
+     // async generateWalletFromMnemonic(environment: string, algorithm: string = 'ed25519') {
+     //      const url = `${this.proxyServer}/api/create-wallet/mnemonic/`;
+     //      const body = { environment, algorithm };
+     //      const wallet = await firstValueFrom(this.http.post<any>(url, body));
+     //      return wallet;
+     // }
 
-     // Derive account from Mnemonic
-     async deriveWalletFromMnemonic(mnemonic: string, algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
-          console.log(`deriveWalletFromMnemonic ${url}`);
-          const wallet = await firstValueFrom(this.http.get<any>(url));
-          return wallet;
-     }
+     // // Derive account from Mnemonic
+     // async deriveWalletFromMnemonic(mnemonic: string, algorithm: string = 'ed25519') {
+     //      const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
+     //      console.log(`deriveWalletFromMnemonic ${url}`);
+     //      const wallet = await firstValueFrom(this.http.get<any>(url));
+     //      return wallet;
+     // }
 
-     // Generate account from Secret Numbers
-     async generateWalletFromSecretNumbers(environment: string, algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/create-wallet/secret-numbers/`;
-          const body = { environment, algorithm };
-          const wallet = await firstValueFrom(this.http.post<any>(url, body));
-          return wallet;
-     }
+     // // Generate account from Secret Numbers
+     // async generateWalletFromSecretNumbers(environment: string, algorithm: string = 'ed25519') {
+     //      const url = `${this.proxyServer}/api/create-wallet/secret-numbers/`;
+     //      const body = { environment, algorithm };
+     //      const wallet = await firstValueFrom(this.http.post<any>(url, body));
+     //      return wallet;
+     // }
 
-     // Derive account from Secret Numbers
-     async deriveWalletFromSecretNumbers(secretNumbers: string[], algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/derive/secretNumbers`;
-          console.log(`deriveWalletFromSecretNumbers with ${secretNumbers.length} numbers`);
+     // // Derive account from Secret Numbers
+     // async deriveWalletFromSecretNumbers(secretNumbers: string[], algorithm: string = 'ed25519') {
+     //      const url = `${this.proxyServer}/api/derive/secretNumbers`;
+     //      console.log(`deriveWalletFromSecretNumbers with ${secretNumbers.length} numbers`);
 
-          const body = {
-               secretNumbers: secretNumbers,
-               algorithm: algorithm,
-          };
+     //      const body = {
+     //           secretNumbers: secretNumbers,
+     //           algorithm: algorithm,
+     //      };
 
-          const wallet = await firstValueFrom(this.http.post<any>(url, body));
-          return wallet;
-     }
+     //      const wallet = await firstValueFrom(this.http.post<any>(url, body));
+     //      return wallet;
+     // }
 
-     async fundWalletFromFaucet(wallet: xrpl.Wallet | { secret?: { familySeed?: string } }) {
-          const environment = this.getNet().environment;
-          if (environment !== 'mainnet') {
-               try {
-                    const client = await this.getClient();
+     // async fundWalletFromFaucet(wallet: xrpl.Wallet | { secret?: { familySeed?: string } }) {
+     //      const environment = this.getNet().environment;
+     //      if (environment !== 'mainnet') {
+     //           try {
+     //                const client = await this.getClient();
 
-                    // If wallet is not already an xrpl.Wallet, convert it
-                    let xrplWallet: xrpl.Wallet;
-                    if (wallet instanceof xrpl.Wallet) {
-                         xrplWallet = wallet;
-                    } else if (wallet && typeof wallet === 'object' && wallet.secret?.familySeed) {
-                         xrplWallet = xrpl.Wallet.fromSeed(wallet.secret.familySeed);
-                    } else {
-                         throw new Error('Unsupported wallet type for funding');
-                    }
+     //                // If wallet is not already an xrpl.Wallet, convert it
+     //                let xrplWallet: xrpl.Wallet;
+     //                if (wallet instanceof xrpl.Wallet) {
+     //                     xrplWallet = wallet;
+     //                } else if (wallet && typeof wallet === 'object' && wallet.secret?.familySeed) {
+     //                     xrplWallet = xrpl.Wallet.fromSeed(wallet.secret.familySeed);
+     //                } else {
+     //                     throw new Error('Unsupported wallet type for funding');
+     //                }
 
-                    // Call faucet
-                    const faucetResult = await client.fundWallet(xrplWallet);
-                    console.log('Faucet result:', faucetResult);
-                    return faucetResult;
-               } catch (error) {
-                    console.error('Funding failed:', error);
-                    throw error;
-               }
-          }
-          return null;
-     }
+     //                // Call faucet
+     //                const faucetResult = await client.fundWallet(xrplWallet);
+     //                console.log('Faucet result:', faucetResult);
+     //                return faucetResult;
+     //           } catch (error) {
+     //                console.error('Funding failed:', error);
+     //                throw error;
+     //           }
+     //      }
+     //      return null;
+     // }
 
      async getTokenCreationDateService(currency: string, issuer: string, client: xrpl.Client): Promise<Date> {
           const key = `${currency}:${issuer}`;

@@ -236,20 +236,26 @@
                                    </div>
 
                                    <!-- Loading More -->
-                                   <div class="loading-row row" *ngIf="loadingMore">
+                                   @if (loadingMore) {
+                                   <div class="loading-row row">
                                         <mat-spinner diameter="28"></mat-spinner>
                                         <span>Loading more transactions...</span>
                                    </div>
+                                   }
 
                                    <!-- No Data -->
-                                   <div class="empty-row row" *ngIf="!loadingInitial && balanceChanges.length === 0">
+                                   @if (!loadingInitial && balanceChanges.length === 0) {
+                                   <div class="empty-row row">
                                         <p>No balance changes found for this account.</p>
                                    </div>
+                                   }
 
                                    <!-- End of History -->
-                                   <div class="end-row row" *ngIf="!hasMoreData && balanceChanges.length > 0 && !loadingMore">
+                                   @if (!hasMoreData && balanceChanges.length > 0 && !loadingMore) {
+                                   <div class="end-row row">
                                         <p>You've reached the end of transaction history.</p>
                                    </div>
+                                   }
                               </cdk-virtual-scroll-viewport>
                          </div>
                     </div>

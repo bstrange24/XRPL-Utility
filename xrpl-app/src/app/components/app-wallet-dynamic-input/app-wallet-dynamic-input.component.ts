@@ -10,6 +10,7 @@ import { debounceTime } from 'rxjs/operators';
 import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
+import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 
 @Component({
      selector: 'app-app-wallet-dynamic-input',
@@ -39,7 +40,7 @@ export class AppWalletDynamicInputComponent {
 
      wallets: any[] = [];
 
-     constructor(private readonly storageService: StorageService, private readonly cdr: ChangeDetectorRef, private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly xrplTransactions: XrplTransactionService) {}
+     constructor(private readonly storageService: StorageService, private readonly cdr: ChangeDetectorRef, private readonly xrplService: XrplService, private readonly utilsService: UtilsService, private readonly renderUiComponentsService: RenderUiComponentsService, private readonly xrplTransactions: XrplTransactionService, private readonly walletGeneratorService: WalletGeneratorService) {}
 
      ngOnInit() {
           const savedWallets = this.storageService.get('wallets');
@@ -201,127 +202,6 @@ export class AppWalletDynamicInputComponent {
           this.emitChange();
      }
 
-     async generateNewWalletFromFamilySeed(index: number) {
-          const environment = this.xrplService.getNet().environment;
-          let encryptionAlgorithm = AppConstants.ENCRYPTION.SECP256K1;
-          if (this.encryptionType) {
-               encryptionAlgorithm = AppConstants.ENCRYPTION.ED25519;
-          }
-          const wallet = await this.xrplService.generateWalletFromFamilySeed(environment, encryptionAlgorithm);
-          await this.sleep(4000);
-          this.wallets[index] = {
-               ...this.wallets[index],
-               address: wallet.address,
-               seed: wallet.secret.familySeed || '',
-               mnemonic: '',
-               secretNumbers: '',
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               isIssuer: this.wallets[index].isIssuer ?? false,
-          };
-          this.saveWallets();
-          this.emitChange();
-     }
-
-     async deriveNewWalletFromFamilySeed(index: number) {
-          const seed = this.wallets[index].seed;
-          if (!seed) {
-               // Handle error, e.g., alert or log
-               return;
-          }
-          const wallet = await this.xrplService.deriveWalletFromFamilySeed(seed, '');
-          this.wallets[index] = {
-               ...this.wallets[index],
-               address: wallet.address,
-               seed: wallet.secret.familySeed || '',
-               mnemonic: '',
-               secretNumbers: '',
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               isIssuer: this.wallets[index].isIssuer ?? false,
-          };
-          this.saveWallets();
-          this.emitChange();
-     }
-
-     async generateNewWalletFromMnemonic(index: number) {
-          const environment = this.xrplService.getNet().environment;
-          let encryptionAlgorithm = AppConstants.ENCRYPTION.SECP256K1;
-          if (this.encryptionType) {
-               encryptionAlgorithm = AppConstants.ENCRYPTION.ED25519;
-          }
-          const wallet = await this.xrplService.generateWalletFromMnemonic(environment, encryptionAlgorithm);
-          await this.sleep(4000);
-          this.wallets[index] = {
-               ...this.wallets[index],
-               address: wallet.address,
-               seed: wallet.secret.mnemonic || '',
-               mnemonic: wallet.secret.mnemonic || '',
-               secretNumbers: '',
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               isIssuer: this.wallets[index].isIssuer ?? false,
-          };
-          this.saveWallets();
-          this.emitChange();
-     }
-
-     async deriveNewWalletFromMnemonic(index: number) {
-          const mnemonic = this.wallets[index].mnemonic;
-          if (!mnemonic) {
-               return;
-          }
-          const wallet = await this.xrplService.deriveWalletFromMnemonic(mnemonic, '');
-          this.wallets[index] = {
-               ...this.wallets[index],
-               address: wallet.address,
-               seed: wallet.secret.mnemonic || '',
-               mnemonic: wallet.secret.mnemonic || '',
-               secretNumbers: '',
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               isIssuer: this.wallets[index].isIssuer ?? false,
-          };
-          this.saveWallets();
-          this.emitChange();
-     }
-
-     async generateNewWalletFromSecretNumbers(index: number) {
-          const environment = this.xrplService.getNet().environment;
-          let encryptionAlgorithm = AppConstants.ENCRYPTION.SECP256K1;
-          if (this.encryptionType) {
-               encryptionAlgorithm = AppConstants.ENCRYPTION.ED25519;
-          }
-          const wallet = await this.xrplService.generateWalletFromSecretNumbers(environment, encryptionAlgorithm);
-          await this.sleep(4000);
-          this.wallets[index] = {
-               ...this.wallets[index],
-               address: wallet.address,
-               seed: wallet.secret.familySeed || '',
-               mnemonic: '',
-               secretNumbers: wallet.secret.secretNumbers || '',
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               isIssuer: this.wallets[index].isIssuer ?? false,
-          };
-          this.saveWallets();
-          this.emitChange();
-     }
-
-     async deriveNewWalletFromSecretNumbers(index: number) {
-          const secretNumbers = this.wallets[index].secretNumbers;
-          if (!secretNumbers) {
-               return;
-          }
-          const wallet = await this.xrplService.deriveWalletFromSecretNumbers(secretNumbers, '');
-          this.wallets[index] = {
-               ...this.wallets[index],
-               address: wallet.address,
-               seed: wallet.secret.familySeed || '',
-               mnemonic: '',
-               secretNumbers: wallet.secret.secretNumbers || '',
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               isIssuer: this.wallets[index].isIssuer ?? false,
-          };
-          this.saveWallets();
-          this.emitChange();
-     }
-
      async getTransaction() {
           console.log('Entering getTransaction');
           const startTime = Date.now();
@@ -413,9 +293,5 @@ export class AppWalletDynamicInputComponent {
 
      private emitChange() {
           this.walletListChange.emit(this.wallets);
-     }
-
-     sleep(ms: number) {
-          return new Promise(resolve => setTimeout(resolve, ms));
      }
 }

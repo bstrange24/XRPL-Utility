@@ -3,13 +3,17 @@ import { XrplService } from '../../xrpl-services/xrpl.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { StorageService } from '../../local-storage/storage.service';
 import { WalletManagerService } from '../manager/wallet-manager.service';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import * as xrpl from 'xrpl';
 
 @Injectable({
      providedIn: 'root',
 })
 export class WalletGeneratorService {
-     constructor(private xrplService: XrplService, private utilsService: UtilsService, private storageService: StorageService, private walletManager: WalletManagerService) {}
+     constructor(private xrplService: XrplService, private utilsService: UtilsService, private readonly http: HttpClient, private storageService: StorageService, private walletManager: WalletManagerService) {}
+
+     private readonly proxyServer = 'http://localhost:3000';
 
      /**
       * Generates a new wallet from family seed and adds it to the wallets array.
@@ -21,9 +25,9 @@ export class WalletGeneratorService {
       */
      async generateNewAccount(wallets: any[], environment: string, encryptionType: string): Promise<any> {
           console.log('encryptionType: ', encryptionType);
-          const wallet = await this.xrplService.generateWalletFromFamilySeed(environment, encryptionType);
+          const wallet = await this.generateWalletFromFamilySeed(environment, encryptionType);
 
-          // Optional delay (e.g. for faucet)
+          // Delay (e.g. for faucet)
           await this.utilsService.sleep(5000);
           console.log('Generated wallet:', wallet);
 
@@ -59,7 +63,7 @@ export class WalletGeneratorService {
       */
      async deriveWalletFromFamilySeed(client: xrpl.Client, encryptionType: string, seed: string, destinations: any, customDestinations: any) {
           try {
-               const wallet = await this.xrplService.deriveWalletFromFamilySeed(seed, encryptionType);
+               const wallet = await this.deriveFromFamilySeed(seed, encryptionType);
 
                // Return error if the wallet already exist in the application. We do not want duplicate wallets.
                customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
@@ -99,7 +103,7 @@ export class WalletGeneratorService {
       */
      async generateNewWalletFromMnemonic(wallets: any[], environment: string, encryptionType: string): Promise<any> {
           console.log('encryptionType:', encryptionType);
-          const wallet = await this.xrplService.generateWalletFromMnemonic(environment, encryptionType);
+          const wallet = await this.generateWalletFromMnemonic(environment, encryptionType);
 
           // Optional delay (e.g. for faucet)
           await this.utilsService.sleep(5000);
@@ -136,7 +140,7 @@ export class WalletGeneratorService {
       * @throws Error if wallet derivation fails or account validation fails
       */
      async deriveWalletFromMnemonic(client: xrpl.Client, encryptionType: string, seed: string, destinations: any, customDestinations: any) {
-          const wallet = await this.xrplService.deriveWalletFromMnemonic(seed, encryptionType);
+          const wallet = await this.deriveFromMnemonic(seed, encryptionType);
 
           // Return error if the wallet already exist in the application. We do not want duplicate wallets.
           customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
@@ -173,7 +177,7 @@ export class WalletGeneratorService {
       */
      async generateNewWalletFromSecretNumbers(wallets: any[], environment: string, encryptionType: string): Promise<any> {
           console.log('encryptionType: ', encryptionType);
-          const wallet = await this.xrplService.generateWalletFromSecretNumbers(environment, encryptionType);
+          const wallet = await this.generateWalletFromSecretNumbers(environment, encryptionType);
 
           // Optional delay (e.g. for faucet)
           await this.utilsService.sleep(5000);
@@ -211,7 +215,7 @@ export class WalletGeneratorService {
       * @throws Error if wallet derivation fails or account validation fails
       */
      async deriveWalletFromSecretNumbers(client: xrpl.Client, encryptionType: string, seed: any, destinations: any, customDestinations: any) {
-          const wallet = await this.xrplService.deriveWalletFromSecretNumbers(seed, encryptionType);
+          const wallet = await this.deriveFromSecretNumbers(seed, encryptionType);
 
           customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
@@ -260,5 +264,83 @@ export class WalletGeneratorService {
                }
           }
           return customDestinations;
+     }
+
+     // Generate account from Family Seed
+     async generateWalletFromFamilySeed(environment: string, algorithm: string = 'ed25519') {
+          const url = `${this.proxyServer}/api/create-wallet/family-seed/`;
+          const wallet = await firstValueFrom(this.http.post<any>(url, { environment, algorithm }));
+          return wallet;
+     }
+
+     // Derive account from Family Seed
+     async deriveFromFamilySeed(familySeed: string, algorithm: string = 'ed25519') {
+          const url = `${this.proxyServer}/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
+          console.log(`deriveFromFamilySeed ${url}`);
+          console.log(`deriveFromFamilySeed with ${familySeed} familySeed`);
+          const wallet = await firstValueFrom(this.http.get<any>(url));
+          return wallet;
+     }
+
+     // Generate account from Mnemonic
+     async generateWalletFromMnemonic(environment: string, algorithm: string = 'ed25519') {
+          const url = `${this.proxyServer}/api/create-wallet/mnemonic/`;
+          const body = { environment, algorithm };
+          const wallet = await firstValueFrom(this.http.post<any>(url, body));
+          return wallet;
+     }
+
+     // Derive account from Mnemonic
+     async deriveFromMnemonic(mnemonic: string, algorithm: string = 'ed25519') {
+          const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
+          console.log(`deriveFromMnemonic ${url}`);
+          console.log(`deriveFromMnemonic with ${mnemonic} mnemonic`);
+          const wallet = await firstValueFrom(this.http.get<any>(url));
+          return wallet;
+     }
+
+     // Generate account from Secret Numbers
+     async generateWalletFromSecretNumbers(environment: string, algorithm: string = 'ed25519') {
+          const url = `${this.proxyServer}/api/create-wallet/secret-numbers/`;
+          const body = { environment, algorithm };
+          const wallet = await firstValueFrom(this.http.post<any>(url, body));
+          return wallet;
+     }
+
+     // Derive account from Secret Numbers
+     async deriveFromSecretNumbers(secretNumbers: string[], algorithm: string = 'ed25519') {
+          const url = `${this.proxyServer}/api/derive/secretNumbers`;
+          console.log(`deriveFromSecretNumbers ${url}`);
+          console.log(`deriveFromSecretNumbers with ${secretNumbers} ${secretNumbers.length} numbers`);
+          const body = { secretNumbers: secretNumbers, algorithm: algorithm };
+          const wallet = await firstValueFrom(this.http.post<any>(url, body));
+          return wallet;
+     }
+
+     async fundWalletFromFaucet(wallet: xrpl.Wallet | { secret?: { familySeed?: string } }, environment: string) {
+          if (environment !== 'mainnet') {
+               try {
+                    const client = await this.xrplService.getClient();
+
+                    // If wallet is not already an xrpl.Wallet, convert it
+                    let xrplWallet: xrpl.Wallet;
+                    if (wallet instanceof xrpl.Wallet) {
+                         xrplWallet = wallet;
+                    } else if (wallet && typeof wallet === 'object' && wallet.secret?.familySeed) {
+                         xrplWallet = xrpl.Wallet.fromSeed(wallet.secret.familySeed);
+                    } else {
+                         throw new Error('Unsupported wallet type for funding');
+                    }
+
+                    // Call faucet
+                    const faucetResult = await client.fundWallet(xrplWallet);
+                    console.log('Faucet result:', faucetResult);
+                    return faucetResult;
+               } catch (error) {
+                    console.error('Funding failed:', error);
+                    throw error;
+               }
+          }
+          return null;
      }
 }

@@ -1601,7 +1601,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      private async showSpinnerWithDelay(message: string, delayMs: number = 200) {
           this.spinner = true;
           this.updateSpinnerMessage(message);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
+          await this.utilsService.sleep(delayMs);
      }
 
      private setErrorProperties() {

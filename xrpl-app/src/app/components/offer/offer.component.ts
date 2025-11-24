@@ -3096,7 +3096,7 @@ export class CreateOfferComponent implements AfterViewChecked {
      async showSpinnerWithDelay(message: string, delayMs: number = 200) {
           this.spinner = true;
           this.updateSpinnerMessage(message);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
+          await this.utilsService.sleep(delayMs);
      }
 
      setSlippage(slippage: number) {
