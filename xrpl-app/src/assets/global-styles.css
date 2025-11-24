@@ -331,7 +331,7 @@ input[type='text']:focus {
      line-height: 1.4 !important;
 }
 
-.navbar-links > .dropdown {
+.navbar-links>.dropdown {
      display: inline-flex !important;
      align-items: center !important;
      height: auto !important;
@@ -779,12 +779,16 @@ input[type='text']:focus {
 }
 
 .form-row-account-flags {
+     display: grid;
+     grid-template-columns: repeat(2, 1fr);
+     gap: 1rem;
+}
+
+/* .form-row-account-flags {
      display: flex;
      gap: 1rem;
      align-items: stretch;
-     /* makes all children equal height */
-     /* flex-wrap: wrap; */
-}
+} */
 
 .form-group-account-flags {
      flex: 1;
@@ -949,18 +953,18 @@ input[type='text']:focus {
 }
 
 /* CHECKED STATE */
-input:checked + .slider {
+input:checked+.slider {
      background: #4caf50;
      /* green on */
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
      transform: translateX(14px);
      /* 34-20 = 14px travel */
 }
 
 /* FOCUS RING (still visible but tighter) */
-input:focus + .slider {
+input:focus+.slider {
      box-shadow: 0 0 0 2.5px rgba(76, 175, 80, 0.3);
 }
 
@@ -1402,14 +1406,14 @@ input:focus + .slider {
 }
 
 /* Top row: avatar + (address/balance/icons) side by side */
-.wallet-item > .wallet-avatar,
-.wallet-item > .wallet-top-row {
+.wallet-item>.wallet-avatar,
+.wallet-item>.wallet-top-row {
      display: flex;
      align-items: flex-start;
      gap: 0.75rem;
 }
 
-.wallet-item > .wallet-top-row {
+.wallet-item>.wallet-top-row {
      flex: 1;
      justify-content: space-between;
      min-width: 0;
@@ -1805,7 +1809,7 @@ input:focus + .slider {
      margin-right: 4px;
 }
 
-:not(pre) > code[class*='language-'],
+:not(pre)>code[class*='language-'],
 pre[class*='language-'] {
      background: #fff;
 }
@@ -1935,7 +1939,7 @@ pre[class*='language-'] {
      flex: 1;
      font-size: 0.95rem;
      line-height: 1.5;
-     padding-left: 10px;
+     padding-left: 6px;
 }
 
 .tx-text span {
@@ -2141,7 +2145,7 @@ app-root {
      margin-bottom: 0.85rem;
 }
 
-.flag-header-account > * {
+.flag-header-account>* {
      line-height: 18px !important;
 }
 
@@ -2263,7 +2267,7 @@ app-root {
      /* base size for the whole row */
 }
 
-.flag-header > * {
+.flag-header>* {
      line-height: 18px !important;
 }
 

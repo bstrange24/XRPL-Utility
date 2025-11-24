@@ -245,215 +245,20 @@
                                         </div>
 
                                         <div class="form-row-account-flags">
-                                             <!-- asfRequireDest -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfRequireDest" (click)="toggleFlag('asfRequireDest')">
+                                             @for (flag of accountFlagsConfig; track flag.key) {
+                                             <div class="flag-item-account-flags" [class.enabled]="flags[flag.key]" (click)="toggleFlag(flag.key)">
                                                   <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfRequireDest" name="asfRequireDest" [checked]="flags.asfRequireDest" class="flag-checkbox" />
+                                                       <input type="checkbox" [id]="flag.key" [name]="flag.key" [checked]="flags[flag.key]" class="flag-checkbox" />
                                                        <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                             <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                        </svg>
-                                                       <span class="flag-title-account-flags">Require Destination Tag</span>
+                                                       <span class="flag-title-account-flags">{{ flag.title }}</span>
                                                   </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfRequireDest }} {{'asfRequireDest'}}</div>
-                                                  <div class="flag-desc">Require a destination tag to send transactions to this account.</div>
-                                             </div>
 
-                                             <!-- asfRequireAuth -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfRequireAuth" (click)="toggleFlag('asfRequireAuth')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfRequireAuth" name="asfRequireAuth" [checked]="flags.asfRequireAuth" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title-account-flags">Require Trust Line Auth</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfRequireAuth }} {{'asfRequireAuth'}}</div>
-                                                  <div class="flag-desc">Require authorization for users to hold balances issued by this address can only be enabled if the address has no trust lines connected to it.</div>
+                                                  <div class="flag-value">{{ FLAG_VALUES[flag.key] }} {{ flag.key }}</div>
+                                                  <div class="flag-desc">{{ flag.desc }}</div>
                                              </div>
-                                        </div>
-
-                                        <div class="form-row-account-flags">
-                                             <!-- asfDisallowXRP -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowXRP" (click)="toggleFlag('asfDisallowXRP')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfDisallowXRP" name="asfDisallowXRP" [checked]="flags.asfDisallowXRP" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Disallow XRP</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfDisallowXRP }} {{'asfDisallowXRP'}}</div>
-                                                  <div class="flag-desc">XRP should not be sent to this account.</div>
-                                             </div>
-
-                                             <!-- asfDisableMaster -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfDisableMaster" (click)="toggleFlag('asfDisableMaster')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfDisableMaster" name="asfDisableMaster" [checked]="flags.asfDisableMaster" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Disable Master Key</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfDisableMaster }} {{'asfDisableMaster'}}</div>
-                                                  <div class="flag-desc">Disallow use of the master key pair. Can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.</div>
-                                             </div>
-                                        </div>
-
-                                        <div class="form-row-account-flags">
-                                             <!-- asfNoFreeze -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfNoFreeze" (click)="toggleFlag('asfNoFreeze');onNoFreezeChange();">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfNoFreeze" name="asfNoFreeze" [checked]="flags.asfNoFreeze" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">No Freeze</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfNoFreeze }} {{'asfNoFreeze'}}</div>
-                                                  <div class="flag-desc">Permanently give up the ability to freeze individual trust lines or disable Global Freeze. This flag can never be disabled after being enabled.</div>
-                                             </div>
-
-                                             <!-- asfGlobalFreeze -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfGlobalFreeze" (click)="toggleFlag('asfGlobalFreeze')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfGlobalFreeze" name="asfGlobalFreeze" [checked]="flags.asfGlobalFreeze" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Global Freeze</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfGlobalFreeze }} {{'asfGlobalFreeze'}}</div>
-                                                  <div class="flag-desc">Freeze all assets issued by this account.</div>
-                                             </div>
-                                        </div>
-
-                                        <div class="form-row-account-flags">
-                                             <!-- asfDefaultRipple -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfDefaultRipple" (click)="toggleFlag('asfDefaultRipple')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfDefaultRipple" name="asfDefaultRipple" [checked]="flags.asfDefaultRipple" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Default Ripple</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfDefaultRipple }} {{'asfDefaultRipple'}}</div>
-                                                  <div class="flag-desc">Enable rippling on this account's trust lines by default.</div>
-                                             </div>
-
-                                             <!-- asfDepositAuth -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfDepositAuth" (click)="toggleFlag('asfDepositAuth')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfDepositAuth" name="asfDepositAuth" [checked]="flags.asfDepositAuth" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Deposit Authorization</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfDepositAuth }} {{'asfDepositAuth'}}</div>
-                                                  <div class="flag-desc">Enable Deposit Authorization on this account.</div>
-                                             </div>
-                                        </div>
-
-                                        <div class="form-row-account-flags">
-                                             <!-- asfAuthorizedNFTokenMinter -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfAuthorizedNFTokenMinter" (click)="toggleFlag('asfAuthorizedNFTokenMinter')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfAuthorizedNFTokenMinter" name="asfAuthorizedNFTokenMinter" [checked]="flags.asfAuthorizedNFTokenMinter" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Authorized NFToken Minter</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfAuthorizedNFTokenMinter }} {{'asfAuthorizedNFTokenMinter'}}</div>
-                                                  <div class="flag-desc">Allow another account to mint and burn tokens on behalf of this account.</div>
-                                             </div>
-
-                                             <!-- asfDisallowIncomingNFTokenOffer -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingNFTokenOffer" (click)="toggleFlag('asfDisallowIncomingNFTokenOffer')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfDisallowIncomingNFTokenOffer" name="asfDisallowIncomingNFTokenOffer" [checked]="flags.asfDisallowIncomingNFTokenOffer" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Disallow Incoming NFToken Offer</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfDisallowIncomingNFTokenOffer }} {{'asfDisallowIncomingNFTokenOffer'}}</div>
-                                                  <div class="flag-desc">Disallow other accounts from creating incoming NFTOffers.</div>
-                                             </div>
-                                        </div>
-
-                                        <div class="form-row-account-flags">
-                                             <!-- asfDisallowIncomingCheck -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingCheck" (click)="toggleFlag('asfDisallowIncomingCheck')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfDisallowIncomingCheck" name="asfDisallowIncomingCheck" [checked]="flags.asfDisallowIncomingCheck" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Disallow Incoming Check</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfDisallowIncomingCheck }} {{'asfDisallowIncomingCheck'}}</div>
-                                                  <div class="flag-desc">Disallow other accounts from creating incoming Checks.</div>
-                                             </div>
-
-                                             <!-- asfDisallowIncomingPayChan -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingPayChan" (click)="toggleFlag('asfDisallowIncomingPayChan')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfDisallowIncomingPayChan" name="asfDisallowIncomingPayChan" [checked]="flags.asfDisallowIncomingPayChan" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Disallow Incoming Payment Channel</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfDisallowIncomingPayChan }} {{'asfDisallowIncomingPayChan'}}</div>
-                                                  <div class="flag-desc">Disallow other accounts from creating incoming PayChannels.</div>
-                                             </div>
-                                        </div>
-
-                                        <div class="form-row-account-flags">
-                                             <!-- asfDisallowIncomingTrustline -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfDisallowIncomingTrustline" (click)="toggleFlag('asfDisallowIncomingTrustline')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfDisallowIncomingTrustline" name="asfDisallowIncomingTrustline" [checked]="flags.asfDisallowIncomingTrustline" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Disallow Incoming Trustline</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfDisallowIncomingTrustline }} {{'asfDisallowIncomingTrustline'}}</div>
-                                                  <div class="flag-desc">Disallow other accounts from creating incoming Trustlines.</div>
-                                             </div>
-
-                                             <!-- asfAllowTrustLineClawback -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfAllowTrustLineClawback" (click)="toggleFlag('asfAllowTrustLineClawback');onClawbackChange();">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfAllowTrustLineClawback" name="asfAllowTrustLineClawback" [checked]="flags.asfAllowTrustLineClawback" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Allow TrustLine Clawback</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfAllowTrustLineClawback }} {{'asfAllowTrustLineClawback'}}</div>
-                                                  <div class="flag-desc">Permanently gain the ability to claw back issued IOUs.</div>
-                                             </div>
-                                        </div>
-
-                                        <div class="form-row-account-flags">
-                                             <!-- asfAllowTrustLineLocking -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.asfAllowTrustLineLocking" (click)="toggleFlag('asfAllowTrustLineLocking')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="asfAllowTrustLineLocking" name="asfAllowTrustLineLocking" [checked]="flags.asfAllowTrustLineLocking" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Allow TrustLine Locking</span>
-                                                  </div>
-                                                  <div class="flag-value">{{ FLAG_VALUES.asfAllowTrustLineLocking }} {{'asfAllowTrustLineLocking'}}</div>
-                                                  <div class="flag-desc">Issuers allow their IOUs to be used as escrow amounts.</div>
-                                             </div>
-
+                                             }
                                              <div class="flag-item-account-flags">
                                                   <!-- Total Flag value -->
                                                   <div class="flags-total">
@@ -478,8 +283,8 @@
                                              </div>
 
                                              <div class="button-row" style="margin-top: 0">
-                                                  <button type="button" (click)="setDepositAuthAccounts('Y')" class="btn-primary-blue">Set Deposit Authorization</button>
-                                                  <button type="button" (click)="setDepositAuthAccounts('N')" class="btn-primary-red">Remove Deposit Authorization</button>
+                                                  <button type="button" (click)="setDepositAuthAccounts('Y')" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Set Deposit Authorization' }}</button>
+                                                  <button type="button" (click)="setDepositAuthAccounts('N')" class="btn-primary-red" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Remove Deposit Authorization' }}</button>
                                              </div>
                                         </div>
 
@@ -492,8 +297,8 @@
                                              </div>
 
                                              <div class="button-row" style="margin-top: 0">
-                                                  <button type="button" (click)="setNftMinterAddress('Y')" class="btn-primary-blue">Set NFT Minter</button>
-                                                  <button type="button" (click)="setNftMinterAddress('N')" class="btn-primary-red">Remove NFT Minter</button>
+                                                  <button type="button" (click)="setNftMinterAddress('Y')" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Set NFT Minter' }}</button>
+                                                  <button type="button" (click)="setNftMinterAddress('Y')" class="btn-primary-red" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Remove NFT Minter' }}</button>
                                              </div>
                                         </div>
                                    </fieldset>
@@ -749,24 +554,24 @@
                                    <!-- Action buttons -->
                                    @if(activeTab === 'modifyMultiSigners') {
                                    <div class="button-row" style="margin-top: 0">
-                                        <button type="button" (click)="setMultiSign('Y')" class="btn-primary-blue">Set Multi-Sign</button>
-                                        <button type="button" (click)="setMultiSign('N')" class="btn-primary-red">Remove Multi-Sign</button>
+                                        <button type="button" (click)="setMultiSign('Y')" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Set Multi-Sign' }}</button>
+                                        <button type="button" (click)="setMultiSign('N')" class="btn-primary-red" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Remove Multi-Sign' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
                                    } @else if(activeTab === 'modifyRegularKey') {
                                    <div class="button-row" style="margin-top: 0">
-                                        <button type="button" (click)="setRegularKey('Y')" class="btn-primary-blue">Set Regular Key</button>
-                                        <button type="button" (click)="setRegularKey('N')" class="btn-primary-red">Remove Regular Key</button>
+                                        <button type="button" (click)="setRegularKey('Y')" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Set Regular Key' }}</button>
+                                        <button type="button" (click)="setRegularKey('N')" class="btn-primary-red" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Remove Regular Key' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
                                    } @else if(activeTab === 'modifyMetaData') {
                                    <div class="button-row" style="margin-top: 0.6rem">
-                                        <button type="button" class="btn-primary-blue" (click)="updateMetaData()">Modify Account Meta Data</button>
+                                        <button type="button" (click)="updateMetaData()" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Modify Account Meta Data' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
                                    } @else if(activeTab === 'modifyAccountFlags') {
                                    <div class="button-row" style="margin-top: 0.6rem">
-                                        <button type="button" class="btn-primary-blue" (click)="updateFlags()">Modify Account Flags</button>
+                                        <button type="button" (click)="updateFlags()" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Modify Account Flags' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
                                    }
@@ -815,7 +620,7 @@
                                    <!-- Error message -->
                                    @if (ui.isError) {
                                    <div class="tx-message error">
-                                        <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
+                                        <ng-icon name="heroExclamationCircle" size="20" class="text-red-600" style="margin-top: 1px"></ng-icon>
                                         <div class="tx-text">
                                              <!-- Display Tx Hash if we are not in simulation mode-->
                                              @if (ui.txHash && !ui.isSimulateEnabled) {

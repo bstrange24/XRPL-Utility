@@ -71,37 +71,36 @@ export const AppConstants = {
           TES_SUCCESS: 'tesSUCCESS',
      },
 
-     ACCOUNT_SET_FLAGS: {
-          1: 'asfRequireDest',
-          2: 'asfRequireAuth',
-          3: 'asfDisallowXRP',
-          4: 'asfDisableMaster',
-          5: 'asfAccountTxnID',
-          6: 'asfNoFreeze',
-          7: 'asfGlobalFreeze',
-          8: 'asfDefaultRipple',
-          9: 'asfDepositAuth',
-          10: 'asfAuthorizedNFTokenMinter',
-          12: 'asfDisallowIncomingNFTokenOffer',
-          13: 'asfDisallowIncomingCheck',
-          14: 'asfDisallowIncomingPayChan',
-          15: 'asfDisallowIncomingTrustline',
-          16: 'asfAllowTrustLineClawback',
-          17: 'asfAllowTrustLineLocking',
-     },
+     // ACCOUNT_SET_FLAGS: {
+     //      1: 'asfRequireDest',
+     //      2: 'asfRequireAuth',
+     //      3: 'asfDisallowXRP',
+     //      4: 'asfDisableMaster',
+     //      5: 'asfAccountTxnID',
+     //      6: 'asfNoFreeze',
+     //      7: 'asfGlobalFreeze',
+     //      8: 'asfDefaultRipple',
+     //      9: 'asfDepositAuth',
+     //      10: 'asfAuthorizedNFTokenMinter',
+     //      12: 'asfDisallowIncomingNFTokenOffer',
+     //      13: 'asfDisallowIncomingCheck',
+     //      14: 'asfDisallowIncomingPayChan',
+     //      15: 'asfDisallowIncomingTrustline',
+     //      16: 'asfAllowTrustLineClawback',
+     //      17: 'asfAllowTrustLineLocking',
+     // },
 
-     ACCOUNT_ROOT_FLAGS: {
-          0x00010000: 'Regular Key Set',
-          0x00020000: 'Require Destination Tag',
-          0x00040000: 'Require Authorization',
-          0x00080000: 'Disallow Incoming XRP',
-          0x00100000: 'DisableMaster Key',
-          0x00200000: 'No Freeze',
-          0x00400000: 'Global Freeze',
-          0x00800000: 'Default Ripple',
-          0x01000000: 'Deposit Auth',
-          // If new flags are added later, just extend this map
-     },
+     // ACCOUNT_ROOT_FLAGS: {
+     //      0x00010000: 'Regular Key Set',
+     //      0x00020000: 'Require Destination Tag',
+     //      0x00040000: 'Require Authorization',
+     //      0x00080000: 'Disallow Incoming XRP',
+     //      0x00100000: 'DisableMaster Key',
+     //      0x00200000: 'No Freeze',
+     //      0x00400000: 'Global Freeze',
+     //      0x00800000: 'Default Ripple',
+     //      0x01000000: 'Deposit Auth',
+     // },
 
      // Payment tx flags
      PAYMENT_FLAGS: {
@@ -164,6 +163,84 @@ export const AppConstants = {
 
      // You can extend with CheckCash, AMM, etc.
 
+     ACCOUNT_FLAGS_CONFIG: [
+          {
+               key: 'asfRequireDest',
+               title: 'Require Destination Tag',
+               desc: 'Require a destination tag to send transactions to this account.',
+          },
+          {
+               key: 'asfRequireAuth',
+               title: 'Require Trust Line Auth',
+               desc: 'Require authorization for users to hold balances issued by this address can only be enabled if the address has no trust lines connected to it.',
+          },
+          {
+               key: 'asfDisallowXRP',
+               title: 'Disallow XRP',
+               desc: 'XRP should not be sent to this account.',
+          },
+          {
+               key: 'asfDisableMaster',
+               title: 'Disable Master Key',
+               desc: 'Disallow use of the master key pair. Can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.',
+          },
+          {
+               key: 'asfNoFreeze',
+               title: 'No Freeze',
+               desc: 'Permanently give up the ability to freeze individual trust lines or disable Global Freeze. This flag can never be disabled after being enabled.',
+          },
+          {
+               key: 'asfGlobalFreeze',
+               title: 'Global Freeze',
+               desc: 'Freeze all assets issued by this account.',
+          },
+          {
+               key: 'asfDefaultRipple',
+               title: 'Default Ripple',
+               desc: "Enable rippling on this account's trust lines by default.",
+          },
+          {
+               key: 'asfDepositAuth',
+               title: 'Deposit Authorization',
+               desc: 'Enable Deposit Authorization on this account.',
+          },
+          {
+               key: 'asfAuthorizedNFTokenMinter',
+               title: 'Authorized NFToken Minter',
+               desc: 'Allow another account to mint and burn tokens on behalf of this account.',
+          },
+          {
+               key: 'asfDisallowIncomingNFTokenOffer',
+               title: 'Disallow Incoming NFToken Offer',
+               desc: 'Disallow other accounts from creating incoming NFTOffers.',
+          },
+          {
+               key: 'asfDisallowIncomingCheck',
+               title: 'Disallow Incoming Check',
+               desc: 'Disallow other accounts from creating incoming Checks.',
+          },
+          {
+               key: 'asfDisallowIncomingPayChan',
+               title: 'Disallow Incoming Payment Channel',
+               desc: 'Disallow other accounts from creating incoming PayChannels.',
+          },
+          {
+               key: 'asfDisallowIncomingTrustline',
+               title: 'Disallow Incoming Trustline',
+               desc: 'Disallow other accounts from creating incoming Trustlines.',
+          },
+          {
+               key: 'asfAllowTrustLineClawback',
+               title: 'Allow TrustLine Clawback',
+               desc: 'Permanently gain the ability to claw back issued IOUs.',
+          },
+          {
+               key: 'asfAllowTrustLineLocking',
+               title: 'Allow TrustLine Locking',
+               desc: 'Issuers allow their IOUs to be used as escrow amounts.',
+          },
+     ],
+
      // Account Flags (from your flagList in AccountComponent)
      FLAGS: [
           { name: 'asfRequireDest', label: 'Require Destination Tag', value: 1, xrplName: 'requireDestinationTag', xrplEnum: xrpl.AccountSetAsfFlags.asfRequireDest },
@@ -219,7 +296,7 @@ export const AppConstants = {
           { id: 65548, key: 'MPTokenIssuanceUnlock', txType: 'MPToken Issuance Unlock', description: 'Can unlock balances of a particular MPT.' },
      ],
 
-     NESTED_FIELDS: ['SetFlag', 'ClearFlag'],
+     // NESTED_FIELDS: ['SetFlag', 'ClearFlag'],
 
      BLACK_LISTED_MEMES: ['USD', 'EUR', 'GBP', 'JPY', 'BTC', 'ETH', 'XRP', 'CNY', 'USDT', 'USDC', 'DAI', '666', 'GRD', 'coreum905c098732', 'RLUSD', 'ETH', 'USDC.axl'],
 
@@ -309,7 +386,7 @@ export const AppConstants = {
           } as { [key: string]: string[] },
      },
 
-     // ✅ Transaction labels
+     // Transaction labels
      SIGN_TRANSACTION_LABEL_MAP: {
           batch: 'Batch',
           sendXrp: 'Send XRP',

@@ -199,6 +199,83 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
      tempName: string = '';
      userEmail: string = '';
      filterQuery: string = '';
+     accountFlagsConfig = [
+          {
+               key: 'asfRequireDest',
+               title: 'Require Destination Tag',
+               desc: 'Require a destination tag to send transactions to this account.',
+          },
+          {
+               key: 'asfRequireAuth',
+               title: 'Require Trust Line Auth',
+               desc: 'Require authorization for users to hold balances issued by this address can only be enabled if the address has no trust lines connected to it.',
+          },
+          {
+               key: 'asfDisallowXRP',
+               title: 'Disallow XRP',
+               desc: 'XRP should not be sent to this account.',
+          },
+          {
+               key: 'asfDisableMaster',
+               title: 'Disable Master Key',
+               desc: 'Disallow use of the master key pair. Can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.',
+          },
+          {
+               key: 'asfNoFreeze',
+               title: 'No Freeze',
+               desc: 'Permanently give up the ability to freeze individual trust lines or disable Global Freeze. This flag can never be disabled after being enabled.',
+          },
+          {
+               key: 'asfGlobalFreeze',
+               title: 'Global Freeze',
+               desc: 'Freeze all assets issued by this account.',
+          },
+          {
+               key: 'asfDefaultRipple',
+               title: 'Default Ripple',
+               desc: "Enable rippling on this account's trust lines by default.",
+          },
+          {
+               key: 'asfDepositAuth',
+               title: 'Deposit Authorization',
+               desc: 'Enable Deposit Authorization on this account.',
+          },
+          {
+               key: 'asfAuthorizedNFTokenMinter',
+               title: 'Authorized NFToken Minter',
+               desc: 'Allow another account to mint and burn tokens on behalf of this account.',
+          },
+          {
+               key: 'asfDisallowIncomingNFTokenOffer',
+               title: 'Disallow Incoming NFToken Offer',
+               desc: 'Disallow other accounts from creating incoming NFTOffers.',
+          },
+          {
+               key: 'asfDisallowIncomingCheck',
+               title: 'Disallow Incoming Check',
+               desc: 'Disallow other accounts from creating incoming Checks.',
+          },
+          {
+               key: 'asfDisallowIncomingPayChan',
+               title: 'Disallow Incoming Payment Channel',
+               desc: 'Disallow other accounts from creating incoming PayChannels.',
+          },
+          {
+               key: 'asfDisallowIncomingTrustline',
+               title: 'Disallow Incoming Trustline',
+               desc: 'Disallow other accounts from creating incoming Trustlines.',
+          },
+          {
+               key: 'asfAllowTrustLineClawback',
+               title: 'Allow TrustLine Clawback',
+               desc: 'Permanently gain the ability to claw back issued IOUs.',
+          },
+          {
+               key: 'asfAllowTrustLineLocking',
+               title: 'Allow TrustLine Locking',
+               desc: 'Issuers allow their IOUs to be used as escrow amounts.',
+          },
+     ] as const;
 
      constructor(
           private readonly xrplService: XrplService,
@@ -538,7 +615,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getAccountDetails:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -635,7 +712,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in updateFlags:', error);
-               this.ui.errorMessage = `ERROR: ${error.message || 'Unknown error'}`;
+               this.ui.errorMessage = `${error.message || 'Unknown error'}`;
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -719,7 +796,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                }
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, accountSetTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                updates.forEach(update => update());
@@ -739,7 +816,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, accountSetTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign Payment transaction.');
+                         return this.ui.setError('Failed to sign Payment transaction.');
                     }
 
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
@@ -784,7 +861,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in updateMetaData:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -817,7 +894,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           // Split and validate deposit auth addresses
           const addressesArray = this.utilsService.getUserEnteredAddress(this.depositAuthAddress);
           if (!addressesArray.length) {
-               return this.ui.setError('ERROR: Deposit Auth address list is empty');
+               return this.ui.setError('Deposit Auth address list is empty');
           }
 
           try {
@@ -839,10 +916,10 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     // Check for existing preauthorization
                     const alreadyAuthorized = accountObjects.result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress);
                     if (authorizeFlag === 'Y' && alreadyAuthorized) {
-                         return this.ui.setError(`ERROR: Preauthorization already exists for ${authorizedAddress} (tecDUPLICATE). Use Unauthorize to remove`);
+                         return this.ui.setError(`Preauthorization already exists for ${authorizedAddress} (tecDUPLICATE). Use Unauthorize to remove`);
                     }
                     if (authorizeFlag === 'N' && !alreadyAuthorized) {
-                         return this.ui.setError(`ERROR: No preauthorization exists for ${authorizedAddress} to unauthorize`);
+                         return this.ui.setError(`No preauthorization exists for ${authorizedAddress} to unauthorize`);
                     }
                }
 
@@ -859,7 +936,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     await this.setTxOptionalFields(client, depositPreauthTx, wallet, accountInfo);
 
                     if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, depositPreauthTx, fee)) {
-                         return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                         return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
                     this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Setting Deposit Auth (no changes will be made)...' : 'Submitting Deposit Auth Accounts to Ledger...', 200);
@@ -923,7 +1000,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in setDepositAuthAccounts:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -988,13 +1065,13 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                if (enableMultiSignFlag === 'Y') {
                     signerListTx.SignerEntries = formattedSignerEntries;
                     if (Number(this.signerQuorum) <= 0) {
-                         return this.ui.setError('ERROR: Signer Quorum must be greater than 0.');
+                         return this.ui.setError('Signer Quorum must be greater than 0.');
                     }
                     signerListTx.SignerQuorum = Number(this.signerQuorum);
                }
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, signerListTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficent XRP to complete transaction');
+                    return this.ui.setError('Insufficent XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Setting Multi Sign (no changes will be made)...' : 'Submitting Multi-Sign to Ledger...', 200);
@@ -1012,7 +1089,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, signerListTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign Payment transaction.');
+                         return this.ui.setError('Failed to sign Payment transaction.');
                     }
 
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
@@ -1063,7 +1140,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in setMultiSign:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -1107,7 +1184,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                }
 
                if (this.regularKeyAddress === '' || this.regularKeyAddress === 'No RegularKey configured for account' || this.regularKeySeed === '') {
-                    return this.ui.setError(`ERROR: Regular Key address and seed must be present`);
+                    return this.ui.setError(`Regular Key address and seed must be present`);
                }
 
                let setRegularKeyTx: xrpl.SetRegularKey = {
@@ -1124,7 +1201,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, setRegularKeyTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, setRegularKeyTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? `Simulating ${enableRegularKeyFlag === 'Y' ? 'Setting' : 'Remove'} Regular Key (no changes will be made)...` : `Submitting Regular Key ${enableRegularKeyFlag === 'Y' ? 'Set' : 'Removal'} to Ledger...`, 200);
@@ -1140,7 +1217,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, setRegularKeyTx, false, '', fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign Payment transaction.');
+                         return this.ui.setError('Failed to sign Payment transaction.');
                     }
 
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
@@ -1193,7 +1270,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in setRegularKey:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -1226,7 +1303,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           // Split and validate NFT minter addresses
           const addressesArray = this.utilsService.getUserEnteredAddress(this.nfTokenMinterAddress);
           if (!addressesArray.length) {
-               return this.ui.setError('ERROR: NFT Minter address list is empty');
+               return this.ui.setError('NFT Minter address is empty');
           }
 
           try {
@@ -1248,7 +1325,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                } catch (error: any) {
                     if (error.data?.error === 'actNotFound') {
                          const missingAddress = addressesArray.find((addr: any) => error.data?.error_message?.includes(addr)) || addressesArray[0];
-                         return this.ui.setError(`ERROR: Account ${missingAddress} does not exist (tecNO_TARGET)`);
+                         return this.ui.setError(`Account ${missingAddress} does not exist (tecNO_TARGET)`);
                     }
                     throw error;
                }
@@ -1274,7 +1351,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, accountSetTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, accountSetTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? `Simulating ${enableNftMinter === 'Y' ? 'Setting' : 'Remove'} NFT Minter (no changes will be made)...` : `Submitting NFT Minter ${enableNftMinter === 'Y' ? 'Set' : 'Removal'} to Ledger...`, 200);
@@ -1292,7 +1369,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, accountSetTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign Payment transaction.');
+                         return this.ui.setError('Failed to sign Payment transaction.');
                     }
 
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
@@ -1335,7 +1412,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error:', error);
-               return this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               return this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -1418,12 +1495,12 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     if (this.useMultiSign) {
                          const signerAddresses = this.utilsService.getMultiSignAddress(this.multiSignAddress);
                          if (signerAddresses.length === 0) {
-                              return this.ui.setError('ERROR: No signer addresses provided for multi-signing');
+                              return this.ui.setError('No signer addresses provided for multi-signing');
                          }
 
                          const signerSeeds = this.utilsService.getMultiSignSeeds(this.multiSignSeeds);
                          if (signerSeeds.length === 0) {
-                              return this.ui.setError('ERROR: No signer seeds provided for multi-signing');
+                              return this.ui.setError('No signer seeds provided for multi-signing');
                          }
 
                          try {
@@ -1435,7 +1512,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                               console.debug('SignedTx:', signedTx);
 
                               if (!signedTx) {
-                                   return this.ui.setError('ERROR: No valid signature collected for multisign transaction');
+                                   return this.ui.setError('No valid signature collected for multisign transaction');
                               }
 
                               const multiSignFee = String((signerAddresses.length + 1) * Number(await this.xrplService.calculateTransactionFee(client)));
@@ -1444,7 +1521,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                               const finalTx = xrpl.decode(signedTx.tx_blob);
                               console.debug('Decoded Final Tx:', finalTx);
                          } catch (err: any) {
-                              return { success: false, message: `ERROR: ${err.message}` };
+                              return { success: false, message: `${err.message}` };
                          }
                     } else {
                          const preparedTx = await client.autofill(tx);
@@ -1458,11 +1535,11 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     }
 
                     if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, tx, fee)) {
-                         return { success: false, message: 'ERROR: Insufficient XRP to complete transaction' };
+                         return { success: false, message: 'Insufficient XRP to complete transaction' };
                     }
 
                     if (!signedTx) {
-                         return { success: false, message: 'ERROR: Failed to sign transaction.' };
+                         return { success: false, message: 'Failed to sign transaction.' };
                     }
 
                     response = await client.submitAndWait(signedTx.tx_blob);
@@ -1812,7 +1889,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           if (this.selectedSingleTicket) {
                const ticketExists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
                if (!ticketExists) {
-                    throw new Error(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
+                    throw new Error(`Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
                }
                this.utilsService.setTicketSequence(accountTx, this.selectedSingleTicket, true);
           } else {
@@ -2077,7 +2154,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
      private async getWallet() {
           const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
           if (!wallet) {
-               throw new Error('ERROR: Wallet could not be created or is undefined');
+               throw new Error('Wallet could not be created or is undefined');
           }
           return wallet;
      }
