@@ -35,7 +35,12 @@ export class WalletDataService {
                console.debug(`Refreshing ${walletsToUpdate.length} wallet(s)...`);
 
                // Fetch account info in parallel
-               const accountInfos = await Promise.all(walletsToUpdate.map(w => this.xrplService.getAccountInfo(client, w.classicAddress ?? w.address, 'validated', '')));
+               let accountInfos: any;
+               try {
+                    accountInfos = await Promise.all(walletsToUpdate.map(w => this.xrplService.getAccountInfo(client, w.classicAddress ?? w.address, 'validated', '')));
+               } catch (error: any) {
+                    throw new Error(error.message);
+               }
 
                // Cache reserves once
                if (!this.cachedReserves) {
@@ -91,6 +96,7 @@ export class WalletDataService {
                });
           } catch (error: any) {
                console.error('Error in refreshWallets:', error);
+               throw new Error(error.message);
           }
      }
 }

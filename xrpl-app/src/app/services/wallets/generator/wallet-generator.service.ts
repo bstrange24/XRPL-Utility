@@ -3,6 +3,7 @@ import { XrplService } from '../../xrpl-services/xrpl.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { StorageService } from '../../local-storage/storage.service';
 import { WalletManagerService } from '../manager/wallet-manager.service';
+import * as xrpl from 'xrpl';
 
 @Injectable({
      providedIn: 'root',
@@ -46,40 +47,36 @@ export class WalletGeneratorService {
           return wallet;
      }
 
-     async deriveWalletFromFamilySeed(wallets: any[], environment: string, encryptionType: string, seed: string, destinations: any, customDestinations: any) {
-          const wallet = await this.xrplService.deriveWalletFromFamilySeed(seed, encryptionType);
+     async deriveWalletFromFamilySeed(client: xrpl.Client, encryptionType: string, seed: string, destinations: any, customDestinations: any) {
+          try {
+               const wallet = await this.xrplService.deriveWalletFromFamilySeed(seed, encryptionType);
 
-          // Get current wallets to calculate next name
-          const currentWallets = this.walletManager.getWallets();
-          const nextIndex = currentWallets.length + 1;
+               // Return error if the wallet already exist in the application. We do not want duplicate wallets.
+               customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
-          // Initialize or update wallet entry
-          const newWalletEntry = {
-               address: wallet.address,
-               classicAddress: wallet.address,
-               seed: wallet.secret.familySeed || '',
-               mnemonic: '',
-               secretNumbers: '',
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               name: `Wallet ${nextIndex}`, // ← AUTO NAME
-          };
+               // Get current wallets to calculate next name
+               const currentWallets = this.walletManager.getWallets();
+               const nextIndex = currentWallets.length + 1;
 
-          // // Return null if the wallet already exist in the application. We do not want duplicate wallets.
-          // for (let i = destinations.length - 1; i >= 0; i--) {
-          //      if (destinations[i].address === newWalletEntry.address) {
-          //           // Remove from user entered wallet addresses since we have the actual wallet now and not just the address.
-          //           if (destinations[i].name.includes('Custom')) {
-          //                this.walletManager.deleteWallet(i);
-          //                customDestinations = customDestinations.filter((dest: { address: any }) => dest.address !== destinations[i].address);
-          //                break;
-          //           }
-          //           return null;
-          //      }
-          // }
+               // Initialize or update wallet entry
+               const newWalletEntry = {
+                    address: wallet.address,
+                    classicAddress: wallet.address,
+                    seed: wallet.secret.familySeed || '',
+                    mnemonic: '',
+                    secretNumbers: '',
+                    encryptionAlgorithm: wallet.keypair.algorithm || '',
+                    name: `Wallet ${nextIndex}`, // ← AUTO NAME
+               };
 
-          // Persist and notify
-          this.walletManager.addWallet(newWalletEntry); // ← uses shared service
-          return wallet;
+               await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
+
+               // Persist and notify
+               this.walletManager.addWallet(newWalletEntry); // ← uses shared service
+               return { wallet, destinations, customDestinations };
+          } catch (error: any) {
+               throw new Error(error.message);
+          }
      }
 
      /**
@@ -118,8 +115,11 @@ export class WalletGeneratorService {
           return wallet;
      }
 
-     async deriveWalletFromMnemonic(wallets: any[], environment: string, encryptionType: string, seed: string) {
+     async deriveWalletFromMnemonic(client: xrpl.Client, encryptionType: string, seed: string, destinations: any, customDestinations: any) {
           const wallet = await this.xrplService.deriveWalletFromMnemonic(seed, encryptionType);
+
+          // Return error if the wallet already exist in the application. We do not want duplicate wallets.
+          customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
           // Get current wallets to calculate next name
           const currentWallets = this.walletManager.getWallets();
@@ -136,9 +136,11 @@ export class WalletGeneratorService {
                name: `Wallet ${nextIndex}`, // ← AUTO NAME
           };
 
+          await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
+
           // Persist and notify
           this.walletManager.addWallet(newWalletEntry); // ← uses shared service
-          return wallet;
+          return { wallet, destinations, customDestinations };
      }
 
      /**
@@ -178,8 +180,10 @@ export class WalletGeneratorService {
           return wallet;
      }
 
-     async deriveWalletFromSecretNumbers(wallets: any[], environment: string, encryptionType: string, seed: any) {
+     async deriveWalletFromSecretNumbers(client: xrpl.Client, encryptionType: string, seed: any, destinations: any, customDestinations: any) {
           const wallet = await this.xrplService.deriveWalletFromSecretNumbers(seed, encryptionType);
+
+          customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
           // Get current wallets to calculate next name
           const currentWallets = this.walletManager.getWallets();
@@ -196,12 +200,27 @@ export class WalletGeneratorService {
                name: `Wallet ${nextIndex}`, // ← AUTO NAME
           };
 
+          await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
+
           // Persist and notify
           this.walletManager.addWallet(newWalletEntry); // ← uses shared service
-          return wallet;
+          return { wallet, destinations, customDestinations };
      }
 
-     async deleteWallet(index: any) {
-          this.walletManager.deleteWallet(index);
+     private checkIfWalletAlreadyExist(destinations: any, wallet: any, customDestinations: any) {
+          for (let i = destinations.length - 1; i >= 0; i--) {
+               console.log(`Destinations: ${destinations[i].address} wallet.address: ${wallet.address}`);
+               if (destinations[i].address === wallet.address) {
+                    // Remove from user entered wallet addresses since we have the actual wallet now and not just the address.
+                    if (destinations[i].name?.includes('Custom')) {
+                         this.walletManager.deleteWallet(i);
+                         customDestinations = customDestinations.filter((dest: { address: any }) => dest.address !== destinations[i].address);
+                         this.storageService.set('customDestinations', JSON.stringify(customDestinations));
+                         break;
+                    }
+                    throw new Error(`Wallet already exists in the application.`);
+               }
+          }
+          return customDestinations;
      }
 }

@@ -5,7 +5,6 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
-import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
@@ -19,7 +18,6 @@ import { TransactionUiService } from '../../services/transaction-ui/transaction-
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
-import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
@@ -56,7 +54,6 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
      dropdownOpen: boolean = false;
      filteredDestinations: DropdownItem[] = [];
      highlightedIndex = -1;
-     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      wallets: Wallet[] = [];
      selectedWalletIndex: number = 0;
      currentWallet: Wallet = {
@@ -90,14 +87,12 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
           private readonly utilsService: UtilsService,
           private readonly cdr: ChangeDetectorRef,
           private readonly storageService: StorageService,
-          private readonly xrplTransactions: XrplTransactionService,
           private walletGenerator: WalletGeneratorService,
           private walletManagerService: WalletManagerService,
           public ui: TransactionUiService,
           public downloadUtilService: DownloadUtilService,
           public copyUtilService: CopyUtilService,
           private walletDataService: WalletDataService,
-          private validationService: ValidationService,
           private overlay: Overlay,
           private viewContainerRef: ViewContainerRef,
           private destinationDropdownService: DestinationDropdownService
@@ -266,95 +261,173 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
      }
 
      async generateNewAccount() {
-          this.ui.updateSpinnerMessage(``);
+          console.log('Entering generateNewAccount');
+          const startTime = Date.now();
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-          this.encryptionType = this.getEncryptionType();
-          console.log('encryptionType ............................................................', this.encryptionType);
-          const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, [faucetWallet.address]);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
+          try {
+               this.encryptionType = this.getEncryptionType();
+               console.log('encryptionType: ', this.encryptionType);
+               const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
+               const client = await this.xrplService.getClient();
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+          } catch (error: any) {
+               console.error('Error in generateNewAccount:', error);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving v in ${this.executionTime}ms`);
+          }
      }
 
      async deriveWalletFromFamilySeed() {
+          console.log('Entering deriveWalletFromFamilySeed');
+          const startTime = Date.now();
           this.ui.updateSpinnerMessage(``);
           this.ui.showSpinnerWithDelay('Derive wallet', 10);
-          this.encryptionType = this.getEncryptionType();
-          console.log('encryptionType ............................................................', this.encryptionType);
-          const faucetWallet = await this.walletGenerator.deriveWalletFromFamilySeed(this.wallets, this.environment, this.encryptionType, this.seed, this.destinations, this.customDestinations);
 
-          // Return null if the wallet already exist in the application. We do not want duplicate wallets.
-          for (let i = this.destinations.length - 1; i >= 0; i--) {
-               if (this.destinations[i].address === faucetWallet.address) {
-                    // Remove from user entered wallet addresses since we have the actual wallet now and not just the address.
-                    if (this.destinations[i].name?.includes('Custom')) {
-                         this.walletGenerator.deleteWallet(i);
-                         this.customDestinations = this.customDestinations.filter((dest: { address: any }) => dest.address !== this.destinations[i].address);
-                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
-                         this.updateDestinations();
-                         break;
-                    }
-                    return this.ui.setError(`Wallet already exists in the application.`);
+          try {
+               this.encryptionType = this.getEncryptionType();
+               console.log('encryptionType: ', this.encryptionType);
+               const client = await this.xrplService.getClient();
+
+               const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromFamilySeed(client, this.encryptionType, this.seed, this.destinations, this.customDestinations);
+               this.destinations = destinations;
+               this.customDestinations = customDestinations;
+               this.updateDestinations();
+
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+               this.ui.setSuccess(`Successfully added ${faucetWallet.address}`);
+          } catch (error: any) {
+               console.error('Error in deriveWalletFromFamilySeed:', error);
+               if (error.message === 'Failed to fetch account info: Account not found.') {
+                    this.ui.setError(`${error.message} Are you using the correct encryption?`);
+               } else {
+                    this.ui.setError(`${error.message}`);
                }
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving deriveWalletFromFamilySeed in ${this.executionTime}ms`);
           }
-
-          // if (faucetWallet === null) {
-          // return this.ui.setError(`Wallet already exists in the application.`);
-          // }
-
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, [faucetWallet.address]);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
      }
 
      async generateNewWalletFromMnemonic() {
-          this.ui.updateSpinnerMessage(``);
+          console.log('Entering deriveWalletFromFamilySeed');
+          const startTime = Date.now();
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-          this.encryptionType = this.getEncryptionType();
-          console.log('encryptionType ............................................................', this.encryptionType);
-          const faucetWallet = await this.walletGenerator.generateNewWalletFromMnemonic(this.wallets, this.environment, this.encryptionType);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, [faucetWallet.address]);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
+
+          try {
+               this.encryptionType = this.getEncryptionType();
+               console.log('encryptionType: ', this.encryptionType);
+               const faucetWallet = await this.walletGenerator.generateNewWalletFromMnemonic(this.wallets, this.environment, this.encryptionType);
+               const client = await this.xrplService.getClient();
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+          } catch (error: any) {
+               console.error('Error in deriveWalletFromFamilySeed:', error);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving deriveWalletFromFamilySeed in ${this.executionTime}ms`);
+          }
      }
 
      async deriveWalletFromMnemonic() {
+          console.log('Entering deriveWalletFromMnemonic');
+          const startTime = Date.now();
           this.ui.updateSpinnerMessage(``);
           this.ui.showSpinnerWithDelay('Derive wallet', 10);
-          this.encryptionType = this.getEncryptionType();
-          console.log('encryptionType ............................................................', this.encryptionType);
-          const faucetWallet = await this.walletGenerator.deriveWalletFromMnemonic(this.wallets, this.environment, this.encryptionType, this.mnemonic);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, [faucetWallet.address]);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
+
+          try {
+               this.encryptionType = this.getEncryptionType();
+               console.log('encryptionType ............................................................', this.encryptionType);
+               const client = await this.xrplService.getClient();
+
+               const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromMnemonic(client, this.encryptionType, this.mnemonic, this.destinations, this.customDestinations);
+               this.destinations = destinations;
+               this.customDestinations = customDestinations;
+               this.updateDestinations();
+
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+               this.ui.setSuccess(`Successfully added ${faucetWallet.address}`);
+          } catch (error: any) {
+               console.error('Error in deriveWalletFromMnemonic:', error);
+               if (error.message === 'Failed to fetch account info: Account not found.') {
+                    this.ui.setError(`${error.message} Are you using the correct encryption?`);
+               } else {
+                    this.ui.setError(`${error.message}`);
+               }
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving deriveWalletFromMnemonic in ${this.executionTime}ms`);
+          }
      }
 
      async generateNewWalletFromSecretNumbers() {
-          this.ui.updateSpinnerMessage(``);
+          console.log('Entering generateNewWalletFromSecretNumbers');
+          const startTime = Date.now();
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-          this.encryptionType = this.getEncryptionType();
-          console.log('encryptionType ............................................................', this.encryptionType);
-          const faucetWallet = await this.walletGenerator.generateNewWalletFromSecretNumbers(this.wallets, this.environment, this.encryptionType);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, [faucetWallet.address]);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
+
+          try {
+               this.encryptionType = this.getEncryptionType();
+               console.log('encryptionType ............................................................', this.encryptionType);
+               const faucetWallet = await this.walletGenerator.generateNewWalletFromSecretNumbers(this.wallets, this.environment, this.encryptionType);
+               const client = await this.xrplService.getClient();
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+          } catch (error: any) {
+               console.error('Error in generateNewWalletFromSecretNumbers:', error);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateNewWalletFromSecretNumbers in ${this.executionTime}ms`);
+          }
      }
 
      async deriveWalletFromSecretNumbers() {
+          console.log('Entering deriveWalletFromSecretNumbers');
+          const startTime = Date.now();
           this.ui.updateSpinnerMessage(``);
-          this.ui.showSpinnerWithDelay('Derive new wallet', 10);
-          this.encryptionType = this.getEncryptionType();
-          console.log('encryptionType ............................................................', this.encryptionType);
-          const faucetWallet = await this.walletGenerator.deriveWalletFromSecretNumbers(this.wallets, this.environment, this.encryptionType, this.secretNumbers);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, [faucetWallet.address]);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
+          this.ui.showSpinnerWithDelay('Derive wallet', 10);
+
+          try {
+               this.encryptionType = this.getEncryptionType();
+               console.log('encryptionType ............................................................', this.encryptionType);
+               const client = await this.xrplService.getClient();
+
+               const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromSecretNumbers(client, this.encryptionType, this.secretNumbers, this.destinations, this.customDestinations);
+               this.destinations = destinations;
+               this.customDestinations = customDestinations;
+               this.updateDestinations();
+
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+               this.ui.setSuccess(`Successfully added ${faucetWallet.address}`);
+          } catch (error: any) {
+               console.error('Error in deriveWalletFromSecretNumbers:', error);
+               if (error.message === 'Failed to fetch account info: Account not found.') {
+                    this.ui.setError(`${error.message} Are you using the correct encryption?`);
+               } else {
+                    this.ui.setError(`${error.message}`);
+               }
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving deriveWalletFromSecretNumbers in ${this.executionTime}ms`);
+          }
      }
 
      getEncryptionType(): string {
@@ -450,18 +523,22 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
      private async refreshWallets(client: xrpl.Client, addressesToRefresh?: string[]) {
           console.log('Calling refreshWallets');
 
-          await this.walletDataService.refreshWallets(
-               client,
-               this.wallets, // pass current wallet list
-               this.selectedWalletIndex, // pass selected index
-               addressesToRefresh,
-               (updatedWalletsList, newCurrentWallet) => {
-                    // This callback runs inside NgZone → UI updates safely
-                    this.currentWallet = { ...newCurrentWallet };
-                    // Optional: trigger change detection if needed
-                    this.cdr.markForCheck();
-               }
-          );
+          try {
+               await this.walletDataService.refreshWallets(
+                    client,
+                    this.wallets, // pass current wallet list
+                    this.selectedWalletIndex, // pass selected index
+                    addressesToRefresh,
+                    (updatedWalletsList, newCurrentWallet) => {
+                         // This callback runs inside NgZone → UI updates safely
+                         this.currentWallet = { ...newCurrentWallet };
+                         // Optional: trigger change detection if needed
+                         this.cdr.markForCheck();
+                    }
+               );
+          } catch (error: any) {
+               throw new Error(error.message);
+          }
      }
 
      updateDestinations() {
