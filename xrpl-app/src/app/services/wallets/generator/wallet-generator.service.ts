@@ -20,7 +20,7 @@ export class WalletGeneratorService {
       * @returns The newly created wallet
       */
      async generateNewAccount(wallets: any[], environment: string, encryptionType: string): Promise<any> {
-          console.log('encryptionType ________________________________________________', encryptionType);
+          console.log('encryptionType: ', encryptionType);
           const wallet = await this.xrplService.generateWalletFromFamilySeed(environment, encryptionType);
 
           // Optional delay (e.g. for faucet)
@@ -47,6 +47,16 @@ export class WalletGeneratorService {
           return wallet;
      }
 
+     /**
+      * Derives a wallet from a family seed and adds it to the application
+      * @param client - XRPL client instance
+      * @param encryptionType - Encryption algorithm type
+      * @param seed - Family seed for wallet derivation
+      * @param destinations - Current destination wallets
+      * @param customDestinations - Custom destination configurations
+      * @returns Object containing derived wallet and updated destinations
+      * @throws Error if wallet derivation or account validation fails
+      */
      async deriveWalletFromFamilySeed(client: xrpl.Client, encryptionType: string, seed: string, destinations: any, customDestinations: any) {
           try {
                const wallet = await this.xrplService.deriveWalletFromFamilySeed(seed, encryptionType);
@@ -88,7 +98,7 @@ export class WalletGeneratorService {
       * @returns The newly created wallet
       */
      async generateNewWalletFromMnemonic(wallets: any[], environment: string, encryptionType: string): Promise<any> {
-          console.log('encryptionType ________________________________________________', encryptionType);
+          console.log('encryptionType:', encryptionType);
           const wallet = await this.xrplService.generateWalletFromMnemonic(environment, encryptionType);
 
           // Optional delay (e.g. for faucet)
@@ -115,6 +125,16 @@ export class WalletGeneratorService {
           return wallet;
      }
 
+     /**
+      * Derives a wallet from a mnemonic phrase and adds it to the application
+      * @param client - XRPL client instance for network operations
+      * @param encryptionType - Encryption algorithm type for key derivation
+      * @param seed - Mnemonic phrase for wallet derivation
+      * @param destinations - Current destination wallets for duplicate checking
+      * @param customDestinations - Custom destination configurations
+      * @returns Object containing derived wallet and updated destinations
+      * @throws Error if wallet derivation fails or account validation fails
+      */
      async deriveWalletFromMnemonic(client: xrpl.Client, encryptionType: string, seed: string, destinations: any, customDestinations: any) {
           const wallet = await this.xrplService.deriveWalletFromMnemonic(seed, encryptionType);
 
@@ -152,7 +172,7 @@ export class WalletGeneratorService {
       * @returns The newly created wallet
       */
      async generateNewWalletFromSecretNumbers(wallets: any[], environment: string, encryptionType: string): Promise<any> {
-          console.log('encryptionType ________________________________________________', encryptionType);
+          console.log('encryptionType: ', encryptionType);
           const wallet = await this.xrplService.generateWalletFromSecretNumbers(environment, encryptionType);
 
           // Optional delay (e.g. for faucet)
@@ -180,6 +200,16 @@ export class WalletGeneratorService {
           return wallet;
      }
 
+     /**
+      * Derives a wallet from secret numbers and adds it to the application
+      * @param client - XRPL client instance for network operations
+      * @param encryptionType - Encryption algorithm type for key derivation
+      * @param seed - Secret numbers array for wallet derivation
+      * @param destinations - Current destination wallets for duplicate checking
+      * @param customDestinations - Custom destination configurations
+      * @returns Object containing derived wallet and updated destinations
+      * @throws Error if wallet derivation fails or account validation fails
+      */
      async deriveWalletFromSecretNumbers(client: xrpl.Client, encryptionType: string, seed: any, destinations: any, customDestinations: any) {
           const wallet = await this.xrplService.deriveWalletFromSecretNumbers(seed, encryptionType);
 
@@ -207,6 +237,14 @@ export class WalletGeneratorService {
           return { wallet, destinations, customDestinations };
      }
 
+     /**
+      * Checks if a wallet already exists in destinations and handles duplicates
+      * @param destinations - Array of existing destination wallets
+      * @param wallet - New wallet to check for duplicates
+      * @param customDestinations - Custom destination configurations
+      * @returns Updated customDestinations array if custom wallet was removed
+      * @throws Error if non-custom duplicate wallet is found
+      */
      private checkIfWalletAlreadyExist(destinations: any, wallet: any, customDestinations: any) {
           for (let i = destinations.length - 1; i >= 0; i--) {
                console.log(`Destinations: ${destinations[i].address} wallet.address: ${wallet.address}`);
