@@ -282,7 +282,27 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
           this.ui.showSpinnerWithDelay('Derive wallet', 10);
           this.encryptionType = this.getEncryptionType();
           console.log('encryptionType ............................................................', this.encryptionType);
-          const faucetWallet = await this.walletGenerator.deriveWalletFromFamilySeed(this.wallets, this.environment, this.encryptionType, this.seed);
+          const faucetWallet = await this.walletGenerator.deriveWalletFromFamilySeed(this.wallets, this.environment, this.encryptionType, this.seed, this.destinations, this.customDestinations);
+
+          // Return null if the wallet already exist in the application. We do not want duplicate wallets.
+          for (let i = this.destinations.length - 1; i >= 0; i--) {
+               if (this.destinations[i].address === faucetWallet.address) {
+                    // Remove from user entered wallet addresses since we have the actual wallet now and not just the address.
+                    if (this.destinations[i].name?.includes('Custom')) {
+                         this.walletGenerator.deleteWallet(i);
+                         this.customDestinations = this.customDestinations.filter((dest: { address: any }) => dest.address !== this.destinations[i].address);
+                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+                         this.updateDestinations();
+                         break;
+                    }
+                    return this.ui.setError(`Wallet already exists in the application.`);
+               }
+          }
+
+          // if (faucetWallet === null) {
+          // return this.ui.setError(`Wallet already exists in the application.`);
+          // }
+
           const client = await this.xrplService.getClient();
           this.refreshWallets(client, [faucetWallet.address]);
           this.ui.spinner = false;
