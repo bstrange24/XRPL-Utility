@@ -22,6 +22,14 @@ export class TransactionUiService {
      warningMessage: string | null = null;
      errorMessage: string | null = null;
 
+     setPaymentTx(tx: any) {
+          this.paymentTx = [...this.paymentTx, tx];
+     }
+
+     setTxResult(result: any) {
+          this.txResult = [...this.txResult, result];
+     }
+
      // Called when user toggles the simulate slider
      toggleSimulate(enabled: boolean) {
           this.isSimulateEnabled = enabled;

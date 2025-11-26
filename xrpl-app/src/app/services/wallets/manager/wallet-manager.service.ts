@@ -31,6 +31,8 @@ export class WalletManagerService {
      private editingIndex: number | null = null; // Wallet name change state
      private tempName = '';
      private currentNetwork = 'devnet';
+     private selectedIndexSource = new BehaviorSubject<number>(0);
+     selectedIndex$ = this.selectedIndexSource.asObservable();
 
      constructor(private storageService: StorageService, private networkService: NetworkService) {
           const net = this.storageService.getNet();
@@ -153,6 +155,14 @@ export class WalletManagerService {
      /** getter function */
      getTempName(): string {
           return this.tempName;
+     }
+
+     setSelectedIndex(index: number) {
+          this.selectedIndexSource.next(index);
+     }
+
+     getSelectedIndex(): number {
+          return this.selectedIndexSource.value;
      }
 
      getDestinationFromDisplay(displayString: string, destinations: any) {

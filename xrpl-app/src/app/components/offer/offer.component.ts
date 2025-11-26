@@ -20,7 +20,6 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
-import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
 import { ClickToCopyService } from '../../services/click-to-copy/click-to-copy.service';
 
 interface ValidationInputs {
@@ -103,7 +102,7 @@ type CustomBookOffer = Partial<Omit<BookOffer, 'TakerGets' | 'TakerPays'>> & {
 @Component({
      selector: 'app-offer',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, SanitizeHtmlPipe, MatTableModule, MatSortModule, MatPaginatorModule, MatButtonModule],
+     imports: [CommonModule, FormsModule, NavbarComponent, SanitizeHtmlPipe, MatTableModule, MatSortModule, MatPaginatorModule, MatButtonModule],
      templateUrl: './offer.component.html',
      styleUrl: './offer.component.css',
      encapsulation: ViewEncapsulation.None,

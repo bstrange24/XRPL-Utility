@@ -15,7 +15,6 @@ import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
-import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
 import { ClickToCopyService } from '../../services/click-to-copy/click-to-copy.service';
 
 interface ValidationInputs {
@@ -86,7 +85,7 @@ type CurrencyAmount = CurrencyAmountXRP | CurrencyAmountToken;
 @Component({
      selector: 'app-amm',
      standalone: true,
-     imports: [CommonModule, FormsModule, AppWalletDynamicInputComponent, NavbarComponent, SanitizeHtmlPipe, MatTableModule, MatSortModule, MatPaginatorModule, MatButtonModule],
+     imports: [CommonModule, FormsModule, NavbarComponent, SanitizeHtmlPipe, MatTableModule, MatSortModule, MatPaginatorModule, MatButtonModule],
      templateUrl: './amm.component.html',
      styleUrl: './amm.component.css',
 })
