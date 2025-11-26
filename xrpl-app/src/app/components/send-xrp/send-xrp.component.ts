@@ -48,6 +48,7 @@ interface ValidationInputs {
      selectedTickets?: string[];
      selectedTicket?: string;
      signerQuorum?: number;
+     signers?: { account: string; weight: number }[];
 }
 
 @Component({
@@ -62,48 +63,50 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
      private destroy$ = new Subject<void>();
      private readonly injector = inject(Injector);
      public destinationSearch$ = new Subject<string>();
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
+     @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
+     @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
 
      // Form fields
-     activeTab = 'send';
+     activeTab: string = 'send';
      amountField = '';
-     destinationField = '';
+     destinationField: string = '';
      destinationTagField = '';
      sourceTagField = '';
      invoiceIdField = '';
-     memoField = '';
-     isMemoEnabled = false;
-     useMultiSign = false;
-     isRegularKeyAddress = false;
-     isTicket = false;
-     selectedSingleTicket = '';
+     memoField: string = '';
+     isMemoEnabled: boolean = false;
+     useMultiSign: boolean = false;
+     isRegularKeyAddress: boolean = false;
+     isTicket: boolean = false;
+     selectedSingleTicket: string = '';
      selectedTickets: string[] = [];
-     multiSelectMode = false;
+     multiSelectMode: boolean = false;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      selectedTicket: string = '';
 
      // Wallet state (now driven by WalletPanelComponent via service)
      currentWallet: Wallet = {} as Wallet;
      wallets: Wallet[] = [];
-     hasWallets = false;
+     hasWallets: boolean = true;
      environment = '';
      url = '';
      showDropdown: boolean = false;
      dropdownOpen: boolean = false;
 
      // Multi-sign & Regular Key
-     multiSignAddress = '';
-     multiSignSeeds = '';
-     signerQuorum = 0;
-     regularKeyAddress = '';
-     regularKeySeed = '';
-     multiSigningEnabled = false;
-     regularKeySigningEnabled = false;
+     multiSignAddress: string = '';
+     multiSignSeeds: string = '';
+     signerQuorum: number = 0;
+     regularKeyAddress: string = '';
+     regularKeySeed: string = '';
+     multiSigningEnabled: boolean = false;
+     regularKeySigningEnabled: boolean = false;
      ticketArray: string[] = [];
-     masterKeyDisabled = false;
+     masterKeyDisabled: boolean = false;
 
      // Dropdown
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
      private overlayRef: OverlayRef | null = null;
      filteredDestinations: DropdownItem[] = [];
      highlightedIndex = -1;
@@ -113,9 +116,6 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
      // Code preview
      private lastPaymentTx = '';
      private lastTxResult = '';
-     @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
-     @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
-
      executionTime = '';
 
      constructor(
@@ -144,7 +144,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           this.walletManagerService.selectedIndex$.pipe(takeUntil(this.destroy$)).subscribe(index => {
                if (this.wallets[index]) {
                     this.currentWallet = { ...this.wallets[index] };
-                    this.onAccountChange();
+                    // this.onAccountChange();
                }
           });
 
@@ -224,6 +224,9 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
      }
 
      async onAccountChange() {
+          console.log('Entering onAccountChange');
+          const startTime = Date.now();
+
           if (!this.currentWallet?.address || !xrpl.isValidAddress(this.currentWallet.address)) {
                this.ui.setError('Invalid or missing wallet address');
                return;
@@ -236,6 +239,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
                const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
                if (errors.length > 0) {
@@ -250,75 +254,14 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                this.clearFields(false);
                this.cdr.detectChanges();
           } catch (error: any) {
+               console.error('Failed to load account:', error);
                this.ui.setError(`Failed to load account: ${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving onAccountChange in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
-     }
-
-     private refreshUIData(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any) {
-          this.refreshUiAccountObjects(accountObjects, accountInfo, wallet);
-          this.refreshUiAccountInfo(accountInfo);
-     }
-
-     public refreshUiAccountObjects(accountObjects: any, accountInfo: any, wallet: xrpl.Wallet) {
-          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
-
-          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
-          this.signerQuorum = signerQuorum;
-          const hasSignerAccounts = signerAccounts?.length > 0;
-
-          if (hasSignerAccounts) {
-               const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.multiSignAddress = entries.map((e: any) => e.Account).join(',\n');
-               this.multiSignSeeds = entries.map((e: any) => e.seed).join(',\n');
-          } else {
-               this.signerQuorum = 0;
-               this.multiSignAddress = 'No Multi-Sign address configured for account';
-               this.multiSignSeeds = '';
-               this.storageService.removeValue('signerEntries');
-          }
-
-          this.multiSigningEnabled = hasSignerAccounts;
-          this.useMultiSign = false;
-          this.masterKeyDisabled = Boolean(accountInfo?.result?.account_flags?.disableMasterKey);
-     }
-
-     public refreshUiAccountInfo(accountInfo: any) {
-          const data = accountInfo?.result?.account_data;
-          if (!data) return;
-
-          const regularKey = data.RegularKey;
-          const props = this.utilsService.setRegularKeyProperties(regularKey, data.Account) || {
-               regularKeyAddress: 'No RegularKey configured',
-               regularKeySeed: '',
-          };
-
-          this.regularKeyAddress = props.regularKeyAddress;
-          this.regularKeySeed = props.regularKeySeed;
-          this.regularKeySigningEnabled = !!regularKey;
-     }
-
-     updateTickets(accountObjects: any) {
-          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
-          if (this.multiSelectMode) {
-               this.selectedSingleTicket = this.utilsService.cleanUpMultiSelection(this.selectedTickets, this.ticketArray);
-          } else {
-               this.selectedSingleTicket = this.utilsService.cleanUpSingleSelection(this.selectedTickets, this.ticketArray);
-          }
-     }
-
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(client, this.wallets, this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-               this.currentWallet = { ...newCurrent };
-          });
-     }
-
-     private async getWallet() {
-          const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
-          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
-          if (!wallet) {
-               throw new Error('ERROR: Wallet could not be created or is undefined');
-          }
-          return wallet;
      }
 
      async sendXrp() {
@@ -463,6 +406,91 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           if (this.sourceTagField) this.utilsService.setSourceTagField(tx, this.sourceTagField);
      }
 
+     private refreshUIData(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any) {
+          this.refreshUiAccountObjects(accountObjects, accountInfo, wallet);
+          this.refreshUiAccountInfo(accountInfo);
+     }
+
+     updateTickets(accountObjects: any) {
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
+          if (this.multiSelectMode) {
+               this.selectedSingleTicket = this.utilsService.cleanUpMultiSelection(this.selectedTickets, this.ticketArray);
+          } else {
+               this.selectedSingleTicket = this.utilsService.cleanUpSingleSelection(this.selectedTickets, this.ticketArray);
+          }
+     }
+
+     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+          await this.walletDataService.refreshWallets(client, this.wallets, this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+               this.currentWallet = { ...newCurrent };
+          });
+     }
+
+     public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
+          // Tickets
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
+          this.selectedTicket = this.ticketArray[0] || this.selectedTicket;
+
+          // Signer accounts
+          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
+          this.signerQuorum = signerQuorum;
+          const hasSignerAccounts = signerAccounts?.length > 0;
+          this.checkForMultiSigners(hasSignerAccounts, wallet);
+
+          // Boolean flags
+          this.multiSigningEnabled = hasSignerAccounts;
+          this.useMultiSign = false;
+          this.masterKeyDisabled = Boolean(accountInfo?.result?.account_flags?.disableMasterKey);
+
+          this.clearFields(false);
+     }
+
+     private checkForMultiSigners(hasSignerAccounts: boolean, wallet: xrpl.Wallet) {
+          if (hasSignerAccounts) {
+               const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+               this.multiSignAddress = signerEntries.map((e: { Account: any }) => e.Account).join(',\n');
+               this.multiSignSeeds = signerEntries.map((e: { seed: any }) => e.seed).join(',\n');
+          } else {
+               this.signerQuorum = 0;
+               this.multiSignAddress = 'No Multi-Sign address configured for account';
+               this.multiSignSeeds = '';
+               this.storageService.removeValue('signerEntries');
+          }
+     }
+
+     public refreshUiAccountInfo(accountInfo: xrpl.AccountInfoResponse): void {
+          const accountData = accountInfo?.result?.account_data;
+          if (!accountData) return;
+
+          const regularKey = accountData.RegularKey;
+          const isMasterKeyDisabled = accountInfo?.result?.account_flags?.disableMasterKey ?? false;
+
+          // Set regular key properties
+          const rkProps = this.utilsService.setRegularKeyProperties(regularKey, accountData.Account) || { regularKeyAddress: 'No RegularKey configured for account', regularKeySeed: '', isRegularKeyAddress: false };
+          this.regularKeyAddress = rkProps.regularKeyAddress;
+          this.regularKeySeed = rkProps.regularKeySeed;
+
+          // Set master key property
+          this.masterKeyDisabled = isMasterKeyDisabled;
+
+          // Set regular key signing enabled flag
+          this.regularKeySigningEnabled = !!regularKey;
+     }
+
+     updateDestinations() {
+          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
+          this.destinationDropdownService.setItems(this.destinations);
+     }
+
+     private async getWallet() {
+          const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
+          if (!wallet) {
+               throw new Error('ERROR: Wallet could not be created or is undefined');
+          }
+          return wallet;
+     }
+
      private addNewDestinationFromUser() {
           const addr = this.destinationField.includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
 
@@ -471,11 +499,6 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
                this.updateDestinations();
           }
-     }
-
-     updateDestinations() {
-          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          this.destinationDropdownService.setItems(this.destinations);
      }
 
      get safeWarningMessage() {
