@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<app-app-wallet-dynamic-input style="display: none" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (transactionResult)="ui.handleTransactionResult($event)"></app-app-wallet-dynamic-input>
 
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
@@ -30,11 +30,6 @@
                          <!-- List of wallets -->
                          @for (wallet of wallets; track wallet.address; let i = $index) {
                          <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
-                              <!-- Drag Handle (6-dot grip) -->
-                              <!-- <div class="drag-handle" cdkDragHandle>
-                                   <lucide-icon name="grip-vertical" size="20"></lucide-icon>
-                              </div> -->
-
                               <!-- Wallet Info -->
                               <div class="wallet-info">
                                    @if (editingIndex(i)) {
@@ -133,14 +128,6 @@
                </div>
                }
 
-               <!-- Dynamic info panel -->
-               @if (infoMessage) {
-               <div class="info-panel">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-red-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="infoMessage"></div>
-               </div>
-               }
-
                <!-- Dynamic warning panel  -->
                @if (ui.warningMessage) {
                <div class="warning-panel">
@@ -149,7 +136,7 @@
                </div>
                }
 
-               <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
+               <form #theForm="ngForm" class="send-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab">
                               <!-- Amount and Destination -->
@@ -188,14 +175,6 @@
                                                   }
                                              </div>
                                         </ng-template>
-                                        <!-- <div class="form-group">
-                                             <label>Destination</label>
-                                             <select [(ngModel)]="destinationField" name="destinationField">
-                                                  @for (d of destinations; track d.address) {
-                                                  <option [value]="d.address" [disabled]="d.address===currentWallet.address">{{ d.name || 'Wallet' }} ({{ d.address | slice:0:6 }}...{{ d.address | slice:-4 }})</option>
-                                                  }
-                                             </select>
-                                        </div> -->
                                    </div>
                               </div>
 
@@ -337,7 +316,7 @@
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   <button type="submit" class="btn-primary-green">Send XRP</button>
+                                   <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Send XRP' }}</button>
                                    <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                               </div>
 

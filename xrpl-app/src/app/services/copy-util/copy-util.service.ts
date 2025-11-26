@@ -31,11 +31,25 @@ export class CopyUtilService {
           });
      }
 
+     copySignTx(txJson: any) {
+          // const json = JSON.stringify(txJson, null, 2);
+          // const json = JSON.stringify(this.paymentTx, null, 2);
+          navigator.clipboard.writeText(txJson).then(() => {
+               this.ui.showToastMessage('Transaction JSON copied!');
+          });
+     }
+
      copyTxResult() {
           // const json = JSON.stringify(this.txResult, null, 2);
           const json = JSON.stringify(this.ui.txResult, null, 2);
           navigator.clipboard.writeText(json).then(() => {
                this.ui.showToastMessage('Transaction Result JSON copied!');
+          });
+     }
+
+     copySignedTx(text: string) {
+          navigator.clipboard.writeText(text).then(() => {
+               this.ui.showToastMessage('Copied Signed Tx to clipboard!');
           });
      }
 }

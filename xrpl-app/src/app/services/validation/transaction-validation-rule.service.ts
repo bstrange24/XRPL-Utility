@@ -406,6 +406,68 @@ export class ValidationService {
                ],
           });
 
+          // CreateTicket
+          this.registerRule({
+               transactionType: 'CreateTicket',
+               requiredFields: ['amount'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // DeleteTicket
+          this.registerRule({
+               transactionType: 'DeleteTicket',
+               requiredFields: ['deleteTicketSequence'],
+               validators: [
+                    this.optionalNumeric('deleteTicketSequence', 0),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
           // Delegate Actions
           this.registerRule({
                transactionType: 'DelegateActions',
@@ -688,6 +750,336 @@ export class ValidationService {
 
                     // Destination address valid
                     this.isValidAddress('subject'),
+               ],
+          });
+
+          // CreateCheck
+          this.registerRule({
+               transactionType: 'CreateCheck',
+               requiredFields: ['seed', 'amount', 'destination'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Destination address valid
+                    this.isValidAddress('destination'),
+                    this.notSelf('senderAddress', 'destination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+
+                    this.invoiceId(),
+               ],
+          });
+
+          // CashCheck
+          this.registerRule({
+               transactionType: 'CashCheck',
+               requiredFields: ['seed', 'amount', 'checkId'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Destination address valid
+                    this.isValidAddress('destination'),
+                    this.notSelf('senderAddress', 'destination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+
+                    this.invoiceId(),
+               ],
+          });
+
+          // CancelCheck
+          this.registerRule({
+               transactionType: 'CancelCheck',
+               requiredFields: ['seed', 'checkId'],
+               validators: [
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Destination address valid
+                    this.isValidAddress('destination'),
+                    this.notSelf('senderAddress', 'destination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+
+                    this.invoiceId(),
+               ],
+          });
+
+          // PaymentChannelCreate
+          this.registerRule({
+               transactionType: 'PaymentChannelCreate',
+               requiredFields: ['seed', 'amount', 'destination', 'settleDelay'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Destination address valid
+                    this.isValidAddress('destination'),
+                    this.notSelf('senderAddress', 'destination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
+
+                    this.optionalNumeric('settleDelay', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // PaymentChannelFund
+          this.registerRule({
+               transactionType: 'PaymentChannelFund',
+               requiredFields: ['seed', 'amount', 'destination', 'channelID'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Destination address valid
+                    this.isValidAddress('destination'),
+                    this.notSelf('senderAddress', 'destination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
+
+                    this.optionalNumeric('channelID', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // PaymentChannelRenew
+          this.registerRule({
+               transactionType: 'PaymentChannelRenew',
+               requiredFields: ['seed', 'amount', 'destination', 'channelID'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Destination address valid
+                    this.isValidAddress('destination'),
+                    this.notSelf('senderAddress', 'destination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
+
+                    this.optionalNumeric('channelID', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // PaymentChannelClaim
+          this.registerRule({
+               transactionType: 'PaymentChannelClaim',
+               requiredFields: ['seed', 'amount', 'channelID', 'channelClaimSignatureField', 'publicKeyField'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    this.optionalNumeric('channelID', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // PaymentChannelClose
+          this.registerRule({
+               transactionType: 'PaymentChannelClose',
+               requiredFields: ['seed', 'channelID'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    this.optionalNumeric('channelID', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // PaymentChannelGenerateCreatorClaimSignature
+          this.registerRule({
+               transactionType: 'PaymentChannelClose',
+               requiredFields: ['seed', 'amount', 'channelID', 'destination'],
+               validators: [
+                    this.positiveAmount(),
+
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Destination address valid
+                    this.isValidAddress('destination'),
+                    this.notSelf('senderAddress', 'destination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
+
+                    this.optionalNumeric('channelID', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
                ],
           });
 

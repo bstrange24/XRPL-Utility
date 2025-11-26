@@ -12,7 +12,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { Subject, takeUntil } from 'rxjs';
+import { pairwise, startWith, Subject, takeUntil } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -81,6 +81,20 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
      secretNumbers: string = '';
      ed25519_encryption_type: boolean = false;
      secp256k1_encryption_type: boolean = false;
+     buttonLoading = {
+          generateNewWalletFromSeed: false,
+          generateNewWalletFromMnemonic: false,
+          generateNewWalletFromSecretNumbers: false,
+          deriveWalletFromFamilySeed: false,
+          deriveWalletFromMnemonic: false,
+          deriveWalletFromSecretNumbers: false,
+     };
+     mnemonicInput = '';
+     mnemonicValid = false;
+     secretNumberInput: string[] = [];
+     secretNumberValid = false;
+     seedInput = '';
+     seedValid = false;
 
      constructor(
           private readonly xrplService: XrplService,
@@ -117,11 +131,18 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
           const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
           this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
-               this.wallets = wallets;
-               if (!this.wallets) {
-                    this.hasWallets = false;
-                    return;
+          this.walletManagerService.wallets$.pipe(startWith(null), pairwise(), takeUntil(this.destroy$)).subscribe(([prev, curr]) => {
+               this.wallets = curr || [];
+               this.hasWallets = this.wallets.length > 0;
+
+               const prevSelected = prev?.[this.selectedWalletIndex];
+               const currSelected = curr?.[this.selectedWalletIndex];
+
+               const walletSwitched = !prev || prevSelected?.address !== currSelected?.address || prev.length !== curr?.length;
+
+               if (walletSwitched) {
+                    this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
+                    this.onAccountChange(); // Only on actual change
                }
           });
 
@@ -150,6 +171,21 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                     this.closeDropdownInternal(); // detach overlay (component-owned)
                }
           });
+     }
+
+     onMnemonicInput() {
+          this.mnemonicInput = this.utilsService.normalizeMnemonic(this.mnemonic);
+          this.mnemonicValid = this.utilsService.isValidMnemonic(this.mnemonic);
+     }
+
+     onSecretNumberInput() {
+          this.secretNumberInput = this.utilsService.normalizeSecrets(this.secretNumbers);
+          this.secretNumberValid = this.utilsService.isValidSecret(this.utilsService.convertSecretNumberStringToArray(this.secretNumbers));
+     }
+
+     onSeedInput() {
+          this.seedInput = this.utilsService.normalizeFamilySeed(this.seed);
+          this.seedValid = xrpl.isValidSecret(this.seed);
      }
 
      onEd25519Change() {
@@ -186,6 +222,10 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
           return wallet.address;
      }
 
+     get isAnyButtonLoading(): boolean {
+          return Object.values(this.buttonLoading).some(v => v === true);
+     }
+
      setTab(tab: string) {
           this.activeTab = tab;
           this.clearFields(true);
@@ -217,24 +257,6 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
           this.tempName = '';
      }
 
-     onWalletListChange(): void {
-          if (this.wallets.length <= 0) {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length === 1 && this.wallets[0].address === '') {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
-               this.selectedWalletIndex = 0;
-          }
-
-          this.onAccountChange();
-     }
-
      toggleSecret(index: number) {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
      }
@@ -263,9 +285,12 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
      async generateNewAccount() {
           console.log('Entering generateNewAccount');
           const startTime = Date.now();
+          this.buttonLoading.generateNewWalletFromSeed = true;
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
+
           try {
-               this.encryptionType = this.getEncryptionType();
+               // Default to ed25519
+               this.encryptionType = AppConstants.ENCRYPTION.ED25519;
                console.log('encryptionType: ', this.encryptionType);
                const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
                const client = await this.xrplService.getClient();
@@ -279,20 +304,27 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
+               this.buttonLoading.generateNewWalletFromSeed = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving v in ${this.executionTime}ms`);
+               console.log(`Leaving generateNewAccount in ${this.executionTime}ms`);
           }
      }
 
      async deriveWalletFromFamilySeed() {
           console.log('Entering deriveWalletFromFamilySeed');
           const startTime = Date.now();
+          this.buttonLoading.deriveWalletFromFamilySeed = true;
           this.ui.updateSpinnerMessage(``);
           this.ui.showSpinnerWithDelay('Derive wallet', 10);
 
           try {
                this.encryptionType = this.getEncryptionType();
                console.log('encryptionType: ', this.encryptionType);
+
+               if (!xrpl.isValidSecret(this.seed)) {
+                    return this.ui.setError('Invalid seed value.');
+               }
+
                const client = await this.xrplService.getClient();
 
                const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromFamilySeed(client, this.encryptionType, this.seed, this.destinations, this.customDestinations);
@@ -313,6 +345,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                }
           } finally {
                this.ui.spinner = false;
+               this.buttonLoading.deriveWalletFromFamilySeed = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving deriveWalletFromFamilySeed in ${this.executionTime}ms`);
           }
@@ -321,6 +354,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
      async generateNewWalletFromMnemonic() {
           console.log('Entering deriveWalletFromFamilySeed');
           const startTime = Date.now();
+          this.buttonLoading.generateNewWalletFromMnemonic = true;
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
 
           try {
@@ -331,11 +365,14 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                await this.refreshWallets(client, [faucetWallet.address]);
                this.ui.spinner = false;
                this.ui.clearWarning();
+               this.ui.txResult.push(faucetWallet);
+               this.updateTxResult(this.ui.txResult);
           } catch (error: any) {
                console.error('Error in deriveWalletFromFamilySeed:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
+               this.buttonLoading.generateNewWalletFromMnemonic = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving deriveWalletFromFamilySeed in ${this.executionTime}ms`);
           }
@@ -344,12 +381,18 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
      async deriveWalletFromMnemonic() {
           console.log('Entering deriveWalletFromMnemonic');
           const startTime = Date.now();
+          this.buttonLoading.deriveWalletFromMnemonic = true;
           this.ui.updateSpinnerMessage(``);
           this.ui.showSpinnerWithDelay('Derive wallet', 10);
 
           try {
                this.encryptionType = this.getEncryptionType();
-               console.log('encryptionType ............................................................', this.encryptionType);
+               console.log('encryptionType: ', this.encryptionType);
+
+               if (!this.utilsService.isValidMnemonic(this.mnemonic)) {
+                    return this.ui.setError('Invalid Mnemonic.');
+               }
+
                const client = await this.xrplService.getClient();
 
                const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromMnemonic(client, this.encryptionType, this.mnemonic, this.destinations, this.customDestinations);
@@ -370,6 +413,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                }
           } finally {
                this.ui.spinner = false;
+               this.buttonLoading.deriveWalletFromMnemonic = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving deriveWalletFromMnemonic in ${this.executionTime}ms`);
           }
@@ -378,6 +422,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
      async generateNewWalletFromSecretNumbers() {
           console.log('Entering generateNewWalletFromSecretNumbers');
           const startTime = Date.now();
+          this.buttonLoading.generateNewWalletFromSecretNumbers = true;
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
 
           try {
@@ -388,11 +433,14 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                await this.refreshWallets(client, [faucetWallet.address]);
                this.ui.spinner = false;
                this.ui.clearWarning();
+               this.ui.txResult.push(faucetWallet);
+               this.updateTxResult(this.ui.txResult);
           } catch (error: any) {
                console.error('Error in generateNewWalletFromSecretNumbers:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
+               this.buttonLoading.generateNewWalletFromSecretNumbers = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving generateNewWalletFromSecretNumbers in ${this.executionTime}ms`);
           }
@@ -401,12 +449,18 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
      async deriveWalletFromSecretNumbers() {
           console.log('Entering deriveWalletFromSecretNumbers');
           const startTime = Date.now();
+          this.buttonLoading.deriveWalletFromSecretNumbers = true;
           this.ui.updateSpinnerMessage(``);
           this.ui.showSpinnerWithDelay('Derive wallet', 10);
 
           try {
                this.encryptionType = this.getEncryptionType();
-               console.log('encryptionType ............................................................', this.encryptionType);
+               console.log('encryptionType: ', this.encryptionType);
+
+               if (!this.utilsService.isValidSecret(this.utilsService.convertSecretNumberStringToArray(this.secretNumbers))) {
+                    return this.ui.setError('Invalid Secret Number.');
+               }
+
                const client = await this.xrplService.getClient();
 
                const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromSecretNumbers(client, this.encryptionType, this.secretNumbers, this.destinations, this.customDestinations);
@@ -427,6 +481,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                }
           } finally {
                this.ui.spinner = false;
+               this.buttonLoading.deriveWalletFromSecretNumbers = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving deriveWalletFromSecretNumbers in ${this.executionTime}ms`);
           }
@@ -452,7 +507,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
           }
 
           // Persist the new order to localStorage
-          this.saveWallets();
+          this.walletManagerService.setWallets(this.wallets); // ← this saves + updates observable
 
           // Update destinations and account state
           this.updateDestinations();
@@ -557,10 +612,6 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
           return wallet;
      }
 
-     saveWallets() {
-          this.storageService.set('wallets', JSON.stringify(this.wallets));
-     }
-
      updatePaymentTx() {
           this.scheduleHighlight();
      }
@@ -622,7 +673,15 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                this.ui.clearMessages();
                this.ui.clearWarning();
           }
-
+          this.seed = '';
+          this.mnemonic = '';
+          this.secretNumbers = '';
+          this.mnemonicInput = '';
+          this.mnemonicValid = false;
+          this.secretNumberInput = [];
+          this.secretNumberValid = false;
+          this.seedInput = '';
+          this.seedValid = false;
           this.cdr.detectChanges();
      }
 

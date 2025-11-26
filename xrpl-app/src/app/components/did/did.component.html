@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (transactionResult)="ui.handleTransactionResult($event)"></app-app-wallet-dynamic-input>
 
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
@@ -30,11 +30,6 @@
                          <!-- List of wallets -->
                          @for (wallet of wallets; track wallet.address; let i = $index) {
                          <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
-                              <!-- Drag Handle (6-dot grip) -->
-                              <!-- <div class="drag-handle" cdkDragHandle>
-                                   <lucide-icon name="grip-vertical" size="20"></lucide-icon>
-                              </div> -->
-
                               <!-- Wallet Info -->
                               <div class="wallet-info">
                                    @if (editingIndex(i)) {
@@ -231,7 +226,7 @@
                </div>
                }
 
-               <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
+               <form #theForm="ngForm" class="send-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab">
                               <div>
@@ -294,7 +289,7 @@
                                    }
 
                                    <!-- Use Ticket for tx -->
-                                   @if (activeTab !== 'delete' && ticketArray.length > 0) {
+                                   @if (ticketArray.length > 0) {
                                    <label class="switch">
                                         <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
                                         <span class="slider"></span>
@@ -381,9 +376,9 @@
                               <!-- Action buttons -->
                               <div class="button-row">
                                    @if (activeTab === 'set') {
-                                   <button type="button" class="btn-primary-blue" (click)="setDid()">Set DID</button>
+                                   <button type="button" class="btn-primary-blue" (click)="setDid()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Set DID' }}</button>
                                    } @else if (activeTab === 'delete') {
-                                   <button type="button" class="btn-primary-red" (click)="deleteDid()">Delete DID</button>
+                                   <button type="button" class="btn-primary-red" (click)="deleteDid()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Delete DID' }}</button>
                                    }
                                    <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                               </div>

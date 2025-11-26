@@ -622,6 +622,69 @@ export class UtilsService {
           return field.replace(/,/g, '');
      }
 
+     normalizeMnemonic(input: string): string {
+          return input
+               .toLowerCase()
+               .replace(/[^a-z\s]/g, '') // remove symbols
+               .replace(/\s+/g, ' ') // collapse spaces
+               .trim();
+     }
+
+     normalizeSecrets(input: string): string[] {
+          return input
+               .split(/[\s,]+/)
+               .map(s => s.trim())
+               .filter(Boolean);
+     }
+
+     normalizeFamilySeed(input: string): string {
+          if (!input) return '';
+
+          return input
+               .trim()
+               .replace(/\s+/g, '') // remove all spaces (including pasted line breaks)
+               .replace(/[\u200B-\u200D\uFEFF]/g, ''); // remove invisible unicode chars
+     }
+
+     isValidSecret(secrets: string[]): boolean {
+          const valid: string[] = [];
+          const invalid: string[] = [];
+
+          for (const secret of secrets) {
+               if (this.isValidSecretNumber(secret.trim())) {
+                    valid.push(secret);
+               } else {
+                    invalid.push(secret);
+               }
+          }
+
+          if (invalid.length > 0 || valid.length != 8) {
+               return false;
+          }
+          return true;
+     }
+
+     isValidMnemonic(mnemonic: string): boolean {
+          const cleaned = this.normalizeMnemonic(mnemonic);
+          const words = cleaned.split(' ');
+
+          // Basic structural validation (24 words, alphabetic only)
+          if (words.length !== 24) return false;
+
+          return words.every(word => /^[a-z]+$/.test(word));
+     }
+
+     isValidSecretNumber(secret: string): boolean {
+          return /^\d{6}$/.test(secret);
+     }
+
+     convertSecretNumberStringToArray(rawSecrets: string) {
+          return rawSecrets
+               .split(',')
+               .map(s => s.trim())
+               .filter(s => s.length > 0);
+     }
+
      formatCurrencyForDisplay(v: any): string {
           const strV = String(v);
           const normalizedCurrency = this.normalizeCurrencyCode(strV);
@@ -997,6 +1060,110 @@ export class UtilsService {
 
           // Final fallback
           return { type: 'unknown', value: trimmed };
+     }
+
+     checkForSignerAccounts(accountObjects: xrpl.AccountObjectsResponse): any {
+          let signerQuorum;
+          const signerAccounts: string[] = [];
+
+          const accountObjectsArray = accountObjects.result?.account_objects;
+          if (!Array.isArray(accountObjectsArray)) return [];
+
+          for (const obj of accountObjectsArray) {
+               if (obj.LedgerEntryType === 'SignerList' && Array.isArray(obj.SignerEntries)) {
+                    // Set quorum once
+                    if (obj.SignerQuorum !== undefined) {
+                         signerQuorum = obj.SignerQuorum;
+                    }
+
+                    for (const entry of obj.SignerEntries) {
+                         const account = entry.SignerEntry?.Account;
+                         if (account) {
+                              signerAccounts.push(`${account}~${entry.SignerEntry.SignerWeight ?? ''}`);
+                         }
+                    }
+               }
+          }
+
+          return { signerAccounts, signerQuorum };
+     }
+
+     getAccountTickets(accountObjects: xrpl.AccountObjectsResponse): string[] {
+          const objects = accountObjects.result?.account_objects;
+          if (!Array.isArray(objects)) return [];
+
+          const tickets = objects.reduce((acc: number[], obj) => {
+               if (obj.LedgerEntryType === 'Ticket' && typeof obj.TicketSequence === 'number') {
+                    acc.push(obj.TicketSequence);
+               }
+               return acc;
+          }, []);
+
+          return tickets.sort((a, b) => a - b).map(String);
+     }
+
+     setRegularKeyProperties(regularKey: string | undefined, account: string): any {
+          if (regularKey) {
+               const regularKeyAddress = regularKey;
+               const regularKeySeed = this.storageService.get(`${account}regularKeySeed`) || '';
+               const isRegularKeyAddress = true;
+               return { regularKeyAddress, regularKeySeed, isRegularKeyAddress };
+          }
+     }
+
+     validateQuorum(signers: any, signerQuorum: any) {
+          const totalWeight = signers.reduce((sum: any, s: { weight: any }) => sum + (s.weight || 0), 0);
+          if (signerQuorum > totalWeight) {
+               return totalWeight;
+          }
+     }
+
+     async toggleUseMultiSign(multiSignAddress: string, multiSignSeeds: string) {
+          if (multiSignAddress === 'No Multi-Sign address configured for account') {
+               multiSignSeeds = '';
+               return { multiSignSeeds };
+          }
+          return null;
+     }
+
+     // async toggleUseMultiSign(multiSignAddress: string, multiSignSeeds: string) {
+     //      if (this.multiSignAddress === 'No Multi-Sign address configured for account') {
+     //           this.multiSignSeeds = '';
+     //      }
+     // }
+
+     onTicketToggle(event: any, ticket: string, selectedTickets: any) {
+          if (event.target.checked) {
+               selectedTickets = [...selectedTickets, ticket];
+          } else {
+               selectedTickets = selectedTickets.filter((t: string) => t !== ticket);
+          }
+          return selectedTickets;
+     }
+
+     async toggleMultiSign(useMultiSign: boolean, signers: any, walletClassicAddress: string) {
+          try {
+               if (!useMultiSign) {
+                    this.clearSignerList(signers);
+               } else {
+                    this.loadSignerList(walletClassicAddress, signers);
+               }
+          } catch (error: any) {
+               throw new Error(`Error getting wallet in toggleMultiSign' ${error.message}`);
+          }
+     }
+
+     cleanUpSingleSelection(selectedSingleTicket: any, ticketArray: any): string {
+          // Check if selected ticket still exists in available tickets
+          if (selectedSingleTicket && !ticketArray.includes(selectedSingleTicket)) {
+               return ''; // Reset to "Select a ticket"
+          }
+          return '';
+     }
+
+     cleanUpMultiSelection(selectedTickets: any, ticketArray: any) {
+          // Filter out any selected tickets that no longer exist
+          return selectedTickets.filter((ticket: any) => ticketArray.includes(ticket));
      }
 
      checkTimeBasedEscrowStatus(escrow: { FinishAfter?: number; CancelAfter?: number; owner: string }, currentRippleTime: number, callerAddress: string, operation: string): { canFinish: boolean; canCancel: boolean; reasonFinish: string; reasonCancel: string } {

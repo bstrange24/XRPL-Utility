@@ -24,31 +24,41 @@ export class WalletGeneratorService {
       * @returns The newly created wallet
       */
      async generateNewAccount(wallets: any[], environment: string, encryptionType: string): Promise<any> {
-          console.log('encryptionType: ', encryptionType);
-          const wallet = await this.generateWalletFromFamilySeed(environment, encryptionType);
+          console.log('Entering generateNewAccount');
+          const startTime = Date.now();
+          try {
+               console.log('encryptionType: ', encryptionType);
+               const wallet = await this.generateWalletFromFamilySeed(environment, encryptionType);
 
-          // Delay (e.g. for faucet)
-          await this.utilsService.sleep(6000);
-          console.log('Generated wallet:', wallet);
+               // Delay (e.g. for faucet)
+               await this.utilsService.sleep(6000);
+               console.log('Generated wallet:', wallet);
 
-          // Get current wallets to calculate next name
-          const currentWallets = this.walletManager.getWallets();
-          const nextIndex = currentWallets.length + 1;
+               // Get current wallets to calculate next name
+               const currentWallets = this.walletManager.getWallets();
+               const nextIndex = currentWallets.length + 1;
 
-          // Initialize or update wallet entry
-          const newWalletEntry = {
-               address: wallet.address,
-               classicAddress: wallet.address,
-               seed: wallet.secret.familySeed || '',
-               mnemonic: '',
-               secretNumbers: '',
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               name: `Wallet ${nextIndex}`, // ← AUTO NAME
-          };
+               // Initialize or update wallet entry
+               const newWalletEntry = {
+                    address: wallet.address,
+                    classicAddress: wallet.address,
+                    seed: wallet.secret.familySeed || '',
+                    mnemonic: '',
+                    secretNumbers: '',
+                    encryptionAlgorithm: wallet.keypair.algorithm || '',
+                    name: `Wallet ${nextIndex}`, // ← AUTO NAME
+               };
 
-          // Persist and notify
-          this.walletManager.addWallet(newWalletEntry); // ← uses shared service
-          return wallet;
+               // Persist and notify
+               this.walletManager.addWallet(newWalletEntry); // ← uses shared service
+               return wallet;
+          } catch (error: any) {
+               console.error('Error in generateNewAccount:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateNewAccount in ${executionTime}ms`);
+          }
      }
 
      /**
@@ -62,6 +72,8 @@ export class WalletGeneratorService {
       * @throws Error if wallet derivation or account validation fails
       */
      async deriveWalletFromFamilySeed(client: xrpl.Client, encryptionType: string, seed: string, destinations: any, customDestinations: any) {
+          console.log('Entering deriveWalletFromFamilySeed');
+          const startTime = Date.now();
           try {
                const wallet = await this.deriveFromFamilySeed(seed, encryptionType);
 
@@ -89,7 +101,11 @@ export class WalletGeneratorService {
                this.walletManager.addWallet(newWalletEntry); // ← uses shared service
                return { wallet, destinations, customDestinations };
           } catch (error: any) {
-               throw new Error(error.message);
+               console.error('Error in deriveWalletFromFamilySeed:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving deriveWalletFromFamilySeed in ${executionTime}ms`);
           }
      }
 
@@ -102,31 +118,41 @@ export class WalletGeneratorService {
       * @returns The newly created wallet
       */
      async generateNewWalletFromMnemonic(wallets: any[], environment: string, encryptionType: string): Promise<any> {
-          console.log('encryptionType:', encryptionType);
-          const wallet = await this.generateWalletFromMnemonic(environment, encryptionType);
+          console.log('Entering generateNewWalletFromMnemonic');
+          const startTime = Date.now();
+          try {
+               console.log('encryptionType:', encryptionType);
+               const wallet = await this.generateWalletFromMnemonic(environment, encryptionType);
 
-          // Optional delay (e.g. for faucet)
-          await this.utilsService.sleep(6000);
-          console.log('Generated wallet:', wallet);
+               // Optional delay (e.g. for faucet)
+               await this.utilsService.sleep(6000);
+               console.log('Generated wallet:', wallet);
 
-          // Get current wallets to calculate next name
-          const currentWallets = this.walletManager.getWallets();
-          const nextIndex = currentWallets.length + 1;
+               // Get current wallets to calculate next name
+               const currentWallets = this.walletManager.getWallets();
+               const nextIndex = currentWallets.length + 1;
 
-          // Initialize or update wallet entry
-          const newWalletEntry = {
-               address: wallet.address,
-               classicAddress: wallet.address,
-               seed: wallet.secret.mnemonic || '',
-               mnemonic: wallet.secret.mnemonic,
-               secretNumbers: '',
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               name: `Wallet ${nextIndex}`, // ← AUTO NAME
-          };
+               // Initialize or update wallet entry
+               const newWalletEntry = {
+                    address: wallet.address,
+                    classicAddress: wallet.address,
+                    seed: wallet.secret.mnemonic || '',
+                    mnemonic: wallet.secret.mnemonic,
+                    secretNumbers: '',
+                    encryptionAlgorithm: wallet.keypair.algorithm || '',
+                    name: `Wallet ${nextIndex}`, // ← AUTO NAME
+               };
 
-          // Persist and notify
-          this.walletManager.addWallet(newWalletEntry); // ← uses shared service
-          return wallet;
+               // Persist and notify
+               this.walletManager.addWallet(newWalletEntry); // ← uses shared service
+               return wallet;
+          } catch (error: any) {
+               console.error('Error in generateNewWalletFromMnemonic:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateNewWalletFromMnemonic in ${executionTime}ms`);
+          }
      }
 
      /**
@@ -140,31 +166,41 @@ export class WalletGeneratorService {
       * @throws Error if wallet derivation fails or account validation fails
       */
      async deriveWalletFromMnemonic(client: xrpl.Client, encryptionType: string, seed: string, destinations: any, customDestinations: any) {
-          const wallet = await this.deriveFromMnemonic(seed, encryptionType);
+          console.log('Entering deriveWalletFromMnemonic');
+          const startTime = Date.now();
+          try {
+               const wallet = await this.deriveFromMnemonic(seed, encryptionType);
 
-          // Return error if the wallet already exist in the application. We do not want duplicate wallets.
-          customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
+               // Return error if the wallet already exist in the application. We do not want duplicate wallets.
+               customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
-          // Get current wallets to calculate next name
-          const currentWallets = this.walletManager.getWallets();
-          const nextIndex = currentWallets.length + 1;
+               // Get current wallets to calculate next name
+               const currentWallets = this.walletManager.getWallets();
+               const nextIndex = currentWallets.length + 1;
 
-          // Initialize or update wallet entry
-          const newWalletEntry = {
-               address: wallet.address,
-               classicAddress: wallet.address,
-               seed: wallet.secret.mnemonic || '',
-               mnemonic: wallet.secret.mnemonic,
-               secretNumbers: '',
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               name: `Wallet ${nextIndex}`, // ← AUTO NAME
-          };
+               // Initialize or update wallet entry
+               const newWalletEntry = {
+                    address: wallet.address,
+                    classicAddress: wallet.address,
+                    seed: wallet.secret.mnemonic || '',
+                    mnemonic: wallet.secret.mnemonic,
+                    secretNumbers: '',
+                    encryptionAlgorithm: wallet.keypair.algorithm || '',
+                    name: `Wallet ${nextIndex}`, // ← AUTO NAME
+               };
 
-          await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
+               await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
 
-          // Persist and notify
-          this.walletManager.addWallet(newWalletEntry); // ← uses shared service
-          return { wallet, destinations, customDestinations };
+               // Persist and notify
+               this.walletManager.addWallet(newWalletEntry); // ← uses shared service
+               return { wallet, destinations, customDestinations };
+          } catch (error: any) {
+               console.error('Error in deriveWalletFromMnemonic:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving deriveWalletFromMnemonic in ${executionTime}ms`);
+          }
      }
 
      /**
@@ -176,32 +212,42 @@ export class WalletGeneratorService {
       * @returns The newly created wallet
       */
      async generateNewWalletFromSecretNumbers(wallets: any[], environment: string, encryptionType: string): Promise<any> {
-          console.log('encryptionType: ', encryptionType);
-          const wallet = await this.generateWalletFromSecretNumbers(environment, encryptionType);
+          console.log('Entering generateNewWalletFromSecretNumbers');
+          const startTime = Date.now();
+          try {
+               console.log('encryptionType: ', encryptionType);
+               const wallet = await this.generateWalletFromSecretNumbers(environment, encryptionType);
 
-          // Optional delay (e.g. for faucet)
-          await this.utilsService.sleep(6000);
-          console.log('Generated wallet:', wallet);
+               // Optional delay (e.g. for faucet)
+               await this.utilsService.sleep(6000);
+               console.log('Generated wallet:', wallet);
 
-          // Get current wallets to calculate next name
-          const currentWallets = this.walletManager.getWallets();
-          const nextIndex = currentWallets.length + 1;
+               // Get current wallets to calculate next name
+               const currentWallets = this.walletManager.getWallets();
+               const nextIndex = currentWallets.length + 1;
 
-          // Initialize or update wallet entry
-          const newWalletEntry = {
-               address: wallet.address,
-               classicAddress: wallet.address,
-               seed: wallet.secret.familySeed || '',
-               mnemonic: '',
-               secretNumbers: wallet.secret.secretNumbers,
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               // algorithm: encryptionType ? encryptionType : '',
-               name: `Wallet ${nextIndex}`, // ← AUTO NAME
-          };
+               // Initialize or update wallet entry
+               const newWalletEntry = {
+                    address: wallet.address,
+                    classicAddress: wallet.address,
+                    seed: wallet.secret.familySeed || '',
+                    mnemonic: '',
+                    secretNumbers: wallet.secret.secretNumbers,
+                    encryptionAlgorithm: wallet.keypair.algorithm || '',
+                    // algorithm: encryptionType ? encryptionType : '',
+                    name: `Wallet ${nextIndex}`, // ← AUTO NAME
+               };
 
-          // Persist and notify
-          this.walletManager.addWallet(newWalletEntry); // ← uses shared service
-          return wallet;
+               // Persist and notify
+               this.walletManager.addWallet(newWalletEntry); // ← uses shared service
+               return wallet;
+          } catch (error: any) {
+               console.error('Error in generateNewWalletFromSecretNumbers:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateNewWalletFromSecretNumbers in ${executionTime}ms`);
+          }
      }
 
      /**
@@ -215,30 +261,40 @@ export class WalletGeneratorService {
       * @throws Error if wallet derivation fails or account validation fails
       */
      async deriveWalletFromSecretNumbers(client: xrpl.Client, encryptionType: string, seed: any, destinations: any, customDestinations: any) {
-          const wallet = await this.deriveFromSecretNumbers(seed, encryptionType);
+          console.log('Entering deriveWalletFromSecretNumbers');
+          const startTime = Date.now();
+          try {
+               const wallet = await this.deriveFromSecretNumbers(seed, encryptionType);
 
-          customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
+               customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
-          // Get current wallets to calculate next name
-          const currentWallets = this.walletManager.getWallets();
-          const nextIndex = currentWallets.length + 1;
+               // Get current wallets to calculate next name
+               const currentWallets = this.walletManager.getWallets();
+               const nextIndex = currentWallets.length + 1;
 
-          // Initialize or update wallet entry
-          const newWalletEntry = {
-               address: wallet.address,
-               classicAddress: wallet.address,
-               seed: wallet.secret.familySeed || '',
-               mnemonic: '',
-               secretNumbers: wallet.secret.secretNumbers,
-               encryptionAlgorithm: wallet.keypair.algorithm || '',
-               name: `Wallet ${nextIndex}`, // ← AUTO NAME
-          };
+               // Initialize or update wallet entry
+               const newWalletEntry = {
+                    address: wallet.address,
+                    classicAddress: wallet.address,
+                    seed: wallet.secret.familySeed || '',
+                    mnemonic: '',
+                    secretNumbers: wallet.secret.secretNumbers,
+                    encryptionAlgorithm: wallet.keypair.algorithm || '',
+                    name: `Wallet ${nextIndex}`, // ← AUTO NAME
+               };
 
-          await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
+               await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
 
-          // Persist and notify
-          this.walletManager.addWallet(newWalletEntry); // ← uses shared service
-          return { wallet, destinations, customDestinations };
+               // Persist and notify
+               this.walletManager.addWallet(newWalletEntry); // ← uses shared service
+               return { wallet, destinations, customDestinations };
+          } catch (error: any) {
+               console.error('Error in deriveWalletFromSecretNumbers:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving deriveWalletFromSecretNumbers in ${executionTime}ms`);
+          }
      }
 
      /**
@@ -268,56 +324,118 @@ export class WalletGeneratorService {
 
      // Generate account from Family Seed
      async generateWalletFromFamilySeed(environment: string, algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/create-wallet/family-seed/`;
-          const wallet = await firstValueFrom(this.http.post<any>(url, { environment, algorithm }));
-          return wallet;
+          console.log('Entering generateWalletFromFamilySeed');
+          const startTime = Date.now();
+          try {
+               const url = `${this.proxyServer}/api/create-wallet/family-seed/`;
+               const wallet = await firstValueFrom(this.http.post<any>(url, { environment, algorithm }));
+               return wallet;
+          } catch (error: any) {
+               console.error('Error in generateWalletFromFamilySeed:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateWalletFromFamilySeed in ${executionTime}ms`);
+          }
      }
 
      // Derive account from Family Seed
      async deriveFromFamilySeed(familySeed: string, algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
-          console.log(`deriveFromFamilySeed ${url}`);
-          console.log(`deriveFromFamilySeed with ${familySeed} familySeed`);
-          const wallet = await firstValueFrom(this.http.get<any>(url));
-          return wallet;
+          console.log('Entering deriveFromFamilySeed');
+          const startTime = Date.now();
+          try {
+               const url = `${this.proxyServer}/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
+               console.log(`deriveFromFamilySeed ${url}`);
+               console.log(`deriveFromFamilySeed with ${familySeed} familySeed`);
+               const wallet = await firstValueFrom(this.http.get<any>(url));
+               return wallet;
+          } catch (error: any) {
+               console.error('Error in deriveFromFamilySeed:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving deriveFromFamilySeed in ${executionTime}ms`);
+          }
      }
 
      // Generate account from Mnemonic
      async generateWalletFromMnemonic(environment: string, algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/create-wallet/mnemonic/`;
-          const body = { environment, algorithm };
-          const wallet = await firstValueFrom(this.http.post<any>(url, body));
-          return wallet;
+          console.log('Entering generateWalletFromMnemonic');
+          const startTime = Date.now();
+          try {
+               const url = `${this.proxyServer}/api/create-wallet/mnemonic/`;
+               const body = { environment, algorithm };
+               const wallet = await firstValueFrom(this.http.post<any>(url, body));
+               return wallet;
+          } catch (error: any) {
+               console.error('Error in generateWalletFromMnemonic:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateWalletFromMnemonic in ${executionTime}ms`);
+          }
      }
 
      // Derive account from Mnemonic
      async deriveFromMnemonic(mnemonic: string, algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
-          console.log(`deriveFromMnemonic ${url}`);
-          console.log(`deriveFromMnemonic with ${mnemonic} mnemonic`);
-          const wallet = await firstValueFrom(this.http.get<any>(url));
-          return wallet;
+          console.log('Entering deriveFromMnemonic');
+          const startTime = Date.now();
+          try {
+               const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
+               console.log(`deriveFromMnemonic ${url}`);
+               console.log(`deriveFromMnemonic with ${mnemonic} mnemonic`);
+               const wallet = await firstValueFrom(this.http.get<any>(url));
+               return wallet;
+          } catch (error: any) {
+               console.error('Error in deriveFromMnemonic:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving deriveFromMnemonic in ${executionTime}ms`);
+          }
      }
 
      // Generate account from Secret Numbers
      async generateWalletFromSecretNumbers(environment: string, algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/create-wallet/secret-numbers/`;
-          const body = { environment, algorithm };
-          const wallet = await firstValueFrom(this.http.post<any>(url, body));
-          return wallet;
+          console.log('Entering generateWalletFromSecretNumbers');
+          const startTime = Date.now();
+          try {
+               const url = `${this.proxyServer}/api/create-wallet/secret-numbers/`;
+               const body = { environment, algorithm };
+               const wallet = await firstValueFrom(this.http.post<any>(url, body));
+               return wallet;
+          } catch (error: any) {
+               console.error('Error in generateWalletFromSecretNumbers:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateWalletFromSecretNumbers in ${executionTime}ms`);
+          }
      }
 
      // Derive account from Secret Numbers
      async deriveFromSecretNumbers(secretNumbers: string[], algorithm: string = 'ed25519') {
-          const url = `${this.proxyServer}/api/derive/secretNumbers`;
-          console.log(`deriveFromSecretNumbers ${url}`);
-          console.log(`deriveFromSecretNumbers with ${secretNumbers} ${secretNumbers.length} numbers`);
-          const body = { secretNumbers: secretNumbers, algorithm: algorithm };
-          const wallet = await firstValueFrom(this.http.post<any>(url, body));
-          return wallet;
+          console.log('Entering deriveFromSecretNumbers');
+          const startTime = Date.now();
+          try {
+               const url = `${this.proxyServer}/api/derive/secretNumbers`;
+               console.log(`deriveFromSecretNumbers ${url}`);
+               console.log(`deriveFromSecretNumbers with ${secretNumbers} ${secretNumbers.length} numbers`);
+               const body = { secretNumbers: secretNumbers, algorithm: algorithm };
+               const wallet = await firstValueFrom(this.http.post<any>(url, body));
+               return wallet;
+          } catch (error: any) {
+               console.error('Error in deriveFromSecretNumbers:', error);
+               throw new Error(`${error.message}`);
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving deriveFromSecretNumbers in ${executionTime}ms`);
+          }
      }
 
      async fundWalletFromFaucet(wallet: xrpl.Wallet | { secret?: { familySeed?: string } }, environment: string) {
+          console.log('Entering fundWalletFromFaucet');
+          const startTime = Date.now();
           if (environment !== 'mainnet') {
                try {
                     const client = await this.xrplService.getClient();
@@ -336,9 +454,12 @@ export class WalletGeneratorService {
                     const faucetResult = await client.fundWallet(xrplWallet);
                     console.log('Faucet result:', faucetResult);
                     return faucetResult;
-               } catch (error) {
+               } catch (error: any) {
                     console.error('Funding failed:', error);
-                    throw error;
+                    throw new Error(`${error.message}`);
+               } finally {
+                    const executionTime = (Date.now() - startTime).toString();
+                    console.log(`Leaving fundWalletFromFaucet in ${executionTime}ms`);
                }
           }
           return null;

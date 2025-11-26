@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (transactionResult)="ui.handleTransactionResult($event)"></app-app-wallet-dynamic-input>
 
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
@@ -371,7 +371,7 @@
                </div>
                }
 
-               <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
+               <form #theForm="ngForm" class="send-form">
                     <div [@tabTransition]="activeTab">
                          <div class="tab-content-columns">
                               <div class="tab-content-container form-fields-container">
@@ -748,16 +748,16 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if(activeTab === 'setTrustline') {
-                              <button type="button" (click)="setTrustLine()" class="btn-primary-blue">Set Trustline</button>
+                              <button type="button" class="btn-primary-blue" (click)="setTrustLine()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Set Trustline' }}</button>
                               } @else if (activeTab === 'removeTrustline') {
-                              <button type="button" (click)="removeTrustline()" class="btn-primary-red">Remove Trustline</button>
+                              <button type="button" class="btn-primary-red" (click)="removeTrustline()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Remove Trustline' }}</button>
                               } @else if (activeTab === 'issueCurrency') {
-                              <button type="button" (click)="issueCurrency()" class="btn-primary-green">Issue Currency</button>
+                              <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Issue Currency' }}</button>
                               } @else if (activeTab === 'clawbackTokens') {
-                              <button type="button" (click)="clawbackTokens()" class="btn-primary-red">Clawback Tokens</button>
+                              <button type="button" class="btn-primary-red" (click)="clawbackTokens()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Clawback Tokens' }}</button>
                               } @else if (activeTab === 'addNewIssuers') {
-                              <button type="button" (click)="addToken(newCurrency, newIssuer, true)" class="btn-primary-blue">Add Currency/Issuer</button>
-                              <button type="button" (click)="removeToken(currencyFieldDropDownValue, selectedIssuer)" class="btn-primary-red">Remove Currency/Issuer</button>
+                              <button type="button" class="btn-primary-blue" (click)="addToken(newCurrency, newIssuer, true)" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Add Currency/Issuer' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="removeToken(currencyFieldDropDownValue, selectedIssuer)" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Remove Currency/Issuer' }}</button>
                               }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                          </div>

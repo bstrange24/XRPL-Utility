@@ -217,7 +217,7 @@
                                         <div class="col date" matTooltip="{{ change.date | date:'medium' }}">{{ change.date | date:'MMM d, y HH:mm' }}</div>
 
                                         <div class="col hash">
-                                             <a [href]="url + 'transactions/' + change.hash" target="_blank" class="tx-link"> {{ change.hash.slice(0, 12) }}...{{ change.hash.slice(-6) }} </a>
+                                             <a [href]="url + 'tx/' + change.hash" target="_blank" class="tx-link"> {{ change.hash.slice(0, 12) }}...{{ change.hash.slice(-6) }} </a>
                                              <button mat-icon-button class="copy-btn" (click)="copyToClipboard(change.hash)" matTooltip="Copy hash">
                                                   <lucide-icon name="copy" size="16"></lucide-icon>
                                              </button>

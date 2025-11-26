@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (transactionResult)="ui.handleTransactionResult($event)"></app-app-wallet-dynamic-input>
 
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
@@ -30,11 +30,6 @@
                          <!-- List of wallets -->
                          @for (wallet of wallets; track wallet.address; let i = $index) {
                          <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
-                              <!-- Drag Handle (6-dot grip) -->
-                              <!-- <div class="drag-handle" cdkDragHandle>
-                                   <lucide-icon name="grip-vertical" size="20"></lucide-icon>
-                              </div> -->
-
                               <!-- Wallet Info -->
                               <div class="wallet-info">
                                    @if (editingIndex(i)) {
@@ -309,7 +304,7 @@
                     </div>
                </div> -->
 
-               <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
+               <form #theForm="ngForm" class="send-form">
                     <div [@tabTransition]="activeTab">
                          <div class="tab-content-columns">
                               <!-- ==================== LEFT: FORM FIELDS ==================== -->
@@ -346,21 +341,12 @@
                                                             }
                                                        </div>
                                                        <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
                                                   </div>
                                                   } @empty {
                                                   <div class="combobox-empty">No matching addresses</div>
                                                   }
                                              </div>
                                         </ng-template>
-                                        <!-- <div class="form-group">
-                                             <label>Destination</label>
-                                             <select id="destinationField" [(ngModel)]="destinationField" name="destinationField">
-                                                  @for (dest of destinations; track dest.address; let i = $index) {
-                                                  <option [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{ dest.name || 'Wallet ' + (i + 1) }} ({{ dest.address | slice:0:6 }}...{{ dest.address | slice:-4 }})</option>
-                                                  }
-                                             </select>
-                                        </div> -->
                                         }
                                    </div>
                                    }
@@ -449,21 +435,12 @@
                                                             }
                                                        </div>
                                                        <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
                                                   </div>
                                                   } @empty {
                                                   <div class="combobox-empty">No matching addresses</div>
                                                   }
                                              </div>
                                         </ng-template>
-                                        <!-- <div class="form-group">
-                                             <label>Authorized Wallet</label>
-                                             <select id="authorizedWalletField" [(ngModel)]="authorizedWalletAddress" name="authorizedWalletField">
-                                                  @for (auth of authorizedWallets; track auth.address; let i = $index) {
-                                                  <option [value]="auth.address">{{ auth.name || 'Wallet ' + (i + 1) }} ({{ auth.address | slice:0:6 }}...{{ auth.address | slice:-4 }})</option>
-                                                  }
-                                             </select>
-                                        </div> -->
                                         }
                                    </div>
                                    }
@@ -642,20 +619,20 @@
                               @switch (activeTab) {
                               <!-- create buttons -->
                               @case ('create') {
-                              <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()">Create Channel</button>
+                              <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create Channel' }}</button>
                               }
                               <!-- close buttons -->
                               @case ('close') {
-                              <button type="button" class="btn-primary-red" (click)="handlePaymentChannelAction()">Close Channel</button>
+                              <button type="button" class="btn-primary-red" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Close Channel' }}</button>
                               }
                               <!-- claim buttons -->
                               @case ('claim') {
-                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()">Claim/Renew Channel</button>
-                              <button type="button" class="btn-primary-blue" (click)="generateCreatorClaimSignature()">Generate Claim Signature</button>
+                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Claim/Renew Channel' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="generateCreatorClaimSignature()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Generate Claim Signature' }}</button>
                               }
                               <!-- fund buttons -->
                               @case ('fund') {
-                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()">Fund Channel</button>
+                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Fund Channel' }}</button>
                               } }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>

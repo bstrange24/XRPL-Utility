@@ -300,14 +300,6 @@ export class CreateOfferComponent implements AfterViewChecked {
           this.cdr.detectChanges();
      }
 
-     onTicketToggle(event: any, ticket: string) {
-          if (event.target.checked) {
-               this.selectedTickets = [...this.selectedTickets, ticket];
-          } else {
-               this.selectedTickets = this.selectedTickets.filter(t => t !== ticket);
-          }
-     }
-
      ngOnDestroy() {
           // Clean up interval to prevent memory leaks
           if (this.priceRefreshInterval) {
@@ -2663,20 +2655,6 @@ export class CreateOfferComponent implements AfterViewChecked {
           return signerAccounts;
      }
 
-     private getAccountTickets(accountObjects: xrpl.AccountObjectsResponse): string[] {
-          const objects = accountObjects.result?.account_objects;
-          if (!Array.isArray(objects)) return [];
-
-          const tickets = objects.reduce((acc: number[], obj) => {
-               if (obj.LedgerEntryType === 'Ticket' && typeof obj.TicketSequence === 'number') {
-                    acc.push(obj.TicketSequence);
-               }
-               return acc;
-          }, []);
-
-          return tickets.sort((a, b) => a - b).map(String);
-     }
-
      private cleanUpSingleSelection() {
           if (this.selectedSingleTicket && !this.ticketArray.includes(this.selectedSingleTicket)) {
                this.selectedSingleTicket = ''; // Reset to "Select a ticket"
@@ -2688,7 +2666,7 @@ export class CreateOfferComponent implements AfterViewChecked {
      }
 
      updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
-          this.ticketArray = this.getAccountTickets(accountObjects);
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
 
           if (this.multiSelectMode) {
                this.cleanUpMultiSelection();
@@ -2709,7 +2687,7 @@ export class CreateOfferComponent implements AfterViewChecked {
 
      public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
           // Tickets
-          this.ticketArray = this.getAccountTickets(accountObjects);
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
           this.selectedTicket = this.ticketArray[0] || this.selectedTicket;
 
           // Signer accounts

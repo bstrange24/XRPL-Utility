@@ -14,7 +14,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { Subject, takeUntil } from 'rxjs';
+import { pairwise, startWith, Subject, takeUntil } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -39,6 +39,7 @@ interface ValidationInputs {
      amount?: string;
      flags?: any;
      depositAuthAddress?: string;
+     depositAuthAddresses?: any;
      nfTokenMinterAddress?: string;
      tickSize?: string;
      transferRate?: string;
@@ -176,6 +177,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
      filteredDestinations: DropdownItem[] = [];
      highlightedIndex = -1;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
+     depositAuthAddresses: { account: string }[] = [{ account: '' }];
      wallets: Wallet[] = [];
      selectedWalletIndex: number = 0;
      currentWallet: Wallet = {
@@ -305,11 +307,18 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
           this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
-               this.wallets = wallets;
-               if (!this.wallets) {
-                    this.hasWallets = false;
-                    return;
+          this.walletManagerService.wallets$.pipe(startWith(null), pairwise(), takeUntil(this.destroy$)).subscribe(([prev, curr]) => {
+               this.wallets = curr || [];
+               this.hasWallets = this.wallets.length > 0;
+
+               const prevSelected = prev?.[this.selectedWalletIndex];
+               const currSelected = curr?.[this.selectedWalletIndex];
+
+               const walletSwitched = !prev || prevSelected?.address !== currSelected?.address || prev.length !== curr?.length;
+
+               if (walletSwitched) {
+                    this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
+                    this.onAccountChange(); // Only on actual change
                }
           });
 
@@ -402,23 +411,23 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           this.tempName = '';
      }
 
-     onWalletListChange(): void {
-          if (this.wallets.length <= 0) {
-               this.hasWallets = false;
-               return;
-          }
+     // onWalletListChange(): void {
+     //      if (this.wallets.length <= 0) {
+     //           this.hasWallets = false;
+     //           return;
+     //      }
 
-          if (this.wallets.length === 1 && this.wallets[0].address === '') {
-               this.hasWallets = false;
-               return;
-          }
+     //      if (this.wallets.length === 1 && this.wallets[0].address === '') {
+     //           this.hasWallets = false;
+     //           return;
+     //      }
 
-          if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
-               this.selectedWalletIndex = 0;
-          }
+     //      if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
+     //           this.selectedWalletIndex = 0;
+     //      }
 
-          this.onAccountChange();
-     }
+     //      this.onAccountChange();
+     // }
 
      toggleSecret(index: number) {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
@@ -446,13 +455,29 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
      }
 
      async generateNewAccount() {
-          this.ui.updateSpinnerMessage(``);
+          console.log('Entering generateNewAccount');
+          const startTime = Date.now();
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-          const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, faucetWallet.address);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
+
+          try {
+               // Default to ed25519
+               this.encryptionType = AppConstants.ENCRYPTION.ED25519;
+               console.log('encryptionType: ', this.encryptionType);
+               const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
+               const client = await this.xrplService.getClient();
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+               this.ui.txResult.push(faucetWallet);
+               this.updateTxResult(this.ui.txResult);
+          } catch (error: any) {
+               console.error('Error in generateNewAccount:', error);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateNewAccount in ${this.executionTime}ms`);
+          }
      }
 
      dropWallet(event: CdkDragDrop<any[]>) {
@@ -468,7 +493,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           }
 
           // Persist the new order to localStorage
-          this.saveWallets();
+          this.walletManagerService.setWallets(this.wallets); // ← this saves + updates observable
 
           // Update destinations and account state
           this.updateDestinations();
@@ -559,8 +584,16 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           this.signers.push({ account: '', seed: '', weight: 1 });
      }
 
+     addDepositAuthAddresses() {
+          this.depositAuthAddresses.push({ account: '' });
+     }
+
      removeSigner(index: number) {
           this.signers.splice(index, 1);
+     }
+
+     removeDepositAuthAddresses(index: number) {
+          this.depositAuthAddresses.splice(index, 1);
      }
 
      onNoFreezeChange() {
@@ -835,7 +868,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -878,7 +911,6 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           const inputs: ValidationInputs = {
                selectedAccount: this.currentWallet.address,
                seed: this.currentWallet.seed,
-               depositAuthAddress: this.depositAuthAddress,
                isRegularKeyAddress: this.isRegularKeyAddress,
                isMultiSign: this.useMultiSign,
                regularKeyAddress: this.regularKeyAddress || undefined,
@@ -892,8 +924,9 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           };
 
           // Split and validate deposit auth addresses
-          const addressesArray = this.utilsService.getUserEnteredAddress(this.depositAuthAddress);
-          if (!addressesArray.length) {
+          let depsositAuthEntries = this.createDepsoitAuthEntries();
+          const formattedDepsositAuthEntries = this.formatDepositAuthEntries(depsositAuthEntries);
+          if (!formattedDepsositAuthEntries.length) {
                return this.ui.setError('Deposit Auth address list is empty');
           }
 
@@ -905,6 +938,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
                inputs.accountInfo = accountInfo;
+               inputs.depositAuthAddresses = formattedDepsositAuthEntries;
 
                const errors = await this.validateInputs(inputs, 'setDepositAuthAccounts');
                if (errors.length > 0) {
@@ -912,23 +946,23 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                }
 
                // Validate each address
-               for (const authorizedAddress of addressesArray) {
+               for (const authorizedAddress of formattedDepsositAuthEntries) {
                     // Check for existing preauthorization
-                    const alreadyAuthorized = accountObjects.result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress);
+                    const alreadyAuthorized = accountObjects.result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.SignerEntry.Account);
                     if (authorizeFlag === 'Y' && alreadyAuthorized) {
-                         return this.ui.setError(`Preauthorization already exists for ${authorizedAddress} (tecDUPLICATE). Use Unauthorize to remove`);
+                         return this.ui.setError(`Preauthorization already exists for ${authorizedAddress.SignerEntry.Account} (tecDUPLICATE). Use Unauthorize to remove`);
                     }
                     if (authorizeFlag === 'N' && !alreadyAuthorized) {
-                         return this.ui.setError(`No preauthorization exists for ${authorizedAddress} to unauthorize`);
+                         return this.ui.setError(`No preauthorization exists for ${authorizedAddress.SignerEntry.Account} to unauthorize`);
                     }
                }
 
                // Process each address
-               for (const authorizedAddress of addressesArray) {
+               for (const authorizedAddress of formattedDepsositAuthEntries) {
                     const depositPreauthTx: DepositPreauth = await client.autofill({
                          TransactionType: 'DepositPreauth',
                          Account: wallet.classicAddress,
-                         [authorizeFlag === 'Y' ? 'Authorize' : 'Unauthorize']: authorizedAddress,
+                         [authorizeFlag === 'Y' ? 'Authorize' : 'Unauthorize']: authorizedAddress.SignerEntry.Account,
                          Fee: fee,
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
                     });
@@ -1108,7 +1142,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -1236,7 +1270,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -1388,7 +1422,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -1574,7 +1608,6 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
           // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
-
           this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
           this.refreshUiAccountInfo(updatedAccountInfo);
      }
@@ -1670,12 +1703,15 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           const validateAddresses = async (addressesStr: string | undefined, fieldName: string) => {
                const errors: string[] = [];
                if (!addressesStr) return errors;
-               const addresses = this.utilsService.getUserEnteredAddress(addressesStr);
-               if (!addresses.length) {
+               // const addresses = this.utilsService.getUserEnteredAddress(addressesStr);
+               let depsositAuthEntries = this.createDepsoitAuthEntries();
+               const formattedDepsositAuthEntries = this.formatDepositAuthEntries(depsositAuthEntries);
+               if (!formattedDepsositAuthEntries.length) {
                     errors.push(`${fieldName} list is empty`);
                     return errors;
                }
                const selfAddress = (await this.getWallet()).classicAddress;
+               const addresses = formattedDepsositAuthEntries.map(entry => entry.SignerEntry.Account);
                if (addresses.includes(selfAddress)) {
                     errors.push(`Your own account cannot be in the ${fieldName.toLowerCase()} list`);
                }
@@ -1791,12 +1827,12 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     ],
                },
                setDepositAuthAccounts: {
-                    required: ['seed', 'depositAuthAddress'],
+                    required: ['seed'],
                     customValidators: [
                          async () => isValidSeed(inputs.seed),
                          async () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
                          async () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.isMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                         async () => (await validateAddresses(inputs.depositAuthAddress, 'Deposit Auth')).join('; '),
+                         async () => (await validateAddresses(inputs.depositAuthAddresses, 'Deposit Auth')).join('; '),
                          async () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
                          async () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
                          async () => (inputs.isRegularKeyAddress && !inputs.isMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
@@ -1952,11 +1988,12 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
      private setDepositAuthProperties(hasPreAuthAccounts: boolean, preAuthAccounts: string[]): void {
           if (hasPreAuthAccounts) {
-               this.depositAuthAddress = preAuthAccounts.join(',\n');
+               console.debug('preAuthAccounts:', preAuthAccounts);
+               this.depositAuthAddresses = preAuthAccounts.map(a => ({ account: a }));
                this.isdepositAuthAddress = false;
                this.depositAuthEnabled = true;
           } else {
-               this.depositAuthAddress = '';
+               this.depositAuthAddresses = [{ account: '' }];
                this.isdepositAuthAddress = false;
                this.depositAuthEnabled = false;
           }
@@ -2152,9 +2189,10 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
      }
 
      private async getWallet() {
-          const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
+          const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) {
-               throw new Error('Wallet could not be created or is undefined');
+               throw new Error('ERROR: Wallet could not be created or is undefined');
           }
           return wallet;
      }
@@ -2254,9 +2292,9 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                .join(' - ');
      }
 
-     saveWallets() {
-          this.storageService.set('wallets', JSON.stringify(this.wallets));
-     }
+     // saveWallets() {
+     //      this.storageService.set('wallets', JSON.stringify(this.wallets));
+     // }
 
      updatePaymentTx() {
           this.scheduleHighlight();
@@ -2380,6 +2418,14 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           }));
      }
 
+     private formatDepositAuthEntries(signerEntries: { Account: string }[]) {
+          return signerEntries.map(entry => ({
+               SignerEntry: {
+                    Account: entry.Account,
+               },
+          }));
+     }
+
      private createSignerEntries() {
           return this.signers
                .filter(s => s.account && s.weight > 0)
@@ -2387,6 +2433,14 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     Account: s.account,
                     SignerWeight: Number(s.weight),
                     seed: s.seed,
+               }));
+     }
+
+     private createDepsoitAuthEntries() {
+          return this.depositAuthAddresses
+               .filter(s => s.account)
+               .map(s => ({
+                    Account: s.account,
                }));
      }
 

@@ -47,21 +47,25 @@ export class WalletManagerService {
 
      /** Load wallets from localStorage */
      private loadFromStorage(): void {
-          // const stored = this.storageService.get('wallets');
+          console.log('loadFromStorage called for network:', this.currentNetwork);
           const key = `wallets_${this.currentNetwork}`;
           const stored = this.storageService.get(key);
+
+          let wallets: Wallet[] = [];
 
           if (stored) {
                try {
                     const parsed = JSON.parse(stored);
-                    this.walletsSubject.next(Array.isArray(parsed) ? parsed : []);
+                    wallets = Array.isArray(parsed) ? parsed : [];
                } catch (e) {
                     console.error('Failed to parse wallets from storage', e);
-                    this.walletsSubject.next([]);
+                    wallets = [];
                }
-          } else {
-               this.walletsSubject.next([]);
           }
+
+          // THIS IS THE MISSING LINE THAT FIXES EVERYTHING
+          this.walletsSubject.next(wallets);
+          console.log('wallets$ emitted:', wallets.length, 'wallets');
      }
 
      private saveToStorage(wallets: Wallet[]): void {

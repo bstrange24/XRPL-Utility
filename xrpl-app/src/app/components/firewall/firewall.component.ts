@@ -15,7 +15,7 @@ import { InfoMessageConstants } from '../../core/info-message.constants';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { Subject, takeUntil } from 'rxjs';
+import { pairwise, startWith, Subject, takeUntil } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -184,11 +184,18 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
           this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
-               this.wallets = wallets;
-               if (!this.wallets) {
-                    this.hasWallets = false;
-                    return;
+          this.walletManagerService.wallets$.pipe(startWith(null), pairwise(), takeUntil(this.destroy$)).subscribe(([prev, curr]) => {
+               this.wallets = curr || [];
+               this.hasWallets = this.wallets.length > 0;
+
+               const prevSelected = prev?.[this.selectedWalletIndex];
+               const currSelected = curr?.[this.selectedWalletIndex];
+
+               const walletSwitched = !prev || prevSelected?.address !== currSelected?.address || prev.length !== curr?.length;
+
+               if (walletSwitched) {
+                    this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
+                    this.onAccountChange(); // Only on actual change
                }
           });
 
@@ -284,23 +291,23 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           this.tempName = '';
      }
 
-     onWalletListChange(): void {
-          if (this.wallets.length <= 0) {
-               this.hasWallets = false;
-               return;
-          }
+     // onWalletListChange(): void {
+     //      if (this.wallets.length <= 0) {
+     //           this.hasWallets = false;
+     //           return;
+     //      }
 
-          if (this.wallets.length === 1 && this.wallets[0].address === '') {
-               this.hasWallets = false;
-               return;
-          }
+     //      if (this.wallets.length === 1 && this.wallets[0].address === '') {
+     //           this.hasWallets = false;
+     //           return;
+     //      }
 
-          if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
-               this.selectedWalletIndex = 0;
-          }
+     //      if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
+     //           this.selectedWalletIndex = 0;
+     //      }
 
-          this.onAccountChange();
-     }
+     //      this.onAccountChange();
+     // }
 
      toggleSecret(index: number) {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
@@ -328,13 +335,29 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      }
 
      async generateNewAccount() {
-          this.ui.updateSpinnerMessage(``);
+          console.log('Entering generateNewAccount');
+          const startTime = Date.now();
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-          const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, faucetWallet.address);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
+
+          try {
+               // Default to ed25519
+               this.encryptionType = AppConstants.ENCRYPTION.ED25519;
+               console.log('encryptionType: ', this.encryptionType);
+               const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
+               const client = await this.xrplService.getClient();
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+               this.ui.txResult.push(faucetWallet);
+               this.updateTxResult(this.ui.txResult);
+          } catch (error: any) {
+               console.error('Error in generateNewAccount:', error);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateNewAccount in ${this.executionTime}ms`);
+          }
      }
 
      dropWallet(event: CdkDragDrop<any[]>) {
@@ -350,7 +373,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           }
 
           // Persist the new order to localStorage
-          this.saveWallets();
+          this.walletManagerService.setWallets(this.wallets); // ← this saves + updates observable
 
           // Update destinations and account state
           this.updateDestinations();
@@ -417,14 +440,6 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      async toggleUseMultiSign() {
           if (this.multiSignAddress === 'No Multi-Sign address configured for account') {
                this.multiSignSeeds = '';
-          }
-     }
-
-     onTicketToggle(event: any, ticket: string) {
-          if (event.target.checked) {
-               this.selectedTickets = [...this.selectedTickets, ticket];
-          } else {
-               this.selectedTickets = this.selectedTickets.filter(t => t !== ticket);
           }
      }
 
@@ -661,7 +676,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -798,7 +813,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -955,7 +970,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -1080,7 +1095,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -1212,20 +1227,6 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           return signerAccounts;
      }
 
-     private getAccountTickets(accountObjects: xrpl.AccountObjectsResponse): string[] {
-          const objects = accountObjects.result?.account_objects;
-          if (!Array.isArray(objects)) return [];
-
-          const tickets = objects.reduce((acc: number[], obj) => {
-               if (obj.LedgerEntryType === 'Ticket' && typeof obj.TicketSequence === 'number') {
-                    acc.push(obj.TicketSequence);
-               }
-               return acc;
-          }, []);
-
-          return tickets.sort((a, b) => a - b).map(String);
-     }
-
      public cleanUpSingleSelection() {
           // Check if selected ticket still exists in available tickets
           if (this.selectedSingleTicket && !this.ticketArray.includes(this.selectedSingleTicket)) {
@@ -1239,7 +1240,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      }
 
      updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
-          this.ticketArray = this.getAccountTickets(accountObjects);
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
 
           // Clean up selections based on current mode
           if (this.multiSelectMode) {
@@ -1268,7 +1269,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
      public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
           // Tickets
-          this.ticketArray = this.getAccountTickets(accountObjects);
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
           this.selectedTicket = this.ticketArray[0] || this.selectedTicket;
 
           // Signer accounts
@@ -1581,15 +1582,12 @@ export class FirewallComponent implements OnInit, AfterViewInit {
      }
 
      private async getWallet() {
-          const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
+          const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) {
                throw new Error('ERROR: Wallet could not be created or is undefined');
           }
           return wallet;
-     }
-
-     saveWallets() {
-          this.storageService.set('wallets', JSON.stringify(this.wallets));
      }
 
      updatePaymentTx() {

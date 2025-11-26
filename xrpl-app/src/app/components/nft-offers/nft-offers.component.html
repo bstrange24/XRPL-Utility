@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (transactionResult)="ui.handleTransactionResult($event)"></app-app-wallet-dynamic-input>
 
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
@@ -30,11 +30,6 @@
                          <!-- List of wallets -->
                          @for (wallet of wallets; track wallet.address; let i = $index) {
                          <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
-                              <!-- Drag Handle (6-dot grip) -->
-                              <!-- <div class="drag-handle" cdkDragHandle>
-                                   <lucide-icon name="grip-vertical" size="20"></lucide-icon>
-                              </div> -->
-
                               <!-- Wallet Info -->
                               <div class="wallet-info">
                                    @if (editingIndex(i)) {
@@ -227,6 +222,8 @@
                </div>
                }
 
+               <!-- Select dropdown -->
+
                <!-- @if (selectedNft) {
                <div class="nft-details" style="margin-top: 1rem">
                     <h4>NFT Details</h4>
@@ -242,7 +239,7 @@
                } -->
 
                <!-- Existing NFTs on selected account -->
-               @if (existingNfts.length > 10000) {
+               @if (existingNfts.length > 0) {
                <div class="outstanding-checks-panel">
                     <div class="panel-header" (click)="toggleExistingNfts()" style="cursor: pointer; user-select: none">
                          <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
@@ -384,7 +381,9 @@
                                         <div class="form-group">
                                              <label>Currency Code</label>
                                              <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="toggleIssuerField()" name="currencyField">
-                                                  <option *ngFor="let curr of currencies" [value]="curr">{{curr}}</option>
+                                                  @for (curr of availableCurrencies; track curr) {
+                                                  <option [value]="curr">{{ curr }}</option>
+                                                  }
                                              </select>
                                         </div>
 
@@ -398,9 +397,11 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Issuer</label>
-                                             <select id="issuerField" [(ngModel)]="selectedIssuer" name="issuerField" (ngModelChange)="this.toggleIssuerField()">
+                                             <select id="issuerField" [(ngModel)]="selectedIssuer" name="issuerField" (ngModelChange)="toggleIssuerField()">
                                                   <option value="" disabled selected>Select an issuer</option>
-                                                  <option *ngFor="let iss of currencyIssuers; let i = index" [value]="iss.address">{{iss.name || 'Wallet ' + (i + 1)}} ({{iss.address | slice:0:6}}...{{iss.address | slice:-4}})</option>
+                                                  @for (iss of issuers; track iss.address; let i = $index) {
+                                                  <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
+                                                  }
                                              </select>
                                         </div>
 
@@ -554,7 +555,9 @@
                                         <div class="form-group">
                                              <label>Currency Code</label>
                                              <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="toggleIssuerField()" name="currencyField">
-                                                  <option *ngFor="let curr of currencies" [value]="curr">{{curr}}</option>
+                                                  @for (curr of availableCurrencies; track curr) {
+                                                  <option [value]="curr">{{ curr }}</option>
+                                                  }
                                              </select>
                                         </div>
 
@@ -568,9 +571,11 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Issuer</label>
-                                             <select id="issuerField" [(ngModel)]="selectedIssuer" name="issuerField" (ngModelChange)="this.toggleIssuerField()">
+                                             <select id="issuerField" [(ngModel)]="selectedIssuer" name="issuerField" (ngModelChange)="toggleIssuerField()">
                                                   <option value="" disabled selected>Select an issuer</option>
-                                                  <option *ngFor="let iss of currencyIssuers; let i = index" [value]="iss.address">{{iss.name || 'Wallet ' + (i + 1)}} ({{iss.address | slice:0:6}}...{{iss.address | slice:-4}})</option>
+                                                  @for (iss of issuers; track iss.address; let i = $index) {
+                                                  <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
+                                                  }
                                              </select>
                                         </div>
 
@@ -794,7 +799,7 @@
                               }
 
                               <!-- Use Ticket for tx -->
-                              @if (activeTab !== 'delete' && ticketArray.length > 0) {
+                              @if (ticketArray.length > 0) {
                               <label class="switch">
                                    <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
                                    <span class="slider"></span>
@@ -851,8 +856,8 @@
                          </div>
                          }
 
-                         <!-- Get ticket to delete -->
-                         @if (isTicket && activeTab !== 'delete') {
+                         <!-- Get ticket -->
+                         @if (isTicket) {
                          <div class="ticket-fields">
                               <div class="form-group">
                                    <label>Ticket Sequence</label>
@@ -881,15 +886,15 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if(activeTab === 'buy') {
-                              <button type="button" (click)="buyNFT()" class="btn-primary-green">Buy NFT</button>
+                              <button type="button" class="btn-primary-green" (click)="buyNFT()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Buy NFT' }}</button>
                               } @else if (activeTab === 'sell') {
-                              <button type="button" (click)="sellNFT()" class="btn-primary-blue">Sell NFT</button>
+                              <button type="button" class="btn-primary-blue" (click)="sellNFT()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Sell NFT' }}</button>
                               } @else if (activeTab === 'buyOffer') {
-                              <button type="button" (click)="createOffer('Buy')" class="btn-primary-green">Buy NFT Offer</button>
+                              <button type="button" class="btn-primary-green" (click)="createOffer('Buy')" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Buy NFT Offer' }}</button>
                               }@else if (activeTab === 'sellOffer') {
-                              <button type="button" (click)="createOffer('Sell')" class="btn-primary-blue">Sell NFT Offer</button>
+                              <button type="button" class="btn-primary-blue" (click)="createOffer('Sell')" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Sell NFT Offer' }}</button>
                               }@else if (activeTab === 'cancelOffer') {
-                              <button type="button" (click)="cancelOffer()" class="btn-primary-red">Cancel NFT Offer</button>
+                              <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Cancel NFT Offer' }}</button>
                               }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>
@@ -912,6 +917,23 @@
                                    <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
                                    } @else {
                                    <span>{{ui.successMessage}}</span>
+                                   }
+
+                                   <!-- Multiple Hashes -->
+                                   @if (ui.txHashes.length > 1 && !ui.isSimulateEnabled) {
+                                   <div class="tx-hashes">
+                                        @for (hash of ui.txHashes; track hash; let i = $index) {
+                                        <div class="tx-hash-item">
+                                             Transaction {{ i + 1 }} hash:
+                                             <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
+                                        </div>
+                                        }
+                                   </div>
+                                   }
+
+                                   <!-- Single hash -->
+                                   @if (ui.txHashes.length === 1 && !ui.isSimulateEnabled) {
+                                   <span>Transaction hash: <a [href]="url + 'tx/' + ui.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHashes[0] }} </a></span>
                                    }
                               </div>
                          </div>

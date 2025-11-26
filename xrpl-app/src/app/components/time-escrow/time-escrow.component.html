@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (transactionResult)="ui.handleTransactionResult($event)"></app-app-wallet-dynamic-input>
 
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
@@ -30,11 +30,6 @@
                          <!-- List of wallets -->
                          @for (wallet of wallets; track wallet.address; let i = $index) {
                          <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
-                              <!-- Drag Handle (6-dot grip) -->
-                              <!-- <div class="drag-handle" cdkDragHandle>
-                                   <lucide-icon name="grip-vertical" size="20"></lucide-icon>
-                              </div> -->
-
                               <!-- Wallet Info -->
                               <div class="wallet-info">
                                    @if (editingIndex(i)) {
@@ -313,7 +308,7 @@
                     No outstanding checks.
                </div> -->
 
-               <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
+               <form #theForm="ngForm" class="send-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab">
                               @switch (activeTab) { @case ('create') {
@@ -514,7 +509,7 @@
                                    }
 
                                    <!-- Use Ticket for tx -->
-                                   @if (activeTab !== 'delete' && ticketArray.length > 0) {
+                                   @if (ticketArray.length > 0) {
                                    <label class="switch">
                                         <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
                                         <span class="slider"></span>
@@ -603,15 +598,15 @@
                                    @switch (activeTab) {
                                    <!-- create buttons -->
                                    @case ('create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createTimeBasedEscrow()">Create Escrow</button>
+                                   <button type="button" class="btn-primary-blue" (click)="createTimeBasedEscrow()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create Escrow' }}</button>
                                    }
                                    <!-- finish buttons -->
                                    @case ('finish') {
-                                   <button type="button" class="btn-primary-green" (click)="finishTimeBasedEscrow()">Finish Escrow</button>
+                                   <button type="button" class="btn-primary-green" (click)="finishTimeBasedEscrow()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Finish Escrow' }}</button>
                                    }
                                    <!-- claim buttons -->
                                    @case ('cancel') {
-                                   <button type="button" class="btn-primary-red" (click)="cancelEscrow()">Cancel Escrow</button>
+                                   <button type="button" class="btn-primary-red" (click)="cancelEscrow()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Cancel Escrow' }}</button>
                                    } }
                                    <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>

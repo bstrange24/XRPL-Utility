@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (transactionResult)="ui.handleTransactionResult($event)"></app-app-wallet-dynamic-input>
 
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
@@ -246,7 +246,7 @@
                     No outstanding checks.
                </div> -->
 
-               <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
+               <form #theForm="ngForm" class="send-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab">
                               @switch (activeTab) { @case ('create') {
@@ -467,7 +467,7 @@
                                    }
 
                                    <!-- Use Ticket for tx -->
-                                   @if (activeTab !== 'delete' && ticketArray.length > 0) {
+                                   @if (ticketArray.length > 0) {
                                    <label class="switch">
                                         <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
                                         <span class="slider"></span>
@@ -525,7 +525,7 @@
                               }
 
                               <!-- Get ticket -->
-                              @if (isTicket && activeTab !== 'delete') {
+                              @if (isTicket) {
                               <div class="ticket-fields">
                                    <div class="form-group">
                                         <label>Ticket Sequence</label>

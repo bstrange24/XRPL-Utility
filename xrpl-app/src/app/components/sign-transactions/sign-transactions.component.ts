@@ -18,12 +18,11 @@ import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-
 import { SignTransactionUtilService } from '../../services/sign-transactions-util/sign-transaction-util.service';
 import { AppConstants } from '../../core/app.constants';
 import SignerList from 'xrpl/dist/npm/models/ledger/SignerList';
-import { InfoMessageConstants } from '../../core/info-message.constants';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { pairwise, startWith } from 'rxjs/operators';
 import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -31,14 +30,12 @@ import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
-import { TemplatePortal } from '@angular/cdk/portal';
-import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
+import { Overlay, OverlayModule } from '@angular/cdk/overlay';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
-import { DropdownItem } from '../../models/dropdown-item.model';
 declare var Prism: any;
 
 interface ValidationInputs {
-     account_info?: any;
+     accountInfo?: any;
      seed?: string;
 }
 
@@ -67,9 +64,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      private readonly injector = inject(Injector);
      txJson: string = ''; // Dedicated for transaction JSON (untouched on error)
      outputField: string = ''; // Dedicated for hash/blob in "Signed" field (empty on error)
-     isError: boolean = false;
-     isSuccess: boolean = false;
-     isEditable: boolean = false;
      ticketSequence: string = '';
      isTicket: boolean = false;
      isTicketEnabled: boolean = false;
@@ -85,20 +79,17 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      multiSignAddress: string = '';
      multiSignSeeds: string = '';
      signerQuorum: number = 0;
-     spinner: boolean = false;
      useMultiSign: boolean = false;
      multiSigningEnabled: boolean = false;
      regularKeySigningEnabled: boolean = false;
      isRegularKeyAddress: boolean = false;
      regularKeySeed: string = '';
      regularKeyAddress: string = '';
-     spinnerMessage: string = '';
      masterKeyDisabled: boolean = false;
      memoField: string = '';
      isMemoEnabled: boolean = false;
      isSimulateEnabled: boolean = false;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
-     errorMessage: string | null = null;
      selectedTransaction: string | null = null;
      editedTxJson: any = {};
      wallets: Wallet[] = [];
@@ -118,31 +109,26 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      availableSigners: any[] = [];
      requiredQuorum: number = 0;
      selectedQuorum: number = 0;
-
      environment: string = '';
-     paymentTx: any[] = [];
-     txResult: any[] = [];
-     txHash: string = '';
-     txHashes: string[] = [];
-     txErrorHashes: string[] = [];
      activeTab = 'getAccountDetails'; // default
      private cachedReserves: any = null;
-     successMessage: string = '';
      encryptionType: string = '';
      hasWallets: boolean = true;
-     showToast: boolean = false;
-     toastMessage: string = '';
      url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
-     warningMessage: string | null = null;
      userEmail: string = '';
      flagResults: any;
-     result: string = '';
      private highlightTimeout: any;
      destinations: { name?: string; address: string }[] = [];
      issuers: { name?: string; address: string }[] = [];
      customDestinations: { name?: string; address: string }[] = [];
+     buttonLoading = {
+          getJson: false,
+          signed: false,
+          submit: false,
+          multiSign: false,
+     };
 
      constructor(
           private readonly xrplService: XrplService,
@@ -150,7 +136,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           private readonly cdr: ChangeDetectorRef,
           private readonly storageService: StorageService,
           private readonly xrplTransactions: XrplTransactionService,
-          private ngZone: NgZone,
           private walletGenerator: WalletGeneratorService,
           private walletManagerService: WalletManagerService,
           private signTransactionUtilService: SignTransactionUtilService,
@@ -158,10 +143,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           public downloadUtilService: DownloadUtilService,
           public copyUtilService: CopyUtilService,
           private walletDataService: WalletDataService,
-          private validationService: ValidationService,
-          private overlay: Overlay,
-          private viewContainerRef: ViewContainerRef,
-          private destinationDropdownService: DestinationDropdownService
+          private validationService: ValidationService
      ) {}
 
      ngOnInit() {
@@ -174,12 +156,20 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
           this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
-               this.wallets = wallets;
-               if (!this.wallets) {
-                    this.hasWallets = false;
-                    return;
+          this.walletManagerService.wallets$.pipe(startWith(null), pairwise(), takeUntil(this.destroy$)).subscribe(([prev, curr]) => {
+               this.wallets = curr || [];
+               this.hasWallets = this.wallets.length > 0;
+
+               const prevSelected = prev?.[this.selectedWalletIndex];
+               const currSelected = curr?.[this.selectedWalletIndex];
+
+               const walletSwitched = !prev || prevSelected?.address !== currSelected?.address || prev.length !== curr?.length;
+
+               if (walletSwitched) {
+                    this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
+                    this.onAccountChange(); // Only on actual change
                }
+               this.cdr.markForCheck();
           });
 
           if (this.ticketArray && this.ticketArray.length > 0) {
@@ -204,29 +194,11 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           this.destroy$.complete();
      }
 
-     onSubmit() {
-          if (this.activeTab === 'getAccountDetails') {
-               this.getAccountDetails();
-          }
-     }
-
      async setTab(tab: string) {
           this.activeTab = tab;
           this.clearMessages();
           this.clearFields(true);
           this.getAccountDetails();
-     }
-
-     async onIssuerChange(index: number, event: Event) {
-          const checked = (event.target as HTMLInputElement).checked;
-          if (!this.wallets[index].isIssuer) {
-          } else {
-               this.wallets[index].isIssuer = checked;
-               const updates = {
-                    isIssuer: checked,
-               };
-               this.walletManagerService.updateWalletByAddress(this.wallets[index].address, updates);
-          }
      }
 
      selectWallet(index: number) {
@@ -252,32 +224,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           this.tempName = '';
      }
 
-     onWalletListChange(): void {
-          if (this.wallets.length <= 0) {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length === 1 && this.wallets[0].address === '') {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
-               this.selectedWalletIndex = 0;
-          }
-
-          this.onAccountChange();
-     }
-
-     handleTransactionResult(event: { result: string; isError: boolean; isSuccess: boolean }) {
-          this.result = event.result;
-          this.isError = event.isError;
-          this.isSuccess = event.isSuccess;
-          this.isEditable = !this.isSuccess;
-          this.cdr.detectChanges();
-     }
-
      toggleSecret(index: number) {
           this.wallets[index].showSecret = !this.wallets[index].showSecret;
      }
@@ -293,32 +239,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           }
      }
 
-     copyAddress(address: string) {
-          navigator.clipboard.writeText(address).then(() => {
-               this.showToastMessage('Address copied to clipboard!');
-          });
-     }
-
-     private showToastMessage(message: string, duration: number = 2000) {
-          this.toastMessage = message;
-          this.showToast = true;
-          setTimeout(() => {
-               this.showToast = false;
-          }, duration);
-     }
-
-     copySeed(seed: string) {
-          navigator.clipboard
-               .writeText(seed)
-               .then(() => {
-                    this.showToastMessage('Seed copied to clipboard!');
-               })
-               .catch(err => {
-                    console.error('Failed to copy seed:', err);
-                    this.showToastMessage('Failed to copy. Please select and copy manually.');
-               });
-     }
-
      deleteWallet(index: number) {
           if (confirm('Delete this wallet? This cannot be undone.')) {
                this.walletManagerService.deleteWallet(index);
@@ -330,13 +250,29 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      }
 
      async generateNewAccount() {
-          this.ui.updateSpinnerMessage(``);
+          console.log('Entering generateNewAccount');
+          const startTime = Date.now();
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-          const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, [faucetWallet.address]);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
+
+          try {
+               // Default to ed25519
+               this.encryptionType = AppConstants.ENCRYPTION.ED25519;
+               console.log('encryptionType: ', this.encryptionType);
+               const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
+               const client = await this.xrplService.getClient();
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+               this.ui.txResult.push(faucetWallet);
+               this.updateTxResult(this.ui.txResult);
+          } catch (error: any) {
+               console.error('Error in generateNewAccount:', error);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateNewAccount in ${this.executionTime}ms`);
+          }
      }
 
      dropWallet(event: CdkDragDrop<any[]>) {
@@ -352,11 +288,15 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           }
 
           // Persist the new order to localStorage
-          this.saveWallets();
+          this.walletManagerService.setWallets(this.wallets); // ← this saves + updates observable
 
           // Update destinations and account state
           this.updateDestinations();
           this.onAccountChange();
+     }
+
+     get isAnyButtonLoading(): boolean {
+          return Object.values(this.buttonLoading).some(v => v === true);
      }
 
      async onAccountChange() {
@@ -388,25 +328,18 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                await this.getAccountDetails();
                this.resetSigners();
           } else if (this.currentWallet.address) {
-               this.setError('Invalid XRP address');
+               this.ui.setError('Invalid XRP address');
           }
      }
 
      onTransactionChange(): void {
           this.txJson = '';
           this.outputField = '';
-          this.isError = false;
-          this.errorMessage = null;
+          this.ui.isError = false;
+          this.ui.errorMessage = null;
           this.clearMessages();
           // Enable the newly selected transaction (fills the JSON pane)
           this.enableTransaction();
-     }
-
-     validateQuorum() {
-          const totalWeight = this.signers.reduce((sum, s) => sum + (s.weight || 0), 0);
-          if (this.signerQuorum > totalWeight) {
-               this.signerQuorum = totalWeight;
-          }
      }
 
      async toggleMultiSign() {
@@ -419,40 +352,13 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.log(`ERROR getting wallet in toggleMultiSign' ${error.message}`);
-               this.setError('ERROR getting wallet in toggleMultiSign');
+               this.ui.setError('ERROR getting wallet in toggleMultiSign');
           }
      }
 
      async toggleUseMultiSign() {
           if (this.multiSignAddress === 'No Multi-Sign address configured for account') {
                this.multiSignSeeds = '';
-          }
-     }
-
-     onTicketChange(newValue: any) {
-          // Check if user changed from default
-          if (Array.isArray(newValue)) {
-               // multi-select mode
-               if (!newValue.includes(this.defaultTicketSequence)) {
-                    this.toggleTicketSequence();
-               }
-          } else if (newValue !== this.defaultTicketSequence) {
-               // single-select mode
-               this.toggleTicketSequence();
-          }
-     }
-
-     toggleTicketSequence() {
-          this.clearMessages();
-          this.enableTransaction();
-          this.cdr.markForCheck();
-     }
-
-     onTicketToggle(event: any, ticket: string) {
-          if (event.target.checked) {
-               this.selectedTickets = [...this.selectedTickets, ticket];
-          } else {
-               this.selectedTickets = this.selectedTickets.filter(t => t !== ticket);
           }
      }
 
@@ -465,7 +371,9 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      }
 
      getTransactionJSON() {
+          this.buttonLoading.getJson = true;
           this.onTransactionChange();
+          this.buttonLoading.getJson = false;
      }
 
      get currentQuorumSelected(): number {
@@ -481,7 +389,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           console.log('Entering getAccountDetails');
           const startTime = Date.now();
           this.clearMessages();
-          this.updateSpinnerMessage(``);
+          this.ui.updateSpinnerMessage(``);
 
           try {
                const client = await this.xrplService.getClient();
@@ -491,12 +399,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
                const inputs: ValidationInputs = {
                     seed: this.currentWallet.seed,
-                    account_info: accountInfo,
+                    accountInfo: accountInfo,
                };
 
-               const errors = await this.validateInputs(inputs, 'getAccountDetails');
+               const errors = await this.validationService.validate('AccountInfo', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    return this.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                this.getSignerAccountsList(accountObjects);
@@ -519,9 +427,9 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                this.enableTransaction();
           } catch (error: any) {
                console.error('Error in getAccountDetails:', error);
-               this.setError(error.message || 'Unknown error');
+               this.ui.setError(error.message || 'Unknown error');
           } finally {
-               this.spinner = false;
+               this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving getAccountDetails in ${this.executionTime}ms`);
           }
@@ -656,12 +564,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           console.log('Entering unsignedTransaction');
           const startTime = Date.now();
           this.clearMessages();
-          this.updateSpinnerMessage(``);
+          this.ui.updateSpinnerMessage(``);
 
           try {
-               this.errorMessage = ''; // Clear any prior error
+               this.ui.errorMessage = ''; // Clear any prior error
 
-               if (!this.txJson.trim()) return this.setError('Transaction cannot be empty');
+               if (!this.txJson.trim()) return this.ui.setError('Transaction cannot be empty');
 
                const editedString = this.txJson.trim();
                let editedJson = JSON.parse(editedString);
@@ -674,12 +582,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.log('Unsigned Transaction hash (hex):', unsignedHash);
 
                this.outputField = unsignedHash; // Set property
-               this.isError = false;
+               this.ui.isError = false;
           } catch (error: any) {
                console.error('Error in unsignedTransaction:', error);
-               this.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
-               this.spinner = false;
+               this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving unsignedTransaction in ${this.executionTime}ms`);
           }
@@ -689,7 +597,8 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           console.log('Entering signedTransaction');
           const startTime = Date.now();
           this.clearMessages();
-          this.updateSpinnerMessage(``);
+          this.ui.updateSpinnerMessage(``);
+          this.buttonLoading.signed = true;
 
           let txToSign: any;
 
@@ -697,7 +606,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                const wallet = await this.getWallet();
 
                if (!this.txJson.trim()) {
-                    return this.setError('Transaction cannot be empty');
+                    return this.ui.setError('Transaction cannot be empty');
                }
 
                const editedString = this.txJson.trim();
@@ -725,9 +634,10 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.log(decodedTx);
           } catch (error: any) {
                console.error('Error in signedTransaction:', error);
-               this.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
-               this.spinner = false;
+               this.buttonLoading.signed = false;
+               this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving signedTransaction in ${this.executionTime}ms`);
           }
@@ -737,20 +647,21 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           console.log('Entering submitTransaction');
           const startTime = Date.now();
           this.clearMessages();
-          this.updateSpinnerMessage(``);
+          this.ui.updateSpinnerMessage(``);
+          this.buttonLoading.submit = true;
 
           try {
                const client = await this.xrplService.getClient();
                const wallet = await this.getWallet();
 
                if (!this.outputField.trim()) {
-                    return this.setError('Signed tx blob can not be empty');
+                    return this.ui.setError('Signed tx blob can not be empty');
                }
 
                const signedTxBlob = this.outputField.trim();
 
                const txType = this.getTransactionLabel(this.selectedTransaction ?? '');
-               this.showSpinnerWithDelay(this.isSimulateEnabled ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
+               this.ui.showSpinnerWithDelay(this.isSimulateEnabled ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
 
                let response: any;
 
@@ -768,8 +679,8 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                this.utilsService.logObjects('response', response);
                this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.txResult.push(response.result);
-               this.updateTxResult(this.txResult);
+               this.ui.txResult.push(response.result);
+               this.updateTxResult(this.ui.txResult);
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
@@ -778,15 +689,15 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.setError(userMessage);
+                    this.ui.setError(userMessage);
                } else {
-                    this.setSuccess(this.result);
+                    this.ui.setSuccess(this.ui.result);
                }
 
-               this.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
+               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
                if (!this.isSimulateEnabled) {
-                    this.successMessage = 'Transaction completed successfully!';
+                    this.ui.successMessage = 'Transaction completed successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
@@ -805,13 +716,14 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                          }
                     }, 0);
                } else {
-                    this.successMessage = 'Simulated transaction successfully!';
+                    this.ui.successMessage = 'Simulated transaction successfully!';
                }
           } catch (error: any) {
                console.error('Error in submitTransaction:', error);
-               this.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
-               this.spinner = false;
+               this.ui.spinner = false;
+               this.buttonLoading.submit = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving submitTransaction in ${this.executionTime}ms`);
           }
@@ -821,11 +733,11 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           console.log('Entering submitMultiSignedTransaction');
           const startTime = Date.now();
           this.clearMessages();
-          this.updateSpinnerMessage(``);
+          this.ui.updateSpinnerMessage(``);
 
           try {
                if (!this.outputField.trim()) {
-                    return this.setError('Signed tx blob can not be empty');
+                    return this.ui.setError('Signed tx blob can not be empty');
                }
 
                const client = await this.xrplService.getClient();
@@ -835,7 +747,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.log('multiSignedTxBlob', multiSignedTxBlob);
 
                const txType = this.getTransactionLabel(this.selectedTransaction ?? '');
-               this.showSpinnerWithDelay(this.isSimulateEnabled ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
+               this.ui.showSpinnerWithDelay(this.isSimulateEnabled ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
 
                let response: any;
 
@@ -853,8 +765,8 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                this.utilsService.logObjects('response', response);
                this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.txResult.push(response.result);
-               this.updateTxResult(this.txResult);
+               this.ui.txResult.push(response.result);
+               this.updateTxResult(this.ui.txResult);
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
@@ -863,12 +775,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.setError(userMessage);
+                    this.ui.setError(userMessage);
                } else {
-                    this.setSuccess(this.result);
+                    this.ui.setSuccess(this.ui.result);
                }
 
-               this.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
+               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
                if (!this.isSimulateEnabled) {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -888,9 +800,9 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in submitMultiSignedTransaction:', error);
-               this.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
           } finally {
-               this.spinner = false;
+               this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving submitMultiSignedTransaction in ${this.executionTime}ms`);
           }
@@ -900,13 +812,14 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           console.log('Entering signForMultiSign');
           const startTime = Date.now();
           this.clearMessages();
-          this.updateSpinnerMessage(``);
+          this.ui.updateSpinnerMessage(``);
+          this.buttonLoading.multiSign = true;
 
           let txToSign: any;
 
           try {
                if (!this.txJson.trim()) {
-                    return this.setError('Transaction cannot be empty');
+                    return this.ui.setError('Transaction cannot be empty');
                }
 
                const editedString = this.txJson.trim();
@@ -925,7 +838,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                const selectedSigners = this.availableSigners.filter(w => w.isSelectedSigner);
 
                if (!selectedSigners.length) {
-                    return this.setError('Select at least one signer.');
+                    return this.ui.setError('Select at least one signer.');
                }
 
                const addresses = selectedSigners.map(acc => acc.address).join(',');
@@ -942,9 +855,10 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                this.outputField = result.signedTx?.tx_blob ? result.signedTx?.tx_blob : 'Error';
           } catch (error: any) {
                console.error('Error in signForMultiSign:', error);
-               this.setError(`Error: ${error.message || error}`);
+               this.ui.setError(`Error: ${error.message || error}`);
           } finally {
-               this.spinner = false;
+               this.ui.spinner = false;
+               this.buttonLoading.multiSign = false;
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving signForMultiSign in ${this.executionTime}ms`);
           }
@@ -1023,92 +937,24 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      }
 
      private async refreshWallets(client: xrpl.Client, addressesToRefresh?: string[]) {
-          console.log('Entering refreshWallets');
-          const REFRESH_THRESHOLD_MS = 3000;
-          const now = Date.now();
+          console.log('Calling refreshWallets');
 
-          try {
-               // Determine which wallets to refresh
-               const walletsToUpdate = this.wallets.filter(w => {
-                    const needsUpdate = !w.lastUpdated || now - w.lastUpdated > REFRESH_THRESHOLD_MS;
-                    const inFilter = addressesToRefresh ? addressesToRefresh.includes(w.classicAddress ?? w.address) : true;
-                    return needsUpdate && inFilter;
-               });
-
-               if (!walletsToUpdate.length) {
-                    console.debug('No wallets need updating.');
-                    return;
+          await this.walletDataService.refreshWallets(
+               client,
+               this.wallets, // pass current wallet list
+               this.selectedWalletIndex, // pass selected index
+               addressesToRefresh,
+               (updatedWalletsList, newCurrentWallet) => {
+                    // This callback runs inside NgZone → UI updates safely
+                    this.currentWallet = { ...newCurrentWallet };
+                    // Optional: trigger change detection if needed
+                    // this.cdr.markForCheck();
                }
-
-               console.debug(`Refreshing ${walletsToUpdate.length} wallet(s)...`);
-
-               //Fetch all accountInfo data in parallel (faster, single request per wallet)
-               const accountInfos = await Promise.all(walletsToUpdate.map(w => this.xrplService.getAccountInfo(client, w.classicAddress ?? w.address, 'validated', '')));
-
-               //Cache reserves (only once per session)
-               if (!this.cachedReserves) {
-                    this.cachedReserves = await this.utilsService.getXrplReserve(client);
-                    console.debug('Cached XRPL reserve data:', this.cachedReserves);
-               }
-
-               // Heavy computation outside Angular (no UI reflows)
-               this.ngZone.runOutsideAngular(async () => {
-                    const updatedWallets = await Promise.all(
-                         walletsToUpdate.map(async (wallet, i) => {
-                              try {
-                                   const accountInfo = accountInfos[i];
-                                   const address = wallet.classicAddress ?? wallet.address;
-
-                                   // --- Derive balance directly from accountInfo to avoid extra ledger call ---
-                                   const balanceInDrops = String(accountInfo.result.account_data.Balance);
-                                   const balanceXrp = xrpl.dropsToXrp(balanceInDrops); // returns string
-
-                                   // --- Get ownerCount + total reserve ---
-                                   const { ownerCount, totalXrpReserves } = await this.utilsService.updateOwnerCountAndReserves(client, accountInfo, address);
-
-                                   const spendable = parseFloat(String(balanceXrp)) - parseFloat(String(totalXrpReserves || '0'));
-
-                                   return {
-                                        ...wallet,
-                                        ownerCount,
-                                        xrpReserves: totalXrpReserves,
-                                        balance: spendable.toFixed(6),
-                                        spendableXrp: spendable.toFixed(6),
-                                        lastUpdated: now,
-                                   };
-                              } catch (err) {
-                                   console.error(`Error updating wallet ${wallet.address}:`, err);
-                                   return wallet;
-                              }
-                         })
-                    );
-
-                    console.log('updatedWallets', updatedWallets);
-                    // Apply updates inside Angular (UI updates + service sync)
-                    this.ngZone.run(() => {
-                         updatedWallets.forEach(updated => {
-                              const idx = this.wallets.findIndex(existing => (existing.classicAddress ?? existing.address) === (updated.classicAddress ?? updated.address));
-                              if (idx !== -1) {
-                                   this.walletManagerService.updateWallet(idx, updated);
-                              }
-                         });
-                         // Ensure Selected Account Summary refreshes
-                         if (this.selectedWalletIndex !== null && this.wallets[this.selectedWalletIndex]) {
-                              this.currentWallet = { ...this.wallets[this.selectedWalletIndex] };
-                         }
-                    });
-               });
-          } catch (error: any) {
-               console.error('Error in refreshWallets:', error);
-          } finally {
-               this.executionTime = (Date.now() - now).toString();
-               console.log(`Leaving refreshWallets in ${this.executionTime}ms`);
-          }
+          );
      }
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
           this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
-
           this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
           this.refreshUiAccountInfo(updatedAccountInfo);
      }
@@ -1151,52 +997,37 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                });
      }
 
-     private getAccountTickets(accountObjects: xrpl.AccountObjectsResponse): string[] {
-          const objects = accountObjects.result?.account_objects;
-          if (!Array.isArray(objects)) return [];
-
-          const tickets = objects.reduce((acc: number[], obj) => {
-               if (obj.LedgerEntryType === 'Ticket' && typeof obj.TicketSequence === 'number') {
-                    acc.push(obj.TicketSequence);
-               }
-               return acc;
-          }, []);
-
-          return tickets.sort((a, b) => a - b).map(String);
-     }
-
-     public cleanUpSingleSelection() {
-          // Check if selected ticket still exists in available tickets
-          if (this.selectedSingleTicket && !this.ticketArray.includes(this.selectedSingleTicket)) {
-               this.selectedSingleTicket = ''; // Reset to "Select a ticket"
-          }
-     }
-
-     public cleanUpMultiSelection() {
-          // Filter out any selected tickets that no longer exist
-          this.selectedTickets = this.selectedTickets.filter(ticket => this.ticketArray.includes(ticket));
-     }
-
      updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
-          this.ticketArray = this.getAccountTickets(accountObjects);
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
 
           // Clean up selections based on current mode
           if (this.multiSelectMode) {
-               this.cleanUpMultiSelection();
+               this.selectedSingleTicket = this.utilsService.cleanUpMultiSelection(this.selectedTickets, this.ticketArray);
           } else {
-               this.cleanUpSingleSelection();
+               this.selectedSingleTicket = this.utilsService.cleanUpSingleSelection(this.selectedTickets, this.ticketArray);
           }
      }
 
      public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
           // Tickets
-          this.ticketArray = this.getAccountTickets(accountObjects);
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
           this.selectedTicket = this.ticketArray[0] || this.selectedTicket;
 
           // Signer accounts
-          const signerAccounts = this.checkForSignerAccounts(accountObjects);
+          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
+          this.signerQuorum = signerQuorum;
           const hasSignerAccounts = signerAccounts?.length > 0;
+          this.checkForMultiSigners(hasSignerAccounts, wallet);
 
+          // Boolean flags
+          this.multiSigningEnabled = hasSignerAccounts;
+          this.useMultiSign = false;
+          this.masterKeyDisabled = Boolean(accountInfo?.result?.account_flags?.disableMasterKey);
+
+          this.clearFields(false);
+     }
+
+     private checkForMultiSigners(hasSignerAccounts: boolean, wallet: xrpl.Wallet) {
           if (hasSignerAccounts) {
                const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
                this.multiSignAddress = signerEntries.map((e: { Account: any }) => e.Account).join(',\n');
@@ -1207,13 +1038,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                this.multiSignSeeds = '';
                this.storageService.removeValue('signerEntries');
           }
-
-          // Boolean flags
-          this.multiSigningEnabled = hasSignerAccounts;
-          this.useMultiSign = false;
-          this.masterKeyDisabled = Boolean(accountInfo?.result?.account_flags?.disableMasterKey);
-
-          this.clearFields(false);
      }
 
      public refreshUiAccountInfo(accountInfo: xrpl.AccountInfoResponse): void {
@@ -1224,7 +1048,9 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           const isMasterKeyDisabled = accountInfo?.result?.account_flags?.disableMasterKey ?? false;
 
           // Set regular key properties
-          this.setRegularKeyProperties(regularKey, accountData.Account);
+          const rkProps = this.utilsService.setRegularKeyProperties(regularKey, accountData.Account) || { regularKeyAddress: 'No RegularKey configured for account', regularKeySeed: '', isRegularKeyAddress: false };
+          this.regularKeyAddress = rkProps.regularKeyAddress;
+          this.regularKeySeed = rkProps.regularKeySeed;
 
           // Set master key property
           this.masterKeyDisabled = isMasterKeyDisabled;
@@ -1233,90 +1059,13 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           this.regularKeySigningEnabled = !!regularKey;
      }
 
-     private setRegularKeyProperties(regularKey: string | undefined, account: string): void {
-          if (regularKey) {
-               this.regularKeyAddress = regularKey;
-               this.regularKeySeed = this.storageService.get(`${account}regularKeySeed`) || '';
-          } else {
-               this.regularKeyAddress = 'No RegularKey configured for account';
-               this.regularKeySeed = '';
-               this.isRegularKeyAddress = false;
-          }
-     }
-
-     private async validateInputs(inputs: ValidationInputs, action: string): Promise<string[]> {
-          const errors: string[] = [];
-
-          // --- Common validators ---
-          const isRequired = (value: string | null | undefined, fieldName: string): string | null => {
-               if (value == null || !this.utilsService.validateInput(value)) {
-                    return `${fieldName} cannot be empty.`;
-               }
-               return null;
-          };
-
-          const isValidSeed = (value: string | undefined): string | null => {
-               if (value) {
-                    const { type } = this.utilsService.detectXrpInputType(value);
-                    if (type === 'unknown') {
-                         return 'Account seed or mnemonic is invalid.';
-                    }
-               }
-               return null;
-          };
-
-          // --- Action-specific config ---
-          const actionConfig: Record<
-               string,
-               {
-                    required: (keyof ValidationInputs)[];
-                    customValidators?: (() => string | null)[];
-                    asyncValidators?: (() => Promise<string | null>)[];
-               }
-          > = {
-               getAccountDetails: {
-                    required: ['seed'],
-                    customValidators: [() => isValidSeed(inputs.seed), () => (inputs.account_info === undefined || inputs.account_info === null ? `No account data found` : null)],
-                    asyncValidators: [],
-               },
-               default: { required: [], customValidators: [], asyncValidators: [] },
-          };
-
-          const config = actionConfig[action] || actionConfig['default'];
-
-          // --- Run required checks ---
-          config.required.forEach((field: keyof ValidationInputs) => {
-               const err = isRequired(inputs[field], field.charAt(0).toUpperCase() + field.slice(1));
-               if (err) errors.push(err);
-          });
-
-          // --- Run sync custom validators ---
-          config.customValidators?.forEach(validator => {
-               const err = validator();
-               if (err) errors.push(err);
-          });
-
-          // --- Run async validators ---
-          if (config.asyncValidators) {
-               for (const validator of config.asyncValidators) {
-                    const err = await validator();
-                    if (err) errors.push(err);
-               }
-          }
-
-          return errors;
-     }
-
      private async getWallet() {
-          const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
+          const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) {
                throw new Error('ERROR: Wallet could not be created or is undefined');
           }
           return wallet;
-     }
-
-     saveWallets() {
-          this.storageService.set('wallets', JSON.stringify(this.wallets));
      }
 
      updatePaymentTx() {
@@ -1324,7 +1073,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      }
 
      updateTxResult(tx: any) {
-          this.txResult = tx;
+          this.ui.txResult = tx;
           this.scheduleHighlight();
      }
 
@@ -1347,12 +1096,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           }
      }
 
-     // onTxJsonBlur() {
-     //      const text = this.txJsonPre.nativeElement.innerText.trim();
-     //      this.txJson = text;
-     //      this.scheduleHighlight();
-     // }
-
      onTxJsonInput() {
           this.txJson = this.txJsonPre.nativeElement.innerText;
 
@@ -1372,9 +1115,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
      setTxJson(json: string) {
           this.txJson = json;
-          // if (this.txJsonPre) {
-          //      this.txJsonPre.nativeElement.innerText = json;
-          // }
           this.scheduleHighlight();
      }
 
@@ -1387,13 +1127,13 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           // Use the captured injector to run afterRenderEffect  safely
           afterRenderEffect(
                () => {
-                    if (this.paymentTx && this.paymentJson?.nativeElement) {
-                         const json = JSON.stringify(this.paymentTx, null, 2);
+                    if (this.ui.paymentTx && this.paymentJson?.nativeElement) {
+                         const json = JSON.stringify(this.ui.paymentTx, null, 2);
                          this.paymentJson.nativeElement.textContent = json;
                          Prism.highlightElement(this.paymentJson.nativeElement);
                     }
-                    if (this.txResult && this.txResultJson?.nativeElement) {
-                         const json = JSON.stringify(this.txResult, null, 2);
+                    if (this.ui.txResult && this.txResultJson?.nativeElement) {
+                         const json = JSON.stringify(this.ui.txResult, null, 2);
                          this.txResultJson.nativeElement.textContent = json;
                          Prism.highlightElement(this.txResultJson.nativeElement);
                     }
@@ -1411,8 +1151,8 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                     }
 
                     /* ---- Error message (plain text) ---- */
-                    if (this.isError && this.errorMessage && this.txJsonCode?.nativeElement) {
-                         this.txJsonCode.nativeElement.textContent = `ERROR: ${this.errorMessage}`;
+                    if (this.ui.isError && this.ui.errorMessage && this.txJsonCode?.nativeElement) {
+                         this.txJsonCode.nativeElement.textContent = `ERROR: ${this.ui.errorMessage}`;
                          // optional: give it a red background
                          this.txJsonPre.nativeElement.classList.add('error');
                     } else {
@@ -1426,125 +1166,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
      copyCheckId(checkId: string) {
           navigator.clipboard.writeText(checkId).then(() => {
-               this.showToastMessage('Check ID copied!');
+               this.ui.showToastMessage('Check ID copied!');
           });
-     }
-
-     copyTxJson() {
-          this.copyToClipboard(this.txJson);
-     }
-     copySigned() {
-          this.copyToClipboard(this.outputField);
-     }
-
-     private copyToClipboard(text: string) {
-          navigator.clipboard.writeText(text).then(() => {
-               this.showToast = true;
-               this.toastMessage = 'Copied to clipboard!';
-               setTimeout(() => (this.showToast = false), 2000);
-          });
-     }
-
-     downloadSigned() {
-          const blob = new Blob([this.outputField], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `signed-tx-${Date.now()}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-     }
-
-     downloadTxJson() {
-          const blob = new Blob([this.txJson], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `signed-tx-${Date.now()}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-     }
-
-     copyTx() {
-          const json = JSON.stringify(this.paymentTx, null, 2);
-          navigator.clipboard.writeText(json).then(() => {
-               this.showToastMessage('Transaction JSON copied!');
-          });
-     }
-
-     downloadTx() {
-          const json = JSON.stringify(this.paymentTx, null, 2);
-          const blob = new Blob([json], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `payment-tx-${Date.now()}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-     }
-
-     copyTxResult() {
-          const json = JSON.stringify(this.txResult, null, 2);
-          navigator.clipboard.writeText(json).then(() => {
-               this.showToastMessage('Transaction Result JSON copied!');
-          });
-     }
-
-     downloadTxResult() {
-          const json = JSON.stringify(this.txResult, null, 2);
-          const blob = new Blob([json], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `tx-result-${Date.now()}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-     }
-
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               create: {
-                    // checks: this.existingChecks,
-                    getDescription: (count: number) => (count === 1 ? 'check' : 'checks'),
-                    dynamicText: 'created', // Add dynamic text here
-                    showLink: true,
-               },
-               cash: {
-                    // checks: this.cashableChecks,
-                    getDescription: (count: number) => (count === 1 ? 'check that can be cashed' : 'checks that can be cashed'),
-                    dynamicText: '', // Empty for no additional text
-                    showLink: true,
-               },
-               cancel: {
-                    // checks: this.cancellableChecks,
-                    getDescription: (count: number) => (count === 1 ? 'check that can be cancelled' : 'checks that can be cancelled'),
-                    dynamicText: '', // Dynamic text before the count
-                    showLink: true,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
-
-          const walletName = this.currentWallet.name || 'selected';
-          // const count = config.checks.length;
-          const count = 0;
-
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
-
-          let message = `The <code>${walletName}</code> wallet has ${dynamicText}${count} ${config.getDescription(count)}.`;
-
-          if (config.showLink && count > 0) {
-               const link = `${this.url}account/${this.currentWallet.address}/checks`;
-               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View checks on XRPL Win</a>`;
-          }
-
-          return message;
      }
 
      private setWarning(msg: string | null) {
-          this.warningMessage = msg;
+          this.ui.warningMessage = msg;
           this.cdr.detectChanges();
      }
 
@@ -1570,17 +1197,11 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      }
 
      private clearMessages() {
-          const fadeDuration = 400; // ms
-          this.result = '';
-          this.isError = false;
-          this.isSuccess = false;
-          this.txHash = '';
-          this.txHashes = [];
-          this.txErrorHashes = [];
-          this.txResult = [];
-          this.paymentTx = [];
-          this.successMessage = '';
-          this.errorMessage = '';
+          this.ui.result = '';
+          this.ui.isError = false;
+          this.ui.isSuccess = false;
+          this.ui.successMessage = '';
+          this.ui.errorMessage = '';
           this.cdr.detectChanges();
      }
 
@@ -1591,48 +1212,5 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
      getTransactionLabel(key: string): string {
           return (AppConstants.SIGN_TRANSACTION_LABEL_MAP as Record<string, string>)[key] || key;
-     }
-
-     private updateSpinnerMessage(message: string) {
-          this.spinnerMessage = message;
-          this.cdr.detectChanges();
-     }
-
-     private async showSpinnerWithDelay(message: string, delayMs: number = 200) {
-          this.spinner = true;
-          this.updateSpinnerMessage(message);
-          await this.utilsService.sleep(delayMs);
-     }
-
-     private setErrorProperties() {
-          this.isSuccess = false;
-          this.isError = true;
-          this.spinner = false;
-     }
-
-     private setError(message: string) {
-          this.setErrorProperties();
-          this.handleTransactionResult({
-               result: `${message}`,
-               isError: this.isError,
-               isSuccess: this.isSuccess,
-          });
-     }
-
-     private setSuccessProperties() {
-          this.isSuccess = true;
-          this.isError = false;
-          this.spinner = false;
-          this.result = '';
-     }
-
-     private setSuccess(message: string) {
-          this.setSuccessProperties();
-          this.handleTransactionResult({
-               result: `${message}`,
-               isError: this.isError,
-               isSuccess: this.isSuccess,
-          });
-          this.cdr.detectChanges();
      }
 }

@@ -12,11 +12,11 @@ import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { AppWalletDynamicInputComponent } from '../app-wallet-dynamic-input/app-wallet-dynamic-input.component';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { InfoMessageConstants } from '../../core/info-message.constants';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
+import { debounceTime, distinctUntilChanged, pairwise, startWith } from 'rxjs/operators';
 import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -35,6 +35,7 @@ interface ValidationInputs {
      senderAddress?: string;
      seed?: string;
      accountInfo?: any;
+     destination?: string;
      nft_info?: any;
      nftIdField?: string;
      uri?: string;
@@ -74,6 +75,11 @@ interface AccountFlags {
      asfAllowTrustLineLocking: boolean;
 }
 
+interface IssuerItem {
+     name: string;
+     address: string;
+}
+
 @Component({
      selector: 'app-nft-offers',
      standalone: true,
@@ -94,6 +100,8 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
      private overlayRef: OverlayRef | null = null;
+     private issuerFieldSubject = new Subject<void>();
+     private destinationInputSubject = new Subject<string>();
      private readonly injector = inject(Injector);
      executionTime: string = '';
      destinationTagField: string = '';
@@ -120,6 +128,8 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      gatewayBalance: string = '0';
      currencyFieldDropDownValue: string = 'XRP';
      private knownTrustLinesIssuers: { [key: string]: string[] } = { XRP: [] };
+     issuerToRemove: string = '';
+     issuerFields: string = '';
      currencies: string[] = [];
      selectedIssuer: string = '';
      domain: string = '';
@@ -158,7 +168,6 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      nftIdField: string = '';
      nftIndexField: string = '';
      nftCountField: string = '';
-     spinnerMessage: string = '';
      masterKeyDisabled: boolean = false;
      flags: AccountFlags = {
           asfRequireDest: false,
@@ -183,6 +192,8 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      dropdownOpen = false;
      filteredDestinations: DropdownItem[] = [];
      highlightedIndex = -1;
+     allKnownIssuers: string[] = [];
+     storedIssuers: IssuerItem[] = [];
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      private burnCheckboxHandlerBound!: (e: Event) => void;
      wallets: Wallet[] = [];
@@ -197,7 +208,9 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           xrpReserves: undefined,
           spendableXrp: undefined,
      };
+     tokenToRemove: string = '';
      currencyIssuers: { name?: string; address: string }[] = [];
+     issuers: { name?: string; address: string }[] = [];
      private lastCurrency: string = '';
      private lastIssuer: string = '';
      showManageTokens: boolean = false;
@@ -218,6 +231,14 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      tempName: string = '';
      filterQuery: string = '';
      nftOwnerAddress: string = '';
+     private accountDataCache = new Map<
+          string,
+          {
+               accountObjects?: xrpl.AccountObjectsResponse;
+               tokenBalance?: xrpl.GatewayBalancesResponse;
+               timestamp: number;
+          }
+     >();
 
      constructor(
           private readonly xrplService: XrplService,
@@ -242,11 +263,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      }
 
      async ngOnInit(): Promise<void> {
-          const storedIssuers = this.storageService.getKnownIssuers('knownIssuers');
-          if (storedIssuers) {
-               this.knownTrustLinesIssuers = storedIssuers;
-          }
-          this.updateCurrencies();
+          this.getKnownIssuersFromLocalStorage();
           this.currencyFieldDropDownValue = 'XRP'; // Set default to XRP
 
           this.environment = this.xrplService.getNet().environment;
@@ -258,12 +275,30 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
           this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
-               this.wallets = wallets;
-               if (!this.wallets) {
-                    this.hasWallets = false;
-                    return;
+          this.walletManagerService.wallets$.pipe(startWith(null), pairwise(), takeUntil(this.destroy$)).subscribe(([prev, curr]) => {
+               this.wallets = curr || [];
+               this.hasWallets = this.wallets.length > 0;
+
+               const prevSelected = prev?.[this.selectedWalletIndex];
+               const currSelected = curr?.[this.selectedWalletIndex];
+
+               const walletSwitched = !prev || prevSelected?.address !== currSelected?.address || prev.length !== curr?.length;
+
+               if (walletSwitched) {
+                    this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
+                    this.onAccountChange(); // Only on actual change
                }
+               this.cdr.markForCheck();
+          });
+
+          // Debounce issuer/currency changes → 200ms
+          this.issuerFieldSubject.pipe(debounceTime(200), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(() => this.toggleIssuerField());
+
+          // Debounce destination input
+          this.destinationInputSubject.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => {
+               this.filterQuery = query;
+               this.destinationDropdownService.filter(query);
+               this.destinationDropdownService.openDropdown();
           });
 
           // Load custom destinations from storage
@@ -315,6 +350,35 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           this.destroy$.complete();
      }
 
+     async onCurrencyChange() {
+          this.issuerFieldSubject.next(); // ← instead of toggleIssuerField()
+     }
+
+     private getKnownIssuersFromLocalStorage() {
+          const knownIssuersObj = this.storageService.getKnownIssuers('knownIssuers');
+
+          this.storedIssuers = [];
+
+          if (knownIssuersObj) {
+               for (const currency in knownIssuersObj) {
+                    for (const address of knownIssuersObj[currency]) {
+                         this.storedIssuers.push({
+                              name: currency,
+                              address: address,
+                         });
+                    }
+               }
+               this.knownTrustLinesIssuers = knownIssuersObj;
+
+               if (Object.keys(this.knownTrustLinesIssuers).length > 0) {
+                    this.currencyFieldDropDownValue = Object.keys(this.knownTrustLinesIssuers)[0];
+               }
+
+               // This is the key line
+               this.updateCurrencies(); // ← Triggers auto-select + sorting
+          }
+     }
+
      trackByWalletAddress(index: number, wallet: Wallet): string {
           return wallet.address;
      }
@@ -326,13 +390,22 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      setTab(tab: string) {
           this.activeTab = tab;
           this.selectedNft = null;
+
+          if (Object.keys(this.knownTrustLinesIssuers).length > 0 && this.issuerFields === '') {
+               this.currencyFieldDropDownValue = Object.keys(this.knownTrustLinesIssuers)[0];
+          }
+
+          if (this.currencyFieldDropDownValue !== 'XRP') {
+               this.toggleIssuerField();
+          }
+
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
      }
 
      selectWallet(index: number) {
-          if (this.selectedWalletIndex === index) return; // ← Add this guard!
+          if (this.selectedWalletIndex === index) return;
           this.selectedWalletIndex = index;
           this.onAccountChange();
      }
@@ -353,24 +426,6 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      cancelEdit() {
           this.walletManagerService.cancelEdit();
           this.tempName = '';
-     }
-
-     onWalletListChange(): void {
-          if (this.wallets.length <= 0) {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length === 1 && this.wallets[0].address === '') {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
-               this.selectedWalletIndex = 0;
-          }
-
-          this.onAccountChange();
      }
 
      toggleSecret(index: number) {
@@ -399,13 +454,29 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      }
 
      async generateNewAccount() {
-          this.ui.updateSpinnerMessage(``);
+          console.log('Entering generateNewAccount');
+          const startTime = Date.now();
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-          const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, faucetWallet.address);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
+
+          try {
+               // Default to ed25519
+               this.encryptionType = AppConstants.ENCRYPTION.ED25519;
+               console.log('encryptionType: ', this.encryptionType);
+               const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
+               const client = await this.xrplService.getClient();
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+               this.ui.txResult.push(faucetWallet);
+               this.updateTxResult(this.ui.txResult);
+          } catch (error: any) {
+               console.error('Error in generateNewAccount:', error);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateNewAccount in ${this.executionTime}ms`);
+          }
      }
 
      dropWallet(event: CdkDragDrop<any[]>) {
@@ -421,7 +492,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           }
 
           // Persist the new order to localStorage
-          this.saveWallets();
+          this.walletManagerService.setWallets(this.wallets); // ← this saves + updates observable
 
           // Update destinations and account state
           this.updateDestinations();
@@ -456,6 +527,9 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                this.ui.clearWarning();
                this.updateDestinations();
                this.getNFTOffers();
+               if (this.currencyFieldDropDownValue !== 'XRP') {
+                    await this.onCurrencyChange();
+               }
           } else if (this.currentWallet.address) {
                this.ui.setError('Invalid XRP address');
           }
@@ -469,41 +543,11 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           this.existingSellOffersCollapsed = !this.existingSellOffersCollapsed;
      }
 
-     validateQuorum() {
-          const totalWeight = this.signers.reduce((sum, s) => sum + (s.weight || 0), 0);
-          if (this.signerQuorum > totalWeight) {
-               this.signerQuorum = totalWeight;
-          }
-     }
-
      async toggleMultiSign() {
           try {
-               if (!this.useMultiSign) {
-                    this.utilsService.clearSignerList(this.signers);
-               } else {
-                    const wallet = await this.getWallet();
-                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-               }
+               this.utilsService.toggleMultiSign(this.useMultiSign, this.signers, (await this.getWallet()).classicAddress);
           } catch (error: any) {
-               this.ui.setError(`ERROR getting wallet in toggleMultiSign' ${error.message}`);
-          }
-     }
-
-     async toggleUseMultiSign() {
-          if (this.multiSignAddress === 'No Multi-Sign address configured for account') {
-               this.multiSignSeeds = '';
-          }
-     }
-
-     toggleTicketSequence() {
-          this.cdr.detectChanges();
-     }
-
-     onTicketToggle(event: any, ticket: string) {
-          if (event.target.checked) {
-               this.selectedTickets = [...this.selectedTickets, ticket];
-          } else {
-               this.selectedTickets = this.selectedTickets.filter(t => t !== ticket);
+               this.ui.setError(`${error.message}`);
           }
      }
 
@@ -512,173 +556,6 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      }
 
      toggleFlags() {}
-
-     // async getNFT() {
-     //      console.log('Entering getNFT');
-     //      const startTime = Date.now();
-     //      this.ui.clearMessages();
-     //      this.ui.updateSpinnerMessage(``);
-
-     //      try {
-     //           const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-
-     //           const [accountNfts, accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountNFTs(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-     //           // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
-     //           // this.utilsService.logObjects('accountNfts', accountNfts);
-
-     //           const inputs: ValidationInputs = { seed: this.currentWallet.seed, accountInfo: accountInfo };
-
-     //           const errors = await this.validationService.validate('AccountInfo', { inputs, client, accountInfo });
-     //           if (errors.length > 0) {
-     //                return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-     //           }
-
-     //           this.getExistingNfts(accountObjects, this.currentWallet.address);
-
-     //           // Prepare data structure
-     //           // const data = {
-     //           //      sections: [{}],
-     //           // };
-     //           // const nfts = accountNfts.result.account_nfts || [];
-
-     //           // if (nfts.length <= 0) {
-     //           //      data.sections.push({
-     //           //           title: 'NFTs',
-     //           //           openByDefault: true,
-     //           //           content: [{ key: 'Status', value: `No NFTs found for <code>${wallet.classicAddress}</code>` }],
-     //           //      });
-     //           // } else {
-     //           //      // Define flags (you can move this to a constant outside the function if reused elsewhere)
-     //           //      const TF_BURNABLE = 0x00000001;
-
-     //           //      // Filter burnable NFTs
-     //           //      // const burnableNftIds = nfts.filter((nft: any) => (nft.Flags & TF_BURNABLE) !== 0).map((nft: any) => nft.NFTokenID);
-     //           //      const idsSet = (this.nftIdField || '')
-     //           //           .split(',')
-     //           //           .map(s => s.trim())
-     //           //           .filter(Boolean);
-
-     //           //      // if (burnableNftIds.length > 0) {
-     //           //      //      data.sections.push({
-     //           //      //           title: `Burnable NFTs`,
-     //           //      //           openByDefault: true,
-     //           //      //           subItems: [
-     //           //      //                {
-     //           //      //                     key: `NFT ID's`,
-     //           //      //                     openByDefault: false,
-     //           //      //                     content: burnableNftIds.map((id: any) => ({
-     //           //      //                          key: 'NFToken ID',
-     //           //      //                          // value: `<code>${id}</code>`,
-     //           //      //                          value: `<code>${id}</code><label class="burn-checkbox"><input type="checkbox" class="burn-check" data-id="${id}"/>Burn</label>`,
-     //           //      //                     })),
-     //           //      //                },
-     //           //      //           ],
-     //           //      //      });
-     //           //      // } else {
-     //           //      //      data.sections.push({
-     //           //      //           title: `Burnable NFT IDs`,
-     //           //      //           openByDefault: true,
-     //           //      //           content: [{ key: 'Status', value: 'No burnable NFTs found' }],
-     //           //      //      });
-     //           //      // }
-
-     //           //      // Add all NFTs section
-     //           //      data.sections.push({
-     //           //           title: `NFTs (${nfts.length})`,
-     //           //           openByDefault: true,
-     //           //           subItems: nfts.map((nft: any, index: number) => {
-     //           //                const { NFTokenID, NFTokenTaxon, Issuer, URI, Flags, TransferFee } = nft;
-     //           //                const isBurnable = (nft.Flags & TF_BURNABLE) !== 0;
-     //           //                const checkedAttr = idsSet.includes(nft.NFTokenID) ? 'checked' : '';
-     //           //                // const burnLabel = isBurnable ? 'Burn' : 'Not Burnable';
-     //           //                const burnLabel = isBurnable ? 'Sell' : 'Sell';
-     //           //                // const disabledAttr = isBurnable ? '' : 'disabled';
-     //           //                const disabledAttr = isBurnable ? '' : '';
-
-     //           //                return {
-     //           //                     // key: `NFT ${index + 1} (ID: ${NFTokenID.slice(8, -1)}...) Flags: ${String(this.decodeNftFlags(Flags))}`,
-     //           //                     key: `NFT ${index + 1} (ID: ...${NFTokenID.slice(-16)})`,
-     //           //                     openByDefault: false,
-     //           //                     content: [
-     //           //                          {
-     //           //                               key: 'NFToken ID',
-     //           //                               // value: `<code>${nft.NFTokenID}</code><label class="burn-checkbox"><input type="checkbox" class="burn-check" data-id="${nft.NFTokenID}" ${disabledAttr}/>${burnLabel}</label>`,
-     //           //                               value: `<code>${nft.NFTokenID}</code><label class="burn-checkbox"><input type="checkbox" class="burn-check" data-id="${nft.NFTokenID}" ${disabledAttr}/>${burnLabel}</label>`,
-     //           //                          },
-     //           //                          { key: 'Taxon', value: String(NFTokenTaxon) },
-     //           //                          ...(Issuer ? [{ key: 'Issuer', value: `<code>${Issuer}</code>` }] : []),
-     //           //                          ...(URI
-     //           //                               ? [
-     //           //                                      { key: 'URI', value: `<code>${this.utilsService.decodeHex(URI)}</code>` },
-     //           //                                      { key: 'Image', value: `<img id="nftImage" src="${this.utilsService.decodeHex(URI)}" width="150" height="150">` },
-     //           //                                 ]
-     //           //                               : []),
-     //           //                          { key: 'Flags', value: String(this.decodeNftFlags(Flags)) },
-     //           //                          ...(TransferFee ? [{ key: 'Transfer Fee', value: `${TransferFee / 1000}%` }] : []),
-     //           //                     ],
-     //           //                };
-     //           //           }),
-     //           //      });
-     //           // }
-
-     //           if (this.currencyFieldDropDownValue !== 'XRP' && this.selectedIssuer !== '') {
-     //                const tokenBalance = await this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '');
-     //                console.debug('Token Balance:', tokenBalance.result);
-
-     //                console.debug(`parseAllGatewayBalances:`, this.parseAllGatewayBalances(tokenBalance, wallet));
-     //                const parsedBalances = this.parseAllGatewayBalances(tokenBalance, wallet);
-     //                if (parsedBalances && Object.keys(parsedBalances).length > 0) {
-     //                     this.tokenBalance = parsedBalances?.[this.currencyFieldDropDownValue]?.[this.selectedIssuer] ?? '0';
-     //                } else {
-     //                     this.tokenBalance = '0';
-     //                }
-     //           }
-
-     //           // // --- Attach Burn Checkbox Logic ---
-     //           // setTimeout(() => {
-     //           //      const burnChecks = document.querySelectorAll<HTMLInputElement>('input.burn-check');
-
-     //           //      burnChecks.forEach(checkbox => {
-     //           //           checkbox.addEventListener('change', (e: Event) => {
-     //           //                const target = e.target as HTMLInputElement;
-     //           //                const nftId = target.getAttribute('data-id');
-     //           //                const isChecked = target.checked;
-
-     //           //                // Sync all checkboxes for same NFT ID
-     //           //                document.querySelectorAll<HTMLInputElement>(`input.burn-check[data-id="${nftId}"]`).forEach(cb => {
-     //           //                     if (cb !== target) {
-     //           //                          cb.checked = isChecked;
-     //           //                     }
-     //           //                });
-
-     //           //                // Update textarea or linked field
-     //           //                if (nftId) this.updateNftTextField(nftId, isChecked);
-     //           //           });
-     //           //      });
-
-     //           //      // Stop checkbox clicks from interfering with <code> copy
-     //           //      document.querySelectorAll<HTMLInputElement>('input.burn-check').forEach(cb => {
-     //           //           cb.addEventListener('click', (e: Event) => e.stopPropagation());
-     //           //      });
-     //           // });
-
-     //           await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
-
-     //           this.refreshUIData(wallet, accountInfo, accountObjects);
-     //           this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-     //           this.updateTickets(accountObjects);
-
-     //           this.clearFields(false);
-     //           this.cdr.detectChanges();
-     //      } catch (error: any) {
-     //           console.error('Error in getNFT:', error);
-     //           this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
-     //      } finally {
-     //           this.ui.spinner = false;
-     //           this.executionTime = (Date.now() - startTime).toString();
-     //           console.log(`Leaving getNFT in ${this.executionTime}ms`);
-     //      }
-     // }
 
      async getNFTOffers() {
           console.log('Entering getNFTOffers');
@@ -838,24 +715,29 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                     }
                }
 
-               if (this.currencyFieldDropDownValue !== 'XRP' && this.selectedIssuer !== '') {
+               if (this.currencyFieldDropDownValue !== 'XRP' && this.issuerFields !== '') {
                     const tokenBalance = await this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '');
                     console.debug('Token Balance:', tokenBalance.result);
 
                     console.debug(`parseAllGatewayBalances:`, this.parseAllGatewayBalances(tokenBalance, wallet));
                     const parsedBalances = this.parseAllGatewayBalances(tokenBalance, wallet);
                     if (parsedBalances && Object.keys(parsedBalances).length > 0) {
-                         this.tokenBalance = parsedBalances?.[this.currencyFieldDropDownValue]?.[this.selectedIssuer] ?? '0';
+                         this.tokenBalance = parsedBalances?.[this.currencyFieldDropDownValue]?.[this.issuerFields] ?? '0';
                     } else {
                          this.tokenBalance = '0';
                     }
+                    this.toggleIssuerField();
                }
 
-               Promise.resolve().then(() => {
-                    this.refreshUIData(wallet, accountInfo, accountObjects);
-                    this.clearFields(false);
-                    this.updateTickets(accountObjects);
-               });
+               await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
+
+               this.refreshUIData(wallet, accountInfo, accountObjects);
+               this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+
+               this.updateTickets(accountObjects);
+
+               this.clearFields(false);
+               this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getNFTOffers:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
@@ -983,7 +865,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -1010,12 +892,11 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                          await this.toggleIssuerField();
                     }
 
-                    Promise.resolve().then(() => {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                    });
+                    this.refreshUIData(wallet, accountInfo, accountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.clearFields(false);
+                    this.updateTickets(accountObjects);
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Buy NFT successfully!';
                }
@@ -1119,7 +1000,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -1146,12 +1027,11 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                          await this.toggleIssuerField();
                     }
 
-                    Promise.resolve().then(() => {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                    });
+                    this.refreshUIData(wallet, accountInfo, accountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(accountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Sell NFT successfully!';
                }
@@ -1265,7 +1145,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -1290,11 +1170,11 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                          await this.toggleIssuerField();
                     }
 
-                    Promise.resolve().then(() => {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.clearFields(false);
-                         this.updateTickets(accountObjects);
-                    });
+                    this.refreshUIData(wallet, accountInfo, accountObjects);
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(accountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Create NFT Offer successfully!';
                }
@@ -1384,7 +1264,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -1745,11 +1625,6 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           return flags;
      }
 
-     private updateCurrencies() {
-          this.currencies = [...Object.keys(this.knownTrustLinesIssuers)];
-          this.currencies.sort((a, b) => a.localeCompare(b));
-     }
-
      private addNewDestinationFromUser() {
           if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
                this.customDestinations.push({
@@ -1813,71 +1688,19 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      }
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
-          this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
-
+          // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
           this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
           this.refreshUiAccountInfo(updatedAccountInfo);
      }
 
-     private checkForSignerAccounts(accountObjects: xrpl.AccountObjectsResponse): string[] {
-          const accountObjectsArray = accountObjects.result?.account_objects;
-          if (!Array.isArray(accountObjectsArray)) return [];
-
-          const signerAccounts: string[] = [];
-
-          for (const obj of accountObjectsArray) {
-               if (obj.LedgerEntryType === 'SignerList' && Array.isArray(obj.SignerEntries)) {
-                    // Set quorum once
-                    if (obj.SignerQuorum !== undefined) {
-                         this.signerQuorum = obj.SignerQuorum;
-                    }
-
-                    for (const entry of obj.SignerEntries) {
-                         const account = entry.SignerEntry?.Account;
-                         if (account) {
-                              signerAccounts.push(`${account}~${entry.SignerEntry.SignerWeight ?? ''}`);
-                         }
-                    }
-               }
-          }
-
-          return signerAccounts;
-     }
-
-     private getAccountTickets(accountObjects: xrpl.AccountObjectsResponse): string[] {
-          const objects = accountObjects.result?.account_objects;
-          if (!Array.isArray(objects)) return [];
-
-          const tickets = objects.reduce((acc: number[], obj) => {
-               if (obj.LedgerEntryType === 'Ticket' && typeof obj.TicketSequence === 'number') {
-                    acc.push(obj.TicketSequence);
-               }
-               return acc;
-          }, []);
-
-          return tickets.sort((a, b) => a - b).map(String);
-     }
-
-     public cleanUpSingleSelection() {
-          // Check if selected ticket still exists in available tickets
-          if (this.selectedSingleTicket && !this.ticketArray.includes(this.selectedSingleTicket)) {
-               this.selectedSingleTicket = ''; // Reset to "Select a ticket"
-          }
-     }
-
-     public cleanUpMultiSelection() {
-          // Filter out any selected tickets that no longer exist
-          this.selectedTickets = this.selectedTickets.filter(ticket => this.ticketArray.includes(ticket));
-     }
-
      updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
-          this.ticketArray = this.getAccountTickets(accountObjects);
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
 
           // Clean up selections based on current mode
           if (this.multiSelectMode) {
-               this.cleanUpMultiSelection();
+               this.selectedSingleTicket = this.utilsService.cleanUpMultiSelection(this.selectedTickets, this.ticketArray);
           } else {
-               this.cleanUpSingleSelection();
+               this.selectedSingleTicket = this.utilsService.cleanUpSingleSelection(this.selectedTickets, this.ticketArray);
           }
      }
 
@@ -1893,20 +1716,31 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                     // This callback runs inside NgZone → UI updates safely
                     this.currentWallet = { ...newCurrentWallet };
                     // Optional: trigger change detection if needed
-                    this.cdr.markForCheck();
+                    // this.cdr.markForCheck();
                }
           );
      }
 
      public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
           // Tickets
-          this.ticketArray = this.getAccountTickets(accountObjects);
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
           this.selectedTicket = this.ticketArray[0] || this.selectedTicket;
 
           // Signer accounts
-          const signerAccounts = this.checkForSignerAccounts(accountObjects);
+          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
+          this.signerQuorum = signerQuorum;
           const hasSignerAccounts = signerAccounts?.length > 0;
+          this.checkForMultiSigners(hasSignerAccounts, wallet);
 
+          // Boolean flags
+          this.multiSigningEnabled = hasSignerAccounts;
+          this.useMultiSign = false;
+          this.masterKeyDisabled = Boolean(accountInfo?.result?.account_flags?.disableMasterKey);
+
+          this.clearFields(false);
+     }
+
+     private checkForMultiSigners(hasSignerAccounts: boolean, wallet: xrpl.Wallet) {
           if (hasSignerAccounts) {
                const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
                this.multiSignAddress = signerEntries.map((e: { Account: any }) => e.Account).join(',\n');
@@ -1917,13 +1751,6 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                this.multiSignSeeds = '';
                this.storageService.removeValue('signerEntries');
           }
-
-          // Boolean flags
-          this.multiSigningEnabled = hasSignerAccounts;
-          this.useMultiSign = false;
-          this.masterKeyDisabled = Boolean(accountInfo?.result?.account_flags?.disableMasterKey);
-
-          this.clearFields(false);
      }
 
      public refreshUiAccountInfo(accountInfo: xrpl.AccountInfoResponse): void {
@@ -1934,7 +1761,9 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           const isMasterKeyDisabled = accountInfo?.result?.account_flags?.disableMasterKey ?? false;
 
           // Set regular key properties
-          this.setRegularKeyProperties(regularKey, accountData.Account);
+          const rkProps = this.utilsService.setRegularKeyProperties(regularKey, accountData.Account) || { regularKeyAddress: 'No RegularKey configured for account', regularKeySeed: '', isRegularKeyAddress: false };
+          this.regularKeyAddress = rkProps.regularKeyAddress;
+          this.regularKeySeed = rkProps.regularKeySeed;
 
           // Set master key property
           this.masterKeyDisabled = isMasterKeyDisabled;
@@ -1943,35 +1772,9 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           this.regularKeySigningEnabled = !!regularKey;
      }
 
-     private setRegularKeyProperties(regularKey: string | undefined, account: string): void {
-          if (regularKey) {
-               this.regularKeyAddress = regularKey;
-               this.regularKeySeed = this.storageService.get(`${account}regularKeySeed`) || '';
-          } else {
-               this.regularKeyAddress = 'No RegularKey configured for account';
-               this.regularKeySeed = '';
-               this.isRegularKeyAddress = false;
-          }
-     }
-
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          if (this.destinations.length > 0 && !this.destinationField) {
-               // this.destinationField = this.destinations[0].address;
-          }
           this.storageService.set('destinations', this.destinations);
-          this.ensureDefaultNotSelected();
-     }
-
-     ensureDefaultNotSelected() {
-          const currentAddress = this.currentWallet.address;
-          if (currentAddress && this.destinations.length > 0) {
-               if (!this.destinationField || this.destinationField === currentAddress) {
-                    const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    // this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
-               }
-          }
-          this.cdr.detectChanges();
      }
 
      private validateInputs(inputs: ValidationInputs, action: string): string[] {
@@ -2216,148 +2019,102 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           this.nftIdField = ids.join(', ');
      }
 
-     async toggleIssuerField() {
-          console.log('Entering onCurrencyChange');
-          const startTime = Date.now();
-          this.ui.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+     async toggleIssuerField(): Promise<void> {
+          console.log('toggleIssuerField → currency:', this.currencyFieldDropDownValue);
+          // this.ui.clearMessages();
 
           try {
-               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-
-               const [gatewayBalances] = await Promise.all([this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
-
-               // Calculate total balance for selected currency
-               let balanceTotal: number = 0;
-               const currency = this.utilsService.formatCurrencyForDisplay(this.currencyFieldDropDownValue);
-               // const relevantIssuers: string[] = []; // New array for issuers of this currency
-
-               if (gatewayBalances.result.assets && Object.keys(gatewayBalances.result.assets).length > 0) {
-                    for (const [issuer, currencies] of Object.entries(gatewayBalances.result.assets)) {
-                         for (const { currency, value } of currencies) {
-                              if (this.utilsService.formatCurrencyForDisplay(currency) === this.currencyFieldDropDownValue) {
-                                   balanceTotal += Number(value);
-                                   // relevantIssuers.push(issuer); // Collect issuers for this currency
-                              }
-                         }
-                    }
-                    this.gatewayBalance = this.utilsService.formatTokenBalance(balanceTotal.toString(), 18);
-               } else {
-                    this.gatewayBalance = '0';
+               if (!this.currencyFieldDropDownValue) {
+                    this.issuers = [];
+                    this.issuerFields = '';
+                    this.ui.setWarning('Please select a currency first.');
+                    this.ui.spinner = false;
+                    return;
                }
 
-               const encodedCurr = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
-               const issuerPromises = this.wallets
-                    .filter(w => xrpl.isValidAddress(w.address))
-                    .map(async w => {
-                         try {
-                              const tokenBalance = await this.xrplService.getTokenBalance(client, w.address, 'validated', '');
-                              const hasObligation = tokenBalance.result.obligations?.[encodedCurr];
+               const currency = this.currencyFieldDropDownValue;
+               const knownIssuersForThisCurrency = this.knownTrustLinesIssuers[currency] || [];
 
-                              if (hasObligation && hasObligation !== '0') {
-                                   return { name: w.name, address: w.address };
-                              } else if (w.isIssuer === true) {
-                                   return { name: w.name, address: w.address };
-                              }
-                         } catch (err) {
-                              console.warn(`Issuer check failed for ${w.address}:`, err);
-                         }
-                         return null;
-                    });
+               // Build issuer list — ONLY from knownTrustLinesIssuers[currency]
+               const issuerEntries: { name: string; address: string }[] = [];
 
-               const issuerResults = await Promise.all(issuerPromises);
-               // let uniqueIssuers = issuerResults.filter((i): i is { name: string; address: string } => i !== null).filter((candidate, index, self) => index === self.findIndex(c => c.address === candidate.address));
+               for (const addr of knownIssuersForThisCurrency) {
+                    if (!xrpl.isValidAddress(addr)) continue;
 
-               // Step 1: filter out nulls
-               const nonNullIssuers = issuerResults.filter((i): i is { name: string; address: string } => {
-                    const isValid = i !== null;
-                    console.log('Filtering null:', i, '->', isValid);
-                    return isValid;
-               });
+                    // Try to get nice name
+                    const wallet = this.wallets.find(w => w.address === addr);
+                    const custom = this.customDestinations.find(d => d.address === addr);
 
-               // Step 2: remove duplicates by address
-               const uniqueIssuers = nonNullIssuers.filter((candidate, index, self) => {
-                    const firstIndex = self.findIndex(c => c.address === candidate.address);
-                    const isUnique = index === firstIndex;
-                    console.log('Checking uniqueness:', candidate, 'Index:', index, 'First index:', firstIndex, 'Unique?', isUnique);
-                    return isUnique;
-               });
+                    const name = wallet?.name || custom?.name || currency || `Issuer (${addr.slice(0, 8)}...)`;
 
-               console.log('Unique issuers:', uniqueIssuers);
+                    issuerEntries.push({ name, address: addr });
+               }
 
-               // Always include the current wallet in issuers
-               // if (!uniqueIssuers.some(i => i.address === wallet.classicAddress)) {
-               //      uniqueIssuers.push({ name: this.currentWallet.name || 'Current Account', address: wallet.classicAddress });
-               // }
+               // Sort by name
+               this.issuers = issuerEntries.sort((a, b) => a.name.localeCompare(b.name));
 
-               this.currencyIssuers = uniqueIssuers;
+               // Auto-select first issuer
+               if (this.issuers.length > 0) {
+                    if (!this.issuerFields || !this.issuers.some(i => i.address === this.issuerFields)) {
+                         this.issuerFields = this.issuers[0].address;
+                    }
+                    this.ui.clearWarning();
+               } else {
+                    if (currency !== 'XRP' && currency !== 'MPT') {
+                         this.issuerFields = '';
+                         this.ui.setWarning(`No issuers configured for <strong>${currency}</strong>`);
+                    }
+               }
 
-               const knownIssuers = this.knownTrustLinesIssuers[this.currencyFieldDropDownValue] || [];
+               try {
+                    const wallet = await this.getWallet();
+                    const cache = this.getCachedAccountData(this.currentWallet.address);
 
-               if (!this.selectedIssuer || !this.currencyIssuers.some(iss => iss.address === this.selectedIssuer)) {
-                    let newIssuer = '';
+                    let accountObjects: xrpl.AccountObjectsResponse;
+                    let gatewayBalances: xrpl.GatewayBalancesResponse;
 
-                    // Find the first matching known issuer that exists in available issuers
-                    const matchedKnownIssuer = knownIssuers.find(known => this.currencyIssuers.some(iss => iss.address === known));
-
-                    if (matchedKnownIssuer) {
-                         newIssuer = matchedKnownIssuer;
-                    } else if (this.currencyIssuers.length > 0) {
-                         newIssuer = this.currencyIssuers[0].address;
+                    if (cache?.accountObjects && cache?.tokenBalance) {
+                         accountObjects = cache.accountObjects;
+                         gatewayBalances = cache.tokenBalance;
                     } else {
-                         newIssuer = '';
+                         const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                         [gatewayBalances, accountObjects] = await Promise.all([this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+                         this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance: gatewayBalances });
                     }
 
-                    this.selectedIssuer = newIssuer;
-               }
-
-               // this.issuers = uniqueIssuers;
-
-               // const knownIssuer = this.knownTrustLinesIssuers[this.currencyFieldDropDownValue];
-               // if (!this.selectedIssuer || !this.issuers.some(iss => iss.address === this.selectedIssuer)) {
-               //      let newIssuer = '';
-               //      if (knownIssuer && this.issuers.some(iss => iss.address === knownIssuer)) {
-               //           newIssuer = knownIssuer;
-               //      } else if (this.issuers.length > 0) {
-               //           newIssuer = this.issuers[0].address;
-               //      } else {
-               //           newIssuer = '';
-               //      }
-               //      this.selectedIssuer = newIssuer;
-               // }
-
-               if (this.currencyIssuers.length === 0) {
-                    console.warn(`No issuers found among wallets for currency: ${this.currencyFieldDropDownValue}`);
-               }
-
-               if (this.currencyFieldDropDownValue === 'XRP') {
-                    this.destinationFields = this.wallets[1]?.address || ''; // Default to first wallet address for XRP
-               } else {
-                    const currencyChanged = this.lastCurrency !== this.currencyFieldDropDownValue;
-                    const issuerChanged = this.lastIssuer !== this.selectedIssuer;
-                    if (currencyChanged || issuerChanged) {
-                         this.lastCurrency = this.currencyFieldDropDownValue;
-                         this.lastIssuer = this.selectedIssuer;
-                    }
                     await this.updateCurrencyBalance(gatewayBalances, wallet);
+               } catch (e) {
+                    console.warn('Balance update failed in toggleIssuerField', e);
                }
-               this.ensureDefaultNotSelected();
+
+               this.cdr.detectChanges();
           } catch (error: any) {
-               this.tokenBalance = '0';
-               this.gatewayBalance = '0';
-               console.error('Error in onCurrencyChange:', error);
-               this.ui.setError(`ERROR: Failed to fetch balance - ${error.message || 'Unknown error'}`);
+               console.error('Error in toggleIssuerField:', error);
+               this.ui.setError('Failed to load issuers');
+               this.issuers = [];
+               this.issuerFields = '';
           } finally {
                this.ui.spinner = false;
-               this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving onCurrencyChange in ${this.executionTime}ms`);
           }
+     }
+
+     get availableCurrencies(): string[] {
+          const baseCurrencies = Object.keys(this.knownTrustLinesIssuers).filter(c => c !== '' && c !== 'MPT'); // Exclude XRP and MPT by default
+
+          // On the Create Escrow tab → always include MPT (and XRP if you want)
+          if (this.activeTab === 'create') {
+               const currencies = ['XRP', ...baseCurrencies];
+               return [...new Set(currencies)].sort(); // dedupe + sort
+          }
+
+          // On ANY other tab (especially Create Trustline) → MPT is NOT allowed
+          return baseCurrencies.sort();
      }
 
      private async updateCurrencyBalance(gatewayBalance: xrpl.GatewayBalancesResponse, wallet: xrpl.Wallet) {
           const parsedBalances = this.parseAllGatewayBalances(gatewayBalance, wallet);
           if (parsedBalances && Object.keys(parsedBalances).length > 0) {
-               this.tokenBalance = parsedBalances[this.currencyFieldDropDownValue]?.[wallet.classicAddress] ?? parsedBalances[this.currencyFieldDropDownValue]?.[this.selectedIssuer] ?? '0';
+               this.tokenBalance = parsedBalances[this.currencyFieldDropDownValue]?.[wallet.classicAddress] ?? parsedBalances[this.currencyFieldDropDownValue]?.[this.issuerFields] ?? '0';
           } else {
                this.tokenBalance = '0';
           }
@@ -2408,16 +2165,27 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           return grouped;
      }
 
+     private getCachedAccountData(address: string) {
+          const cached = this.accountDataCache.get(address);
+          if (cached && Date.now() - cached.timestamp < 8000) {
+               // 8 sec cache
+               return cached;
+          }
+          return null;
+     }
+
+     private setCachedAccountData(address: string, data: Partial<{ accountObjects: xrpl.AccountObjectsResponse; tokenBalance: xrpl.GatewayBalancesResponse }>) {
+          const existing = this.accountDataCache.get(address) || { timestamp: Date.now() };
+          this.accountDataCache.set(address, { ...existing, ...data, timestamp: Date.now() });
+     }
+
      private async getWallet() {
-          const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
+          const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) {
                throw new Error('ERROR: Wallet could not be created or is undefined');
           }
           return wallet;
-     }
-
-     saveWallets() {
-          this.storageService.set('wallets', JSON.stringify(this.wallets));
      }
 
      updatePaymentTx() {
@@ -2468,12 +2236,6 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
      }
 
      public get infoMessage(): string | null {
-          if (this.activeTab === 'setTrustline') {
-          } else if (this.activeTab === 'removeTrustline') {
-          } else if (this.activeTab === 'issueCurrency') {
-          } else if (this.activeTab === 'clawbackTokens') {
-          }
-
           const tabConfig = {
                setTrustline: {
                     // checks: this.existingIOUs,
@@ -2546,6 +2308,43 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           this.isTicket = false;
           this.ticketSequence = '';
           this.cdr.detectChanges();
+     }
+
+     private updateCurrencies() {
+          // Get all currencies except XRP
+          const allCurrencies = Object.keys(this.knownTrustLinesIssuers);
+          const filtered = allCurrencies.filter(c => c !== 'XRP');
+          // allCurrencies.push('MPT');
+
+          // Sort alphabetically
+          this.currencies = filtered.sort((a, b) => a.localeCompare(b));
+
+          // AUTO-SELECT FIRST CURRENCY — SAFE WAY
+          if (this.currencies.length > 0) {
+               // Only set if nothing is selected OR current selection is invalid/removed
+               const shouldSelectFirst = !this.currencyFieldDropDownValue || !this.currencies.includes(this.currencyFieldDropDownValue);
+
+               if (shouldSelectFirst) {
+                    this.currencyFieldDropDownValue = this.currencies[0];
+                    // Trigger issuer load — but do it in next tick so binding is ready
+                    Promise.resolve().then(() => this.onCurrencyChange());
+               }
+          } else {
+               // No currencies left
+               this.currencyFieldDropDownValue = '';
+               this.issuerFields = '';
+               this.issuers = [];
+          }
+     }
+
+     onTokenChange(): void {
+          const issuers = this.knownTrustLinesIssuers[this.tokenToRemove] || [];
+          this.issuerToRemove = issuers.length > 0 ? issuers[0] : '';
+     }
+
+     getIssuerForCheck(checks: any[], checkIndex: string): string | null {
+          const check = checks.find(c => c.index === checkIndex);
+          return check?.SendMax?.issuer || null;
      }
 
      openDropdown() {

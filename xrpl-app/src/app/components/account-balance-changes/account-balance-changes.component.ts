@@ -26,7 +26,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, pairwise, startWith } from 'rxjs/operators';
 import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -38,6 +38,7 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
+import { Router } from '@angular/router';
 declare var Prism: any;
 
 interface BalanceChange {
@@ -80,7 +81,6 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      @ViewChild(MatPaginator) paginator!: MatPaginator;
      displayedColumns: string[] = ['date', 'hash', 'type', 'change', 'currency', 'fees', 'balanceBefore', 'balanceAfter', 'counterparty'];
      balanceChanges: BalanceChange[] = [];
-     // balanceChangesDataSource = new MatTableDataSource<BalanceChange>(this.balanceChanges);
      trackByHash = (index: number, item: BalanceChange) => item.hash;
      loadingMore: boolean = false;
      hasMoreData: boolean = true;
@@ -154,7 +154,8 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           private validationService: ValidationService,
           private overlay: Overlay,
           private viewContainerRef: ViewContainerRef,
-          private destinationDropdownService: DestinationDropdownService
+          private destinationDropdownService: DestinationDropdownService,
+          private router: Router
      ) {}
 
      ngOnInit() {
@@ -167,11 +168,18 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
           this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
-               this.wallets = wallets;
-               if (!this.wallets) {
-                    this.hasWallets = false;
-                    return;
+          this.walletManagerService.wallets$.pipe(startWith(null), pairwise(), takeUntil(this.destroy$)).subscribe(([prev, curr]) => {
+               this.wallets = curr || [];
+               this.hasWallets = this.wallets.length > 0;
+
+               const prevSelected = prev?.[this.selectedWalletIndex];
+               const currSelected = curr?.[this.selectedWalletIndex];
+
+               const walletSwitched = !prev || prevSelected?.address !== currSelected?.address || prev.length !== curr?.length;
+
+               if (walletSwitched) {
+                    this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
+                    this.onAccountChange(); // Only on actual change
                }
           });
 
@@ -193,21 +201,9 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           if (this.hasInitialized) return;
           this.hasInitialized = true;
 
-          // Keep sort
-          // this.balanceChangesDataSource.sort = this.sort;
-
-          // We are using infinite scroll (no paginator) so do NOT attach paginator
-          // If paginator is present for any reason, do not rely on it.
           if (this.paginator) {
                console.log('Warning: paginator present but not used for infinite scroll.');
           }
-
-          // (this.balanceChangesDataSource as any).trackByFunction = this.trackByFunction;
-
-          // if (this.selectedAccount) {
-          // initial load
-          // this.loadBalanceChanges(true);
-          // }
      }
 
      toggleExpanded() {
@@ -266,19 +262,6 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      private readonly trackByFunction = (index: number, item: BalanceChange) => {
           return item.hash;
      };
-
-     // private setFilterPredicate() {
-     //      this.balanceChangesDataSource.filterPredicate = (data: BalanceChange, filter: string) => {
-     //           const searchText = filter.trim();
-     //           if (!searchText) return this.isInDateRange(data.date);
-
-     //           // Use pre-computed index
-     //           const matchesText = data._searchIndex?.includes(searchText) ?? false;
-     //           const inDateRange = this.isInDateRange(data.date);
-
-     //           return matchesText && inDateRange;
-     //      };
-     // }
 
      private formatDateForSearch(date: Date): string {
           const d = new Date(date);
@@ -406,6 +389,10 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      }
 
      async onAccountChange() {
+          if (!this.router.url.includes('account-balance-changes')) {
+               return;
+          }
+
           if (this.wallets.length === 0) {
                this.currentWallet = {
                     classicAddress: '',
@@ -421,20 +408,27 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           }
 
           const selected = this.wallets[this.selectedWalletIndex];
-          this.currentWallet = {
-               ...selected,
-               balance: selected.balance || '0',
-               ownerCount: selected.ownerCount || '0',
-               xrpReserves: selected.xrpReserves || '0',
-               spendableXrp: selected.spendableXrp || '0',
-          };
 
-          if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
-               this.ui.clearWarning();
+          // Only reload if the actual address changed
+          if (selected.address !== this.currentWallet.address) {
+               this.currentWallet = { ...selected };
                this.loadBalanceChanges(true);
-          } else if (this.currentWallet.address) {
-               this.ui.setError('Failed to refresh balance');
+          } else {
+               this.currentWallet = {
+                    ...selected,
+                    balance: selected.balance || '0',
+                    ownerCount: selected.ownerCount || '0',
+                    xrpReserves: selected.xrpReserves || '0',
+                    spendableXrp: selected.spendableXrp || '0',
+               };
           }
+
+          // if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
+          //      this.ui.clearWarning();
+          //      this.loadBalanceChanges(true);
+          // } else if (this.currentWallet.address) {
+          //      this.ui.setError('Failed to refresh balance');
+          // }
      }
 
      async loadBalanceChanges(reset = true) {

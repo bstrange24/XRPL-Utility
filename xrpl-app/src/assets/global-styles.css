@@ -13,8 +13,8 @@
      margin: 0 auto;
      /* padding: 0 1rem; */
      padding-right: 0.5rem;
-     /* background-color: aliceblue; */
-     background-color: white;
+     background-color: aliceblue;
+     /* background-color: white; */
 }
 
 html {
@@ -233,12 +233,6 @@ input[type='text']:focus {
      margin-right: 5px;
 }
 
-.network .arrow {
-     width: 12px;
-     height: 12px;
-     color: white;
-}
-
 .network .dropdown-menu {
      position: absolute;
      top: 100%;
@@ -252,23 +246,6 @@ input[type='text']:focus {
      padding: 4px;
      color: white;
      display: none;
-}
-
-.network .dropdown-menu a {
-     display: block;
-     padding: 8px 12px;
-     text-decoration: none;
-     color: white;
-     white-space: nowrap;
-}
-
-.network .dropdown-menu a:hover {
-     text-decoration: none;
-     background-color: #2a2c31;
-}
-
-.network:hover .dropdown-menu {
-     display: block;
 }
 
 .custom-network-form input {
@@ -321,6 +298,7 @@ input[type='text']:focus {
      display: flex;
      gap: 15px;
      align-items: center;
+     margin-left: 5em;
 }
 
 .navbar-links .dropdown-toggle,
@@ -374,18 +352,8 @@ input[type='text']:focus {
      background-color: #2a2c31;
 }
 
-.dropdown-menu a.active {
-     color: #4caf50;
-     font-weight: bold;
-}
-
 .dropdown:hover .dropdown-menu {
      display: block;
-}
-
-.dropdown-item.active {
-     background-color: #2a2c31;
-     font-weight: bold;
 }
 
 .accounts-dropdown.active .dropdown-toggle {
@@ -607,8 +575,8 @@ input[type='text']:focus {
 }
 
 .wallet-item {
-     /* background: aliceblue; */
-     background-color: white;
+     background: aliceblue;
+     /* background-color: white; */
      border: 1px solid #e5e7eb;
      border-radius: 10px;
      padding: 1rem;
@@ -1046,12 +1014,12 @@ input:focus+.slider {
 
 .btn-primary-blue {
      background-color: rgba(12, 34, 235, 0.7);
-     background: linear-gradient(135deg, #4f8bfc 50%, #002cbb 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #002cbb 100%);
 }
 
 .btn-primary-blue:hover {
      background-color: rgba(12, 34, 235, 0.7);
-     background: linear-gradient(135deg, #4f8bfc 50%, #002cbb 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #002cbb 100%);
 }
 
 .btn-primary-green {
@@ -1218,7 +1186,7 @@ input:focus+.slider {
 .generate-btn {
      /* background: #007bff; */
      background-color: rgba(12, 34, 235, 0.7);
-     background: linear-gradient(135deg, #4f8bfc 50%, #5254b1 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
      color: white;
      border: none;
      border-radius: 10px;
@@ -1231,7 +1199,7 @@ input:focus+.slider {
 .generate-btn:hover {
      /* background: #2563eb; */
      background-color: rgba(12, 34, 235, 0.7);
-     background: linear-gradient(135deg, #4f8bfc 50%, #5254b1 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
 }
 
 .panel-subtitle {
@@ -1242,7 +1210,8 @@ input:focus+.slider {
 
 /* Selected Account Card */
 .selected-account-card {
-     background: #fff;
+     background: white;
+     /* background: aliceblue; */
      border: 1px solid #e5e7eb;
      border-radius: 10px;
      padding: 1rem;
@@ -1360,7 +1329,7 @@ input:focus+.slider {
 .wallet-avatar {
      width: 36px;
      height: 36px;
-     background: linear-gradient(135deg, #4f8bfc 50%, #5254b1 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
      color: white;
      font-weight: bold;
      font-size: 1rem;
@@ -1455,7 +1424,7 @@ input:focus+.slider {
      /* background-color: rgba(12, 34, 235, 0.7); */
      /* background: linear-gradient(135deg, rgba(23, 56, 240, 0.356) 50%, rgba(12, 34, 235, 0.7)100%); */
      color: white;
-     background: linear-gradient(135deg, #4f8bfc 50%, #5254b1 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
      /* border-color: #6366f1; */
      /* box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); */
 }
@@ -1507,7 +1476,7 @@ input:focus+.slider {
 /* ===== TAB MENU BAR (Create, Send, Authorize, etc.) ===== */
 .menu-bar {
      display: flex;
-     gap: 0.5rem;
+     /* gap: 0.5rem; */
      border-radius: 10px;
      margin-bottom: 1.5rem;
      overflow-x: auto;
@@ -1681,7 +1650,7 @@ input:focus+.slider {
 } */
 
 .show-toggle:hover {
-     background: linear-gradient(135deg, #4f8bfc 50%, #5254b1 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
      border-color: #93c5fd;
 }
 
@@ -2029,8 +1998,8 @@ app-root {
      display: block;
      margin: 0;
      padding: 0;
-     /* background-color: aliceblue; */
-     background-color: white;
+     background-color: aliceblue;
+     /* background-color: white; */
 }
 
 /* -------------------------------------------------
@@ -2320,8 +2289,8 @@ app-root {
      bottom: 20px;
      left: 50%;
      transform: translateX(-50%) translateY(100%);
-     /* background-color: aliceblue; */
-     background-color: white;
+     background-color: aliceblue;
+     /* background-color: white; */
      color: black;
      padding: 10px 20px;
      border-radius: 6px;
@@ -2655,7 +2624,7 @@ app-root {
 
 .blue-button-submenu {
      background-color: #007bff;
-     background: linear-gradient(135deg, #4f8bfc 50%, #002cbb 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #002cbb 100%);
      width: 40px;
      height: 40px;
      border-radius: 10px;
@@ -2737,8 +2706,8 @@ app-root {
      line-height: 1;
      /* margin-top: 0.5em; */
      /* no extra margin */
-     /* background-color: aliceblue; */
-     background-color: white;
+     background-color: aliceblue;
+     /* background-color: white; */
      /* padding-top: 10px; */
 }
 
@@ -2785,7 +2754,7 @@ app-root {
      font-size: 0.9rem;
      white-space: nowrap;
      background-color: rgba(12, 34, 235, 0.7);
-     background: linear-gradient(135deg, #4f8bfc 50%, #5254b1 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
      /* color: #007bff; */
      color: white;
      /* background-color: #000000; */
@@ -3037,10 +3006,11 @@ cdk-drop-list {
 }
 
 .wallet-item.selected {
-     background: linear-gradient(135deg, #4f8bfc 50%, #5254b1 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
      border-color: #6366f1;
      color: white;
-     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+     /* box-shadow: white */
+     box-shadow: 0 0 0 3px aliceblue;
 }
 
 .wallet-item.selected .wallet-balance,
@@ -3136,7 +3106,7 @@ cdk-drop-list {
 
 /* When wallet is selected → make Show button pop with full gradient */
 .wallet-item.selected .show-toggle {
-     background: linear-gradient(135deg, #4f8bfc 50%, #5254b1 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
      border: 1px solid rgba(99, 102, 241, 0.7);
      color: white !important;
      font-weight: 600;
@@ -3144,7 +3114,7 @@ cdk-drop-list {
 }
 
 .wallet-item.selected .show-toggle:hover {
-     background: linear-gradient(135deg, #4f8bfc 50%, #5254b1 100%);
+     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
      transform: translateY(-2px);
      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
 }
@@ -3365,4 +3335,238 @@ cdk-drop-list {
 .flag-item-account-flags input[disabled] {
      opacity: 0.7;
      cursor: not-allowed;
+}
+
+.helper-text {
+     display: block;
+     margin-top: 0.8em;
+     font-size: 0.85em;
+     color: #777;
+     margin-bottom: 0.8em;
+     padding-left: 0.2em;
+}
+
+.helper-text code {
+     background: #f4f4f4;
+     padding: 2px 6px;
+     border-radius: 6px;
+     font-size: 0.9em;
+}
+
+
+.mnemonic-textarea {
+     width: 100%;
+     min-height: 80px;
+     padding: 12px;
+     font-family: inherit;
+     font-size: 14px;
+     border: 1px solid #ccc;
+     border-radius: 4px;
+     resize: vertical;
+     /* Allows user to resize if needed */
+     white-space: pre-wrap;
+     /* Preserves spaces but wraps text */
+     word-wrap: break-word;
+}
+
+.network-section {
+     display: flex;
+     align-items: center;
+     gap: 12px;
+     /* space between dropdown and status */
+     flex-wrap: nowrap;
+}
+
+.connection-status {
+     display: flex;
+     align-items: center;
+     gap: 6px;
+     font-size: 13px;
+     font-weight: 500;
+     white-space: nowrap;
+     user-select: none;
+     transition: all 0.3s ease;
+}
+
+.status-dot {
+     font-size: 16px;
+     line-height: 1;
+     padding-left: 0.4em;
+}
+
+.connection-status.connected .status-dot {
+     color: #28a745;
+     text-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
+}
+
+.connection-status.disconnected .status-dot {
+     color: #dc3545;
+}
+
+.connection-status.connecting .status-dot {
+     color: #ffc107;
+     animation: pulse 2s infinite;
+}
+
+.connection-status.connected .status-text {
+     color: #28a745;
+}
+
+.connection-status.disconnected .status-text {
+     color: #dc3545;
+}
+
+.connection-status.connecting .status-text {
+     color: #ffc107;
+}
+
+@keyframes pulse {
+
+     0%,
+     100% {
+          opacity: 0.7;
+     }
+
+     50% {
+          opacity: 1;
+     }
+}
+
+/* Optional: subtle hover effect */
+.connection-status:hover {
+     opacity: 0.9;
+}
+
+
+/* ============================================= */
+/* NEW NAVBAR STYLE – WHITE BACKGROUND + BLUE LINKS */
+/* ============================================= */
+
+.navbar {
+     /* background-color: white !important; */
+     background-color: aliceblue !important;
+     /* ← White background */
+     border-radius: 16px;
+     /* Slightly softer corners */
+     padding: 14px 24px !important;
+     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+     /* Subtle depth */
+     border: 1px solid aliceblue;
+     /* border: 1px solid white; */
+     /* Light border */
+}
+
+/* THIS IS THE MISSING PIECE – target the actual active link inside dropdowns */
+.navbar-links .dropdown-menu a.active {
+     color: #55C240 !important;
+     font-weight: 700 !important;
+     background: linear-gradient(90deg, rgba(85, 194, 64, 0.08), transparent) !important;
+     border-left: 3px solid #55C240 !important;
+     border-radius: 0 6px 6px 0 !important;
+     padding-left: 9px !important;
+}
+
+/* All navbar links → blue */
+.navbar-links a,
+.navbar-links .dropdown-toggle {
+     color: #fff !important;
+     /* Tailwind blue-500 → nice vibrant blue */
+     font-weight: 500;
+     transition: all 0.2s ease;
+}
+
+/* Hover state */
+.navbar-links a:hover,
+.navbar-links .dropdown-toggle:hover {
+     color: #fff !important;
+     /* Slightly darker blue on hover */
+}
+
+/* Active / selected link → YELLOW */
+.navbar-links a.active,
+.navbar-links .dropdown-toggle.active,
+.dropdown-menu a.active,
+.accounts-dropdown.active .dropdown-toggle,
+.escrows-dropdown.active .dropdown-toggle,
+.dropdown-item.active {
+     color: #91ED80 !important;
+     font-weight: 700 !important;
+}
+
+/* Dropdown menus – keep dark but make them pop on white navbar */
+.dropdown-menu,
+.accounts-dropdown .dropdown-menu,
+.escrows-dropdown .dropdown-menu {
+     background-color: #ffffff !important;
+     /* Dark slate – looks premium */
+     border: 1px solid #ffffff;
+     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Dropdown items – white text */
+.dropdown-menu a,
+.accounts-dropdown .dropdown-menu a,
+.escrows-dropdown .dropdown-menu a {
+     color: #3b82f6 !important;
+     /* Light gray-white */
+}
+
+/* Dropdown hover */
+.dropdown-menu a:hover,
+.accounts-dropdown .dropdown-menu a:hover {
+     background-color: #ffffff !important;
+     color: #91ED80 !important;
+     /* Yellow on hover inside dropdown */
+}
+
+/* Optional: make the whole navbar container a bit wider and centered */
+.nav-container {
+     background: transparent;
+     padding: 0;
+     margin-bottom: 1rem;
+}
+
+/* Keep your connection status visible and crisp on white */
+.connection-status {
+     font-weight: 600;
+}
+
+/* Darker green */
+.connection-status.connected .status-text {
+     color: #16a34a;
+}
+
+/* Darker red */
+.connection-status.disconnected .status-text {
+     color: #dc2626;
+}
+
+.navbar-container,
+.navbar-container * {
+     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+     font-weight: 500 !important;
+     letter-spacing: -0.015em;
+}
+
+/* Slightly bolder for active items */
+.navbar-container a.active,
+.navbar-container .dropdown-toggle.active,
+.navbar-container .dropdown-menu a.active,
+.navbar-container .accounts-dropdown.active .dropdown-toggle,
+.navbar-container .escrows-dropdown.active .dropdown-toggle {
+     font-weight: 700 !important;
+}
+
+/* Network dropdown button – make it match */
+.network .btn,
+.network .dropdown-toggle-text {
+     font-family: 'Inter', system-ui, sans-serif !important;
+     font-weight: 600 !important;
+     letter-spacing: -0.02em;
+}
+
+/* Connection status text */
+.connection-status .status-text {
+     font-family: 'Inter', system-ui, sans-serif !important;
+     font-weight: 600 !important;
 }

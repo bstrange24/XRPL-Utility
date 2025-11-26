@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (transactionResult)="ui.handleTransactionResult($event)"></app-app-wallet-dynamic-input>
 
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
@@ -111,38 +111,68 @@
                          <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
                          Generate New Wallet
                     </button>
-                    <button class="menu-btn active" [class.active]="activeTab === 'derive'" (click)="setTab('derive')">
+                    <button class="menu-btn active" [class.active]="activeTab === 'deriveSeed'" (click)="setTab('deriveSeed')">
                          <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
-                         Derive Existing Wallet
+                         Derive from Seed
+                    </button>
+                    <button class="menu-btn active" [class.active]="activeTab === 'deriveMnemonic'" (click)="setTab('deriveMnemonic')">
+                         <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
+                         Derive from Mnemonic
+                    </button>
+                    <button class="menu-btn active" [class.active]="activeTab === 'deriveSecretNumbers'" (click)="setTab('deriveSecretNumbers')">
+                         <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
+                         Derive from Secret Numbers
                     </button>
                </div>
 
                <!-- Configure Menu -->
                @if (activeTab === 'generate') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">New Wallet Generator</h2>
-                              <p class="submenu-info-secondary-text">Generate a new XRPL Wallet on {{environment}}</p>
-                         </div>
+               <div class="submenu-info-text">
+                    <div class="green-button-submenu">
+                         <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
+                    </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">New Wallet Generator</h2>
+                         <p class="submenu-info-secondary-text">Generate a new XRPL Wallet on {{environment}}</p>
                     </div>
                </div>
                }
 
-               <!-- Derive Menu -->
-               @if (activeTab === 'derive') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Derive Wallet</h2>
-                              <p class="submenu-info-secondary-text">Derive an existing XRPL Wallet on {{environment}}</p>
-                         </div>
+               <!-- Derive Seed Menu -->
+               @if (activeTab === 'deriveSeed') {
+               <div class="submenu-info-text">
+                    <div class="blue-button-submenu">
+                         <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
+                    </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">Derive Wallet from Seed</h2>
+                         <p class="submenu-info-secondary-text">Derive an existing XRPL Wallet from a seed on {{environment}}</p>
+                    </div>
+               </div>
+               }
+
+               <!-- Derive Mnemonic Menu -->
+               @if (activeTab === 'deriveMnemonic') {
+               <div class="submenu-info-text">
+                    <div class="blue-button-submenu">
+                         <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
+                    </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">Derive Wallet from Mnemonic</h2>
+                         <p class="submenu-info-secondary-text">Derive an existing XRPL Wallet from a mnemonic on {{environment}}</p>
+                    </div>
+               </div>
+               }
+
+               <!-- Derive Secret Numbers Menu -->
+               @if (activeTab === 'deriveSecretNumbers') {
+               <div class="submenu-info-text">
+                    <div class="blue-button-submenu">
+                         <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
+                    </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">Derive Wallet from Secret Numbers</h2>
+                         <p class="submenu-info-secondary-text">Derive an existing XRPL Wallet from secret numbers on {{environment}}</p>
                     </div>
                </div>
                }
@@ -166,48 +196,111 @@
                <form #theForm="ngForm" class="send-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab">
-                              <!-- Amount and Destination -->
-                              @if (activeTab === 'derive') {
-                              <div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Seed</label>
-                                             <input type="text" [(ngModel)]="seed" name="seed" placeholder="" />
-                                        </div>
+                              <!-- Derive Seed -->
+                              @if (activeTab === 'deriveSeed') {
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Enter Seed</label>
+                                        @if (seedInput.length > 0) {
+                                        <label>
+                                             <span [ngClass]="{ valid: seedValid, invalid: !seedValid }"> {{ seedValid ? 'Seed Valid ✅' : 'Invalid Seed ❌' }} </span>
+                                        </label>
+                                        }
                                    </div>
                               </div>
 
-                              <div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Mnemonic</label>
-                                             <input type="text" [(ngModel)]="mnemonic" name="mnemonic" placeholder="" />
-                                        </div>
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <input type="text" [(ngModel)]="seed" name="seed" (input)="onSeedInput()" placeholder="Paste your family seed here..." />
+                                        <small class="helper-text">
+                                             Example format:
+                                             <code>rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De</code>
+                                        </small>
+                                   </div>
+                              </div>
+                              }
+
+                              <!-- Derive Mnemonic -->
+                              @if (activeTab === 'deriveMnemonic') {
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Enter Mnemonic</label>
+                                        @if (mnemonicInput.trim().length > 0) {
+                                        <label>
+                                             <span [ngClass]="{ valid: mnemonicValid, invalid: !mnemonicValid }"> {{ mnemonicValid ? 'Mnemonic Valid ✅' : 'Invalid Mnemonic ❌' }} </span>
+                                        </label>
+                                        }
                                    </div>
                               </div>
 
-                              <div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Secret Numbers</label>
-                                             <input type="text" [(ngModel)]="secretNumbers" name="secretNumbers" placeholder="" />
-                                        </div>
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <textarea [(ngModel)]="mnemonic" name="mnemonic" (input)="onMnemonicInput()" placeholder="Paste your 24-word mnemonic here..." rows="3" class="mnemonic-textarea"> </textarea>
+
+                                        <small class="helper-text">
+                                             Example format:
+                                             <code>joe, bill, john, joe, john, bill, bill, joe, john, bill, john, joe, john, joe, bill, john, bill, joe, joe, bill, john, joe, john, bill</code>
+                                        </small>
+                                   </div>
+                              </div>
+                              }
+
+                              <!-- Derive Secret Numbers -->
+                              @if (activeTab === 'deriveSecretNumbers') {
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label>Enter Secret Numbers</label>
+                                        @if (secretNumberInput.length > 0) {
+                                        <label>
+                                             <span [ngClass]="{ valid: secretNumberValid, invalid: !secretNumberValid }"> {{ secretNumberValid ? 'Secret Numbers Valid ✅' : 'Invalid Secret Numbers ❌ ' }} </span>
+                                        </label>
+                                        }
+                                   </div>
+                              </div>
+
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <input type="text" [(ngModel)]="secretNumbers" name="secretNumbers" (input)="onSecretNumberInput()" placeholder="Paste your secret numbers here..." />
+
+                                        <small class="helper-text">
+                                             Example format:
+                                             <code>123456, 456789, 123456, 456789, 123456, 456789, 123456, 456789</code>
+                                        </small>
                                    </div>
                               </div>
                               }
 
                               <!-- Action buttons -->
+                              <!-- Generate buttons -->
                               @if (activeTab === 'generate') {
-                              <div class="button-row">
-                                   <button type="button" (click)="generateNewAccount()" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Generate Wallet from Family Seed' }}</button>
-                                   <button type="button" (click)="generateNewWalletFromMnemonic()" class="btn-primary-green" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Generate Wallet from Mnemonic' }}</button>
-                                   <button type="button" (click)="generateNewWalletFromSecretNumbers()" class="btn-primary-orange" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Generate Wallet from Secret Numbers' }}</button>
+                              <div class="button-row" style="margin-top: 0em">
+                                   <button type="button" class="btn-primary-blue" (click)="generateNewAccount()" [disabled]="buttonLoading.generateNewWalletFromSeed || isAnyButtonLoading">{{ buttonLoading.generateNewWalletFromSeed ? 'Processing...' : 'Generate Wallet from Family Seed' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="generateNewWalletFromMnemonic()" [disabled]="buttonLoading.generateNewWalletFromMnemonic || isAnyButtonLoading">{{ buttonLoading.generateNewWalletFromMnemonic ? 'Processing...' : 'Generate Wallet from Family Seed' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="generateNewWalletFromSecretNumbers()" [disabled]="buttonLoading.generateNewWalletFromSecretNumbers || isAnyButtonLoading">{{ buttonLoading.generateNewWalletFromSecretNumbers ? 'Processing...' : 'Generate Wallet from Secret Numbers' }}</button>
                               </div>
-                              } @if (activeTab === 'derive') {
-                              <div class="button-row">
-                                   <button type="button" (click)="deriveWalletFromFamilySeed()" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
-                                   <button type="button" (click)="deriveWalletFromMnemonic()" class="btn-primary-green" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
-                                   <button type="button" (click)="deriveWalletFromSecretNumbers()" class="btn-primary-orange" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Derive Wallet from Secret Numbers' }}</button>
+                              }
+
+                              <!-- Derive Seed button -->
+                              @if (activeTab === 'deriveSeed') {
+                              <div class="button-row" style="margin-top: 0em">
+                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromFamilySeed()" [disabled]="buttonLoading.deriveWalletFromFamilySeed || isAnyButtonLoading">{{ buttonLoading.deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
+                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
+                              </div>
+                              }
+
+                              <!-- Derive Mnemonic button -->
+                              @if (activeTab === 'deriveMnemonic') {
+                              <div class="button-row" style="margin-top: 0em">
+                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromMnemonic()" [disabled]="buttonLoading.deriveWalletFromMnemonic || isAnyButtonLoading">{{ buttonLoading.deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
+                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
+                              </div>
+                              }
+
+                              <!-- Derive Secret Numbers button -->
+                              @if (activeTab === 'deriveSecretNumbers') {
+                              <div class="button-row" style="margin-top: 0em">
+                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromSecretNumbers()" [disabled]="buttonLoading.deriveWalletFromSecretNumbers || isAnyButtonLoading">{{ buttonLoading.deriveWalletFromSecretNumbers ? 'Processing...' : 'Derive Wallet from Secret Numbers' }}</button>
+                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                               </div>
                               }
 
@@ -254,6 +347,7 @@
                </form>
 
                <!-- Switches -->
+               @if (activeTab === 'generate' || activeTab === 'deriveSeed') {
                <div class="switch-group">
                     <!-- ED25519 group -->
                     <label class="switch">
@@ -269,11 +363,21 @@
                          SECP256K1 Encryption
                     </label>
                </div>
+               }
 
+               <!-- Generate message -->
                @if (activeTab === 'generate') {
-               <div class="info-box" style="margin-top: 16px; margin-bottom: 16px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Generating a new Mnemonic or Secret Numbers wallet will always be SECP256K1 encryption.</div>
-               } @if (activeTab === 'derive') {
-               <div class="info-box" style="margin-top: 16px; margin-bottom: 16px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Deriving a new Mnemonic or Secret Numbers wallet will always be SECP256K1 encryption.</div>
+               <div class="info-box" style="margin-top: 16px; margin-bottom: 16px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Generating a Mnemonic or Secret Number wallet will always be SECP256K1 encryption.</div>
+               }
+
+               <!-- Derive Mnemonic message -->
+               @if (activeTab === 'deriveMnemonic') {
+               <div class="info-box" style="margin-top: 16px; margin-bottom: 16px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Deriving a Mnemonic wallet will always be SECP256K1 encryption.</div>
+               }
+
+               <!-- Derive Secret Numbers message -->
+               @if (activeTab === 'deriveSecretNumbers') {
+               <div class="info-box" style="margin-top: 16px; margin-bottom: 16px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Deriving a Secret Number wallet will always be SECP256K1 encryption.</div>
                }
 
                <!-- Tx Preview -->

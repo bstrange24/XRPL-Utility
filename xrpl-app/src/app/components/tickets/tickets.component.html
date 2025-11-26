@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<app-app-wallet-dynamic-input style="display: none" (walletListChange)="onWalletListChange()" (transactionResult)="ui.handleTransactionResult($event)"> </app-app-wallet-dynamic-input>
+<app-app-wallet-dynamic-input style="display: none" (transactionResult)="ui.handleTransactionResult($event)"></app-app-wallet-dynamic-input>
 
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
@@ -163,7 +163,7 @@
                </div>
                }
 
-               <form #theForm="ngForm" (ngSubmit)="onSubmit()" class="send-form">
+               <form #theForm="ngForm" class="send-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab">
                               @switch (activeTab) {
@@ -228,7 +228,6 @@
                               } }
 
                               <!-- Switches -->
-                              <!-- @if (walletTicketCount > 0) { -->
                               <div class="switch-group">
                                    <!-- Memo group -->
                                    <label class="switch">
@@ -256,7 +255,7 @@
                                    }
 
                                    <!-- Use Ticket for tx -->
-                                   @if (activeTab !== 'delete' && ticketArray.length > 0) {
+                                   @if (ticketArray.length > 0) {
                                    <label class="switch">
                                         <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
                                         <span class="slider"></span>
@@ -271,7 +270,6 @@
                                         Simulate
                                    </label>
                               </div>
-                              <!-- } -->
 
                               <!-- Memo Field -->
                               @if (isMemoEnabled) {
@@ -315,7 +313,7 @@
                               }
 
                               <!-- Get ticket -->
-                              @if (isTicket && activeTab !== 'delete') {
+                              @if (isTicket) {
                               <div class="ticket-fields">
                                    <div class="form-group">
                                         <label>Ticket Sequence</label>
@@ -347,7 +345,6 @@
                                    <!-- create buttons -->
                                    @case ('create') {
                                    <button type="button" class="btn-primary-blue" (click)="createTicket()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create Ticket' }}</button>
-
                                    }
                                    <!-- delete buttons -->
                                    @case ('delete') {

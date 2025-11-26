@@ -36,37 +36,92 @@ export class XrplService {
      private client: Client | null = null;
      private readonly tokensSubject = new BehaviorSubject<Token[]>([]);
      tokens$ = this.tokensSubject.asObservable();
-     private readonly tokenCreationDates: Map<string, Date> = new Map(); // Track earliest TrustSet date by currency+issuer
-     private readonly tokenCache = new Map<string, { createdAt: Date; checkedAt: number }>();
      private readonly proxyServer = 'http://localhost:3000';
+     private connectingPromise: Promise<xrpl.Client> | null = null; // ← Prevents double connection attempts
+     // ← NEW: shared connection state
+     private connectionStatus = new BehaviorSubject<'disconnected' | 'connecting' | 'connected'>('disconnected');
+     public connectionStatus$ = this.connectionStatus.asObservable();
+
+     private connectionMessage = new BehaviorSubject<string>('Disconnected');
+     public connectionMessage$ = this.connectionMessage.asObservable();
 
      constructor(private readonly storageService: StorageService, private readonly http: HttpClient, private readonly tokenCacheService: TokenCacheService) {}
 
      async getClient(): Promise<xrpl.Client> {
-          if (!this.client?.isConnected()) {
-               const { net } = this.getNet();
-               this.client = new xrpl.Client(net);
+          // CASE 1: Already connected → return immediately
+          if (this.client?.isConnected()) {
+               return this.client;
+          }
 
-               // Retry configuration
-               const maxRetries = 5;
-               const retryDelay = 1000; // Delay in milliseconds between retries
+          // CASE 2: Already trying to connect → return the existing promise (avoid duplicate connections)
+          if (this.connectingPromise) {
+               return this.connectingPromise;
+          }
 
-               for (let attempt = 1; attempt <= maxRetries; attempt++) {
-                    try {
-                         await this.client.connect();
-                         if (this.client.isConnected()) {
-                              break; // Connection successful, exit retry loop
-                         }
-                    } catch (error: any) {
-                         if (attempt === maxRetries) {
-                              throw new Error(`Failed to connect to XRPL after ${maxRetries} attempts: ${error.message}`);
-                         }
-                         // Wait before retrying
-                         await new Promise(resolve => setTimeout(resolve, retryDelay));
+          // CASE 3: Need to (re)connect
+          this.connectingPromise = this.connectWithRetry();
+
+          try {
+               this.client = await this.connectingPromise;
+               return this.client;
+          } finally {
+               // Always clear the promise when done (success or failure)
+               this.connectingPromise = null;
+          }
+     }
+
+     private async connectWithRetry(): Promise<xrpl.Client> {
+          const { net } = this.getNet(); // your method to get wss URL
+          const maxRetries = 5;
+          const baseDelay = 1000;
+
+          // Update shared status immediately
+          this.setStatus('connecting', 'Connecting...');
+
+          for (let attempt = 1; attempt <= maxRetries; attempt++) {
+               const client = new xrpl.Client(net);
+
+               try {
+                    // Set a reasonable timeout (xrpl.js default is infinite)
+                    const connectPromise = client.connect();
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 15_000));
+
+                    await Promise.race([connectPromise, timeoutPromise]);
+
+                    // Success! Verify with a lightweight call
+                    await client.request({ command: 'server_info' });
+
+                    this.client = client;
+
+                    // Update global status on success
+                    const networkName = this.getNetworkName();
+                    this.setStatus('connected', `Connected to ${networkName}`);
+
+                    // Optional: auto-reconnect on disconnect
+                    client.on('disconnected', code => {
+                         console.warn('XRPL client disconnected:', code);
+                         this.setStatus('disconnected', 'Connection lost');
+                         this.client = null;
+                    });
+
+                    return client;
+               } catch (error: any) {
+                    console.warn(`XRPL connection attempt ${attempt}/${maxRetries} failed:`, error.message);
+
+                    if (attempt === maxRetries) {
+                         const msg = `Failed to connect after ${maxRetries} attempts`;
+                         this.setStatus('disconnected', msg);
+                         throw new Error(msg);
                     }
+
+                    // Exponential backoff (1s, 2s, 4s, 8s...)
+                    const delay = baseDelay * Math.pow(2, attempt - 1);
+                    await new Promise(resolve => setTimeout(resolve, delay));
                }
           }
-          return this.client;
+
+          // This should never reach here
+          throw new Error('Unexpected connection failure');
      }
 
      async disconnect() {
@@ -74,6 +129,25 @@ export class XrplService {
                await this.client.disconnect();
                this.client = null;
           }
+          this.setStatus('disconnected', 'Disconnected');
+     }
+
+     private setStatus(status: 'disconnected' | 'connecting' | 'connected', message: string) {
+          this.connectionStatus.next(status);
+          this.connectionMessage.next(message);
+     }
+
+     private getNetworkName(): string {
+          const net = this.storageService.getNet().environment;
+          return net.charAt(0).toUpperCase() + net.slice(1);
+     }
+
+     // expose current values synchronously (useful in templates)
+     getCurrentStatus() {
+          return this.connectionStatus.value;
+     }
+     getCurrentMessage() {
+          return this.connectionMessage.value;
      }
 
      getNet() {
@@ -151,87 +225,6 @@ export class XrplService {
           const url = `${this.proxyServer}/api/xpmarket/token/${key}`;
           return this.http.get<any>(url);
      }
-
-     // // Generate account from Family Seed
-     // async generateWalletFromFamilySeed(environment: string, algorithm: string = 'ed25519') {
-     //      const url = `${this.proxyServer}/api/create-wallet/family-seed/`;
-     //      const wallet = await firstValueFrom(this.http.post<any>(url, { environment, algorithm }));
-     //      return wallet;
-     // }
-
-     // // Derive account from Family Seed
-     // async deriveWalletFromFamilySeed(familySeed: string, algorithm: string = 'ed25519') {
-     //      const url = `${this.proxyServer}/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
-     //      console.log(`deriveWalletFromFamilySeed ${url}`);
-     //      const wallet = await firstValueFrom(this.http.get<any>(url));
-     //      return wallet;
-     // }
-
-     // // Generate account from Mnemonic
-     // async generateWalletFromMnemonic(environment: string, algorithm: string = 'ed25519') {
-     //      const url = `${this.proxyServer}/api/create-wallet/mnemonic/`;
-     //      const body = { environment, algorithm };
-     //      const wallet = await firstValueFrom(this.http.post<any>(url, body));
-     //      return wallet;
-     // }
-
-     // // Derive account from Mnemonic
-     // async deriveWalletFromMnemonic(mnemonic: string, algorithm: string = 'ed25519') {
-     //      const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
-     //      console.log(`deriveWalletFromMnemonic ${url}`);
-     //      const wallet = await firstValueFrom(this.http.get<any>(url));
-     //      return wallet;
-     // }
-
-     // // Generate account from Secret Numbers
-     // async generateWalletFromSecretNumbers(environment: string, algorithm: string = 'ed25519') {
-     //      const url = `${this.proxyServer}/api/create-wallet/secret-numbers/`;
-     //      const body = { environment, algorithm };
-     //      const wallet = await firstValueFrom(this.http.post<any>(url, body));
-     //      return wallet;
-     // }
-
-     // // Derive account from Secret Numbers
-     // async deriveWalletFromSecretNumbers(secretNumbers: string[], algorithm: string = 'ed25519') {
-     //      const url = `${this.proxyServer}/api/derive/secretNumbers`;
-     //      console.log(`deriveWalletFromSecretNumbers with ${secretNumbers.length} numbers`);
-
-     //      const body = {
-     //           secretNumbers: secretNumbers,
-     //           algorithm: algorithm,
-     //      };
-
-     //      const wallet = await firstValueFrom(this.http.post<any>(url, body));
-     //      return wallet;
-     // }
-
-     // async fundWalletFromFaucet(wallet: xrpl.Wallet | { secret?: { familySeed?: string } }) {
-     //      const environment = this.getNet().environment;
-     //      if (environment !== 'mainnet') {
-     //           try {
-     //                const client = await this.getClient();
-
-     //                // If wallet is not already an xrpl.Wallet, convert it
-     //                let xrplWallet: xrpl.Wallet;
-     //                if (wallet instanceof xrpl.Wallet) {
-     //                     xrplWallet = wallet;
-     //                } else if (wallet && typeof wallet === 'object' && wallet.secret?.familySeed) {
-     //                     xrplWallet = xrpl.Wallet.fromSeed(wallet.secret.familySeed);
-     //                } else {
-     //                     throw new Error('Unsupported wallet type for funding');
-     //                }
-
-     //                // Call faucet
-     //                const faucetResult = await client.fundWallet(xrplWallet);
-     //                console.log('Faucet result:', faucetResult);
-     //                return faucetResult;
-     //           } catch (error) {
-     //                console.error('Funding failed:', error);
-     //                throw error;
-     //           }
-     //      }
-     //      return null;
-     // }
 
      async getTokenCreationDateService(currency: string, issuer: string, client: xrpl.Client): Promise<Date> {
           const key = `${currency}:${issuer}`;

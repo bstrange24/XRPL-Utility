@@ -14,7 +14,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { Subject, takeUntil } from 'rxjs';
+import { pairwise, startWith, Subject, takeUntil } from 'rxjs';
 import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -147,12 +147,20 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
           this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
-               this.wallets = wallets;
-               if (!this.wallets) {
-                    this.hasWallets = false;
-                    return;
+          this.walletManagerService.wallets$.pipe(startWith(null), pairwise(), takeUntil(this.destroy$)).subscribe(([prev, curr]) => {
+               this.wallets = curr || [];
+               this.hasWallets = this.wallets.length > 0;
+
+               const prevSelected = prev?.[this.selectedWalletIndex];
+               const currSelected = curr?.[this.selectedWalletIndex];
+
+               const walletSwitched = !prev || prevSelected?.address !== currSelected?.address || prev.length !== curr?.length;
+
+               if (walletSwitched) {
+                    this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
+                    this.onAccountChange(); // Only on actual change
                }
+               this.cdr.markForCheck();
           });
 
           // Load custom destinations from storage
@@ -197,12 +205,6 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           return wallet.address;
      }
 
-     onSubmit() {
-          if (this.activeTab === 'delete') {
-               this.deleteAccount();
-          }
-     }
-
      setTab(tab: string) {
           this.activeTab = tab;
           this.clearFields(true);
@@ -211,7 +213,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      }
 
      selectWallet(index: number) {
-          if (this.selectedWalletIndex === index) return; // ← Add this guard!
+          if (this.selectedWalletIndex === index) return;
           this.selectedWalletIndex = index;
           this.onAccountChange();
      }
@@ -232,24 +234,6 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      cancelEdit() {
           this.walletManagerService.cancelEdit();
           this.tempName = '';
-     }
-
-     onWalletListChange(): void {
-          if (this.wallets.length <= 0) {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length === 1 && this.wallets[0].address === '') {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
-               this.selectedWalletIndex = 0;
-          }
-
-          this.onAccountChange();
      }
 
      toggleSecret(index: number) {
@@ -285,13 +269,29 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      }
 
      async generateNewAccount() {
-          this.ui.updateSpinnerMessage(``);
+          console.log('Entering generateNewAccount');
+          const startTime = Date.now();
           this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-          const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, faucetWallet.address);
-          this.ui.spinner = false;
-          this.ui.clearWarning();
+
+          try {
+               // Default to ed25519
+               this.encryptionType = AppConstants.ENCRYPTION.ED25519;
+               console.log('encryptionType: ', this.encryptionType);
+               const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
+               const client = await this.xrplService.getClient();
+               await this.refreshWallets(client, [faucetWallet.address]);
+               this.ui.spinner = false;
+               this.ui.clearWarning();
+               this.ui.txResult.push(faucetWallet);
+               this.updateTxResult(this.ui.txResult);
+          } catch (error: any) {
+               console.error('Error in generateNewAccount:', error);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving generateNewAccount in ${this.executionTime}ms`);
+          }
      }
 
      dropWallet(event: CdkDragDrop<any[]>) {
@@ -307,7 +307,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           }
 
           // Persist the new order to localStorage
-          this.saveWallets();
+          this.walletManagerService.setWallets(this.wallets); // ← this saves + updates observable
 
           // Update destinations and account state
           this.updateDestinations();
@@ -347,37 +347,11 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           }
      }
 
-     validateQuorum() {
-          const totalWeight = this.signers.reduce((sum, s) => sum + (s.weight || 0), 0);
-          if (this.signerQuorum > totalWeight) {
-               this.signerQuorum = totalWeight;
-          }
-     }
-
      async toggleMultiSign() {
           try {
-               if (!this.useMultiSign) {
-                    this.utilsService.clearSignerList(this.signers);
-               } else {
-                    const wallet = await this.getWallet();
-                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-               }
+               this.utilsService.toggleMultiSign(this.useMultiSign, this.signers, (await this.getWallet()).classicAddress);
           } catch (error: any) {
-               this.ui.setError(`ERROR getting wallet in toggleMultiSign' ${error.message}`);
-          }
-     }
-
-     async toggleUseMultiSign() {
-          if (this.multiSignAddress === 'No Multi-Sign address configured for account') {
-               this.multiSignSeeds = '';
-          }
-     }
-
-     onTicketToggle(event: any, ticket: string) {
-          if (event.target.checked) {
-               this.selectedTickets = [...this.selectedTickets, ticket];
-          } else {
-               this.selectedTickets = this.selectedTickets.filter(t => t !== ticket);
+               this.ui.setError(`${error.message}`);
           }
      }
 
@@ -447,6 +421,9 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
                // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
+               if (this.destinationField === '') {
+                    return this.ui.setError(`Destination cannot be empty.`);
+               }
                const isShortForm = this.destinationField.includes('...');
                const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
 
@@ -505,7 +482,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
@@ -571,70 +548,18 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
           // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
-
           this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
           this.refreshUiAccountInfo(updatedAccountInfo);
      }
 
-     private checkForSignerAccounts(accountObjects: xrpl.AccountObjectsResponse): string[] {
-          const accountObjectsArray = accountObjects.result?.account_objects;
-          if (!Array.isArray(accountObjectsArray)) return [];
-
-          const signerAccounts: string[] = [];
-
-          for (const obj of accountObjectsArray) {
-               if (obj.LedgerEntryType === 'SignerList' && Array.isArray(obj.SignerEntries)) {
-                    // Set quorum once
-                    if (obj.SignerQuorum !== undefined) {
-                         this.signerQuorum = obj.SignerQuorum;
-                    }
-
-                    for (const entry of obj.SignerEntries) {
-                         const account = entry.SignerEntry?.Account;
-                         if (account) {
-                              signerAccounts.push(`${account}~${entry.SignerEntry.SignerWeight ?? ''}`);
-                         }
-                    }
-               }
-          }
-
-          return signerAccounts;
-     }
-
-     private getAccountTickets(accountObjects: xrpl.AccountObjectsResponse): string[] {
-          const objects = accountObjects.result?.account_objects;
-          if (!Array.isArray(objects)) return [];
-
-          const tickets = objects.reduce((acc: number[], obj) => {
-               if (obj.LedgerEntryType === 'Ticket' && typeof obj.TicketSequence === 'number') {
-                    acc.push(obj.TicketSequence);
-               }
-               return acc;
-          }, []);
-
-          return tickets.sort((a, b) => a - b).map(String);
-     }
-
-     public cleanUpSingleSelection() {
-          // Check if selected ticket still exists in available tickets
-          if (this.selectedSingleTicket && !this.ticketArray.includes(this.selectedSingleTicket)) {
-               this.selectedSingleTicket = ''; // Reset to "Select a ticket"
-          }
-     }
-
-     public cleanUpMultiSelection() {
-          // Filter out any selected tickets that no longer exist
-          this.selectedTickets = this.selectedTickets.filter(ticket => this.ticketArray.includes(ticket));
-     }
-
      updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
-          this.ticketArray = this.getAccountTickets(accountObjects);
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
 
           // Clean up selections based on current mode
           if (this.multiSelectMode) {
-               this.cleanUpMultiSelection();
+               this.selectedSingleTicket = this.utilsService.cleanUpMultiSelection(this.selectedTickets, this.ticketArray);
           } else {
-               this.cleanUpSingleSelection();
+               this.selectedSingleTicket = this.utilsService.cleanUpSingleSelection(this.selectedTickets, this.ticketArray);
           }
      }
 
@@ -650,20 +575,31 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                     // This callback runs inside NgZone → UI updates safely
                     this.currentWallet = { ...newCurrentWallet };
                     // Optional: trigger change detection if needed
-                    this.cdr.markForCheck();
+                    // this.cdr.markForCheck();
                }
           );
      }
 
      public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
           // Tickets
-          this.ticketArray = this.getAccountTickets(accountObjects);
+          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
           this.selectedTicket = this.ticketArray[0] || this.selectedTicket;
 
           // Signer accounts
-          const signerAccounts = this.checkForSignerAccounts(accountObjects);
+          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
+          this.signerQuorum = signerQuorum;
           const hasSignerAccounts = signerAccounts?.length > 0;
+          this.checkForMultiSigners(hasSignerAccounts, wallet);
 
+          // Boolean flags
+          this.multiSigningEnabled = hasSignerAccounts;
+          this.useMultiSign = false;
+          this.masterKeyDisabled = Boolean(accountInfo?.result?.account_flags?.disableMasterKey);
+
+          this.clearFields(false);
+     }
+
+     private checkForMultiSigners(hasSignerAccounts: boolean, wallet: xrpl.Wallet) {
           if (hasSignerAccounts) {
                const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
                this.multiSignAddress = signerEntries.map((e: { Account: any }) => e.Account).join(',\n');
@@ -674,13 +610,6 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                this.multiSignSeeds = '';
                this.storageService.removeValue('signerEntries');
           }
-
-          // Boolean flags
-          this.multiSigningEnabled = hasSignerAccounts;
-          this.useMultiSign = false;
-          this.masterKeyDisabled = Boolean(accountInfo?.result?.account_flags?.disableMasterKey);
-
-          this.clearFields(false);
      }
 
      public refreshUiAccountInfo(accountInfo: xrpl.AccountInfoResponse): void {
@@ -691,7 +620,9 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           const isMasterKeyDisabled = accountInfo?.result?.account_flags?.disableMasterKey ?? false;
 
           // Set regular key properties
-          this.setRegularKeyProperties(regularKey, accountData.Account);
+          const rkProps = this.utilsService.setRegularKeyProperties(regularKey, accountData.Account) || { regularKeyAddress: 'No RegularKey configured for account', regularKeySeed: '', isRegularKeyAddress: false };
+          this.regularKeyAddress = rkProps.regularKeyAddress;
+          this.regularKeySeed = rkProps.regularKeySeed;
 
           // Set master key property
           this.masterKeyDisabled = isMasterKeyDisabled;
@@ -700,47 +631,18 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           this.regularKeySigningEnabled = !!regularKey;
      }
 
-     private setRegularKeyProperties(regularKey: string | undefined, account: string): void {
-          if (regularKey) {
-               this.regularKeyAddress = regularKey;
-               this.regularKeySeed = this.storageService.get(`${account}regularKeySeed`) || '';
-          } else {
-               this.regularKeyAddress = 'No RegularKey configured for account';
-               this.regularKeySeed = '';
-               this.isRegularKeyAddress = false;
-          }
-     }
-
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          if (this.destinations.length > 0 && !this.destinationField) {
-               // this.destinationField = this.destinations[0].address;
-          }
           this.storageService.set('destinations', this.destinations);
-          this.ensureDefaultNotSelected();
-     }
-
-     ensureDefaultNotSelected() {
-          const currentAddress = this.currentWallet.address;
-          if (currentAddress && this.destinations.length > 0) {
-               if (!this.destinationField || this.destinationField === currentAddress) {
-                    const nonSelectedDest = this.destinations.find(d => d.address !== currentAddress);
-                    // this.destinationField = nonSelectedDest ? nonSelectedDest.address : this.destinations[0].address;
-               }
-          }
-          this.cdr.detectChanges();
      }
 
      private async getWallet() {
-          const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
+          const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) {
                throw new Error('ERROR: Wallet could not be created or is undefined');
           }
           return wallet;
-     }
-
-     saveWallets() {
-          this.storageService.set('wallets', JSON.stringify(this.wallets));
      }
 
      updatePaymentTx() {
