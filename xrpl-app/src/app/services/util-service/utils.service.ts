@@ -10,6 +10,7 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { StorageService } from '../local-storage/storage.service';
 import md5 from 'blueimp-md5';
+import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -67,7 +68,7 @@ export class UtilsService {
      isSuccess: boolean = false;
      spinner: boolean = false;
 
-     constructor(private readonly xrplService: XrplService, private readonly storageService: StorageService) {}
+     constructor(private readonly xrplService: XrplService, private readonly storageService: StorageService, private walletManagerService: WalletManagerService) {}
 
      MPT_FLAGS: Record<number, string> = {
           0x00000001: 'MptLocked',
@@ -683,6 +684,23 @@ export class UtilsService {
                .split(',')
                .map(s => s.trim())
                .filter(s => s.length > 0);
+     }
+
+     async getWalletFromAddress(address: string): Promise<xrpl.Wallet> {
+          const walletData = this.walletManagerService.getWallets().find(w => w.address === address || (w.classicAddress && w.classicAddress === address));
+
+          if (!walletData?.seed) {
+               throw new Error(`Wallet seed not found for address: ${address}`);
+          }
+
+          const algStr = (walletData.encryptionAlgorithm || 'ed25519') as 'ed25519' | 'secp256k1';
+          // Map string algorithm to xrpl.ECDSA enum when needed; leave undefined for Ed25519 to use default
+          const options: { algorithm?: xrpl.ECDSA } = {};
+          if (algStr === 'secp256k1') {
+               options.algorithm = xrpl.ECDSA.secp256k1;
+          }
+
+          return xrpl.Wallet.fromSeed(walletData.seed, options);
      }
 
      formatCurrencyForDisplay(v: any): string {

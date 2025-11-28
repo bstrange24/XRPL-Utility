@@ -1,7 +1,11 @@
 import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
-import { trigger, style, transition, animate } from '@angular/animations';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { NgIcon } from '@ng-icons/core';
+import { LucideAngularModule } from 'lucide-angular';
+import { OverlayModule, Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { TemplatePortal } from '@angular/cdk/portal';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
 import { PermissionedDomainSet, PermissionedDomainDelete } from 'xrpl';
@@ -9,23 +13,22 @@ import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
-import { NavbarComponent } from '../navbar/navbar.component';
-import { LucideAngularModule } from 'lucide-angular';
-import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
-import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { pairwise, startWith, Subject, takeUntil } from 'rxjs';
-import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
-import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
-import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
-import { TemplatePortal } from '@angular/cdk/portal';
-import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
-import { WithImplicitCoercion } from 'buffer';
+import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
+import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
+import { Subject, takeUntil } from 'rxjs';
+import { NavbarComponent } from '../navbar/navbar.component';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { WithImplicitCoercion } from 'buffer';
+import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
+import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
+
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -72,47 +75,75 @@ interface PermissionedDomainInfo {
 @Component({
      selector: 'app-permissioned-domain',
      standalone: true,
-     imports: [CommonModule, FormsModule, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule, OverlayModule],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './permissioned-domain.component.html',
      styleUrl: './permissioned-domain.component.css',
 })
 export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      private destroy$ = new Subject<void>();
-     @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
-     @ViewChild('accountForm') accountForm!: NgForm;
+     private readonly injector = inject(Injector);
+     public destinationSearch$ = new Subject<string>();
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
      @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
      @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
-     @ViewChild('signers') signersRef!: ElementRef<HTMLTextAreaElement>;
-     @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
-     @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
-     private overlayRef: OverlayRef | null = null;
-     private readonly injector = inject(Injector);
-     selectedPermissionedDomain: string | null = null; // stores NFTokenID
-     isTicket: boolean = false;
-     ticketArray: string[] = [];
-     selectedTickets: string[] = [];
-     selectedSingleTicket: string = '';
-     multiSelectMode: boolean = false;
-     selectedTicket: string = '';
-     executionTime: string = '';
-     isRegularKeyAddress: boolean = false;
-     regularKeyAddress: string = '';
-     regularKeySeed: string = '';
+
+     // Form fields
+     activeTab: string = 'set';
+     amountField = '';
+     destinationField: string = '';
+     destinationTagField = '';
+     sourceTagField = '';
+     invoiceIdField = '';
+     memoField: string = '';
+     isMemoEnabled: boolean = false;
      useMultiSign: boolean = false;
+     isRegularKeyAddress: boolean = false;
+     isTicket: boolean = false;
+     selectedSingleTicket: string = '';
+     selectedTickets: string[] = [];
+     multiSelectMode: boolean = false;
+     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
+     selectedTicket: string = '';
+
+     // Wallet state (now driven by WalletPanelComponent via service)
+     currentWallet: Wallet = {} as Wallet;
+     wallets: Wallet[] = [];
+     hasWallets: boolean = true;
+     environment = '';
+     url = '';
+     showDropdown: boolean = false;
+     dropdownOpen: boolean = false;
+
+     // Multi-sign & Regular Key
      multiSignAddress: string = '';
      multiSignSeeds: string = '';
      signerQuorum: number = 0;
-     memoField: string = '';
-     isMemoEnabled: boolean = false;
+     regularKeyAddress: string = '';
+     regularKeySeed: string = '';
      multiSigningEnabled: boolean = false;
      regularKeySigningEnabled: boolean = false;
+     ticketArray: string[] = [];
+     masterKeyDisabled: boolean = false;
+
+     // Dropdown
+     private overlayRef: OverlayRef | null = null;
+     filteredDestinations: DropdownItem[] = [];
+     highlightedIndex = -1;
+     destinations: DropdownItem[] = [];
+     customDestinations: { name?: string; address: string }[] = [];
+
+     // Code preview
+     private lastPaymentTx = '';
+     private lastTxResult = '';
+     executionTime = '';
+
+     // Permissioned Domain Specific
+     selectedPermissionedDomain: string | null = null; // stores NFTokenID
      domainId: string = '';
      credentialType: string = '';
      subject: string = '';
-     masterKeyDisabled: boolean = false;
      permissionedDomainObject = {
           version: '1.0',
           credential_type: 'KYCCredential',
@@ -134,45 +165,18 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           hash: '',
           uri: 'ipfs://bafybeiexamplehash',
      };
-     destinationField: string = '';
-     destinations: DropdownItem[] = [];
-     customDestinations: { name?: string; address: string }[] = [];
-     showDropdown: boolean = false;
-     dropdownOpen: boolean = false;
-     filteredDestinations: DropdownItem[] = [];
-     highlightedIndex = -1;
-     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
-     wallets: Wallet[] = [];
      selectedWalletIndex: number = 0;
-     currentWallet: Wallet = {
-          classicAddress: '',
-          address: '',
-          seed: '',
-          name: undefined,
-          balance: '0',
-          ownerCount: undefined,
-          xrpReserves: undefined,
-          spendableXrp: undefined,
-     };
-     showSecret: boolean = false;
-     environment: string = '';
-     activeTab: string = 'set'; // default
-     encryptionType: string = '';
-     hasWallets: boolean = true;
      createdDomains: boolean = true;
      createdPermissionedDomains: any = [];
-     url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
      filterQuery: string = '';
 
      constructor(
-          private readonly xrplService: XrplService,
-          private readonly utilsService: UtilsService,
-          private readonly cdr: ChangeDetectorRef,
-          private readonly storageService: StorageService,
-          private readonly xrplTransactions: XrplTransactionService,
-          private walletGenerator: WalletGeneratorService,
+          private xrplService: XrplService,
+          private utilsService: UtilsService,
+          private storageService: StorageService,
+          private xrplTransactions: XrplTransactionService,
           private walletManagerService: WalletManagerService,
           public ui: TransactionUiService,
           public downloadUtilService: DownloadUtilService,
@@ -181,59 +185,54 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           private validationService: ValidationService,
           private overlay: Overlay,
           private viewContainerRef: ViewContainerRef,
-          private destinationDropdownService: DestinationDropdownService
+          private destinationDropdownService: DestinationDropdownService,
+          private cdr: ChangeDetectorRef
      ) {}
 
      ngOnInit() {
           this.environment = this.xrplService.getNet().environment;
-          this.encryptionType = this.storageService.getInputValue('encryptionType');
+          const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
+          this.url = AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          this.editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
-
-          type EnvKey = keyof typeof AppConstants.XRPL_WIN_URL;
-          const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
-          this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
-
-          this.walletManagerService.wallets$.pipe(startWith(null), pairwise(), takeUntil(this.destroy$)).subscribe(([prev, curr]) => {
-               this.wallets = curr || [];
-               this.hasWallets = this.wallets.length > 0;
-
-               const prevSelected = prev?.[this.selectedWalletIndex];
-               const currSelected = curr?.[this.selectedWalletIndex];
-
-               const walletSwitched = !prev || prevSelected?.address !== currSelected?.address || prev.length !== curr?.length;
-
-               if (walletSwitched) {
-                    this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
-                    this.onAccountChange(); // Only on actual change
+          // Listen to selected wallet changes (critical!)
+          this.walletManagerService.selectedIndex$.pipe(takeUntil(this.destroy$)).subscribe(index => {
+               if (this.wallets[index]) {
+                    this.currentWallet = { ...this.wallets[index] };
+                    // this.getPermissionedDomainForAccount();
                }
-               this.cdr.markForCheck();
           });
 
-          // Load custom destinations from storage
-          const storedCustoms = this.storageService.get('customDestinations');
-          this.customDestinations = storedCustoms ? JSON.parse(storedCustoms) : [];
+          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
+               this.wallets = wallets;
+               this.hasWallets = wallets.length > 0;
+
+               // If panel hasn't emitted yet (e.g. on page load), set current wallet manually
+               if (wallets.length > 0 && !this.currentWallet.address) {
+                    const index = this.walletManagerService.getSelectedIndex?.() ?? 0;
+                    this.currentWallet = { ...wallets[index] };
+                    this.getPermissionedDomainForAccount();
+               }
+
+               this.updateDestinations();
+          });
+
+          // Load custom destinations
+          const stored = this.storageService.get('customDestinations');
+          this.customDestinations = stored ? JSON.parse(stored) : [];
           this.updateDestinations();
 
-          // Ensure service knows the list
+          // Dropdown service sync
+          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => {
+               this.destinationDropdownService.filter(query);
+          });
           this.destinationDropdownService.setItems(this.destinations);
-
-          // Subscribe to filtered list updates
           this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
                this.filteredDestinations = list;
-               // keep selection sane
                this.highlightedIndex = list.length > 0 ? 0 : -1;
                this.cdr.detectChanges();
           });
-
-          // Subscribe to open/close state from service
           this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
-               this.dropdownOpen = open;
-               if (open) {
-                    this.openDropdownInternal(); // create + attach overlay (component-owned)
-               } else {
-                    this.closeDropdownInternal(); // detach overlay (component-owned)
-               }
+               open ? this.openDropdownInternal() : this.closeDropdownInternal();
           });
      }
 
@@ -243,9 +242,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
      }
 
      ngAfterViewInit() {
-          setTimeout(() => {
-               this.textareas.forEach(ta => this.autoResize(ta.nativeElement));
-          });
+          this.scheduleHighlight();
      }
 
      ngOnDestroy() {
@@ -253,148 +250,12 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           this.destroy$.complete();
      }
 
+     trackByAddress(index: number, item: DropdownItem): string {
+          return item.address;
+     }
+
      trackByWalletAddress(index: number, wallet: Wallet): string {
           return wallet.address;
-     }
-
-     setTab(tab: string) {
-          this.activeTab = tab;
-          this.selectedPermissionedDomain = null;
-          this.clearFields(true);
-          this.ui.clearMessages();
-          this.ui.clearWarning();
-     }
-
-     selectWallet(index: number) {
-          if (this.selectedWalletIndex === index) return;
-          this.selectedWalletIndex = index;
-          this.onAccountChange();
-     }
-
-     editName(i: number) {
-          this.walletManagerService.startEdit(i);
-          const wallet = this.wallets[i];
-          this.tempName = wallet.name || `Wallet ${i + 1}`;
-          setTimeout(() => this.nameInput?.nativeElement.focus(), 0);
-     }
-
-     saveName() {
-          this.walletManagerService.saveEdit(this.tempName);
-          this.tempName = '';
-          this.updateDestinations();
-     }
-
-     cancelEdit() {
-          this.walletManagerService.cancelEdit();
-          this.tempName = '';
-     }
-
-     toggleSecret(index: number) {
-          this.wallets[index].showSecret = !this.wallets[index].showSecret;
-     }
-
-     async refreshBalance(index: number) {
-          const wallet = this.wallets[index];
-          try {
-               const client = await this.xrplService.getClient();
-               const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               await this.refreshWallets(client, [walletAddress]).catch(console.error);
-          } catch (err) {
-               this.ui.setError('Failed to refresh balance');
-          }
-     }
-
-     deleteWallet(index: number) {
-          if (confirm('Delete this wallet? This cannot be undone.')) {
-               this.walletManagerService.deleteWallet(index);
-               if (this.selectedWalletIndex >= this.wallets.length) {
-                    this.selectedWalletIndex = Math.max(0, this.wallets.length - 1);
-               }
-               this.onAccountChange();
-          }
-     }
-
-     async generateNewAccount() {
-          console.log('Entering generateNewAccount');
-          const startTime = Date.now();
-          this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-
-          try {
-               // Default to ed25519
-               this.encryptionType = AppConstants.ENCRYPTION.ED25519;
-               console.log('encryptionType: ', this.encryptionType);
-               const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
-               const client = await this.xrplService.getClient();
-               await this.refreshWallets(client, [faucetWallet.address]);
-               this.ui.spinner = false;
-               this.ui.clearWarning();
-               this.ui.txResult.push(faucetWallet);
-               this.updateTxResult(this.ui.txResult);
-          } catch (error: any) {
-               console.error('Error in generateNewAccount:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
-          } finally {
-               this.ui.spinner = false;
-               this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving generateNewAccount in ${this.executionTime}ms`);
-          }
-     }
-
-     dropWallet(event: CdkDragDrop<any[]>) {
-          moveItemInArray(this.wallets, event.previousIndex, event.currentIndex);
-
-          // Update your selectedWalletIndex if needed
-          if (this.selectedWalletIndex === event.previousIndex) {
-               this.selectedWalletIndex = event.currentIndex;
-          } else if (this.selectedWalletIndex > event.previousIndex && this.selectedWalletIndex <= event.currentIndex) {
-               this.selectedWalletIndex--;
-          } else if (this.selectedWalletIndex < event.previousIndex && this.selectedWalletIndex >= event.currentIndex) {
-               this.selectedWalletIndex++;
-          }
-
-          // Persist the new order to localStorage
-          this.walletManagerService.setWallets(this.wallets); // ← this saves + updates observable
-
-          // Update destinations and account state
-          this.updateDestinations();
-          this.onAccountChange();
-     }
-
-     async onAccountChange() {
-          if (this.wallets.length === 0) {
-               this.currentWallet = {
-                    classicAddress: '',
-                    address: '',
-                    seed: '',
-                    name: undefined,
-                    balance: '0',
-                    ownerCount: undefined,
-                    xrpReserves: undefined,
-                    spendableXrp: undefined,
-               };
-               return;
-          }
-
-          const selected = this.wallets[this.selectedWalletIndex];
-          this.currentWallet = {
-               ...selected,
-               balance: selected.balance || '0',
-               ownerCount: selected.ownerCount || '0',
-               xrpReserves: selected.xrpReserves || '0',
-               spendableXrp: selected.spendableXrp || '0',
-          };
-
-          if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
-               this.ui.clearWarning();
-               this.updateDestinations();
-               await this.getPermissionedDomainForAccount();
-          } else if (this.currentWallet.address) {
-               this.ui.setError('Failed to refresh balance');
-          }
-     }
-
-     toggleCreatedDomains() {
-          this.createdDomains = !this.createdDomains;
      }
 
      async toggleMultiSign() {
@@ -403,6 +264,38 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           } catch (error: any) {
                this.ui.setError(`${error.message}`);
           }
+     }
+
+     onWalletSelected(wallet: Wallet) {
+          this.currentWallet = { ...wallet };
+
+          // Prevent setting self as the destination after switching wallet
+          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address || this.destinationField;
+          if (currentDest === wallet.address) {
+               this.destinationField = '';
+          }
+
+          this.getPermissionedDomainForAccount();
+     }
+
+     async setTab(tab: string) {
+          const previousTab = this.activeTab;
+          this.activeTab = tab;
+
+          // Only clear messages when actually changing tabs
+          if (previousTab !== tab) {
+               this.ui.clearMessages();
+               this.ui.clearWarning();
+          }
+
+          this.selectedPermissionedDomain = null;
+          this.clearFields(true);
+          this.ui.clearMessages();
+          this.ui.clearWarning();
+     }
+
+     toggleCreatedDomains() {
+          this.createdDomains = !this.createdDomains;
      }
 
      async getPermissionedDomainForAccount() {
@@ -417,22 +310,16 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
-               const inputs: ValidationInputs = { seed: this.currentWallet.seed, accountInfo: accountInfo };
-
-               const errors = await this.validationService.validate('AccountInfo', { inputs, client, accountInfo });
+               const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
                if (errors.length > 0) {
                     return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                this.getCreatedPermissionedDomains(accountObjects, wallet.classicAddress);
 
-               await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
-
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-
                this.updateTickets(accountObjects);
-
                this.clearFields(false);
                this.cdr.detectChanges();
           } catch (error: any) {
@@ -441,7 +328,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving getPermissionedDomainForAccount in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving getPermissionedDomainForAccount in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -510,7 +398,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Setting Permissioned Domain (no changes will be made)...' : 'Submitting Setting Permissioned Domain to Ledger...', 200);
 
-               this.ui.paymentTx.push(permissionedDomainTx);
+               this.ui.setPaymentTx(permissionedDomainTx);
                this.updatePaymentTx();
 
                let response: any;
@@ -532,8 +420,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                // this.utilsService.logObjects('response', response);
                // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.ui.txResult.push(response.result);
-               this.updateTxResult(this.ui.txResult);
+               this.ui.setTxResult(response.result);
+               this.updateTxResult();
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
@@ -558,13 +446,12 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
+                    // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-
                     this.updateTickets(updatedAccountObjects);
-
                     this.clearFields(false);
                     this.cdr.detectChanges();
                } else {
@@ -576,7 +463,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving setPermissionedDomain in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving setPermissionedDomain in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -638,7 +526,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Deleting Permissioned Domain (no changes will be made)...' : 'Submitting Delete Permissioned Domain to Ledger...', 200);
 
-               this.ui.paymentTx.push(permissionedDomainDeleteTx);
+               this.ui.setPaymentTx(permissionedDomainDeleteTx);
                this.updatePaymentTx();
 
                let response: any;
@@ -660,8 +548,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                // this.utilsService.logObjects('response', response);
                // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.ui.txResult.push(response.result);
-               this.updateTxResult(this.ui.txResult);
+               this.ui.setTxResult(response.result);
+               this.updateTxResult();
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
@@ -700,7 +588,8 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving deletePermissionedDomain in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving deletePermissionedDomain in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -732,23 +621,10 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           this.utilsService.logObjects('createdPermissionedDomains', this.createdPermissionedDomains);
      }
 
-     private addNewDestinationFromUser() {
-          if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
-               this.customDestinations.push({
-                    name: `Custom ${this.customDestinations.length + 1}`,
-                    address: this.destinationField,
-               });
-               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
-               this.updateDestinations();
-          }
-     }
-
      private async setTxOptionalFields(client: xrpl.Client, permissionDomainTx: any, wallet: xrpl.Wallet, accountInfo: any) {
           if (this.selectedSingleTicket) {
-               const ticketExists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
-               if (!ticketExists) {
-                    throw new Error(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
-               }
+               const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
+               if (!exists) throw new Error(`Ticket ${this.selectedSingleTicket} not found`);
                this.utilsService.setTicketSequence(permissionDomainTx, this.selectedSingleTicket, true);
           } else {
                if (this.multiSelectMode && this.selectedTickets.length > 0) {
@@ -757,9 +633,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                }
           }
 
-          if (this.memoField) {
-               this.utilsService.setMemoField(permissionDomainTx, this.memoField);
-          }
+          if (this.memoField) this.utilsService.setMemoField(permissionDomainTx, this.memoField);
      }
 
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
@@ -770,8 +644,6 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
      updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
           this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
-
-          // Clean up selections based on current mode
           if (this.multiSelectMode) {
                this.selectedSingleTicket = this.utilsService.cleanUpMultiSelection(this.selectedTickets, this.ticketArray);
           } else {
@@ -779,21 +651,10 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           }
      }
 
-     private async refreshWallets(client: xrpl.Client, addressesToRefresh?: string[]) {
-          console.log('Calling refreshWallets');
-
-          await this.walletDataService.refreshWallets(
-               client,
-               this.wallets, // pass current wallet list
-               this.selectedWalletIndex, // pass selected index
-               addressesToRefresh,
-               (updatedWalletsList, newCurrentWallet) => {
-                    // This callback runs inside NgZone → UI updates safely
-                    this.currentWallet = { ...newCurrentWallet };
-                    // Optional: trigger change detection if needed
-                    // this.cdr.markForCheck();
-               }
-          );
+     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+          await this.walletDataService.refreshWallets(client, this.wallets, this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+               this.currentWallet = { ...newCurrent };
+          });
      }
 
      public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
@@ -876,33 +737,14 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           return wallet;
      }
 
-     updatePaymentTx() {
-          this.scheduleHighlight();
-     }
+     private addNewDestinationFromUser() {
+          const addr = this.destinationField.includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
 
-     updateTxResult(tx: any) {
-          this.ui.txResult = tx;
-          this.scheduleHighlight();
-     }
-
-     private scheduleHighlight() {
-          // Use the captured injector to run afterRenderEffect safely
-          afterRenderEffect(
-               () => {
-                    if (this.ui.paymentTx && this.paymentJson?.nativeElement) {
-                         const json = JSON.stringify(this.ui.paymentTx, null, 2);
-                         this.paymentJson.nativeElement.textContent = json;
-                         Prism.highlightElement(this.paymentJson.nativeElement);
-                    }
-
-                    if (this.ui.txResult && this.txResultJson?.nativeElement) {
-                         const json = JSON.stringify(this.ui.txResult, null, 2);
-                         this.txResultJson.nativeElement.textContent = json;
-                         Prism.highlightElement(this.txResultJson.nativeElement);
-                    }
-               },
-               { injector: this.injector }
-          );
+          if (addr && xrpl.isValidAddress(addr) && !this.destinations.some(d => d.address === addr)) {
+               this.customDestinations.push({ name: `Custom ${this.customDestinations.length + 1}`, address: addr });
+               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+               this.updateDestinations();
+          }
      }
 
      copyPermissionedDomainId(checkId: string) {
@@ -958,14 +800,12 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           return this.utilsService.convertXRPLTime(timestamp);
      }
 
-     autoResize(textarea: HTMLTextAreaElement) {
-          if (!textarea) return;
-          textarea.style.height = 'auto'; // reset
-          textarea.style.height = textarea.scrollHeight + 'px'; // expand
+     get safeWarningMessage() {
+          return this.ui.warningMessage?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
      }
 
-     clearFields(clearAllFields: boolean) {
-          if (clearAllFields) {
+     clearFields(all = true) {
+          if (all) {
                this.permissionedDomainObject.uri = '';
                this.useMultiSign = false;
                this.isRegularKeyAddress = false;
@@ -986,76 +826,6 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           this.cdr.detectChanges();
      }
 
-     openDropdown() {
-          // update service items (in case destinations changed)
-          this.destinationDropdownService.setItems(this.destinations);
-          // prepare filtered list
-          this.destinationDropdownService.filter(this.destinationField || '');
-          // tell service to open -> subscription above will attach overlay
-          this.destinationDropdownService.openDropdown();
-     }
-
-     // Called by outside click / programmatic close
-     closeDropdown() {
-          this.destinationDropdownService.closeDropdown();
-     }
-
-     // Called by chevron toggle
-     toggleDropdown() {
-          // make sure the service has current items first
-          this.destinationDropdownService.setItems(this.destinations);
-          this.destinationDropdownService.toggleDropdown();
-     }
-
-     // Called on input typing
-     onDestinationInput() {
-          this.filterQuery = this.destinationField || '';
-          this.destinationDropdownService.filter(this.filterQuery);
-          this.destinationDropdownService.openDropdown(); // ensure open while typing
-     }
-
-     private openDropdownInternal() {
-          // If already attached, do nothing
-          if (this.overlayRef?.hasAttached()) return;
-
-          // position strategy (your existing logic)
-          const positionStrategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([
-                    {
-                         originX: 'start',
-                         originY: 'bottom',
-                         overlayX: 'start',
-                         overlayY: 'top',
-                         offsetY: 8,
-                    },
-               ])
-               .withPush(false);
-
-          this.overlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy,
-               scrollStrategy: this.overlay.scrollStrategies.close(),
-          });
-
-          const portal = new TemplatePortal(this.dropdownTemplate, this.viewContainerRef);
-          this.overlayRef.attach(portal);
-
-          // Close on backdrop click
-          this.overlayRef.backdropClick().subscribe(() => {
-               this.destinationDropdownService.closeDropdown(); // close via service so subscribers sync
-          });
-     }
-
-     private closeDropdownInternal() {
-          if (this.overlayRef) {
-               this.overlayRef.detach();
-               this.overlayRef = null;
-          }
-     }
-
      filterDestinations() {
           const query = this.filterQuery.trim().toLowerCase();
 
@@ -1066,22 +836,6 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           }
 
           this.highlightedIndex = this.filteredDestinations.length > 0 ? 0 : -1;
-     }
-
-     selectDestination(address: string) {
-          if (address === this.currentWallet.address) return;
-
-          const dest = this.destinations.find(d => d.address === address);
-          if (dest) {
-               // show "Name (rABC12...DEF456)"
-               this.destinationField = this.destinationDropdownService.formatDisplay(dest);
-          } else {
-               this.destinationField = `${address.slice(0, 6)}...${address.slice(-6)}`;
-          }
-
-          // close via service so subscribers remain in sync
-          this.destinationDropdownService.closeDropdown();
-          this.cdr.detectChanges();
      }
 
      onArrowDown() {
@@ -1097,5 +851,89 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                     this.closeDropdown(); // Also close on Enter
                }
           }
+     }
+
+     // Dropdown controls
+     openDropdown() {
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.filter(this.destinationField || '');
+          this.destinationDropdownService.openDropdown();
+     }
+
+     closeDropdown() {
+          this.destinationDropdownService.closeDropdown();
+     }
+
+     toggleDropdown() {
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.toggleDropdown();
+     }
+
+     onDestinationInput() {
+          this.destinationDropdownService.filter(this.destinationField || '');
+          this.destinationDropdownService.openDropdown();
+     }
+
+     selectDestination(address: string) {
+          if (address === this.currentWallet.address) return;
+          const dest = this.destinations.find(d => d.address === address);
+          this.destinationField = dest ? this.destinationDropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`;
+          this.closeDropdown();
+     }
+
+     private openDropdownInternal() {
+          if (this.overlayRef?.hasAttached()) return;
+
+          const strategy = this.overlay
+               .position()
+               .flexibleConnectedTo(this.dropdownOrigin)
+               .withPositions([{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]);
+
+          this.overlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy: strategy,
+               scrollStrategy: this.overlay.scrollStrategies.close(),
+          });
+
+          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
+          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
+     }
+
+     private closeDropdownInternal() {
+          this.overlayRef?.detach();
+          this.overlayRef = null;
+     }
+
+     updatePaymentTx() {
+          this.scheduleHighlight();
+     }
+
+     updateTxResult() {
+          this.scheduleHighlight();
+     }
+
+     private scheduleHighlight() {
+          afterRenderEffect(
+               () => {
+                    const paymentStr = JSON.stringify(this.ui.paymentTx, null, 2);
+                    const resultStr = JSON.stringify(this.ui.txResult, null, 2);
+
+                    if (this.paymentJson?.nativeElement && paymentStr !== this.lastPaymentTx) {
+                         this.paymentJson.nativeElement.textContent = paymentStr;
+                         Prism.highlightElement(this.paymentJson.nativeElement);
+                         this.lastPaymentTx = paymentStr;
+                    }
+
+                    if (this.txResultJson?.nativeElement && resultStr !== this.lastTxResult) {
+                         this.txResultJson.nativeElement.textContent = resultStr;
+                         Prism.highlightElement(this.txResultJson.nativeElement);
+                         this.lastTxResult = resultStr;
+                    }
+
+                    this.cdr.detectChanges();
+               },
+               { injector: this.injector }
+          );
      }
 }

@@ -1017,8 +1017,6 @@ export class ValidationService {
                transactionType: 'PaymentChannelClose',
                requiredFields: ['seed', 'channelID'],
                validators: [
-                    this.positiveAmount(),
-
                     ctx => {
                          if (ctx.inputs['seed']) {
                               const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
@@ -1047,7 +1045,7 @@ export class ValidationService {
 
           // PaymentChannelGenerateCreatorClaimSignature
           this.registerRule({
-               transactionType: 'PaymentChannelClose',
+               transactionType: 'PaymentChannelGenerateCreatorClaimSignature',
                requiredFields: ['seed', 'amount', 'channelID', 'destination'],
                validators: [
                     this.positiveAmount(),

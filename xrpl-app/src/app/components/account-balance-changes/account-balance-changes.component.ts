@@ -38,6 +38,8 @@ import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { Router } from '@angular/router';
+import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
+
 declare var Prism: any;
 
 interface BalanceChange {
@@ -56,7 +58,7 @@ interface BalanceChange {
 @Component({
      selector: 'app-account-changes',
      standalone: true,
-     imports: [CommonModule, FormsModule, NavbarComponent, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, ScrollingModule, MatProgressSpinnerModule, MatIconModule, MatTooltipModule, MatButtonModule, LucideAngularModule, NgIcon, MatDatepickerModule, MatNativeDateModule, LucideAngularModule, NgIcon, DragDropModule, OverlayModule],
+     imports: [CommonModule, FormsModule, NavbarComponent, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, ScrollingModule, MatProgressSpinnerModule, MatIconModule, MatTooltipModule, MatButtonModule, LucideAngularModule, NgIcon, MatDatepickerModule, MatNativeDateModule, LucideAngularModule, NgIcon, DragDropModule, OverlayModule, WalletPanelComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './account-balance-changes.component.html',
      styleUrl: './account-balance-changes.component.css',
@@ -134,6 +136,48 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      private readonly seenHashes = new Set<string>();
      private originalBalanceChanges: BalanceChange[] = []; // Cache full data
 
+     public destinationSearch$ = new Subject<string>();
+
+     // Form fields
+     amountField = '';
+     destinationField: string = '';
+     destinationTagField = '';
+     sourceTagField = '';
+     invoiceIdField = '';
+     memoField: string = '';
+     isMemoEnabled: boolean = false;
+     useMultiSign: boolean = false;
+     isRegularKeyAddress: boolean = false;
+     isTicket: boolean = false;
+     selectedSingleTicket: string = '';
+     selectedTickets: string[] = [];
+     multiSelectMode: boolean = false;
+     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
+     selectedTicket: string = '';
+     showDropdown: boolean = false;
+     dropdownOpen: boolean = false;
+
+     // Multi-sign & Regular Key
+     multiSignAddress: string = '';
+     multiSignSeeds: string = '';
+     signerQuorum: number = 0;
+     regularKeyAddress: string = '';
+     regularKeySeed: string = '';
+     multiSigningEnabled: boolean = false;
+     regularKeySigningEnabled: boolean = false;
+     ticketArray: string[] = [];
+     masterKeyDisabled: boolean = false;
+
+     // Dropdown
+     filteredDestinations: DropdownItem[] = [];
+     highlightedIndex = -1;
+     destinations: DropdownItem[] = [];
+     customDestinations: { name?: string; address: string }[] = [];
+
+     // Account Balance
+     private lastPaymentTx = '';
+     private lastTxResult = '';
+
      onSearchInput(value: string) {
           this.searchSubject.next(value);
      }
@@ -159,27 +203,48 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
      ngOnInit() {
           this.environment = this.xrplService.getNet().environment;
-          this.encryptionType = this.storageService.getInputValue('encryptionType');
+          const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
+          this.url = AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          this.editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
-
-          type EnvKey = keyof typeof AppConstants.XRPL_WIN_URL;
-          const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
-          this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
-
-          this.walletManagerService.wallets$.pipe(startWith(null), pairwise(), takeUntil(this.destroy$)).subscribe(([prev, curr]) => {
-               this.wallets = curr || [];
-               this.hasWallets = this.wallets.length > 0;
-
-               const prevSelected = prev?.[this.selectedWalletIndex];
-               const currSelected = curr?.[this.selectedWalletIndex];
-
-               const walletSwitched = !prev || prevSelected?.address !== currSelected?.address || prev.length !== curr?.length;
-
-               if (walletSwitched) {
-                    this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
-                    this.onAccountChange(); // Only on actual change
+          // Listen to selected wallet changes (critical!)
+          this.walletManagerService.selectedIndex$.pipe(takeUntil(this.destroy$)).subscribe(index => {
+               if (this.wallets[index]) {
+                    this.currentWallet = { ...this.wallets[index] };
+                    // this.onAccountChange();
                }
+          });
+
+          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
+               this.wallets = wallets;
+               this.hasWallets = wallets.length > 0;
+
+               // If panel hasn't emitted yet (e.g. on page load), set current wallet manually
+               if (wallets.length > 0 && !this.currentWallet.address) {
+                    const index = this.walletManagerService.getSelectedIndex?.() ?? 0;
+                    this.currentWallet = { ...wallets[index] };
+                    this.onAccountChange();
+               }
+
+               this.updateDestinations();
+          });
+
+          // Load custom destinations
+          const stored = this.storageService.get('customDestinations');
+          this.customDestinations = stored ? JSON.parse(stored) : [];
+          this.updateDestinations();
+
+          // Dropdown service sync
+          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => {
+               this.destinationDropdownService.filter(query);
+          });
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
+               this.filteredDestinations = list;
+               this.highlightedIndex = list.length > 0 ? 0 : -1;
+               this.cdr.detectChanges();
+          });
+          this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
+               open ? this.openDropdownInternal() : this.closeDropdownInternal();
           });
 
           // Debounce search input
@@ -190,12 +255,6 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           console.log('paginator:', this.paginator, 'pageIndex:', this.paginator?.pageIndex, 'pageSize:', this.paginator?.pageSize, 'length:', this.paginator?.length);
      }
 
-     ngOnDestroy() {
-          if (this.scrollDebounce) {
-               clearTimeout(this.scrollDebounce);
-          }
-     }
-
      ngAfterViewInit() {
           if (this.hasInitialized) return;
           this.hasInitialized = true;
@@ -203,188 +262,52 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           if (this.paginator) {
                console.log('Warning: paginator present but not used for infinite scroll.');
           }
+
+          this.scheduleHighlight();
+     }
+
+     ngOnDestroy() {
+          if (this.scrollDebounce) {
+               clearTimeout(this.scrollDebounce);
+          }
+          this.destroy$.next();
+          this.destroy$.complete();
+     }
+
+     trackByAddress(index: number, item: DropdownItem): string {
+          return item.address;
+     }
+
+     async toggleMultiSign() {
+          try {
+               this.utilsService.toggleMultiSign(this.useMultiSign, this.signers, (await this.getWallet()).classicAddress);
+          } catch (error: any) {
+               this.ui.setError(`${error.message}`);
+          }
      }
 
      toggleExpanded() {
           this.isExpanded = !this.isExpanded;
      }
 
+     onWalletSelected(wallet: Wallet) {
+          this.currentWallet = { ...wallet };
+
+          // Prevent setting self as the destination after switching wallet
+          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address || this.destinationField;
+          if (currentDest === wallet.address) {
+               this.destinationField = '';
+          }
+
+          // This triggers refresh balance, signer list, etc.
+          this.onAccountChange();
+     }
+
      setTab(tab: string) {
           this.activeTab = tab;
-          this.ui.clearMessages();
           this.clearFields(true);
-          this.clearWarning();
-     }
-
-     selectWallet(index: number) {
-          if (this.selectedWalletIndex === index) return; // ← Add this guard!
-          this.selectedWalletIndex = index;
-          this.onAccountChange();
-     }
-
-     editName(i: number) {
-          this.walletManagerService.startEdit(i);
-          const wallet = this.wallets[i];
-          this.tempName = wallet.name || `Wallet ${i + 1}`;
-          setTimeout(() => this.nameInput?.nativeElement.focus(), 0);
-     }
-
-     saveName() {
-          this.walletManagerService.saveEdit(this.tempName);
-          this.tempName = '';
-     }
-
-     cancelEdit() {
-          this.walletManagerService.cancelEdit();
-          this.tempName = '';
-     }
-
-     applyFilter(filterValue: string) {
-          const trimmed = (filterValue || '').trim().toLowerCase();
-          this.filterValue = trimmed;
-
-          if (!trimmed && !this.dateRange.start && !this.dateRange.end) {
-               this.balanceChanges = [...this.originalBalanceChanges];
-          } else {
-               this.balanceChanges = this.originalBalanceChanges.filter(item => {
-                    const matchesText = !trimmed || (item._searchIndex?.includes(trimmed) ?? false);
-                    const inDateRange = this.isInDateRange(item.date);
-                    return matchesText && inDateRange;
-               });
-          }
-
-          // Scroll to top on filter
-          this.viewport?.scrollToIndex(0);
-          this.cdr.detectChanges();
-     }
-
-     private readonly trackByFunction = (index: number, item: BalanceChange) => {
-          return item.hash;
-     };
-
-     private formatDateForSearch(date: Date): string {
-          const d = new Date(date);
-          const month = d.toLocaleString('default', { month: 'short' });
-          const day = d.getDate();
-          const year = d.getFullYear();
-          return `${month} ${day}, ${year} ${year} ${day} ${month}`.toLowerCase();
-     }
-
-     private isInDateRange(date: Date): boolean {
-          if (!this.dateRange.start && !this.dateRange.end) return true;
-          const d = new Date(date);
-          d.setHours(0, 0, 0, 0);
-
-          if (this.dateRange.start) {
-               const start = new Date(this.dateRange.start);
-               start.setHours(0, 0, 0, 0);
-               if (d < start) return false;
-          }
-          if (this.dateRange.end) {
-               const end = new Date(this.dateRange.end);
-               end.setHours(23, 59, 59, 999);
-               if (d > end) return false;
-          }
-          return true;
-     }
-
-     clearFilter() {
-          this.filterValue = '';
-          this.applyFilter('');
-     }
-
-     applyDateFilter() {
-          this.applyFilter(this.filterValue); // Re-apply both filters
-     }
-
-     clearDateFilter() {
-          this.dateRange = { start: null, end: null };
-          this.applyFilter(this.filterValue);
-     }
-
-     onPageChange(event: PageEvent) {
-          const { pageIndex, pageSize } = event;
-          const totalLoaded = this.balanceChanges.length;
-
-          // Calculate how many items this page would require
-          const requiredCount = (pageIndex + 1) * pageSize;
-
-          // Only load if we don't already have enough items
-          if (requiredCount > totalLoaded && this.hasMoreData && !this.loadingMore) {
-               console.log('Paginator requested more data for page', pageIndex);
-               this.loadBalanceChanges(false);
-          }
-     }
-
-     onWalletListChange(): void {
-          if (this.wallets.length <= 0) {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length === 1 && this.wallets[0].address === '') {
-               this.hasWallets = false;
-               return;
-          }
-
-          if (this.wallets.length > 0 && this.selectedWalletIndex >= this.wallets.length) {
-               this.selectedWalletIndex = 0;
-          }
-
-          this.onAccountChange();
-     }
-
-     toggleSecret(index: number) {
-          this.wallets[index].showSecret = !this.wallets[index].showSecret;
-     }
-
-     async refreshBalance(index: number) {
-          const wallet = this.wallets[index];
-          try {
-               const client = await this.xrplService.getClient();
-               const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               await this.refreshWallets(client, [walletAddress]).catch(console.error);
-          } catch (err) {
-               this.ui.setError('Failed to refresh balance');
-          }
-     }
-
-     deleteWallet(index: number) {
-          if (confirm('Delete this wallet? This cannot be undone.')) {
-               this.walletManagerService.deleteWallet(index);
-               if (this.selectedWalletIndex >= this.wallets.length) {
-                    this.selectedWalletIndex = Math.max(0, this.wallets.length - 1);
-               }
-               this.onAccountChange();
-          }
-     }
-
-     async generateNewAccount() {
-          this.ui.updateSpinnerMessage(``);
-          this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-          const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
-          const client = await this.xrplService.getClient();
-          this.refreshWallets(client, faucetWallet.address);
-          this.ui.spinner = false;
+          this.ui.clearMessages();
           this.ui.clearWarning();
-     }
-
-     dropWallet(event: CdkDragDrop<any[]>) {
-          moveItemInArray(this.wallets, event.previousIndex, event.currentIndex);
-
-          // Update your selectedWalletIndex if needed
-          if (this.selectedWalletIndex === event.previousIndex) {
-               this.selectedWalletIndex = event.currentIndex;
-          } else if (this.selectedWalletIndex > event.previousIndex && this.selectedWalletIndex <= event.currentIndex) {
-               this.selectedWalletIndex--;
-          } else if (this.selectedWalletIndex < event.previousIndex && this.selectedWalletIndex >= event.currentIndex) {
-               this.selectedWalletIndex++;
-          }
-
-          // Persist the new order to localStorage
-          this.saveWallets();
-
-          this.onAccountChange();
      }
 
      async onAccountChange() {
@@ -392,42 +315,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                return;
           }
 
-          if (this.wallets.length === 0) {
-               this.currentWallet = {
-                    classicAddress: '',
-                    address: '',
-                    seed: '',
-                    name: undefined,
-                    balance: '0',
-                    ownerCount: undefined,
-                    xrpReserves: undefined,
-                    spendableXrp: undefined,
-               };
-               return;
-          }
-
-          const selected = this.wallets[this.selectedWalletIndex];
-
-          // Only reload if the actual address changed
-          if (selected.address !== this.currentWallet.address) {
-               this.currentWallet = { ...selected };
-               this.loadBalanceChanges(true);
-          } else {
-               this.currentWallet = {
-                    ...selected,
-                    balance: selected.balance || '0',
-                    ownerCount: selected.ownerCount || '0',
-                    xrpReserves: selected.xrpReserves || '0',
-                    spendableXrp: selected.spendableXrp || '0',
-               };
-          }
-
-          // if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
-          //      this.ui.clearWarning();
-          //      this.loadBalanceChanges(true);
-          // } else if (this.currentWallet.address) {
-          //      this.ui.setError('Failed to refresh balance');
-          // }
+          this.loadBalanceChanges(true);
      }
 
      async loadBalanceChanges(reset = true) {
@@ -592,13 +480,13 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           const processed: BalanceChange[] = [];
 
           for (const txWrapper of transactions) {
-               console.debug(`txWrapper`, txWrapper);
+               // console.debug(`txWrapper`, txWrapper);
                const tx = txWrapper.tx_json || txWrapper.transaction;
-               console.debug(`tx`, tx);
+               // console.debug(`tx`, tx);
                const fee = xrpl.dropsToXrp(tx.Fee).toString();
                const meta = txWrapper.meta;
                const fees = tx.Fee;
-               console.debug(`Fee 2`, xrpl.dropsToXrp(fees));
+               // console.debug(`Fee 2`, xrpl.dropsToXrp(fees));
 
                if (typeof meta !== 'object' || !meta.AffectedNodes) {
                     continue;
@@ -849,6 +737,60 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           return processed;
      }
 
+     private formatDateForSearch(date: Date): string {
+          const d = new Date(date);
+          const month = d.toLocaleString('default', { month: 'short' });
+          const day = d.getDate();
+          const year = d.getFullYear();
+          return `${month} ${day}, ${year} ${year} ${day} ${month}`.toLowerCase();
+     }
+
+     private isInDateRange(date: Date): boolean {
+          if (!this.dateRange.start && !this.dateRange.end) return true;
+          const d = new Date(date);
+          d.setHours(0, 0, 0, 0);
+
+          if (this.dateRange.start) {
+               const start = new Date(this.dateRange.start);
+               start.setHours(0, 0, 0, 0);
+               if (d < start) return false;
+          }
+          if (this.dateRange.end) {
+               const end = new Date(this.dateRange.end);
+               end.setHours(23, 59, 59, 999);
+               if (d > end) return false;
+          }
+          return true;
+     }
+
+     clearFilter() {
+          this.filterValue = '';
+          this.applyFilter('');
+     }
+
+     applyDateFilter() {
+          this.applyFilter(this.filterValue); // Re-apply both filters
+     }
+
+     clearDateFilter() {
+          this.dateRange = { start: null, end: null };
+          this.applyFilter(this.filterValue);
+     }
+
+     onPageChange(event: PageEvent) {
+          const { pageIndex, pageSize } = event;
+          const totalLoaded = this.balanceChanges.length;
+
+          // Calculate how many items this page would require
+          const requiredCount = (pageIndex + 1) * pageSize;
+
+          // Only load if we don't already have enough items
+          if (requiredCount > totalLoaded && this.hasMoreData && !this.loadingMore) {
+               console.log('Paginator requested more data for page', pageIndex);
+               this.loadBalanceChanges(false);
+          }
+     }
+
      onScroll(event: any) {
           if (this.loadingMore || !this.hasMoreData) return;
 
@@ -861,6 +803,25 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                     this.loadBalanceChanges(false);
                }, 100);
           }
+     }
+
+     applyFilter(filterValue: string) {
+          const trimmed = (filterValue || '').trim().toLowerCase();
+          this.filterValue = trimmed;
+
+          if (!trimmed && !this.dateRange.start && !this.dateRange.end) {
+               this.balanceChanges = [...this.originalBalanceChanges];
+          } else {
+               this.balanceChanges = this.originalBalanceChanges.filter(item => {
+                    const matchesText = !trimmed || (item._searchIndex?.includes(trimmed) ?? false);
+                    const inDateRange = this.isInDateRange(item.date);
+                    return matchesText && inDateRange;
+               });
+          }
+
+          // Scroll to top on filter
+          this.viewport?.scrollToIndex(0);
+          this.cdr.detectChanges();
      }
 
      getTypeColor(type: string): string {
@@ -927,62 +888,18 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           }
      }
 
+     updateDestinations() {
+          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
+          this.destinationDropdownService.setItems(this.destinations);
+     }
+
      private async getWallet() {
-          const wallet = await this.utilsService.getWallet(this.currentWallet.seed);
+          const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) {
                throw new Error('ERROR: Wallet could not be created or is undefined');
           }
           return wallet;
-     }
-
-     saveWallets() {
-          this.storageService.set('wallets', JSON.stringify(this.wallets));
-     }
-
-     updatePaymentTx() {
-          this.scheduleHighlight();
-     }
-
-     updateTxResult(tx: any) {
-          this.ui.txResult = tx;
-          this.scheduleHighlight();
-     }
-
-     private scheduleHighlight() {
-          // Use the captured injector to run afterRenderEffect safely
-          afterRenderEffect(
-               () => {
-                    if (this.ui.paymentTx && this.paymentJson?.nativeElement) {
-                         const json = JSON.stringify(this.ui.paymentTx, null, 2);
-                         this.paymentJson.nativeElement.textContent = json;
-                         Prism.highlightElement(this.paymentJson.nativeElement);
-                    }
-
-                    if (this.ui.txResult && this.txResultJson?.nativeElement) {
-                         const json = JSON.stringify(this.ui.txResult, null, 2);
-                         this.txResultJson.nativeElement.textContent = json;
-                         Prism.highlightElement(this.txResultJson.nativeElement);
-                    }
-               },
-               { injector: this.injector }
-          );
-     }
-
-     private async refreshWallets(client: xrpl.Client, addressesToRefresh?: string[]) {
-          console.log('Calling refreshWallets');
-
-          await this.walletDataService.refreshWallets(
-               client,
-               this.wallets, // pass current wallet list
-               this.selectedWalletIndex, // pass selected index
-               addressesToRefresh,
-               (updatedWalletsList, newCurrentWallet) => {
-                    // This callback runs inside NgZone → UI updates safely
-                    this.currentWallet = { ...newCurrentWallet };
-                    // Optional: trigger change detection if needed
-                    this.cdr.markForCheck();
-               }
-          );
      }
 
      copyToClipboard(text: string) {
@@ -1029,5 +946,104 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
      clearWarning() {
           this.ui.setWarning(null);
+     }
+
+     onArrowDown() {
+          if (!this.showDropdown || this.filteredDestinations.length === 0) return;
+          this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredDestinations.length;
+     }
+
+     selectHighlighted() {
+          if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
+               const addr = this.filteredDestinations[this.highlightedIndex].address;
+               if (addr !== this.currentWallet.address) {
+                    this.destinationField = addr;
+                    this.closeDropdown(); // Also close on Enter
+               }
+          }
+     }
+
+     // Dropdown controls
+     openDropdown() {
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.filter(this.destinationField || '');
+          this.destinationDropdownService.openDropdown();
+     }
+
+     closeDropdown() {
+          this.destinationDropdownService.closeDropdown();
+     }
+
+     toggleDropdown() {
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.toggleDropdown();
+     }
+
+     onDestinationInput() {
+          this.destinationDropdownService.filter(this.destinationField || '');
+          this.destinationDropdownService.openDropdown();
+     }
+
+     selectDestination(address: string) {
+          if (address === this.currentWallet.address) return;
+          const dest = this.destinations.find(d => d.address === address);
+          this.destinationField = dest ? this.destinationDropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`;
+          this.closeDropdown();
+     }
+
+     private openDropdownInternal() {
+          if (this.overlayRef?.hasAttached()) return;
+
+          const strategy = this.overlay
+               .position()
+               .flexibleConnectedTo(this.dropdownOrigin)
+               .withPositions([{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]);
+
+          this.overlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy: strategy,
+               scrollStrategy: this.overlay.scrollStrategies.close(),
+          });
+
+          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
+          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
+     }
+
+     private closeDropdownInternal() {
+          this.overlayRef?.detach();
+          this.overlayRef = null;
+     }
+
+     updatePaymentTx() {
+          this.scheduleHighlight();
+     }
+
+     updateTxResult() {
+          this.scheduleHighlight();
+     }
+
+     private scheduleHighlight() {
+          afterRenderEffect(
+               () => {
+                    const paymentStr = JSON.stringify(this.ui.paymentTx, null, 2);
+                    const resultStr = JSON.stringify(this.ui.txResult, null, 2);
+
+                    if (this.paymentJson?.nativeElement && paymentStr !== this.lastPaymentTx) {
+                         this.paymentJson.nativeElement.textContent = paymentStr;
+                         Prism.highlightElement(this.paymentJson.nativeElement);
+                         this.lastPaymentTx = paymentStr;
+                    }
+
+                    if (this.txResultJson?.nativeElement && resultStr !== this.lastTxResult) {
+                         this.txResultJson.nativeElement.textContent = resultStr;
+                         Prism.highlightElement(this.txResultJson.nativeElement);
+                         this.lastTxResult = resultStr;
+                    }
+
+                    this.cdr.detectChanges();
+               },
+               { injector: this.injector }
+          );
      }
 }

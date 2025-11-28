@@ -10,94 +10,7 @@
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel ==== -->
-          <div class="wallets-panel">
-               <!-- Header with title + Generate button -->
-               <div class="panel-header">
-                    <h2 class="panel-title">
-                         <lucide-icon name="wallet" size="25" style="padding-top: 5px"></lucide-icon>
-                         Accounts
-                    </h2>
-                    <button class="generate-btn" (click)="generateNewAccount()">+ Generate</button>
-               </div>
-
-               <p class="panel-subtitle">Generate {{environment}} accounts with XRP from the faucet. You can also generate or derive accounts in the 'Wallets' Menu.</p>
-
-               @if (hasWallets) {
-               <div>
-                    <div cdkDropList (cdkDropListDropped)="dropWallet($event)">
-                         <!-- List of wallets -->
-                         @for (wallet of wallets; track wallet.address; let i = $index) {
-                         <div class="wallet-item" cdkDrag [class.selected]="selectedWalletIndex === i">
-                              <!-- Wallet Info -->
-                              <div class="wallet-info">
-                                   @if (editingIndex(i)) {
-                                   <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" class="name-input" placeholder="Enter name" (click)="$event.stopPropagation()" />
-                                   } @else {
-                                   <span (click)="editName(i); $event.stopPropagation()" class="clickable-name"> {{ wallet.name || 'Wallet ' + (i + 1) }} </span>
-                                   }
-                              </div>
-
-                              <div class="wallet-info" (click)="selectWallet(i)">
-                                   <div class="address-line">
-                                        <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
-                                        <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
-                                   </div>
-
-                                   <!-- Icons -->
-                                   <div class="wallet-actions">
-                                        <button class="icon-btn refresh" (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Balance">
-                                             <lucide-icon name="refresh-ccw"></lucide-icon>
-                                        </button>
-
-                                        <button class="icon-btn copy" (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" title="Copy Address">
-                                             <lucide-icon name="copy"></lucide-icon>
-                                        </button>
-
-                                        <button class="icon-btn delete" (click)="deleteWallet(i); $event.stopPropagation()" title="Delete Wallet">
-                                             <lucide-icon name="trash-2"></lucide-icon>
-                                        </button>
-                                   </div>
-                              </div>
-
-                              <!-- Secret Key -->
-                              <div class="secret-section" (click)="selectWallet(i)">
-                                   <button class="show-toggle" (click)="toggleSecret(i); $event.stopPropagation()">
-                                        <lucide-icon [name]="wallet.showSecret ? 'eye-off' : 'eye'" size="16" style="padding-top: 5px"></lucide-icon>
-                                        <span>{{ wallet.showSecret ? 'Hide Secret' : 'Show Secret' }}</span>
-                                   </button>
-
-                                   <!-- Seed shown below the button -->
-                                   @if (wallet.showSecret) {
-                                   <div class="secret-seed-container">
-                                        <div class="secret-seed">{{ wallet.seed }}</div>
-                                        <button class="copy-btn" (click)="copyUtilService.copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
-                                             <lucide-icon name="copy" size="20"></lucide-icon>
-                                        </button>
-                                   </div>
-                                   }
-                              </div>
-                         </div>
-                         }
-                    </div>
-
-                    <!-- Selected Account Summary ==== -->
-                    <div class="selected-account-card">
-                         <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
-                         <div class="summary-row"><span>Address:</span> <span>{{ currentWallet.address | slice:0:5 }}...{{ currentWallet.address | slice:-5 }}</span></div>
-                         <div class="summary-row"><span>Balance:</span> <span class="highlight wallet-balance">{{ currentWallet.balance }} XRP</span></div>
-                         <div class="summary-row"><span>Owner Count:</span> <span class="highlight wallet-balance">{{ currentWallet.ownerCount }}</span></div>
-                         <div class="summary-row"><span>Xrp Reserves:</span> <span class="highlight wallet-balance">{{ currentWallet.xrpReserves }} XRP</span></div>
-                    </div>
-               </div>
-               } @else {
-               <!-- This block shows if hasWallets is false -->
-               <div class="no-wallet-found">
-                    <lucide-icon name="wallet" size="40"></lucide-icon>
-                    <p>No accounts generated yet.</p>
-                    <p>Click "Generate" to create your first {{environment}} account</p>
-               </div>
-               }
-          </div>
+          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
           <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div>
 
@@ -235,7 +148,7 @@
                @if (ui.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="ui.warningMessage"></div>
+                    <div class="warning-text">{{ safeWarningMessage }}</div>
                </div>
                }
 
@@ -387,7 +300,7 @@
                                              <label>Destination</label>
 
                                              <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
+                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
 
                                                   <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
                                                        <lucide-icon name="chevron-down" size="18"></lucide-icon>
@@ -443,7 +356,7 @@
                                              <label>Destination</label>
 
                                              <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
+                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
 
                                                   <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
                                                        <lucide-icon name="chevron-down" size="18"></lucide-icon>
@@ -487,7 +400,7 @@
                                              <label>Destination</label>
 
                                              <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
+                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
 
                                                   <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
                                                        <lucide-icon name="chevron-down" size="18"></lucide-icon>
@@ -705,11 +618,11 @@
                          <div class="multisign-grid">
                               <div class="multisign-field">
                                    <label>Signers</label>
-                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly (ngModelChange)="autoResize(signers)"></textarea>
+                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
                               </div>
                               <div class="multisign-field">
                                    <label>Seeds</label>
-                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly (ngModelChange)="autoResize(seeds)"></textarea>
+                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
                               </div>
                               <div class="multisign-field quorum-field">
                                    <label>Quorum</label>

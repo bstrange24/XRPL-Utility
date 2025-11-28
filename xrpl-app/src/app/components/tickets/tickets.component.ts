@@ -228,7 +228,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
 
                this.walletTicketCount = ticketObjects.result.account_objects.length;
                this.refreshUIData(wallet, accountInfo, accountObjects);
-               this.utilsService.loadSignerList(wallet.classicAddress, []);
+               this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
                this.clearFields(false);
                this.cdr.detectChanges();

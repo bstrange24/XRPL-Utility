@@ -1,36 +1,38 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, NgZone, inject, afterRenderEffect, Injector, ViewContainerRef } from '@angular/core';
-import { trigger, state, style, transition, animate, group, query } from '@angular/animations';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, ElementRef, ViewChild, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { MatSortModule } from '@angular/material/sort';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTableModule } from '@angular/material/table';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { NgIcon } from '@ng-icons/core';
+import { LucideAngularModule } from 'lucide-angular';
+import { OverlayModule, Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { TemplatePortal } from '@angular/cdk/portal';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
-import { NavbarComponent } from '../navbar/navbar.component';
+import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
-import { SignTransactionUtilService } from '../../services/sign-transactions-util/sign-transaction-util.service';
-import { AppConstants } from '../../core/app.constants';
-import SignerList from 'xrpl/dist/npm/models/ledger/SignerList';
-import { LucideAngularModule } from 'lucide-angular';
-import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
-import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { Subject, takeUntil } from 'rxjs';
-import { pairwise, startWith } from 'rxjs/operators';
-import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
-import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
+import SignerList from 'xrpl/dist/npm/models/ledger/SignerList';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
-import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
-import { Overlay, OverlayModule } from '@angular/cdk/overlay';
+import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
+import { DropdownItem } from '../../models/dropdown-item.model';
+import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
+import { Subject, takeUntil } from 'rxjs';
+import { NavbarComponent } from '../navbar/navbar.component';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { SignTransactionUtilService } from '../../services/sign-transactions-util/sign-transaction-util.service';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -41,87 +43,94 @@ interface ValidationInputs {
 @Component({
      selector: 'app-sign-transactions',
      standalone: true,
-     imports: [CommonModule, FormsModule, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule, OverlayModule, MatAutocompleteModule, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule],
+     imports: [CommonModule, FormsModule, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule, OverlayModule, MatAutocompleteModule, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, WalletPanelComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './sign-transactions.component.html',
      styleUrl: './sign-transactions.component.css',
 })
 export class SignTransactionsComponent implements OnInit, AfterViewInit {
      private destroy$ = new Subject<void>();
-     @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
-     @ViewChild('resultFieldError') resultFieldError!: ElementRef<HTMLDivElement>;
-     @ViewChild('accountForm') accountForm!: NgForm;
+     private readonly injector = inject(Injector);
+     public destinationSearch$ = new Subject<string>();
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
      @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
      @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
-     @ViewChild('signers') signersRef!: ElementRef<HTMLTextAreaElement>;
-     @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
-     @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
+
+     // Form fields
+     activeTab: string = 'getAccountDetails';
+     amountField = '';
+     destinationField: string = '';
+     destinationTagField = '';
+     sourceTagField = '';
+     invoiceIdField = '';
+     memoField: string = '';
+     isMemoEnabled: boolean = false;
+     useMultiSign: boolean = false;
+     isRegularKeyAddress: boolean = false;
+     isTicket: boolean = false;
+     selectedSingleTicket: string = '';
+     selectedTickets: string[] = [];
+     multiSelectMode: boolean = false;
+     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
+     selectedTicket: string = '';
+
+     // Wallet state (now driven by WalletPanelComponent via service)
+     currentWallet: Wallet = {} as Wallet;
+     wallets: Wallet[] = [];
+     hasWallets: boolean = true;
+     environment = '';
+     url = '';
+     showDropdown: boolean = false;
+     dropdownOpen: boolean = false;
+
+     // Multi-sign & Regular Key
+     multiSignAddress: string = '';
+     multiSignSeeds: string = '';
+     signerQuorum: number = 0;
+     regularKeyAddress: string = '';
+     regularKeySeed: string = '';
+     multiSigningEnabled: boolean = false;
+     regularKeySigningEnabled: boolean = false;
+     ticketArray: string[] = [];
+     masterKeyDisabled: boolean = false;
+
+     // Dropdown
+     private overlayRef: OverlayRef | null = null;
+     filteredDestinations: DropdownItem[] = [];
+     highlightedIndex = -1;
+     destinations: DropdownItem[] = [];
+     customDestinations: { name?: string; address: string }[] = [];
+
+     // Sign Tx Specific
+     executionTime = '';
+     @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
+     @ViewChild('resultFieldError') resultFieldError!: ElementRef<HTMLDivElement>;
      @ViewChild('txJsonPre') txJsonPre!: ElementRef<HTMLPreElement>;
      @ViewChild('txJsonCode') txJsonCode!: ElementRef<HTMLElement>;
      @ViewChild('signedPre') signedPre!: ElementRef<HTMLPreElement>;
      @ViewChild('signedCode') signedCode!: ElementRef<HTMLElement>;
-     private readonly injector = inject(Injector);
      txJson: string = ''; // Dedicated for transaction JSON (untouched on error)
      outputField: string = ''; // Dedicated for hash/blob in "Signed" field (empty on error)
      ticketSequence: string = '';
-     isTicket: boolean = false;
      isTicketEnabled: boolean = false;
-     ticketArray: string[] = [];
-     selectedTickets: string[] = [];
-     selectedSingleTicket: string = '';
      defaultTicketSequence: string | null = null; // store defaulted ticket
-     multiSelectMode: boolean = false;
-     selectedTicket: string = '';
      ownerCount: string = '';
      totalXrpReserves: string = '';
-     executionTime: string = '';
-     multiSignAddress: string = '';
-     multiSignSeeds: string = '';
-     signerQuorum: number = 0;
-     useMultiSign: boolean = false;
-     multiSigningEnabled: boolean = false;
-     regularKeySigningEnabled: boolean = false;
-     isRegularKeyAddress: boolean = false;
-     regularKeySeed: string = '';
-     regularKeyAddress: string = '';
-     masterKeyDisabled: boolean = false;
-     memoField: string = '';
-     isMemoEnabled: boolean = false;
      isSimulateEnabled: boolean = false;
-     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      selectedTransaction: string | null = null;
      editedTxJson: any = {};
-     wallets: Wallet[] = [];
      selectedWalletIndex: number = 0;
-     currentWallet: Wallet = {
-          classicAddress: '',
-          address: '',
-          seed: '',
-          name: undefined,
-          balance: '0',
-          ownerCount: undefined,
-          xrpReserves: undefined,
-          spendableXrp: undefined,
-          isIssuer: false,
-     };
      multiSignedTxBlob: string = ''; // Final combined tx blob
      availableSigners: any[] = [];
      requiredQuorum: number = 0;
      selectedQuorum: number = 0;
-     environment: string = '';
-     activeTab = 'getAccountDetails'; // default
-     private cachedReserves: any = null;
-     encryptionType: string = '';
-     hasWallets: boolean = true;
-     url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
      userEmail: string = '';
      flagResults: any;
      private highlightTimeout: any;
-     destinations: { name?: string; address: string }[] = [];
      issuers: { name?: string; address: string }[] = [];
-     customDestinations: { name?: string; address: string }[] = [];
      buttonLoading = {
           getJson: false,
           signed: false,
@@ -130,51 +139,68 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      };
 
      constructor(
-          private readonly xrplService: XrplService,
-          private readonly utilsService: UtilsService,
-          private readonly cdr: ChangeDetectorRef,
-          private readonly storageService: StorageService,
-          private readonly xrplTransactions: XrplTransactionService,
-          private walletGenerator: WalletGeneratorService,
+          private xrplService: XrplService,
+          private utilsService: UtilsService,
+          private storageService: StorageService,
+          private xrplTransactions: XrplTransactionService,
           private walletManagerService: WalletManagerService,
           private signTransactionUtilService: SignTransactionUtilService,
           public ui: TransactionUiService,
           public downloadUtilService: DownloadUtilService,
           public copyUtilService: CopyUtilService,
           private walletDataService: WalletDataService,
-          private validationService: ValidationService
+          private validationService: ValidationService,
+          private overlay: Overlay,
+          private viewContainerRef: ViewContainerRef,
+          private destinationDropdownService: DestinationDropdownService,
+          private cdr: ChangeDetectorRef
      ) {}
 
      ngOnInit() {
           this.environment = this.xrplService.getNet().environment;
-          this.encryptionType = this.storageService.getInputValue('encryptionType');
+          const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
+          this.url = AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          this.editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
-
-          type EnvKey = keyof typeof AppConstants.XRPL_WIN_URL;
-          const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
-          this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
-
-          this.walletManagerService.wallets$.pipe(startWith(null), pairwise(), takeUntil(this.destroy$)).subscribe(([prev, curr]) => {
-               this.wallets = curr || [];
-               this.hasWallets = this.wallets.length > 0;
-
-               const prevSelected = prev?.[this.selectedWalletIndex];
-               const currSelected = curr?.[this.selectedWalletIndex];
-
-               const walletSwitched = !prev || prevSelected?.address !== currSelected?.address || prev.length !== curr?.length;
-
-               if (walletSwitched) {
-                    this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
-                    this.onAccountChange(); // Only on actual change
+          // Listen to selected wallet changes (critical!)
+          this.walletManagerService.selectedIndex$.pipe(takeUntil(this.destroy$)).subscribe(index => {
+               if (this.wallets[index]) {
+                    this.currentWallet = { ...this.wallets[index] };
+                    // this.getAccountDetails();
                }
-               this.cdr.markForCheck();
           });
 
-          if (this.ticketArray && this.ticketArray.length > 0) {
-               this.defaultTicketSequence = this.ticketArray[0];
-               this.selectedSingleTicket = this.defaultTicketSequence;
-          }
+          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
+               this.wallets = wallets;
+               this.hasWallets = wallets.length > 0;
+
+               // If panel hasn't emitted yet (e.g. on page load), set current wallet manually
+               if (wallets.length > 0 && !this.currentWallet.address) {
+                    const index = this.walletManagerService.getSelectedIndex?.() ?? 0;
+                    this.currentWallet = { ...wallets[index] };
+                    this.getAccountDetails();
+               }
+
+               this.updateDestinations();
+          });
+
+          // Load custom destinations
+          const stored = this.storageService.get('customDestinations');
+          this.customDestinations = stored ? JSON.parse(stored) : [];
+          this.updateDestinations();
+
+          // Dropdown service sync
+          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => {
+               this.destinationDropdownService.filter(query);
+          });
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
+               this.filteredDestinations = list;
+               this.highlightedIndex = list.length > 0 ? 0 : -1;
+               this.cdr.detectChanges();
+          });
+          this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
+               open ? this.openDropdownInternal() : this.closeDropdownInternal();
+          });
 
           this.selectedTransaction = 'sendXrp';
           this.clearMessages();
@@ -183,9 +209,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      }
 
      ngAfterViewInit() {
-          setTimeout(() => {
-               this.textareas.forEach(ta => this.autoResize(ta.nativeElement));
-          });
+          this.scheduleHighlight();
      }
 
      ngOnDestroy() {
@@ -193,142 +217,18 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           this.destroy$.complete();
      }
 
+     trackByAddress(index: number, item: DropdownItem): string {
+          return item.address;
+     }
+
      async setTab(tab: string) {
           this.activeTab = tab;
           this.clearMessages();
           this.clearFields(true);
-          this.getAccountDetails();
-     }
-
-     selectWallet(index: number) {
-          if (this.selectedWalletIndex === index) return;
-          this.selectedWalletIndex = index;
-          this.onAccountChange();
-     }
-
-     editName(i: number) {
-          this.walletManagerService.startEdit(i);
-          const wallet = this.wallets[i];
-          this.tempName = wallet.name || `Wallet ${i + 1}`;
-          setTimeout(() => this.nameInput?.nativeElement.focus(), 0);
-     }
-
-     saveName() {
-          this.walletManagerService.saveEdit(this.tempName);
-          this.tempName = '';
-     }
-
-     cancelEdit() {
-          this.walletManagerService.cancelEdit();
-          this.tempName = '';
-     }
-
-     toggleSecret(index: number) {
-          this.wallets[index].showSecret = !this.wallets[index].showSecret;
-     }
-
-     async refreshBalance(index: number) {
-          const wallet = this.wallets[index];
-          try {
-               const client = await this.xrplService.getClient();
-               const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               await this.refreshWallets(client, [walletAddress]).catch(console.error);
-          } catch (err) {
-               this.ui.setError('Failed to refresh balance');
-          }
-     }
-
-     deleteWallet(index: number) {
-          if (confirm('Delete this wallet? This cannot be undone.')) {
-               this.walletManagerService.deleteWallet(index);
-               if (this.selectedWalletIndex >= this.wallets.length) {
-                    this.selectedWalletIndex = Math.max(0, this.wallets.length - 1);
-               }
-               this.onAccountChange();
-          }
-     }
-
-     async generateNewAccount() {
-          console.log('Entering generateNewAccount');
-          const startTime = Date.now();
-          this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-
-          try {
-               // Default to ed25519
-               this.encryptionType = AppConstants.ENCRYPTION.ED25519;
-               console.log('encryptionType: ', this.encryptionType);
-               const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
-               const client = await this.xrplService.getClient();
-               await this.refreshWallets(client, [faucetWallet.address]);
-               this.ui.spinner = false;
-               this.ui.clearWarning();
-               this.ui.txResult.push(faucetWallet);
-               this.updateTxResult(this.ui.txResult);
-          } catch (error: any) {
-               console.error('Error in generateNewAccount:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
-          } finally {
-               this.ui.spinner = false;
-               this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving generateNewAccount in ${this.executionTime}ms`);
-          }
-     }
-
-     dropWallet(event: CdkDragDrop<any[]>) {
-          moveItemInArray(this.wallets, event.previousIndex, event.currentIndex);
-
-          // Update your selectedWalletIndex if needed
-          if (this.selectedWalletIndex === event.previousIndex) {
-               this.selectedWalletIndex = event.currentIndex;
-          } else if (this.selectedWalletIndex > event.previousIndex && this.selectedWalletIndex <= event.currentIndex) {
-               this.selectedWalletIndex--;
-          } else if (this.selectedWalletIndex < event.previousIndex && this.selectedWalletIndex >= event.currentIndex) {
-               this.selectedWalletIndex++;
-          }
-
-          // Persist the new order to localStorage
-          this.walletManagerService.setWallets(this.wallets); // ← this saves + updates observable
-
-          // Update destinations and account state
-          this.updateDestinations();
-          this.onAccountChange();
      }
 
      get isAnyButtonLoading(): boolean {
           return Object.values(this.buttonLoading).some(v => v === true);
-     }
-
-     async onAccountChange() {
-          if (this.wallets.length === 0) {
-               this.currentWallet = {
-                    classicAddress: '',
-                    address: '',
-                    seed: '',
-                    name: undefined,
-                    balance: '0',
-                    ownerCount: undefined,
-                    xrpReserves: undefined,
-                    spendableXrp: undefined,
-               };
-               return;
-          }
-
-          const selected = this.wallets[this.selectedWalletIndex];
-          this.currentWallet = {
-               ...selected,
-               balance: selected.balance || '0',
-               ownerCount: selected.ownerCount || '0',
-               xrpReserves: selected.xrpReserves || '0',
-               spendableXrp: selected.spendableXrp || '0',
-          };
-
-          if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
-               this.clearWarning();
-               await this.getAccountDetails();
-               this.resetSigners();
-          } else if (this.currentWallet.address) {
-               this.ui.setError('Invalid XRP address');
-          }
      }
 
      onTransactionChange(): void {
@@ -343,15 +243,9 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
      async toggleMultiSign() {
           try {
-               if (!this.useMultiSign) {
-                    this.utilsService.clearSignerList(this.signers);
-               } else {
-                    const wallet = await this.getWallet();
-                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-               }
+               this.utilsService.toggleMultiSign(this.useMultiSign, this.signers, (await this.getWallet()).classicAddress);
           } catch (error: any) {
-               console.log(`ERROR getting wallet in toggleMultiSign' ${error.message}`);
-               this.ui.setError('ERROR getting wallet in toggleMultiSign');
+               this.ui.setError(`${error.message}`);
           }
      }
 
@@ -359,6 +253,19 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           if (this.multiSignAddress === 'No Multi-Sign address configured for account') {
                this.multiSignSeeds = '';
           }
+     }
+
+     onWalletSelected(wallet: Wallet) {
+          this.currentWallet = { ...wallet };
+
+          // Prevent setting self as the destination after switching wallet
+          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address || this.destinationField;
+          if (currentDest === wallet.address) {
+               this.destinationField = '';
+          }
+
+          // This triggers refresh balance, signer list, etc.
+          this.getAccountDetails();
      }
 
      setMemoField() {
@@ -387,42 +294,35 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      async getAccountDetails() {
           console.log('Entering getAccountDetails');
           const startTime = Date.now();
-          this.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+
+          if (!this.currentWallet?.address || !xrpl.isValidAddress(this.currentWallet.address)) {
+               this.ui.setError('Invalid or missing wallet address');
+               return;
+          }
+
+          this.ui.clearMessages();
+          this.ui.clearWarning();
 
           try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
-               const inputs: ValidationInputs = {
-                    seed: this.currentWallet.seed,
-                    accountInfo: accountInfo,
-               };
-
-               const errors = await this.validationService.validate('AccountInfo', { inputs, client, accountInfo });
+               const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
                if (errors.length > 0) {
                     return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                this.getSignerAccountsList(accountObjects);
 
-               await this.refreshWallets(client, [wallet.classicAddress]);
+               this.refreshUIData(wallet, accountInfo, accountObjects);
+               this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+               this.updateTickets(accountObjects);
+               this.clearFields(false);
+               this.getTransactionJSON();
 
-               setTimeout(async () => {
-                    try {
-                         this.refreshUIData(wallet, accountInfo, accountObjects);
-                         this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                         this.updateTickets(accountObjects);
-                         this.clearFields(false);
-                         this.getTransactionJSON();
-                    } catch (err) {
-                         console.error('Error in deferred UI updates:', err);
-                    }
-               }, 0);
-
-               this.clearMessages();
+               this.cdr.detectChanges();
                this.enableTransaction();
           } catch (error: any) {
                console.error('Error in getAccountDetails:', error);
@@ -430,7 +330,8 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving getAccountDetails in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving getAccountDetails in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -662,6 +563,9 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                const txType = this.getTransactionLabel(this.selectedTransaction ?? '');
                this.ui.showSpinnerWithDelay(this.isSimulateEnabled ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
 
+               // this.ui.setPaymentTx(paymentTx);
+               // this.updatePaymentTx();
+
                let response: any;
 
                if (this.isSimulateEnabled) {
@@ -675,45 +579,43 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                     response = await client.submitAndWait(signedTxBlob);
                }
 
-               this.utilsService.logObjects('response', response);
-               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               // this.utilsService.logObjects('response', response);
+               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.ui.txResult.push(response.result);
-               this.updateTxResult(this.ui.txResult);
+               this.ui.setTxResult(response.result);
+               this.updateTxResult();
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    return this.ui.setError(userMessage);
                } else {
                     this.ui.setSuccess(this.ui.result);
                }
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled) {
                     this.ui.successMessage = 'Transaction completed successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
                     await this.refreshWallets(client, [wallet.classicAddress]);
 
-                    setTimeout(async () => {
-                         try {
-                              this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                              // Reset selected checkboxes
-                              this.resetSigners();
-                              this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                              this.clearFields(false);
-                              this.updateTickets(updatedAccountObjects);
-                         } catch (err) {
-                              console.error('Error in post-tx cleanup:', err);
-                         }
-                    }, 0);
+                    // Add new destination if valid and not already present
+                    this.addNewDestinationFromUser();
+
+                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    // Reset selected checkboxes
+                    this.resetSigners();
+                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
+                    this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated transaction successfully!';
                }
@@ -724,7 +626,8 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                this.ui.spinner = false;
                this.buttonLoading.submit = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving submitTransaction in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving submitTransaction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -761,11 +664,11 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                     response = await client.submitAndWait(multiSignedTxBlob);
                }
 
-               this.utilsService.logObjects('response', response);
-               this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+               // this.utilsService.logObjects('response', response);
+               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.ui.txResult.push(response.result);
-               this.updateTxResult(this.ui.txResult);
+               this.ui.setTxResult(response.result);
+               this.updateTxResult();
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
@@ -935,44 +838,10 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           });
      }
 
-     private async refreshWallets(client: xrpl.Client, addressesToRefresh?: string[]) {
-          console.log('Calling refreshWallets');
-
-          await this.walletDataService.refreshWallets(
-               client,
-               this.wallets, // pass current wallet list
-               this.selectedWalletIndex, // pass selected index
-               addressesToRefresh,
-               (updatedWalletsList, newCurrentWallet) => {
-                    // This callback runs inside NgZone → UI updates safely
-                    this.currentWallet = { ...newCurrentWallet };
-                    // Optional: trigger change detection if needed
-                    // this.cdr.markForCheck();
-               }
-          );
-     }
-
      private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
-          this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
+          // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
           this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
           this.refreshUiAccountInfo(updatedAccountInfo);
-     }
-
-     private checkForSignerAccounts(accountObjects: xrpl.AccountObjectsResponse) {
-          const signerAccounts: string[] = [];
-          if (accountObjects.result && Array.isArray(accountObjects.result.account_objects)) {
-               accountObjects.result.account_objects.forEach(obj => {
-                    if (obj.LedgerEntryType === 'SignerList' && Array.isArray(obj.SignerEntries)) {
-                         obj.SignerEntries.forEach((entry: any) => {
-                              if (entry.SignerEntry?.Account) {
-                                   signerAccounts.push(entry.SignerEntry.Account + '~' + entry.SignerEntry.SignerWeight);
-                                   this.signerQuorum = obj.SignerQuorum;
-                              }
-                         });
-                    }
-               });
-          }
-          return signerAccounts;
      }
 
      private getSignerAccountsList(accountObjects: xrpl.AccountObjectsResponse) {
@@ -996,15 +865,36 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                });
      }
 
+     private checkForSignerAccounts(accountObjects: xrpl.AccountObjectsResponse) {
+          const signerAccounts: string[] = [];
+          if (accountObjects.result && Array.isArray(accountObjects.result.account_objects)) {
+               accountObjects.result.account_objects.forEach(obj => {
+                    if (obj.LedgerEntryType === 'SignerList' && Array.isArray(obj.SignerEntries)) {
+                         obj.SignerEntries.forEach((entry: any) => {
+                              if (entry.SignerEntry?.Account) {
+                                   signerAccounts.push(entry.SignerEntry.Account + '~' + entry.SignerEntry.SignerWeight);
+                                   this.signerQuorum = obj.SignerQuorum;
+                              }
+                         });
+                    }
+               });
+          }
+          return signerAccounts;
+     }
+
      updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
           this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
-
-          // Clean up selections based on current mode
           if (this.multiSelectMode) {
                this.selectedSingleTicket = this.utilsService.cleanUpMultiSelection(this.selectedTickets, this.ticketArray);
           } else {
                this.selectedSingleTicket = this.utilsService.cleanUpSingleSelection(this.selectedTickets, this.ticketArray);
           }
+     }
+
+     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+          await this.walletDataService.refreshWallets(client, this.wallets, this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+               this.currentWallet = { ...newCurrent };
+          });
      }
 
      public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
@@ -1058,6 +948,11 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           this.regularKeySigningEnabled = !!regularKey;
      }
 
+     updateDestinations() {
+          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
+          this.destinationDropdownService.setItems(this.destinations);
+     }
+
      private async getWallet() {
           const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
@@ -1067,18 +962,18 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           return wallet;
      }
 
-     updatePaymentTx() {
-          this.scheduleHighlight();
+     private addNewDestinationFromUser() {
+          const addr = this.destinationField.includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
+
+          if (addr && xrpl.isValidAddress(addr) && !this.destinations.some(d => d.address === addr)) {
+               this.customDestinations.push({ name: `Custom ${this.customDestinations.length + 1}`, address: addr });
+               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+               this.updateDestinations();
+          }
      }
 
-     updateTxResult(tx: any) {
-          this.ui.txResult = tx;
-          this.scheduleHighlight();
-     }
-
-     updateDestinations() {
-          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          this.storageService.set('destinations', this.destinations);
+     get safeWarningMessage() {
+          return this.ui.warningMessage?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
      }
 
      onTxJsonBlur() {
@@ -1122,6 +1017,125 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           this.updateJsonDisplay();
      }
 
+     copyCheckId(checkId: string) {
+          navigator.clipboard.writeText(checkId).then(() => {
+               this.ui.showToastMessage('Check ID copied!');
+          });
+     }
+
+     private setWarning(msg: string | null) {
+          this.ui.warningMessage = msg;
+          this.cdr.detectChanges();
+     }
+
+     clearWarning() {
+          this.setWarning(null);
+     }
+
+     clearFields(all = true) {
+          if (all) {
+          }
+          this.isSimulateEnabled = false;
+          this.selectedSingleTicket = '';
+          this.isTicket = false;
+          this.useMultiSign = false;
+          this.resetSigners();
+          this.cdr.markForCheck();
+     }
+
+     private clearMessages() {
+          this.ui.result = '';
+          this.ui.isError = false;
+          this.ui.isSuccess = false;
+          this.ui.successMessage = '';
+          this.ui.errorMessage = '';
+          this.cdr.detectChanges();
+     }
+
+     resetSigners() {
+          this.availableSigners.forEach(w => (w.isSelectedSigner = false));
+          this.selectedQuorum = 0;
+     }
+
+     getTransactionLabel(key: string): string {
+          return (AppConstants.SIGN_TRANSACTION_LABEL_MAP as Record<string, string>)[key] || key;
+     }
+
+     onArrowDown() {
+          if (!this.showDropdown || this.filteredDestinations.length === 0) return;
+          this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredDestinations.length;
+     }
+
+     selectHighlighted() {
+          if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
+               const addr = this.filteredDestinations[this.highlightedIndex].address;
+               if (addr !== this.currentWallet.address) {
+                    this.destinationField = addr;
+                    this.closeDropdown(); // Also close on Enter
+               }
+          }
+     }
+
+     // Dropdown controls
+     openDropdown() {
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.filter(this.destinationField || '');
+          this.destinationDropdownService.openDropdown();
+     }
+
+     closeDropdown() {
+          this.destinationDropdownService.closeDropdown();
+     }
+
+     toggleDropdown() {
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.toggleDropdown();
+     }
+
+     onDestinationInput() {
+          this.destinationDropdownService.filter(this.destinationField || '');
+          this.destinationDropdownService.openDropdown();
+     }
+
+     selectDestination(address: string) {
+          if (address === this.currentWallet.address) return;
+          const dest = this.destinations.find(d => d.address === address);
+          this.destinationField = dest ? this.destinationDropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`;
+          this.closeDropdown();
+     }
+
+     private openDropdownInternal() {
+          if (this.overlayRef?.hasAttached()) return;
+
+          const strategy = this.overlay
+               .position()
+               .flexibleConnectedTo(this.dropdownOrigin)
+               .withPositions([{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]);
+
+          this.overlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy: strategy,
+               scrollStrategy: this.overlay.scrollStrategies.close(),
+          });
+
+          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
+          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
+     }
+
+     private closeDropdownInternal() {
+          this.overlayRef?.detach();
+          this.overlayRef = null;
+     }
+
+     updatePaymentTx() {
+          this.scheduleHighlight();
+     }
+
+     updateTxResult() {
+          this.scheduleHighlight();
+     }
+
      private scheduleHighlight() {
           // Use the captured injector to run afterRenderEffect  safely
           afterRenderEffect(
@@ -1161,55 +1175,5 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
                { injector: this.injector }
           );
-     }
-
-     copyCheckId(checkId: string) {
-          navigator.clipboard.writeText(checkId).then(() => {
-               this.ui.showToastMessage('Check ID copied!');
-          });
-     }
-
-     private setWarning(msg: string | null) {
-          this.ui.warningMessage = msg;
-          this.cdr.detectChanges();
-     }
-
-     clearWarning() {
-          this.setWarning(null);
-     }
-
-     autoResize(textarea: HTMLTextAreaElement) {
-          if (!textarea) return;
-          textarea.style.height = 'auto'; // reset
-          textarea.style.height = textarea.scrollHeight + 'px'; // expand
-     }
-
-     clearFields(clearAllFields: boolean) {
-          if (clearAllFields) {
-          }
-          this.isSimulateEnabled = false;
-          this.selectedSingleTicket = '';
-          this.isTicket = false;
-          this.useMultiSign = false;
-          this.resetSigners();
-          this.cdr.markForCheck();
-     }
-
-     private clearMessages() {
-          this.ui.result = '';
-          this.ui.isError = false;
-          this.ui.isSuccess = false;
-          this.ui.successMessage = '';
-          this.ui.errorMessage = '';
-          this.cdr.detectChanges();
-     }
-
-     resetSigners() {
-          this.availableSigners.forEach(w => (w.isSelectedSigner = false));
-          this.selectedQuorum = 0;
-     }
-
-     getTransactionLabel(key: string): string {
-          return (AppConstants.SIGN_TRANSACTION_LABEL_MAP as Record<string, string>)[key] || key;
      }
 }

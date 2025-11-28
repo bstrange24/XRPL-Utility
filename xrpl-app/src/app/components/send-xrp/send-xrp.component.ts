@@ -246,10 +246,8 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                     return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
-               // await this.refreshWallets(client, [wallet.classicAddress]);
-
                this.refreshUIData(wallet, accountInfo, accountObjects);
-               this.utilsService.loadSignerList(wallet.classicAddress, []);
+               this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
                this.clearFields(false);
                this.cdr.detectChanges();
@@ -372,6 +370,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
+                    // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
@@ -406,12 +405,13 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           if (this.sourceTagField) this.utilsService.setSourceTagField(tx, this.sourceTagField);
      }
 
-     private refreshUIData(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any) {
-          this.refreshUiAccountObjects(accountObjects, accountInfo, wallet);
-          this.refreshUiAccountInfo(accountInfo);
+     private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
+          // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
+          this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
+          this.refreshUiAccountInfo(updatedAccountInfo);
      }
 
-     updateTickets(accountObjects: any) {
+     updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
           this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
           if (this.multiSelectMode) {
                this.selectedSingleTicket = this.utilsService.cleanUpMultiSelection(this.selectedTickets, this.ticketArray);

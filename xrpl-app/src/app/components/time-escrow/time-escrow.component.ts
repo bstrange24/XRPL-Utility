@@ -1,30 +1,32 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
-import { trigger, style, transition, animate } from '@angular/animations';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, ElementRef, ViewChild, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { NgIcon } from '@ng-icons/core';
+import { LucideAngularModule } from 'lucide-angular';
+import { OverlayModule, Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { TemplatePortal } from '@angular/cdk/portal';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
-import { NavbarComponent } from '../navbar/navbar.component';
-import { LucideAngularModule } from 'lucide-angular';
-import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
-import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { Subject, takeUntil } from 'rxjs';
-import { debounceTime, distinctUntilChanged, pairwise, startWith } from 'rxjs/operators';
-import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
-import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
-import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
-import { TemplatePortal } from '@angular/cdk/portal';
-import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
+import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
+import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
+import { Subject, takeUntil } from 'rxjs';
+import { NavbarComponent } from '../navbar/navbar.component';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
+import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
+
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -115,41 +117,76 @@ interface IssuerItem {
 @Component({
      selector: 'app-time-escrow',
      standalone: true,
-     imports: [CommonModule, FormsModule, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule, OverlayModule],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './time-escrow.component.html',
      styleUrl: './time-escrow.component.css',
 })
 export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
      private destroy$ = new Subject<void>();
-     @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
-     @ViewChild('accountForm') accountForm!: NgForm;
+     private readonly injector = inject(Injector);
+     public destinationSearch$ = new Subject<string>();
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
      @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
      @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
-     @ViewChild('signers') signersRef!: ElementRef<HTMLTextAreaElement>;
-     @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
-     @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
-     private overlayRef: OverlayRef | null = null;
-     private issuerFieldSubject = new Subject<void>();
-     private destinationInputSubject = new Subject<string>();
-     private readonly injector = inject(Injector);
-     currencyFieldDropDownValue: string = 'XRP';
+
+     // Form fields
+     activeTab: string = 'create';
+     amountField = '';
      destinationField: string = '';
+     destinationTagField = '';
+     sourceTagField = '';
+     invoiceIdField = '';
+     memoField: string = '';
+     isMemoEnabled: boolean = false;
+     useMultiSign: boolean = false;
+     isRegularKeyAddress: boolean = false;
+     isTicket: boolean = false;
+     selectedSingleTicket: string = '';
+     selectedTickets: string[] = [];
+     multiSelectMode: boolean = false;
+     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
+     selectedTicket: string = '';
+
+     // Wallet state (now driven by WalletPanelComponent via service)
+     currentWallet: Wallet = {} as Wallet;
+     wallets: Wallet[] = [];
+     hasWallets: boolean = true;
+     environment = '';
+     url = '';
+     showDropdown: boolean = false;
+     dropdownOpen: boolean = false;
+
+     // Multi-sign & Regular Key
+     multiSignAddress: string = '';
+     multiSignSeeds: string = '';
+     signerQuorum: number = 0;
+     regularKeyAddress: string = '';
+     regularKeySeed: string = '';
+     multiSigningEnabled: boolean = false;
+     regularKeySigningEnabled: boolean = false;
+     ticketArray: string[] = [];
+     masterKeyDisabled: boolean = false;
+
+     // Dropdown
+     private overlayRef: OverlayRef | null = null;
+     filteredDestinations: DropdownItem[] = [];
+     highlightedIndex = -1;
+     destinations: DropdownItem[] = [];
+     customDestinations: { name?: string; address: string }[] = [];
+
+     // Code preview
+     private lastPaymentTx = '';
+     private lastTxResult = '';
+     executionTime = '';
+
+     // Escrow Specific
+     currencyFieldDropDownValue: string = 'XRP';
      issuerFields: string = '';
      currencyBalanceField: string = '';
      gatewayBalance: string = '0';
-     amountField: string = '';
      ticketSequence: string = '';
-     isTicket: boolean = false;
-     ticketArray: string[] = [];
-     selectedTickets: string[] = [];
-     selectedSingleTicket: string = '';
-     multiSelectMode: boolean = false;
-     selectedTicket: string = '';
-     executionTime: string = '';
-     destinationTagField: string = '';
      escrowFinishTimeField: string = '';
      escrowFinishTimeUnit: string = 'seconds';
      escrowCancelTimeUnit: string = 'seconds';
@@ -158,18 +195,6 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
      escrowSequenceNumberField: string = '';
      selectedEscrow: any = null;
      mptIssuanceIdField: string = '';
-     memoField: string = '';
-     isMemoEnabled: boolean = false;
-     useMultiSign: boolean = false;
-     multiSignSeeds: string = '';
-     multiSignAddress: string = '';
-     isRegularKeyAddress: boolean = false;
-     regularKeySeed: string = '';
-     regularKeyAddress: string = '';
-     signerQuorum: number = 0;
-     multiSigningEnabled: boolean = false;
-     regularKeySigningEnabled: boolean = false;
-     masterKeyDisabled: boolean = false;
      tokenBalance: string = '0';
      private knownTrustLinesIssuers: { [key: string]: string[] } = { XRP: [] };
      issuerToRemove: string = '';
@@ -182,66 +207,29 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
      newCurrency: string = '';
      newIssuer: string = '';
      tokenToRemove: string = '';
-     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      escrowCancelDateTimeField: string = '';
      escrowFinishDateTimeField: string = '';
-     wallets: Wallet[] = [];
      selectedWalletIndex: number = 0;
-     currentWallet: Wallet = {
-          classicAddress: '',
-          address: '',
-          seed: '',
-          name: undefined,
-          balance: '0',
-          ownerCount: undefined,
-          xrpReserves: undefined,
-          spendableXrp: undefined,
-     };
-     destinations: { name?: string; address: string }[] = [];
      issuers: { name?: string; address: string }[] = [];
-     customDestinations: { name?: string; address: string }[] = [];
-     showDropdown = false;
-     dropdownOpen = false;
-     filteredDestinations: DropdownItem[] = [];
-     highlightedIndex = -1;
      lastCurrency: string = '';
      lastIssuer: string = '';
-     showManageTokens: boolean = false;
-     environment: string = '';
-     activeTab: string = 'create'; // default
-     sourceTagField: string = '';
-     invoiceIdField: string = '';
-     encryptionType: string = '';
-     hasWallets: boolean = true;
      expiredOrFulfilledEscrows: any = [];
      finishEscrow: any = [];
      existingEscrow: any = [];
      exsitingMpt: any = [];
      existingIOUs: any = [];
-     // Controls whether the panel is expanded or collapsed
      outstandingEscrowCollapsed = true;
      outstandingMptCollapsed: boolean = true;
      outstandingIOUCollapsed: boolean = true;
-     url: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
      filterQuery: string = '';
-     private accountDataCache = new Map<
-          string,
-          {
-               accountObjects?: xrpl.AccountObjectsResponse;
-               tokenBalance?: xrpl.GatewayBalancesResponse;
-               timestamp: number;
-          }
-     >();
 
      constructor(
-          private readonly xrplService: XrplService,
-          private readonly utilsService: UtilsService,
-          private readonly cdr: ChangeDetectorRef,
-          private readonly storageService: StorageService,
-          private readonly xrplTransactions: XrplTransactionService,
-          private walletGenerator: WalletGeneratorService,
+          private xrplService: XrplService,
+          private utilsService: UtilsService,
+          private storageService: StorageService,
+          private xrplTransactions: XrplTransactionService,
           private walletManagerService: WalletManagerService,
           public ui: TransactionUiService,
           public downloadUtilService: DownloadUtilService,
@@ -250,78 +238,85 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           private validationService: ValidationService,
           private overlay: Overlay,
           private viewContainerRef: ViewContainerRef,
-          private destinationDropdownService: DestinationDropdownService
+          private destinationDropdownService: DestinationDropdownService,
+          private cdr: ChangeDetectorRef,
+          private trustlineCurrency: TrustlineCurrencyService
      ) {}
 
      ngOnInit() {
-          this.getKnownIssuersFromLocalStorage();
+          this.loadKnownIssuers();
+          this.refreshStoredIssuers();
 
           this.environment = this.xrplService.getNet().environment;
-          this.encryptionType = this.storageService.getInputValue('encryptionType');
+          const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
+          this.url = AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET;
+          this.currencyFieldDropDownValue = 'XRP';
 
-          this.editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
-
-          type EnvKey = keyof typeof AppConstants.XRPL_WIN_URL;
-          const env = this.xrplService.getNet().environment.toUpperCase() as EnvKey;
-          this.url = AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
-
-          this.walletManagerService.wallets$.pipe(startWith(null), pairwise(), takeUntil(this.destroy$)).subscribe(([prev, curr]) => {
-               this.wallets = curr || [];
-               this.hasWallets = this.wallets.length > 0;
-
-               const prevSelected = prev?.[this.selectedWalletIndex];
-               const currSelected = curr?.[this.selectedWalletIndex];
-
-               const walletSwitched = !prev || prevSelected?.address !== currSelected?.address || prev.length !== curr?.length;
-
-               if (walletSwitched) {
-                    this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
-                    this.onAccountChange(); // Only on actual change
+          // Listen to selected wallet changes (critical!)
+          this.walletManagerService.selectedIndex$.pipe(takeUntil(this.destroy$)).subscribe(index => {
+               if (this.wallets[index]) {
+                    this.currentWallet = { ...this.wallets[index] };
+                    // this.getEscrows();
                }
-               this.cdr.markForCheck();
           });
 
-          // Debounce issuer/currency changes → 200ms
-          this.issuerFieldSubject.pipe(debounceTime(200), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(() => this.toggleIssuerField());
+          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
+               this.wallets = wallets;
+               this.hasWallets = wallets.length > 0;
 
-          // Debounce destination input
-          this.destinationInputSubject.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => {
-               this.filterQuery = query;
-               this.destinationDropdownService.filter(query);
-               this.destinationDropdownService.openDropdown();
+               // If panel hasn't emitted yet (e.g. on page load), set current wallet manually
+               if (wallets.length > 0 && !this.currentWallet.address) {
+                    const index = this.walletManagerService.getSelectedIndex?.() ?? 0;
+                    this.currentWallet = { ...wallets[index] };
+                    this.getEscrows();
+               }
+
+               this.updateDestinations();
           });
 
-          // Load custom destinations from storage
-          const storedCustoms = this.storageService.get('customDestinations');
-          this.customDestinations = storedCustoms ? JSON.parse(storedCustoms) : [];
+          // Subscribe once
+          this.trustlineCurrency.currencies$.subscribe(currencies => {
+               this.currencies = currencies;
+               if (currencies.length > 0 && !this.currencyFieldDropDownValue) {
+                    this.currencyFieldDropDownValue = currencies[0];
+                    this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue, this.currentWallet.address);
+               }
+          });
+
+          this.trustlineCurrency.issuers$.subscribe(issuers => {
+               this.issuers = issuers;
+          });
+
+          this.trustlineCurrency.selectedIssuer$.subscribe(issuer => {
+               this.issuerFields = issuer;
+          });
+
+          this.trustlineCurrency.balance$.subscribe(balance => {
+               this.currencyBalanceField = balance; // ← This is your live balance!
+          });
+
+          // Load custom destinations
+          const stored = this.storageService.get('customDestinations');
+          this.customDestinations = stored ? JSON.parse(stored) : [];
           this.updateDestinations();
 
-          // Ensure service knows the list
+          // Dropdown service sync
+          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => {
+               this.destinationDropdownService.filter(query);
+          });
           this.destinationDropdownService.setItems(this.destinations);
-
-          // Subscribe to filtered list updates
           this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
                this.filteredDestinations = list;
-               // keep selection sane
                this.highlightedIndex = list.length > 0 ? 0 : -1;
                this.cdr.detectChanges();
           });
-
-          // Subscribe to open/close state from service
           this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
-               this.dropdownOpen = open;
-               if (open) {
-                    this.openDropdownInternal(); // create + attach overlay (component-owned)
-               } else {
-                    this.closeDropdownInternal(); // detach overlay (component-owned)
-               }
+               open ? this.openDropdownInternal() : this.closeDropdownInternal();
           });
      }
 
      ngAfterViewInit() {
-          setTimeout(() => {
-               this.textareas.forEach(ta => this.autoResize(ta.nativeElement));
-          });
+          this.scheduleHighlight();
      }
 
      ngOnDestroy() {
@@ -329,37 +324,37 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           this.destroy$.complete();
      }
 
-     async onCurrencyChange() {
-          this.issuerFieldSubject.next(); // ← instead of toggleIssuerField()
-     }
-
-     private getKnownIssuersFromLocalStorage() {
-          const knownIssuersObj = this.storageService.getKnownIssuers('knownIssuers');
-
-          this.storedIssuers = [];
-
-          if (knownIssuersObj) {
-               for (const currency in knownIssuersObj) {
-                    for (const address of knownIssuersObj[currency]) {
-                         this.storedIssuers.push({
-                              name: currency,
-                              address: address,
-                         });
-                    }
-               }
-               this.knownTrustLinesIssuers = knownIssuersObj;
-
-               if (Object.keys(this.knownTrustLinesIssuers).length > 0) {
-                    this.currencyFieldDropDownValue = Object.keys(this.knownTrustLinesIssuers)[0];
-               }
-
-               // This is the key line
-               this.updateCurrencies(); // ← Triggers auto-select + sorting
-          }
+     trackByAddress(index: number, item: DropdownItem): string {
+          return item.address;
      }
 
      trackByWalletAddress(index: number, wallet: Wallet): string {
           return wallet.address;
+     }
+
+     async toggleMultiSign() {
+          try {
+               this.utilsService.toggleMultiSign(this.useMultiSign, this.signers, (await this.getWallet()).classicAddress);
+          } catch (error: any) {
+               this.ui.setError(`${error.message}`);
+          }
+     }
+
+     onWalletSelected(wallet: Wallet) {
+          this.currentWallet = { ...wallet };
+
+          // Prevent setting self as the destination after switching wallet
+          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address || this.destinationField;
+          if (currentDest === wallet.address) {
+               this.destinationField = '';
+          }
+
+          // Re-load currency + issuer balance for new wallet
+          if (this.currencyFieldDropDownValue) {
+               this.onCurrencyChange(this.currencyFieldDropDownValue);
+          }
+
+          this.getEscrows();
      }
 
      async setTab(tab: string) {
@@ -390,8 +385,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                this.getExistingIOUs(accountObjects, this.currentWallet.address);
           }
 
-          if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT') {
-               this.toggleIssuerField();
+          if (this.currencyFieldDropDownValue !== 'XRP') {
+               this.onCurrencyChange(this.currencyFieldDropDownValue);
           }
 
           this.resetEscrowSelection();
@@ -399,138 +394,6 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
-     }
-
-     selectWallet(index: number) {
-          if (this.selectedWalletIndex === index) return;
-          this.selectedWalletIndex = index;
-          this.onAccountChange();
-     }
-
-     editName(i: number) {
-          this.walletManagerService.startEdit(i);
-          const wallet = this.wallets[i];
-          this.tempName = wallet.name || `Wallet ${i + 1}`;
-          setTimeout(() => this.nameInput?.nativeElement.focus(), 0);
-     }
-
-     saveName() {
-          this.walletManagerService.saveEdit(this.tempName);
-          this.tempName = '';
-          this.updateDestinations();
-     }
-
-     cancelEdit() {
-          this.walletManagerService.cancelEdit();
-          this.tempName = '';
-     }
-
-     toggleSecret(index: number) {
-          this.wallets[index].showSecret = !this.wallets[index].showSecret;
-     }
-
-     async refreshBalance(index: number) {
-          const wallet = this.wallets[index];
-          try {
-               const client = await this.xrplService.getClient();
-               const walletAddress = wallet.classicAddress ? wallet.classicAddress : wallet.address;
-               await this.refreshWallets(client, [walletAddress]).catch(console.error);
-          } catch (err) {
-               this.ui.setError('Failed to refresh balance');
-          }
-     }
-
-     deleteWallet(index: number) {
-          if (confirm('Delete this wallet? This cannot be undone.')) {
-               this.walletManagerService.deleteWallet(index);
-               if (this.selectedWalletIndex >= this.wallets.length) {
-                    this.selectedWalletIndex = Math.max(0, this.wallets.length - 1);
-               }
-               this.onAccountChange();
-          }
-     }
-
-     async generateNewAccount() {
-          console.log('Entering generateNewAccount');
-          const startTime = Date.now();
-          this.ui.showSpinnerWithDelay('Generating new wallet', 5000);
-
-          try {
-               // Default to ed25519
-               this.encryptionType = AppConstants.ENCRYPTION.ED25519;
-               console.log('encryptionType: ', this.encryptionType);
-               const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
-               const client = await this.xrplService.getClient();
-               await this.refreshWallets(client, [faucetWallet.address]);
-               this.ui.spinner = false;
-               this.ui.clearWarning();
-               this.ui.txResult.push(faucetWallet);
-               this.updateTxResult(this.ui.txResult);
-          } catch (error: any) {
-               console.error('Error in generateNewAccount:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
-          } finally {
-               this.ui.spinner = false;
-               this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving generateNewAccount in ${this.executionTime}ms`);
-          }
-     }
-
-     dropWallet(event: CdkDragDrop<any[]>) {
-          moveItemInArray(this.wallets, event.previousIndex, event.currentIndex);
-
-          // Update your selectedWalletIndex if needed
-          if (this.selectedWalletIndex === event.previousIndex) {
-               this.selectedWalletIndex = event.currentIndex;
-          } else if (this.selectedWalletIndex > event.previousIndex && this.selectedWalletIndex <= event.currentIndex) {
-               this.selectedWalletIndex--;
-          } else if (this.selectedWalletIndex < event.previousIndex && this.selectedWalletIndex >= event.currentIndex) {
-               this.selectedWalletIndex++;
-          }
-
-          // Persist the new order to localStorage
-          this.walletManagerService.setWallets(this.wallets); // ← this saves + updates observable
-
-          // Update destinations and account state
-          this.updateDestinations();
-          this.onAccountChange();
-     }
-
-     async onAccountChange() {
-          if (this.wallets.length === 0) {
-               this.currentWallet = {
-                    classicAddress: '',
-                    address: '',
-                    seed: '',
-                    name: undefined,
-                    balance: '0',
-                    ownerCount: undefined,
-                    xrpReserves: undefined,
-                    spendableXrp: undefined,
-               };
-               return;
-          }
-
-          const selected = this.wallets[this.selectedWalletIndex];
-          this.currentWallet = {
-               ...selected,
-               balance: selected.balance || '0',
-               ownerCount: selected.ownerCount || '0',
-               xrpReserves: selected.xrpReserves || '0',
-               spendableXrp: selected.spendableXrp || '0',
-          };
-
-          if (this.currentWallet.address && xrpl.isValidAddress(this.currentWallet.address)) {
-               this.accountDataCache.clear();
-               this.ui.clearWarning();
-               this.updateDestinations();
-               await this.getEscrows();
-               if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT') {
-                    await this.onCurrencyChange();
-               }
-          } else if (this.currentWallet.address) {
-               this.ui.setError('Invalid XRP address');
-          }
      }
 
      toggleOutstandingEscrows() {
@@ -545,21 +408,6 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           this.outstandingIOUCollapsed = !this.outstandingIOUCollapsed;
      }
 
-     validateQuorum() {
-          const totalWeight = this.signers.reduce((sum, s) => sum + (s.weight || 0), 0);
-          if (this.signerQuorum > totalWeight) {
-               this.signerQuorum = totalWeight;
-          }
-     }
-
-     async toggleMultiSign() {
-          try {
-               this.utilsService.toggleMultiSign(this.useMultiSign, this.signers, (await this.getWallet()).classicAddress);
-          } catch (error: any) {
-               this.ui.setError(`${error.message}`);
-          }
-     }
-
      async getEscrows() {
           console.log('Entering getEscrows');
           const startTime = Date.now();
@@ -572,9 +420,7 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
-               const inputs: ValidationInputs = { seed: this.currentWallet.seed, accountInfo: accountInfo };
-
-               const errors = await this.validationService.validate('AccountInfo', { inputs, client, accountInfo });
+               const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
                if (errors.length > 0) {
                     return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
@@ -584,30 +430,17 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                this.getExistingIOUs(accountObjects, this.currentWallet.address);
                this.getExpiredOrFulfilledEscrows(client, accountObjects, wallet.classicAddress);
 
-               if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT' && this.selectedIssuer !== '') {
-                    const tokenBalance = await this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '');
-                    console.debug('Token Balance:', tokenBalance.result);
-
-                    console.debug(`parseAllGatewayBalances:`, this.parseAllGatewayBalances(tokenBalance, wallet));
-                    const parsedBalances = this.parseAllGatewayBalances(tokenBalance, wallet);
-                    if (parsedBalances && Object.keys(parsedBalances).length > 0) {
-                         this.tokenBalance = parsedBalances?.[this.currencyFieldDropDownValue]?.[this.selectedIssuer] ?? '0';
-                    } else {
-                         this.tokenBalance = '0';
-                    }
-
-                    this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance });
-                    this.toggleIssuerField();
+               if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT' && this.issuerFields !== '') {
+                    // const tokenBalance = await this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '');
+                    // const parsedBalances = this.parseAllGatewayBalances(tokenBalance, wallet);
+                    // this.currencyBalanceField = parsedBalances?.[this.currencyFieldDropDownValue]?.[this.issuerFields] ?? '0';
+                    this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue, this.currentWallet.address);
                }
-
-               await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
                this.refreshUIData(wallet, accountInfo, accountObjects);
                // this.getEscrowOwnerAddress();
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-
                this.updateTickets(accountObjects);
-
                this.clearFields(false);
                this.cdr.detectChanges();
           } catch (error: any) {
@@ -616,7 +449,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving getEscrows in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving getEscrows in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -715,7 +549,7 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create Time Based Escrow (no changes will be made)...' : 'Submitting Create Time Based Escrow to Ledger...', 200);
 
-               this.ui.paymentTx.push(escrowCreateTx);
+               this.ui.setPaymentTx(escrowCreateTx);
                this.updatePaymentTx();
 
                let response: any;
@@ -737,8 +571,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                // this.utilsService.logObjects('response', response);
                // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.ui.txResult.push(response.result);
-               this.updateTxResult(this.ui.txResult);
+               this.ui.setTxResult(response.result);
+               this.updateTxResult();
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
@@ -756,21 +590,20 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
                if (!this.ui.isSimulateEnabled) {
                     this.ui.successMessage = 'Created escrow successfully!';
-
                     const [updatedAccountInfo, updatedAccountObjects, gatewayBalances] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
-
-                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
                     this.getExistingEscrows(updatedAccountObjects, wallet.classicAddress);
                     this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
                     this.getExistingIOUs(updatedAccountObjects, wallet.classicAddress);
 
-                    this.addNewDestinationFromUser();
-
                     if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT') {
-                         await this.updateCurrencyBalance(gatewayBalances, wallet);
-                         await this.toggleIssuerField();
+                         // await this.updateCurrencyBalance(gatewayBalances, wallet);
+                         this.onCurrencyChange(this.currencyFieldDropDownValue);
                     }
+                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
+
+                    // Add new destination if valid and not already present
+                    this.addNewDestinationFromUser();
 
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
@@ -786,7 +619,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving createTimeBasedEscrow in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving createTimeBasedEscrow in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -877,7 +711,7 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Finishing Time Based Escrow (no changes will be made)...' : 'Submitting Finish Time Based Escrow to Ledger...', 200);
 
-               this.ui.paymentTx.push(escrowFinishTx);
+               this.ui.setPaymentTx(escrowFinishTx);
                this.updatePaymentTx();
 
                let response: any;
@@ -899,8 +733,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                // this.utilsService.logObjects('response', response);
                // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.ui.txResult.push(response.result);
-               this.updateTxResult(this.ui.txResult);
+               this.ui.setTxResult(response.result);
+               this.updateTxResult();
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
@@ -918,7 +752,6 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
                if (!this.ui.isSimulateEnabled) {
                     this.ui.successMessage = 'Finished escrow successfully!';
-
                     const [updatedAccountInfo, updatedAccountObjects, gatewayBalances] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
 
                     this.getExistingEscrows(updatedAccountObjects, wallet.classicAddress);
@@ -927,9 +760,11 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress, this.escrowOwnerField]).catch(console.error);
 
+                    this.addNewDestinationFromUser();
+
                     if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT') {
-                         await this.updateCurrencyBalance(gatewayBalances, wallet);
-                         await this.toggleIssuerField();
+                         // await this.updateCurrencyBalance(gatewayBalances, wallet);
+                         this.onCurrencyChange(this.currencyFieldDropDownValue);
                     }
 
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
@@ -946,7 +781,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving finishTimeBasedEscrow in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving finishTimeBasedEscrow in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -1045,7 +881,7 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Cancelling Time Based Escrow (no changes will be made)...' : 'Submitting Cancel Time Based Escrow to Ledger...', 200);
 
-               this.ui.paymentTx.push(escrowCancelTx);
+               this.ui.setPaymentTx(escrowCancelTx);
                this.updatePaymentTx();
 
                let response: any;
@@ -1067,8 +903,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                // this.utilsService.logObjects('response', response);
                // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.ui.txResult.push(response.result);
-               this.updateTxResult(this.ui.txResult);
+               this.ui.setTxResult(response.result);
+               this.updateTxResult();
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
@@ -1091,6 +927,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
 
+                    this.addNewDestinationFromUser();
+
                     // Re-fetch and update the "Available Escrows to cancel" list
                     this.getExpiredOrFulfilledEscrows(client, updatedAccountObjects, wallet.classicAddress);
 
@@ -1102,8 +940,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                     }
 
                     if (this.currencyFieldDropDownValue !== 'XRP' && this.currencyFieldDropDownValue !== 'MPT') {
-                         await this.updateCurrencyBalance(gatewayBalances, wallet);
-                         await this.toggleIssuerField();
+                         // await this.updateCurrencyBalance(gatewayBalances, wallet);
+                         this.onCurrencyChange(this.currencyFieldDropDownValue);
                     }
 
                     this.resetEscrowSelection();
@@ -1121,7 +959,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving cancelEscrow in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving cancelEscrow in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -1324,122 +1163,19 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           this.utilsService.logObjects('expiredOrFulfilledEscrows', this.expiredOrFulfilledEscrows);
      }
 
-     async toggleIssuerField(): Promise<void> {
-          console.log('toggleIssuerField → currency:', this.currencyFieldDropDownValue);
-          // this.ui.clearMessages();
-
-          try {
-               if (!this.currencyFieldDropDownValue) {
-                    this.issuers = [];
-                    this.issuerFields = '';
-                    this.ui.setWarning('Please select a currency first.');
-                    this.ui.spinner = false;
-                    return;
-               }
-
-               const currency = this.currencyFieldDropDownValue;
-               const knownIssuersForThisCurrency = this.knownTrustLinesIssuers[currency] || [];
-
-               // Build issuer list — ONLY from knownTrustLinesIssuers[currency]
-               const issuerEntries: { name: string; address: string }[] = [];
-
-               for (const addr of knownIssuersForThisCurrency) {
-                    if (!xrpl.isValidAddress(addr)) continue;
-
-                    // Try to get nice name
-                    const wallet = this.wallets.find(w => w.address === addr);
-                    const custom = this.customDestinations.find(d => d.address === addr);
-
-                    const name = wallet?.name || custom?.name || currency || `Issuer (${addr.slice(0, 8)}...)`;
-
-                    issuerEntries.push({ name, address: addr });
-               }
-
-               // Sort by name
-               this.issuers = issuerEntries.sort((a, b) => a.name.localeCompare(b.name));
-
-               // Auto-select first issuer
-               if (this.issuers.length > 0) {
-                    if (!this.issuerFields || !this.issuers.some(i => i.address === this.issuerFields)) {
-                         this.issuerFields = this.issuers[0].address;
-                    }
-                    this.ui.clearWarning();
-               } else {
-                    if (currency !== 'XRP' && currency !== 'MPT') {
-                         this.issuerFields = '';
-                         this.ui.setWarning(`No issuers configured for <strong>${currency}</strong>`);
-                    }
-               }
-
-               try {
-                    const wallet = await this.getWallet();
-                    const cache = this.getCachedAccountData(this.currentWallet.address);
-
-                    let accountObjects: xrpl.AccountObjectsResponse;
-                    let gatewayBalances: xrpl.GatewayBalancesResponse;
-
-                    if (cache?.accountObjects && cache?.tokenBalance) {
-                         accountObjects = cache.accountObjects;
-                         gatewayBalances = cache.tokenBalance;
-                    } else {
-                         const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-                         [gatewayBalances, accountObjects] = await Promise.all([this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-                         this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance: gatewayBalances });
-                    }
-
-                    await this.updateCurrencyBalance(gatewayBalances, wallet);
-               } catch (e) {
-                    console.warn('Balance update failed in toggleIssuerField', e);
-               }
-
-               this.cdr.detectChanges();
-          } catch (error: any) {
-               console.error('Error in toggleIssuerField:', error);
-               this.ui.setError('Failed to load issuers');
-               this.issuers = [];
-               this.issuerFields = '';
-          } finally {
-               this.ui.spinner = false;
-          }
-     }
-
      get availableCurrencies(): string[] {
-          const baseCurrencies = Object.keys(this.knownTrustLinesIssuers).filter(c => c !== '' && c !== 'MPT'); // Exclude XRP and MPT by default
-
-          // On the Create Escrow tab → always include MPT (and XRP if you want)
-          if (this.activeTab === 'create') {
-               const currencies = ['XRP', 'MPT', ...baseCurrencies];
-               return [...new Set(currencies)].sort(); // dedupe + sort
-          }
-
-          // On ANY other tab (especially Create Trustline) → MPT is NOT allowed
-          return baseCurrencies.sort();
-     }
-
-     // Only used in Trustlines template
-     // get availableCurrencies(): string[] {
-     //      const all = Object.keys(this.knownTrustLinesIssuers);
-     //      // Remove XRP only on Trustlines page
-     //      return all.filter(currency => currency !== '');
-     // }
-
-     private addNewDestinationFromUser() {
-          if (xrpl.isValidAddress(this.destinationField) && !this.destinations.some(d => d.address === this.destinationField)) {
-               this.customDestinations.push({
-                    name: `Custom ${this.customDestinations.length + 1}`,
-                    address: this.destinationField,
-               });
-               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
-               this.updateDestinations();
-          }
+          return [
+               'XRP',
+               ...Object.keys(this.knownTrustLinesIssuers)
+                    .filter(c => c && c !== 'XRP' && c !== 'MPT')
+                    .sort((a, b) => a.localeCompare(b)),
+          ];
      }
 
      private async setTxOptionalFields(client: xrpl.Client, escrowTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (this.selectedSingleTicket) {
-               const ticketExists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
-               if (!ticketExists) {
-                    throw new Error(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
-               }
+               const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
+               if (!exists) throw new Error(`Ticket ${this.selectedSingleTicket} not found`);
                this.utilsService.setTicketSequence(escrowTx, this.selectedSingleTicket, true);
           } else {
                if (this.multiSelectMode && this.selectedTickets.length > 0) {
@@ -1448,12 +1184,8 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                }
           }
 
-          if (this.destinationTagField && parseInt(this.destinationTagField) > 0) {
-               this.utilsService.setDestinationTag(escrowTx, this.destinationTagField);
-          }
-          if (this.memoField) {
-               this.utilsService.setMemoField(escrowTx, this.memoField);
-          }
+          if (this.destinationTagField && parseInt(this.destinationTagField) > 0) this.utilsService.setDestinationTag(escrowTx, this.destinationTagField);
+          if (this.memoField) this.utilsService.setMemoField(escrowTx, this.memoField);
 
           if (txType === 'create') {
                if (this.currencyFieldDropDownValue === 'MPT') {
@@ -1495,8 +1227,6 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
      updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
           this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
-
-          // Clean up selections based on current mode
           if (this.multiSelectMode) {
                this.selectedSingleTicket = this.utilsService.cleanUpMultiSelection(this.selectedTickets, this.ticketArray);
           } else {
@@ -1504,21 +1234,10 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           }
      }
 
-     private async refreshWallets(client: xrpl.Client, addressesToRefresh?: string[]) {
-          console.log('Calling refreshWallets');
-
-          await this.walletDataService.refreshWallets(
-               client,
-               this.wallets, // pass current wallet list
-               this.selectedWalletIndex, // pass selected index
-               addressesToRefresh,
-               (updatedWalletsList, newCurrentWallet) => {
-                    // This callback runs inside NgZone → UI updates safely
-                    this.currentWallet = { ...newCurrentWallet };
-                    // Optional: trigger change detection if needed
-                    // this.cdr.markForCheck();
-               }
-          );
+     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+          await this.walletDataService.refreshWallets(client, this.wallets, this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+               this.currentWallet = { ...newCurrent };
+          });
      }
 
      public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
@@ -1574,7 +1293,7 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
 
      updateDestinations() {
           this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          this.storageService.set('destinations', this.destinations);
+          this.destinationDropdownService.setItems(this.destinations);
      }
 
      onEscrowSelect(selected: any) {
@@ -1646,73 +1365,59 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           }
      }
 
-     private async updateCurrencyBalance(gatewayBalance: xrpl.GatewayBalancesResponse, wallet: xrpl.Wallet) {
-          const parsedBalances = this.parseAllGatewayBalances(gatewayBalance, wallet);
-          if (parsedBalances && Object.keys(parsedBalances).length > 0) {
-               this.tokenBalance = parsedBalances[this.currencyFieldDropDownValue]?.[wallet.classicAddress] ?? parsedBalances[this.currencyFieldDropDownValue]?.[this.issuerFields] ?? '0';
-          } else {
-               this.tokenBalance = '0';
-          }
-     }
+     // private async updateCurrencyBalance(gatewayBalance: xrpl.GatewayBalancesResponse, wallet: xrpl.Wallet) {
+     //      const parsedBalances = this.parseAllGatewayBalances(gatewayBalance, wallet);
+     //      if (parsedBalances && Object.keys(parsedBalances).length > 0) {
+     //           this.currencyBalanceField = parsedBalances[this.currencyFieldDropDownValue]?.[wallet.classicAddress] ?? parsedBalances[this.currencyFieldDropDownValue]?.[this.issuerFields] ?? '0';
+     //      } else {
+     //           this.currencyBalanceField = '0';
+     //      }
+     // }
 
-     private parseAllGatewayBalances(gatewayBalances: xrpl.GatewayBalancesResponse, wallet: xrpl.Wallet) {
-          const result = gatewayBalances.result;
-          const grouped: Record<string, Record<string, string>> = {};
-          // structure: { [currency]: { [issuer]: balance } }
+     // private parseAllGatewayBalances(gatewayBalances: xrpl.GatewayBalancesResponse, wallet: xrpl.Wallet) {
+     //      const result = gatewayBalances.result;
+     //      const grouped: Record<string, Record<string, string>> = {};
+     //      // structure: { [currency]: { [issuer]: balance } }
 
-          // --- Case 1: Obligations (this account is the gateway/issuer)
-          if (result.obligations && Object.keys(result.obligations).length > 0) {
-               for (const [currencyCode, value] of Object.entries(result.obligations)) {
-                    const decodedCurrency = this.utilsService.normalizeCurrencyCode(currencyCode);
+     //      // --- Case 1: Obligations (this account is the gateway/issuer)
+     //      if (result.obligations && Object.keys(result.obligations).length > 0) {
+     //           for (const [currencyCode, value] of Object.entries(result.obligations)) {
+     //                const decodedCurrency = this.utilsService.normalizeCurrencyCode(currencyCode);
 
-                    if (!grouped[decodedCurrency]) grouped[decodedCurrency] = {};
+     //                if (!grouped[decodedCurrency]) grouped[decodedCurrency] = {};
 
-                    // Obligations are what the gateway owes → negative
-                    const formatted = '-' + this.utilsService.formatTokenBalance(value, 18);
-                    grouped[decodedCurrency][wallet.address] = formatted;
-               }
-          }
+     //                // Obligations are what the gateway owes → negative
+     //                const formatted = '-' + this.utilsService.formatTokenBalance(value, 18);
+     //                grouped[decodedCurrency][wallet.address] = formatted;
+     //           }
+     //      }
 
-          // --- Case 2: Assets (tokens issued by others, held by this account)
-          if (result.assets && Object.keys(result.assets).length > 0) {
-               for (const [issuer, assetArray] of Object.entries(result.assets)) {
-                    assetArray.forEach(asset => {
-                         const decodedCurrency = this.utilsService.normalizeCurrencyCode(asset.currency);
+     //      // --- Case 2: Assets (tokens issued by others, held by this account)
+     //      if (result.assets && Object.keys(result.assets).length > 0) {
+     //           for (const [issuer, assetArray] of Object.entries(result.assets)) {
+     //                assetArray.forEach(asset => {
+     //                     const decodedCurrency = this.utilsService.normalizeCurrencyCode(asset.currency);
 
-                         if (!grouped[decodedCurrency]) grouped[decodedCurrency] = {};
-                         grouped[decodedCurrency][issuer] = this.utilsService.formatTokenBalance(asset.value, 18);
-                    });
-               }
-          }
+     //                     if (!grouped[decodedCurrency]) grouped[decodedCurrency] = {};
+     //                     grouped[decodedCurrency][issuer] = this.utilsService.formatTokenBalance(asset.value, 18);
+     //                });
+     //           }
+     //      }
 
-          // --- Case 3: Balances (owed TO this account)
-          if (result.balances && Object.keys(result.balances).length > 0) {
-               for (const [issuer, balanceArray] of Object.entries(result.balances)) {
-                    balanceArray.forEach(balanceObj => {
-                         const decodedCurrency = this.utilsService.normalizeCurrencyCode(balanceObj.currency);
+     //      // --- Case 3: Balances (owed TO this account)
+     //      if (result.balances && Object.keys(result.balances).length > 0) {
+     //           for (const [issuer, balanceArray] of Object.entries(result.balances)) {
+     //                balanceArray.forEach(balanceObj => {
+     //                     const decodedCurrency = this.utilsService.normalizeCurrencyCode(balanceObj.currency);
 
-                         if (!grouped[decodedCurrency]) grouped[decodedCurrency] = {};
-                         grouped[decodedCurrency][issuer] = this.utilsService.formatTokenBalance(balanceObj.value, 18);
-                    });
-               }
-          }
+     //                     if (!grouped[decodedCurrency]) grouped[decodedCurrency] = {};
+     //                     grouped[decodedCurrency][issuer] = this.utilsService.formatTokenBalance(balanceObj.value, 18);
+     //                });
+     //           }
+     //      }
 
-          return grouped;
-     }
-
-     private getCachedAccountData(address: string) {
-          const cached = this.accountDataCache.get(address);
-          if (cached && Date.now() - cached.timestamp < 8000) {
-               // 8 sec cache
-               return cached;
-          }
-          return null;
-     }
-
-     private setCachedAccountData(address: string, data: Partial<{ accountObjects: xrpl.AccountObjectsResponse; tokenBalance: xrpl.GatewayBalancesResponse }>) {
-          const existing = this.accountDataCache.get(address) || { timestamp: Date.now() };
-          this.accountDataCache.set(address, { ...existing, ...data, timestamp: Date.now() });
-     }
+     //      return grouped;
+     // }
 
      private async getWallet() {
           const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
@@ -1723,33 +1428,14 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           return wallet;
      }
 
-     updatePaymentTx() {
-          this.scheduleHighlight();
-     }
+     private addNewDestinationFromUser() {
+          const addr = this.destinationField.includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
 
-     updateTxResult(tx: any) {
-          this.ui.txResult = tx;
-          this.scheduleHighlight();
-     }
-
-     private scheduleHighlight() {
-          // Use the captured injector to run afterRenderEffect safely
-          afterRenderEffect(
-               () => {
-                    if (this.ui.paymentTx && this.paymentJson?.nativeElement) {
-                         const json = JSON.stringify(this.ui.paymentTx, null, 2);
-                         this.paymentJson.nativeElement.textContent = json;
-                         Prism.highlightElement(this.paymentJson.nativeElement);
-                    }
-
-                    if (this.ui.txResult && this.txResultJson?.nativeElement) {
-                         const json = JSON.stringify(this.ui.txResult, null, 2);
-                         this.txResultJson.nativeElement.textContent = json;
-                         Prism.highlightElement(this.txResultJson.nativeElement);
-                    }
-               },
-               { injector: this.injector }
-          );
+          if (addr && xrpl.isValidAddress(addr) && !this.destinations.some(d => d.address === addr)) {
+               this.customDestinations.push({ name: `Custom ${this.customDestinations.length + 1}`, address: addr });
+               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+               this.updateDestinations();
+          }
      }
 
      copyEscrowTxHash(PreviousTxnID: string) {
@@ -2027,14 +1713,20 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           return this.utilsService.convertXRPLTime(timestamp);
      }
 
-     autoResize(textarea: HTMLTextAreaElement) {
-          if (!textarea) return;
-          textarea.style.height = 'auto'; // reset
-          textarea.style.height = textarea.scrollHeight + 'px'; // expand
+     get safeWarningMessage() {
+          return this.ui.warningMessage?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
      }
 
-     clearFields(clearAllFields: boolean) {
-          if (clearAllFields) {
+     private loadKnownIssuers() {
+          const data = this.storageService.getKnownIssuers('knownIssuers');
+          if (data) {
+               this.knownTrustLinesIssuers = data;
+               this.updateCurrencies();
+          }
+     }
+
+     clearFields(all = true) {
+          if (all) {
                this.escrowFinishTimeField = '';
                this.escrowCancelTimeField = '';
           }
@@ -2056,11 +1748,34 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           this.escrowOwnerField = '';
      }
 
+     onCurrencyChange(currency: string) {
+          this.trustlineCurrency.selectCurrency(currency, this.currentWallet.address);
+     }
+
+     onIssuerChange(issuer: string) {
+          this.trustlineCurrency.selectIssuer(issuer);
+     }
+
+     private refreshStoredIssuers() {
+          this.storedIssuers = [];
+          for (const currency in this.knownTrustLinesIssuers) {
+               if (currency === 'XRP') continue;
+               for (const address of this.knownTrustLinesIssuers[currency]) {
+                    this.storedIssuers.push({
+                         name: currency,
+                         address: address,
+                    });
+               }
+          }
+          // Optional: sort by currency
+          this.storedIssuers.sort((a, b) => a.name.localeCompare(b.name));
+     }
+
      private updateCurrencies() {
           // Get all currencies except XRP
           const allCurrencies = Object.keys(this.knownTrustLinesIssuers);
           const filtered = allCurrencies.filter(c => c !== 'XRP');
-          allCurrencies.push('MPT');
+          // allCurrencies.push('MPT');
 
           // Sort alphabetically
           this.currencies = filtered.sort((a, b) => a.localeCompare(b));
@@ -2073,7 +1788,11 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                if (shouldSelectFirst) {
                     this.currencyFieldDropDownValue = this.currencies[0];
                     // Trigger issuer load — but do it in next tick so binding is ready
-                    Promise.resolve().then(() => this.onCurrencyChange());
+                    Promise.resolve().then(() => {
+                         if (this.currencyFieldDropDownValue) {
+                              this.onCurrencyChange(this.currencyFieldDropDownValue);
+                         }
+                    });
                }
           } else {
                // No currencies left
@@ -2081,11 +1800,6 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                this.issuerFields = '';
                this.issuers = [];
           }
-     }
-
-     onTokenChange(): void {
-          const issuers = this.knownTrustLinesIssuers[this.tokenToRemove] || [];
-          this.issuerToRemove = issuers.length > 0 ? issuers[0] : '';
      }
 
      populateDefaultDateTime() {
@@ -2128,76 +1842,6 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           return displayAmount;
      }
 
-     openDropdown() {
-          // update service items (in case destinations changed)
-          this.destinationDropdownService.setItems(this.destinations);
-          // prepare filtered list
-          this.destinationDropdownService.filter(this.destinationField || '');
-          // tell service to open -> subscription above will attach overlay
-          this.destinationDropdownService.openDropdown();
-     }
-
-     // Called by outside click / programmatic close
-     closeDropdown() {
-          this.destinationDropdownService.closeDropdown();
-     }
-
-     // Called by chevron toggle
-     toggleDropdown() {
-          // make sure the service has current items first
-          this.destinationDropdownService.setItems(this.destinations);
-          this.destinationDropdownService.toggleDropdown();
-     }
-
-     // Called on input typing
-     onDestinationInput() {
-          this.filterQuery = this.destinationField || '';
-          this.destinationDropdownService.filter(this.filterQuery);
-          this.destinationDropdownService.openDropdown(); // ensure open while typing
-     }
-
-     private openDropdownInternal() {
-          // If already attached, do nothing
-          if (this.overlayRef?.hasAttached()) return;
-
-          // position strategy (your existing logic)
-          const positionStrategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([
-                    {
-                         originX: 'start',
-                         originY: 'bottom',
-                         overlayX: 'start',
-                         overlayY: 'top',
-                         offsetY: 8,
-                    },
-               ])
-               .withPush(false);
-
-          this.overlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy,
-               scrollStrategy: this.overlay.scrollStrategies.close(),
-          });
-
-          const portal = new TemplatePortal(this.dropdownTemplate, this.viewContainerRef);
-          this.overlayRef.attach(portal);
-
-          // Close on backdrop click
-          this.overlayRef.backdropClick().subscribe(() => {
-               this.destinationDropdownService.closeDropdown(); // close via service so subscribers sync
-          });
-     }
-
-     private closeDropdownInternal() {
-          if (this.overlayRef) {
-               this.overlayRef.detach();
-               this.overlayRef = null;
-          }
-     }
-
      filterDestinations() {
           const query = this.filterQuery.trim().toLowerCase();
 
@@ -2208,22 +1852,6 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
           }
 
           this.highlightedIndex = this.filteredDestinations.length > 0 ? 0 : -1;
-     }
-
-     selectDestination(address: string) {
-          if (address === this.currentWallet.address) return;
-
-          const dest = this.destinations.find(d => d.address === address);
-          if (dest) {
-               // show "Name (rABC12...DEF456)"
-               this.destinationField = this.destinationDropdownService.formatDisplay(dest);
-          } else {
-               this.destinationField = `${address.slice(0, 6)}...${address.slice(-6)}`;
-          }
-
-          // close via service so subscribers remain in sync
-          this.destinationDropdownService.closeDropdown();
-          this.cdr.detectChanges();
      }
 
      onArrowDown() {
@@ -2239,5 +1867,89 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                     this.closeDropdown(); // Also close on Enter
                }
           }
+     }
+
+     // Dropdown controls
+     openDropdown() {
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.filter(this.destinationField || '');
+          this.destinationDropdownService.openDropdown();
+     }
+
+     closeDropdown() {
+          this.destinationDropdownService.closeDropdown();
+     }
+
+     toggleDropdown() {
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.toggleDropdown();
+     }
+
+     onDestinationInput() {
+          this.destinationDropdownService.filter(this.destinationField || '');
+          this.destinationDropdownService.openDropdown();
+     }
+
+     selectDestination(address: string) {
+          if (address === this.currentWallet.address) return;
+          const dest = this.destinations.find(d => d.address === address);
+          this.destinationField = dest ? this.destinationDropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`;
+          this.closeDropdown();
+     }
+
+     private openDropdownInternal() {
+          if (this.overlayRef?.hasAttached()) return;
+
+          const strategy = this.overlay
+               .position()
+               .flexibleConnectedTo(this.dropdownOrigin)
+               .withPositions([{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]);
+
+          this.overlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy: strategy,
+               scrollStrategy: this.overlay.scrollStrategies.close(),
+          });
+
+          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
+          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
+     }
+
+     private closeDropdownInternal() {
+          this.overlayRef?.detach();
+          this.overlayRef = null;
+     }
+
+     updatePaymentTx() {
+          this.scheduleHighlight();
+     }
+
+     updateTxResult() {
+          this.scheduleHighlight();
+     }
+
+     private scheduleHighlight() {
+          afterRenderEffect(
+               () => {
+                    const paymentStr = JSON.stringify(this.ui.paymentTx, null, 2);
+                    const resultStr = JSON.stringify(this.ui.txResult, null, 2);
+
+                    if (this.paymentJson?.nativeElement && paymentStr !== this.lastPaymentTx) {
+                         this.paymentJson.nativeElement.textContent = paymentStr;
+                         Prism.highlightElement(this.paymentJson.nativeElement);
+                         this.lastPaymentTx = paymentStr;
+                    }
+
+                    if (this.txResultJson?.nativeElement && resultStr !== this.lastTxResult) {
+                         this.txResultJson.nativeElement.textContent = resultStr;
+                         Prism.highlightElement(this.txResultJson.nativeElement);
+                         this.lastTxResult = resultStr;
+                    }
+
+                    this.cdr.detectChanges();
+               },
+               { injector: this.injector }
+          );
      }
 }

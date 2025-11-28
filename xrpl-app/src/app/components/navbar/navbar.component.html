@@ -9,9 +9,9 @@
                     <a routerLink="/account-configurator" routerLinkActive="active" (click)="setActiveAccountsLink('/account-configurator')">Configurator</a>
                     <a routerLink="/create-credentials" routerLinkActive="active" (click)="setActiveAccountsLink('/create-credentials')">Create Credentials</a>
                     <a routerLink="/create-did" routerLinkActive="active" (click)="setActiveAccountsLink('/create-did')">Create DID</a>
-                    <!-- <a routerLink="/account-delegate" routerLinkActive="active" (click)="setActiveAccountsLink('/account-delegate')">Delegate</a> -->
+                    <a routerLink="/account-delegate" routerLinkActive="active" (click)="setActiveAccountsLink('/account-delegate')">Delegate</a>
                     <a routerLink="/delete-account" routerLinkActive="active" (click)="setActiveAccountsLink('/delete-account')">Delete Account</a>
-                    <!-- <a routerLink="/firewall" routerLinkActive="active" (click)="setActiveAccountsLink('/firewall')">Firewall</a> -->
+                    <a routerLink="/firewall" routerLinkActive="active" (click)="setActiveAccountsLink('/firewall')">Firewall</a>
                     <a routerLink="/permissioned-domain" routerLinkActive="active" (click)="setActiveAccountsLink('/permissioned-domain')">Permissioned Domain</a>
                </div>
           </div>
@@ -37,7 +37,7 @@
           <div class="dropdown escrows-dropdown" [ngClass]="{ active: isNftDropdownActive }">
                <a href="#" class="dropdown-toggle" aria-label="Toggle NFT dropdown" (click)="toggleNftDropdown($event)">NFTs ▾</a>
                <div class="dropdown-menu">
-                    <a routerLink="/create-nft" routerLinkActive="active" (click)="setActiveLink('/create-nft')">NFT Mint</a>
+                    <a routerLink="/create-nft" routerLinkActive="active" (click)="setActiveLink('/create-nft')">NFT Create</a>
                     <a routerLink="/nft-offers" routerLinkActive="active" (click)="setActiveLink('/nft-offers')">NFT Offers</a>
                </div>
           </div>
