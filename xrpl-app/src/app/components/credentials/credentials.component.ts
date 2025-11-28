@@ -315,7 +315,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getCredentialsForAccount:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -451,7 +451,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in createCredential:', error);
-               return this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -581,11 +581,12 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving deleteCredentials in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving deleteCredentials in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -714,11 +715,12 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in acceptCredentials:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving acceptCredentials in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving acceptCredentials in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -854,11 +856,12 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                return true;
           } catch (error: any) {
                console.error('Error:', error);
-               return this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving verifyCredential in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving verifyCredential in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 

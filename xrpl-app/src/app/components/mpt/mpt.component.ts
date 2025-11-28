@@ -331,7 +331,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getMptDetails:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -460,11 +460,12 @@ export class MptComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in createMpt:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving createMpt in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving createMpt in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -589,7 +590,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in authorizeMpt:', error);
-               return this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -727,7 +728,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in setMptLocked:', error);
-               return this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -898,7 +899,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in sendMpt:', error);
-               return this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -1005,7 +1006,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in destroyMpt:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -1146,7 +1147,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in clawbackMpt:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();

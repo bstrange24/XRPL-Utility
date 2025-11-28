@@ -376,7 +376,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getPaymentChannels:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -701,7 +701,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in handlePaymentChannelAction:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -924,7 +924,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                this.channelClaimSignatureField = this.generateChannelSignature(this.channelIDField, this.amountField, wallet);
           } catch (error: any) {
                console.error('Error in generateCreatorClaimSignature:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();

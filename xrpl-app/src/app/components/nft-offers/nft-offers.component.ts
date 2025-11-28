@@ -571,7 +571,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getNFTOffers:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -729,7 +729,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in getNFTOffers:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -859,7 +859,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in sellNFT:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -998,7 +998,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in createBuyOffer:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -1112,12 +1112,13 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                     this.ui.successMessage = 'Simulated Cancel NFT Offer successfully!';
                }
           } catch (error: any) {
-               console.error('Error:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               console.error('Error in cancelOffer:', error);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving cancelOffer in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving cancelOffer in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 

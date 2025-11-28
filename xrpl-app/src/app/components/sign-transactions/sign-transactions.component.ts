@@ -485,11 +485,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                this.ui.isError = false;
           } catch (error: any) {
                console.error('Error in unsignedTransaction:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving unsignedTransaction in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving unsignedTransaction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -534,12 +535,13 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.log(decodedTx);
           } catch (error: any) {
                console.error('Error in signedTransaction:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.buttonLoading.signed = false;
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving signedTransaction in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving signedTransaction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -621,7 +623,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in submitTransaction:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.buttonLoading.submit = false;
@@ -702,11 +704,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in submitMultiSignedTransaction:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving submitMultiSignedTransaction in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving submitMultiSignedTransaction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -762,7 +765,8 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                this.ui.spinner = false;
                this.buttonLoading.multiSign = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving signForMultiSign in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving signForMultiSign in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 

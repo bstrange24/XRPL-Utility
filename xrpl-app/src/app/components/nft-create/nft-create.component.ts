@@ -540,7 +540,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getNFT:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -660,7 +660,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in mintNFT:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -783,7 +783,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in mintBatchNFT:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -911,7 +911,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in burnNFT:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -1030,7 +1030,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in burnBatchNFT:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -1142,7 +1142,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in updateNFTMetadata:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();

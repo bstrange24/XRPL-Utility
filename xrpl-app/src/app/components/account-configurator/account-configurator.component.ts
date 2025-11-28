@@ -489,7 +489,8 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving getAccountDetails in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving getAccountDetails in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -1286,7 +1287,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in setNftMinterAddress:', error);
-               return this.ui.setError(`${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();

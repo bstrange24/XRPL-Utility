@@ -443,7 +443,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getTrustlinesForAccount:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -593,7 +593,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in setTrustLine:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -746,7 +746,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in removeTrustline:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -948,7 +948,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in issueCurrency:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -1101,7 +1101,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in clawbackTokens:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();

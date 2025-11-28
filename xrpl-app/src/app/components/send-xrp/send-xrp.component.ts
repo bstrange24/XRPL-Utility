@@ -383,7 +383,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in sendXrp:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();

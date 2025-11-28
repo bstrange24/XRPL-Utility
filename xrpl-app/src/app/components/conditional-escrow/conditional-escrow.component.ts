@@ -450,7 +450,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getEscrows:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -622,7 +622,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in createConditionalEscrow:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -793,7 +793,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in finishConditionalEscrow:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -971,7 +971,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in cancelEscrow:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -1372,12 +1372,13 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in getEscrowOwnerAddress:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
                this.escrowOwnerField = this.currentWallet.address; // safe fallback
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving getEscrowOwnerAddress in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving getEscrowOwnerAddress in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 

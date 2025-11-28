@@ -394,7 +394,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getChecks:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -579,7 +579,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in createCheck:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -758,7 +758,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in cashCheck:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
@@ -881,7 +881,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in cancelCheck:', error);
-               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
