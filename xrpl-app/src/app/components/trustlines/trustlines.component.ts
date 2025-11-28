@@ -1465,10 +1465,10 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           let message: string;
 
           if (count === 0) {
-               message = `The <code>${walletName}</code> wallet has no ${description}s.`;
+               message = `<code>${walletName}</code> wallet has no ${description}s.`;
           } else {
                const trustlineWord = count === 1 ? 'trustline' : 'trustlines';
-               message = `The <code>${walletName}</code> wallet has <strong>${count}</strong> ${trustlineWord}${description.includes('trustline') ? '' : ` ${description}`}.`;
+               message = `<code>${walletName}</code> wallet has <strong>${count}</strong> ${trustlineWord}${description.includes('trustline') ? '' : ` ${description}`}.`;
 
                // Add link to view tokens
                const link = `${this.url}account/${this.currentWallet.address}/tokens`;

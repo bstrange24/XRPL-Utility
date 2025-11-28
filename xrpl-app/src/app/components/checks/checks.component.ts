@@ -1143,7 +1143,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
           const description = isSingular ? config.singular : config.plural;
 
           // Build base message
-          let message = `The <code>${walletName}</code> wallet has `;
+          let message = `<code>${walletName}</code> wallet has `;
 
           if (config.action) {
                message += `<strong>${count}</strong> ${config.action} `;

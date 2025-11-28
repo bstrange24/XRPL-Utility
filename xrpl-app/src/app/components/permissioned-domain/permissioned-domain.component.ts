@@ -767,14 +767,14 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           const permissionedDomainCount = this.createdPermissionedDomains.length;
 
           if (permissionedDomainCount === 0) {
-               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has no permissioned domains.`);
+               this.ui.setInfoMessage(`<code>${walletName}</code> wallet has no permissioned domains.`);
                return;
           }
 
           let message: string;
 
           const domainDescription = permissionedDomainCount === 1 ? 'permissioned domain' : 'permissioned domains';
-          message = `The <code>${walletName}</code> wallet has ${permissionedDomainCount} ${domainDescription}.`;
+          message = `<code>${walletName}</code> wallet has ${permissionedDomainCount} ${domainDescription}.`;
 
           // Add links to view the permissioned domains
           if (permissionedDomainCount > 0) {

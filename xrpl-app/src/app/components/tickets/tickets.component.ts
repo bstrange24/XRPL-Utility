@@ -631,7 +631,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
 
           const label = this.activeTab === 'create' ? 'available Tickets for use.' : 'Tickets that can be deleted.';
 
-          this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has <strong>${count}</strong> ${label}`);
+          this.ui.setInfoMessage(`<code>${walletName}</code> wallet has <strong>${count}</strong> ${label}`);
      }
 
      clearFields(all = true) {

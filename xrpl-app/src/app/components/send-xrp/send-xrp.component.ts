@@ -525,10 +525,10 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           const availableBalance = this.accountInfo?.result?.account_data?.Balance;
 
           if (availableBalance) {
-               const balanceXrp = xrpl.dropsToXrp(availableBalance);
-               message = `The <code>${walletName}</code> wallet has <strong>${balanceXrp} XRP</strong> available for sending.`;
+               // const balanceXrp = xrpl.dropsToXrp(availableBalance);
+               message = `<code>${walletName}</code> wallet has <strong>${Number(this.currentWallet.balance).toFixed(2)} XRP</strong> available for sending.`;
           } else {
-               message = `The <code>${walletName}</code> wallet is ready to send XRP.`;
+               message = `<code>${walletName}</code> wallet is ready to send XRP.`;
           }
 
           this.ui.setInfoMessage(message);

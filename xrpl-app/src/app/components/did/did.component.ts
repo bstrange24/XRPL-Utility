@@ -739,16 +739,16 @@ export class DidComponent implements OnInit, AfterViewInit {
           const didCount = this.existingDid.length;
 
           if (didCount === 0) {
-               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has no DID.`);
+               this.ui.setInfoMessage(`<code>${walletName}</code> wallet has no DID.`);
                return;
           }
 
           let message: string;
 
           if (didCount === 1) {
-               message = `The <code>${walletName}</code> wallet has one DID.`;
+               message = `<code>${walletName}</code> wallet has one DID.`;
           } else {
-               message = `The <code>${walletName}</code> wallet has ${didCount} DIDs.`;
+               message = `<code>${walletName}</code> wallet has ${didCount} DIDs.`;
           }
 
           // Add link to view the DID(s)

@@ -1873,7 +1873,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
           let message: string;
 
           if (nftCount === 0 && sellOfferCount === 0 && buyOfferCount === 0) {
-               message = `The <code>${walletName}</code> wallet has no NFTs or NFT offers.`;
+               message = `<code>${walletName}</code> wallet has no NFTs or NFT offers.`;
           } else {
                const parts: string[] = [];
 
@@ -1900,7 +1900,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                     summaryText = `${parts.join(', ')} and ${lastPart}`;
                }
 
-               message = `The <code>${walletName}</code> wallet has <strong>${summaryText}</strong>.`;
+               message = `<code>${walletName}</code> wallet has <strong>${summaryText}</strong>.`;
 
                // Add link to view NFTs when any NFTs or offers are present
                const link = `${this.url}account/${this.currentWallet.address}/nfts`;

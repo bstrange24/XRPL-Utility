@@ -536,7 +536,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           const walletName = this.currentWallet.name || 'selected';
 
           if (!this.accountInfo?.result) {
-               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet is ready for account deletion.`);
+               this.ui.setInfoMessage(`<code>${walletName}</code> wallet is ready for account deletion.`);
                return;
           }
 
@@ -567,9 +567,9 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           let message: string;
 
           if (messageParts.length === 0) {
-               message = `The <code>${walletName}</code> wallet can be deleted.`;
+               message = `<code>${walletName}</code> wallet can be deleted.`;
           } else {
-               message = `The <code>${walletName}</code> wallet has the following configuration that affects account deletion:<ul>`;
+               message = `<code>${walletName}</code> wallet has the following configuration that affects account deletion:<ul>`;
                messageParts.forEach(part => {
                     message += `<li>${part}</li>`;
                });

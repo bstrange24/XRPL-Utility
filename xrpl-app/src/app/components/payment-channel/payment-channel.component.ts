@@ -1178,14 +1178,14 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
 
           // Early exit if no data for current tab
           if (count === 0 && this.activeTab !== 'create') {
-               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has no payment channels ${this.getTabDescription()}.`);
+               this.ui.setInfoMessage(`<code>${walletName}</code> wallet has no payment channels ${this.getTabDescription()}.`);
                return;
           }
 
           const isSingular = count === 1;
           const channelWord = isSingular ? 'payment channel' : 'payment channels';
 
-          let message = `The <code>${walletName}</code> wallet has `;
+          let message = `<code>${walletName}</code> wallet has `;
 
           // Special text per tab
           switch (this.activeTab) {

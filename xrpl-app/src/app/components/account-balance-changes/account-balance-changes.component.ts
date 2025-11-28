@@ -925,7 +925,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           const walletName = this.currentWallet.name || 'selected';
 
           if (!this.currentBalance && this.balanceChanges.length === 0) {
-               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has no balance change history available.`);
+               this.ui.setInfoMessage(`<code>${walletName}</code> wallet has no balance change history available.`);
                return;
           }
 
@@ -959,9 +959,9 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
           let message: string;
           if (messageParts.length === 0) {
-               message = `The <code>${walletName}</code> wallet has no balance information available.`;
+               message = `<code>${walletName}</code> wallet has no balance information available.`;
           } else {
-               message = `The <code>${walletName}</code> wallet balance information:<ul>`;
+               message = `<code>${walletName}</code> wallet balance information:<ul>`;
                messageParts.forEach(part => {
                     message += `<li>${part}</li>`;
                });

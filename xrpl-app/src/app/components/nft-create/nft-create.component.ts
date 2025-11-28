@@ -1812,14 +1812,14 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
           let message: string;
 
           if (count === 0) {
-               message = `The <code>${walletName}</code> wallet has no NFTs.`;
+               message = `<code>${walletName}</code> wallet has no NFTs.`;
           } else {
                const nftWord = count === 1 ? 'NFT' : 'NFTs';
 
                // Determine the appropriate action text based on the current tab
                const actionText = this.getActionText();
 
-               message = `The <code>${walletName}</code> wallet has <strong>${count}</strong> ${nftWord}.`;
+               message = `<code>${walletName}</code> wallet has <strong>${count}</strong> ${nftWord}.`;
 
                // Add tab-specific action description if applicable
                if (actionText) {

@@ -1439,10 +1439,10 @@ export class MptComponent implements OnInit, AfterViewInit {
           let message: string;
 
           if (count === 0) {
-               message = `The <code>${walletName}</code> wallet has no Multi-Purpose Tokens.`;
+               message = `<code>${walletName}</code> wallet has no Multi-Purpose Tokens.`;
           } else {
                const tokenWord = count === 1 ? 'Multi-Purpose Token' : 'Multi-Purpose Tokens';
-               message = `The <code>${walletName}</code> wallet has <strong>${count}</strong> ${tokenWord}.`;
+               message = `<code>${walletName}</code> wallet has <strong>${count}</strong> ${tokenWord}.`;
 
                // Add link to view MPTs on XRPL Win
                const link = `${this.url}account/${this.currentWallet.address}/mpts/owned`;

@@ -551,7 +551,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
           // Build the dynamic text part (with space if text exists)
           const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
 
-          // return `The <code>${walletName}</code> wallet has ${dynamicText} ${config.message}`;
+          // return `<code>${walletName}</code> wallet has ${dynamicText} ${config.message}`;
           return null;
      }
 

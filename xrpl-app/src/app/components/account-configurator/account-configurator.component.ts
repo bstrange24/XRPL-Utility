@@ -2146,7 +2146,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           const accountFlags = this.accountInfo?.result?.account_flags;
 
           if (!accountFlags) {
-               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet is ready for account configuration.`);
+               this.ui.setInfoMessage(`<code>${walletName}</code> wallet is ready for account configuration.`);
                return;
           }
 
@@ -2198,9 +2198,9 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           let message: string;
 
           if (messageParts.length === 0) {
-               message = `The <code>${walletName}</code> wallet has no special account configuration. All account flags are in their default state.`;
+               message = `<code>${walletName}</code> wallet has no special account configuration. All account flags are in their default state.`;
           } else {
-               message = `The <code>${walletName}</code> wallet has the following account configuration:<ul>`;
+               message = `<code>${walletName}</code> wallet has the following account configuration:<ul>`;
                messageParts.forEach(part => {
                     message += `<li>${part}</li>`;
                });

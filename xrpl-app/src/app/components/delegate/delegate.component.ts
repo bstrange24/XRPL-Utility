@@ -720,10 +720,10 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           let message: string;
 
           if (delegationCount === 0) {
-               message = `The <code>${walletName}</code> wallet has no delegations.`;
+               message = `<code>${walletName}</code> wallet has no delegations.`;
           } else {
                const delegationDescription = delegationCount === 1 ? 'delegation' : 'delegations';
-               message = `The <code>${walletName}</code> wallet has ${delegationCount} ${delegationDescription}.`;
+               message = `<code>${walletName}</code> wallet has ${delegationCount} ${delegationDescription}.`;
           }
 
           this.ui.setInfoMessage(message);

@@ -1483,11 +1483,11 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                if (mptCount > 0) items.push(`${mptCount} MPT${mptCount > 1 ? 's' : ''}`);
 
                if (items.length === 0) {
-                    message = `The <code>${walletName}</code> wallet has no escrows, IOUs or MPTs yet.`;
+                    message = `<code>${walletName}</code> wallet has no escrows, IOUs or MPTs yet.`;
                } else {
                     const list = items.length === 1 ? items[0] : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
 
-                    message = `The <code>${walletName}</code> wallet has ${list} on the ledger.`;
+                    message = `<code>${walletName}</code> wallet has ${list} on the ledger.`;
 
                     const links: string[] = [];
                     if (escrowCount > 0) links.push(`<a href="${baseUrl}account/${address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Escrows</a>`);
@@ -1520,10 +1520,10 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                const count = relevantEscrows.length;
 
                if (count === 0) {
-                    message = `The <code>${walletName}</code> wallet has no escrows that can be ${action}.`;
+                    message = `<code>${walletName}</code> wallet has no escrows that can be ${action}.`;
                } else {
                     const word = count === 1 ? 'escrow' : 'escrows';
-                    message = `The <code>${walletName}</code> wallet has <strong>${count}</strong> ${word} that can be ${action}.`;
+                    message = `<code>${walletName}</code> wallet has <strong>${count}</strong> ${word} that can be ${action}.`;
                     message += `<br><a href="${baseUrl}account/${address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">
                 View Escrows on XRPL Win
             </a>`;

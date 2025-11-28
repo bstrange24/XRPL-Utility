@@ -1523,10 +1523,10 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           let message: string;
 
           if (firewallCount === 0) {
-               message = `The <code>${walletName}</code> wallet has no firewalls.`;
+               message = `<code>${walletName}</code> wallet has no firewalls.`;
           } else {
                const firewallDescription = firewallCount === 1 ? 'firewall' : 'firewalls';
-               message = `The <code>${walletName}</code> wallet has ${firewallCount} ${firewallDescription}.`;
+               message = `<code>${walletName}</code> wallet has ${firewallCount} ${firewallDescription}.`;
           }
 
           this.ui.setInfoMessage(message);

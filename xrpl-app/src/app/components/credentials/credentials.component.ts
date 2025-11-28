@@ -1083,7 +1083,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           const secondaryCount = secondaryCredentials.length;
 
           if (primaryCount === 0 && secondaryCount === 0) {
-               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has no credentials.`);
+               this.ui.setInfoMessage(`<code>${walletName}</code> wallet has no credentials.`);
                return;
           }
 
@@ -1103,9 +1103,9 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
           let message: string;
           if (messageParts.length === 0) {
-               message = `The <code>${walletName}</code> wallet has no credentials.`;
+               message = `<code>${walletName}</code> wallet has no credentials.`;
           } else {
-               message = `The <code>${walletName}</code> wallet has the following credentials:`;
+               message = `<code>${walletName}</code> wallet has the following credentials:`;
                message += '<ul>';
                messageParts.forEach(part => {
                     message += `<li>${part}</li>`;
