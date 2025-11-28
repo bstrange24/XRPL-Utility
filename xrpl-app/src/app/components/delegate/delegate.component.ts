@@ -263,6 +263,7 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
+          this.updateInfoMessage();
      }
 
      toggleCreatedDelegations() {
@@ -390,6 +391,7 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                //      });
                // }
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -547,6 +549,7 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -705,33 +708,25 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
           });
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               delegate: {
-                    delegations: this.existingDelegations,
-                    getDescription: (count: number) => (count === 1 ? 'delegation' : 'delegations'),
-                    dynamicText: 'created', // Add dynamic text here
-                    showLink: true,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
+     updateInfoMessage(): void {
+          if (!this.currentWallet?.address) {
+               this.ui.setInfoMessage('No wallet is currently selected.');
+               return;
+          }
 
           const walletName = this.currentWallet.name || 'selected';
-          const count = config.delegations.length ? config.delegations.length : 0;
+          const delegationCount = this.existingDelegations.length;
 
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+          let message: string;
 
-          let message = `The <code>${walletName}</code> wallet has ${dynamicText}${count} ${config.getDescription(count)}.`;
+          if (delegationCount === 0) {
+               message = `The <code>${walletName}</code> wallet has no delegations.`;
+          } else {
+               const delegationDescription = delegationCount === 1 ? 'delegation' : 'delegations';
+               message = `The <code>${walletName}</code> wallet has ${delegationCount} ${delegationDescription}.`;
+          }
 
-          // if (config.showLink && count > 0) {
-          //      const link = `${this.url}account/${this.currentWallet.address}/checks`;
-          //      message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View checks on XRPL Win</a>`;
-          // }
-
-          return message;
+          this.ui.setInfoMessage(message);
      }
 
      get safeWarningMessage() {

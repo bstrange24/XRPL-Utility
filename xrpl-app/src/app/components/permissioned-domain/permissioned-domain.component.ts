@@ -292,6 +292,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
+          this.updateInfoMessage();
      }
 
      toggleCreatedDomains() {
@@ -317,6 +318,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
                this.getCreatedPermissionedDomains(accountObjects, wallet.classicAddress);
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -449,6 +451,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -574,6 +577,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -753,46 +757,37 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
           });
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               set: {
-                    permissionedDomain: this.createdPermissionedDomains,
-                    getDescription: (count: number) => (count === 1 ? 'Permissioned Domain' : 'Permissioned Domains'),
-                    dynamicText: '', // Add dynamic text here
-                    showLink: true,
-               },
-               delete: {
-                    permissionedDomain: this.createdPermissionedDomains,
-                    getDescription: (count: number) => (count === 1 ? 'Permissioned Domain' : 'Permissioned Domains'),
-                    dynamicText: '', // Empty for no additional text
-                    showLink: true,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
+     updateInfoMessage(): void {
+          if (!this.currentWallet?.address) {
+               this.ui.setInfoMessage('No wallet is currently selected.');
+               return;
+          }
 
           const walletName = this.currentWallet.name || 'selected';
-          const count = config.permissionedDomain.length ? config.permissionedDomain.length : 0;
+          const permissionedDomainCount = this.createdPermissionedDomains.length;
 
-          if (count === 0) {
-               return `The <code>${walletName}</code> wallet has no permissioned domains.`;
+          if (permissionedDomainCount === 0) {
+               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has no permissioned domains.`);
+               return;
           }
 
-          // Build message header
-          let message = `The <code>${walletName}</code> wallet has:`;
+          let message: string;
 
-          if (count > 0) {
-               message += `<br><strong>${count}</strong> ${config.getDescription(count)}.`;
-               if (config.showLink) {
-                    for (const domains of this.createdPermissionedDomains) {
-                         const link = `${this.url}entry/${domains.index}`;
-                         message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Permissioned Domain on XRPL Win (Domain ID: ${domains.index.slice(0, 8)}...${domains.index.slice(-8)})</a>`;
-                    }
+          const domainDescription = permissionedDomainCount === 1 ? 'permissioned domain' : 'permissioned domains';
+          message = `The <code>${walletName}</code> wallet has ${permissionedDomainCount} ${domainDescription}.`;
+
+          // Add links to view the permissioned domains
+          if (permissionedDomainCount > 0) {
+               message += '<br>Available permissioned domains:<ul>';
+               for (const domain of this.createdPermissionedDomains) {
+                    const shortIndex = `${domain.index.slice(0, 8)}...${domain.index.slice(-8)}`;
+                    const link = `${this.url}entry/${domain.index}`;
+                    message += `<li><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Permissioned Domain (Domain ID: ${shortIndex})</a></li>`;
                }
+               message += '</ul>';
           }
 
-          return message;
+          this.ui.setInfoMessage(message);
      }
 
      // set a warning

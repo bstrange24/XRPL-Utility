@@ -305,6 +305,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
      setTab(tab: string) {
           this.activeTab = tab;
+          this.updateInfoMessage();
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
@@ -320,6 +321,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
      async loadBalanceChanges(reset = true) {
           this.ui.clearMessages();
+          this.updateInfoMessage();
           // Prevent overlapping loads
           if (reset && this.loadingInitial) {
                console.log('loadBalanceChanges skipped (initial load in progress)');
@@ -914,25 +916,70 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           );
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               send: {
-                    message: '',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: false,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
+     updateInfoMessage(): void {
+          if (!this.currentWallet?.address) {
+               this.ui.setInfoMessage('No wallet is currently selected.');
+               return;
+          }
 
           const walletName = this.currentWallet.name || 'selected';
 
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+          if (!this.currentBalance && this.balanceChanges.length === 0) {
+               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has no balance change history available.`);
+               return;
+          }
 
-          // return `The <code>${walletName}</code> wallet has ${dynamicText} ${config.message}`;
-          return null;
+          let messageParts: string[] = [];
+
+          // Add balance information
+          if (this.currentBalance !== undefined) {
+               const formattedBalance = this.utilsService.roundToEightDecimals(this.currentBalance);
+               messageParts.push(`Current XRP balance: <strong>${formattedBalance} XRP</strong>`);
+          }
+
+          // Add balance change summary
+          if (this.balanceChanges.length > 0) {
+               const totalTransactions = this.balanceChanges.length;
+               messageParts.push(`${totalTransactions} balance change${totalTransactions === 1 ? '' : 's'} displayed`);
+          }
+
+          // Add additional balance information if available
+          if (this.ownerCount !== undefined && this.ownerCount !== '') {
+               messageParts.push(`Owner count: <strong>${this.ownerCount}</strong>`);
+          }
+
+          if (this.totalXrpReserves !== undefined && this.totalXrpReserves !== '') {
+               const spendableBalance = parseFloat(this.currentWallet.balance || '0');
+               messageParts.push(`Total XRP reserves: <strong>${this.totalXrpReserves}</strong>`);
+
+               if (spendableBalance >= 0) {
+                    messageParts.push(`Spendable balance: <strong>${spendableBalance.toFixed(6)} XRP</strong>`);
+               }
+          }
+
+          let message: string;
+          if (messageParts.length === 0) {
+               message = `The <code>${walletName}</code> wallet has no balance information available.`;
+          } else {
+               message = `The <code>${walletName}</code> wallet balance information:<ul>`;
+               messageParts.forEach(part => {
+                    message += `<li>${part}</li>`;
+               });
+               message += '</ul>';
+          }
+
+          // Add information about what is displayed
+          if (this.balanceChanges.length > 0) {
+               message += "<br>The balance changes table shows all transactions that affected this account's XRP balance and issued currency balances, including:<ul>";
+               message += '<li>Payments sent and received</li>';
+               message += '<li>Trust line balance changes</li>';
+               message += '<li>Automated Market Maker (AMM) deposit, withdrawal, and trade activity</li>';
+               message += '<li>Offer creation and cancellation affecting account balances</li>';
+               message += '<li>Other transactions that modify account balances</li>';
+               message += '</ul>';
+          }
+
+          this.ui.setInfoMessage(message);
      }
 
      clearFields(clearAllFields: boolean) {

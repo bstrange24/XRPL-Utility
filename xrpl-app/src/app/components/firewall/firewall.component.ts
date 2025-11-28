@@ -350,6 +350,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                this.ui.clearMessages();
                this.ui.clearWarning();
           }
+          this.updateInfoMessage();
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
@@ -448,6 +449,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                // this.ui.setSuccess(this.ui.result);
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -595,11 +597,12 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
-                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
-
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
+                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
+
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -737,6 +740,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -903,6 +907,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1031,6 +1036,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.clearFields(false);
@@ -1505,57 +1511,25 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           });
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               create: {
-                    firewall: this.existingFirewalls,
-                    getDescription: (count: number) => (count === 1 ? 'Firewall' : 'Firewalls'),
-                    dynamicText: 'created', // Empty for no additional text
-                    showLink: false,
-               },
-               modify: {
-                    firewall: this.existingFirewalls,
-                    getDescription: (count: number) => (count === 1 ? 'Firewall' : 'Firewalls'),
-                    dynamicText: 'created', // Empty for no additional text
-                    showLink: false,
-               },
-               authorize: {
-                    firewall: this.existingFirewalls,
-                    getDescription: (count: number) => (count === 1 ? 'Firewall' : 'Firewalls'),
-                    dynamicText: 'created',
-                    showLink: false,
-               },
-               unauthorize: {
-                    firewall: this.existingFirewalls,
-                    getDescription: (count: number) => (count === 1 ? 'Firewall' : 'Firewalls'),
-                    dynamicText: 'created',
-                    showLink: false,
-               },
-               delete: {
-                    firewall: this.existingFirewalls,
-                    getDescription: (count: number) => (count === 1 ? 'Firewall' : 'Firewalls'),
-                    dynamicText: 'created',
-                    showLink: false,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
-
-          const walletName = this.currentWallet.name || 'selected';
-          const count = config.firewall.length;
-
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
-
-          let message = `The <code>${walletName}</code> wallet has ${dynamicText}${count} ${config.getDescription(count)}.`;
-
-          if (config.showLink && count > 0) {
-               const link = `${this.url}account/${this.currentWallet.address}/checks`;
-               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View checks on XRPL Win</a>`;
+     updateInfoMessage(): void {
+          if (!this.currentWallet?.address) {
+               this.ui.setInfoMessage('No wallet is currently selected.');
+               return;
           }
 
-          return message;
+          const walletName = this.currentWallet.name || 'selected';
+          const firewallCount = this.existingFirewalls.length;
+
+          let message: string;
+
+          if (firewallCount === 0) {
+               message = `The <code>${walletName}</code> wallet has no firewalls.`;
+          } else {
+               const firewallDescription = firewallCount === 1 ? 'firewall' : 'firewalls';
+               message = `The <code>${walletName}</code> wallet has ${firewallCount} ${firewallDescription}.`;
+          }
+
+          this.ui.setInfoMessage(message);
      }
 
      get safeWarningMessage() {

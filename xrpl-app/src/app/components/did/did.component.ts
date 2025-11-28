@@ -265,6 +265,7 @@ export class DidComponent implements OnInit, AfterViewInit {
                this.ui.clearWarning();
           }
 
+          this.updateInfoMessage();
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
@@ -289,6 +290,7 @@ export class DidComponent implements OnInit, AfterViewInit {
 
                this.getExistingDid(accountObjects, wallet.classicAddress);
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -406,6 +408,7 @@ export class DidComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -530,6 +533,7 @@ export class DidComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -725,43 +729,35 @@ export class DidComponent implements OnInit, AfterViewInit {
           });
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               set: {
-                    did: this.existingDid,
-                    getDescription: (count: number) => (count === 1 ? 'DID' : 'DID'),
-                    dynamicText: 'a', // Add dynamic text here
-                    showLink: true,
-               },
-               delete: {
-                    did: this.existingDid,
-                    getDescription: (count: number) => (count === 1 ? 'DID' : 'DID'),
-                    dynamicText: '', // Empty for no additional text
-                    showLink: true,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
-
-          const walletName = this.currentWallet.name || 'selected';
-          const count = config.did.length ? config.did.length : 0;
-
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
-
-          if (count === 0) {
-               return `The <code>${walletName}</code> wallet has no ${config.getDescription(count)}.`;
+     updateInfoMessage(): void {
+          if (!this.currentWallet?.address) {
+               this.ui.setInfoMessage('No wallet is currently selected.');
+               return;
           }
 
-          let message = `The <code>${walletName}</code> wallet has ${dynamicText} ${config.getDescription(count)}.`;
+          const walletName = this.currentWallet.name || 'selected';
+          const didCount = this.existingDid.length;
 
-          if (config.showLink && count > 0) {
+          if (didCount === 0) {
+               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has no DID.`);
+               return;
+          }
+
+          let message: string;
+
+          if (didCount === 1) {
+               message = `The <code>${walletName}</code> wallet has one DID.`;
+          } else {
+               message = `The <code>${walletName}</code> wallet has ${didCount} DIDs.`;
+          }
+
+          // Add link to view the DID(s)
+          if (didCount > 0) {
                const link = `${this.url}entry/${this.existingDid[0].index}`;
                message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View DID on XRPL Win</a>`;
           }
 
-          return message;
+          this.ui.setInfoMessage(message);
      }
 
      formatXrplTimestamp(timestamp: number): string {

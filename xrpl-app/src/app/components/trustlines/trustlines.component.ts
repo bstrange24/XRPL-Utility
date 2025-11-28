@@ -353,7 +353,14 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      }
 
      async setTab(tab: string) {
+          const previousTab = this.activeTab;
           this.activeTab = tab;
+
+          // Only clear messages when actually changing tabs
+          if (previousTab !== tab) {
+               this.ui.clearMessages();
+               this.ui.clearWarning();
+          }
 
           if (Object.keys(this.knownTrustLinesIssuers).length > 0 && this.issuerFields === '') {
                this.currencyFieldDropDownValue = Object.keys(this.knownTrustLinesIssuers)[0];
@@ -406,6 +413,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           if (this.activeTab === 'removeTrustline') {
                this.amountField = '0';
           }
+          this.updateInfoMessage();
      }
 
      async getTrustlinesForAccount() {
@@ -434,6 +442,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                // this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance });
                this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue, this.currentWallet.address);
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTrustLineFlagsInUI(accountObjects, wallet);
@@ -583,6 +592,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -736,6 +746,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -938,6 +949,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     this.addNewDestinationFromUser();
 
                     this.onCurrencyChange(this.currencyFieldDropDownValue);
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1091,6 +1103,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
                     // await this.updateCurrencyBalance(gatewayBalances, wallet);
                     this.onCurrencyChange(this.currencyFieldDropDownValue);
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1399,60 +1412,6 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           this.cdr.detectChanges();
      }
 
-     // private async updateCurrencyBalance(gatewayBalance: xrpl.GatewayBalancesResponse, wallet: xrpl.Wallet) {
-     //      const parsedBalances = this.parseAllGatewayBalances(gatewayBalance, wallet);
-     //      if (parsedBalances && Object.keys(parsedBalances).length > 0) {
-     //           this.currencyBalanceField = parsedBalances[this.currencyFieldDropDownValue]?.[wallet.classicAddress] ?? parsedBalances[this.currencyFieldDropDownValue]?.[this.issuerFields] ?? '0';
-     //      } else {
-     //           this.currencyBalanceField = '0';
-     //      }
-     // }
-
-     // private parseAllGatewayBalances(gatewayBalances: xrpl.GatewayBalancesResponse, wallet: xrpl.Wallet) {
-     //      const result = gatewayBalances.result;
-     //      const grouped: Record<string, Record<string, string>> = {};
-     //      // structure: { [currency]: { [issuer]: balance } }
-
-     //      // --- Case 1: Obligations (this account is the gateway/issuer)
-     //      if (result.obligations && Object.keys(result.obligations).length > 0) {
-     //           for (const [currencyCode, value] of Object.entries(result.obligations)) {
-     //                const decodedCurrency = this.utilsService.normalizeCurrencyCode(currencyCode);
-
-     //                if (!grouped[decodedCurrency]) grouped[decodedCurrency] = {};
-
-     //                // Obligations are what the gateway owes → negative
-     //                const formatted = '-' + this.utilsService.formatTokenBalance(value, 18);
-     //                grouped[decodedCurrency][wallet.address] = formatted;
-     //           }
-     //      }
-
-     //      // --- Case 2: Assets (tokens issued by others, held by this account)
-     //      if (result.assets && Object.keys(result.assets).length > 0) {
-     //           for (const [issuer, assetArray] of Object.entries(result.assets)) {
-     //                assetArray.forEach(asset => {
-     //                     const decodedCurrency = this.utilsService.normalizeCurrencyCode(asset.currency);
-
-     //                     if (!grouped[decodedCurrency]) grouped[decodedCurrency] = {};
-     //                     grouped[decodedCurrency][issuer] = this.utilsService.formatTokenBalance(asset.value, 18);
-     //                });
-     //           }
-     //      }
-
-     //      // --- Case 3: Balances (owed TO this account)
-     //      if (result.balances && Object.keys(result.balances).length > 0) {
-     //           for (const [issuer, balanceArray] of Object.entries(result.balances)) {
-     //                balanceArray.forEach(balanceObj => {
-     //                     const decodedCurrency = this.utilsService.normalizeCurrencyCode(balanceObj.currency);
-
-     //                     if (!grouped[decodedCurrency]) grouped[decodedCurrency] = {};
-     //                     grouped[decodedCurrency][issuer] = this.utilsService.formatTokenBalance(balanceObj.value, 18);
-     //                });
-     //           }
-     //      }
-
-     //      return grouped;
-     // }
-
      private async getWallet() {
           const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
@@ -1490,51 +1449,33 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           });
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               setTrustline: {
-                    checks: this.existingIOUs,
-                    getDescription: (count: number) => (count === 1 ? 'trustline' : 'trustlines'),
-                    dynamicText: '', // Add dynamic text here
-                    showLink: true,
-               },
-               removeTrustline: {
-                    checks: this.existingIOUs,
-                    getDescription: (count: number) => (count === 1 ? 'trustline' : 'trustlines'),
-                    dynamicText: '', // Add dynamic text here
-                    showLink: true,
-               },
-               issueCurrency: {
-                    checks: this.existingIOUs,
-                    getDescription: (count: number) => (count === 1 ? 'trustline' : 'trustlines'),
-                    dynamicText: '', // Add dynamic text here
-                    showLink: true,
-               },
-               clawbackTokens: {
-                    checks: this.existingIOUs,
-                    getDescription: (count: number) => (count === 1 ? 'trustline' : 'trustlines'),
-                    dynamicText: '', // Add dynamic text here
-                    showLink: true,
-               },
+     private updateInfoMessage() {
+          const tabDescriptions: Record<string, string> = {
+               setTrustline: 'trustline that can be set',
+               removeTrustline: 'trustline that can be removed',
+               issueCurrency: 'trustline that can be used to issue currency',
+               clawbackTokens: 'trustline that supports clawback',
           };
 
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
+          const count = this.existingIOUs.length;
+          const description = tabDescriptions[this.activeTab] || 'trustline';
 
           const walletName = this.currentWallet.name || 'selected';
-          const count = config.checks.length;
 
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+          let message: string;
 
-          let message = `The <code>${walletName}</code> wallet has ${dynamicText}${count} ${config.getDescription(count)}.`;
+          if (count === 0) {
+               message = `The <code>${walletName}</code> wallet has no ${description}s.`;
+          } else {
+               const trustlineWord = count === 1 ? 'trustline' : 'trustlines';
+               message = `The <code>${walletName}</code> wallet has <strong>${count}</strong> ${trustlineWord}${description.includes('trustline') ? '' : ` ${description}`}.`;
 
-          if (config.showLink && count > 0) {
+               // Add link to view tokens
                const link = `${this.url}account/${this.currentWallet.address}/tokens`;
                message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View tokens on XRPL Win</a>`;
           }
 
-          return message;
+          this.ui.setInfoMessage(message);
      }
 
      decodeMptFlagsForUi(flags: number): string {

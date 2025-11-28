@@ -146,6 +146,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
      regularKeySigningEnabled: boolean = false;
      ticketArray: string[] = [];
      masterKeyDisabled: boolean = false;
+     accountInfo: any;
 
      // Dropdown
      private overlayRef: OverlayRef | null = null;
@@ -447,6 +448,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           this.clearFields(true);
           this.getAccountDetails();
           this.ui.clearMessages();
+          this.updateInfoMessage();
      }
 
      async getAccountDetails() {
@@ -460,6 +462,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+               this.accountInfo = accountInfo;
                // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
                const inputs: ValidationInputs = { seed: this.currentWallet.seed, accountInfo: accountInfo };
@@ -478,6 +481,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     }
                });
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.loadSignerList(wallet.classicAddress);
                this.updateTickets(accountObjects);
@@ -575,6 +579,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -722,6 +727,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -862,6 +868,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1003,6 +1010,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1134,6 +1142,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1277,6 +1286,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -2126,46 +2136,92 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           });
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               create: {
-                    // checks: this.existingChecks,
-                    getDescription: (count: number) => (count === 1 ? 'check' : 'checks'),
-                    dynamicText: 'created', // Add dynamic text here
-                    showLink: true,
-               },
-               cash: {
-                    // checks: this.cashableChecks,
-                    getDescription: (count: number) => (count === 1 ? 'check that can be cashed' : 'checks that can be cashed'),
-                    dynamicText: '', // Empty for no additional text
-                    showLink: true,
-               },
-               cancel: {
-                    // checks: this.cancellableChecks,
-                    getDescription: (count: number) => (count === 1 ? 'check that can be cancelled' : 'checks that can be cancelled'),
-                    dynamicText: '', // Dynamic text before the count
-                    showLink: true,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
-
-          const walletName = this.currentWallet.name || 'selected';
-          // const count = config.checks.length;
-          const count = 0;
-
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
-
-          let message = `The <code>${walletName}</code> wallet has ${dynamicText}${count} ${config.getDescription(count)}.`;
-
-          if (config.showLink && count > 0) {
-               const link = `${this.url}account/${this.currentWallet.address}/checks`;
-               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View checks on XRPL Win</a>`;
+     updateInfoMessage(): void {
+          if (!this.currentWallet?.address) {
+               this.ui.setInfoMessage('No wallet is currently selected.');
+               return;
           }
 
-          return message;
+          const walletName = this.currentWallet.name || 'selected';
+          const accountFlags = this.accountInfo?.result?.account_flags;
+
+          if (!accountFlags) {
+               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet is ready for account configuration.`);
+               return;
+          }
+
+          // Determine key configuration aspects
+          const hasMultiSign = accountFlags.enableSignerList || this.multiSigningEnabled;
+          const hasRegularKey = !!this.accountInfo?.result?.account_data?.RegularKey;
+          const masterKeyDisabled = accountFlags.disableMasterKey;
+          const hasDepositAuth = accountFlags.depositAuth;
+          const hasPreauthObjects = this.depositAuthAddresses.length > 1 || (this.depositAuthAddresses.length === 1 && this.depositAuthAddresses[0].account !== '');
+
+          let messageParts: string[] = [];
+
+          // Primary signing configuration
+          if (masterKeyDisabled) {
+               if (hasMultiSign) {
+                    messageParts.push('This account is configured with multi-signing and the master key is disabled.');
+               } else if (hasRegularKey) {
+                    messageParts.push('This account is configured with a Regular Key and the master key is disabled.');
+               } else {
+                    messageParts.push('This account has the master key disabled.');
+               }
+          } else {
+               if (hasMultiSign) {
+                    messageParts.push('This account has multi-signing configured but the master key is still enabled.');
+               } else if (hasRegularKey) {
+                    messageParts.push('This account has a Regular Key configured but the master key is still enabled.');
+               }
+          }
+
+          // Other significant configurations
+          if (hasDepositAuth) {
+               const preauthCount = hasPreauthObjects ? this.depositAuthAddresses.length : 0;
+               if (preauthCount > 0) {
+                    messageParts.push(`Deposit Authorization is enabled with ${preauthCount} preauthorized account${preauthCount > 1 ? 's' : ''}.`);
+               } else {
+                    messageParts.push('Deposit Authorization is enabled.');
+               }
+          }
+
+          // Certain irreversible flags
+          if (accountFlags.noFreeze) {
+               messageParts.push('This account has permanently given up the ability to freeze trust lines (NoFreeze).');
+          }
+
+          if (accountFlags.allowTrustLineClawback) {
+               messageParts.push('This account has the ability to claw back issued tokens from trust lines.');
+          }
+
+          let message: string;
+
+          if (messageParts.length === 0) {
+               message = `The <code>${walletName}</code> wallet has no special account configuration. All account flags are in their default state.`;
+          } else {
+               message = `The <code>${walletName}</code> wallet has the following account configuration:<ul>`;
+               messageParts.forEach(part => {
+                    message += `<li>${part}</li>`;
+               });
+               message += '</ul>';
+          }
+
+          // Add information about irreversible flags if any are set
+          const irreversibleFlags = ['noFreeze', 'allowTrustLineClawback'];
+          const setIrreversibleFlags = irreversibleFlags.filter(flag => accountFlags[flag as keyof typeof accountFlags]);
+          if (setIrreversibleFlags.length > 0) {
+               const flagNames = setIrreversibleFlags
+                    .map(flag => {
+                         const displayName = flag.replace(/([A-Z])/g, ' $1').replace('No Freeze', 'NoFreeze');
+                         return `<strong>${displayName}</strong>`;
+                    })
+                    .join(', ');
+
+               message += `<br><em>Note: The following flags are irreversible and cannot be disabled once enabled: ${flagNames}.</em>`;
+          }
+
+          this.ui.setInfoMessage(message);
      }
 
      get safeWarningMessage() {

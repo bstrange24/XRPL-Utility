@@ -117,6 +117,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
      private lastPaymentTx = '';
      private lastTxResult = '';
      executionTime = '';
+     accountInfo: any;
 
      constructor(
           private xrplService: XrplService,
@@ -221,6 +222,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
+          this.updateInfoMessage();
      }
 
      async onAccountChange() {
@@ -239,6 +241,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+               this.accountInfo = accountInfo;
                // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
                const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
@@ -246,6 +249,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                     return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -291,6 +295,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
+               this.accountInfo = accountInfo;
                // this.utilsService.logAccountInfoObjects(accountInfo, null);
                // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
@@ -373,6 +378,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -499,6 +505,33 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
                this.updateDestinations();
           }
+     }
+
+     private updateInfoMessage() {
+          const walletName = this.currentWallet.name || 'selected';
+
+          let message: string;
+
+          // Check if account information is available
+          if (!this.currentWallet.address) {
+               message = `No wallet is currently selected.`;
+               this.ui.setInfoMessage(message);
+               return;
+          }
+
+          // The primary relevant information for sending XRP is the available balance
+          // This assumes account information is available through the ui service or
+          // can be accessed from a stored accountInfo property
+          const availableBalance = this.accountInfo?.result?.account_data?.Balance;
+
+          if (availableBalance) {
+               const balanceXrp = xrpl.dropsToXrp(availableBalance);
+               message = `The <code>${walletName}</code> wallet has <strong>${balanceXrp} XRP</strong> available for sending.`;
+          } else {
+               message = `The <code>${walletName}</code> wallet is ready to send XRP.`;
+          }
+
+          this.ui.setInfoMessage(message);
      }
 
      get safeWarningMessage() {

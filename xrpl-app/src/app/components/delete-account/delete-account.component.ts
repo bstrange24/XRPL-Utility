@@ -85,6 +85,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
      multiSelectMode: boolean = false;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      selectedTicket: string = '';
+     accountInfo: any;
 
      // Wallet state (now driven by WalletPanelComponent via service)
      currentWallet: Wallet = {} as Wallet;
@@ -238,6 +239,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
+          this.updateInfoMessage();
      }
 
      async getAccountDetails() {
@@ -250,6 +252,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+               this.accountInfo = accountInfo;
                // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
                const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
@@ -257,6 +260,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                     return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -523,25 +527,74 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           }
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               send: {
-                    message: '',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: false,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
+     updateInfoMessage(): void {
+          if (!this.currentWallet?.address) {
+               this.ui.setInfoMessage('No wallet is currently selected.');
+               return;
+          }
 
           const walletName = this.currentWallet.name || 'selected';
 
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+          if (!this.accountInfo?.result) {
+               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet is ready for account deletion.`);
+               return;
+          }
 
-          // return `The <code>${walletName}</code> wallet has ${dynamicText} ${config.message}`;
-          return null;
+          const accountInfo = this.accountInfo.result;
+          const accountData = accountInfo.account_data;
+          const accountFlags = accountInfo.account_flags;
+
+          let messageParts: string[] = [];
+
+          // Check for conditions that prevent account deletion
+          const hasRegularKey = !!accountData.RegularKey;
+          const hasSignerList = accountFlags.enableSignerList;
+          const hasNonEmptyObjects = accountData.OwnerCount > 0;
+
+          if (hasRegularKey) {
+               messageParts.push('This account has a Regular Key configured.');
+          }
+
+          if (hasSignerList) {
+               messageParts.push('This account has a Signer List configured.');
+          }
+
+          if (hasNonEmptyObjects) {
+               const ownerCount = accountData.OwnerCount;
+               messageParts.push(`This account has ${ownerCount} owner object${ownerCount !== 1 ? 's' : ''} (trust lines, offers, escrows, etc.).`);
+          }
+
+          let message: string;
+
+          if (messageParts.length === 0) {
+               message = `The <code>${walletName}</code> wallet can be deleted.`;
+          } else {
+               message = `The <code>${walletName}</code> wallet has the following configuration that affects account deletion:<ul>`;
+               messageParts.forEach(part => {
+                    message += `<li>${part}</li>`;
+               });
+               message += '</ul>';
+          }
+
+          // Add specific requirements for successful deletion
+          message += '<br><strong>Requirements for successful account deletion:</strong><ul>';
+          message += '<li>All owner objects must be deleted first (trust lines, offers, escrows, checks, etc.)</li>';
+          message += '<li>The account must send all remaining XRP to another account</li>';
+          message += '<li>The account must have no Regular Key configured</li>';
+          message += '<li>The account must have no active Signer List</li>';
+          message += '</ul>';
+
+          // Additional warning about reserve requirements
+          //     const balanceXrp = xrpl.dropsToXrp(accountData.Balance);
+          //     const requiredReserve = xrpl.dropsToXrp(
+          //         xrpl.xrpToDrops(AppConstants.BASE_RESERVE) + accountData.OwnerCount * xrpl.xrpToDrops(AppConstants.OWNER_RESERVE)
+          //     );
+
+          //     if (parseFloat(balanceXrp) <= parseFloat(requiredReserve)) {
+          //         message += '<br><strong>Note:</strong> The account must have sufficient XRP above the required reserve to send to the destination account during deletion.';
+          //     }
+
+          this.ui.setInfoMessage(message);
      }
 
      get safeWarningMessage() {

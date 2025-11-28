@@ -419,6 +419,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
+          this.updateInfoMessage();
      }
 
      onAuthorizedNFTokenMinter() {
@@ -533,6 +534,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
                //      });
                // });
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -650,6 +652,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -773,6 +776,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -901,6 +905,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
 
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1020,6 +1025,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1132,6 +1138,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1798,46 +1805,46 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
           });
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               create: {
-                    checks: this.existingNfts,
-                    getDescription: (count: number) => (count === 1 ? 'NFT' : 'NFTs'),
-                    dynamicText: 'created', // Add dynamic text here
-                    showLink: true,
-               },
-               burn: {
-                    checks: this.existingNfts,
-                    getDescription: (count: number) => (count === 1 ? 'NFT' : 'NFTs'),
-                    dynamicText: 'burned', // Add dynamic text here
-                    showLink: true,
-               },
-               updateNFTMetadata: {
-                    checks: this.existingNfts,
-                    getDescription: (count: number) => (count === 1 ? 'NFT' : 'NFTs'),
-                    dynamicText: 'updated', // Add dynamic text here
-                    showLink: true,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
-
+     private updateInfoMessage() {
           const walletName = this.currentWallet.name || 'selected';
-          const count = config.checks.length;
-          // const count = 0;
+          const count = this.existingNfts.length;
 
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+          let message: string;
 
-          let message = `The <code>${walletName}</code> wallet has ${dynamicText}${count} ${config.getDescription(count)}.`;
+          if (count === 0) {
+               message = `The <code>${walletName}</code> wallet has no NFTs.`;
+          } else {
+               const nftWord = count === 1 ? 'NFT' : 'NFTs';
 
-          if (config.showLink && count > 0) {
+               // Determine the appropriate action text based on the current tab
+               const actionText = this.getActionText();
+
+               message = `The <code>${walletName}</code> wallet has <strong>${count}</strong> ${nftWord}.`;
+
+               // Add tab-specific action description if applicable
+               if (actionText) {
+                    message += ` ${actionText}.`;
+               }
+
+               // Add link to view NFTs when NFTs are present
                const link = `${this.url}account/${this.currentWallet.address}/nfts`;
                message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View NFTs on XRPL Win</a>`;
           }
 
-          return message;
+          this.ui.setInfoMessage(message);
+     }
+
+     private getActionText(): string {
+          switch (this.activeTab) {
+               case 'create':
+                    return 'that can be created';
+               case 'burn':
+                    return 'that can be burned';
+               case 'updateNFTMetadata':
+                    return 'whose metadata can be updated';
+               default:
+                    return '';
+          }
      }
 
      clearFields(clearAllFields: boolean) {

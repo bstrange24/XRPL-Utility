@@ -283,6 +283,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                this.ui.clearWarning();
           }
 
+          this.updateInfoMessage();
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
@@ -308,6 +309,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                this.getExistingCredentials(accountObjects, wallet.classicAddress);
                this.getSubjectCredentials(accountObjects, wallet.classicAddress);
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -441,6 +443,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -573,6 +576,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -705,6 +709,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1064,87 +1069,80 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           });
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               create: {
-                    primary: 'existing', // issuer view (what this wallet created)
-                    credentials: this.existingCredentials,
-                    subjectCredentials: this.subjectCredentials,
-                    getDescription: (count: number) => (count === 1 ? 'credential' : 'credentials'),
-                    dynamicText: 'created',
-                    showLink: true,
-               },
-               accept: {
-                    primary: 'subject', // accept -> items where this wallet is the subject
-                    credentials: this.existingCredentials,
-                    subjectCredentials: this.subjectCredentials,
-                    getDescription: (count: number) => (count === 1 ? 'credential that can be accepted' : 'credentials that can be accepted'),
-                    dynamicText: '',
-                    showLink: true,
-               },
-               verify: {
-                    primary: 'existing', // typically you verify credentials addressed by you (created)
-                    credentials: this.existingCredentials,
-                    subjectCredentials: this.subjectCredentials,
-                    getDescription: (count: number) => (count === 1 ? 'credential that can be verified' : 'credentials that can be verified'),
-                    dynamicText: '',
-                    showLink: true,
-               },
-               delete: {
-                    primary: 'existing', // delete typically refers to credentials you issued
-                    credentials: this.existingCredentials,
-                    subjectCredentials: this.subjectCredentials,
-                    getDescription: (count: number) => (count === 1 ? 'credential that can be deleted' : 'credentials that can be deleted'),
-                    dynamicText: '',
-                    showLink: true,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
+     updateInfoMessage(): void {
+          if (!this.currentWallet?.address) {
+               this.ui.setInfoMessage('No wallet is currently selected.');
+               return;
+          }
 
           const walletName = this.currentWallet.name || 'selected';
+          const primaryCredentials = this.activeTab === 'accept' ? this.subjectCredentials ?? [] : this.existingCredentials ?? [];
+          const secondaryCredentials = this.activeTab === 'accept' ? this.existingCredentials ?? [] : this.subjectCredentials ?? [];
 
-          // Use the tab-specific "primary" list for counts and links
-          const primaryList = config.primary === 'subject' ? config.subjectCredentials ?? [] : config.credentials ?? [];
-          const secondaryList = config.primary === 'subject' ? config.credentials ?? [] : config.subjectCredentials ?? [];
+          const primaryCount = primaryCredentials.length;
+          const secondaryCount = secondaryCredentials.length;
 
-          const primaryCount = primaryList.length;
-          const secondaryCount = secondaryList.length;
-
-          // If both are empty
           if (primaryCount === 0 && secondaryCount === 0) {
-               return `The <code>${walletName}</code> wallet has no credentials.`;
+               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has no credentials.`);
+               return;
           }
 
-          // Build message header
-          let message = `The <code>${walletName}</code> wallet has:`;
+          let messageParts: string[] = [];
 
-          // Primary section (depends on tab: accept -> subject, create/delete -> existing)
+          // Primary credentials information
           if (primaryCount > 0) {
-               message += `<br><strong>${primaryCount}</strong> ${config.getDescription(primaryCount)}.`;
-               if (config.showLink) {
-                    for (const c of primaryList) {
-                         const link = `${this.url}entry/${c.index}`;
-                         message += `<br><a href="${link}" target="_blank" class="xrpl-win-link">View Credential (ID: ${c.index.slice(0, 8)}...${c.index.slice(-8)})</a>`;
-                    }
-               }
+               const primaryDescription = this.getPrimaryDescription(primaryCount);
+               messageParts.push(`${primaryCount} ${primaryDescription}`);
           }
 
-          // Secondary section (optional additional info)
+          // Secondary credentials information
           if (secondaryCount > 0) {
-               // Use a different label so it's clearer which list is which
-               const secondaryLabel = config.primary === 'subject' ? 'issued by this wallet' : 'addressed to this wallet';
-               message += `<br><strong>${secondaryCount}</strong> ${secondaryLabel}.`;
-               if (config.showLink) {
-                    for (const s of secondaryList) {
-                         const link = `${this.url}entry/${s.index}`;
-                         message += `<br><a href="${link}" target="_blank" class="xrpl-win-link">View Credential (ID: ${s.index.slice(0, 8)}...${s.index.slice(-8)})</a>`;
+               const secondaryDescription = this.activeTab === 'accept' ? 'credential(s) issued by this wallet' : 'credential(s) addressed to this wallet';
+               messageParts.push(`${secondaryCount} ${secondaryDescription}`);
+          }
+
+          let message: string;
+          if (messageParts.length === 0) {
+               message = `The <code>${walletName}</code> wallet has no credentials.`;
+          } else {
+               message = `The <code>${walletName}</code> wallet has the following credentials:`;
+               message += '<ul>';
+               messageParts.forEach(part => {
+                    message += `<li>${part}</li>`;
+               });
+               message += '</ul>';
+          }
+
+          // Add credential links if any credentials exist
+          if (primaryCount > 0 || secondaryCount > 0) {
+               const allCredentials = [...primaryCredentials, ...secondaryCredentials];
+               if (allCredentials.length > 0) {
+                    message += '<br>Available credentials:<ul>';
+                    for (const credential of allCredentials) {
+                         const shortIndex = `${credential.index.slice(0, 8)}...${credential.index.slice(-8)}`;
+                         const link = `${this.url}entry/${credential.index}`;
+                         message += `<li><a href="${link}" target="_blank" class="xrpl-win-link">View Credential (ID: ${shortIndex})</a></li>`;
                     }
+                    message += '</ul>';
                }
           }
 
-          return message;
+          this.ui.setInfoMessage(message);
+     }
+
+     private getPrimaryDescription(count: number): string {
+          switch (this.activeTab) {
+               case 'create':
+                    return count === 1 ? 'credential' : 'credentials';
+               case 'accept':
+                    return count === 1 ? 'credential that can be accepted' : 'credentials that can be accepted';
+               case 'verify':
+                    return count === 1 ? 'credential that can be verified' : 'credentials that can be verified';
+               case 'delete':
+                    return count === 1 ? 'credential that can be deleted' : 'credentials that can be deleted';
+               default:
+                    return count === 1 ? 'credential' : 'credentials';
+          }
      }
 
      formatXrplTimestamp(timestamp: number): string {

@@ -303,6 +303,7 @@ export class MptComponent implements OnInit, AfterViewInit {
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
+          this.updateInfoMessage();
      }
 
      async getMptDetails() {
@@ -324,6 +325,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                this.getExistingMpts(accountObjects, wallet.classicAddress);
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -450,6 +452,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -576,6 +579,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -714,6 +718,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -889,6 +894,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -998,6 +1004,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1137,6 +1144,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                     this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1424,25 +1432,24 @@ export class MptComponent implements OnInit, AfterViewInit {
           });
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               send: {
-                    message: '',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: false,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
-
+     private updateInfoMessage() {
           const walletName = this.currentWallet.name || 'selected';
+          const count = this.existingMpts.length;
 
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+          let message: string;
 
-          // return `The <code>${walletName}</code> wallet has ${dynamicText} ${config.message}`;
-          return null;
+          if (count === 0) {
+               message = `The <code>${walletName}</code> wallet has no Multi-Purpose Tokens.`;
+          } else {
+               const tokenWord = count === 1 ? 'Multi-Purpose Token' : 'Multi-Purpose Tokens';
+               message = `The <code>${walletName}</code> wallet has <strong>${count}</strong> ${tokenWord}.`;
+
+               // Add link to view MPTs on XRPL Win
+               const link = `${this.url}account/${this.currentWallet.address}/mpts/owned`;
+               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Multi-Purpose Tokens on XRPL Win</a>`;
+          }
+
+          this.ui.setInfoMessage(message);
      }
 
      get safeWarningMessage() {
