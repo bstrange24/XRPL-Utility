@@ -1028,7 +1028,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      }
 
      private setWarning(msg: string | null) {
-          this.ui.warningMessage = msg;
+          this.ui.setWarning(msg);
           this.cdr.detectChanges();
      }
 

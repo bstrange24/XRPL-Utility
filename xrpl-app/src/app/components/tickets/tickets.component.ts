@@ -194,10 +194,15 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
      }
 
      setTab(tab: string) {
+          const previousTab = this.activeTab;
           this.activeTab = tab;
-          this.clearFields(true);
-          this.ui.clearMessages();
-          this.ui.clearWarning();
+
+          // Only clear messages when actually changing tabs
+          if (previousTab !== tab) {
+               this.updateInfoMessage();
+               this.ui.clearMessages();
+               this.ui.clearWarning();
+          }
      }
 
      async getTickets() {
@@ -209,6 +214,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                return;
           }
 
+          this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
 
@@ -227,6 +233,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                }
 
                this.walletTicketCount = ticketObjects.result.account_objects.length;
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -449,8 +456,8 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                          response = await this.xrplTransactions.submitTransaction(client, signedTx);
                     }
 
-                    this.utilsService.logObjects('response', response);
-                    this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+                    // this.utilsService.logObjects('response', response);
+                    // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                     this.ui.setTxResult(response.result);
                     this.updateTxResult();
@@ -515,12 +522,13 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
           if (this.memoField) this.utilsService.setMemoField(ticketTx, this.memoField);
      }
 
-     private refreshUIData(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any) {
-          this.refreshUiAccountObjects(accountObjects, accountInfo, wallet);
-          this.refreshUiAccountInfo(accountInfo);
+     private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
+          // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
+          this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
+          this.refreshUiAccountInfo(updatedAccountInfo);
      }
 
-     updateTickets(accountObjects: any) {
+     updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
           this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
           if (this.multiSelectMode) {
                this.selectedSingleTicket = this.utilsService.cleanUpMultiSelection(this.selectedTickets, this.ticketArray);
@@ -617,35 +625,13 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
           return wallet;
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               create: {
-                    ticketCount: this.walletTicketCount,
-                    message: 'available Tickets for use.',
-                    dynamicText: '', // Add dynamic text here
-                    showLink: true,
-               },
-               delete: {
-                    ticketCount: this.walletTicketCount,
-                    message: 'Tickets that can be deleted.',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: true,
-               },
-          };
-
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
-
+     private updateInfoMessage() {
           const walletName = this.currentWallet.name || 'selected';
+          const count = this.walletTicketCount;
 
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+          const label = this.activeTab === 'create' ? 'available Tickets for use.' : 'Tickets that can be deleted.';
 
-          return `The <code>${walletName}</code> wallet has ${dynamicText}${config.ticketCount} ${config.message}`;
-     }
-
-     get safeWarningMessage() {
-          return this.ui.warningMessage?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has <strong>${count}</strong> ${label}`);
      }
 
      clearFields(all = true) {

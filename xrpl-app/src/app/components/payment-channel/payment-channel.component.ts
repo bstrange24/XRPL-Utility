@@ -335,6 +335,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
           await this.getPaymentChannelInfo();
           this.ui.clearMessages();
           this.ui.clearWarning();
+          this.updateInfoMessage();
           this.clearFields(true);
           this.clearFlagsValue();
           this.amountField = '';
@@ -369,6 +370,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
 
                // await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -691,6 +693,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
 
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -1162,48 +1165,68 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                .catch(err => console.error('Clipboard copy failed:', err));
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               create: {
-                    channels: this.existingPaymentChannels,
-                    description: '',
-                    dynamicText: 'created', // Empty for no additional text
-                    showLink: false,
-               },
-               fund: {
-                    channels: this.existingPaymentChannels,
-                    description: 'available for funding',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: false,
-               },
-               claim: {
-                    channels: this.receivablePaymentChannels,
-                    description: 'with claimable funds',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: false,
-               },
-               close: {
-                    channels: this.closablePaymentChannels,
-                    description: 'that can potentially be closed',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: true,
-               },
+     private updateInfoMessage() {
+          const walletName = this.currentWallet.name || 'selected';
+          const countByTab: Record<string, number> = {
+               create: this.existingPaymentChannels.length,
+               fund: this.existingPaymentChannels.length,
+               claim: this.receivablePaymentChannels.length,
+               close: this.closablePaymentChannels.length,
           };
 
-          const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-          if (!config) return null;
+          const count = countByTab[this.activeTab] ?? 0;
 
-          const walletName = this.currentWallet.name || 'selected';
-          const count = config.channels.length;
+          // Early exit if no data for current tab
+          if (count === 0 && this.activeTab !== 'create') {
+               this.ui.setInfoMessage(`The <code>${walletName}</code> wallet has no payment channels ${this.getTabDescription()}.`);
+               return;
+          }
 
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
+          const isSingular = count === 1;
+          const channelWord = isSingular ? 'payment channel' : 'payment channels';
 
-          const channelText = count === 1 ? 'payment channel' : 'payment channels';
+          let message = `The <code>${walletName}</code> wallet has `;
 
-          let message = `The <code>${walletName}</code> wallet has ${dynamicText}${count} ${channelText} ${config.description}.`;
+          // Special text per tab
+          switch (this.activeTab) {
+               case 'create':
+                    message += `<strong>${count}</strong> ${channelWord} created.`;
+                    break;
 
-          return message;
+               case 'fund':
+                    message += `<strong>${count}</strong> ${channelWord} available for funding.`;
+                    break;
+
+               case 'claim':
+                    message += `<strong>${count}</strong> ${channelWord} with claimable funds.`;
+                    break;
+
+               case 'close':
+                    message += `<strong>${count}</strong> ${channelWord} that can potentially be closed.`;
+                    // Add XRPL Win link only on close tab
+                    message += `<br><a href="${this.url}account/${this.currentWallet.address}/payment-channels" 
+                             target="_blank" rel="noopener noreferrer" class="xrpl-win-link">
+                View Payment Channels on XRPL Win
+            </a>`;
+                    break;
+
+               default:
+                    this.ui.setInfoMessage(null);
+                    return;
+          }
+
+          this.ui.setInfoMessage(message);
+     }
+
+     // Helper to get clean description when count is 0
+     private getTabDescription(): string {
+          const desc: Record<string, string> = {
+               create: 'created',
+               fund: 'available for funding',
+               claim: 'with claimable funds',
+               close: 'that can be closed',
+          };
+          return desc[this.activeTab] || '';
      }
 
      formatXrplTimestamp(timestamp: number): string {

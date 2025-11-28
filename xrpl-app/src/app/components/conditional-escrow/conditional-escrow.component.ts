@@ -395,6 +395,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           }
 
           this.resetEscrowSelection();
+          this.updateInfoMessage();
 
           this.clearFields(true);
           this.ui.clearMessages();
@@ -442,6 +443,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue, this.currentWallet.address);
                }
 
+               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                // this.getEscrowOwnerAddress();
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
@@ -612,6 +614,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -783,6 +786,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                          this.onCurrencyChange(this.currencyFieldDropDownValue);
                     }
 
+                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
@@ -960,6 +964,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                          this.onCurrencyChange(this.currencyFieldDropDownValue);
                     }
 
+                    this.updateInfoMessage();
                     this.resetEscrowSelection();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
@@ -1473,119 +1478,82 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           });
      }
 
-     // public get infoMessage(): string | null {
-     //      // ------------------------------------------------------------------
-     //      // 1. Decide which data belongs to the current tab
-     //      // ------------------------------------------------------------------
-     //      let escrows: any[] = [];
-     //      let description = '';
-     //      let showEscrowLink = false;
-
-     //      if (this.activeTab === 'create') {
-     //           escrows = this.existingEscrow; // escrows I own
-     //           description = 'on the ledger';
-     //           showEscrowLink = escrows.length > 0;
-     //      } else if (this.activeTab === 'cancel') {
-     //           escrows = this.expiredOrFulfilledEscrows.filter(
-     //                (e: { Sender: string }) =>
-     //                     // On Cancel tab we are the Owner → only show escrows we created
-     //                     e.Sender === this.currentWallet.address
-     //           );
-     //           description = 'that can be cancelled';
-     //           showEscrowLink = escrows.length > 0;
-     //      } else if (this.activeTab === 'finish') {
-     //           escrows = this.expiredOrFulfilledEscrows.filter(
-     //                (e: { Destination: string }) =>
-     //                     // On Finish tab we are the Destination → only show escrows sent to us
-     //                     e.Destination === this.currentWallet.address
-     //           );
-     //           description = 'that can be finished';
-     //           showEscrowLink = escrows.length > 0;
-     //      }
-
-     //      const walletName = this.currentWallet.name || 'selected';
-     //      const escrowCount = escrows.length;
-
-     //      // ------------------------------------------------------------------
-     //      // 2. Build the message – **never mention IOUs/MPTs on Cancel/Finish**
-     //      // ------------------------------------------------------------------
-     //      if (escrowCount === 0) {
-     //           return `The <code>${walletName}</code> wallet has no escrows ${description}.`;
-     //      }
-
-     //      const escrowWord = escrowCount === 1 ? 'escrow' : 'escrows';
-     //      let message = `The <code>${walletName}</code> wallet has ${escrowCount} ${escrowWord} ${description}.`;
-
-     //      if (showEscrowLink) {
-     //           message += `<br><a href="${this.url}account/${this.currentWallet.address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Escrows on XRPL Win</a>`;
-     //      }
-
-     //      return message;
-     // }
-
-     public get infoMessage(): string | null {
+     private updateInfoMessage() {
           const walletName = this.currentWallet.name || 'selected';
+          const address = this.currentWallet.address;
+          const baseUrl = this.url;
+
+          let message = '';
 
           // ==================================================================
-          // 1. CREATE TAB → show everything (escrows + IOUs + MPTs)
+          // 1.create TAB → Show escrows + IOUs + MPTs
           // ==================================================================
           if (this.activeTab === 'create') {
                const escrowCount = this.existingEscrow.length;
                const iouCount = this.existingIOUs.length;
-               const mptCount = this.exsitingMpt.length;
+               const mptCount = this.exsitingMpt?.length || 0; // fix typo: exsitingMpt → exsMpt
 
-               const parts: string[] = [];
-               if (escrowCount > 0) parts.push(`${escrowCount} escrow${escrowCount > 1 ? 's' : ''}`);
-               if (iouCount > 0) parts.push(`${iouCount} IOU${iouCount > 1 ? 's' : ''}`);
-               if (mptCount > 0) parts.push(`${mptCount} MPT${mptCount > 1 ? 's' : ''}`);
+               const items: string[] = [];
+               if (escrowCount > 0) items.push(`${escrowCount} escrow${escrowCount > 1 ? 's' : ''}`);
+               if (iouCount > 0) items.push(`${iouCount} IOU${iouCount > 1 ? 's' : ''}`);
+               if (mptCount > 0) items.push(`${mptCount} MPT${mptCount > 1 ? 's' : ''}`);
 
-               if (parts.length === 0) {
-                    return `The <code>${walletName}</code> wallet has no escrows, IOUs or MPTs yet.`;
+               if (items.length === 0) {
+                    message = `The <code>${walletName}</code> wallet has no escrows, IOUs or MPTs yet.`;
+               } else {
+                    const list = items.length === 1 ? items[0] : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+
+                    message = `The <code>${walletName}</code> wallet has ${list} on the ledger.`;
+
+                    const links: string[] = [];
+                    if (escrowCount > 0) links.push(`<a href="${baseUrl}account/${address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Escrows</a>`);
+                    if (mptCount > 0) links.push(`<a href="${baseUrl}account/${address}/mpts/owned" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View MPTs</a>`);
+                    if (iouCount > 0) links.push(`<a href="${baseUrl}account/${address}/tokens" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View IOUs</a>`);
+
+                    if (links.length > 0) {
+                         message += `<br>${links.join(' | ')} on XRPL Win`;
+                    }
                }
-
-               let message = `The <code>${walletName}</code> wallet has ${this.formatParts(parts)} on the ledger.`;
-
-               // Add links
-               const links: string[] = [];
-               if (escrowCount > 0) links.push(`<a href="${this.url}account/${this.currentWallet.address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Escrows</a>`);
-               if (mptCount > 0) links.push(`<a href="${this.url}account/${this.currentWallet.address}/mpts/owned" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View MPTs</a>`);
-               if (iouCount > 0) links.push(`<a href="${this.url}account/${this.currentWallet.address}/tokens" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View IOUs</a>`);
-
-               if (links.length > 0) {
-                    message += `<br>${links.join(' | ')} on XRPL Win`;
-               }
-
-               return message;
           }
 
           // ==================================================================
-          // 2. CANCEL & FINISH TABS → show ONLY real cancellable/finishable escrows
+          // 2. cancel & finish TABS → Only cancellable/finishable escrows
           // ==================================================================
-          let relevantEscrows: any[] = [];
-          let action: string = '';
+          else if (this.activeTab === 'cancel' || this.activeTab === 'finish') {
+               let relevantEscrows: any[] = [];
+               let action = '';
 
-          if (this.activeTab === 'cancel') {
-               // Only escrows where WE are the owner AND CancelAfter has passed
-               relevantEscrows = this.expiredOrFulfilledEscrows.filter((e: { Sender: string }) => e.Sender === this.currentWallet.address);
-               action = 'cancelled';
-          } else if (this.activeTab === 'finish') {
-               // Only escrows where WE are the destination (and either FinishAfter passed or no CancelAfter)
-               relevantEscrows = this.expiredOrFulfilledEscrows.filter((e: { Destination: string }) => e.Destination === this.currentWallet.address);
-               action = 'finished';
+               if (this.activeTab === 'cancel') {
+                    // Owner + CancelAfter passed
+                    relevantEscrows = this.expiredOrFulfilledEscrows.filter((e: any) => e.Sender === address);
+                    action = 'cancelled';
+               } else {
+                    // Destination + (FinishAfter passed or no CancelAfter)
+                    relevantEscrows = this.expiredOrFulfilledEscrows.filter((e: any) => e.Destination === address);
+                    action = 'finished';
+               }
+
+               const count = relevantEscrows.length;
+
+               if (count === 0) {
+                    message = `The <code>${walletName}</code> wallet has no escrows that can be ${action}.`;
+               } else {
+                    const word = count === 1 ? 'escrow' : 'escrows';
+                    message = `The <code>${walletName}</code> wallet has <strong>${count}</strong> ${word} that can be ${action}.`;
+                    message += `<br><a href="${baseUrl}account/${address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">
+                View Escrows on XRPL Win
+            </a>`;
+               }
           }
 
-          const count = relevantEscrows.length;
-
-          if (count === 0) {
-               return `The <code>${walletName}</code> wallet has no escrows that can be ${action}.`;
+          // Default fallback
+          else {
+               this.ui.setInfoMessage(null);
+               return;
           }
 
-          const escrowWord = count === 1 ? 'escrow' : 'escrows';
-          let message = `The <code>${walletName}</code> wallet has ${count} ${escrowWord} that can be ${action}.`;
-
-          message += `<br><a href="${this.url}account/${this.currentWallet.address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Escrows on XRPL Win</a>`;
-
-          return message;
+          // Send to service — will be safely rendered with <code>, <strong>, <br>, <a>
+          this.ui.setInfoMessage(message);
      }
 
      // Helper to nicely join parts like "1 escrow", "2 IOUs", and "1 MPT"
@@ -1594,97 +1562,6 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
           if (parts.length === 2) return `${parts[0]} and ${parts[1]}`;
           return `${parts.slice(0, -1).join(', ')}, and ${parts[parts.length - 1]}`;
      }
-
-     // public get infoMessage(): string | null {
-     //      const tabConfig = {
-     //           create: {
-     //                escrows: this.existingEscrow,
-     //                mpts: this.exsitingMpt,
-     //                ious: this.existingIOUs,
-     //                description: 'on the ledger',
-     //                dynamicText: '', // Empty for no additional text
-     //                showLink: false,
-     //           },
-     //           finish: {
-     //                escrows: this.expiredOrFulfilledEscrows,
-     //                mpts: this.exsitingMpt,
-     //                ious: this.existingIOUs,
-     //                description: 'that can be finished',
-     //                dynamicText: '',
-     //                showLink: false,
-     //           },
-     //           cancel: {
-     //                escrows: this.expiredOrFulfilledEscrows,
-     //                mpts: this.exsitingMpt,
-     //                ious: this.existingIOUs,
-     //                description: 'that can be cancelled',
-     //                dynamicText: '',
-     //                showLink: false,
-     //           },
-     //      };
-
-     //      const config = tabConfig[this.activeTab as keyof typeof tabConfig];
-     //      if (!config) return null;
-
-     //      const walletName = this.currentWallet.name || 'selected';
-     //      const escrowCount = config.escrows.length;
-     //      const mptCount = config.mpts.length;
-     //      const iouCount = config.ious.length;
-     //      const totalCount = escrowCount + mptCount + iouCount;
-
-     //      // Build the dynamic text part (with space if text exists)
-     //      const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
-
-     //      // Build the item list
-     //      const itemParts = [];
-     //      if (escrowCount > 0) {
-     //           const escrowText = escrowCount === 1 ? 'escrow' : 'escrows';
-     //           itemParts.push(`${escrowCount} ${escrowText}`);
-     //      }
-     //      if (mptCount > 0) {
-     //           const mptText = mptCount === 1 ? 'MPT' : 'MPTs';
-     //           itemParts.push(`${mptCount} ${mptText}`);
-     //      }
-     //      if (iouCount > 0) {
-     //           const iouText = iouCount === 1 ? 'IOU' : 'IOUs';
-     //           itemParts.push(`${iouCount} ${iouText}`);
-     //      }
-
-     //      // Format the item list
-     //      let itemList = '';
-     //      if (itemParts.length === 1) {
-     //           itemList = itemParts[0];
-     //      } else if (itemParts.length === 2) {
-     //           itemList = itemParts.join(' and ');
-     //      } else if (itemParts.length === 3) {
-     //           itemList = `${itemParts[0]}, ${itemParts[1]}, and ${itemParts[2]}`;
-     //      }
-
-     //      let message = `The <code>${walletName}</code> wallet has ${dynamicText}${itemList} ${config.description}.`;
-
-     //      if (totalCount > 0) {
-     //           const links = [];
-     //           if (escrowCount > 0) {
-     //                links.push(`<a href="${this.url}account/${this.currentWallet.address}/escrows" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Escrows on XRPL Win</a>`);
-     //           }
-     //           if (mptCount > 0) {
-     //                links.push(`<a href="${this.url}account/${this.currentWallet.address}/mpts/owned" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View MPTs on XRPL Win</a>`);
-     //           }
-     //           if (iouCount > 0) {
-     //                links.push(`<a href="${this.url}account/${this.currentWallet.address}/tokens" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View IOUs on XRPL Win</a>`);
-     //           }
-
-     //           if (links.length === 1) {
-     //                message += `<br>${links[0]}`;
-     //           } else {
-     //                message += `<br>${links.join(' | ')}`;
-     //           }
-     //      } else {
-     //           message = `The <code>${walletName}</code> wallet has no Escrows, IOU's or MPT's.`;
-     //      }
-
-     //      return message;
-     // }
 
      formatIOUXrpAmountUI(amount: any): string {
           if (!amount) return 'Unknown';

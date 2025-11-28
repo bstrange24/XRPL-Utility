@@ -845,8 +845,6 @@ export class ValidationService {
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     // Destination address valid
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
                     // Master key disabled → must use Regular Key or Multi-Sign

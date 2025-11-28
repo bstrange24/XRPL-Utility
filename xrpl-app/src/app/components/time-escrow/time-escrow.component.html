@@ -77,19 +77,19 @@
                </div>
                }
 
-               <!-- Dynamic info panel -->
-               @if (infoMessage) {
+               <!-- Info Message -->
+               @if (ui.infoMessage) {
                <div class="info-panel">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-red-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="infoMessage"></div>
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
+                    <div class="info-text" [innerHTML]="ui.safeInfo"></div>
                </div>
                }
 
-               <!-- Dynamic warning panel  -->
+               <!-- Warning Message -->
                @if (ui.warningMessage) {
                <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage }}</div>
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                    <div class="warning-text" [innerHTML]="ui.safeWarning"></div>
                </div>
                }
 
