@@ -50,13 +50,16 @@
                </div>
                }
 
-               <!-- Success / Error messages (same as Send-XRP) -->
+               <!-- Success message -->
                @if (ui.isSuccess && !ui.isError) {
                <div class="success-message">
                     <lucide-icon name="check" size="20"></lucide-icon>
                     <div class="success-text">{{ successMessage }}</div>
                </div>
-               } @if (ui.isError && result) {
+               }
+
+               <!-- Error message -->
+               @if (ui.isError && result) {
                <div class="tx-message error">
                     <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
                     <div class="tx-text">{{ result }}</div>
@@ -75,7 +78,9 @@
                                         <div class="search-bar">
                                              <mat-icon class="search-icon">search</mat-icon>
                                              <input type="text" [(ngModel)]="filterValue" (input)="onSearchInput($event.target.value)" placeholder="Search transactions..." />
-                                             <mat-icon *ngIf="filterValue" class="clear-icon" (click)="clearFilter()">close</mat-icon>
+                                             @if (filterValue) {
+                                             <mat-icon class="clear-icon" (click)="clearFilter()">close</mat-icon>
+                                             }
                                         </div>
                                    </div>
 
@@ -100,11 +105,9 @@
 
                               <div class="form-row">
                                    <div class="form-group">
-                                        <div class="button-row-account-changes">
-                                             <button type="button" class="btn-primary-blue" style="margin: 0em" (click)="loadBalanceChanges(true)" [disabled]="loadingInitial">
-                                                  <!-- <lucide-icon name="refresh-cw" size="18" style="margin-right: 8px"></lucide-icon> -->
-                                                  {{ loadingInitial ? 'Loading...' : 'Refresh Balance Changes' }}
-                                             </button>
+                                        <div class="button-row-account-changes" style="padding-left: 0px; padding-right: 0px">
+                                             <button type="button" class="btn-primary-blue" style="margin-left: 0px; margin-right: 0px" (click)="loadBalanceChanges(true)" [disabled]="loadingInitial">{{ loadingInitial ? 'Loading...' : 'Refresh Balance Changes' }}</button>
+                                             <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()">Clear Fields</button>
                                         </div>
                                    </div>
                               </div>

@@ -1054,30 +1054,36 @@ export class UtilsService {
      }
 
      detectXrpInputType(input: string): { type: InputType; value: string } {
-          const trimmed = input.trim();
+          let trimmed = '';
+          try {
+               trimmed = input.trim();
 
-          // Check for valid XRPL seed (family seed)
-          const seedRegex = /^s[0-9A-Za-z]{20,}$/;
-          if (seedRegex.test(trimmed) && xrpl.isValidSecret(trimmed)) {
-               return { type: 'seed', value: trimmed };
+               // Check for valid XRPL seed (family seed)
+               const seedRegex = /^s[0-9A-Za-z]{20,}$/;
+               if (seedRegex.test(trimmed) && xrpl.isValidSecret(trimmed)) {
+                    return { type: 'seed', value: trimmed };
+               }
+
+               // Check for mnemonic (12-24 lowercase words)
+               const mnemonicWords = trimmed.split(/\s+/);
+               const isAllWords = mnemonicWords.every(word => /^[a-z]+$/.test(word));
+               if (isAllWords && [12, 15, 18, 21, 24].includes(mnemonicWords.length)) {
+                    return { type: 'mnemonic', value: trimmed };
+               }
+
+               // Check for "secret numbers" (comma-separated 6-digit parts)
+               const numberParts = trimmed.split(',');
+               const isAllNumbers = numberParts.every(num => /^\d{6}$/.test(num.trim()));
+               if (isAllNumbers && numberParts.length > 1) {
+                    return { type: 'secret_numbers', value: trimmed };
+               }
+
+               // Final fallback
+               return { type: 'unknown', value: trimmed };
+          } catch (error: any) {
+               console.error('Error in detectXrpInputType', error);
+               return { type: 'unknown', value: trimmed };
           }
-
-          // Check for mnemonic (12-24 lowercase words)
-          const mnemonicWords = trimmed.split(/\s+/);
-          const isAllWords = mnemonicWords.every(word => /^[a-z]+$/.test(word));
-          if (isAllWords && [12, 15, 18, 21, 24].includes(mnemonicWords.length)) {
-               return { type: 'mnemonic', value: trimmed };
-          }
-
-          // Check for "secret numbers" (comma-separated 6-digit parts)
-          const numberParts = trimmed.split(',');
-          const isAllNumbers = numberParts.every(num => /^\d{6}$/.test(num.trim()));
-          if (isAllNumbers && numberParts.length > 1) {
-               return { type: 'secret_numbers', value: trimmed };
-          }
-
-          // Final fallback
-          return { type: 'unknown', value: trimmed };
      }
 
      checkForSignerAccounts(accountObjects: xrpl.AccountObjectsResponse): any {

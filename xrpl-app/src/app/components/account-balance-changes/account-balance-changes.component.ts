@@ -306,7 +306,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      setTab(tab: string) {
           this.activeTab = tab;
           // this.updateInfoMessage();
-          this.clearFields(true);
+          this.clearFields();
           this.ui.clearMessages();
           this.ui.clearWarning();
      }
@@ -983,12 +983,11 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           this.ui.setInfoMessage(message);
      }
 
-     clearFields(clearAllFields: boolean) {
-          if (clearAllFields) {
-               this.ui.clearMessages();
-               this.clearWarning();
-          }
-
+     clearFields() {
+          this.clearDateFilter();
+          this.clearFilter();
+          this.ui.clearMessages();
+          this.clearWarning();
           this.cdr.detectChanges();
      }
 

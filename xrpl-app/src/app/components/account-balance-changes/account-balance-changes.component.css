@@ -9,38 +9,29 @@
      }
 }
 
+.account-changes-form-panel {
+     display: flex !important;
+     flex-direction: column;
+     height: 100%;
+     /* Take full height of parent */
+     padding: 20px;
+     box-sizing: border-box;
+}
 
 .date-filter-container {
      display: flex;
-     gap: 6px;
      align-items: center;
-     flex-wrap: wrap;
+     justify-content: flex-start;
+     /* keep everything aligned left */
+     gap: 12px;
+     /* spacing between items */
 }
 
-.date-input.compact .mat-mdc-form-field-infix {
-     padding: 4px 0 !important;
-     min-height: 26px;
-}
-
-.date-input.compact .mat-mdc-form-field-label {
-     font-size: 0.82rem;
-     top: 14px;
-}
-
-.date-input.compact .mat-mdc-form-field-input-control {
-     font-size: 0.88rem;
-     padding-top: 8px;
-}
-
-.date-input.compact .mat-datepicker-toggle {
-     width: 28px;
-     height: 28px;
-}
-
-.date-input.compact .mat-icon-button {
-     width: 28px;
-     height: 28px;
-     line-height: 28px;
+.clear-date-btn {
+     align-self: flex-end;
+     height: 36px;
+     align-items: center;
+     justify-content: center;
 }
 
 .button-row-account-changes {
@@ -52,15 +43,7 @@
      display: flex;
      flex-direction: column;
      gap: 12px;
-     margin-bottom: 16px;
-}
-
-.filter-wrapper {
-     width: 100%;
-}
-
-.filter-form-field {
-     width: 100%;
+     margin-bottom: 10px;
 }
 
 .date-filter-container {
@@ -82,19 +65,6 @@
      font-style: italic;
      background: #f8fafc;
      border-top: 1px solid #e2e8f0;
-}
-
-.empty-state {
-     text-align: center;
-     padding: 60px 20px;
-     color: #64748b;
-     font-size: 1.1rem;
-}
-
-.balance-panel {
-     background: rgba(255, 255, 255, 0.85);
-     backdrop-filter: blur(10px);
-     border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .loading-row {
@@ -132,31 +102,7 @@
      letter-spacing: 0.1px;
 }
 
-/* Spinner overlay styles */
-.spinner-row {
-     position: absolute;
-     top: 50%;
-     left: 50%;
-     transform: translate(-50%, -50%);
-     z-index: 1000;
-     background: rgba(255, 255, 255, 0.9);
-     padding: 20px;
-     border-radius: 8px;
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-     display: flex;
-     align-items: center;
-     gap: 12px;
-     min-width: 200px;
-     justify-content: center;
-     backdrop-filter: blur(4px);
-}
 
-/* Ensure the balance-panel has relative positioning for the absolute spinner */
-.balance-panel {
-     position: relative;
-     min-height: 400px;
-     /* Ensure there's always some height for the spinner */
-}
 
 /* Spinner animation */
 .spinner {
@@ -176,6 +122,23 @@
      100% {
           transform: rotate(360deg);
      }
+}
+
+/* Panel body must also allow growth */
+.panel-body {
+     display: flex !important;
+     flex-direction: column;
+     flex: 1;
+     min-height: 0;
+}
+
+.balance-panel {
+     display: flex !important;
+     flex-direction: column;
+     flex: 1;
+     /* This is the key line */
+     min-height: 0;
+     /* Required for flex children with overflow */
 }
 
 /* Optional: Add a semi-transparent overlay behind the spinner */
@@ -220,61 +183,91 @@
      box-shadow: 0 0 3px rgba(25, 118, 210, 0.5);
 }
 
-
+/* container becomes relative so icons can be absolutely positioned */
 .search-bar {
-     display: flex;
-     align-items: center;
-     /* Vertically center all items */
-     background: white;
+     position: relative;
+     height: 36px;
+     /* final visual height */
+     box-sizing: border-box;
      border: 1px solid #ccc;
      border-radius: 6px;
-     padding: 0 8px;
-     /* Consistent inner padding */
-     height: 36px;
-     /* Fixed height for consistent alignment */
+     background: white;
+}
+
+/* the input fills the container and leaves room for icons */
+.search-bar input[type="text"] {
+     display: block;
+     width: 100%;
+     height: 33px;
+     padding: 0 33px;
+     font-size: 14px;
+     border: none;
+     outline: none;
+     background: transparent;
      box-sizing: border-box;
+     -webkit-appearance: none;
+     appearance: none;
+}
+
+/* remove focus ring that changes dimensions */
+.search-bar input[type="text"]:focus {
+     outline: none !important;
+     box-shadow: none !important;
+}
+
+/* left icon (search) */
+.search-bar .search-icon,
+.search-bar mat-icon.search-icon {
+     position: absolute;
+     left: 10px;
+     top: 50%;
+     transform: translateY(-50%);
+     width: 18px;
+     height: 18px;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     pointer-events: none;
+     color: #777;
+     font-size: 18px;
+}
+
+/* right icon (clear) */
+.search-bar .clear-icon,
+.search-bar mat-icon.clear-icon {
+     position: absolute;
+     right: 10px;
+     top: 50%;
+     transform: translateY(-50%);
+     width: 18px;
+     height: 18px;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     cursor: pointer;
+     color: #777;
+     font-size: 18px;
+}
+
+/* optional hover affordance */
+.search-bar .clear-icon:hover {
+     opacity: 0.9;
+     transform: translateY(-50%) scale(1.05);
 }
 
 .search-icon,
 .clear-icon {
-     color: #777;
-     font-size: 18px;
-     /* Consistent icon size */
-     width: 18px;
-     height: 18px;
      display: flex;
      align-items: center;
      justify-content: center;
-     cursor: pointer;
-     flex-shrink: 0;
-     /* Prevent shrinking */
-}
-
-.search-icon {
-     margin-right: 4px;
+     height: 36px;
 }
 
 .clear-icon {
      margin-left: 4px;
-     /* Optional: only show pointer if clickable */
      cursor: pointer;
      transition: opacity 0.2s ease, transform 0.2s ease;
      opacity: 1;
-}
-
-.search-bar input {
-     border: none;
-     outline: none;
-     flex: 1;
-     /* Take all available space */
-     font-size: 0.9rem;
-     padding: 0 4px;
-     /* Small horizontal padding */
-     height: 100%;
-     /* Full height of container */
-     background: transparent;
-     min-width: 0;
-     /* Allows input to shrink in flex */
 }
 
 .clear-icon {
@@ -286,10 +279,8 @@
 .virtual-table-container {
      height: calc(100vh - 380px);
      min-height: 500px;
-     /* border: 1px solid #fff; */
      border-radius: 12px;
      overflow: hidden;
-     /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); */
      display: flex;
      flex-direction: column;
      background: #fff;
@@ -305,7 +296,7 @@
      display: flex;
      align-items: center;
      padding: 0 20px;
-     min-height: 68px;
+     min-height: 45px;
      border-bottom: 1px solid #f3f4f6;
 }
 
@@ -313,8 +304,7 @@
 .table-header {
      display: flex !important;
      align-items: center !important;
-     /* padding: 0 20px !important; */
-     min-height: 68px !important;
+     min-height: 45px !important;
      position: sticky;
      top: 0;
      z-index: 100;
@@ -324,7 +314,6 @@
      text-transform: uppercase;
      letter-spacing: 0.8px;
      font-size: 13px;
-     /* box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15); */
      flex-shrink: 0;
      border-radius: 8px;
 }
@@ -340,7 +329,6 @@
 }
 
 /* Columns */
-/* COLUMNS — SAME FOR HEADER AND DATA */
 .col {
      flex: 1;
      padding: 0 12px;
@@ -349,13 +337,11 @@
      text-overflow: ellipsis;
      white-space: nowrap;
      display: flex;
-     /* ← critical for alignment */
      align-items: center;
 }
 
 .col.date {
-     flex: 1.3;
-     font-weight: 500;
+     flex: 1.8;
      color: #374151;
 }
 
@@ -399,11 +385,9 @@
 
 .table-header .col.change,
 .table-header .col.fees {
-     /* justify-content: flex-end !important; */
      text-align: right !important;
 }
 
-/* Positive/Negative */
 .positive {
      color: #16a34a !important;
 }
@@ -462,3 +446,29 @@
 .end-row {
      contain: none;
 }
+
+
+/* FINAL FIX — ONLY THESE 6 LINES — DELETE EVERYTHING ELSE YOU TRIED */
+.main-container {
+     /* height: 100vh; */
+     display: flex;
+     flex-direction: column;
+}
+
+/* .content-wrapper {
+     flex: 1;
+     display: grid;
+     grid-template-columns: 310px 1fr;
+     gap: 2rem;
+     padding: 20px;
+     overflow: hidden;
+} */
+
+/* .account-changes-form-panel,
+.balance-panel,
+.panel-body,
+.virtual-table-container,
+.viewport {
+     flex: 1;
+     min-height: 0;
+} */
