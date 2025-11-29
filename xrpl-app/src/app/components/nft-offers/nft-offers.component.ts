@@ -565,11 +565,11 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
 
                this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue, this.currentWallet.address);
 
-               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
                this.clearFields(false);
+               this.updateInfoMessage();
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getNFTOffers:', error);
@@ -721,11 +721,11 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, accountInfo, accountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(accountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Buy NFT successfully!';
@@ -852,11 +852,11 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, accountInfo, accountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(accountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Sell NFT successfully!';
@@ -992,11 +992,11 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, accountInfo, accountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(accountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Create NFT Offer successfully!';
@@ -1108,11 +1108,11 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, accountInfo, accountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(accountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Cancel NFT Offer successfully!';

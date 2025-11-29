@@ -443,12 +443,12 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue, this.currentWallet.address);
                }
 
-               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                // this.getEscrowOwnerAddress();
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
                this.clearFields(false);
+               this.updateInfoMessage();
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getEscrows:', error);
@@ -614,11 +614,11 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Escrow create successfully!';
@@ -786,11 +786,11 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                          this.onCurrencyChange(this.currencyFieldDropDownValue);
                     }
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Escrow finish successfully!';
@@ -964,12 +964,12 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                          this.onCurrencyChange(this.currencyFieldDropDownValue);
                     }
 
-                    this.updateInfoMessage();
                     this.resetEscrowSelection();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Escrow cancel successfully!';

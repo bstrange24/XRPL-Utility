@@ -239,7 +239,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
-          this.updateInfoMessage();
+          // this.updateInfoMessage();
      }
 
      async getAccountDetails() {
@@ -251,7 +251,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           try {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
-               const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+               const [accountInfo, accountObjects, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                this.accountInfo = accountInfo;
                // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
 
@@ -260,7 +260,8 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                     return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
-               this.updateInfoMessage();
+               const xrpReserve = await this.xrplService.getXrpReserveRequirements(accountInfo, serverInfo);
+               this.updateInfoMessage(xrpReserve);
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
@@ -527,7 +528,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           }
      }
 
-     updateInfoMessage(): void {
+     private updateInfoMessage(xrpReserve: any): void {
           if (!this.currentWallet?.address) {
                this.ui.setInfoMessage('No wallet is currently selected.');
                return;
@@ -536,66 +537,125 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
           const walletName = this.currentWallet.name || 'selected';
 
           if (!this.accountInfo?.result) {
-               this.ui.setInfoMessage(`<code>${walletName}</code> wallet is ready for account deletion.`);
+               this.ui.setInfoMessage(`<code>${walletName}</code> wallet can be deleted.`);
                return;
           }
 
-          const accountInfo = this.accountInfo.result;
-          const accountData = accountInfo.account_data;
-          const accountFlags = accountInfo.account_flags;
+          const accountData = this.accountInfo.result.account_data;
+          const accountFlags = this.accountInfo.result.account_flags;
 
-          let messageParts: string[] = [];
-
-          // Check for conditions that prevent account deletion
           const hasRegularKey = !!accountData.RegularKey;
-          const hasSignerList = accountFlags.enableSignerList;
-          const hasNonEmptyObjects = accountData.OwnerCount > 0;
+          const hasSignerList = !!accountFlags.enableSignerList;
+          const ownerCount = Number(accountData.OwnerCount || 0);
 
-          if (hasRegularKey) {
-               messageParts.push('This account has a Regular Key configured.');
+          // === Build blocking issues ===
+          const issues: string[] = [];
+          if (hasRegularKey) issues.push('This account has a Regular Key configured.');
+          if (hasSignerList) issues.push('This account has a Signer List configured.');
+          if (ownerCount > 0) {
+               issues.push(`This account has <strong>${ownerCount}</strong> owner object${ownerCount !== 1 ? 's' : ''} (trust lines, offers, escrows, checks, etc.).`);
           }
 
-          if (hasSignerList) {
-               messageParts.push('This account has a Signer List configured.');
-          }
+          let message = `<code>${walletName}</code> wallet `;
 
-          if (hasNonEmptyObjects) {
-               const ownerCount = accountData.OwnerCount;
-               messageParts.push(`This account has ${ownerCount} owner object${ownerCount !== 1 ? 's' : ''} (trust lines, offers, escrows, etc.).`);
-          }
-
-          let message: string;
-
-          if (messageParts.length === 0) {
-               message = `<code>${walletName}</code> wallet can be deleted.`;
+          if (issues.length === 0) {
+               message += `<strong>can be deleted</strong>.`;
           } else {
-               message = `<code>${walletName}</code> wallet has the following configuration that affects account deletion:<ul>`;
-               messageParts.forEach(part => {
-                    message += `<li>${part}</li>`;
-               });
-               message += '</ul>';
+               message += `has the following configuration that <strong>prevents deletion</strong>:<ul>`;
+               issues.forEach(i => (message += `<li>${i}</li>`));
+               message += `</ul>`;
           }
 
-          // Add specific requirements for successful deletion
-          message += '<br><strong>Requirements for successful account deletion:</strong><ul>';
-          message += '<li>All owner objects must be deleted first (trust lines, offers, escrows, checks, etc.)</li>';
-          message += '<li>The account must send all remaining XRP to another account</li>';
-          message += '<li>The account must have no Regular Key configured</li>';
-          message += '<li>The account must have no active Signer List</li>';
-          message += '</ul>';
+          // === Requirements ===
+          message += `<br><strong>Requirements for successful account deletion:</strong><ul>
+        <li>All owner objects must be deleted first (trust lines, offers, escrows, checks, etc.)</li>
+        <li>The account must send all remaining XRP to another account</li>
+        <li>The account must have no Regular Key configured</li>
+        <li>The account must have no active Signer List</li>
+    </ul>`;
 
-          // Additional warning about reserve requirements
-          //     const balanceXrp = xrpl.dropsToXrp(accountData.Balance);
-          //     const requiredReserve = xrpl.dropsToXrp(
-          //         xrpl.xrpToDrops(AppConstants.BASE_RESERVE) + accountData.OwnerCount * xrpl.xrpToDrops(AppConstants.OWNER_RESERVE)
-          //     );
+          // === Balance check – safe & type-correct ===
+          const balanceXrp = Number(xrpl.dropsToXrp(String(accountData.Balance))); // ← cast to string first
 
-          //     if (parseFloat(balanceXrp) <= parseFloat(requiredReserve)) {
-          //         message += '<br><strong>Note:</strong> The account must have sufficient XRP above the required reserve to send to the destination account during deletion.';
-          //     }
+          const baseReserveXrp = Number(xrpReserve?.baseReserve ?? 10);
+          const ownerReserveXrp = Number(xrpReserve?.ownerReserve ?? 2);
+          const totalReserveXrp = baseReserveXrp + ownerCount * ownerReserveXrp;
+          const deleteFeeXrp = 2; // AccountDelete fee
+          const minimumNeededXrp = totalReserveXrp + deleteFeeXrp;
+
+          if (balanceXrp < minimumNeededXrp) {
+               message += `<br><strong>Warning:</strong> Insufficient balance. ` + `Account needs at least <strong>${minimumNeededXrp.toFixed(6)} XRP</strong> ` + `(${totalReserveXrp.toFixed(6)} reserve + 2 XRP deletion fee).`;
+          }
 
           this.ui.setInfoMessage(message);
      }
+
+     // updateInfoMessage(xrpReserve: any): void {
+     //      if (!this.currentWallet?.address) {
+     //           this.ui.setInfoMessage('No wallet is currently selected.');
+     //           return;
+     //      }
+
+     //      const walletName = this.currentWallet.name || 'selected';
+
+     //      if (!this.accountInfo?.result) {
+     //           this.ui.setInfoMessage(`<code>${walletName}</code> wallet is ready for account deletion.`);
+     //           return;
+     //      }
+
+     //      const accountInfo = this.accountInfo.result;
+     //      const accountData = accountInfo.account_data;
+     //      const accountFlags = accountInfo.account_flags;
+
+     //      let messageParts: string[] = [];
+
+     //      // Check for conditions that prevent account deletion
+     //      const hasRegularKey = !!accountData.RegularKey;
+     //      const hasSignerList = accountFlags.enableSignerList;
+     //      const hasNonEmptyObjects = accountData.OwnerCount > 0;
+
+     //      if (hasRegularKey) {
+     //           messageParts.push('This account has a Regular Key configured.');
+     //      }
+
+     //      if (hasSignerList) {
+     //           messageParts.push('This account has a Signer List configured.');
+     //      }
+
+     //      if (hasNonEmptyObjects) {
+     //           const ownerCount = accountData.OwnerCount;
+     //           messageParts.push(`This account has ${ownerCount} owner object${ownerCount !== 1 ? 's' : ''} (trust lines, offers, escrows, etc.).`);
+     //      }
+
+     //      let message: string;
+
+     //      if (messageParts.length === 0) {
+     //           message = `<code>${walletName}</code> wallet can be deleted.`;
+     //      } else {
+     //           message = `<code>${walletName}</code> wallet has the following configuration that affects account deletion:<ul>`;
+     //           messageParts.forEach(part => {
+     //                message += `<li>${part}</li>`;
+     //           });
+     //           message += '</ul>';
+     //      }
+
+     //      // Add specific requirements for successful deletion
+     //      message += '<br><strong>Requirements for successful account deletion:</strong><ul>';
+     //      message += '<li>All owner objects must be deleted first (trust lines, offers, escrows, checks, etc.)</li>';
+     //      message += '<li>The account must send all remaining XRP to another account</li>';
+     //      message += '<li>The account must have no Regular Key configured</li>';
+     //      message += '<li>The account must have no active Signer List</li>';
+     //      message += '</ul>';
+
+     //      const balanceXrp = xrpl.dropsToXrp(accountData.Balance);
+     //      const requiredReserve = xrpl.dropsToXrp(xrpl.xrpToDrops(xrpReserve.baseReserve) + accountData.OwnerCount * Number(xrpl.xrpToDrops(xrpReserve.ownerReserve)));
+
+     //      if (parseFloat(String(balanceXrp)) <= parseFloat(String(requiredReserve))) {
+     //           message += '<br><strong>Note:</strong> The account must have sufficient XRP above the required reserve to send to the destination account during deletion.';
+     //      }
+
+     //      this.ui.setInfoMessage(message);
+     // }
 
      get safeWarningMessage() {
           return this.ui.warningMessage?.replace(/</g, '&lt;').replace(/>/g, '&gt;');

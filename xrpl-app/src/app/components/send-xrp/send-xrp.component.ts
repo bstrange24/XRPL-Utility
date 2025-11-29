@@ -249,11 +249,11 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                     return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
-               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
                this.clearFields(false);
+               this.updateInfoMessage();
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Failed to load account:', error);
@@ -378,11 +378,11 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated XRP payment successfully!';

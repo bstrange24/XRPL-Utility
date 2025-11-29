@@ -449,11 +449,11 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                // this.ui.setSuccess(this.ui.result);
 
-               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
                this.clearFields(false);
+               this.updateInfoMessage();
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getFirewallDetails:', error);
@@ -602,11 +602,11 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Create Firewall successfully!';
@@ -740,11 +740,11 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Modify Firewall successfully!';
@@ -907,11 +907,11 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Authorize Firewall successfully!';
@@ -1036,11 +1036,12 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                    this.clearFields(false);
                     this.updateTickets(updatedAccountObjects);
+                    this.clearFields(false);
+                    this.updateInfoMessage();
+                    this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Delete Firewall successfully!';
                }

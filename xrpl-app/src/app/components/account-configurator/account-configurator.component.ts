@@ -24,7 +24,7 @@ import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { Subject, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
 
@@ -308,43 +308,58 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
           this.url = AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          // Listen to selected wallet changes (critical!)
-          this.walletManagerService.selectedIndex$.pipe(takeUntil(this.destroy$)).subscribe(index => {
-               if (this.wallets[index]) {
-                    this.currentWallet = { ...this.wallets[index] };
-                    // this.getAccountDetails();
-               }
-          });
-
+          // === 1. Listen to wallet list changes (wallets$.valueChanges) ===
           this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
                this.wallets = wallets;
                this.hasWallets = wallets.length > 0;
 
-               // If panel hasn't emitted yet (e.g. on page load), set current wallet manually
-               if (wallets.length > 0 && !this.currentWallet.address) {
-                    const index = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    this.currentWallet = { ...wallets[index] };
-                    this.getAccountDetails();
-               }
-
+               // Rebuild destination dropdown whenever wallets change
                this.updateDestinations();
+
+               // Only set currentWallet on first load if nothing is selected yet
+               if (this.hasWallets && !this.currentWallet?.address) {
+                    const selectedIndex = this.walletManagerService.getSelectedIndex?.() ?? 0;
+                    const selectedWallet = wallets[selectedIndex];
+                    if (selectedWallet) {
+                         this.currentWallet = { ...selectedWallet };
+                         this.getAccountDetails();
+                    }
+               }
           });
 
-          // Load custom destinations
+          // === 2. Listen to selected wallet index changes (ONLY update if address actually changes) ===
+          this.walletManagerService.selectedIndex$
+               .pipe(
+                    map(index => this.wallets[index]?.address),
+                    distinctUntilChanged(), // ← Prevents unnecessary emissions
+                    filter(address => !!address), // ← Ignore invalid/undefined
+                    takeUntil(this.destroy$)
+               )
+               .subscribe(selectedAddress => {
+                    const wallet = this.wallets.find(w => w.address === selectedAddress);
+                    if (wallet && this.currentWallet.address !== wallet.address) {
+                         console.log('Wallet switched via panel →', wallet.name, wallet.address);
+                         this.currentWallet = { ...wallet };
+                         this.getAccountDetails(); // Refresh UI for new wallet
+                    }
+               });
+
+          // === 3. Load custom destinations from storage ===
           const stored = this.storageService.get('customDestinations');
           this.customDestinations = stored ? JSON.parse(stored) : [];
           this.updateDestinations();
 
-          // Dropdown service sync
-          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => {
-               this.destinationDropdownService.filter(query);
-          });
+          // === 4. Dropdown search integration (unchanged) ===
+          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => this.destinationDropdownService.filter(query));
+
           this.destinationDropdownService.setItems(this.destinations);
+
           this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
                this.filteredDestinations = list;
                this.highlightedIndex = list.length > 0 ? 0 : -1;
                this.cdr.detectChanges();
           });
+
           this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
                open ? this.openDropdownInternal() : this.closeDropdownInternal();
           });
@@ -448,7 +463,6 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           this.clearFields(true);
           this.getAccountDetails();
           this.ui.clearMessages();
-          this.updateInfoMessage();
      }
 
      async getAccountDetails() {
@@ -481,8 +495,8 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     }
                });
 
-               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
+               this.updateInfoMessage(accountObjects);
                this.loadSignerList(wallet.classicAddress);
                this.updateTickets(accountObjects);
                this.clearFields(false);
@@ -518,8 +532,6 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                signers: this.signers || undefined,
                signerQuorum: this.signerQuorum || undefined,
           };
-
-          this.clearUiIAccountMetaData();
 
           try {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
@@ -579,8 +591,8 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.updateInfoMessage(updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
@@ -727,8 +739,8 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.updateInfoMessage(updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
@@ -868,8 +880,8 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.updateInfoMessage(updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
@@ -1010,8 +1022,8 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.updateInfoMessage(updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
@@ -1142,8 +1154,8 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.updateInfoMessage(updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
@@ -1286,8 +1298,8 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
+                    this.updateInfoMessage(updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
@@ -1899,6 +1911,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
      }
 
      private refreshUiAccountMetaData(accountData: any): void {
+          this.clearUiIAccountMetaData();
           const { TickSize, TransferRate, Domain, MessageKey, EmailHash } = accountData;
 
           const hasMetaData = TickSize || TransferRate || Domain || MessageKey || EmailHash;
@@ -1998,21 +2011,10 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           }
      }
 
-     private async refreshWallets(client: xrpl.Client, addressesToRefresh?: string[]) {
-          console.log('Calling refreshWallets');
-
-          await this.walletDataService.refreshWallets(
-               client,
-               this.wallets, // pass current wallet list
-               this.selectedWalletIndex, // pass selected index
-               addressesToRefresh,
-               (updatedWalletsList, newCurrentWallet) => {
-                    // This callback runs inside NgZone → UI updates safely
-                    this.currentWallet = { ...newCurrentWallet };
-                    // Optional: trigger change detection if needed
-                    this.cdr.markForCheck();
-               }
-          );
+     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+          await this.walletDataService.refreshWallets(client, this.wallets, this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+               this.currentWallet = { ...newCurrent };
+          });
      }
 
      updateDestinations() {
@@ -2136,7 +2138,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           });
      }
 
-     updateInfoMessage(): void {
+     updateInfoMessage(accountObjects: xrpl.AccountObjectsResponse): void {
           if (!this.currentWallet?.address) {
                this.ui.setInfoMessage('No wallet is currently selected.');
                return;
@@ -2151,10 +2153,9 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           }
 
           // Determine key configuration aspects
-          const hasMultiSign = accountFlags.enableSignerList || this.multiSigningEnabled;
+          const hasMultiSign = this.checkForSignerAccounts(accountObjects).length > 0;
           const hasRegularKey = !!this.accountInfo?.result?.account_data?.RegularKey;
           const masterKeyDisabled = accountFlags.disableMasterKey;
-          const hasDepositAuth = accountFlags.depositAuth;
           const hasPreauthObjects = this.depositAuthAddresses.length > 1 || (this.depositAuthAddresses.length === 1 && this.depositAuthAddresses[0].account !== '');
 
           let messageParts: string[] = [];
@@ -2162,22 +2163,24 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
           // Primary signing configuration
           if (masterKeyDisabled) {
                if (hasMultiSign) {
-                    messageParts.push('This account is configured with multi-signing and the master key is disabled.');
-               } else if (hasRegularKey) {
-                    messageParts.push('This account is configured with a Regular Key and the master key is disabled.');
-               } else {
-                    messageParts.push('This account has the master key disabled.');
+                    messageParts.push('This account is configured with multi-signing.');
                }
+               if (hasRegularKey) {
+                    messageParts.push('This account is configured with a Regular Key.');
+               }
+               messageParts.push('This account has the master key disabled.');
           } else {
                if (hasMultiSign) {
-                    messageParts.push('This account has multi-signing configured but the master key is still enabled.');
-               } else if (hasRegularKey) {
-                    messageParts.push('This account has a Regular Key configured but the master key is still enabled.');
+                    messageParts.push('This account has multi-signing configured.');
                }
+               if (hasRegularKey) {
+                    messageParts.push('This account has a Regular Key configured.');
+               }
+               messageParts.push('The master key is still enabled.');
           }
 
           // Other significant configurations
-          if (hasDepositAuth) {
+          if (this.depositAuthEnabled) {
                const preauthCount = hasPreauthObjects ? this.depositAuthAddresses.length : 0;
                if (preauthCount > 0) {
                     messageParts.push(`Deposit Authorization is enabled with ${preauthCount} preauthorized account${preauthCount > 1 ? 's' : ''}.`);
@@ -2218,7 +2221,7 @@ export class AccountConfiguratorComponent implements OnInit, AfterViewInit {
                     })
                     .join(', ');
 
-               message += `<br><em>Note: The following flags are irreversible and cannot be disabled once enabled: ${flagNames}.</em>`;
+               message += `<em>Note: The following flags are irreversible and cannot be disabled once enabled: ${flagNames}.</em>`;
           }
 
           this.ui.setInfoMessage(message);

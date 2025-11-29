@@ -442,13 +442,13 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                // this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance });
                this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue, this.currentWallet.address);
 
-               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTrustLineFlagsInUI(accountObjects, wallet);
                this.updateTickets(accountObjects);
                this.clearFlagsValue();
                this.clearFields(false);
+               this.updateInfoMessage();
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getTrustlinesForAccount:', error);
@@ -592,11 +592,11 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     // Add new destination if valid and not already present
                     this.addNewDestinationFromUser();
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Trustline set successfully!';
@@ -746,11 +746,11 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
 
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Trustline removal successfully!';
@@ -949,11 +949,11 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     this.addNewDestinationFromUser();
 
                     this.onCurrencyChange(this.currencyFieldDropDownValue);
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Issued currency successfully!';
@@ -1103,11 +1103,11 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
 
                     // await this.updateCurrencyBalance(gatewayBalances, wallet);
                     this.onCurrencyChange(this.currencyFieldDropDownValue);
-                    this.updateInfoMessage();
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                     this.updateTickets(updatedAccountObjects);
                     this.clearFields(false);
+                    this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
                     this.ui.successMessage = 'Simulated Escrow cancel successfully!';

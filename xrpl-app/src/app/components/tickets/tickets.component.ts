@@ -233,11 +233,11 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                }
 
                this.walletTicketCount = ticketObjects.result.account_objects.length;
-               this.updateInfoMessage();
                this.refreshUIData(wallet, accountInfo, accountObjects);
                this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
                this.updateTickets(accountObjects);
                this.clearFields(false);
+               this.updateInfoMessage();
                this.cdr.detectChanges();
           } catch (error: any) {
                console.error('Error in getTickets:', error);

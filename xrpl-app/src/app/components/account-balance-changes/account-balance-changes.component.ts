@@ -305,7 +305,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
      setTab(tab: string) {
           this.activeTab = tab;
-          this.updateInfoMessage();
+          // this.updateInfoMessage();
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
@@ -321,7 +321,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
      async loadBalanceChanges(reset = true) {
           this.ui.clearMessages();
-          this.updateInfoMessage();
+
           // Prevent overlapping loads
           if (reset && this.loadingInitial) {
                console.log('loadBalanceChanges skipped (initial load in progress)');
@@ -457,6 +457,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                     console.log(`Leaving loadBalanceChanges in ${this.executionTime}ms, totalRows=${this.balanceChanges.length}, hasMore=${this.hasMoreData}`);
                }, remainingSpinnerTime);
           }
+          this.updateInfoMessage();
      }
 
      private async getCachedAccountLines(client: any, address: string): Promise<any> {
@@ -931,31 +932,31 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
           let messageParts: string[] = [];
 
-          // Add balance information
-          if (this.currentBalance !== undefined) {
-               const formattedBalance = this.utilsService.roundToEightDecimals(this.currentBalance);
-               messageParts.push(`Current XRP balance: <strong>${formattedBalance} XRP</strong>`);
-          }
+          // // Add balance information
+          // if (this.currentBalance !== undefined) {
+          //      const formattedBalance = this.utilsService.roundToEightDecimals(this.currentBalance);
+          //      messageParts.push(`Current XRP balance: <strong>${formattedBalance} XRP</strong>`);
+          // }
 
-          // Add balance change summary
+          // // Add balance change summary
           if (this.balanceChanges.length > 0) {
                const totalTransactions = this.balanceChanges.length;
                messageParts.push(`${totalTransactions} balance change${totalTransactions === 1 ? '' : 's'} displayed`);
           }
 
-          // Add additional balance information if available
-          if (this.ownerCount !== undefined && this.ownerCount !== '') {
-               messageParts.push(`Owner count: <strong>${this.ownerCount}</strong>`);
-          }
+          // // Add additional balance information if available
+          // if (this.ownerCount !== undefined && this.ownerCount !== '') {
+          //      messageParts.push(`Owner count: <strong>${this.ownerCount}</strong>`);
+          // }
 
-          if (this.totalXrpReserves !== undefined && this.totalXrpReserves !== '') {
-               const spendableBalance = parseFloat(this.currentWallet.balance || '0');
-               messageParts.push(`Total XRP reserves: <strong>${this.totalXrpReserves}</strong>`);
+          // if (this.totalXrpReserves !== undefined && this.totalXrpReserves !== '') {
+          //      const spendableBalance = parseFloat(this.currentWallet.balance || '0');
+          //      messageParts.push(`Total XRP reserves: <strong>${this.totalXrpReserves}</strong>`);
 
-               if (spendableBalance >= 0) {
-                    messageParts.push(`Spendable balance: <strong>${spendableBalance.toFixed(6)} XRP</strong>`);
-               }
-          }
+          //      if (spendableBalance >= 0) {
+          //           messageParts.push(`Spendable balance: <strong>${spendableBalance.toFixed(6)} XRP</strong>`);
+          //      }
+          // }
 
           let message: string;
           if (messageParts.length === 0) {
@@ -970,12 +971,12 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
 
           // Add information about what is displayed
           if (this.balanceChanges.length > 0) {
-               message += "<br>The balance changes table shows all transactions that affected this account's XRP balance and issued currency balances, including:<ul>";
+               message += "The balance changes table shows all transactions that affected this account's XRP balance and issued currency balances, including:<ul>";
                message += '<li>Payments sent and received</li>';
                message += '<li>Trust line balance changes</li>';
                message += '<li>Automated Market Maker (AMM) deposit, withdrawal, and trade activity</li>';
                message += '<li>Offer creation and cancellation affecting account balances</li>';
-               message += '<li>Other transactions that modify account balances</li>';
+               message += '<li>Other transactions that modify account balances, etc...</li>';
                message += '</ul>';
           }
 

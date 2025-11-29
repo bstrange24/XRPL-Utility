@@ -65,6 +65,29 @@ export class TransactionUiService {
      private allowOnly(tags: string[], html: string): SafeHtml {
           if (!html) return '';
 
+          // 1. Escape everything first
+          let escaped = html;
+          html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+          // 2. Restore paired tags: <code>…</code>, <strong>…</strong>, <ul>…</ul>, <li>…</li>, etc.
+          const pairedTags = tags.filter(t => t !== 'br');
+          if (pairedTags.length > 0) {
+               const regex = new RegExp(`&lt;(${pairedTags.join('|')})\\b[^&]*&gt;(.*?)&lt;/\\1&gt;`, 'gi');
+               escaped = escaped.replace(regex, '<$1>$2</$1>');
+          }
+
+          // 3. Restore <br> and <br/>
+          escaped = escaped.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
+
+          // 4. Restore <a> links
+          escaped = escaped.replace(/&lt;a\s+href="([^"]*)"[^&]*&gt;([^&]*)&lt;\/a&gt;/gi, '<a href="$1" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">$2</a>');
+
+          return this.sanitizer.bypassSecurityTrustHtml(escaped);
+     }
+
+     private allowOnly1(tags: string[], html: string): SafeHtml {
+          if (!html) return '';
+
           // 1. Escape everything
           let escaped = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
@@ -93,13 +116,12 @@ export class TransactionUiService {
 
      setInfoMessage(msg: string | null) {
           this._infoMessage = msg;
-          // Force refresh the SafeHtml
-          this._safeInfo = msg ? this.allowOnly(['code', 'b', 'strong', 'em', 'br', 'a'], msg) : '';
+          this._safeInfo = msg ? this.allowOnly(['code', 'strong', 'b', 'em', 'br', 'a', 'ul', 'li'], msg) : '';
      }
 
      setWarning(msg: string | null) {
           this._warningMessage = msg;
-          this._safeWarning = msg ? this.allowOnly(['code', 'b', 'strong', 'em', 'br', 'a'], msg) : '';
+          this._safeWarning = msg ? this.allowOnly(['code', 'strong', 'b', 'em', 'br', 'a', 'ul', 'li'], msg) : '';
      }
 
      get safeInfo(): SafeHtml {

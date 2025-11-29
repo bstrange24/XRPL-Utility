@@ -111,7 +111,6 @@ export class WalletPanelComponent implements OnInit {
                this.walletManagerService.deleteWallet(index);
                this.updateCurrentWallet();
                this.walletSelected.emit(this.currentWallet);
-               this.syncSelectedIndex(); // ← ADD THIS
           }
      }
 
