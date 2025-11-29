@@ -24,7 +24,7 @@ import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { Subject, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
 
@@ -208,43 +208,58 @@ export class MptComponent implements OnInit, AfterViewInit {
           const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
           this.url = AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          // Listen to selected wallet changes (critical!)
-          this.walletManagerService.selectedIndex$.pipe(takeUntil(this.destroy$)).subscribe(index => {
-               if (this.wallets[index]) {
-                    this.currentWallet = { ...this.wallets[index] };
-                    // this.getMptDetails();
-               }
-          });
-
+          // === 1. Listen to wallet list changes (wallets$.valueChanges) ===
           this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
                this.wallets = wallets;
                this.hasWallets = wallets.length > 0;
 
-               // If panel hasn't emitted yet (e.g. on page load), set current wallet manually
-               if (wallets.length > 0 && !this.currentWallet.address) {
-                    const index = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    this.currentWallet = { ...wallets[index] };
-                    this.getMptDetails();
-               }
-
+               // Rebuild destination dropdown whenever wallets change
                this.updateDestinations();
+
+               // Only set currentWallet on first load if nothing is selected yet
+               if (this.hasWallets && !this.currentWallet?.address) {
+                    const selectedIndex = this.walletManagerService.getSelectedIndex?.() ?? 0;
+                    const selectedWallet = wallets[selectedIndex];
+                    if (selectedWallet) {
+                         this.currentWallet = { ...selectedWallet };
+                         this.getMptDetails();
+                    }
+               }
           });
 
-          // Load custom destinations
+          // === 2. Listen to selected wallet index changes (ONLY update if address actually changes) ===
+          this.walletManagerService.selectedIndex$
+               .pipe(
+                    map(index => this.wallets[index]?.address),
+                    distinctUntilChanged(), // ← Prevents unnecessary emissions
+                    filter(address => !!address), // ← Ignore invalid/undefined
+                    takeUntil(this.destroy$)
+               )
+               .subscribe(selectedAddress => {
+                    const wallet = this.wallets.find(w => w.address === selectedAddress);
+                    if (wallet && this.currentWallet.address !== wallet.address) {
+                         console.log('Wallet switched via panel →', wallet.name, wallet.address);
+                         this.currentWallet = { ...wallet };
+                         this.getMptDetails(); // Refresh UI for new wallet
+                    }
+               });
+
+          // === 3. Load custom destinations from storage ===
           const stored = this.storageService.get('customDestinations');
           this.customDestinations = stored ? JSON.parse(stored) : [];
           this.updateDestinations();
 
-          // Dropdown service sync
-          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => {
-               this.destinationDropdownService.filter(query);
-          });
+          // === 4. Dropdown search integration (unchanged) ===
+          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => this.destinationDropdownService.filter(query));
+
           this.destinationDropdownService.setItems(this.destinations);
+
           this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
                this.filteredDestinations = list;
                this.highlightedIndex = list.length > 0 ? 0 : -1;
                this.cdr.detectChanges();
           });
+
           this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
                open ? this.openDropdownInternal() : this.closeDropdownInternal();
           });

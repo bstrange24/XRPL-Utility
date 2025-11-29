@@ -23,7 +23,7 @@ import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { Subject, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 
 declare var Prism: any;
 
@@ -65,6 +65,11 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
 
      // Form fields
      activeTab: string = 'create';
+     amountField = '';
+     destinationField: string = '';
+     destinationTagField = '';
+     sourceTagField = '';
+     invoiceIdField = '';
      memoField: string = '';
      isMemoEnabled: boolean = false;
      useMultiSign: boolean = false;
@@ -137,32 +142,61 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
           const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
           this.url = AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET;
 
-          // Listen to selected wallet changes (critical!)
-          this.walletManagerService.selectedIndex$.pipe(takeUntil(this.destroy$)).subscribe(index => {
-               if (this.wallets[index]) {
-                    this.currentWallet = { ...this.wallets[index] };
-                    // this.getTickets();
-               }
-          });
-
+          // === 1. Listen to wallet list changes (wallets$.valueChanges) ===
           this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
                this.wallets = wallets;
                this.hasWallets = wallets.length > 0;
 
-               // If panel hasn't emitted yet (e.g. on page load), set current wallet manually
-               if (wallets.length > 0 && !this.currentWallet.address) {
-                    const index = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    this.currentWallet = { ...wallets[index] };
-                    this.getTickets();
-               }
-
+               // Rebuild destination dropdown whenever wallets change
                this.updateDestinations();
+
+               // Only set currentWallet on first load if nothing is selected yet
+               if (this.hasWallets && !this.currentWallet?.address) {
+                    const selectedIndex = this.walletManagerService.getSelectedIndex?.() ?? 0;
+                    const selectedWallet = wallets[selectedIndex];
+                    if (selectedWallet) {
+                         this.currentWallet = { ...selectedWallet };
+                         this.getTickets();
+                    }
+               }
           });
 
-          // Load custom destinations
+          // === 2. Listen to selected wallet index changes (ONLY update if address actually changes) ===
+          this.walletManagerService.selectedIndex$
+               .pipe(
+                    map(index => this.wallets[index]?.address),
+                    distinctUntilChanged(), // ← Prevents unnecessary emissions
+                    filter(address => !!address), // ← Ignore invalid/undefined
+                    takeUntil(this.destroy$)
+               )
+               .subscribe(selectedAddress => {
+                    const wallet = this.wallets.find(w => w.address === selectedAddress);
+                    if (wallet && this.currentWallet.address !== wallet.address) {
+                         console.log('Wallet switched via panel →', wallet.name, wallet.address);
+                         this.currentWallet = { ...wallet };
+                         this.getTickets(); // Refresh UI for new wallet
+                    }
+               });
+
+          // === 3. Load custom destinations from storage ===
           const stored = this.storageService.get('customDestinations');
           this.customDestinations = stored ? JSON.parse(stored) : [];
           this.updateDestinations();
+
+          // === 4. Dropdown search integration (unchanged) ===
+          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => this.destinationDropdownService.filter(query));
+
+          this.destinationDropdownService.setItems(this.destinations);
+
+          this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
+               this.filteredDestinations = list;
+               this.highlightedIndex = list.length > 0 ? 0 : -1;
+               this.cdr.detectChanges();
+          });
+
+          this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
+               open ? this.openDropdownInternal() : this.closeDropdownInternal();
+          });
      }
 
      ngAfterViewInit() {
@@ -652,6 +686,73 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
           this.isMemoEnabled = false;
           this.memoField = '';
           this.cdr.detectChanges();
+     }
+
+     onArrowDown() {
+          if (!this.showDropdown || this.filteredDestinations.length === 0) return;
+          this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredDestinations.length;
+     }
+
+     selectHighlighted() {
+          if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
+               const addr = this.filteredDestinations[this.highlightedIndex].address;
+               if (addr !== this.currentWallet.address) {
+                    this.destinationField = addr;
+                    this.closeDropdown(); // Also close on Enter
+               }
+          }
+     }
+
+     // Dropdown controls
+     openDropdown() {
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.filter(this.destinationField || '');
+          this.destinationDropdownService.openDropdown();
+     }
+
+     closeDropdown() {
+          this.destinationDropdownService.closeDropdown();
+     }
+
+     toggleDropdown() {
+          this.destinationDropdownService.setItems(this.destinations);
+          this.destinationDropdownService.toggleDropdown();
+     }
+
+     onDestinationInput() {
+          this.destinationDropdownService.filter(this.destinationField || '');
+          this.destinationDropdownService.openDropdown();
+     }
+
+     selectDestination(address: string) {
+          if (address === this.currentWallet.address) return;
+          const dest = this.destinations.find(d => d.address === address);
+          this.destinationField = dest ? this.destinationDropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`;
+          this.closeDropdown();
+     }
+
+     private openDropdownInternal() {
+          if (this.overlayRef?.hasAttached()) return;
+
+          const strategy = this.overlay
+               .position()
+               .flexibleConnectedTo(this.dropdownOrigin)
+               .withPositions([{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]);
+
+          this.overlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy: strategy,
+               scrollStrategy: this.overlay.scrollStrategies.close(),
+          });
+
+          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
+          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
+     }
+
+     private closeDropdownInternal() {
+          this.overlayRef?.detach();
+          this.overlayRef = null;
      }
 
      updatePaymentTx() {
