@@ -19,7 +19,7 @@
                <!-- Menu bar -->
                <div class="menu-bar">
                     <button class="menu-btn" [class.active]="activeTab === 'getOffers'" (click)="setTab('getOffers')">
-                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
+                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Offers
                     </button>
                     <!-- <button class="menu-btn" [class.active]="activeTab === 'getOrderBook'" (click)="setTab('getOrderBook')">
@@ -31,7 +31,7 @@
                          Create Offer
                     </button> -->
                     <button class="menu-btn" [class.active]="activeTab === 'cancelOffer'" (click)="setTab('cancelOffer')">
-                         <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
+                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
                          Cancel Offer
                     </button>
                </div>
@@ -41,7 +41,7 @@
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                          </div>
                          <div>
                               <h2 class="submenu-info-main-text">Offers</h2>
@@ -96,7 +96,7 @@
                </div>
                }
 
-               <!-- Dynamic info panel -->
+               <!-- Info Message -->
                @if (ui.infoMessage) {
                <div class="info-panel">
                     <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
@@ -269,18 +269,14 @@
                                         <!-- Currency Code -->
                                         <div class="form-group">
                                              <label>Currency Code</label>
-                                             <select id="weWantCurrencyField" [(ngModel)]="weWantCurrencyField" (ngModelChange)="onCurrencyChange($event)" name="weWantCurrencyField">
-                                                  @for (curr of currencies; track curr) {
-                                                  <option [value]="curr">{{ curr }}</option>
-                                                  }
+                                             <select [(ngModel)]="weWantCurrencyField" (ngModelChange)="onWeWantCurrencyChange()" name="weWantCurrencyField">
+                                                  <option *ngFor="let c of availableCurrencies" [value]="c">{{ c }}</option>
                                              </select>
                                         </div>
                                         <div class="form-group">
                                              <label>Currency Code</label>
-                                             <select id="weSpendCurrencyField" [(ngModel)]="weSpendCurrencyField" (ngModelChange)="onCurrencyChange($event)" name="weSpendCurrencyField">
-                                                  @for (curr of currencies; track curr) {
-                                                  <option [value]="curr">{{ curr }}</option>
-                                                  }
+                                             <select [(ngModel)]="weSpendCurrencyField" (ngModelChange)="onWeSpendCurrencyChange()" name="weSpendCurrencyField">
+                                                  <option *ngFor="let c of availableCurrencies" [value]="c">{{ c }}</option>
                                              </select>
                                         </div>
                                    </div>
@@ -289,17 +285,19 @@
                                         <!-- Issuer -->
                                         <div class="form-group">
                                              <label>Issuer</label>
-                                             <select id="weWantIssuerField" [(ngModel)]="weWantIssuerField" (ngModelChange)="onIssuerChange($event)" name="weWantIssuerField">
-                                                  @for (iss of issuers; track iss.address) {
-                                                  <option [value]="iss.address">{{ iss.name }} ({{ iss.address | slice:0:8 }}...{{ iss.address | slice:-6 }})</option>
+                                             <select [(ngModel)]="weWantIssuerField" (ngModelChange)="onWeWantIssuerChange()" name="weWantIssuerField">
+                                                  @for (iss of (weWantIssuers$ | async); track iss.address; let i = $index) {
+                                                  <!-- <option [value]="iss.address">{{ iss.name }} ({{ iss.address | slice:0:10 }}...)</option> -->
+                                                  <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
                                                   }
                                              </select>
                                         </div>
                                         <div class="form-group">
                                              <label>Issuer</label>
-                                             <select id="weSpendIssuerField" [(ngModel)]="weSpendIssuerField" (ngModelChange)="onIssuerChange($event)" name="weSpendIssuerField">
-                                                  @for (iss of issuers; track iss.address) {
-                                                  <option [value]="iss.address">{{ iss.name }} ({{ iss.address | slice:0:8 }}...{{ iss.address | slice:-6 }})</option>
+                                             <select [(ngModel)]="weSpendIssuerField" (ngModelChange)="onWeSpendIssuerChange()" name="weSpendIssuerField">
+                                                  @for (iss of (weSpendIssuers$ | async); track iss.address; let i = $index) {
+                                                  <!-- <option [value]="iss.address">{{ iss.name }} ({{ iss.address | slice:0:10 }}...)</option> -->
+                                                  <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
                                                   }
                                              </select>
                                         </div>
@@ -313,7 +311,7 @@
                                         </div>
                                         <div class="form-group">
                                              <label>Amount</label>
-                                             <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" placeholder="e.g. 10.5" />
+                                             <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" (ngModelChange)="onWeSpendAmountChange()" placeholder="e.g. 10.5" />
                                         </div>
                                    </div>
 
@@ -321,62 +319,37 @@
                                         <!-- Currency Balance -->
                                         <div class="form-group">
                                              <label>Currency Balance</label>
-                                             <input type="text" [(ngModel)]="weWantTokenBalanceField" name="weWantTokenBalanceField" readonly placeholder="" />
+                                             <input type="text" [value]="(weWantBalance$ | async) ?? '0'" readonly name="weWantTokenBalanceField" />
                                         </div>
                                         <div class="form-group">
                                              <label>Currency Balance</label>
-                                             <input type="text" [(ngModel)]="weSpendTokenBalanceField" name="weSpendTokenBalanceField" readonly placeholder="" />
+                                             <input type="text" [value]="(weSpendBalance$ | async) ?? '0'" readonly name="weSpendTokenBalanceField" />
                                         </div>
                                    </div>
 
-                                   <!-- Offer Flags -->
-                                   <div class="tab-content-container flags-container" style="min-width: 550px">
-                                        <div class="flags-wrapper">
-                                             <div class="token-flags-header">
-                                                  <lucide-icon name="flag" size="20"></lucide-icon>
-                                                  <span class="token-flags-title">Offer Flags</span>
+                                   <!-- Flags header -->
+                                   <div class="token-flags-header">
+                                        <lucide-icon name="flag" size="20"></lucide-icon>
+                                        <span class="token-flags-title">Account Flags</span>
+                                   </div>
+
+                                   <div class="form-row-account-flags">
+                                        @for (flag of offerFlagsConfig; track flag.key) {
+                                        <div class="flag-item-account-flags" [class.enabled]="flags[flag.key]" (click)="toggleFlag(flag.key)">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" [id]="flag.key" [name]="flag.key" [checked]="flags[flag.key]" class="flag-checkbox" />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                  </svg>
+                                                  <span class="flag-title-account-flags">{{ flag.title }}</span>
                                              </div>
 
-                                             <!-- tfRenew -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.passive" (click)="toggleFlag('passive')">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="passive" name="passive" [checked]="flags.passive" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Passive</span>
-                                                  </div>
-                                                  <div class="flag-value">0x00010000 tfPassive</div>
-                                                  <div class="flag-desc">The offer does not consume offers that exactly match it, and instead becomes an Offer object in the ledger. It still consumes offers that cross it.</div>
-                                             </div>
-
-                                             <!-- tfClose -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.marketOrder" (click)="toggleFlag('marketOrder')">
-                                                  <div class="flag-header">
-                                                       <input type="checkbox" [checked]="flags.marketOrder" class="flag-checkbox" disabled />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Immediate Or Cancel</span>
-                                                  </div>
-                                                  <div class="flag-value">0x00020000 tfImmediateOrCancel</div>
-                                                  <div class="flag-desc">The offer never becomes a ledger object: it only tries to match existing offers in the ledger. If the offer cannot match any offers immediately, it executes "successfully" without trading any currency. In this case, the transaction has the result code tesSUCCESS, but creates no Offer objects in the ledger.</div>
-                                             </div>
-
-                                             <!-- tfClose -->
-                                             <div class="flag-item-account-flags" [class.enabled]="flags.fillOrKill" (click)="toggleFlag('fillOrKill')">
-                                                  <div class="flag-header">
-                                                       <input type="checkbox" [checked]="flags.fillOrKill" class="flag-checkbox" disabled />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title">Fill Or Kill</span>
-                                                  </div>
-                                                  <div class="flag-value">0x00040000 tfFillOrKill</div>
-                                                  <div class="flag-desc">Only try to match existing offers in the ledger, and only do so if the entire TakerPays quantity can be obtained. If the fix1578 amendment is enabled and the offer cannot be executed when placed, the transaction has the result code tecKILLED; otherwise, the transaction uses the result code tesSUCCESS even when it was killed without trading any currency.</div>
-                                             </div>
-
-                                             <!-- TOTAL FLAGS VALUE -->
+                                             <div class="flag-value">{{ FLAG_VALUES[flag.key] }} {{ flag.key }}</div>
+                                             <div class="flag-desc">{{ flag.desc }}</div>
+                                        </div>
+                                        }
+                                        <div class="flag-item-account-flags">
+                                             <!-- Total Flag value -->
                                              <div class="flags-total">
                                                   <span class="total-label">Total Flags Value:</span>
                                                   <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
@@ -527,7 +500,7 @@
                               <button type="button" class="btn-primary-blue" (click)="getOffers()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Get Offers' }}</button>
                               <button type="button" class="btn-primary-blue" (click)="getOrderBook()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Get Orderbook' }}</button>
                               <button type="button" class="btn-primary-green" (click)="createOffer()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create Offer' }}</button>
-                              <button type="button" class="btn-primary-green" (click)="getTokenBalance()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Get Token Balance' }}</button>
+                              <!-- <button type="button" class="btn-primary-green" (click)="getTokenBalance()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Get Token Balance' }}</button> -->
                               <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Invert Order' }}</button>
                               } @else if(activeTab === 'cancelOffer') {
                               <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Cancel Offer' }}</button>
@@ -637,19 +610,3 @@
           </div>
      </div>
 </div>
-
-<!-- 
-
-
-                         <tr style="vertical-align: top">
-                              <td colspan="2">
-                                   <button type="button" (click)="getOffers()">Get Offers</button>
-                                   <button type="button" (click)="getOrderBook()">Get Order Book</button>
-                                   <button type="button" (click)="getTokenBalance()">Get Token Balance</button>
-                                   <button type="button" (click)="invertOrder()">Invert Order</button>
-                                   <button type="button" (click)="createOffer()">Create Offer</button>
-                                   <button type="button" (click)="cancelOffer()">Cancel Offer</button>
-                                   <button type="button" (click)="clearFields(true)">Clear Fields</button>
-                              </td>
-                         </tr>
- -->

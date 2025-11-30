@@ -76,7 +76,6 @@ export class WalletManagerService {
      }
 
      /** Update wallets and persist */
-
      updateWallets(wallets: Wallet[]): void {
           this.walletsSubject.next(wallets);
           this.saveToStorage(wallets);
