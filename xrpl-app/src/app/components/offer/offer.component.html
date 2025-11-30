@@ -173,19 +173,19 @@
                } -->
 
                <!-- Existing Sell offers on selected account -->
-               @if (existingSellOffers.length > 0) {
+               @if (existingOffers.length > 0) {
                <div class="outstanding-checks-panel">
                     <div class="panel-header" (click)="toggleExistingSellOffers()" style="cursor: pointer; user-select: none">
                          <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
                               <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing Sell Offers ({{ existingSellOffers.length }})
+                              Existing Sell Offers ({{ existingOffers.length }})
                          </h3>
                     </div>
 
-                    <div class="checks-list-container" [style.max-height]="existingSellOffersCollapsed ? '0': (existingSellOffers.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
+                    <div class="checks-list-container" [style.max-height]="existingSellOffersCollapsed ? '0': (existingOffers.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
                          @if (!existingSellOffersCollapsed) {
                          <div class="checks-list">
-                              @for (offer of existingSellOffers; track offer.OfferIndex) {
+                              @for (offer of existingOffers; track offer.OfferIndex) {
                               <div class="check-card">
                                    <div class="check-extras">
                                         @if (offer.LedgerEntryType) {
@@ -307,7 +307,7 @@
                                         <!-- Amount -->
                                         <div class="form-group">
                                              <label>Amount</label>
-                                             <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" placeholder="e.g. 10.5" />
+                                             <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" (ngModelChange)="onWeWantAmountChange()" placeholder="e.g. 10.5" />
                                         </div>
                                         <div class="form-group">
                                              <label>Amount</label>
@@ -359,7 +359,7 @@
                                    }
 
                                    <!-- Cancel offer -->
-                                   @if (activeTab === 'cancelOffer') {
+                                   <!-- @if (activeTab === 'cancelOffer') {
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label for="offerSequenceField">Offer Sequence</label>
@@ -367,18 +367,18 @@
                                              @if (existingNfts.length > 0) {
                                              <label for="nftSelect">NFT Token ID</label>
                                              <div>
-                                                  <!-- <select id="nftSelect" name="nftSelect" [(ngModel)]="selectedNft" (ngModelChange)="onSelectNft($event)">
+                                                  <select id="nftSelect" name="nftSelect" [(ngModel)]="selectedNft" (ngModelChange)="onSelectNft($event)">
                                                        <option [ngValue]="null">Select an NFT Token ID to cancel</option>
 
                                                        @for (nft of existingNfts; track nft.NFTokenID) {
                                                        <option [ngValue]="nft.NFTokenID">{{ nft.NFTokenID | slice:0:20 }}... ({{ nft.URI ?? 'No URI' }})</option>
                                                        }
-                                                  </select> -->
+                                                  </select>
                                              </div>
                                              }
                                         </div>
                                    </div>
-                                   }
+                                   } -->
                               </div>
                          </div>
 

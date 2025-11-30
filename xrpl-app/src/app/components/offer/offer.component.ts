@@ -291,7 +291,6 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
      totalFlagsValue = 0;
      totalFlagsHex = '0x0';
      existingOffers: any = [];
-     existingNfts: any = [];
      existingSellOffers: any = [];
      existingBuyOffers: any = [];
      existingNftsCollapsed: boolean = true;
@@ -356,7 +355,6 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
           this.weSpendIssuers$ = this.offerCurrency.weSpend.issuers$;
           this.weWantBalance$ = this.offerCurrency.weWant.balance$;
           this.weSpendBalance$ = this.offerCurrency.weSpend.balance$;
-          // Available currencies (updates automatically when known issuers change)
           this.availableCurrencies = this.offerCurrency.getAvailableCurrencies(true);
      }
 
@@ -1702,142 +1700,6 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
           return this.existingOffers;
      }
 
-     // async getTokenBalance() {
-     //      console.log('Entering getTokenBalance');
-     //      const startTime = Date.now();
-     //      this.ui.clearMessages();
-     //      this.ui.updateSpinnerMessage(``);
-
-     //      // await this.updateTokenBalanceAndExchange();
-
-     //      const inputs: ValidationInputs = {
-     //           selectedAccount: this.currentWallet.address,
-     //           seed: this.currentWallet.seed,
-     //      };
-
-     //      try {
-     //           const client = await this.xrplService.getClient();
-     //           const wallet = await this.getWallet();
-
-     //           // PARALLELIZE — fetch account info + account objects together
-     //           const [accountInfo, balance] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
-     //           this.utilsService.logAccountInfoObjects(accountInfo, null);
-     //           this.utilsService.logObjects(`balance`, balance);
-
-     //           inputs.accountInfo = accountInfo;
-
-     //           const errors = await this.validateInputs(inputs, 'getTokenBalance');
-     //           if (errors.length > 0) {
-     //                return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-     //           }
-
-     //           // Prepare data for rendering
-     //           interface SectionContent {
-     //                key: string;
-     //                value: string;
-     //           }
-
-     //           interface SectionSubItem {
-     //                key: string;
-     //                openByDefault: boolean;
-     //                content: SectionContent[];
-     //           }
-
-     //           interface Section {
-     //                title: string;
-     //                openByDefault: boolean;
-     //                content?: SectionContent[];
-     //                subItems?: SectionSubItem[];
-     //           }
-
-     //           const data: { sections: Section[] } = {
-     //                sections: [],
-     //           };
-
-     //           // Obligations section (tokens issued by the account)
-     //           if (balance.result.obligations && Object.keys(balance.result.obligations).length > 0) {
-     //                data.sections.push({
-     //                     title: `Obligations (${Object.keys(balance.result.obligations).length})`,
-     //                     openByDefault: true,
-     //                     subItems: Object.entries(balance.result.obligations).map(([currency, amount], index) => {
-     //                          const displayCurrency = currency.length > 3 ? this.utilsService.decodeCurrencyCode(currency) : currency;
-     //                          return {
-     //                               key: `Obligation ${index + 1} (${displayCurrency})`,
-     //                               openByDefault: false,
-     //                               content: [
-     //                                    { key: 'Currency', value: displayCurrency },
-     //                                    { key: 'Amount', value: amount },
-     //                               ],
-     //                          };
-     //                     }),
-     //                });
-     //           }
-
-     //           let currencyBalance = '0';
-     //           // Balances section (tokens held by the account)
-     //           if (balance.result.assets && Object.keys(balance.result.assets).length > 0) {
-     //                const balanceItems = [];
-
-     //                for (const [issuer, currencies] of Object.entries(balance.result.assets)) {
-     //                     for (const { currency, value } of currencies) {
-     //                          let displayCurrency = currency;
-     //                          if (currency.length > 3) {
-     //                               const tempCurrency = currency;
-     //                               displayCurrency = this.utilsService.decodeCurrencyCode(currency);
-     //                               if (displayCurrency.length > 8) {
-     //                                    displayCurrency = tempCurrency;
-     //                               }
-     //                          }
-
-     //                          // Only add to total if this issuer matches the one we want
-     //                          const issuerField = this.weWantIssuerField == '' ? this.weSpendIssuerField : this.weWantIssuerField;
-     //                          const currencyField = this.weWantCurrencyField == 'XRP' ? this.weSpendCurrencyField : this.weWantCurrencyField;
-     //                          if (issuer === issuerField && displayCurrency === currencyField) {
-     //                               const parsed = parseFloat(value);
-     //                               currencyBalance += Number.isFinite(parsed) ? parsed : 0;
-     //                          }
-
-     //                          balanceItems.push({
-     //                               key: `${displayCurrency} from ${issuer.slice(0, 8)}...`,
-     //                               openByDefault: false,
-     //                               content: [
-     //                                    { key: 'Currency', value: displayCurrency },
-     //                                    { key: 'Issuer', value: `<code>${issuer}</code>` },
-     //                                    {
-     //                                         key: 'Amount',
-     //                                         value: this.utilsService.formatTokenBalance(value, 18),
-     //                                    },
-     //                               ],
-     //                          });
-     //                     }
-     //                }
-     //                data.sections.push({
-     //                     title: `Balances (${balanceItems.length})`,
-     //                     openByDefault: true,
-     //                     subItems: balanceItems,
-     //                });
-     //           }
-
-     //           this.ui.setSuccess(this.result);
-     //           this.currentWallet.balance = await this.updateXrpBalance(client, accountInfo, wallet);
-
-     //           // Format and set the UI fields (fall back to '0' if balance is 0)
-     //           const formattedBalance = currencyBalance ? this.utilsService.formatTokenBalance(currencyBalance, 18) : '0';
-     //           if (this.weWantCurrencyField === 'XRP') {
-     //                this.weSpendTokenBalanceField = formattedBalance;
-     //           } else {
-     //                this.weWantTokenBalanceField = formattedBalance;
-     //           }
-     //      } catch (error: any) {
-     //           console.error('Error:', error);
-     //           this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
-     //      } finally {
-     //           this.ui.spinner = false;
-     //           this.executionTime = (Date.now() - startTime).toString();
-     //           console.log(`Leaving getTokenBalance in ${this.executionTime}ms`);
-     //      }
-     // }
-
      invertOrder() {
           const tempCurr = this.weWantCurrencyField;
           const tempIss = this.weWantIssuerField;
@@ -1856,41 +1718,6 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
           this.weSpendAmountField = tempAmt || '';
           if (this.weSpendAmountField) this.updateTokenBalanceAndExchange();
      }
-
-     // invertOrder() {
-     //      const weWantCurrencyElem = document.getElementById('weWantCurrencyField') as HTMLInputElement | null;
-     //      const weWantIssuerElem = document.getElementById('weWantIssuerField') as HTMLInputElement | null;
-     //      const weWantAmountElem = document.getElementById('weWantAmountField') as HTMLInputElement | null;
-     //      const weWantTokenBalanceElem = document.getElementById('weWantTokenBalanceField') as HTMLInputElement | null;
-
-     //      const weSpendCurrencyElem = document.getElementById('weSpendCurrencyField') as HTMLInputElement | null;
-     //      const weSpendIssuerElem = document.getElementById('weSpendIssuerField') as HTMLInputElement | null;
-     //      const weSpendAmountElem = document.getElementById('weSpendAmountField') as HTMLInputElement | null;
-     //      const weSpendTokenBalanceElem = document.getElementById('weSpendTokenBalanceField') as HTMLInputElement | null;
-
-     //      if (weWantCurrencyElem && weWantIssuerElem && weWantAmountElem && weWantTokenBalanceElem && weSpendCurrencyElem && weSpendIssuerElem && weSpendAmountElem && weSpendTokenBalanceElem) {
-     //           const weWantCurrencyFieldTemp = weWantCurrencyElem.value;
-     //           const weWantIssuerFieldTemp = weWantIssuerElem.value;
-     //           const weWantAmountFieldTemp = weWantAmountElem.value;
-     //           const weWantTokenBalanceTemp = weWantTokenBalanceElem.value;
-
-     //           this.weWantCurrencyField = weSpendCurrencyElem.value;
-     //           this.weWantIssuerField = weSpendIssuerElem.value;
-     //           this.weWantAmountField = weSpendAmountElem.value;
-     //           // if (weSpendTokenBalanceElem.value.includes('.')) {
-     //           //      this.weWantTokenBalanceField = weSpendTokenBalanceElem.value;
-     //           // } else {
-     //           //      this.weWantTokenBalanceField = weSpendTokenBalanceElem.value ? this.utilsService.formatTokenBalance(weSpendTokenBalanceElem.value, 18) : '0';
-     //           // }
-     //           this.weSpendCurrencyField = weWantCurrencyFieldTemp;
-     //           this.weSpendIssuerField = weWantIssuerFieldTemp;
-     //           this.weSpendAmountField = weWantAmountFieldTemp;
-     //           // this.weSpendTokenBalanceField = weWantTokenBalanceTemp;
-     //      }
-     //      this.getOrderBook();
-     //      this.cdr.detectChanges();
-     //      // this.swapBalances();
-     // }
 
      computeBidAskSpread(tokenXrpOffers: any, xrpTokenOffers: any) {
           let bestTokenXrp = 0;
@@ -2147,141 +1974,130 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
           return new BigNumber(paysValue).dividedBy(getsValue).toFixed(15);
      }
 
-     // async onWeWantCurrencyChange() {
-     //      console.log('Entering onWeWantCurrencyChange');
-     //      const startTime = Date.now();
-     //      this.ui.clearMessages();
-     //      this.ui.updateSpinnerMessage(``);
+     // Add this new method for the reverse calculation (want → spend)
+     async updateTokenBalanceAndExchangeReverse() {
+          console.log('Entering updateTokenBalanceAndExchangeReverse');
+          const startTime = Date.now();
+          this.ui.clearMessages();
+          this.ui.updateSpinnerMessage(``);
 
-     //      const inputs: ValidationInputs = {
-     //           selectedAccount: this.currentWallet.address,
-     //      };
+          if (!this.weWantAmountField || parseFloat(this.weWantAmountField) <= 0) {
+               this.weSpendAmountField = '0';
+               return;
+          }
 
-     //      const errors = await this.validateInputs(inputs, 'onWeWantCurrencyChange');
-     //      if (errors.length > 0) {
-     //           this.weWantTokenBalanceField = '0';
-     //           return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-     //      }
+          this.ui.spinner = true;
+          this.ui.showSpinnerWithDelay('Calculating required amount...', 500);
 
-     //      // this.weWantIssuerField = this.knownIssuers[this.weWantCurrencyField] || '';
-     //      const known = this.knownIssuers[this.weWantCurrencyField] || [];
-     //      this.weWantIssuerField = known.length > 0 ? known[0] : '';
+          try {
+               const client = await this.xrplService.getClient();
+               const wallet = await this.utilsService.getWalletFromAddress(this.currentWallet.address);
 
-     //      const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+               const weWant: CurrencyAmount =
+                    this.weWantCurrencyField === 'XRP'
+                         ? { currency: 'XRP', value: this.weWantAmountField }
+                         : {
+                                currency: this.weWantCurrencyField.length > 3 ? this.utilsService.encodeCurrencyCode(this.weWantCurrencyField) : this.weWantCurrencyField,
+                                issuer: this.weWantIssuerField,
+                                value: this.weWantAmountField,
+                           };
 
-     //      const [accountInfo, balanceResponse] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
+               const weSpend: CurrencyAmount =
+                    this.weSpendCurrencyField === 'XRP'
+                         ? { currency: 'XRP', value: '0' }
+                         : {
+                                currency: this.weSpendCurrencyField.length > 3 ? this.utilsService.encodeCurrencyCode(this.weSpendCurrencyField) : this.weSpendCurrencyField,
+                                issuer: this.weSpendIssuerField,
+                                value: '0',
+                           };
 
-     //      try {
-     //           this.ui.spinner = true;
-     //           let balance: string;
-     //           if (this.weWantCurrencyField === 'XRP') {
-     //                balance = await this.updateXrpBalance(client, accountInfo, wallet);
-     //           } else {
-     //                const currencyCode = this.weWantCurrencyField.length > 3 ? this.utilsService.encodeCurrencyCode(this.weWantCurrencyField) : this.weWantCurrencyField;
-     //                balance = (await this.getCurrencyBalance(balanceResponse, wallet.classicAddress, currencyCode, this.weWantIssuerField)) ?? '0';
-     //           }
-     //           this.weWantTokenBalanceField = balance !== null ? balance : '0';
-     //           this.phnixBalance = this.utilsService.formatTokenBalance(balance, 18);
-     //           await this.updateTokenBalanceAndExchange(); // Recalculate exchange
-     //      } catch (error: any) {
-     //           console.error('Error fetching weWant balance:', error);
-     //           this.ui.setError(`ERROR: Failed to fetch balance - ${error.message || 'Unknown error'}`);
-     //           this.weWantTokenBalanceField = '0';
-     //      } finally {
-     //           this.ui.spinner = false;
-     //           this.cdr.detectChanges();
-     //           let executionTime = (Date.now() - startTime).toString();
-     //           console.log(`Leaving onWeWantCurrencyChange in ${executionTime}ms`);
-     //      }
-     // }
+               const [orderBook, ammPoolData] = await Promise.all([
+                    client.request({
+                         command: 'book_offers',
+                         taker_gets: weWant, // Receive
+                         taker_pays: weSpend, // Pay
+                         limit: 400,
+                         ledger_index: 'current',
+                         taker: wallet.classicAddress,
+                    }),
+                    client
+                         .request({
+                              command: 'amm_info',
+                              asset: this.weSpendCurrencyField === 'XRP' ? { currency: 'XRP' } : { currency: weSpend.currency, issuer: (weSpend as any).issuer },
+                              asset2: this.weWantCurrencyField === 'XRP' ? { currency: 'XRP' } : { currency: weWant.currency, issuer: (weSpend as any).issuer },
+                         })
+                         .catch(() => null),
+               ]);
 
-     // async onWeSpendCurrencyChange() {
-     //      console.log('Entering onWeSpendCurrencyChange');
-     //      const startTime = Date.now();
-     //      this.ui.clearMessages();
-     //      this.ui.updateSpinnerMessage(``);
+               let allOffers = [...orderBook.result.offers];
 
-     //      // Set default issuer for the selected currency
-     //      // this.weSpendIssuerField = this.knownIssuers[this.weSpendCurrencyField] || '';
-     //      const known = this.knownIssuers[this.weSpendCurrencyField] || [];
-     //      this.weSpendIssuerField = known.length > 0 ? known[0] : '';
+               if (ammPoolData?.result?.amm) {
+                    const amm = ammPoolData.result.amm;
+                    const getVal = (x: any) => (typeof x === 'string' ? x : x.value);
+                    const amount1 = getVal(amm.amount);
+                    const amount2 = getVal(amm.amount2);
 
-     //      const inputs: ValidationInputs = {
-     //           selectedAccount: this.currentWallet.address,
-     //      };
-     //      const errors = await this.validateInputs(inputs, 'onWeSpendCurrencyChange');
-     //      if (errors.length > 0) {
-     //           this.weSpendTokenBalanceField = '0';
-     //           return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-     //      }
+                    let receiveVal, payVal;
+                    if (this.weWantCurrencyField === 'XRP') {
+                         receiveVal = typeof amm.amount2 === 'string' ? xrpl.dropsToXrp(amount2) : amount2;
+                         payVal = typeof amm.amount === 'string' ? xrpl.dropsToXrp(amount1) : amount1;
+                    } else {
+                         receiveVal = typeof amm.amount === 'string' ? xrpl.dropsToXrp(amount1) : amount1;
+                         payVal = typeof amm.amount2 === 'string' ? xrpl.dropsToXrp(amount2) : amount2;
+                    }
 
-     //      const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const ammRate = new BigNumber(payVal).dividedBy(receiveVal); // pay / receive
+                    const ammOffer = {
+                         TakerGets: receiveVal, // receive
+                         TakerPays: payVal, // pay
+                         isAMM: true,
+                         rate: ammRate,
+                    };
+                    allOffers.push(ammOffer as any);
+               }
 
-     //      // PHASE 1: PARALLELIZE — fetch account info + fee + ledger index
-     //      const [accountInfo, balanceResponse] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
+               // Sort by best rate (lowest pay per receive, ascending)
+               allOffers.sort((a, b) => {
+                    const rateA = new BigNumber(this.normalizeAmount(a.TakerPays)).dividedBy(this.normalizeAmount(a.TakerGets));
+                    const rateB = new BigNumber(this.normalizeAmount(b.TakerPays)).dividedBy(this.normalizeAmount(b.TakerGets));
+                    return rateA.minus(rateB).toNumber();
+               });
 
-     //      try {
-     //           this.ui.spinner = true;
-     //           let balance: string;
-     //           if (this.weSpendCurrencyField === 'XRP') {
-     //                balance = await this.updateXrpBalance(client, accountInfo, wallet);
-     //           } else {
-     //                const currencyCode = this.weSpendCurrencyField.length > 3 ? this.utilsService.encodeCurrencyCode(this.weSpendCurrencyField) : this.weSpendCurrencyField;
-     //                balance = (await this.getCurrencyBalance(balanceResponse, wallet.classicAddress, currencyCode, this.weSpendIssuerField)) ?? '0';
-     //           }
-     //           this.weSpendTokenBalanceField = balance !== null ? balance : '0';
-     //           this.phnixExchangeXrp = balance;
-     //           await this.updateTokenBalanceAndExchange(); // Recalculate exchange
-     //      } catch (error: any) {
-     //           console.error('Error fetching weSpend balance:', error);
-     //           this.ui.setError(`ERROR: Failed to fetch balance - ${error.message || 'Unknown error'}`);
-     //           this.weSpendTokenBalanceField = '0';
-     //      } finally {
-     //           this.ui.spinner = false;
-     //           this.cdr.detectChanges();
-     //           let executionTime = (Date.now() - startTime).toString();
-     //           console.log(`Leaving onWeSpendCurrencyChange in ${executionTime}ms`);
-     //      }
-     // }
+               let remainingReceive = new BigNumber(this.weWantAmountField);
+               let totalPay = new BigNumber(0);
 
-     // async getCurrencyBalance(balanceResponse: xrpl.GatewayBalancesResponse, address: string, currency: string, issuer?: string): Promise<string | null> {
-     //      console.log('Entering getCurrencyBalance');
-     //      const startTime = Date.now();
-     //      this.ui.clearMessages();
-     //      this.ui.updateSpinnerMessage(``);
+               for (const offer of allOffers) {
+                    if (remainingReceive.lte(0)) break;
 
-     //      try {
-     //           let tokenTotal = new BigNumber(0);
-     //           if (balanceResponse.result.assets) {
-     //                Object.entries(balanceResponse.result.assets).forEach(([assetIssuer, assets]) => {
-     //                     if (!issuer || assetIssuer === issuer) {
-     //                          assets.forEach((asset: any) => {
-     //                               let assetCurrency = asset.currency.length > 3 ? this.utilsService.decodeCurrencyCode(asset.currency) : asset.currency;
-     //                               let assetCur = currency.length > 3 ? this.utilsService.decodeCurrencyCode(currency) : currency;
-     //                               if (assetCur === assetCurrency) {
-     //                                    const value = parseFloat(asset.value);
-     //                                    if (!isNaN(Number(asset.value))) {
-     //                                         tokenTotal = tokenTotal.plus(asset.value);
-     //                                    }
-     //                               }
-     //                          });
-     //                     }
-     //                });
-     //           }
-     //           // return tokenTotal > 0 ? (Math.round(tokenTotal * 100) / 100).toString() : '0';
-     //           // return tokenTotal > 0 ? tokenTotal.toString() : '0';
-     //           return tokenTotal.isGreaterThan(0) ? tokenTotal.toFixed() : '0';
-     //      } catch (error: any) {
-     //           console.error('Error fetching token balance:', error);
-     //           throw error;
-     //      } finally {
-     //           this.ui.spinner = false;
-     //           this.cdr.detectChanges();
-     //           let executionTime = (Date.now() - startTime).toString();
-     //           console.log(`Leaving getCurrencyBalance in ${executionTime}ms`);
-     //      }
-     // }
+                    const availableReceive = new BigNumber(this.normalizeAmount(offer.TakerGets));
+                    const payForThis = new BigNumber(this.normalizeAmount(offer.TakerPays));
 
+                    if (availableReceive.isZero()) continue;
+
+                    const rate = payForThis.dividedBy(availableReceive); // pay / receive
+
+                    const useReceive = BigNumber.min(remainingReceive, availableReceive);
+                    const requiredPay = useReceive.multipliedBy(rate);
+
+                    totalPay = totalPay.plus(requiredPay);
+                    remainingReceive = remainingReceive.minus(useReceive);
+               }
+
+               this.weSpendAmountField = totalPay.toFixed(8);
+               this.phnixExchangeXrp = totalPay.toFixed(8);
+               this.insufficientLiquidityWarning = remainingReceive.gt(0);
+          } catch (error: any) {
+               console.error('Error in updateTokenBalanceAndExchange:', error);
+               this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
+               this.phnixBalance = '0';
+               this.phnixExchangeXrp = 'Error';
+               this.weSpendAmountField = '0';
+          } finally {
+               this.ui.spinner = false;
+               let executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving updateTokenBalanceAndExchange in ${executionTime}ms`);
+          }
+     }
      async updateTokenBalanceAndExchange() {
           console.log('Entering updateTokenBalanceAndExchange');
           const startTime = Date.now();
@@ -2398,464 +2214,19 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
           }
      }
 
-     // async updateTokenBalanceAndExchange() {
-     //      console.log('Entering updateTokenBalanceAndExchange');
-     //      const startTime = Date.now();
-     //      this.ui.clearMessages();
-     //      this.ui.updateSpinnerMessage(``);
-
-     //      const inputs: ValidationInputs = {
-     //           selectedAccount: this.currentWallet.address,
-     //           weWantCurrencyField: this.weWantCurrencyField,
-     //           weSpendCurrencyField: this.weSpendCurrencyField,
-     //           weWantIssuerField: this.weWantCurrencyField !== 'XRP' ? this.weWantIssuerField : undefined,
-     //           weSpendIssuerField: this.weSpendCurrencyField !== 'XRP' ? this.weSpendIssuerField : undefined,
-     //           weSpendAmountField: this.weSpendAmountField,
-     //      };
-
-     //      const errors = await this.validateInputs(inputs, 'updateTokenBalanceAndExchange');
-     //      if (errors.length > 0) {
-     //           this.phnixBalance = '0';
-     //           this.phnixExchangeXrp = '0';
-     //           this.weWantAmountField = '0';
-     //           return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-     //      }
-
-     //      try {
-     //           this.ui.spinner = true;
-
-     //           const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-     //           const environment = this.xrplService.getNet().environment;
-
-     //           const [accountInfo, balanceResponse, fee] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client)]);
-
-     //           if (environment !== AppConstants.NETWORKS.MAINNET.NAME) {
-     //                console.warn('Not connected to Mainnet. Results may differ from XPMarket.');
-     //           }
-
-     //           // Fetch transaction fee
-     //           const feeInXrp = Number(xrpl.dropsToXrp(String(fee)));
-
-     //           // Define currency objects
-     //           const weWant: CurrencyAmount =
-     //                this.weWantCurrencyField === 'XRP'
-     //                     ? { currency: 'XRP', value: this.weWantAmountField }
-     //                     : {
-     //                            currency: this.weWantCurrencyField.length > 3 ? this.utilsService.encodeCurrencyCode(this.weWantCurrencyField) : this.weWantCurrencyField,
-     //                            issuer: this.weWantIssuerField,
-     //                            value: this.weWantAmountField,
-     //                       };
-
-     //           const weSpend: CurrencyAmount =
-     //                this.weSpendCurrencyField === 'XRP'
-     //                     ? { currency: 'XRP', value: this.weSpendAmountField }
-     //                     : {
-     //                            currency: this.weSpendCurrencyField.length > 3 ? this.utilsService.encodeCurrencyCode(this.weSpendCurrencyField) : this.weSpendCurrencyField,
-     //                            issuer: this.weSpendIssuerField,
-     //                            value: this.weSpendAmountField,
-     //                       };
-
-     //           // Fetch balance for weWant currency
-     //           let balance: string;
-     //           if (this.weWantCurrencyField === 'XRP') {
-     //                balance = await this.updateXrpBalance(client, accountInfo, wallet);
-     //           } else {
-     //                const currencyCode = this.weWantCurrencyField.length > 3 ? this.utilsService.encodeCurrencyCode(this.weWantCurrencyField) : this.weWantCurrencyField;
-     //                balance = (await this.getCurrencyBalance(balanceResponse, wallet.classicAddress, currencyCode, this.weWantIssuerField)) ?? '0';
-     //           }
-     //           this.weWantTokenBalanceField = balance !== null ? balance : '0';
-     //           this.phnixBalance = this.utilsService.formatTokenBalance(balance, 18);
-
-     //           // If weSpend is XRP, calculate token amount (e.g., RLUSD) to receive
-     //           if (this.weSpendAmountField && parseFloat(this.weSpendAmountField) > 0) {
-     //                const xrpAmount = new BigNumber(this.weSpendAmountField);
-
-     //                // Check if balance is sufficient (amount + fee)
-     //                const spendableXrp = new BigNumber(await this.updateXrpBalance(client, accountInfo, wallet));
-     //                if (xrpAmount.plus(feeInXrp).gt(spendableXrp)) {
-     //                     this.ui.setError('Insufficient XRP balance (including fee)');
-     //                     this.weWantAmountField = '0';
-     //                     return;
-     //                }
-
-     //                // PARALLELIZE — fetch order book, counter order book, and AMM data
-     //                const [orderBook, ammPoolData] = await Promise.all([
-     //                     client.request({
-     //                          command: 'book_offers',
-     //                          taker: wallet.address,
-     //                          ledger_index: 'current',
-     //                          taker_gets: weWant,
-     //                          taker_pays: weSpend,
-     //                          limit: 400,
-     //                     }),
-     //                     client.request(this.createAmmRequest(weSpend, weWant)).catch(err => {
-     //                          console.warn('No AMM pool found for this pair:', err);
-     //                          return null; // prevent rejection
-     //                     }) as Promise<AMMInfoResponse | null>,
-     //                ]);
-
-     //                console.log('Order Book:', orderBook);
-     //                console.log('AMM Pool Data:', ammPoolData); // will be null if not found
-
-     //                // Combine Order Book and AMM Liquidity
-     //                let allOffers: CustomBookOffer[] = [...orderBook.result.offers];
-
-     //                if (ammPoolData?.result?.amm) {
-     //                     const amm = ammPoolData.result.amm;
-     //                     const tradingFeeBps = amm.trading_fee; // e.g., 1000 = 0.1%
-     //                     const tradingFee = tradingFeeBps / 1000000; // Convert to decimal (0.001 = 0.1%)
-
-     //                     const getAmountValue = (amount: any): string => {
-     //                          if (typeof amount === 'object' && amount !== null && 'value' in amount) {
-     //                               return String(amount.value);
-     //                          }
-     //                          return String(amount);
-     //                     };
-
-     //                     const asset1Amount = getAmountValue(amm.amount); // First asset
-     //                     let asset2Amount = getAmountValue(amm.amount2); // Second asset
-
-     //                     // Determine which asset is XRP and which is token
-     //                     let xrpAmount: string, tokenAmount: string;
-
-     //                     if (typeof amm.amount === 'string' || (typeof amm.amount === 'object' && amm.amount.currency === 'XRP')) {
-     //                          xrpAmount = typeof amm.amount === 'string' ? xrpl.dropsToXrp(asset1Amount).toString() : String(amm.amount.value);
-     //                          tokenAmount = String(asset2Amount);
-     //                     } else {
-     //                          xrpAmount = typeof amm.amount2 === 'string' ? xrpl.dropsToXrp(asset2Amount).toString() : String(amm.amount2.value);
-     //                          tokenAmount = String(asset1Amount);
-     //                     }
-
-     //                     // Calculate AMM rate (token per XRP)
-     //                     const ammRate = new BigNumber(tokenAmount).dividedBy(xrpAmount);
-
-     //                     const ammOffer: CustomBookOffer = {
-     //                          Account: amm.account || 'AMM_POOL',
-     //                          Flags: 0,
-     //                          LedgerEntryType: 'Offer',
-     //                          Sequence: 0,
-     //                          TakerGets: this.isTokenAmount(weWant) ? { currency: weWant.currency, issuer: weWant.issuer!, value: String(tokenAmount) } : String(tokenAmount),
-     //                          TakerPays: this.isTokenAmount(weSpend) ? { currency: weSpend.currency, issuer: weSpend.issuer!, value: String(xrpAmount) } : String(xrpAmount),
-     //                          isAMM: true,
-     //                          rate: ammRate,
-     //                          BookDirectory: '0',
-     //                          BookNode: '0',
-     //                          OwnerNode: '0',
-     //                          PreviousTxnID: '0',
-     //                          PreviousTxnLgrSeq: 0,
-     //                     };
-     //                     allOffers.push(ammOffer);
-     //                }
-
-     //                // Sort offers by best rate (ascending, since we want token per XRP)
-     //                const sortedOffers = allOffers.sort((a, b) => {
-     //                     const rateA = this.calculateRate(a.TakerGets, a.TakerPays);
-     //                     const rateB = this.calculateRate(b.TakerGets, b.TakerPays);
-     //                     return new BigNumber(rateA).minus(rateB).toNumber();
-     //                });
-
-     //                let remainingXrp = xrpAmount;
-     //                let totalToken = new BigNumber(0);
-     //                let totalFee = new BigNumber(0); // AMM fees only; tx fee separate
-
-     //                // let remainingXrp = xrpAmount.minus(feeInXrp); // Deduct transaction fee
-     //                // let totalToken = new BigNumber(0);
-     //                // let totalFee = new BigNumber(feeInXrp); // Start with transaction fee
-
-     //                for (const offer of sortedOffers) {
-     //                     const takerGets = new BigNumber(this.normalizeAmount(offer.TakerGets)); // Token
-     //                     const takerPays = new BigNumber(this.normalizeAmount(offer.TakerPays)); // XRP
-
-     //                     if (takerPays.isZero()) continue;
-
-     //                     const rate = takerGets.dividedBy(takerPays); // Token per XRP
-     //                     const xrpToUse = BigNumber.minimum(remainingXrp, takerPays);
-     //                     let tokenReceived = xrpToUse.multipliedBy(rate);
-
-     //                     // Apply AMM trading fee if applicable
-     //                     if (offer.isAMM && ammPoolData?.result?.amm) {
-     //                          const tradingFeeBps = ammPoolData.result.amm.trading_fee;
-     //                          const tradingFee = tradingFeeBps / 1000000;
-     //                          tokenReceived = tokenReceived.multipliedBy(1 - tradingFee);
-     //                          totalFee = totalFee.plus(xrpToUse.multipliedBy(tradingFee));
-     //                     }
-
-     //                     totalToken = totalToken.plus(tokenReceived);
-     //                     remainingXrp = remainingXrp.minus(xrpToUse);
-
-     //                     console.log(`Used ${xrpToUse.toFixed(6)} XRP to get ${tokenReceived.toFixed(8)} ${this.weWantCurrencyField} at rate ${rate.toFixed(8)}`);
-
-     //                     if (remainingXrp.isLessThanOrEqualTo(0)) break;
-     //                }
-
-     //                if (totalToken.isZero()) {
-     //                     this.phnixExchangeXrp = `No liquidity available`;
-     //                     this.weWantAmountField = '0';
-     //                     this.insufficientLiquidityWarning = true;
-     //                } else if (remainingXrp.isGreaterThan(0)) {
-     //                     this.phnixExchangeXrp = `Insufficient liquidity: Only ${xrpAmount.minus(remainingXrp).toFixed(6)} XRP can be exchanged for ${totalToken.toFixed(8)} ${this.weWantCurrencyField}`;
-     //                     this.weWantAmountField = totalToken.toFixed(8);
-     //                     this.insufficientLiquidityWarning = true;
-     //                } else {
-     //                     this.phnixExchangeXrp = totalToken.toFixed(8);
-     //                     this.weWantAmountField = totalToken.toFixed(8);
-     //                     this.insufficientLiquidityWarning = false;
-     //                }
-
-     //                // Log total fees
-     //                console.log(`Total fees: ${totalFee.toFixed(6)} XRP (AMM fees) + ${feeInXrp} XRP (tx fee)`);
-     //                console.log(`Total fees: ${totalFee.toFixed(6)} XRP (Transaction: ${feeInXrp}, AMM: ${totalFee.minus(feeInXrp).toFixed(6)})`);
-
-     //                this.cdr.detectChanges();
-     //           } else {
-     //                // Handle token to XRP case (if needed)
-     //                this.weWantAmountField = '0';
-     //                this.phnixExchangeXrp = '0';
-     //           }
-     //      } catch (error: any) {
-     //           console.error('Error in updateTokenBalanceAndExchange:', error);
-     //           this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
-     //           this.phnixBalance = '0';
-     //           this.phnixExchangeXrp = 'Error';
-     //           this.weWantAmountField = '0';
-     //      } finally {
-     //           this.ui.spinner = false;
-     //           let executionTime = (Date.now() - startTime).toString();
-     //           console.log(`Leaving updateTokenBalanceAndExchange in ${executionTime}ms`);
-     //      }
-     // }
-
-     // async updateTokenBalanceAndExchange1() {
-     //      console.log('Entering updateTokenBalanceAndExchange1');
-     //      const startTime = Date.now();
-     //      this.ui.clearMessages();
-     //      this.ui.updateSpinnerMessage(``);
-
-     //      const inputs: ValidationInputs = {
-     //           selectedAccount: this.currentWallet.address,
-     //           weSpendCurrencyField: this.weSpendCurrencyField,
-     //           weSpendIssuerField: this.weSpendCurrencyField !== 'XRP' ? this.weSpendIssuerField : undefined,
-     //      };
-
-     //      const errors = await this.validateInputs(inputs, 'updateTokenBalanceAndExchange1');
-     //      if (errors.length > 0) {
-     //           this.phnixBalance = '0';
-     //           this.phnixExchangeXrp = '0';
-     //           return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-     //      }
-
-     //      const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-
-     //      const [accountInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', '')]);
-
-     //      try {
-     //           this.ui.spinner = true;
-     //           this.ui.showSpinnerWithDelay('Fetching Token balance and market data...', 2000);
-
-     //           const client = await this.xrplService.getClient();
-     //           const environment = this.xrplService.getNet().environment;
-
-     //           if (environment !== AppConstants.NETWORKS.MAINNET.NAME) {
-     //                console.warn('Not connected to Mainnet. Results may differ from XPMarket.');
-     //           }
-
-     //           let xrpBalance = xrpl.dropsToXrp(accountInfo.result.account_data.Balance).toString();
-
-     //           if (parseFloat(xrpBalance) === 0) {
-     //                this.ui.setError('No XRP balance found');
-     //                this.phnixExchangeXrp = '0';
-     //                return;
-     //           }
-
-     //           const encodedCurrency = this.weSpendCurrencyField.length < 3 ? this.weSpendCurrencyField : this.utilsService.encodeCurrencyCode(this.weSpendCurrencyField);
-     //           const weWant = {
-     //                currency: encodedCurrency,
-     //                issuer: this.weSpendIssuerField,
-     //           };
-     //           const weSpend = { currency: 'XRP' };
-
-     //           // PHASE 3: PARALLELIZE — fetch order book, counter order book, and AMM data
-     //           const [orderBook, ammPoolData] = await Promise.all([
-     //                client.request({
-     //                     command: 'book_offers',
-     //                     taker: wallet.address,
-     //                     ledger_index: 'current',
-     //                     taker_gets: weWant,
-     //                     taker_pays: weSpend,
-     //                     limit: 400,
-     //                }),
-     //                client
-     //                     .request({
-     //                          command: 'amm_info',
-     //                          asset: { currency: 'XRP' }, // XRP (no issuer)
-     //                          asset2: weWant,
-     //                     })
-     //                     .catch(err => {
-     //                          console.warn('No AMM pool found for this pair:', err);
-     //                          return null; // prevent rejection
-     //                     }),
-     //           ]);
-
-     //           // Combine Order Book and AMM Liquidity
-     //           let allOffers = [...orderBook.result.offers];
-
-     //           if (ammPoolData?.result?.amm) {
-     //                const amm = ammPoolData.result.amm;
-
-     //                const getAmountValue = (amount: any): string => {
-     //                     if (typeof amount === 'object' && amount !== null && 'value' in amount) {
-     //                          return amount.value;
-     //                     }
-     //                     return String(amount);
-     //                };
-
-     //                const asset1Amount = getAmountValue(amm.amount); // XRP or PHNIX
-     //                let asset2Amount = getAmountValue(amm.amount2); // PHNIX or XRP
-
-     //                // Determine which asset is XRP and which is PHNIX
-     //                let xrpAmount, phnixAmount;
-     //                if (typeof amm.amount2 === 'string') {
-     //                     // amount2 is XRP (in drops)
-     //                     xrpAmount = xrpl.dropsToXrp(asset2Amount).toString();
-     //                     phnixAmount = asset1Amount;
-     //                } else {
-     //                     // amount2 is PHNIX, amount is XRP (in drops)
-     //                     xrpAmount = xrpl.dropsToXrp(asset1Amount).toString();
-     //                     phnixAmount = asset2Amount;
-     //                }
-
-     //                // Calculate the AMM rate (PHNIX per XRP)
-     //                const ammRate = new BigNumber(phnixAmount).dividedBy(xrpAmount);
-
-     //                const ammOffer = {
-     //                     TakerGets: {
-     //                          currency: encodedCurrency,
-     //                          issuer: this.weWantIssuerField,
-     //                          value: phnixAmount,
-     //                     },
-     //                     TakerPays: { currency: 'XRP', value: xrpAmount },
-     //                     rate: ammRate,
-     //                     isAMM: true,
-     //                     LedgerEntryType: 'Offer',
-     //                     Flags: 0,
-     //                     Account: 'AMM_POOL',
-     //                     Sequence: 0,
-     //                     Expiration: null,
-     //                     BookDirectory: '',
-     //                     BookNode: '',
-     //                     OwnerNode: '',
-     //                     PreviousTxnID: '',
-     //                     PreviousTxnLgrSeq: 0,
-     //                };
-     //                allOffers.push(ammOffer as any);
-     //           }
-
-     //           // Sort all offers by best rate (ascending, since we want PHNIX per XRP)
-     //           const sortedOffers = allOffers.sort((a, b) => {
-     //                const rateA = getOfferRate(a); // PHNIX per XRP
-     //                const rateB = getOfferRate(b);
-     //                return rateA.minus(rateB).toNumber(); // Ascending for best PHNIX/XRP rate
-     //           });
-
-     //           const xrpAmount = new BigNumber(parseFloat(xrpBalance).toFixed(6));
-     //           let remainingXrp = xrpAmount;
-     //           let totalPhnix = new BigNumber(0);
-
-     //           for (const offer of sortedOffers) {
-     //                const takerGets = getOfferPhnixAmount(offer); // PHNIX
-     //                const takerPays = getOfferXrpAmount(offer); // XRP
-
-     //                if (takerGets.isZero()) continue;
-
-     //                const rate = takerGets.dividedBy(takerPays); // PHNIX per XRP
-     //                const xrpToUse = BigNumber.minimum(remainingXrp, takerPays);
-     //                const phnixReceived = xrpToUse.multipliedBy(rate);
-
-     //                totalPhnix = totalPhnix.plus(phnixReceived.toFixed(8));
-     //                remainingXrp = remainingXrp.minus(xrpToUse);
-
-     //                console.log(`Used ${xrpToUse.toFixed(6)} XRP to get ${phnixReceived.toFixed(8)} PHNIX at rate ${rate.toFixed(8)}`);
-
-     //                if (remainingXrp.isLessThanOrEqualTo(0)) break;
-     //           }
-
-     //           const usedAmount = xrpAmount.minus(remainingXrp);
-     //           if (usedAmount.isZero()) {
-     //                this.phnixExchangeXrp = `No liquidity available`;
-     //                this.insufficientLiquidityWarning = true;
-     //           } else if (remainingXrp.isGreaterThan(0)) {
-     //                this.phnixExchangeXrp = `Insufficient liquidity: Only ${usedAmount.toFixed(6)} XRP can be exchanged for ${totalPhnix.toFixed(8)} PHNIX`;
-     //                this.insufficientLiquidityWarning = true;
-     //           } else {
-     //                this.phnixExchangeXrp = totalPhnix.toFixed(8);
-     //                this.insufficientLiquidityWarning = false;
-     //           }
-
-     //           // Optional: Show average rate
-     //           if (usedAmount.isGreaterThan(0)) {
-     //                const avgRate = totalPhnix.dividedBy(usedAmount);
-     //                console.log(`Average exchange rate: ${avgRate.toFixed(8)} PHNIX/XRP`);
-     //           }
-
-     //           this.cdr.detectChanges();
-     //      } catch (error: any) {
-     //           console.error('Error in updateTokenBalanceAndExchange1:', error);
-     //           this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
-     //           // this.xrpBalance = '0';
-     //           this.phnixExchangeXrp = 'Error';
-     //      } finally {
-     //           this.ui.spinner = false;
-     //           let executionTime = (Date.now() - startTime).toString();
-     //           console.log(`Leaving updateTokenBalanceAndExchange1 in ${executionTime}ms`);
-     //      }
-
-     //      function getOfferXrpAmount(offer: any): BigNumber {
-     //           if (offer.taker_gets_funded) {
-     //                const amount = typeof offer.taker_gets_funded === 'string' ? offer.taker_gets_funded : offer.taker_gets_funded.value;
-     //                if (amount.includes('.')) {
-     //                     return new BigNumber(amount);
-     //                } else {
-     //                     return new BigNumber(xrpl.dropsToXrp(amount));
-     //                }
-     //           }
-     //           if (typeof offer.TakerGets === 'string') {
-     //                return new BigNumber(xrpl.dropsToXrp(offer.TakerGets));
-     //           }
-     //           return new BigNumber(offer.TakerGets.value);
-     //      }
-
-     //      function getOfferPhnixAmount(offer: any): BigNumber {
-     //           if (offer.taker_pays_funded) {
-     //                return new BigNumber(offer.taker_pays_funded.value);
-     //           }
-     //           if (typeof offer.TakerPays === 'string') {
-     //                // This should never happen for tokens, but just in case
-     //                return new BigNumber(offer.TakerPays);
-     //           }
-     //           return new BigNumber(offer.TakerPays.value);
-     //      }
-
-     //      function getOfferRate(offer: any): BigNumber {
-     //           const takerGets = getOfferXrpAmount(offer);
-     //           const takerPays = getOfferPhnixAmount(offer);
-     //           return takerPays.isZero() ? new BigNumber(0) : takerGets.dividedBy(takerPays);
-     //      }
-     // }
-
      onWeSpendAmountChange() {
           clearTimeout(this.amountTimeout);
           this.amountTimeout = setTimeout(() => {
                this.updateTokenBalanceAndExchange();
           }, 400);
      }
-     // async onWeSpendAmountChange() {
-     //      if (!this.weSpendAmountField || isNaN(parseFloat(this.weSpendAmountField))) {
-     //           this.weWantAmountField = '0';
-     //           this.cdr.detectChanges();
-     //           return;
-     //      }
-     //      // await this.updateTokenBalanceAndExchange();
-     // }
+
+     onWeWantAmountChange() {
+          clearTimeout(this.amountTimeout);
+          this.amountTimeout = setTimeout(() => {
+               this.updateTokenBalanceAndExchangeReverse();
+          }, 400);
+     }
 
      private async startTokenMonitoring() {
           try {
@@ -3039,19 +2410,6 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
           // }, 10000);
      }
 
-     // get availableCurrencies(): string[] {
-     //      return [
-     //           'XRP',
-     //           ...Object.keys(this.knownTrustLinesIssuers)
-     //                .filter(c => c && c !== 'XRP' && c !== 'MPT')
-     //                .sort((a, b) => a.localeCompare(b)),
-     //      ];
-     // }
-
-     // get availableCurrencies(): string[] {
-     //      return this.offerCurrency.getAvailableCurrencies();
-     // }
-
      toggleFlag(key: 'tfPassive' | 'tfImmediateOrCancel' | 'tfFillOrKill') {
           this.flags[key] = !this.flags[key];
           this.updateFlagTotal();
@@ -3097,23 +2455,6 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                if (this.memoField) this.utilsService.setMemoField(offerTx, this.memoField);
           }
      }
-
-     // swapBalances() {
-     //      // Store the current values
-     //      const tempToken = this.phnixBalance;
-     //      const tempXrp = this.phnixExchangeXrp;
-
-     //      // Swap the values
-     //      this.phnixBalance = tempXrp;
-     //      this.phnixExchangeXrp = tempToken;
-
-     //      // Trigger any necessary updates
-     //      if (this.weWantCurrencyField === 'XRP') {
-     //           this.updateTokenBalanceAndExchange1();
-     //      } else {
-     //           this.updateTokenBalanceAndExchange();
-     //      }
-     // }
 
      private async validateInputs(inputs: ValidationInputs, action: string): Promise<string[]> {
           const errors: string[] = [];
@@ -3525,13 +2866,14 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
      private updateInfoMessage() {
           const walletName = this.currentWallet.name || 'selected';
 
-          const nftCount = this.existingNfts.length;
-          const sellOfferCount = this.existingSellOffers.length;
-          const buyOfferCount = this.existingBuyOffers.length;
+          const nftCount = this.existingOffers.length;
+          // const sellOfferCount = this.existingSellOffers.length;
+          // const buyOfferCount = this.existingBuyOffers.length;
 
           let message: string;
 
-          if (nftCount === 0 && sellOfferCount === 0 && buyOfferCount === 0) {
+          // if (nftCount === 0 && sellOfferCount === 0 && buyOfferCount === 0) {
+          if (nftCount === 0) {
                message = `<code>${walletName}</code> wallet has no NFTs or NFT offers.`;
           } else {
                const parts: string[] = [];
@@ -3541,15 +2883,15 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                     parts.push(`${nftCount} ${nftWord}`);
                }
 
-               if (sellOfferCount > 0) {
-                    const sellWord = sellOfferCount === 1 ? 'sell offer' : 'sell offers';
-                    parts.push(`${sellOfferCount} ${sellWord}`);
-               }
+               // if (sellOfferCount > 0) {
+               //      const sellWord = sellOfferCount === 1 ? 'sell offer' : 'sell offers';
+               //      parts.push(`${sellOfferCount} ${sellWord}`);
+               // }
 
-               if (buyOfferCount > 0) {
-                    const buyWord = buyOfferCount === 1 ? 'buy offer' : 'buy offers';
-                    parts.push(`${buyOfferCount} ${buyWord}`);
-               }
+               // if (buyOfferCount > 0) {
+               //      const buyWord = buyOfferCount === 1 ? 'buy offer' : 'buy offers';
+               //      parts.push(`${buyOfferCount} ${buyWord}`);
+               // }
 
                let summaryText: string;
                if (parts.length === 1) {
