@@ -98,19 +98,19 @@ input:read-only {
      margin-right: 5px;
 }
 
-#account1address,
+/* #account1address,
 #account2address,
 #account3address,
 #accountAddress1Field,
 #accountAddress2Field,
 #accountAddress3Field,
-#accountAddressField,
+#accountAddressField, */
 /* #destinationField, */
 #escrowOwnerField,
 #issuerAddress,
 /* #issuerField, */
-#weWantIssuerField,
-#weSpendIssuerField,
+/* #weWantIssuerField, */
+/* #weSpendIssuerField, */
 #nfTokenMinterAddress,
 #signer1AccountField,
 #signer2AccountField,
@@ -309,7 +309,7 @@ input[type='text']:focus {
      line-height: 1.4 !important;
 }
 
-.navbar-links>.dropdown {
+.navbar-links > .dropdown {
      display: inline-flex !important;
      align-items: center !important;
      height: auto !important;
@@ -921,18 +921,18 @@ input[type='text']:focus {
 }
 
 /* CHECKED STATE */
-input:checked+.slider {
+input:checked + .slider {
      background: #4caf50;
      /* green on */
 }
 
-input:checked+.slider:before {
+input:checked + .slider:before {
      transform: translateX(14px);
      /* 34-20 = 14px travel */
 }
 
 /* FOCUS RING (still visible but tighter) */
-input:focus+.slider {
+input:focus + .slider {
      box-shadow: 0 0 0 2.5px rgba(76, 175, 80, 0.3);
 }
 
@@ -1014,12 +1014,12 @@ input:focus+.slider {
 
 .btn-primary-blue {
      background-color: rgba(12, 34, 235, 0.7);
-     background: linear-gradient(135deg, #2E7BFF 50%, #002cbb 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #002cbb 100%);
 }
 
 .btn-primary-blue:hover {
      background-color: rgba(12, 34, 235, 0.7);
-     background: linear-gradient(135deg, #2E7BFF 50%, #002cbb 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #002cbb 100%);
 }
 
 .btn-primary-green {
@@ -1186,7 +1186,7 @@ input:focus+.slider {
 .generate-btn {
      /* background: #007bff; */
      background-color: rgba(12, 34, 235, 0.7);
-     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      color: white;
      border: none;
      border-radius: 10px;
@@ -1199,7 +1199,7 @@ input:focus+.slider {
 .generate-btn:hover {
      /* background: #2563eb; */
      background-color: rgba(12, 34, 235, 0.7);
-     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
 }
 
 .panel-subtitle {
@@ -1329,7 +1329,7 @@ input:focus+.slider {
 .wallet-avatar {
      width: 36px;
      height: 36px;
-     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      color: white;
      font-weight: bold;
      font-size: 1rem;
@@ -1375,14 +1375,14 @@ input:focus+.slider {
 }
 
 /* Top row: avatar + (address/balance/icons) side by side */
-.wallet-item>.wallet-avatar,
-.wallet-item>.wallet-top-row {
+.wallet-item > .wallet-avatar,
+.wallet-item > .wallet-top-row {
      display: flex;
      align-items: flex-start;
      gap: 0.75rem;
 }
 
-.wallet-item>.wallet-top-row {
+.wallet-item > .wallet-top-row {
      flex: 1;
      justify-content: space-between;
      min-width: 0;
@@ -1424,7 +1424,7 @@ input:focus+.slider {
      /* background-color: rgba(12, 34, 235, 0.7); */
      /* background: linear-gradient(135deg, rgba(23, 56, 240, 0.356) 50%, rgba(12, 34, 235, 0.7)100%); */
      color: white;
-     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      /* border-color: #6366f1; */
      /* box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); */
 }
@@ -1650,7 +1650,7 @@ input:focus+.slider {
 } */
 
 .show-toggle:hover {
-     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      border-color: #93c5fd;
 }
 
@@ -1778,7 +1778,7 @@ input:focus+.slider {
      margin-right: 4px;
 }
 
-:not(pre)>code[class*='language-'],
+:not(pre) > code[class*='language-'],
 pre[class*='language-'] {
      background: #fff;
 }
@@ -2114,7 +2114,7 @@ app-root {
      margin-bottom: 0.85rem;
 }
 
-.flag-header-account>* {
+.flag-header-account > * {
      line-height: 18px !important;
 }
 
@@ -2236,7 +2236,7 @@ app-root {
      /* base size for the whole row */
 }
 
-.flag-header>* {
+.flag-header > * {
      line-height: 18px !important;
 }
 
@@ -2624,7 +2624,7 @@ app-root {
 
 .blue-button-submenu {
      background-color: #007bff;
-     background: linear-gradient(135deg, #2E7BFF 50%, #002cbb 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #002cbb 100%);
      width: 40px;
      height: 40px;
      border-radius: 10px;
@@ -2754,7 +2754,7 @@ app-root {
      font-size: 0.9rem;
      white-space: nowrap;
      background-color: rgba(12, 34, 235, 0.7);
-     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      /* color: #007bff; */
      color: white;
      /* background-color: #000000; */
@@ -3006,7 +3006,7 @@ cdk-drop-list {
 }
 
 .wallet-item.selected {
-     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      border-color: #6366f1;
      color: white;
      /* box-shadow: white */
@@ -3106,7 +3106,7 @@ cdk-drop-list {
 
 /* When wallet is selected → make Show button pop with full gradient */
 .wallet-item.selected .show-toggle {
-     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      border: 1px solid rgba(99, 102, 241, 0.7);
      color: white !important;
      font-weight: 600;
@@ -3114,7 +3114,7 @@ cdk-drop-list {
 }
 
 .wallet-item.selected .show-toggle:hover {
-     background: linear-gradient(135deg, #2E7BFF 50%, #045AFB 100%);
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      transform: translateY(-2px);
      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
 }
@@ -3353,7 +3353,6 @@ cdk-drop-list {
      font-size: 0.9em;
 }
 
-
 .mnemonic-textarea {
      width: 100%;
      min-height: 80px;
@@ -3421,7 +3420,6 @@ cdk-drop-list {
 }
 
 @keyframes pulse {
-
      0%,
      100% {
           opacity: 0.7;
@@ -3436,7 +3434,6 @@ cdk-drop-list {
 .connection-status:hover {
      opacity: 0.9;
 }
-
 
 /* ============================================= */
 /* NEW NAVBAR STYLE – WHITE BACKGROUND + BLUE LINKS */
@@ -3458,10 +3455,10 @@ cdk-drop-list {
 
 /* THIS IS THE MISSING PIECE – target the actual active link inside dropdowns */
 .navbar-links .dropdown-menu a.active {
-     color: #55C240 !important;
+     color: #55c240 !important;
      font-weight: 700 !important;
      background: linear-gradient(90deg, rgba(85, 194, 64, 0.08), transparent) !important;
-     border-left: 3px solid #55C240 !important;
+     border-left: 3px solid #55c240 !important;
      border-radius: 0 6px 6px 0 !important;
      padding-left: 9px !important;
 }
@@ -3489,7 +3486,7 @@ cdk-drop-list {
 .accounts-dropdown.active .dropdown-toggle,
 .escrows-dropdown.active .dropdown-toggle,
 .dropdown-item.active {
-     color: #91ED80 !important;
+     color: #91ed80 !important;
      font-weight: 700 !important;
 }
 
@@ -3515,7 +3512,7 @@ cdk-drop-list {
 .dropdown-menu a:hover,
 .accounts-dropdown .dropdown-menu a:hover {
      background-color: #ffffff !important;
-     color: #91ED80 !important;
+     color: #91ed80 !important;
      /* Yellow on hover inside dropdown */
 }
 
