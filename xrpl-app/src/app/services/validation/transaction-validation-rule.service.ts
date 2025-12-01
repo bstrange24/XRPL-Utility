@@ -96,25 +96,57 @@ export class ValidationService {
           };
      }
 
-     private numeric(field: string, options: { min?: number; allowEmpty?: boolean; message?: string } = {}): ValidatorFn {
-          return ctx => {
+     private numeric(field: string, options: { min?: number; max?: number; allowEmpty?: boolean; message?: string } = {}): ValidatorFn {
+          return (ctx: ValidationContext): string | null => {
                const value = ctx.inputs[field];
-               const { min, allowEmpty = false, message } = options;
+               const { min, max, allowEmpty = false, message } = options;
 
+               // Skip if empty and allowed
                if (this.shouldSkipNumericValidation(value) || (allowEmpty && value === '')) {
                     return null;
                }
 
                const num = parseFloat(value as string);
+
+               // Not a valid number
                if (isNaN(num) || !isFinite(num)) {
                     return message || `${this.capitalize(field)} must be a valid number`;
                }
+
+               // Min check
                if (min !== undefined && num <= min) {
                     return message || `${this.capitalize(field)} must be greater than ${min}`;
                }
+
+               // Max check – now 100% safe
+               if (max !== undefined && num > max) {
+                    return message || `${this.capitalize(field)} must be ${max} or less`;
+               }
+
+               // All good
                return null;
           };
      }
+
+     // private numeric1(field: string, options: { min?: number; allowEmpty?: boolean; message?: string } = {}): ValidatorFn {
+     //      return ctx => {
+     //           const value = ctx.inputs[field];
+     //           const { min, allowEmpty = false, message } = options;
+
+     //           if (this.shouldSkipNumericValidation(value) || (allowEmpty && value === '')) {
+     //                return null;
+     //           }
+
+     //           const num = parseFloat(value as string);
+     //           if (isNaN(num) || !isFinite(num)) {
+     //                return message || `${this.capitalize(field)} must be a valid number`;
+     //           }
+     //           if (min !== undefined && num <= min) {
+     //                return message || `${this.capitalize(field)} must be greater than ${min}`;
+     //           }
+     //           return null;
+     //      };
+     // }
 
      private optionalNumeric(field: string, min?: number): ValidatorFn {
           return this.numeric(field, { min, allowEmpty: true });
@@ -288,6 +320,138 @@ export class ValidationService {
                const result = this.utilsService.validateAndConvertDidJson(data, didSchema);
                if (!result.success) {
                     return `${documentType} is invalid: ${result.errors || 'Unknown error'}`;
+               }
+               return null;
+          };
+     }
+
+     // Add these new validator helpers near the top with your other private methods
+
+     private validCurrency(field: string): ValidatorFn {
+          return ctx => {
+               const value = ctx.inputs[field];
+               if (!value) return null;
+               return this.utilsService.isValidCurrencyCode(value) ? null : `${this.capitalize(field)} must be a valid currency code (3-20 chars or 40-char hex)`;
+          };
+     }
+
+     private requireIssuerIfNotXRP(currencyField: string, issuerField: string): ValidatorFn {
+          return ctx => {
+               const currency = ctx.inputs[currencyField];
+               const issuer = ctx.inputs[issuerField];
+               if (currency && currency !== 'XRP' && !issuer) {
+                    return `${this.capitalize(issuerField)} is required when currency is not XRP`;
+               }
+               return null;
+          };
+     }
+
+     private validIssuerIfProvided(currencyField: string, issuerField: string): ValidatorFn {
+          return ctx => {
+               const currency = ctx.inputs[currencyField];
+               const issuer = ctx.inputs[issuerField];
+               if (currency && currency !== 'XRP' && issuer && !xrpl.isValidAddress(issuer)) {
+                    return `${this.capitalize(issuerField)} is not a valid XRP address`;
+               }
+               return null;
+          };
+     }
+
+     private positiveNumber(field: string): ValidatorFn {
+          return ctx => {
+               const value = ctx.inputs[field];
+               if (!value) return null;
+               const num = Number(value);
+               if (isNaN(num) || num <= 0) {
+                    return `${this.capitalize(field)} must be greater than 0`;
+               }
+               return null;
+          };
+     }
+
+     private validOfferSequences(field = 'offerSequenceField'): ValidatorFn {
+          return ctx => {
+               const value = ctx.inputs[field];
+               if (!value) return null;
+
+               const sequences = (value as string)
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean);
+
+               if (sequences.length === 0) {
+                    return 'At least one offer sequence is required';
+               }
+
+               const invalid = sequences.find(seq => {
+                    const n = parseInt(seq, 10);
+                    return isNaN(n) || n <= 0;
+               });
+
+               if (invalid) {
+                    return `Invalid offer sequence: ${invalid}. Must be positive integers`;
+               }
+
+               return null;
+          };
+     }
+
+     private notSelfOffer(issuerField: string): ValidatorFn {
+          return ctx => {
+               const sender = ctx.inputs['senderAddress'];
+               const issuer = ctx.inputs[issuerField];
+               if (sender && issuer && sender === issuer) {
+                    return 'Cannot create offer to yourself';
+               }
+               return null;
+          };
+     }
+
+     // AMM-specific reusable validators
+
+     private validTradingFee(): ValidatorFn {
+          return ctx => {
+               const value = ctx.inputs['tradingFeeField'];
+               if (!value) return null;
+               const num = Number(value);
+               if (isNaN(num) || num < 0 || num > 1000) {
+                    return 'Trading fee must be between 0 and 1000 (inclusive)';
+               }
+               return null;
+          };
+     }
+
+     private requireAtLeastOneAmountForDeposit(): ValidatorFn {
+          return ctx => {
+               const both = ctx.inputs['weWantAmountField'] || ctx.inputs['weSpendAmountField'];
+               if (!both) {
+                    return 'At least one amount must be provided for deposit (single or both assets)';
+               }
+               return null;
+          };
+     }
+
+     private validLpTokenAmount(field = 'lpTokenAmountField'): ValidatorFn {
+          return ctx => {
+               const value = ctx.inputs[field];
+               if (!value) return null;
+               const num = Number(value);
+               if (isNaN(num) || num <= 0) {
+                    return `${this.capitalize(field)} must be greater than 0`;
+               }
+               return null;
+          };
+     }
+
+     private requireCurrencyPair(): ValidatorFn {
+          return ctx => {
+               const want = ctx.inputs['firstPoolCurrencyField'];
+               const spend = ctx.inputs['secondPoolCurrencyField'];
+               if (!want || !spend) {
+                    return 'Both currencies in the trading pair are required';
+               }
+               if (want === spend) {
+                    return 'The two assets in the AMM pool cannot be the same';
                }
                return null;
           };
@@ -1433,6 +1597,290 @@ export class ValidationService {
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
                ],
+          });
+
+          // OfferCreate
+          this.registerRule({
+               transactionType: 'OfferCreate',
+               requiredFields: ['weWantAmountField', 'weSpendAmountField', 'weWantCurrencyField', 'weSpendCurrencyField'],
+               validators: [
+                    this.positiveNumber('weWantAmountField'),
+                    this.positiveNumber('weSpendAmountField'),
+                    this.validCurrency('weWantCurrencyField'),
+                    this.validCurrency('weSpendCurrencyField'),
+                    this.requireIssuerIfNotXRP('weWantCurrencyField', 'weWantIssuerField'),
+                    this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'),
+                    this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
+                    this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
+                    this.notSelfOffer('weWantIssuerField'),
+                    this.notSelfOffer('weSpendIssuerField'),
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Master key disabled check
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation
+                    this.multiSign(),
+               ],
+          });
+
+          // OfferCancel
+          this.registerRule({
+               transactionType: 'OfferCancel',
+               requiredFields: ['offerSequenceField'],
+               validators: [
+                    this.validOfferSequences('offerSequenceField'),
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation
+                    this.multiSign(),
+               ],
+          });
+
+          // For read-only or utility actions (not real transactions)
+          this.registerRule({
+               transactionType: 'GetOrderBook',
+               requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField'],
+               validators: [this.validCurrency('weWantCurrencyField'), this.validCurrency('weSpendCurrencyField'), this.requireIssuerIfNotXRP('weWantCurrencyField', 'weWantIssuerField'), this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'), this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'), this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField')],
+          });
+
+          // AMMCreate
+          this.registerRule({
+               transactionType: 'AMMCreate',
+               requiredFields: ['firstPoolAssetAmount', 'secondPoolAssetAmount', 'firstPoolCurrencyField', 'secondPoolCurrencyField', 'tradingFeeField'],
+               validators: [
+                    this.positiveNumber('firstPoolAssetAmount'),
+                    this.positiveNumber('secondPoolAssetAmount'),
+                    this.numeric('tradingFeeField', { min: 0, max: 1000 }),
+
+                    this.validCurrency('firstPoolCurrencyField'),
+                    this.validCurrency('secondPoolCurrencyField'),
+                    this.requireCurrencyPair(),
+
+                    this.requireIssuerIfNotXRP('firstPoolCurrencyField', 'firstPoolIssuerField'),
+                    this.requireIssuerIfNotXRP('secondPoolCurrencyField', 'secondPoolIssuerField'),
+                    this.validIssuerIfProvided('firstPoolCurrencyField', 'firstPoolIssuerField'),
+                    this.validIssuerIfProvided('secondPoolCurrencyField', 'secondPoolIssuerField'),
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    this.masterKeyDisabledRequiresAltSigning(),
+                    this.ticketValidation(),
+                    ...this.regularKeySigningValidation(),
+                    this.multiSign(),
+               ],
+          });
+
+          // AMMDeposit
+          this.registerRule({
+               transactionType: 'AMMDeposit',
+               requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField'],
+               validators: [
+                    // At least one amount must be provided
+                    this.requireAtLeastOneAmountForDeposit(),
+
+                    // Validate amounts only if provided
+                    ctx => (ctx.inputs['weWantAmountField'] ? this.positiveNumber('weWantAmountField')(ctx) : null),
+                    ctx => (ctx.inputs['weSpendAmountField'] ? this.positiveNumber('weSpendAmountField')(ctx) : null),
+
+                    this.validCurrency('weWantCurrencyField'),
+                    this.validCurrency('weSpendCurrencyField'),
+                    this.requireCurrencyPair(),
+
+                    this.requireIssuerIfNotXRP('weWantCurrencyField', 'weWantIssuerField'),
+                    this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'),
+                    this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
+                    this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    this.masterKeyDisabledRequiresAltSigning(),
+                    this.ticketValidation(),
+                    ...this.regularKeySigningValidation(),
+                    this.multiSign(),
+               ],
+          });
+
+          // AMMWithdraw
+          this.registerRule({
+               transactionType: 'AMMWithdraw',
+               requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField'],
+               validators: [
+                    // You can optionally require LP token amount
+                    // this.validLpTokenAmount('lpTokenAmountField'),
+
+                    this.validCurrency('weWantCurrencyField'),
+                    this.validCurrency('weSpendCurrencyField'),
+                    this.requireCurrencyPair(),
+
+                    this.requireIssuerIfNotXRP('weWantCurrencyField', 'weWantIssuerField'),
+                    this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'),
+                    this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
+                    this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
+
+                    // Optional: validate requested amounts if user specifies them
+                    ctx => (ctx.inputs['weWantAmountField'] ? this.positiveNumber('weWantAmountField')(ctx) : null),
+                    ctx => (ctx.inputs['weSpendAmountField'] ? this.positiveNumber('weSpendAmountField')(ctx) : null),
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    this.masterKeyDisabledRequiresAltSigning(),
+                    this.ticketValidation(),
+                    ...this.regularKeySigningValidation(),
+                    this.multiSign(),
+               ],
+          });
+
+          // AMMVote (for changing trading fee)
+          this.registerRule({
+               transactionType: 'AMMVote',
+               requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField', 'tradingFeeField'],
+               validators: [
+                    this.numeric('tradingFeeField', { min: 0, max: 1000 }),
+                    this.validCurrency('weWantCurrencyField'),
+                    this.validCurrency('weSpendCurrencyField'),
+                    this.requireCurrencyPair(),
+
+                    this.requireIssuerIfNotXRP('weWantCurrencyField', 'weWantIssuerField'),
+                    this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'),
+                    this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
+                    this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    this.masterKeyDisabledRequiresAltSigning(),
+                    this.ticketValidation(),
+                    ...this.regularKeySigningValidation(),
+                    this.multiSign(),
+               ],
+          });
+
+          // AMMBid (optional – for auction slot)
+          this.registerRule({
+               transactionType: 'AMMBid',
+               requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField'],
+               validators: [
+                    this.validCurrency('weWantCurrencyField'),
+                    this.validCurrency('weSpendCurrencyField'),
+                    this.requireCurrencyPair(),
+
+                    this.requireIssuerIfNotXRP('weWantCurrencyField', 'weWantIssuerField'),
+                    this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'),
+                    this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
+                    this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    this.masterKeyDisabledRequiresAltSigning(),
+                    this.ticketValidation(),
+                    ...this.regularKeySigningValidation(),
+                    this.multiSign(),
+               ],
+          });
+
+          // AMMDelete (only allowed if pool is empty)
+          this.registerRule({
+               transactionType: 'AMMDelete',
+               requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField'],
+               validators: [
+                    this.validCurrency('weWantCurrencyField'),
+                    this.validCurrency('weSpendCurrencyField'),
+                    this.requireCurrencyPair(),
+
+                    this.requireIssuerIfNotXRP('weWantCurrencyField', 'weWantIssuerField'),
+                    this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'),
+                    this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
+                    this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    this.masterKeyDisabledRequiresAltSigning(),
+                    this.ticketValidation(),
+                    ...this.regularKeySigningValidation(),
+                    this.multiSign(),
+               ],
+          });
+
+          // AMMClawback – only allowed if the account has the clawback flag set
+          this.registerRule({
+               transactionType: 'AMMClawback',
+               requiredFields: [
+                    'lpTokenAmountField', // amount of LP tokens to claw back
+                    'weWantCurrencyField',
+                    'weSpendCurrencyField',
+               ],
+               validators: [
+                    this.positiveNumber('lpTokenAmountField'),
+
+                    this.validCurrency('weWantCurrencyField'),
+                    this.validCurrency('weSpendCurrencyField'),
+                    this.requireCurrencyPair(),
+
+                    this.requireIssuerIfNotXRP('weWantCurrencyField', 'weWantIssuerField'),
+                    this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'),
+                    this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
+                    this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
+
+                    // Only the issuer of the LP token can claw back
+                    ctx => {
+                         const flags = ctx.accountInfo?.result?.account_flags;
+                         if (!flags?.clawbackEnabled) {
+                              return 'Clawback is not enabled only if the account has the lsfClawback flag set';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    this.masterKeyDisabledRequiresAltSigning(),
+                    this.ticketValidation(),
+                    ...this.regularKeySigningValidation(),
+                    this.multiSign(),
+               ],
+          });
+
+          // AMMSwap – uses a Payment with DeliverMin or Amount + Path (but we treat it separately in UI)
+          this.registerRule({
+               transactionType: 'AMMSwap',
+               requiredFields: ['weWantAmountField', 'weWantCurrencyField', 'weSpendCurrencyField'],
+               validators: [
+                    this.positiveNumber('weWantAmountField'),
+
+                    // Optional: max spend amount (SendMax field)
+                    ctx => (ctx.inputs['weSpendAmountField'] ? this.positiveNumber('weSpendAmountField')(ctx) : null),
+
+                    this.validCurrency('weWantCurrencyField'),
+                    this.validCurrency('weSpendCurrencyField'),
+                    this.requireCurrencyPair(),
+
+                    this.requireIssuerIfNotXRP('weWantCurrencyField', 'weWantIssuerField'),
+                    this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'),
+                    this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
+                    this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    this.masterKeyDisabledRequiresAltSigning(),
+                    this.ticketValidation(),
+                    ...this.regularKeySigningValidation(),
+                    this.multiSign(),
+               ],
+          });
+
+          // For getPoolInfo / swap preview etc.
+          this.registerRule({
+               transactionType: 'GetPoolInfo',
+               requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField'],
+               validators: [this.validCurrency('weWantCurrencyField'), this.validCurrency('weSpendCurrencyField'), this.requireCurrencyPair(), this.requireIssuerIfNotXRP('weWantCurrencyField', 'weWantIssuerField'), this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'), this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'), this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField')],
           });
      }
 }

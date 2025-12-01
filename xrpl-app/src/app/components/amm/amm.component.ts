@@ -41,11 +41,17 @@ interface ValidationInputs {
      seed?: string;
      accountInfo?: any;
      weWantAmountField?: string;
+     firstPoolAssetAmount?: string;
      weSpendAmountField?: string;
+     secondPoolAssetAmount?: string;
      weWantCurrencyField?: string;
+     firstPoolCurrencyField?: string;
      weSpendCurrencyField?: string;
+     secondPoolCurrencyField?: string;
      weWantIssuerField?: string;
+     firstPoolIssuerField?: string;
      weSpendIssuerField?: string;
+     secondPoolIssuerField?: string;
      lpTokenBalanceField?: string;
      withdrawlLpTokenFromPoolField?: string;
      withdrawOptions?: { bothPools: boolean; firstPoolOnly: boolean; secondPoolOnly: boolean };
@@ -687,12 +693,12 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                selectedAccount: this.currentWallet.address,
                seed: this.currentWallet.seed,
                senderAddress: this.currentWallet.address,
-               weWantAmountField: this.weWantAmountField,
-               weSpendAmountField: this.weSpendAmountField,
-               weWantCurrencyField: this.weWantCurrencyField,
-               weSpendCurrencyField: this.weSpendCurrencyField,
-               weWantIssuerField: this.weWantCurrencyField !== 'XRP' ? this.weWantIssuerField : undefined,
-               weSpendIssuerField: this.weSpendCurrencyField !== 'XRP' ? this.weSpendIssuerField : undefined,
+               firstPoolAssetAmount: this.weWantAmountField,
+               secondPoolAssetAmount: this.weSpendAmountField,
+               firstPoolCurrencyField: this.weWantCurrencyField,
+               secondPoolCurrencyField: this.weSpendCurrencyField,
+               firstPoolIssuerField: this.weWantCurrencyField !== 'XRP' ? this.weWantIssuerField : undefined,
+               secondPoolIssuerField: this.weSpendCurrencyField !== 'XRP' ? this.weSpendIssuerField : undefined,
                tradingFeeField: this.tradingFeeField,
                isRegularKeyAddress: this.isRegularKeyAddress,
                regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
@@ -714,10 +720,15 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
 
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'create');
+               const errors = await this.validationService.validate('AMMCreate', { inputs, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
+
+               // const errors = await this.validationService.validate('AMMCreate', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
+               // if (errors.length > 0) {
+               //      return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+               // }
 
                // Build currency objects correctly
                const we_want_currency = this.utilsService.encodeIfNeeded(this.weWantCurrencyField);
@@ -885,9 +896,9 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
 
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'deposit');
+               const errors = await this.validationService.validate('AMMDeposit', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                // Build currency objects correctly
@@ -1067,9 +1078,9 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
 
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'withdraw');
+               const errors = await this.validationService.validate('AMMWithdraw', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                // Build currency objects correctly
@@ -1287,9 +1298,9 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
 
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'ammclawback');
+               const errors = await this.validationService.validate('AMMClawback', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                // Build AMM pool assets correctly
@@ -1437,9 +1448,9 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
 
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'swap');
+               const errors = await this.validationService.validate('AMMSwap', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                const asset = this.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.weWantCurrencyField), 'r9DZiCr2eejjRUqqTnTahL5UpLfku9Fe9D');
@@ -1559,9 +1570,9 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
 
                inputs.accountInfo = accountInfo;
 
-               const errors = await this.validateInputs(inputs, 'deleteAMM');
+               const errors = await this.validationService.validate('AMMDelete', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
+                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                const asset = this.toCurrency(this.utilsService.encodeIfNeeded(this.weWantCurrencyField), this.weWantIssuerField);
@@ -1964,342 +1975,6 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
           }
      }
 
-     private async validateInputs(inputs: ValidationInputs, action: string): Promise<string[]> {
-          const errors: string[] = [];
-
-          // --- Shared skip helper ---
-          const shouldSkipNumericValidation = (value: string | undefined): boolean => {
-               return value === undefined || value === null || value.trim() === '';
-          };
-
-          // --- Common validators ---
-          const isRequired = (value: string | null | undefined, fieldName: string): string | null => {
-               if (value == null || !this.utilsService.validateInput(value)) {
-                    return `${fieldName} cannot be empty`;
-               }
-               return null;
-          };
-
-          const isValidXrpAddress = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidAddress(value)) {
-                    return `${fieldName} is invalid`;
-               }
-               return null;
-          };
-
-          const isValidSecret = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !xrpl.isValidSecret(value)) {
-                    return `${fieldName} is invalid`;
-               }
-               return null;
-          };
-
-          const isNotSelfPayment = (sender: string | undefined, receiver: string | undefined): string | null => {
-               if (sender && receiver && sender === receiver) {
-                    return `Sender and receiver cannot be the same`;
-               }
-               return null;
-          };
-
-          const isValidNumber = (value: string | undefined, fieldName: string, minValue?: number, maxValue?: number): string | null => {
-               if (value === undefined) return null; // Not required, so skip
-               const num = parseFloat(value);
-               if (isNaN(num) || !isFinite(num)) {
-                    return `${fieldName} must be a valid number`;
-               }
-               if (minValue !== undefined && num <= minValue) {
-                    return `${fieldName} must be greater than ${minValue}`;
-               }
-               if (maxValue !== undefined && num > maxValue) {
-                    return `${fieldName} must be less than or equal to ${maxValue}`;
-               }
-               return null;
-          };
-
-          const isValidSeed = (value: string | undefined): string | null => {
-               if (value) {
-                    const { type, value: detectedValue } = this.utilsService.detectXrpInputType(value);
-                    if (detectedValue === 'unknown') {
-                         return 'Account seed is invalid';
-                    }
-               }
-               return null;
-          };
-
-          const isValidCurrency = (value: string | undefined, fieldName: string): string | null => {
-               if (value && !this.utilsService.isValidCurrencyCode(value)) {
-                    return `${fieldName} must be a valid currency code (3-20 characters or valid hex)`;
-               }
-               return null;
-          };
-
-          const validateMultiSign = (addressesStr: string | undefined, seedsStr: string | undefined): string | null => {
-               if (!addressesStr || !seedsStr) return null;
-               const addresses = this.utilsService.getMultiSignAddress(addressesStr);
-               const seeds = this.utilsService.getMultiSignSeeds(seedsStr);
-               if (addresses.length === 0) {
-                    return 'At least one signer address is required for multi-signing';
-               }
-               if (addresses.length !== seeds.length) {
-                    return 'Number of signer addresses must match number of signer seeds';
-               }
-               const invalidAddr = addresses.find((addr: string) => !xrpl.isValidAddress(addr));
-               if (invalidAddr) {
-                    return `Invalid signer address: ${invalidAddr}`;
-               }
-               const invalidSeed = seeds.find((seed: string) => !xrpl.isValidSecret(seed));
-               if (invalidSeed) {
-                    return 'One or more signer seeds are invalid';
-               }
-               return null;
-          };
-
-          function commonValidators(inputs: ValidationInputs) {
-               return [
-                    // Ticket flow
-                    () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                    () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-
-                    // RegularKey flow
-                    () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                    () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                    () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                    () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-
-                    // Multi-sign
-                    () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-
-                    // Account info + master key
-                    () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? 'No account data found' : null),
-                    () => (inputs.accountInfo?.result?.account_flags?.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-               ];
-          }
-
-          // Action-specific config: required fields and custom rules
-          const actionConfig: Record<
-               string,
-               {
-                    required: (keyof ValidationInputs)[];
-                    customValidators?: (() => string | null)[];
-                    asyncValidators?: (() => Promise<string | null>)[];
-               }
-          > = {
-               getPoolInfo: {
-                    required: ['seed', 'weWantCurrencyField', 'weSpendCurrencyField'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidCurrency(inputs.weWantCurrencyField, 'We want currency'),
-                         () => isValidCurrency(inputs.weSpendCurrencyField, 'We spend currency'),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isRequired(inputs.weWantIssuerField, 'We want issuer') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isRequired(inputs.weSpendIssuerField, 'We spend issuer') : null),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weWantIssuerField, 'We want issuer address') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weSpendIssuerField, 'We spend issuer address') : null),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                    ],
-                    asyncValidators: [],
-               },
-               create: {
-                    required: ['seed', 'weWantAmountField', 'weSpendAmountField', 'weWantCurrencyField', 'weSpendCurrencyField'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidNumber(inputs.weWantAmountField, 'First pool amount', 0),
-                         () => isValidNumber(inputs.weSpendAmountField, 'Second pool amount', 0),
-                         () => isValidNumber(inputs.tradingFeeField, 'Trading fee', 0, 1000),
-                         () => isValidCurrency(inputs.weWantCurrencyField, 'We want currency'),
-                         () => isValidCurrency(inputs.weSpendCurrencyField, 'We spend currency'),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isRequired(inputs.weWantIssuerField, 'We want issuer') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isRequired(inputs.weSpendIssuerField, 'We spend issuer') : null),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weWantIssuerField, 'We want issuer address') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weSpendIssuerField, 'We spend issuer address') : null),
-                         () => isNotSelfPayment(inputs.senderAddress, inputs.weSpendIssuerField),
-                         () => isNotSelfPayment(inputs.senderAddress, inputs.weWantCurrencyField),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                    ],
-                    asyncValidators: [],
-               },
-               deposit: {
-                    required: ['seed', ...(inputs.depositOptions?.bothPools || inputs.depositOptions?.firstPoolOnly ? (['weWantAmountField'] as (keyof ValidationInputs)[]) : []), ...(inputs.depositOptions?.bothPools || inputs.depositOptions?.secondPoolOnly ? (['weSpendAmountField'] as (keyof ValidationInputs)[]) : []), 'weWantCurrencyField', 'weSpendCurrencyField'],
-                    ...(inputs.depositOptions?.firstPoolOnly ? (['weWantAmountField'] as (keyof ValidationInputs)[]) : []),
-                    ...(inputs.depositOptions?.secondPoolOnly ? (['weSpendAmountField'] as (keyof ValidationInputs)[]) : []),
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-
-                         // Amount checks
-                         () => (inputs.weWantAmountField ? isValidNumber(inputs.weWantAmountField, 'We want amount', 0) : null),
-                         () => (inputs.weSpendAmountField ? isValidNumber(inputs.weSpendAmountField, 'We spend amount', 0) : null),
-
-                         // Currency + issuer checks
-                         () => isValidCurrency(inputs.weWantCurrencyField, 'We want currency'),
-                         () => isValidCurrency(inputs.weSpendCurrencyField, 'We spend currency'),
-
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isRequired(inputs.weWantIssuerField, 'We want issuer') : null),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weWantIssuerField, 'We want issuer address') : null),
-
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isRequired(inputs.weSpendIssuerField, 'We spend issuer') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weSpendIssuerField, 'We spend issuer address') : null),
-
-                         // Shared rules
-                         ...commonValidators(inputs),
-                    ],
-               },
-               withdraw: {
-                    required: [
-                         'selectedAccount',
-                         'seed',
-                         // 'lpTokenBalanceField',
-                         // ...(inputs.withdrawOptions?.bothPools || inputs.withdrawOptions?.firstPoolOnly ? (['weWantCurrencyField'] as (keyof ValidationInputs)[]) : []),
-                         // ...(inputs.withdrawOptions?.bothPools || inputs.withdrawOptions?.secondPoolOnly ? (['weSpendCurrencyField'] as (keyof ValidationInputs)[]) : []),
-                         // ...(inputs.withdrawOptions?.firstPoolOnly ? (['weWantAmountField'] as (keyof ValidationInputs)[]) : []),
-                         // ...(inputs.withdrawOptions?.secondPoolOnly ? (['weSpendAmountField'] as (keyof ValidationInputs)[]) : []),
-                    ],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         // () => isValidNumber(inputs.lpTokenBalanceField, 'LP token amount', 0),
-                         // () => isValidNumber(inputs.withdrawlLpTokenFromPoolField, 'LP withdraw amount', 0),
-
-                         // Conditionally validate currencies
-                         () => (inputs.withdrawOptions?.bothPools || inputs.withdrawOptions?.firstPoolOnly ? isValidCurrency(inputs.weWantCurrencyField, 'We want currency') : null),
-                         () => (inputs.withdrawOptions?.bothPools || inputs.withdrawOptions?.secondPoolOnly ? isValidCurrency(inputs.weSpendCurrencyField, 'We spend currency') : null),
-
-                         // Conditionally validate amounts
-                         () => (inputs.weWantAmountField ? isValidNumber(inputs.weWantAmountField, 'We want amount', 0) : null),
-                         () => (inputs.weSpendAmountField ? isValidNumber(inputs.weSpendAmountField, 'We spend amount', 0) : null),
-
-                         // Issuers only if non-XRP
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isRequired(inputs.weWantIssuerField, 'We want issuer') : null),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weWantIssuerField, 'We want issuer address') : null),
-
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isRequired(inputs.weSpendIssuerField, 'We spend issuer') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weSpendIssuerField, 'We spend issuer address') : null),
-
-                         // Shared rules
-                         ...commonValidators(inputs),
-                    ],
-               },
-               swap: {
-                    required: ['seed', 'weWantAmountField', 'weWantCurrencyField', 'weSpendCurrencyField'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidNumber(inputs.weWantAmountField, 'Amount', 0),
-                         () => (inputs.weSpendAmountField ? isValidNumber(inputs.weSpendAmountField, 'Send max amount', 0) : null),
-                         () => isValidCurrency(inputs.weWantCurrencyField, 'We want currency'),
-                         () => isValidCurrency(inputs.weSpendCurrencyField, 'We spend currency'),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isRequired(inputs.weWantIssuerField, 'We want issuer') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isRequired(inputs.weSpendIssuerField, 'We spend issuer') : null),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weWantIssuerField, 'We want issuer address') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weSpendIssuerField, 'We spend issuer address') : null),
-                    ],
-               },
-               clawback: {
-                    required: ['seed', 'lpTokenBalanceField', 'weWantCurrencyField', 'weSpendCurrencyField'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidNumber(inputs.lpTokenBalanceField, 'LP token amount to claw back', 0),
-                         () => isValidCurrency(inputs.weWantCurrencyField, 'We want currency'),
-                         () => isValidCurrency(inputs.weSpendCurrencyField, 'We spend currency'),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isRequired(inputs.weWantIssuerField, 'We want issuer') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isRequired(inputs.weSpendIssuerField, 'We spend issuer') : null),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weWantIssuerField, 'We want issuer address') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weSpendIssuerField, 'We spend issuer address') : null),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                    ],
-                    asyncValidators: [],
-               },
-               deleteAMM: {
-                    required: ['seed', 'weWantCurrencyField', 'weSpendCurrencyField'],
-                    customValidators: [
-                         () => isValidSeed(inputs.seed),
-                         () => isValidCurrency(inputs.weWantCurrencyField, 'We want currency'),
-                         () => isValidCurrency(inputs.weSpendCurrencyField, 'We spend currency'),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isRequired(inputs.weWantIssuerField, 'We want issuer') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isRequired(inputs.weSpendIssuerField, 'We spend issuer') : null),
-                         () => (inputs.weWantCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weWantIssuerField, 'We want issuer address') : null),
-                         () => (inputs.weSpendCurrencyField !== 'XRP' ? isValidXrpAddress(inputs.weSpendIssuerField, 'We spend issuer address') : null),
-                         () => (inputs.isTicket ? isRequired(inputs.selectedSingleTicket, 'Ticket Sequence') : null),
-                         () => (inputs.isTicket ? isValidNumber(inputs.selectedSingleTicket, 'Ticket Sequence', 0) : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isRequired(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address') : null),
-                         () => (inputs.isRegularKeyAddress && !inputs.useMultiSign ? isValidSecret(inputs.regularKeySeed, 'Regular Key Seed') : null),
-                         () => validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds),
-                         () => (inputs.accountInfo === undefined || inputs.accountInfo === null ? `No account data found` : null),
-                         () => (inputs.accountInfo.result.account_flags.disableMasterKey && !inputs.useMultiSign && !inputs.isRegularKeyAddress ? 'Master key is disabled. Must sign with Regular Key or Multi-sign.' : null),
-                    ],
-                    asyncValidators: [],
-               },
-               tokenBalance: {
-                    required: ['seed'],
-                    customValidators: [() => isValidSeed(inputs.seed)],
-                    asyncValidators: [],
-               },
-               weWantCurrencyChange: {
-                    required: ['selectedAccount'],
-                    customValidators: [() => isValidXrpAddress('r9DZiCr2eejjRUqqTnTahL5UpLfku9Fe9D', 'Account address')],
-                    asyncValidators: [],
-               },
-               weSpendCurrencyChange: {
-                    required: ['selectedAccount'],
-                    customValidators: [() => isValidXrpAddress('r9DZiCr2eejjRUqqTnTahL5UpLfku9Fe9D', 'Account address')],
-                    asyncValidators: [],
-               },
-               default: { required: [], customValidators: [], asyncValidators: [] },
-          };
-
-          const config = actionConfig[action] || actionConfig['default'];
-
-          // --- Run required checks ---
-          config.required.forEach((field: keyof ValidationInputs) => {
-               const err = isRequired(inputs[field], field.charAt(0).toUpperCase() + field.slice(1));
-               if (err) errors.push(err);
-          });
-
-          // Run custom validators
-          config.customValidators?.forEach((validator: () => string | null) => {
-               const err = validator();
-               if (err) errors.push(err);
-          });
-
-          // --- Run async validators ---
-          if (config.asyncValidators) {
-               for (const validator of config.asyncValidators) {
-                    const err = await validator();
-                    if (err) errors.push(err);
-               }
-          }
-
-          // Always validate optional fields if provided (e.g., multi-sign, regular key)
-          const multiErr = validateMultiSign(inputs.multiSignAddresses, inputs.multiSignSeeds);
-          if (multiErr) errors.push(multiErr);
-
-          const regAddrErr = isValidXrpAddress(inputs.regularKeyAddress, 'Regular Key Address');
-          if (regAddrErr && inputs.regularKeyAddress !== 'No RegularKey configured for account') errors.push(regAddrErr);
-
-          const regSeedErr = isValidSecret(inputs.regularKeySeed, 'Regular Key Seed');
-          if (regSeedErr) errors.push(regSeedErr);
-
-          if (errors.length == 0 && inputs.useMultiSign && (inputs.multiSignAddresses === 'No Multi-Sign address configured for account' || inputs.multiSignSeeds === '')) {
-               errors.push('At least one signer address is required for multi-signing');
-          }
-
-          return errors;
-     }
-
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
           }
@@ -2537,8 +2212,8 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                message = `<code>${walletName}</code> wallet has <strong>${summaryText}</strong>.`;
 
                // Add link to view NFTs when any NFTs or offers are present
-               const link = `${this.url}account/${this.currentWallet.address}/nfts`;
-               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View NFTs on XRPL Win</a>`;
+               const link = `${this.url}account/${this.currentWallet.address}/objects`;
+               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View AMM on XRPL Win</a>`;
           }
 
           this.ui.setInfoMessage(message);
