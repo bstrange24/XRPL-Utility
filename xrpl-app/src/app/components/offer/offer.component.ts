@@ -870,7 +870,8 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
           } finally {
                this.ui.spinner = false;
                this.executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving getOrderBook in ${this.executionTime}ms`);
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving getOrderBook in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
           }
      }
 
@@ -1309,7 +1310,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
                }
 
-               this.ui.updateSpinnerMessage(this.ui.isSimulateEnabled ? 'Simulating Create Offer (no changes will be made)...' : 'Submitting Create Offer to Ledger...');
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create Offer (no changes will be made)...' : 'Submitting Create Offer to Ledger...', 200);
 
                this.ui.setPaymentTx(offerCreateTx);
                this.updatePaymentTx();
@@ -1535,7 +1536,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                          }
                          console.log(`signed:`, signedTx);
 
-                         this.ui.updateSpinnerMessage('Submitting transaction to the Ledger...');
+                         this.ui.showSpinnerWithDelay('Submitting transaction to the Ledger...', 200);
                          const response = await client.submitAndWait(signedTx.tx_blob);
                          console.log(`Response:`, response);
 
@@ -2087,7 +2088,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                this.phnixExchangeXrp = totalPay.toFixed(8);
                this.insufficientLiquidityWarning = remainingReceive.gt(0);
           } catch (error: any) {
-               console.error('Error in updateTokenBalanceAndExchange:', error);
+               console.error('Error in updateTokenBalanceAndExchangeReverse:', error);
                this.ui.setError(`ERROR: ${error.message || 'Unknown error'}`);
                this.phnixBalance = '0';
                this.phnixExchangeXrp = 'Error';
@@ -2095,7 +2096,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
           } finally {
                this.ui.spinner = false;
                let executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving updateTokenBalanceAndExchange in ${executionTime}ms`);
+               console.log(`Leaving updateTokenBalanceAndExchangeReverse in ${executionTime}ms`);
           }
      }
      async updateTokenBalanceAndExchange() {
@@ -2863,6 +2864,12 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
           }
      }
 
+     setSlippage(slippage: number) {
+          this.slippage = slippage;
+          // this.updateTokenBalanceAndExchange(); // Recalculate exchange with new slippage
+          this.cdr.detectChanges();
+     }
+
      private updateInfoMessage() {
           const walletName = this.currentWallet.name || 'selected';
 
@@ -2909,12 +2916,6 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
           }
 
           this.ui.setInfoMessage(message);
-     }
-
-     setSlippage(slippage: number) {
-          this.slippage = slippage;
-          // this.updateTokenBalanceAndExchange(); // Recalculate exchange with new slippage
-          this.cdr.detectChanges();
      }
 
      async onWeWantCurrencyChange() {
