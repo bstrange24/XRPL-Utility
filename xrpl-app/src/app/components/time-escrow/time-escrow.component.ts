@@ -1493,9 +1493,9 @@ export class CreateTimeEscrowComponent implements OnInit, AfterViewInit {
                const mptCount = this.exsitingMpt?.length || 0; // fix typo: exsitingMpt → exsMpt
 
                const items: string[] = [];
-               if (escrowCount > 0) items.push(`${escrowCount} escrow${escrowCount > 1 ? 's' : ''}`);
-               if (iouCount > 0) items.push(`${iouCount} IOU${iouCount > 1 ? 's' : ''}`);
-               if (mptCount > 0) items.push(`${mptCount} MPT${mptCount > 1 ? 's' : ''}`);
+               if (escrowCount > 0) items.push(`<strong>${escrowCount}</strong> escrow${escrowCount > 1 ? 's' : ''}`);
+               if (iouCount > 0) items.push(`<strong>${iouCount}</strong> IOU${iouCount > 1 ? 's' : ''}`);
+               if (mptCount > 0) items.push(`<strong>${mptCount}</strong> MPT${mptCount > 1 ? 's' : ''}`);
 
                if (items.length === 0) {
                     message = `<code>${walletName}</code> wallet has no escrows, IOUs or MPTs yet.`;

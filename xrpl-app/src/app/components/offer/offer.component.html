@@ -112,130 +112,66 @@
                </div>
                }
 
-               <!-- Existing NFTs on selected account -->
-               <!-- @if (existingNfts.length > 0) {
-               <div class="outstanding-checks-panel">
-                    <div class="panel-header" (click)="toggleExistingNfts()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing NFTs ({{ existingNfts.length }})
-                         </h3>
-                    </div>
-
-                    <div class="checks-list-container" [style.max-height]="existingNftsCollapsed ? '0': (existingNfts.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         @if (!existingNftsCollapsed) {
-                         <div class="checks-list">
-                              @for (chk of existingNfts; track chk.NFTokenID) {
-                              <div class="check-card">
-                                   <div class="check-extras">
-                                        @if (chk.LedgerEntryType) {
-                                        <span class="badge badge-expire"> LedgerEntryType: {{ chk.LedgerEntryType }} </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> LedgerEntryType: Not set </span>
-                                        } @if (chk.NFTokenID) {
-                                        <span class="badge badge-expire"> NFTokenID: {{ chk.NFTokenID }} </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> NFTokenID: Not set </span>
-                                        } @if (chk.Flags !== undefined && chk.Flags !== 0) {
-                                        <span class="badge badge-expire">
-                                             Flags: @for (f of decodeNftFlags(chk.Flags); track f) {
-                                             <span class="flag-item">{{ f }}</span>
-                                             }
-                                             <span class="flag-original">({{ chk.Flags }})</span>
-                                        </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> Flags: Not set </span>
-                                        }
-
-                                        <div class="line-break"></div>
-
-                                        @if (chk.URI) {
-                                        <span class="badge badge-tag"> URI: {{ chk.URI }} </span>
-                                        } @else {
-                                        <span class="badge badge-tag-not-set"> URI: Not set </span>
-                                        }
-                                   </div>
-
-                                   <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyNFTokenID(chk.NFTokenID); $event.stopPropagation(); $event.preventDefault()" title="Copy NFT Token ID" type="button">
-                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}account/` + currentWallet.address + `/nfts`" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
-                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
-                                             </a>
-                                        </button>
-                                   </div>
-                              </div>
-                              }
-                         </div>
-                         }
-                    </div>
-               </div>
-               } -->
-
-               <!-- Existing Sell offers on selected account -->
+               <!-- Existing offers on selected account -->
                @if (existingOffers.length > 0) {
                <div class="outstanding-checks-panel">
-                    <div class="panel-header" (click)="toggleExistingSellOffers()" style="cursor: pointer; user-select: none">
+                    <div class="panel-header" (click)="toggleExistingOffers()" style="cursor: pointer; user-select: none">
                          <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
                               <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing Sell Offers ({{ existingOffers.length }})
+                              Existing Offers ({{ existingOffers.length }})
                          </h3>
                     </div>
 
-                    <div class="checks-list-container" [style.max-height]="existingSellOffersCollapsed ? '0': (existingOffers.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         @if (!existingSellOffersCollapsed) {
+                    <div class="credential-list-container" [class.collapsed]="displayExistingOffers">
+                         @if (!displayExistingOffers) {
                          <div class="checks-list">
-                              @for (offer of existingOffers; track offer.OfferIndex) {
+                              @for (offer of existingOffers; track offer.Sequence){
                               <div class="check-card">
                                    <div class="check-extras">
                                         @if (offer.LedgerEntryType) {
-                                        <span class="badge badge-expire"> LedgerEntryType: {{ offer.LedgerEntryType }} </span>
+                                        <span class="badge badge-invoice">LedgerEntryType: {{ offer.LedgerEntryType }}</span>
                                         } @else {
-                                        <span class="badge badge-expire-not-set"> LedgerEntryType: Not set </span>
-                                        } @if (offer.NFTokenID) {
-                                        <span class="badge badge-expire"> NFTokenID: {{ offer.NFTokenID }} </span>
+                                        <span class="badge badge-tag-not-set">LedgerEntryType: Not set</span>
+                                        } @if (offer.Account) {
+                                        <span class="badge badge-address">Account: {{ offer.Account }}</span>
                                         } @else {
-                                        <span class="badge badge-expire-not-set"> NFTokenID: Not set </span>
+                                        <span class="badge badge-address-not-set">Account: Not set</span>
                                         } @if (offer.Flags !== undefined && offer.Flags !== 0) {
-                                        <!-- <span class="badge badge-expire">
+                                        <span class="badge badge-expire">
                                              Flags: @for (f of decodeOfferFlags(offer.Flags); track f) {
                                              <span>{{ f }}</span>
                                              }
                                              <span class="flag-original"> ({{ offer.Flags }})</span>
-                                        </span> -->
+                                        </span>
                                         } @else {
-                                        <span class="badge badge-expire-not-set"> Flags: Not set </span>
+                                        <span class="badge badge-expire-not-set">Flags: Not set</span>
                                         }
 
                                         <div class="line-break"></div>
 
-                                        @if (offer.IsSellOffer) {
-                                        <span class="badge badge-tag"> Is Sell Offer: {{ offer.IsSellOffer }} </span>
+                                        @if (offer.TakerGets) {
+                                        <span class="badge badge-uri">TakerGets: {{ offer.TakerGets }}</span>
                                         } @else {
-                                        <span class="badge badge-tag-not-set"> Is Sell Offer: Not set </span>
-                                        } @if (offer.OfferIndex) {
-                                        <span class="badge badge-tag"> Offer Index: {{ offer.OfferIndex }} </span>
+                                        <span class="badge badge-uri-not-set">TakerGets: Not set</span>
+                                        } @if (offer.TakerPays) {
+                                        <span class="badge badge-uri">TakerPays: {{ offer.TakerPays }}</span>
                                         } @else {
-                                        <span class="badge badge-tag-not-set"> Offer Index: Not set </span>
-                                        } @if (offer.AmountXRP) {
-                                        <span class="badge badge-tag"> Amount: {{ offer.AmountXRP }} XRP</span>
+                                        <span class="badge badge-uri-not-set"> TakerPays: Not set</span>
+                                        } @if (offer.TxHash) {
+                                        <span class="badge badge-credential-index">Hash: {{ offer.TxHash }}</span>
                                         } @else {
-                                        <span class="badge badge-tag-not-set"> XRP Amount: Not set </span>
-                                        } @if (offer.Owner) {
-                                        <span class="badge badge-tag"> Owner: {{ offer.Owner }}</span>
-                                        } @else {
-                                        <span class="badge badge-tag-not-set"> Owner: Not set </span>
+                                        <span class="badge badge-credential-index-not-set">Hash: Not set</span>
                                         }
                                    </div>
 
-                                   <!-- <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyNFTokenID(offer.NFTokenID); $event.stopPropagation(); $event.preventDefault()" title="Copy NFT Token ID" type="button">
+                                   <div class="button-group">
+                                        <button class="icon-btn copy-check-id" (click)="copyOfferHash(offer.TxHash); $event.stopPropagation(); $event.preventDefault()" title="Copy NFT Token ID" type="button">
                                              <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}account/` + currentWallet.address + `/nfts`" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
+                                             <a [href]="`${url}entry/` + offer.TxHash" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
                                                   <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
                                              </a>
                                         </button>
-                                   </div> -->
+                                   </div>
                               </div>
                               }
                          </div>
@@ -287,7 +223,6 @@
                                              <label>Issuer</label>
                                              <select [(ngModel)]="weWantIssuerField" (ngModelChange)="onWeWantIssuerChange()" name="weWantIssuerField">
                                                   @for (iss of (weWantIssuers$ | async); track iss.address; let i = $index) {
-                                                  <!-- <option [value]="iss.address">{{ iss.name }} ({{ iss.address | slice:0:10 }}...)</option> -->
                                                   <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
                                                   }
                                              </select>
@@ -296,7 +231,6 @@
                                              <label>Issuer</label>
                                              <select [(ngModel)]="weSpendIssuerField" (ngModelChange)="onWeSpendIssuerChange()" name="weSpendIssuerField">
                                                   @for (iss of (weSpendIssuers$ | async); track iss.address; let i = $index) {
-                                                  <!-- <option [value]="iss.address">{{ iss.name }} ({{ iss.address | slice:0:10 }}...)</option> -->
                                                   <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
                                                   }
                                              </select>
@@ -307,11 +241,13 @@
                                         <!-- Amount -->
                                         <div class="form-group">
                                              <label>Amount</label>
-                                             <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" (ngModelChange)="onWeWantAmountChange()" placeholder="e.g. 10.5" />
+                                             <!-- <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" (ngModelChange)="onWeWantAmountChange()" placeholder="e.g. 10.5" /> -->
+                                             <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" placeholder="e.g. 10.5" />
                                         </div>
                                         <div class="form-group">
                                              <label>Amount</label>
-                                             <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" (ngModelChange)="onWeSpendAmountChange()" placeholder="e.g. 10.5" />
+                                             <!-- <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" (ngModelChange)="onWeSpendAmountChange()" placeholder="e.g. 10.5" /> -->
+                                             <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" placeholder="e.g. 10.5" />
                                         </div>
                                    </div>
 
@@ -328,9 +264,9 @@
                                    </div>
 
                                    <!-- Flags header -->
-                                   <div class="token-flags-header">
+                                   <div class="token-flags-header" style="margin-top: 0.8em; margin-bottom: 0.5em">
                                         <lucide-icon name="flag" size="20"></lucide-icon>
-                                        <span class="token-flags-title">Account Flags</span>
+                                        <span class="token-flags-title">Offer Flags</span>
                                    </div>
 
                                    <div class="form-row-account-flags">
@@ -359,31 +295,59 @@
                                    }
 
                                    <!-- Cancel offer -->
-                                   <!-- @if (activeTab === 'cancelOffer') {
+                                   @if (activeTab === 'cancelOffer') {
+                                   <!-- <div class="form-row">
+                                        <div class="form-group" style="margin-bottom: 1em">
+                                             <label>Offer Sequence</label>
+                                             <input type="text" [(ngModel)]="offerSequenceField" name="offerSequenceField" />
+                                        </div>
+                                   </div> -->
+
+                                   <!-- Cancellable checks dropdown -->
+                                   @if (existingOffers.length > 0) {
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label for="offerSequenceField">Offer Sequence</label>
-                                             <input type="text" id="offerSequenceField" placeholder="Comma seperated list of sequence numbers" [(ngModel)]="offerSequenceField" name="offerSequenceField" />
-                                             @if (existingNfts.length > 0) {
-                                             <label for="nftSelect">NFT Token ID</label>
-                                             <div>
-                                                  <select id="nftSelect" name="nftSelect" [(ngModel)]="selectedNft" (ngModelChange)="onSelectNft($event)">
-                                                       <option [ngValue]="null">Select an NFT Token ID to cancel</option>
-
-                                                       @for (nft of existingNfts; track nft.NFTokenID) {
-                                                       <option [ngValue]="nft.NFTokenID">{{ nft.NFTokenID | slice:0:20 }}... ({{ nft.URI ?? 'No URI' }})</option>
-                                                       }
-                                                  </select>
-                                             </div>
-                                             }
+                                             <label>Offer Sequence</label>
+                                             <input type="text" [(ngModel)]="offerSequenceField" name="offerSequenceField" (input)="ui.clearWarning()" />
                                         </div>
                                    </div>
-                                   } -->
+
+                                   <div class="ticket-fields-to-delete">
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <div class="toggle-row">
+                                                       <span class="toggle-label">Multiple Offer Selection</span>
+                                                       <label class="switch" style="display: contents">
+                                                            <input type="checkbox" [(ngModel)]="multiSelectMode" [ngModelOptions]="{standalone: true}" (ngModelChange)="clearCancelOfferSequence()" />
+                                                            <span class="slider"></span>
+                                                       </label>
+                                                  </div>
+
+                                                  <div class="ticket-dropdown">
+                                                       @if (multiSelectMode) {
+                                                       <select [(ngModel)]="selectedTickets" size="10" multiple (ngModelChange)="updateDeleteTicketSequence()" [ngModelOptions]="{standalone: true}">
+                                                            @for (ticket of offersArray; track ticket) {
+                                                            <option [value]="ticket">{{ ticket }}</option>
+                                                            }
+                                                       </select>
+                                                       } @else {
+                                                       <select [(ngModel)]="selectedSingleTicket" (ngModelChange)="updateDeleteTicketSequence()" [ngModelOptions]="{standalone: true}">
+                                                            <option value="" disabled>Select an offer</option>
+                                                            @for (ticket of offersArray; track ticket) {
+                                                            <option [value]="ticket">{{ ticket }}</option>
+                                                            }
+                                                       </select>
+                                                       }
+                                                  </div>
+                                             </div>
+                                        </div>
+                                   </div>
+                                   } }
                               </div>
                          </div>
 
                          <!-- Switches -->
-                         <div class="switch-group">
+                         <div class="switch-group" style="margin-top: 0.9em">
                               <!-- Memo group -->
                               <label class="switch">
                                    <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
@@ -525,7 +489,7 @@
                                    <span>{{ui.successMessage}}</span><br /><br />
                                    <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
                                    } @else {
-                                   <span>{{ui.successMessage}}</span>
+                                   <span>{{ui.successMessage}}</span><br /><br />
                                    }
 
                                    <!-- Multiple Hashes -->

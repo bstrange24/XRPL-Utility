@@ -1468,7 +1468,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           const tabDescriptions: Record<string, string> = {
                setTrustline: 'trustline that can be set',
                removeTrustline: 'trustline that can be removed',
-               issueCurrency: 'trustline that can be used to issue currency',
+               issueCurrency: 'trustline that can be used to issue currencies',
                clawbackTokens: 'trustline that supports clawback',
           };
 
@@ -1480,7 +1480,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           let message: string;
 
           if (count === 0) {
-               message = `<code>${walletName}</code> wallet has no ${description}s.`;
+               message = `<code>${walletName}</code> wallet has no ${description}.`;
           } else {
                const trustlineWord = count === 1 ? 'trustline' : 'trustlines';
                message = `<code>${walletName}</code> wallet has <strong>${count}</strong> ${trustlineWord}${description.includes('trustline') ? '' : ` ${description}`}.`;

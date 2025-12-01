@@ -20,7 +20,7 @@
                <div class="menu-bar">
                     <button class="menu-btn" [class.active]="activeTab === 'createAMM'" (click)="setTab('createAMM')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Create AMM Pool
+                         Create AMM
                     </button>
                     <button class="menu-btn" [class.active]="activeTab === 'depositToAMM'" (click)="setTab('depositToAMM')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
@@ -150,66 +150,6 @@
                </div>
                }
 
-               <!-- Existing NFTs on selected account -->
-               <!-- @if (existingNfts.length > 0) {
-               <div class="outstanding-checks-panel">
-                    <div class="panel-header" (click)="toggleExistingNfts()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing NFTs ({{ existingNfts.length }})
-                         </h3>
-                    </div>
-
-                    <div class="checks-list-container" [style.max-height]="existingNftsCollapsed ? '0': (existingNfts.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         @if (!existingNftsCollapsed) {
-                         <div class="checks-list">
-                              @for (chk of existingNfts; track chk.NFTokenID) {
-                              <div class="check-card">
-                                   <div class="check-extras">
-                                        @if (chk.LedgerEntryType) {
-                                        <span class="badge badge-expire"> LedgerEntryType: {{ chk.LedgerEntryType }} </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> LedgerEntryType: Not set </span>
-                                        } @if (chk.NFTokenID) {
-                                        <span class="badge badge-expire"> NFTokenID: {{ chk.NFTokenID }} </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> NFTokenID: Not set </span>
-                                        } @if (chk.Flags !== undefined && chk.Flags !== 0) {
-                                        <span class="badge badge-expire">
-                                             Flags: @for (f of decodeNftFlags(chk.Flags); track f) {
-                                             <span class="flag-item">{{ f }}</span>
-                                             }
-                                             <span class="flag-original">({{ chk.Flags }})</span>
-                                        </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> Flags: Not set </span>
-                                        }
-
-                                        <div class="line-break"></div>
-
-                                        @if (chk.URI) {
-                                        <span class="badge badge-tag"> URI: {{ chk.URI }} </span>
-                                        } @else {
-                                        <span class="badge badge-tag-not-set"> URI: Not set </span>
-                                        }
-                                   </div>
-
-                                   <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyNFTokenID(chk.NFTokenID); $event.stopPropagation(); $event.preventDefault()" title="Copy NFT Token ID" type="button">
-                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}account/` + currentWallet.address + `/nfts`" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
-                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
-                                             </a>
-                                        </button>
-                                   </div>
-                              </div>
-                              }
-                         </div>
-                         }
-                    </div>
-               </div>
-               } -->
-
                <!-- Existing Sell offers on selected account -->
                @if (existingOffers.length > 0) {
                <div class="outstanding-checks-panel">
@@ -288,7 +228,7 @@
                               <!-- ==================== LEFT: FORM FIELDS ==================== -->
                               <div class="tab-content-container form-fields-container">
                                    <!-- Get Offers -->
-                                   @if(activeTab === 'createAMM' || activeTab === 'depositToAMM') {
+                                   @if(activeTab === 'createAMM' || activeTab === 'depositToAMM' || activeTab === 'withdrawlTokenFromAMM' || activeTab === 'clawbackFromAMM' || activeTab === 'swapViaAMM' || activeTab === 'deleteAMM') {
                                    <div class="form-row">
                                         <!-- Info -->
                                         <div class="form-group">
@@ -343,11 +283,13 @@
                                         <!-- Amount -->
                                         <div class="form-group">
                                              <label>Amount</label>
-                                             <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" (ngModelChange)="onWeWantAmountChange()" placeholder="e.g. 10.5" />
+                                             <!-- <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" (ngModelChange)="onWeWantAmountChange()" placeholder="e.g. 10.5" /> -->
+                                             <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" placeholder="e.g. 10.5" />
                                         </div>
                                         <div class="form-group">
                                              <label>Amount</label>
-                                             <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" (ngModelChange)="onWeSpendAmountChange()" placeholder="e.g. 10.5" />
+                                             <!-- <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" (ngModelChange)="onWeSpendAmountChange()" placeholder="e.g. 10.5" /> -->
+                                             <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" placeholder="e.g. 10.5" />
                                         </div>
                                    </div>
 
@@ -375,88 +317,154 @@
                                         </div>
                                    </div>
 
-                                   @if(activeTab === 'createAMM') {
+                                   <!-- LP Token Balance for create and clawback -->
+                                   @if(activeTab === 'createAMM' || activeTab === 'clawbackFromAMM') {
                                    <div class="form-row">
-                                        <!-- Currency Balance -->
+                                        <!-- Trading Fee -->
+                                        @if(activeTab === 'createAMM') {
                                         <div class="form-group">
                                              <label>Trading Fee</label>
                                              <input type="text" [(ngModel)]="tradingFeeField" name="tradingFeeField" placeholder="e.g. 500 is 0.05%" />
                                         </div>
-                                        <div class="form-group">
-                                             <label>Destination Tag</label>
-                                             <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" placeholder="" />
-                                        </div>
-                                   </div>
+                                        }
 
-                                   <div class="form-row">
                                         <div class="form-group">
                                              <label>LP Token Balance</label>
-                                             <input type="text" [(ngModel)]="lpTokenBalanceField" name="lpTokenBalanceField" placeholder="" />
+                                             <input type="text" [value]="(lpTokenBalance$ | async) ?? '0'" readonly name="lpTokenBalanceField" />
+                                             <!-- <input type="text" [(ngModel)]="lpTokenBalanceField" name="lpTokenBalanceField" placeholder="" /> -->
                                         </div>
+
+                                        <!-- Clawback holder -->
+                                        @if(activeTab === 'clawbackFromAMM') {
+                                        <div class="form-group">
+                                             <label>Holder</label>
+                                             <input type="text" [(ngModel)]="holderField" name="holderField" placeholder="" />
+                                        </div>
+                                        }
+                                   </div>
+                                   }
+
+                                   <!-- LP Token Balance -->
+                                   @if(activeTab === 'depositToAMM' || activeTab === 'withdrawlTokenFromAMM') {
+                                   <div class="form-row">
+                                        <!-- Deposit Token -->
+                                        @if(activeTab === 'depositToAMM' || activeTab === 'withdrawlTokenFromAMM') {
+                                        <div class="form-group">
+                                             <label>LP Token Balance</label>
+                                             <input type="text" [value]="(lpTokenBalance$ | async) ?? '0'" readonly name="lpTokenBalanceField" />
+                                             <!-- <input type="text" [(ngModel)]="lpTokenBalanceField" name="lpTokenBalanceField" placeholder="" /> -->
+                                        </div>
+                                        }
+                                        <!-- withdrawl Token -->
+                                        @if(activeTab === 'withdrawlTokenFromAMM') {
                                         <div class="form-group">
                                              <label>Withdrawl LP Token</label>
                                              <input type="text" [(ngModel)]="withdrawlLpTokenFromPoolField" name="withdrawlLpTokenFromPoolField" placeholder="" />
                                         </div>
+                                        }
+                                   </div>
+
+                                   }}
+
+                                   <!-- Swap -->
+                                   @if(activeTab === 'swapViaAMM') {
+                                   <!-- Destination + Tag -->
+                                   <div class="form-row">
                                         <div class="form-group">
-                                             <label>Holder</label>
-                                             <input type="text" [(ngModel)]="holderField" name="holderField" placeholder="" />
+                                             <label>Destination</label>
+
+                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
+                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
+
+                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
+                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                                                  </button>
+                                             </div>
+                                        </div>
+
+                                        <!-- Dropdown template -->
+                                        <ng-template #dropdownTemplate>
+                                             <div class="combobox-dropdown-overlay">
+                                                  @for (dest of filteredDestinations; track trackByAddress($index, dest)) {
+                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
+                                                       <div class="item-name">
+                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
+                                                            <span class="self-badge">Current Account</span>
+                                                            }
+                                                       </div>
+                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
+                                                  </div>
+                                                  } @empty {
+                                                  <div class="combobox-empty">No matching addresses</div>
+                                                  }
+                                             </div>
+                                        </ng-template>
+                                        <div class="form-group">
+                                             <label>Destination Tag</label>
+                                             <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
                                         </div>
                                    </div>
 
                                    }
 
-                                   <!-- AMM Flags header -->
+                                   <!-- AMM Options -->
+                                   @if(activeTab === 'depositToAMM' || activeTab === 'withdrawlTokenFromAMM') {
+                                   <!-- Deposit to AMM Options -->
                                    @if(activeTab === 'depositToAMM') {
-                                   <div class="token-flags-header">
-                                        <lucide-icon name="flag" size="20"></lucide-icon>
-                                        <span class="token-flags-title">AMM Flags</span>
+                                   <div style="margin-top: 0.8em; padding: 0px">
+                                        <tr>
+                                             <td style="padding: 0px">
+                                                  <span class="tooltip" tooltip-data="Select deposit option(s) for the AMM pool">
+                                                       <label>Deposit Option(s)</label>
+                                                  </span>
+                                             </td>
+                                             <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                                  <span class="tooltip" tooltip-data="Deposit currency into both pools.">
+                                                       <input type="checkbox" id="isDepositIntoBothPools" [checked]="depositOptions.bothPools" (change)="selectDepositOption('bothPools')" />
+                                                       <label for="isDepositIntoBothPools">Both Pools</label>
+                                                  </span>
+
+                                                  <span class="tooltip" tooltip-data="Deposit currency into the first pool only.">
+                                                       <input type="checkbox" id="isDepositIntoFirstPoolOnly" [checked]="depositOptions.firstPoolOnly" (change)="selectDepositOption('firstPoolOnly')" />
+                                                       <label for="isDepositIntoFirstPoolOnly">First Pool Only</label>
+                                                  </span>
+
+                                                  <span class="tooltip" tooltip-data="Deposit currency into the second pool only.">
+                                                       <input type="checkbox" id="isDepositIntoSecondPoolOnly" [checked]="depositOptions.secondPoolOnly" (change)="selectDepositOption('secondPoolOnly')" />
+                                                       <label for="isDepositIntoSecondPoolOnly">Second Pool Only</label>
+                                                  </span>
+                                             </td>
+                                        </tr>
                                    </div>
+                                   }
+                                   <!-- Withdrawl from AMM Options -->
+                                   @else if (activeTab === 'withdrawlTokenFromAMM') {
+                                   <div style="margin-top: 0.8em">
+                                        <tr>
+                                             <td style="padding: 0px">
+                                                  <span class="tooltip" tooltip-data="Select withdrawal option(s) for the AMM pool">
+                                                       <label>Withdrawal Options</label>
+                                                  </span>
+                                             </td>
+                                             <td style="display: flex; gap: 10px; flex-wrap: wrap">
+                                                  <span class="tooltip" tooltip-data="Withdraw currency from both pools.">
+                                                       <input type="checkbox" id="isWithdrawFromBothPools" [checked]="withdrawOptions.bothPools" (change)="selectWithdrawOption('bothPools')" />
+                                                       <label for="isWithdrawFromBothPools">Both Pools</label>
+                                                  </span>
 
-                                   <div class="form-row-account-flags">
-                                        @for (flag of offerFlagsConfig; track flag.key) {
-                                        <div class="flag-item-account-flags" [class.enabled]="flags[flag.key]" (click)="toggleFlag(flag.key)">
-                                             <div class="flag-header-account">
-                                                  <input type="checkbox" [id]="flag.key" [name]="flag.key" [checked]="flags[flag.key]" class="flag-checkbox" />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title-account-flags">{{ flag.title }}</span>
-                                             </div>
+                                                  <span class="tooltip" tooltip-data="Withdraw currency from the first pool only.">
+                                                       <input type="checkbox" id="isWithdrawFromFirstPoolOnly" [checked]="withdrawOptions.firstPoolOnly" (change)="selectWithdrawOption('firstPoolOnly')" />
+                                                       <label for="isWithdrawFromFirstPoolOnly">First Pool Only</label>
+                                                  </span>
 
-                                             <div class="flag-value">{{ FLAG_VALUES[flag.key] }} {{ flag.key }}</div>
-                                             <div class="flag-desc">{{ flag.desc }}</div>
-                                        </div>
-                                        }
-                                        <div class="flag-item-account-flags">
-                                             <div class="flags-total">
-                                                  <span class="total-label">Total Flags Value:</span>
-                                                  <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
-                                             </div>
-                                        </div>
+                                                  <span class="tooltip" tooltip-data="Withdraw currency from the second pool only.">
+                                                       <input type="checkbox" id="isWithdrawFromSecondPoolOnly" [checked]="withdrawOptions.secondPoolOnly" (change)="selectWithdrawOption('secondPoolOnly')" />
+                                                       <label for="isWithdrawFromSecondPoolOnly">Second Pool Only</label>
+                                                  </span>
+                                             </td>
+                                        </tr>
                                    </div>
                                    } }
-
-                                   <!-- Cancel offer -->
-                                   <!-- @if (activeTab === 'cancelOffer') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="offerSequenceField">Offer Sequence</label>
-                                             <input type="text" id="offerSequenceField" placeholder="Comma seperated list of sequence numbers" [(ngModel)]="offerSequenceField" name="offerSequenceField" />
-                                             @if (existingNfts.length > 0) {
-                                             <label for="nftSelect">NFT Token ID</label>
-                                             <div>
-                                                  <select id="nftSelect" name="nftSelect" [(ngModel)]="selectedNft" (ngModelChange)="onSelectNft($event)">
-                                                       <option [ngValue]="null">Select an NFT Token ID to cancel</option>
-
-                                                       @for (nft of existingNfts; track nft.NFTokenID) {
-                                                       <option [ngValue]="nft.NFTokenID">{{ nft.NFTokenID | slice:0:20 }}... ({{ nft.URI ?? 'No URI' }})</option>
-                                                       }
-                                                  </select>
-                                             </div>
-                                             }
-                                        </div>
-                                   </div>
-                                   } -->
                               </div>
                          </div>
 
@@ -693,53 +701,3 @@
           </div>
      </div>
 </div>
-
-<!--
-                              <tr>
-                                   <td>
-                                        <span class="tooltip" tooltip-data="Select deposit option(s) for the AMM pool">
-                                             <label>Deposit Option(s)</label>
-                                        </span>
-                                   </td>
-                                   <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                        <span class="tooltip" tooltip-data="Deposit currency into both pools.">
-                                             <input type="checkbox" id="isDepositIntoBothPools" [checked]="depositOptions.bothPools" (change)="selectDepositOption('bothPools')" />
-                                             <label for="isDepositIntoBothPools">Both Pools</label>
-                                        </span>
-
-                                        <span class="tooltip" tooltip-data="Deposit currency into the first pool only.">
-                                             <input type="checkbox" id="isDepositIntoFirstPoolOnly" [checked]="depositOptions.firstPoolOnly" (change)="selectDepositOption('firstPoolOnly')" />
-                                             <label for="isDepositIntoFirstPoolOnly">First Pool Only</label>
-                                        </span>
-
-                                        <span class="tooltip" tooltip-data="Deposit currency into the second pool only.">
-                                             <input type="checkbox" id="isDepositIntoSecondPoolOnly" [checked]="depositOptions.secondPoolOnly" (change)="selectDepositOption('secondPoolOnly')" />
-                                             <label for="isDepositIntoSecondPoolOnly">Second Pool Only</label>
-                                        </span>
-                                   </td>
-                              </tr>
-                              <tr>
-                                   <td>
-                                        <span class="tooltip" tooltip-data="Select withdrawal option(s) for the AMM pool">
-                                             <label>Withdrawal Option(s)</label>
-                                        </span>
-                                   </td>
-                                   <td style="display: flex; gap: 10px; flex-wrap: wrap">
-                                        <span class="tooltip" tooltip-data="Withdraw currency from both pools.">
-                                             <input type="checkbox" id="isWithdrawFromBothPools" [checked]="withdrawOptions.bothPools" (change)="selectWithdrawOption('bothPools')" />
-                                             <label for="isWithdrawFromBothPools">Both Pools</label>
-                                        </span>
-
-                                        <span class="tooltip" tooltip-data="Withdraw currency from the first pool only.">
-                                             <input type="checkbox" id="isWithdrawFromFirstPoolOnly" [checked]="withdrawOptions.firstPoolOnly" (change)="selectWithdrawOption('firstPoolOnly')" />
-                                             <label for="isWithdrawFromFirstPoolOnly">First Pool Only</label>
-                                        </span>
-
-                                        <span class="tooltip" tooltip-data="Withdraw currency from the second pool only.">
-                                             <input type="checkbox" id="isWithdrawFromSecondPoolOnly" [checked]="withdrawOptions.secondPoolOnly" (change)="selectWithdrawOption('secondPoolOnly')" />
-                                             <label for="isWithdrawFromSecondPoolOnly">Second Pool Only</label>
-                                        </span>
-                                   </td>
-                              </tr>
-                         </table>
-</form> -->

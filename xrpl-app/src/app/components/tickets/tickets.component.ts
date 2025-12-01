@@ -445,6 +445,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
 
                for (const ticketSeq of ticketsToDelete) {
                     const ticketExists = ticketObjects.result.account_objects.some((ticket: any) => ticket.TicketSequence === ticketSeq);
+                    let currentLedger = await this.xrplService.getLastLedgerIndex(client);
 
                     if (!ticketExists) {
                          console.warn(`Ticket ${ticketSeq} does not exist for account ${wallet.classicAddress}`);
