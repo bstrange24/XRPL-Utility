@@ -68,6 +68,20 @@ export class WalletManagerService {
           // THIS IS THE MISSING LINE THAT FIXES EVERYTHING
           this.walletsSubject.next(wallets);
           console.log('wallets$ emitted:', wallets.length, 'wallets');
+
+          // NEW: Load persisted selected index for this network
+          const selectedKey = `selectedIndex_${this.currentNetwork}`;
+          const storedIndex = this.storageService.get(selectedKey);
+          if (storedIndex !== null) {
+               const index = parseInt(storedIndex, 10);
+               if (!isNaN(index) && index >= 0 && index < wallets.length) {
+                    this.selectedIndexSource.next(index);
+               } else {
+                    this.selectedIndexSource.next(0); // Fallback to 0 if invalid
+               }
+          } else {
+               this.selectedIndexSource.next(0); // Default if none stored
+          }
      }
 
      private saveToStorage(wallets: Wallet[]): void {
@@ -158,6 +172,9 @@ export class WalletManagerService {
 
      setSelectedIndex(index: number) {
           this.selectedIndexSource.next(index);
+          // NEW: Persist the selected index to storage
+          const selectedKey = `selectedIndex_${this.currentNetwork}`;
+          this.storageService.set(selectedKey, index.toString());
      }
 
      getSelectedIndex(): number {

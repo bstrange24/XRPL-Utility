@@ -24,10 +24,7 @@ import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { Subject, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { WithImplicitCoercion } from 'buffer';
-import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
+import { debounceTime, distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 
 declare var Prism: any;
 
@@ -36,7 +33,6 @@ interface ValidationInputs {
      accountInfo?: any;
      destination?: any;
      credentialID?: any;
-     // formattedDestination?: string;
      domainId?: string;
      credentialType?: string;
      date?: string;
@@ -87,6 +83,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
      multiSelectMode: boolean = false;
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
      selectedTicket: string = '';
+     credentialSearchTerm: string = '';
 
      // Wallet state (now driven by WalletPanelComponent via service)
      currentWallet: Wallet = {} as Wallet;
@@ -158,6 +155,21 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
      tempName: string = '';
      filterQuery: string = '';
 
+     credentialSearch$ = new Subject<string>();
+     acceptableCredentialSearch$ = new Subject<string>();
+     filteredCredentials$ = this.credentialSearch$.pipe(
+          startWith(''),
+          debounceTime(150),
+          distinctUntilChanged(),
+          map(term => this.filterCredentials(term))
+     );
+     filteredAcceptableCredentials$ = this.acceptableCredentialSearch$.pipe(
+          startWith(''),
+          debounceTime(150),
+          distinctUntilChanged(),
+          map(term => this.filterAcceptableCredentials(term))
+     );
+
      constructor(
           private xrplService: XrplService,
           private utilsService: UtilsService,
@@ -194,7 +206,6 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                     const selectedWallet = wallets[selectedIndex];
                     if (selectedWallet) {
                          this.currentWallet = { ...selectedWallet };
-                         this.getCredentialsForAccount();
                     }
                }
           });
@@ -202,18 +213,14 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           // === 2. Listen to selected wallet index changes (ONLY update if address actually changes) ===
           this.walletManagerService.selectedIndex$
                .pipe(
-                    map(index => this.wallets[index]?.address),
-                    distinctUntilChanged(), // ← Prevents unnecessary emissions
-                    filter(address => !!address), // ← Ignore invalid/undefined
+                    map(index => this.wallets[index]),
+                    filter(wallet => !!wallet && !!wallet.address),
+                    distinctUntilChanged((a, b) => a?.address === b?.address),
                     takeUntil(this.destroy$)
                )
-               .subscribe(selectedAddress => {
-                    const wallet = this.wallets.find(w => w.address === selectedAddress);
-                    if (wallet && this.currentWallet.address !== wallet.address) {
-                         console.log('Wallet switched via panel →', wallet.name, wallet.address);
-                         this.currentWallet = { ...wallet };
-                         this.getCredentialsForAccount(); // Refresh UI for new wallet
-                    }
+               .subscribe(wallet => {
+                    this.currentWallet = { ...wallet };
+                    this.getCredentialsForAccount();
                });
 
           // === 3. Load custom destinations from storage ===
@@ -235,11 +242,24 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
                open ? this.openDropdownInternal() : this.closeDropdownInternal();
           });
+
+          // start the stream
+          this.credentialSearch$.next('');
+          this.acceptableCredentialSearch$.next('');
      }
 
-     onSelectCredentials(credentialId: string | null) {
-          this.selectedCredentials = credentialId;
-          this.credentialID = credentialId ?? '';
+     onSelectCredentials(credential: any | null) {
+          if (!credential) {
+               this.selectedCredentials = null;
+               this.credentialID = '';
+               this.credentialType = '';
+               return;
+          }
+
+          // Keep the search term that led to this selection!
+          this.selectedCredentials = credential; // store the whole object
+          this.credentialID = credential.index;
+          this.credentialType = credential.CredentialType || '';
      }
 
      ngAfterViewInit() {
@@ -283,8 +303,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           if (currentDest === wallet.address) {
                this.destinationField = '';
           }
-
-          this.getCredentialsForAccount();
+          // this.getCredentialsForAccount();
      }
 
      async setTab(tab: string) {
@@ -302,6 +321,27 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           this.clearFields(true);
           this.ui.clearMessages();
           this.ui.clearWarning();
+          await this.getAllCredentialsForAccount();
+     }
+
+     async getAllCredentialsForAccount() {
+          console.log('Entering getAllCredentialsForAccount');
+          const startTime = Date.now();
+
+          try {
+               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+               const [accountObjects] = await Promise.all([this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
+               this.getExistingCredentials(accountObjects, wallet.classicAddress);
+               this.getSubjectCredentials(accountObjects, wallet.classicAddress);
+          } catch (error: any) {
+               console.error('Error in getAllCredentialsForAccount:', error);
+               this.ui.setError(`${error.message || 'Unknown error'}`);
+          } finally {
+               this.ui.spinner = false;
+               this.executionTime = (Date.now() - startTime).toString();
+               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+               console.log(`Leaving getAllCredentialsForAccount in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
+          }
      }
 
      async getCredentialsForAccount() {
@@ -309,6 +349,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
           const startTime = Date.now();
           this.ui.clearMessages();
           this.ui.updateSpinnerMessage(``);
+          console.log('current wallet: ', this.currentWallet.address);
 
           try {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
@@ -731,7 +772,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                     this.updateInfoMessage();
                     this.cdr.detectChanges();
                } else {
-                    this.ui.successMessage = 'Simulated Check create successfully!';
+                    this.ui.successMessage = 'Simulated accepting credential successfully!';
                }
           } catch (error: any) {
                console.error('Error in acceptCredentials:', error);
@@ -754,7 +795,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                seed: this.currentWallet.seed,
                destination: this.credential.subject.destinationAddress,
                credentialID: this.credentialID,
-               credentialType: this.credential.credential_type,
+               credentialType: this.credentialType,
                isRegularKeyAddress: this.isRegularKeyAddress,
                useMultiSign: this.useMultiSign,
                regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
@@ -783,9 +824,9 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                // Encode credentialType as uppercase hex, if needed
                let credentialTypeHex = '';
                if (binary) {
-                    credentialTypeHex = this.credential.credential_type.toUpperCase();
+                    credentialTypeHex = this.credentialType.toUpperCase();
                } else {
-                    credentialTypeHex = xrpl.convertStringToHex(this.credential.credential_type).toUpperCase();
+                    credentialTypeHex = xrpl.convertStringToHex(this.credentialType).toUpperCase();
                     console.info(`Encoded credential_type as hex: ${credentialTypeHex}`);
                }
 
@@ -805,8 +846,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                     },
                     ledger_index: 'validated',
                };
-               console.info('Looking up credential...');
-               console.info(`Found: `, ledgerEntryRequest);
+               console.info('Looking up credential...', ledgerEntryRequest);
 
                let xrplResponse;
                try {
@@ -870,6 +910,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                }
 
                // Credential has passed all checks
+               this.updateInfoMessage();
                console.info('Credential is verified.');
                this.ui.setSuccess(this.ui.result);
                this.ui.successMessage = 'Credential is verified.';
@@ -933,9 +974,7 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
 
      private async setTxOptionalFields(client: xrpl.Client, credentialTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (txType === 'createCredential') {
-               if (this.credential.uri) {
-                    this.utilsService.setURI(credentialTx, this.credential.uri);
-               }
+               if (this.credential.uri) this.utilsService.setURI(credentialTx, this.credential.uri);
           }
 
           if (this.selectedSingleTicket) {
@@ -1090,74 +1129,122 @@ export class CreateCredentialsComponent implements OnInit, AfterViewInit {
                return;
           }
 
-          const walletName = this.currentWallet.name || 'selected';
-          const primaryCredentials = this.activeTab === 'accept' ? this.subjectCredentials ?? [] : this.existingCredentials ?? [];
-          const secondaryCredentials = this.activeTab === 'accept' ? this.existingCredentials ?? [] : this.subjectCredentials ?? [];
+          const walletName = this.currentWallet.name || 'Selected wallet';
 
-          const primaryCount = primaryCredentials.length;
-          const secondaryCount = secondaryCredentials.length;
+          // Always filter strictly by role
+          const issuedByMe = this.existingCredentials ?? []; // Issuer === me
+          const issuedToMe = this.subjectCredentials ?? []; // Subject === me
 
-          if (primaryCount === 0 && secondaryCount === 0) {
-               this.ui.setInfoMessage(`<code>${walletName}</code> wallet has no credentials.`);
-               return;
-          }
+          let relevantCredentials: any[] = [];
+          let message = '';
 
-          let messageParts: string[] = [];
-
-          // Primary credentials information
-          if (primaryCount > 0) {
-               const primaryDescription = this.getPrimaryDescription(primaryCount);
-               messageParts.push(`${primaryCount} ${primaryDescription}`);
-          }
-
-          // Secondary credentials information
-          if (secondaryCount > 0) {
-               const secondaryDescription = this.activeTab === 'accept' ? 'credential(s) issued by this wallet' : 'credential(s) addressed to this wallet';
-               messageParts.push(`${secondaryCount} ${secondaryDescription}`);
-          }
-
-          let message: string;
-          if (messageParts.length === 0) {
-               message = `<code>${walletName}</code> wallet has no credentials.`;
-          } else {
-               message = `<code>${walletName}</code> wallet has the following credentials:`;
-               message += '<ul>';
-               messageParts.forEach(part => {
-                    message += `<li>${part}</li>`;
-               });
-               message += '</ul>';
-          }
-
-          // Add credential links if any credentials exist
-          if (primaryCount > 0 || secondaryCount > 0) {
-               const allCredentials = [...primaryCredentials, ...secondaryCredentials];
-               if (allCredentials.length > 0) {
-                    message += '<br>Available credentials:<ul>';
-                    for (const credential of allCredentials) {
-                         const shortIndex = `${credential.index.slice(0, 8)}...${credential.index.slice(-8)}`;
-                         const link = `${this.url}entry/${credential.index}`;
-                         message += `<li><a href="${link}" target="_blank" class="xrpl-win-link">View Credential (ID: ${shortIndex})</a></li>`;
+          switch (this.activeTab) {
+               case 'create':
+                    relevantCredentials = issuedByMe;
+                    if (relevantCredentials.length === 0) {
+                         message = `<code>${walletName}</code> has not issued any credentials yet.`;
+                    } else {
+                         message = `<code>${walletName}</code> has issued <strong>${relevantCredentials.length}</strong> credential(s):`;
                     }
-                    message += '</ul>';
+                    break;
+
+               case 'accept':
+                    relevantCredentials = issuedToMe;
+                    if (relevantCredentials.length === 0) {
+                         message = `<code>${walletName}</code> has no pending credentials to accept.`;
+                    } else {
+                         message = `<code>${walletName}</code> has <strong>${relevantCredentials.length}</strong> credential(s) to accept:`;
+                    }
+                    break;
+
+               case 'delete':
+                    relevantCredentials = issuedByMe;
+                    if (relevantCredentials.length === 0) {
+                         message = `<code>${walletName}</code> has no credentials to delete.`;
+                    } else {
+                         message = `<code>${walletName}</code> has <strong>${relevantCredentials.length}</strong> credential(s) that can be deleted:`;
+                    }
+                    break;
+
+               case 'verify':
+                    relevantCredentials = [...issuedToMe, ...issuedByMe];
+                    const total = relevantCredentials.length;
+                    if (total === 0) {
+                         message = `<code>${walletName}</code> is not involved in any credentials.`;
+                    } else {
+                         const toMe = issuedToMe.length;
+                         const byMe = issuedByMe.length;
+                         if (toMe && byMe) {
+                              message = `<code>${walletName}</code> is involved in <strong>${total}</strong> credential(s):<br>` + `• ${toMe} issued to this wallet<br>• ${byMe} issued by this wallet`;
+                         } else if (toMe) {
+                              message = `<code>${walletName}</code> has <strong>${toMe}</strong> credential(s) issued to it:`;
+                         } else {
+                              message = `<code>${walletName}</code> has issued <strong>${byMe}</strong> credential(s):`;
+                         }
+                    }
+                    break;
+
+               default:
+                    relevantCredentials = issuedByMe;
+                    message = `<code>${walletName}</code> has issued <strong>${relevantCredentials.length}</strong> credential(s).`;
+          }
+
+          // Always append explorer links if any relevant credentials
+          if (relevantCredentials.length > 0) {
+               message += `<br><br>View Credentials on XRPL Win:<ul style="margin:8px 0; padding-left:20px; font-size:0.9em;">`;
+               relevantCredentials.slice(0, 8).forEach(cred => {
+                    const type = cred.CredentialType;
+                    let subject;
+                    let issuer;
+                    if (this.currentWallet.address === cred.Subject) {
+                         issuer = cred.Issuer ? cred.Issuer.slice(0, 8) + '...' + cred.Issuer.slice(-6) : '';
+                    } else {
+                         subject = cred.Subject ? cred.Subject.slice(0, 8) + '...' + cred.Subject.slice(-6) : '';
+                    }
+                    const shortId = cred.index.slice(0, 8) + '...' + cred.index.slice(-6);
+                    const link = `${this.url}entry/${cred.index}`;
+
+                    const subjectText = subject?.trim() ? ` Subject: (${subject.trim()})` : '';
+                    const issuerText = issuer?.trim() ? ` Issuer: (${issuer.trim()})` : '';
+                    message += `<li><a href="${link}" target="_blank" class="xrpl-win-link">${type} Index: (${shortId})${subjectText}${issuerText}</a></li>`;
+               });
+               if (relevantCredentials.length > 8) {
+                    message += `<li><em>... and ${relevantCredentials.length - 8} more</em></li>`;
                }
+               message += `</ul>`;
           }
 
           this.ui.setInfoMessage(message);
      }
 
-     private getPrimaryDescription(count: number): string {
-          switch (this.activeTab) {
-               case 'create':
-                    return count === 1 ? 'credential' : 'credentials';
-               case 'accept':
-                    return count === 1 ? 'credential that can be accepted' : 'credentials that can be accepted';
-               case 'verify':
-                    return count === 1 ? 'credential that can be verified' : 'credentials that can be verified';
-               case 'delete':
-                    return count === 1 ? 'credential that can be deleted' : 'credentials that can be deleted';
-               default:
-                    return count === 1 ? 'credential' : 'credentials';
-          }
+     formatIssuer(issuer?: string): string {
+          if (!issuer) return '';
+          return `${issuer.slice(0, 6)}...${issuer.slice(-6)}`;
+     }
+
+     private filterCredentials(term: string): any[] {
+          if (!term) return this.existingCredentials ?? [];
+
+          const lower = term.toLowerCase();
+          return (this.existingCredentials ?? []).filter((c: { CredentialType: any; Issuer: any; Subject: any; index: any }) => (c.CredentialType || '').toLowerCase().includes(lower) || (c.Issuer || '').toLowerCase().includes(lower) || (c.Subject || '').toLowerCase().includes(lower) || (c.index || '').toLowerCase().includes(lower));
+     }
+
+     private filterAcceptableCredentials(term: string): any[] {
+          if (!term) return this.subjectCredentials ?? [];
+
+          const lower = term.toLowerCase();
+          return (this.subjectCredentials ?? []).filter((c: { CredentialType: any; Issuer: any; Subject: any; index: any }) => (c.CredentialType || '').toLowerCase().includes(lower) || (c.Issuer || '').toLowerCase().includes(lower) || (c.Subject || '').toLowerCase().includes(lower) || (c.index || '').toLowerCase().includes(lower));
+     }
+
+     getCredentialColor(credential: any): string {
+          const type = credential?.CredentialType;
+
+          if (type.includes('kyc') || type.includes('KYC')) return 'green';
+          if (type.includes('member')) return '#007bff';
+          if (type.includes('compliance') || type.includes('Compliance')) return 'orange';
+          if (type.includes('admin') || type.includes('Admin')) return 'red';
+
+          return '#333';
      }
 
      formatXrplTimestamp(timestamp: number): string {

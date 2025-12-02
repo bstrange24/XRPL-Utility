@@ -75,7 +75,7 @@
                }
 
                <!-- Created DID -->
-               @if ((activeTab !== undefined) && existingDid.length > 0) {
+               @if ((activeTab !== undefined) && existingDid.length > 1000) {
                <div class="outstanding-checks-panel">
                     <!-- Header – clickable to expand/collapse -->
                     <div class="panel-header" (click)="toggleCreatedDids()" style="cursor: pointer; user-select: none">

@@ -54,8 +54,19 @@ export class WalletPanelComponent implements OnInit {
                this.wallets = curr || [];
                this.hasWallets = this.wallets.length > 0;
                this.selectedWalletIndex = Math.min(this.selectedWalletIndex, this.wallets.length - 1 || 0);
+               // this.syncSelectedIndex();
                this.updateCurrentWallet();
                this.cdr.detectChanges();
+          });
+
+          // Subscribe to selectedIndex$ to sync local state on init and changes
+          this.walletManagerService.selectedIndex$.pipe(takeUntil(this.destroy$)).subscribe(index => {
+               if (index >= 0 && index < this.wallets.length) {
+                    this.selectedWalletIndex = index;
+                    this.updateCurrentWallet();
+                    this.walletSelected.emit(this.currentWallet);
+                    this.cdr.detectChanges();
+               }
           });
      }
 

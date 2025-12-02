@@ -186,7 +186,6 @@ export class DidComponent implements OnInit, AfterViewInit {
                     const selectedWallet = wallets[selectedIndex];
                     if (selectedWallet) {
                          this.currentWallet = { ...selectedWallet };
-                         this.getDidForAccount();
                     }
                }
           });
@@ -194,18 +193,14 @@ export class DidComponent implements OnInit, AfterViewInit {
           // === 2. Listen to selected wallet index changes (ONLY update if address actually changes) ===
           this.walletManagerService.selectedIndex$
                .pipe(
-                    map(index => this.wallets[index]?.address),
-                    distinctUntilChanged(), // ← Prevents unnecessary emissions
-                    filter(address => !!address), // ← Ignore invalid/undefined
+                    map(index => this.wallets[index]),
+                    filter(wallet => !!wallet && !!wallet.address),
+                    distinctUntilChanged((a, b) => a?.address === b?.address),
                     takeUntil(this.destroy$)
                )
-               .subscribe(selectedAddress => {
-                    const wallet = this.wallets.find(w => w.address === selectedAddress);
-                    if (wallet && this.currentWallet.address !== wallet.address) {
-                         console.log('Wallet switched via panel →', wallet.name, wallet.address);
-                         this.currentWallet = { ...wallet };
-                         this.getDidForAccount(); // Refresh UI for new wallet
-                    }
+               .subscribe(wallet => {
+                    this.currentWallet = { ...wallet };
+                    this.getDidForAccount();
                });
 
           // === 3. Load custom destinations from storage ===
@@ -267,7 +262,7 @@ export class DidComponent implements OnInit, AfterViewInit {
                this.destinationField = '';
           }
 
-          this.getDidForAccount();
+          // this.getDidForAccount();
      }
 
      async setTab(tab: string) {

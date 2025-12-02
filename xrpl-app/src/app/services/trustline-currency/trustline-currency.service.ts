@@ -139,8 +139,8 @@ export class TrustlineCurrencyService {
 
           try {
                const client = await this.xrplService.getClient();
-               const wallet = await this.utils.getWalletFromAddress(this.currentWalletAddress);
-               const gatewayBalances = await this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '');
+               // const wallet = await this.utils.getWalletFromAddress(this.currentWalletAddress);
+               const gatewayBalances = await this.xrplService.getTokenBalance(client, this.currentWalletAddress, 'validated', '');
 
                this.balanceCache.set(cacheKey, { data: gatewayBalances, timestamp: Date.now() });
 
