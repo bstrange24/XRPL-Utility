@@ -562,6 +562,30 @@ export class UtilsService {
           }
      };
 
+     // Helper: safely decode hex strings
+     private decodeutf8Hex(hex: string | undefined): string {
+          if (!hex) return 'N/A';
+          try {
+               return Buffer.from(hex, 'hex').toString('utf8') || 'N/A';
+          } catch {
+               return 'Invalid Hex';
+          }
+     }
+
+     formatIssuer(issuer?: string): string {
+          if (!issuer) return '';
+          return `${issuer.slice(0, 6)}...${issuer.slice(-6)}`;
+     }
+
+     getCredentialColor(credential: any): string {
+          const type = credential?.CredentialType;
+          if (type.includes('kyc') || type.includes('KYC')) return 'green';
+          if (type.includes('member')) return '#007bff';
+          if (type.includes('compliance') || type.includes('Compliance')) return 'orange';
+          if (type.includes('admin') || type.includes('Admin')) return 'red';
+          return '#333';
+     }
+
      async getRegularKeyWallet(isMultiSign: boolean, isRegularKeyAddress: boolean, regularKeySeed: string) {
           let regularKeyWalletSignTx: any = '';
           let useRegularKeyWalletSignTx = false;

@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { ClickToCopyService } from './click-to-copy.service';
+import { XrplCacheService } from './xrpl-cache.service';
 
-describe('ClickToCopyService', () => {
-  let service: ClickToCopyService;
+describe('XrplCacheService', () => {
+  let service: XrplCacheService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(ClickToCopyService);
+    service = TestBed.inject(XrplCacheService);
   });
 
   it('should be created', () => {

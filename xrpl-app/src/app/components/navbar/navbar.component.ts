@@ -11,7 +11,6 @@ import { UtilsService } from '../../services/util-service/utils.service';
 import { debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import * as xrpl from 'xrpl';
-import { RenderUiComponentsService } from '../../services/render-ui-components/render-ui-components.service';
 
 @Injectable({ providedIn: 'root' })
 export class NetworkService {
@@ -54,7 +53,7 @@ export class NavbarComponent implements OnInit {
      connectionStatusMessage = 'Disconnected';
      private subs: Subscription[] = [];
 
-     constructor(private readonly storageService: StorageService, private readonly utilsService: UtilsService, private readonly xrplService: XrplService, private readonly router: Router, private readonly datePipe: DatePipe, private readonly renderUiComponentsService: RenderUiComponentsService, private networkService: NetworkService) {}
+     constructor(private readonly storageService: StorageService, private readonly utilsService: UtilsService, private readonly xrplService: XrplService, private readonly router: Router, private readonly datePipe: DatePipe, private networkService: NetworkService) {}
 
      ngOnInit() {
           // Initialize network
@@ -359,8 +358,6 @@ export class NavbarComponent implements OnInit {
                tempDiv.innerHTML += `\nTransaction data retrieved successfully.\n`;
 
                if (txResponse) {
-                    this.renderUiComponentsService.renderTransactionsResults(txResponse, tempDiv);
-
                     this.transactionResult.emit({
                          result: tempDiv.innerHTML,
                          isError: false,

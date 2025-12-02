@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Injectable({ providedIn: 'root' })
@@ -14,6 +14,29 @@ export class TransactionUiService {
      spinnerMessage: string = '';
      showToast: boolean = false;
      toastMessage: string = '';
+
+     txSignal = signal<any[]>([]);
+     txResultSignal = signal<any[]>([]);
+
+     setTxSignal(tx: any) {
+          this.txSignal.set(Array.isArray(tx) ? tx : [tx]);
+     }
+
+     setTxResultSignal(result: any) {
+          this.txResultSignal.set(Array.isArray(result) ? result : [result]);
+     }
+
+     addTxSignal(tx: any) {
+          this.txSignal.update(arr => [...arr, tx]);
+     }
+
+     clearTxSignal() {
+          this.txSignal.set([]);
+     }
+
+     clearTxResultSignal() {
+          this.txResultSignal.set([]);
+     }
 
      paymentTx: any[] = [];
      txResult: any[] = [];
