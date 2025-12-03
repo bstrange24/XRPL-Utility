@@ -12,7 +12,7 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div>
+          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
 
           <!-- Right form -->
           <div class="form-panel">
@@ -467,11 +467,11 @@
                          <div class="multisign-grid">
                               <div class="multisign-field">
                                    <label>Signers</label>
-                                        <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
+                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
                               </div>
                               <div class="multisign-field">
                                    <label>Seeds</label>
-                                        <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
+                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
                               </div>
                               <div class="multisign-field quorum-field">
                                    <label>Quorum</label>

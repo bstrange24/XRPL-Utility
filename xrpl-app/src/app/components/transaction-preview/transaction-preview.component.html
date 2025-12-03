@@ -1,0 +1,97 @@
+<!-- Spinner -->
+@if (txUiService.spinner) {
+<div class="spinner-row">
+     <div class="spinner"></div>
+     <span>{{ txUiService.spinnerMessage || 'Loading...' }}</span>
+</div>
+}
+
+<!-- Success message -->
+@if (txUiService.isSuccess && !txUiService.isError) {
+<div class="success-message">
+     <lucide-icon name="check" size="20"></lucide-icon>
+     <div class="success-text">
+          @if (txUiService.txHash && !txUiService.isSimulateEnabled) {
+          <span>{{txUiService.successMessage}}</span><br /><br />
+          <span>Transaction hash: <a [href]="`${url()}tx/` + txUiService.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHash }} </a></span>
+          } @else {
+          <span>{{txUiService.successMessage}}</span>
+          }
+
+          <!-- Multiple Hashes -->
+          @if (txUiService.txHashes.length > 1 && !txUiService.isSimulateEnabled) {
+          <div class="tx-hashes">
+               @for (hash of txUiService.txHashes; track hash; let i = $index) {
+               <div class="tx-hash-item">
+                    Transaction {{ i + 1 }} hash:
+                    <a [href]="url() + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
+               </div>
+               }
+          </div>
+          }
+
+          <!-- Single hash -->
+          @if (txUiService.txHashes.length === 1 && !txUiService.isSimulateEnabled) {
+          <span>Transaction hash: <a [href]="url() + 'tx/' + txUiService.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashes[0] }} </a></span>
+          }
+     </div>
+</div>
+}
+
+<!-- Error message -->
+@if (txUiService.isError && txUiService.result) {
+<div class="tx-message error">
+     <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
+     <div class="tx-text">
+          <!-- Display Tx Hash if we are not in simulation mode-->
+          @if (txUiService.txHash && !txUiService.isSimulateEnabled) {
+          <span>{{ txUiService.result }}</span><br />
+          <span>Transaction hash: <a [href]="`${url()}tx/` + txUiService.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHash }} </a></span>
+          } @else {
+          <span>{{ txUiService.result }}</span>
+          }
+     </div>
+</div>
+}
+
+<!-- Tx Preview -->
+@if (txUiService.txSignal().length > 0) {
+<div class="tx-preview-container">
+     <div class="tx-header">
+          <h5 class="tx-title">Credential Transaction</h5>
+          <div class="tx-actions">
+               <button class="copy-btn" (click)="copyUtilService.copyTxSignal()" title="Copy JSON">
+                    <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                    Copy
+               </button>
+               <button class="download-btn" (click)="downloadUtilService.downloadTxSignal()" title="Download JSON">
+                    <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+                    Download
+               </button>
+          </div>
+     </div>
+
+     <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
+</div>
+}
+
+<!-- Tx Result Preview -->
+@if (txUiService.txResultSignal().length > 0) {
+<div class="tx-preview-container">
+     <div class="tx-header">
+          <h3 class="tx-title">Transaction Result</h3>
+          <div class="tx-actions">
+               <button class="copy-btn" (click)="copyUtilService.copyTxResultSignal()" title="Copy JSON">
+                    <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                    Copy
+               </button>
+               <button class="download-btn" (click)="downloadUtilService.downloadTxResultSignal()" title="Download JSON">
+                    <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+                    Download
+               </button>
+          </div>
+     </div>
+
+     <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
+</div>
+}

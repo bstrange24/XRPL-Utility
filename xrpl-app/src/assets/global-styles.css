@@ -9,10 +9,10 @@
 }
 
 .main-container {
-     max-width: 1200px;
+     max-width: 1280px;
      margin: 0 auto;
      /* padding: 0 1rem; */
-     padding-right: 0.5rem;
+     /* padding-right: 0.5rem; */
      background-color: aliceblue;
      /* background-color: white; */
 }
@@ -98,19 +98,8 @@ input:read-only {
      margin-right: 5px;
 }
 
-/* #account1address,
-#account2address,
-#account3address,
-#accountAddress1Field,
-#accountAddress2Field,
-#accountAddress3Field,
-#accountAddressField, */
-/* #destinationField, */
 #escrowOwnerField,
 #issuerAddress,
-/* #issuerField, */
-/* #weWantIssuerField, */
-/* #weSpendIssuerField, */
 #nfTokenMinterAddress,
 #signer1AccountField,
 #signer2AccountField,
@@ -121,12 +110,8 @@ input:read-only {
 #regularKeyAccountField,
 #regularKeyAccount,
 #depositAuthAddress,
-/* #destinationFields, */
 #backupAccountField,
-#selectedWalletField,
-/* #authorizedWalletField, */
-/* #issuerFields, */
-#holderAccount {
+#selectedWalletField {
      color: #4caf50;
 }
 
@@ -488,21 +473,22 @@ input[type='text']:focus {
    TWO-COLUMN LAYOUT – GRID (no more flex shift)
    ------------------------------------------------- */
 .content-wrapper {
+     background-color: aliceblue;
+     color: black;
+     border-radius: 6px;
+     font-size: 0.9rem;
      display: flex;
-     flex-direction: column;
-     gap: 2rem;
+     gap: 1.75rem;
      padding-top: 20px;
 }
 
 /* Desktop – two columns */
 @media (min-width: 992px) {
      .content-wrapper {
-          display: grid;
+          /* display: grid; */
           grid-template-columns: 310px 1fr;
-          /* ← LEFT = 340px, RIGHT = everything else */
-          gap: 2rem;
+          gap: 1.75rem;
           align-items: stretch;
-          /* both panels same height */
      }
 
      /* No extra flex rules needed – grid does the job */
@@ -510,13 +496,7 @@ input[type='text']:focus {
      .form-panel {
           display: flex;
           flex-direction: column;
-          /* overflow: auto; */
-          /* scroll inside if needed */
      }
-
-     /* .form-panel.wide {
-          min-width: 875px;
-     } */
 }
 
 /* ==== PANELS ==== */
@@ -574,26 +554,6 @@ input[type='text']:focus {
      gap: 0.75rem;
 }
 
-.wallet-item {
-     background: aliceblue;
-     /* background-color: white; */
-     border: 1px solid #e5e7eb;
-     border-radius: 10px;
-     padding: 1rem;
-     cursor: pointer;
-     transition: all 0.2s;
-     margin-bottom: 0.75em;
-}
-
-.wallet-item:hover {
-     border-color: #6caefa;
-}
-
-.wallet-item.selected {
-     border-color: #3b82f6;
-     background: #eff6ff;
-}
-
 .wallet-card {
      display: flex;
      align-items: flex-start;
@@ -623,20 +583,13 @@ input[type='text']:focus {
      flex-direction: column;
 }
 
-.wallet-name {
-     font-weight: 600;
-     font-size: 0.95rem;
-}
-
 .wallet-balance {
-     /* font-weight: 600; */
      font-size: 0.8rem;
      color: #10b981;
      margin-top: 0.25rem;
 }
 
 .wallet-reserves {
-     /* font-weight: 200; */
      font-size: 0.8rem;
      margin-left: 0.75rem;
 }
@@ -738,12 +691,9 @@ input[type='text']:focus {
      font-weight: 600;
      font-size: 0.95rem;
      line-height: 1;
-     /* tight line height */
      margin-top: 0;
      margin-bottom: 0;
-     /* display: flex; */
      align-items: center;
-     /* color: #1a1a1a; */
 }
 
 .form-row-account-flags {
@@ -752,18 +702,11 @@ input[type='text']:focus {
      gap: 1rem;
 }
 
-/* .form-row-account-flags {
-     display: flex;
-     gap: 1rem;
-     align-items: stretch;
-} */
-
 .form-group-account-flags {
      flex: 1;
      min-width: 200px;
      display: flex;
      flex-direction: column;
-     /* allow internal layout */
 }
 
 .form-group-account-flags label {
@@ -775,7 +718,6 @@ input[type='text']:focus {
 
 .form-group-account-flags input,
 .form-group-account-flags select {
-     /* width: 100%; */
      padding: 0.5rem 0.75rem;
      border: 1px solid #cbd5e1;
      border-radius: 6px;
@@ -1270,35 +1212,6 @@ input:focus+.slider {
      font-weight: 600;
 }
 
-/* -------------------------------------------------
-   WALLET ITEM – NEW LAYOUT: Address + Balance + Icons
-   ------------------------------------------------- */
-.wallet-item {
-     display: flex;
-     align-items: flex-start;
-     gap: 0.75rem;
-     padding: 0.75rem;
-     border: 1px solid #e5e7eb;
-     border-radius: 10px;
-     cursor: pointer;
-     transition: all 0.2s;
-}
-
-/* Avatar */
-/* .wallet-avatar {
-     width: 36px;
-     height: 36px;
-     background: linear-gradient(135deg, #6366f1, #4f46e5);
-     color: white;
-     font-weight: bold;
-     font-size: 1rem;
-     border-radius: 50%;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     flex-shrink: 0;
-} */
-
 /* Info: Address + Balance */
 .wallet-info {
      display: flex;
@@ -1311,33 +1224,7 @@ input:focus+.slider {
 .address-line {
      display: flex;
      flex-direction: column;
-     padding-top: 8px;
-}
-
-.wallet-item {
-     display: flex;
-     align-items: flex-start;
-     /* gap: 0.75rem; */
-     gap: 0rem;
-     padding: 0.75rem;
-     border: 1px solid #e5e7eb;
-     border-radius: 10px;
-     cursor: pointer;
-     transition: all 0.2s;
-}
-
-.wallet-avatar {
-     width: 36px;
-     height: 36px;
-     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
-     color: white;
-     font-weight: bold;
-     font-size: 1rem;
-     border-radius: 50%;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     flex-shrink: 0;
+     /* padding-top: 8px; */
 }
 
 /* LEFT COLUMN: Address, Balance, Secret */
@@ -1362,20 +1249,6 @@ input:focus+.slider {
      letter-spacing: 0.1em;
 }
 
-.wallet-item {
-     display: flex;
-     flex-direction: column;
-     /* Stack children vertically */
-     gap: 0.5rem;
-     padding: 0.75rem;
-     border: 1px solid #e5e7eb;
-     border-radius: 10px;
-     cursor: pointer;
-     transition: all 0.2s;
-}
-
-/* Top row: avatar + (address/balance/icons) side by side */
-.wallet-item>.wallet-avatar,
 .wallet-item>.wallet-top-row {
      display: flex;
      align-items: flex-start;
@@ -1408,9 +1281,6 @@ input:focus+.slider {
      flex-shrink: 0;
 }
 
-/* -------------------------------------------------
-   MPT BANNER – EXACT MATCH
-   ------------------------------------------------- */
 .banner {
      margin: 0;
      padding: 0;
@@ -1470,24 +1340,18 @@ input:focus+.slider {
      }
 }
 
-/* -------------------------------------------------
-   MPT MENU BAR – EXACT MATCH
-   ------------------------------------------------- */
+
 /* ===== TAB MENU BAR (Create, Send, Authorize, etc.) ===== */
 .menu-bar {
      display: flex;
-     /* gap: 0.5rem; */
      border-radius: 10px;
      margin-bottom: 1.5rem;
      overflow-x: auto;
      white-space: nowrap;
      -ms-overflow-style: none;
-     /* IE/Edge */
      scrollbar-width: none;
-     /* Firefox */
 }
 
-/* Hide scrollbar in Chrome/Safari */
 .menu-bar::-webkit-scrollbar {
      display: none;
 }
@@ -1522,11 +1386,8 @@ input:focus+.slider {
 }
 
 .menu-btn.active {
-     /* background: #dbeafe; */
-     /* border-color: #93c5fd; */
      color: #1e40af;
      font-weight: 600;
-     /* box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); */
 }
 
 .menu-btn.active::after {
@@ -1832,7 +1693,7 @@ pre[class*='language-'] {
      border: 1px solid #a5d6a7;
      border-radius: 8px;
      padding: 10px 14px;
-     margin-top: 12px;
+     /* margin-top: 12px; */
      margin-bottom: 16px;
      /* padding-left: 20px; */
      /* font-weight: 500; */
@@ -1926,7 +1787,7 @@ pre[class*='language-'] {
 
 /* ---- INFO PANEL ------------------------------------------------ */
 .info-panel {
-     display: flex;
+     /* display: flex; */
      align-items: flex-start;
      gap: 0.75rem;
      background: #e0f2fe;
@@ -2284,13 +2145,12 @@ app-root {
      color: #9ca3af;
 }
 
-.toast {
+/* .toast {
      position: fixed;
      bottom: 20px;
      left: 50%;
      transform: translateX(-50%) translateY(100%);
      background-color: aliceblue;
-     /* background-color: white; */
      color: black;
      padding: 10px 20px;
      border-radius: 6px;
@@ -2306,7 +2166,7 @@ app-root {
      transform: translateX(-50%) translateY(0);
      opacity: 1;
      visibility: visible;
-}
+} */
 
 .xrpl-win-link {
      text-decoration: none;
@@ -2986,10 +2846,15 @@ cdk-drop-list {
 
 /* ==== INDIVIDUAL WALLET CARD ==== */
 .wallet-item {
+     margin-bottom: 0.75em;
+     align-items: flex-start;
+     display: flex;
+     flex-direction: column;
+     gap: 0.75rem;
+     padding: 0.75rem;
      background: rgba(255, 255, 255, 0.08);
      border: 1px solid rgba(255, 255, 255, 0.12);
      border-radius: 14px;
-     padding: 14px 16px;
      cursor: grab;
      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
      position: relative;
@@ -3567,4 +3432,108 @@ cdk-drop-list {
 .connection-status .status-text {
      font-family: 'Inter', system-ui, sans-serif !important;
      font-weight: 600 !important;
+}
+
+/* Smooth entrance/exit for toasts */
+.animate-in {
+     animation: slideInFromBottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInFromBottom {
+     from {
+          transform: translateY(100%);
+          opacity: 0;
+     }
+
+     to {
+          transform: translateY(0);
+          opacity: 1;
+     }
+}
+
+
+.toast-wrap {
+     position: fixed;
+     bottom: 12px;
+     left: 55%;
+     transform: translateX(-50%);
+     max-width: 450px;
+     width: 100%;
+     padding: 0 16px;
+     display: flex;
+     justify-content: center;
+}
+
+.toast-stack {
+     display: flex;
+     flex-direction: column;
+     gap: 10px;
+     width: 100%;
+}
+
+.toast {
+     pointer-events: auto;
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     padding: 10px 14px;
+     border-radius: 12px;
+     font-size: 13px;
+     font-weight: 500;
+     min-height: 42px;
+     max-width: 350px;
+     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+     background: white;
+     border: 1px solid #e5e7eb;
+}
+
+.toast.success {
+     background: #ecfdf5;
+     color: #065f46;
+     border: 1px solid #a7f3d0;
+}
+
+.toast.error {
+     background: #fef2f2;
+     color: #991b1b;
+     border: 1px solid #fecaca;
+}
+
+.toast.info {
+     background: #eff6ff;
+     color: #1e3a8a;
+     border: 1px solid #bfdbfe;
+}
+
+.toast .icon svg {
+     width: 22px;
+     height: 22px;
+     stroke: currentColor;
+     fill: none;
+     stroke-width: 2.5;
+}
+
+.toast .message {
+     flex: 1;
+}
+
+.toast .close {
+     width: 20px;
+     height: 22px;
+     border-radius: 50%;
+     border: none;
+     background: rgba(0, 0, 0, 0.05);
+     color: currentColor;
+     font-size: 16px;
+     font-weight: 700;
+     cursor: pointer;
+     line-height: 1;
+     padding-top: 2px;
+}
+
+.toast-close {
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     line-height: 1;
 }

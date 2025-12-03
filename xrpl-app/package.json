@@ -12,7 +12,7 @@
   "private": true,
   "dependencies": {
     "@angular/animations": "^20.3.10",
-    "@angular/cdk": "^20.2.12",
+    "@angular/cdk": "^20.2.14",
     "@angular/common": "^20.3.10",
     "@angular/compiler": "^20.3.10",
     "@angular/core": "^20.3.10",
@@ -43,6 +43,7 @@
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "lucide-angular": "^0.552.0",
+    "ngx-toastr": "^19.1.0",
     "process": "^0.11.10",
     "ripple-keypairs": "^2.0.0",
     "ripple-lib-transactionparser": "^0.8.2",

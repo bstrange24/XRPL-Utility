@@ -27,7 +27,7 @@
 
                     <div class="wallet-info" (click)="selectWallet(i)">
                          <div class="address-line">
-                              <div class="wallet-address">{{ wallet.address | slice:0:6 }}...{{ wallet.address | slice:-6 }}</div>
+                              <div class="wallet-address">{{ wallet.address | slice:0:7 }}...{{ wallet.address | slice:-7 }}</div>
                               <div class="wallet-balance">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</div>
                          </div>
 
@@ -68,7 +68,7 @@
           <!-- Selected Account Summary -->
           <div class="selected-account-card">
                <div class="wallet-address" style="padding-bottom: 0.5em">Selected Account</div>
-               <div class="summary-row"><span>Address:</span> <span>{{ currentWallet.address | slice:0:5 }}...{{ currentWallet.address | slice:-5 }}</span></div>
+               <div class="summary-row"><span>Address:</span> <span>{{ currentWallet.address | slice:0:7 }}...{{ currentWallet.address | slice:-7 }}</span></div>
                <div class="summary-row"><span>Balance:</span> <span class="highlight wallet-balance">{{ currentWallet.balance }} XRP</span></div>
                <div class="summary-row"><span>Owner Count:</span> <span class="highlight wallet-balance">{{ currentWallet.ownerCount }}</span></div>
                <div class="summary-row"><span>Xrp Reserves:</span> <span class="highlight wallet-balance">{{ currentWallet.xrpReserves }} XRP</span></div>

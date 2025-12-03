@@ -92,7 +92,7 @@ export class XrplCacheService {
           }
      }
 
-     async getAccountData(address: string, forceRefresh = false) {
+     async getAccountData(address: string, forceRefresh?: boolean): Promise<{ accountInfo: xrpl.AccountInfoResponse; accountObjects: xrpl.AccountObjectsResponse }> {
           const infoKey = `account:${address}:info`;
           const objectsKey = `account:${address}:objects`;
           const client = await this.getClient(() => this.xrplService.getClient());
@@ -108,7 +108,7 @@ export class XrplCacheService {
           return { accountInfo, accountObjects };
      }
 
-     async getAccountInfo(address: string, forceRefresh = false) {
+     async getAccountInfo(address: string, forceRefresh?: boolean): Promise<xrpl.AccountInfoResponse> {
           const infoKey = `account:${address}:info`;
           const objectsKey = `account:${address}:objects`;
           const client = await this.getClient(() => this.xrplService.getClient());
@@ -120,10 +120,11 @@ export class XrplCacheService {
 
           const [accountInfo] = await Promise.all([this.getOrFetch(infoKey, () => this.xrplService.getAccountInfo(client, address, 'validated', ''), 10000)]);
 
-          return { accountInfo };
+          // return { accountInfo };
+          return accountInfo;
      }
 
-     async getAccountObjects(address: string, forceRefresh = false) {
+     async getAccountObjects(address: string, forceRefresh?: boolean): Promise<xrpl.AccountObjectsResponse> {
           const infoKey = `account:${address}:info`;
           const objectsKey = `account:${address}:objects`;
           const client = await this.getClient(() => this.xrplService.getClient());
@@ -135,7 +136,7 @@ export class XrplCacheService {
 
           const [accountObjects] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', ''), 10000)]);
 
-          return { accountObjects };
+          return accountObjects;
      }
 
      /** Get current transaction fee (drops or XRP) – cached for 8 seconds (fees change slowly) */

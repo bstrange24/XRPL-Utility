@@ -1,9 +1,40 @@
 import { Injectable, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { AppConstants } from '../../core/app.constants';
+import { XrplService } from '../xrpl-services/xrpl.service';
+import { BehaviorSubject } from 'rxjs';
+
+interface Toast {
+     id: number;
+     message: string;
+     duration: number;
+}
+
+interface CredentialItem {
+     index: string;
+     CredentialType: string;
+     Subject: string;
+     Issuer: string;
+     Expiration?: string;
+     URI?: string;
+     Flags?: any;
+}
+
+interface CredentialInfoPanel {
+     walletName: string;
+     mode: 'create' | 'accept' | 'delete' | 'verify';
+     issuedByMe: CredentialItem[];
+     issuedToMe: CredentialItem[];
+     pendingIssued: CredentialItem[];
+     acceptedIssued: CredentialItem[];
+     pendingToAccept: CredentialItem[];
+     acceptedByMe: CredentialItem[];
+     credentialsToShow: CredentialItem[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class TransactionUiService {
-     constructor(private sanitizer: DomSanitizer) {}
+     constructor(private sanitizer: DomSanitizer, private xrplService: XrplService) {}
      isSimulateEnabled = false;
      txHash: string | null = null;
      txHashes: string[] = [];
@@ -12,11 +43,27 @@ export class TransactionUiService {
      result: string = '';
      spinner: boolean = false;
      spinnerMessage: string = '';
-     showToast: boolean = false;
-     toastMessage: string = '';
-
+     // showToast: boolean = false;
+     // toastMessage: string = '';
+     private toastId = 0;
+     toasts = signal<Toast[]>([]);
+     paymentTxSignal = signal<any[]>([]);
      txSignal = signal<any[]>([]);
      txResultSignal = signal<any[]>([]);
+     successMessageSignal = signal<string>('');
+     executionTime = signal<string>('');
+     url = signal<string>('');
+
+     private _infoData = new BehaviorSubject<CredentialInfoPanel | null>(null);
+     infoData$ = this._infoData.asObservable();
+
+     setInfoData(data: CredentialInfoPanel | null) {
+          this._infoData.next(data);
+     }
+
+     setPaymentTxSignal(tx: any) {
+          this.paymentTxSignal.set(Array.isArray(tx) ? tx : [tx]);
+     }
 
      setTxSignal(tx: any) {
           this.txSignal.set(Array.isArray(tx) ? tx : [tx]);
@@ -24,6 +71,10 @@ export class TransactionUiService {
 
      setTxResultSignal(result: any) {
           this.txResultSignal.set(Array.isArray(result) ? result : [result]);
+     }
+
+     setExecutionTime(time: string) {
+          this.executionTime.set(time);
      }
 
      addTxSignal(tx: any) {
@@ -36,6 +87,11 @@ export class TransactionUiService {
 
      clearTxResultSignal() {
           this.txResultSignal.set([]);
+     }
+
+     setUrl() {
+          const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
+          this.url.set(AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET);
      }
 
      paymentTx: any[] = [];
@@ -66,8 +122,8 @@ export class TransactionUiService {
           this.txHashes = [];
 
           // Optional: clean up previous messages
-          this._infoMessage = null;
-          this._warningMessage = null;
+          // this._infoMessage = null;
+          // this._warningMessage = null;
           this.successMessage = null;
           this.errorMessage = null;
           this.clearMessages();
@@ -103,28 +159,6 @@ export class TransactionUiService {
           escaped = escaped.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
 
           // 4. Restore <a> links
-          escaped = escaped.replace(/&lt;a\s+href="([^"]*)"[^&]*&gt;([^&]*)&lt;\/a&gt;/gi, '<a href="$1" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">$2</a>');
-
-          return this.sanitizer.bypassSecurityTrustHtml(escaped);
-     }
-
-     private allowOnly1(tags: string[], html: string): SafeHtml {
-          if (!html) return '';
-
-          // 1. Escape everything
-          let escaped = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-          // 2. Restore normal tags with content: <code>text</code>, <b>text</b>, etc.
-          const pairedTags = tags.filter(t => t !== 'br');
-          if (pairedTags.length > 0) {
-               const regex = new RegExp(`&lt;(${pairedTags.join('|')})&gt;(.*?)&lt;/\\1&gt;`, 'gi');
-               escaped = escaped.replace(regex, '<$1>$2</$1>');
-          }
-
-          // 3. Restore self-closing <br> and <br/>
-          escaped = escaped.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
-
-          // 4. Restore <a> links (with href)
           escaped = escaped.replace(/&lt;a\s+href="([^"]*)"[^&]*&gt;([^&]*)&lt;\/a&gt;/gi, '<a href="$1" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">$2</a>');
 
           return this.sanitizer.bypassSecurityTrustHtml(escaped);
@@ -168,12 +202,21 @@ export class TransactionUiService {
           this.spinnerMessage = message;
      }
 
-     showToastMessage(message: string, duration: number = 2000) {
-          this.toastMessage = message;
-          this.showToast = true;
+     showToastMessage(message: string, duration = 3000) {
+          const id = ++this.toastId;
+          const toast: Toast = { id, message, duration };
+
+          this.toasts.update(toasts => [...toasts, toast]);
+          console.log('Toasts: ', this.toasts());
+
+          // Auto-remove after duration
           setTimeout(() => {
-               this.showToast = false;
+               this.toasts.update(toasts => toasts.filter(t => t.id !== id));
           }, duration);
+     }
+
+     clearAllToasts() {
+          this.toasts.set([]);
      }
 
      // Called when a real transaction succeeds
