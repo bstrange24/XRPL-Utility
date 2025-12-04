@@ -558,11 +558,11 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                if (this.currencyFieldDropDownValue === AppConstants.XRP_CURRENCY) {
                     if (this.amountField || this.amountField === '') {
                          if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, escrowCreateTx, fee)) {
-                              return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                              return this.ui.setError('Insufficient XRP to complete transaction');
                          }
                     } else {
                          if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, this.amountField, wallet.classicAddress, escrowCreateTx, fee)) {
-                              return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                              return this.ui.setError('Insufficient XRP to complete transaction');
                          }
                     }
                } else if (this.currencyFieldDropDownValue !== 'MPT') {
@@ -730,11 +730,11 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                if (this.currencyFieldDropDownValue === AppConstants.XRP_CURRENCY) {
                     if (this.amountField || this.amountField === '') {
                          if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, escrowFinishTx, fee)) {
-                              return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                              return this.ui.setError('Insufficient XRP to complete transaction');
                          }
                     } else {
                          if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, this.amountField, wallet.classicAddress, escrowFinishTx, fee)) {
-                              return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                              return this.ui.setError('Insufficient XRP to complete transaction');
                          }
                     }
                } else if (this.currencyFieldDropDownValue !== 'MPT') {
@@ -911,7 +911,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, escrowCancelTx, wallet, accountInfo, 'cancel');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, escrowCancelTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Cancelling Conditional Escrow (no changes will be made)...' : 'Submitting Cancel Conditional Escrow to Ledger...', 200);

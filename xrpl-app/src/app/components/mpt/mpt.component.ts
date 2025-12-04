@@ -413,7 +413,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, mPTokenIssuanceCreateTx, wallet, accountInfo, 'create');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, mPTokenIssuanceCreateTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create MPT (no changes will be made)...' : 'Submitting Create MPT to Ledger...', 200);
@@ -539,7 +539,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, mPTokenAuthorizeTx, wallet, accountInfo, 'generate');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, mPTokenAuthorizeTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating MPT Authorie (no changes will be made)...' : 'Submitting MPT Authorize to Ledger...', 200);
@@ -678,7 +678,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, mPTokenIssuanceSetTx, wallet, accountInfo, 'lock');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, mPTokenIssuanceSetTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Locking MPT (no changes will be made)...' : 'Submitting to Ledger...');
@@ -856,7 +856,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, sendMptPaymentTx, wallet, accountInfo, 'send');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, sendMptPaymentTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Sending MPT (no changes will be made)...' : 'Submitting Send MPT to Ledger...', 200);
@@ -976,7 +976,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, mPTokenIssuanceDestroyTx, wallet, accountInfo, 'generate');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, mPTokenIssuanceDestroyTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Deleting MPT (no changes will be made)...' : 'Submitting to Ledger...', 200);
@@ -1108,7 +1108,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, mptClawbackTx, wallet, accountInfo, 'clawback');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, mptClawbackTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating MPT Clawback (no changes will be made)...' : 'Submitting MPT Clawback to Ledger...', 200);

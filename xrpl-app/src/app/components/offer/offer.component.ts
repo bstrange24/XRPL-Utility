@@ -845,7 +845,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                     };
 
                     if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, trustSetTx, fee)) {
-                         return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                         return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
                     this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Trustline (no changes will be made)...' : 'Submitting Trustline to Ledger...', 200);
@@ -1109,7 +1109,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, offerCreateTx, wallet, accountInfo, 'createOffer');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, offerCreateTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create Offer (no changes will be made)...' : 'Submitting Create Offer to Ledger...', 200);
@@ -1301,7 +1301,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                     // await this.setTxOptionalFields(client, offerCancelTx, wallet, accountInfo, 'cancelOffer');
 
                     if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, offerCancelTx, fee)) {
-                         return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                         return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
                     this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? `Simulating Cancel Offer ${offerSeq}...` : `Submitting Cancel Offer for offer sequence ${offerSeq}...`, 200);

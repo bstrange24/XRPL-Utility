@@ -612,7 +612,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, nFTokenMintTx, wallet, accountInfo, 'mint');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, nFTokenMintTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating NFT Mint (no changes will be made)...' : 'Submitting NFT Mint to Ledger...', 200);
@@ -866,7 +866,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, nFTokenBurnTx, wallet, accountInfo, 'burn');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, nFTokenBurnTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating NFT Burn (no changes will be made)...' : 'Submitting to Ledger...', 200);
@@ -1103,7 +1103,7 @@ export class CreateNftComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, nFTokenModifyTx, wallet, accountInfo, 'updateMetaData');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, nFTokenModifyTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating NFT Meta Update (no changes will be made)...' : 'Submitting NFT Meta Update to Ledger...', 200);

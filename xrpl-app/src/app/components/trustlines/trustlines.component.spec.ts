@@ -598,7 +598,7 @@ fdescribe('TrustlinesComponent', () => {
 
           await component.setTrustLine();
 
-          expect(setErrorSpy).toHaveBeenCalledWith('ERROR: Insufficient XRP to complete transaction');
+          expect(setErrorSpy).toHaveBeenCalledWith('Insufficient XRP to complete transaction');
      });
 
      it('setTrustLine should simulate when isSimulateEnabled', async () => {

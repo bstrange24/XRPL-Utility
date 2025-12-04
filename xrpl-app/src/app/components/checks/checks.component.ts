@@ -513,11 +513,11 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                if (this.currencyFieldDropDownValue === AppConstants.XRP_CURRENCY) {
                     if (this.amountField || this.amountField === '') {
                          if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, checkCreateTx, fee)) {
-                              return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                              return this.ui.setError('Insufficient XRP to complete transaction');
                          }
                     } else {
                          if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, this.amountField, wallet.classicAddress, checkCreateTx, fee)) {
-                              return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                              return this.ui.setError('Insufficient XRP to complete transaction');
                          }
                     }
                } else if (this.currencyFieldDropDownValue !== 'MPT') {
@@ -692,11 +692,11 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                if (this.currencyFieldDropDownValue === AppConstants.XRP_CURRENCY) {
                     if (this.amountField || this.amountField === '') {
                          if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, checkCashTx, fee)) {
-                              return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                              return this.ui.setError('Insufficient XRP to complete transaction');
                          }
                     } else {
                          if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, this.amountField, wallet.classicAddress, checkCashTx, fee)) {
-                              return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                              return this.ui.setError('Insufficient XRP to complete transaction');
                          }
                     }
                } else if (this.currencyFieldDropDownValue !== 'MPT') {
@@ -817,7 +817,7 @@ export class SendChecksComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, checkCancelTx, wallet, accountInfo, 'cancelCheck');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, checkCancelTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Canceling Check (no changes will be made)...' : 'Submitting Cancel Check to Ledger...', 200);

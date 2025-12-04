@@ -550,7 +550,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, trustSetTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, trustSetTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Setting Trustline (no changes will be made)...' : 'Submitting Trustset to Ledger...', 200);
@@ -708,7 +708,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, trustSetTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, trustSetTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Removing Trustline (no changes will be made)...' : 'Submitting to Ledger...', 200);
@@ -846,7 +846,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                //      await this.setTxOptionalFields(client, accountSetTx, wallet, accountInfo);
 
                //      if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, accountSetTx, fee)) {
-               //           return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+               //           return this.ui.setError('Insufficient XRP to complete transaction');
                //      }
 
                //      // this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Set Default Ripple (no changes will be made)...' : 'Submitting Set Default Ripple to Ledger...', 200);
@@ -906,7 +906,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, paymentTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, paymentTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                // if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, paymentTx, resolvedDestination)) {
@@ -1056,7 +1056,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, clawbackTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, clawbackTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, clawbackTx, resolvedDestination)) {

@@ -508,7 +508,7 @@ export class AccountDelegateComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, delegateSetTx, wallet, accountInfo, 'delegateActions');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, delegateSetTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Delegate Action (no changes will be made)...' : 'Submitting Delegating Actions to the Ledger...', 200);

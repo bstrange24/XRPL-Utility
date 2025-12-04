@@ -339,7 +339,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, paymentTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, paymentTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Sending XRP (no funds will be moved)...' : 'Submitting Send XRP to Ledger...', 200);

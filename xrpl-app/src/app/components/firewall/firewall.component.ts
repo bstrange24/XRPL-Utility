@@ -563,7 +563,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, mPTokenIssuanceCreateTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, mPTokenIssuanceCreateTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create Firewall (no changes will be made)...' : 'Submitting Create Firewall to Ledger...', 200);
@@ -701,7 +701,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, mPTokenAuthorizeTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, mPTokenAuthorizeTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating MPT Authorize (no changes will be made)...' : 'Submitting to Ledger...', 200);
@@ -868,7 +868,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, sendMptPaymentTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, sendMptPaymentTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.updateSpinnerMessage(this.ui.isSimulateEnabled ? 'Simulating Sending MPT (no changes will be made)...' : 'Submitting to Ledger...');
@@ -1003,7 +1003,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, mPTokenIssuanceDestroyTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, mPTokenIssuanceDestroyTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.updateSpinnerMessage(this.ui.isSimulateEnabled ? 'Simulating Deleting MPT (no changes will be made)...' : 'Submitting to Ledger...');

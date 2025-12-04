@@ -467,7 +467,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                     await this.setTxOptionalFields(client, paymentChannelCreateTx, wallet, accountInfo);
 
                     if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, this.amountField, wallet.classicAddress, paymentChannelCreateTx, fee)) {
-                         return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                         return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
                     this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create Payment Channel (no changes will be made)...' : 'Submitting Create Payment Channel to Ledger...', 200);
@@ -506,7 +506,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                     await this.setTxOptionalFields(client, paymentChannelFundTx, wallet, accountInfo);
 
                     if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, this.amountField, wallet.classicAddress, paymentChannelFundTx, fee)) {
-                         return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                         return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
                     this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Funding/Renewing Payment Channel (no changes will be made)...' : 'Submitting Funding/Renewing Payment Channel to Ledger...', 200);
@@ -581,7 +581,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                     await this.setTxOptionalFields(client, paymentChannelClaimTx, wallet, accountInfo);
 
                     if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, this.amountField, wallet.classicAddress, paymentChannelClaimTx, fee)) {
-                         return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                         return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
                     this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Claiming Payment Channel (no changes will be made)...' : 'Submitting Claiming Payment Channel to Ledger...', 200);
@@ -652,7 +652,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                     await this.setTxOptionalFields(client, paymentChannelClaimTx, wallet, accountInfo);
 
                     if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, paymentChannelClaimTx, fee)) {
-                         return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                         return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
                     this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Close Payment Channel (no changes will be made)...' : 'Submitting Close Payment Channel to Ledger...', 200);

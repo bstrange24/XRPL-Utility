@@ -330,7 +330,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, ticketCreateTx, wallet, '');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, ticketCreateTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Ticket Creation (no funds will be moved)...' : 'Submitting Ticket Creation to Ledger...', 200);

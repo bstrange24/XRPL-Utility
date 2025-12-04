@@ -505,24 +505,24 @@
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
                                    } @else if(activeTab === 'modifyRegularKey') {
-                                   <div class="button-row" style="margin-top: 0">
+                                   <div class="button-row">
                                         <button type="button" (click)="setRegularKey('Y')" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Set Regular Key' }}</button>
                                         <button type="button" (click)="setRegularKey('N')" class="btn-primary-red" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Remove Regular Key' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
                                    } @else if(activeTab === 'modifyMetaData') {
-                                   <div class="button-row" style="margin-top: 0.6rem">
+                                   <div class="button-row">
                                         <button type="button" (click)="updateMetaData()" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Modify Account Meta Data' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
                                    } @else if(activeTab === 'modifyDepositAuth') {
-                                   <div class="button-row" style="margin-top: 0.6em">
+                                   <div class="button-row">
                                         <button type="button" (click)="setDepositAuthAccounts('Y')" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Set Deposit Authorization' }}</button>
                                         <button type="button" (click)="setDepositAuthAccounts('N')" class="btn-primary-red" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Remove Deposit Authorization' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
                                    } @else if(activeTab === 'modifyAccountFlags') {
-                                   <div class="button-row" style="margin-top: 0.6rem">
+                                   <div class="button-row">
                                         <button type="button" (click)="updateFlags()" class="btn-primary-blue" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Modify Account Flags' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>

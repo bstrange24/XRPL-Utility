@@ -10,6 +10,11 @@ export interface Toast {
 export class ToastService {
      private id = 0;
      toasts = signal<Toast[]>([]);
+     private isShowing = signal<boolean>(false);
+
+     constructor() {
+          console.log('🔥 ToastService instance created', Math.random());
+     }
 
      success(message: string, duration = 2000) {
           this.show({ message, type: 'success' }, duration);

@@ -10,27 +10,27 @@ interface Toast {
      duration: number;
 }
 
-interface CredentialItem {
-     index: string;
-     CredentialType: string;
-     Subject: string;
-     Issuer: string;
-     Expiration?: string;
-     URI?: string;
-     Flags?: any;
-}
+// interface CredentialItem {
+//      index: string;
+//      CredentialType: string;
+//      Subject: string;
+//      Issuer: string;
+//      Expiration?: string;
+//      URI?: string;
+//      Flags?: any;
+// }
 
-interface CredentialInfoPanel {
-     walletName: string;
-     mode: 'create' | 'accept' | 'delete' | 'verify';
-     issuedByMe: CredentialItem[];
-     issuedToMe: CredentialItem[];
-     pendingIssued: CredentialItem[];
-     acceptedIssued: CredentialItem[];
-     pendingToAccept: CredentialItem[];
-     acceptedByMe: CredentialItem[];
-     credentialsToShow: CredentialItem[];
-}
+// interface CredentialInfoPanel {
+//      walletName: string;
+//      mode: 'create' | 'accept' | 'delete' | 'verify';
+//      issuedByMe: CredentialItem[];
+//      issuedToMe: CredentialItem[];
+//      pendingIssued: CredentialItem[];
+//      acceptedIssued: CredentialItem[];
+//      pendingToAccept: CredentialItem[];
+//      acceptedByMe: CredentialItem[];
+//      credentialsToShow: CredentialItem[];
+// }
 
 @Injectable({ providedIn: 'root' })
 export class TransactionUiService {
@@ -54,10 +54,10 @@ export class TransactionUiService {
      executionTime = signal<string>('');
      url = signal<string>('');
 
-     private _infoData = new BehaviorSubject<CredentialInfoPanel | null>(null);
+     private _infoData = new BehaviorSubject<any | null>(null);
      infoData$ = this._infoData.asObservable();
 
-     setInfoData(data: CredentialInfoPanel | null) {
+     setInfoData(data: any | null) {
           this._infoData.next(data);
      }
 

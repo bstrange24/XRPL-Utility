@@ -153,4 +153,44 @@ export class XrplTransactionExecutorService {
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
      }
+
+     async setDid(
+          tx: xrpl.DIDSet,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating DID Set (no changes will be made)...',
+               submitMessage: 'Setting DID on Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async deleteDid(
+          tx: xrpl.DIDDelete,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating DID Delete (no changes will be made)...',
+               submitMessage: 'Deleting DID on Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
 }

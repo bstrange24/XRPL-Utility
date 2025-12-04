@@ -677,7 +677,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, nFTokenAcceptOfferTx, wallet, accountInfo, 'buy');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, nFTokenAcceptOfferTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating NFT Buy Offer (no changes will be made)...' : 'Submitting NFT Buy Offer to Ledger...', 200);
@@ -809,7 +809,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, nFTokenCreateOfferTx, wallet, accountInfo, 'sell');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, nFTokenCreateOfferTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating NFT Sell Offer (no changes will be made)...' : 'Submitting NFT Sell Offer to Ledger...', 200);
@@ -943,7 +943,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, nFTokenCreateOfferTx, wallet, accountInfo, 'sell');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, nFTokenCreateOfferTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                if (offerType === 'Buy') {
@@ -1066,7 +1066,7 @@ export class NftOffersComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, nFTokenCancelOfferTx, wallet, accountInfo, 'cancelSellOffer');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, nFTokenCancelOfferTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating NFT Cancel Offer (no changes will be made)...' : 'Submitting NFT Cancel Offer to Ledger...', 200);

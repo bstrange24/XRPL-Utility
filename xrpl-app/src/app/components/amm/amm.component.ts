@@ -779,7 +779,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, ammCreateTx, wallet, accountInfo, 'createAmm');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, ammCreateTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating AMM Creation (no funds will be moved)...' : 'Submitting AMM Creation to Ledger...', 200);
@@ -971,7 +971,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, ammDepositTx, wallet, accountInfo, 'depositToAmm');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, ammDepositTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating AMM Deposit (no funds will be moved)...' : 'Submitting AMM Deposit to Ledger...', 200);
@@ -1193,7 +1193,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, ammWithdrawTx, wallet, accountInfo, 'withdrawlFromAmm');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, ammWithdrawTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating AMM Withdrawal (no funds will be moved)...' : 'Submitting AMM Withdrawal to Ledger...', 200);
@@ -1352,7 +1352,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, ammClawbackTx, wallet, accountInfo, 'clawbackFromAmm');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, ammClawbackTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating AMM Clawback (no funds will be moved)...' : 'Submitting AMM Clawback to Ledger...', 200);
@@ -1474,7 +1474,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, swapPaymentTx, wallet, accountInfo, 'swamViaAMM');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, swapPaymentTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Swap via AMM (no changes will be made)...' : 'Submitting Swap via AMM to Ledger...', 200);
@@ -1592,7 +1592,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, deleteAmmTx, wallet, accountInfo, 'deleteAMM');
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, deleteAmmTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating AMM Delete (no changes will be made)...' : 'Submitting AMM Delete to Ledger...', 200);

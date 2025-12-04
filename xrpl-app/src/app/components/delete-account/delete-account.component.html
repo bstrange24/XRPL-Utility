@@ -12,17 +12,15 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
-
           <!-- Right form -->
-          <div class="form-panel">
+          <div class="form-panel" style="padding-top: 2em">
                <!-- Menu bar -->
-               <div class="menu-bar">
+               <!-- <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab === 'delete'" (click)="setTab('delete')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
                          Delete Wallet
                     </button>
-               </div>
+               </div> -->
 
                <!-- Delete Menu -->
                @if (activeTab === 'delete') {

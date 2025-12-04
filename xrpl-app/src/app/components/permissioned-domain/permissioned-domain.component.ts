@@ -410,7 +410,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, permissionedDomainTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, permissionedDomainTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Setting Permissioned Domain (no changes will be made)...' : 'Submitting Setting Permissioned Domain to Ledger...', 200);
@@ -539,7 +539,7 @@ export class PermissionedDomainComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, permissionedDomainDeleteTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, permissionedDomainDeleteTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Deleting Permissioned Domain (no changes will be made)...' : 'Submitting Delete Permissioned Domain to Ledger...', 200);

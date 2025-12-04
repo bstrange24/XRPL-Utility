@@ -7,7 +7,6 @@ import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule, Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -338,19 +337,26 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
      async getCredentialsForAccount(forceRefresh = false): Promise<void> {
           await this.withPerf('getCredentialsForAccount', async () => {
-               const client = await this.getClient();
-               const wallet = await this.getWallet();
-               const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
+               try {
+                    const client = await this.getClient();
+                    const wallet = await this.getWallet();
+                    const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
 
-               const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
-               if (errors.length) {
-                    this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                    return;
+                    const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
+                    if (errors.length) {
+                         this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                         return;
+                    }
+
+                    this.parseCredentials(accountObjects, wallet.classicAddress);
+                    this.refreshUIData(wallet, accountInfo, accountObjects);
+                    this.clearFields(true);
+               } catch (error: any) {
+                    console.error('Error in getCredentialsForAccount:', error);
+                    this.txUiService.setError(`${error.message || 'Unknown error'}`);
+               } finally {
+                    this.txUiService.spinner = false;
                }
-
-               this.parseCredentials(accountObjects, wallet.classicAddress);
-               this.refreshUIData(wallet, accountInfo, accountObjects);
-               this.clearFields(true);
           });
      }
 
@@ -977,22 +983,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           return list.filter(c => [c.CredentialType, c.Issuer, c.Subject, c.index].some(f => f?.toLowerCase().includes(lower)));
      }
 
-     // private async withPerf<T>(name: string, fn: () => Promise<T>): Promise<T> {
-     //      if (this.environment() != 'mainnet') {
-     //           console.log(`Entering ${name}`);
-     //      }
-     //      const start = Date.now();
-     //      return fn().finally(() => {
-     //           let ms = Date.now();
-     //           if (this.environment() != 'mainnet') {
-     //                ms = ms - start;
-     //                console.log(`Leaving ${name} in ${ms}ms (${(ms / 1000).toFixed(2)}s)`);
-     //           }
-     //           const exTime = `Execution time completed in ${ms}ms (${(ms / 1000).toFixed(2)}s)`;
-     //           this.executionTime.set(exTime);
-     //      });
-     // }
-
      private async getWallet(): Promise<xrpl.Wallet> {
           const encryption = this.currentWallet().encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, encryption as 'ed25519' | 'secp256k1');
@@ -1035,7 +1025,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           }
 
           const walletName = this.currentWallet().name || 'Selected wallet';
-          const myAddress = this.currentWallet().address;
 
           const issuedByMe = this.existingCredentials() ?? [];
           const issuedToMe = this.subjectCredentials() ?? [];
@@ -1117,7 +1106,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.isRegularKeyAddress.set(false);
           this.useMultiSign.set(false);
           this.credentialID.set('');
-          this.selectedTicket.set('');
           this.selectedSingleTicket.set('');
           this.isTicket.set(false);
           this.selectedTicket.set('');

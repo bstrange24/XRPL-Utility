@@ -345,7 +345,7 @@ export class DeleteAccountComponent implements OnInit, AfterViewInit {
                await this.setTxOptionalFields(client, accountDeleteTx, wallet, accountInfo);
 
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, accountDeleteTx, fee)) {
-                    return this.ui.setError('ERROR: Insufficient XRP to complete transaction');
+                    return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
                this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Deleting Account (no changes will be made)...' : 'Submitting Delete Account to Ledger...', 200);

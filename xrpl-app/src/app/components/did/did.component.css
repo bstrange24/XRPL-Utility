@@ -1,0 +1,12 @@
+.copy-link {
+     color: #2563eb;
+     font-size: 0.9em;
+     cursor: pointer;
+     text-decoration: underline;
+     margin-top: 8px;
+     display: inline-block;
+}
+
+.copy-link:hover {
+     color: #1d4ed8;
+}

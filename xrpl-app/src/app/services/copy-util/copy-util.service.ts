@@ -4,7 +4,33 @@ import { ToastService } from '../toast/toast.service';
 
 @Injectable({ providedIn: 'root' })
 export class CopyUtilService {
-     constructor(public ui: TransactionUiService, private toast: ToastService) {}
+     constructor(public ui: TransactionUiService, private readonly toast: ToastService) {}
+
+     copyAndToast(value: any, label: string) {
+          const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+
+          navigator.clipboard
+               .writeText(text)
+               .then(() => {
+                    this.toast.success(`${label} copied`);
+               })
+               .catch(() => {
+                    this.toast.error(`Failed to copy ${label}`);
+               });
+     }
+
+     copyToClipboard(address: any) {
+          console.log('copyAndToast fired for:', performance.now());
+          navigator.clipboard
+               .writeText(address)
+               .then(() => {
+                    this.toast.success('Data copied to clipboard!');
+               })
+               .catch(err => {
+                    console.error('Failed to copy data:', err);
+                    this.toast.error('Failed to copy data. Please select and copy manually.');
+               });
+     }
 
      copyAddress(address: string) {
           navigator.clipboard
@@ -14,7 +40,7 @@ export class CopyUtilService {
                })
                .catch(err => {
                     console.error('Failed to copy address:', err);
-                    this.toast.error('Failed to address. Please select and copy manually.');
+                    this.toast.error('Failed to copy address. Please select and copy manually.');
                });
      }
 
