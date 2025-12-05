@@ -509,22 +509,22 @@
                                    @switch (activeTab) {
                                    <!-- create buttons -->
                                    @case ('create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createTimeBasedEscrow()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create Escrow' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="createTimeBasedEscrow()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create Escrow' }}</button>
                                    }
                                    <!-- finish buttons -->
                                    @case ('finish') {
-                                   <button type="button" class="btn-primary-green" (click)="finishTimeBasedEscrow()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Finish Escrow' }}</button>
+                                   <button type="button" class="btn-primary-green" (click)="finishTimeBasedEscrow()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Finish Escrow' }}</button>
                                    }
                                    <!-- claim buttons -->
                                    @case ('cancel') {
-                                   <button type="button" class="btn-primary-red" (click)="cancelEscrow()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Cancel Escrow' }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="cancelEscrow()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Cancel Escrow' }}</button>
                                    } }
                                    <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>
                          </div>
 
                          <!-- Spinner -->
-                         @if (ui.spinner) {
+                         @if (ui.spinner()) {
                          <div class="spinner-row">
                               <div class="spinner"></div>
                               <span>{{ ui.spinnerMessage || 'Loading...' }}</span>

@@ -474,7 +474,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                console.error('Error in getFirewallDetails:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving getFirewallDetails in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -566,14 +566,14 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create Firewall (no changes will be made)...' : 'Submitting Create Firewall to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Create Firewall (no changes will be made)...' : 'Submitting Create Firewall to Ledger...', 200);
 
                this.ui.setPaymentTx(mPTokenIssuanceCreateTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, mPTokenIssuanceCreateTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -598,7 +598,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -607,7 +607,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Created Firewall successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -630,7 +630,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                console.error('Error in createFirewall:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving createFirewall in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -704,14 +704,14 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating MPT Authorize (no changes will be made)...' : 'Submitting to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating MPT Authorize (no changes will be made)...' : 'Submitting to Ledger...', 200);
 
                this.ui.setPaymentTx(mPTokenAuthorizeTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, mPTokenAuthorizeTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -736,7 +736,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -745,7 +745,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Modified Firewall successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -768,7 +768,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                console.error('Error in modifyFirewall:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving modifyFirewall in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -871,14 +871,14 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.updateSpinnerMessage(this.ui.isSimulateEnabled ? 'Simulating Sending MPT (no changes will be made)...' : 'Submitting to Ledger...');
+               this.ui.updateSpinnerMessage(this.ui.isSimulateEnabled() ? 'Simulating Sending MPT (no changes will be made)...' : 'Submitting to Ledger...');
 
                this.ui.setPaymentTx(sendMptPaymentTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, sendMptPaymentTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -903,7 +903,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -912,7 +912,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Authorized Firewall successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -935,7 +935,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                console.error('Error in authorizeFirewall:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving authorizeFirewall in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -1006,14 +1006,14 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.updateSpinnerMessage(this.ui.isSimulateEnabled ? 'Simulating Deleting MPT (no changes will be made)...' : 'Submitting to Ledger...');
+               this.ui.updateSpinnerMessage(this.ui.isSimulateEnabled() ? 'Simulating Deleting MPT (no changes will be made)...' : 'Submitting to Ledger...');
 
                this.ui.setPaymentTx(mPTokenIssuanceDestroyTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, mPTokenIssuanceDestroyTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -1032,7 +1032,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -1041,7 +1041,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Deleted Firewall successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -1064,7 +1064,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
                console.error('Error in deleteFirewall:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving deleteFirewall in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -1475,7 +1475,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           } else {
                this.ui.setError('Currency code and issuer address are required');
           }
-          this.ui.spinner = false;
+          this.ui.spinner.set(false);
      }
 
      removeWhitelistAddress() {
@@ -1493,7 +1493,7 @@ export class FirewallComponent implements OnInit, AfterViewInit {
           } else {
                this.ui.setError('Select a whitelist address to remove');
           }
-          this.ui.spinner = false;
+          this.ui.spinner.set(false);
      }
 
      private updateWhitelistAddress() {

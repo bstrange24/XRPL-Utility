@@ -235,12 +235,12 @@
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Send XRP' }}</button>
+                                   <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Send XRP' }}</button>
                                    <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                               </div>
 
                               <!-- Spinner -->
-                              @if (ui.spinner) {
+                              @if (ui.spinner()) {
                               <div class="spinner-row">
                                    <div class="spinner"></div>
                                    <span>{{ ui.spinnerMessage || 'Loading...' }}</span>

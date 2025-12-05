@@ -395,7 +395,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                console.error('Error in getPaymentChannels:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving getPaymentChannels in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -470,12 +470,12 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                          return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
-                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create Payment Channel (no changes will be made)...' : 'Submitting Create Payment Channel to Ledger...', 200);
+                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Create Payment Channel (no changes will be made)...' : 'Submitting Create Payment Channel to Ledger...', 200);
 
                     this.ui.setPaymentTx(paymentChannelCreateTx);
                     this.updatePaymentTx();
 
-                    if (this.ui.isSimulateEnabled) {
+                    if (this.ui.isSimulateEnabled()) {
                          response = await this.xrplTransactions.simulateTransaction(client, paymentChannelCreateTx);
                     } else {
                          const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -509,12 +509,12 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                          return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
-                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Funding/Renewing Payment Channel (no changes will be made)...' : 'Submitting Funding/Renewing Payment Channel to Ledger...', 200);
+                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Funding/Renewing Payment Channel (no changes will be made)...' : 'Submitting Funding/Renewing Payment Channel to Ledger...', 200);
 
                     this.ui.setPaymentTx(paymentChannelFundTx);
                     this.updatePaymentTx();
 
-                    if (this.ui.isSimulateEnabled) {
+                    if (this.ui.isSimulateEnabled()) {
                          response = await this.xrplTransactions.simulateTransaction(client, paymentChannelFundTx);
                     } else {
                          const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -584,12 +584,12 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                          return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
-                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Claiming Payment Channel (no changes will be made)...' : 'Submitting Claiming Payment Channel to Ledger...', 200);
+                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Claiming Payment Channel (no changes will be made)...' : 'Submitting Claiming Payment Channel to Ledger...', 200);
 
                     this.ui.setPaymentTx(paymentChannelClaimTx);
                     this.updatePaymentTx();
 
-                    if (this.ui.isSimulateEnabled) {
+                    if (this.ui.isSimulateEnabled()) {
                          response = await this.xrplTransactions.simulateTransaction(client, paymentChannelClaimTx);
                     } else {
                          const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -655,12 +655,12 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                          return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
-                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Close Payment Channel (no changes will be made)...' : 'Submitting Close Payment Channel to Ledger...', 200);
+                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Close Payment Channel (no changes will be made)...' : 'Submitting Close Payment Channel to Ledger...', 200);
 
                     this.ui.setPaymentTx(paymentChannelClaimTx);
                     this.updatePaymentTx();
 
-                    if (this.ui.isSimulateEnabled) {
+                    if (this.ui.isSimulateEnabled()) {
                          response = await this.xrplTransactions.simulateTransaction(client, paymentChannelClaimTx);
                     } else {
                          const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -686,7 +686,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -695,7 +695,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = `${action} payment channel successfully!`;
 
                     const [updatedAccountInfo, updatedAccountObjects, paymentChannelObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'payment_channel')]);
@@ -721,7 +721,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                console.error('Error in handlePaymentChannelAction:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving handlePaymentChannelAction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -944,7 +944,7 @@ export class CreatePaymentChannelComponent implements OnInit, AfterViewInit {
                console.error('Error in generateCreatorClaimSignature:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving generateCreatorClaimSignature in ${this.executionTime} ms ${executionTimeSeconds} seconds`);

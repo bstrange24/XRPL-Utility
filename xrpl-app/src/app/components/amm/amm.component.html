@@ -583,24 +583,24 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if (activeTab === 'createAMM') {
-                              <!-- <button type="button" class="btn-primary-blue" (click)="getAMMPoolInfo()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Get AMM Pool' }}</button> -->
-                              <button type="button" class="btn-primary-blue" (click)="createAMM()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create AMM' }}</button>
+                              <!-- <button type="button" class="btn-primary-blue" (click)="getAMMPoolInfo()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Get AMM Pool' }}</button> -->
+                              <button type="button" class="btn-primary-blue" (click)="createAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create AMM' }}</button>
                               } @else if(activeTab === 'depositToAMM') {
-                              <button type="button" class="btn-primary-green" (click)="depositToAMM()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Deposit Tokens to AMM' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="depositToAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Deposit Tokens to AMM' }}</button>
                               } @else if(activeTab === 'withdrawlTokenFromAMM') {
-                              <button type="button" class="btn-primary-green" (click)="withdrawlTokenFromAMM()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Withdreawl Token from AMM' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="withdrawlTokenFromAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Withdreawl Token from AMM' }}</button>
                               } @else if(activeTab === 'clawbackFromAMM') {
-                              <button type="button" class="btn-primary-red" (click)="clawbackFromAMM()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Clawaback Token from AMM' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="clawbackFromAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Clawaback Token from AMM' }}</button>
                               } @else if(activeTab === 'swapViaAMM') {
-                              <button type="button" class="btn-primary-green" (click)="swapViaAMM()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Swap Token via AMM' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="swapViaAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Swap Token via AMM' }}</button>
                               }@else if(activeTab === 'deleteAMM') {
-                              <button type="button" class="btn-primary-red" (click)="deleteAMM()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Delete AMM' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="deleteAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Delete AMM' }}</button>
                               }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>
 
                          <!-- Spinner -->
-                         @if (ui.spinner) {
+                         @if (ui.spinner()) {
                          <div class="spinner-row">
                               <div class="spinner"></div>
                               <span>{{ ui.spinnerMessage || 'Loading...' }}</span>

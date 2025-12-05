@@ -530,26 +530,26 @@
                               @switch (activeTab) {
                               <!-- create buttons -->
                               @case ('create') {
-                              <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create Channel' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create Channel' }}</button>
                               }
                               <!-- close buttons -->
                               @case ('close') {
-                              <button type="button" class="btn-primary-red" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Close Channel' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Close Channel' }}</button>
                               }
                               <!-- claim buttons -->
                               @case ('claim') {
-                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Claim/Renew Channel' }}</button>
-                              <button type="button" class="btn-primary-blue" (click)="generateCreatorClaimSignature()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Generate Claim Signature' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Claim/Renew Channel' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="generateCreatorClaimSignature()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Generate Claim Signature' }}</button>
                               }
                               <!-- fund buttons -->
                               @case ('fund') {
-                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Fund Channel' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Fund Channel' }}</button>
                               } }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>
 
                          <!-- Spinner -->
-                         @if (ui.spinner) {
+                         @if (ui.spinner()) {
                          <div class="spinner-row">
                               <div class="spinner"></div>
                               <span>{{ ui.spinnerMessage || 'Loading...' }}</span>

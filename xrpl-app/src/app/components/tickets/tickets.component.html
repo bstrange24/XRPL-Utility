@@ -255,20 +255,20 @@
                                    @switch (activeTab) {
                                    <!-- create buttons -->
                                    @case ('create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createTicket()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create Ticket' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="createTicket()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create Ticket' }}</button>
                                    }
                                    <!-- delete buttons -->
                                    @case ('delete') {
-                                   <button type="button" class="btn-primary-red" (click)="deleteTicket()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Delete Ticket' }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="deleteTicket()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Delete Ticket' }}</button>
                                    } }
                                    <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>
                          </div>
 
                          <!-- Spinner -->
-                         @if (ui.spinner) {
-                         <div class="spinner-row">
-                              <div class="spinner"></div>
+                         @if (ui.spinner()) {
+                         <div class="ui.spinner()-row">
+                              <div class="ui.spinner()"></div>
                               <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
                          </div>
                          }

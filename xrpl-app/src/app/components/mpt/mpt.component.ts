@@ -350,7 +350,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                console.error('Error in getMptDetails:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving getMptDetails in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -416,14 +416,14 @@ export class MptComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create MPT (no changes will be made)...' : 'Submitting Create MPT to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Create MPT (no changes will be made)...' : 'Submitting Create MPT to Ledger...', 200);
 
                this.ui.setPaymentTx(mPTokenIssuanceCreateTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, mPTokenIssuanceCreateTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -448,7 +448,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -457,7 +457,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Created MPT successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -480,7 +480,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                console.error('Error in createMpt:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving createMpt in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -542,14 +542,14 @@ export class MptComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating MPT Authorie (no changes will be made)...' : 'Submitting MPT Authorize to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating MPT Authorie (no changes will be made)...' : 'Submitting MPT Authorize to Ledger...', 200);
 
                this.ui.setPaymentTx(mPTokenAuthorizeTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, mPTokenAuthorizeTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -574,7 +574,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -583,7 +583,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     if (authorizeFlag === 'Y') {
                          this.ui.successMessage = 'Authorized MPT successfully!';
                     } else {
@@ -611,7 +611,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                console.error('Error in authorizeMpt:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving authorizeMpt in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -681,14 +681,14 @@ export class MptComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Locking MPT (no changes will be made)...' : 'Submitting to Ledger...');
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Locking MPT (no changes will be made)...' : 'Submitting to Ledger...');
 
                this.ui.setPaymentTx(mPTokenIssuanceSetTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, mPTokenIssuanceSetTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -713,7 +713,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -722,7 +722,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     if (locked === 'Y') {
                          this.ui.successMessage = 'Lock MPT successfully!';
                     } else {
@@ -750,7 +750,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                console.error('Error in setMptLocked:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving setMptLocked in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -859,14 +859,14 @@ export class MptComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Sending MPT (no changes will be made)...' : 'Submitting Send MPT to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Sending MPT (no changes will be made)...' : 'Submitting Send MPT to Ledger...', 200);
 
                this.ui.paymentTx.push(sendMptPaymentTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, sendMptPaymentTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -891,7 +891,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -900,7 +900,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'MPT sent successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -922,7 +922,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                console.error('Error in sendMpt:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving sendMpt in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -979,14 +979,14 @@ export class MptComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Deleting MPT (no changes will be made)...' : 'Submitting to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Deleting MPT (no changes will be made)...' : 'Submitting to Ledger...', 200);
 
                this.ui.paymentTx.push(mPTokenIssuanceDestroyTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, mPTokenIssuanceDestroyTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -1008,11 +1008,11 @@ export class MptComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                }
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
                     await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
@@ -1032,7 +1032,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                console.error('Error in destroyMpt:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving destroyMpt in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -1111,14 +1111,14 @@ export class MptComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating MPT Clawback (no changes will be made)...' : 'Submitting MPT Clawback to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating MPT Clawback (no changes will be made)...' : 'Submitting MPT Clawback to Ledger...', 200);
 
                this.ui.paymentTx.push(mptClawbackTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, mptClawbackTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -1143,7 +1143,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -1152,7 +1152,7 @@ export class MptComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'MPT clawback executed successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -1174,7 +1174,7 @@ export class MptComponent implements OnInit, AfterViewInit {
                console.error('Error in clawbackMpt:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving clawbackMpt in ${this.executionTime} ms ${executionTimeSeconds} seconds`);

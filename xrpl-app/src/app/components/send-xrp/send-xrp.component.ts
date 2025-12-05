@@ -274,7 +274,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                console.error('Failed to load account:', error);
                this.ui.setError(`Failed to load account: ${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving onAccountChange in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -342,14 +342,14 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Sending XRP (no funds will be moved)...' : 'Submitting Send XRP to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Sending XRP (no funds will be moved)...' : 'Submitting Send XRP to Ledger...', 200);
 
                this.ui.setPaymentTx(paymentTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, paymentTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -374,7 +374,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -383,7 +383,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'XRP payment sent successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -406,7 +406,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
                console.error('Error in sendXrp:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving sendXrp in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -557,7 +557,7 @@ export class SendXrpModernComponent implements OnInit, AfterViewInit {
           if (all) {
                this.amountField = this.destinationField = this.destinationTagField = this.sourceTagField = this.invoiceIdField = this.memoField = '';
                this.isMemoEnabled = this.useMultiSign = this.isRegularKeyAddress = this.isTicket = false;
-               this.ui.isSimulateEnabled = false;
+               this.ui.isSimulateEnabled.set(false);
                this.ui.clearMessages();
                this.ui.clearWarning();
           }

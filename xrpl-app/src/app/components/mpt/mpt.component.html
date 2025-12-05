@@ -679,25 +679,25 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if(activeTab === 'create') {
-                              <button type="button" class="btn-primary-blue" (click)="createMpt()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create MPT' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="createMpt()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create MPT' }}</button>
                               } @else if (activeTab === 'authorize' || activeTab === 'unauthorize') {
-                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('Y')" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Authorize MPT' }}</button>
-                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('N')" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Unauthorize MPT' }}</button>
+                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('Y')" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Authorize MPT' }}</button>
+                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('N')" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Unauthorize MPT' }}</button>
                               } @else if (activeTab === 'send') {
-                              <button type="button" class="btn-primary-green" (click)="sendMpt()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Send MPT' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="sendMpt()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Send MPT' }}</button>
                               } @else if (activeTab === 'lock' || activeTab === 'unlock') {
-                              <button type="button" class="btn-primary-orange" (click)="setMptLockUnlock('Y')" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Lock MPT' }}</button>
-                              <button type="button" class="btn-primary-blue" (click)="setMptLockUnlock('N')" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Unlock MPT' }}</button>
+                              <button type="button" class="btn-primary-orange" (click)="setMptLockUnlock('Y')" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Lock MPT' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="setMptLockUnlock('N')" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Unlock MPT' }}</button>
                               } @else if (activeTab === 'clawback') {
-                              <button type="button" class="btn-primary-red" (click)="clawbackMpt()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Clawback MPT' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="clawbackMpt()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Clawback MPT' }}</button>
                               } @else {
-                              <button type="button" class="btn-primary-red" (click)="destroyMpt()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Destroy MPT' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="destroyMpt()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Destroy MPT' }}</button>
                               }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>
 
                          <!-- Spinner -->
-                         @if (ui.spinner) {
+                         @if (ui.spinner()) {
                          <div class="spinner-row">
                               <div class="spinner"></div>
                               <span>{{ ui.spinnerMessage || 'Loading...' }}</span>

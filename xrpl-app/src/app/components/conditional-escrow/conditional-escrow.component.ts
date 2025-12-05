@@ -469,7 +469,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                console.error('Error in getEscrows:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving getEscrows in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -571,14 +571,14 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     }
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create Conditional Escrow (no changes will be made)...' : 'Submitting Create Conditional Escrow to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Create Conditional Escrow (no changes will be made)...' : 'Submitting Create Conditional Escrow to Ledger...', 200);
 
                this.ui.setPaymentTx(escrowCreateTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, escrowCreateTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -603,7 +603,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -612,7 +612,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Created escrow successfully!';
                     const [updatedAccountInfo, updatedAccountObjects, gatewayBalances] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
 
@@ -642,7 +642,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                console.error('Error in createConditionalEscrow:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving createConditionalEscrow in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -743,14 +743,14 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     // }
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Finishing Conditional Escrow (no changes will be made)...' : 'Submitting Finish Conditional Escrow to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Finishing Conditional Escrow (no changes will be made)...' : 'Submitting Finish Conditional Escrow to Ledger...', 200);
 
                this.ui.setPaymentTx(escrowFinishTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, escrowFinishTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -775,7 +775,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -784,7 +784,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Finished escrow successfully!';
                     const [updatedAccountInfo, updatedAccountObjects, gatewayBalances] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
 
@@ -814,7 +814,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                console.error('Error in finishConditionalEscrow:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving finishConditionalEscrow in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -914,14 +914,14 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Cancelling Conditional Escrow (no changes will be made)...' : 'Submitting Cancel Conditional Escrow to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Cancelling Conditional Escrow (no changes will be made)...' : 'Submitting Cancel Conditional Escrow to Ledger...', 200);
 
                this.ui.setPaymentTx(escrowCancelTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, escrowCancelTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -946,7 +946,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -955,7 +955,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Cancelled escrow successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects, gatewayBalances] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
@@ -993,7 +993,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                console.error('Error in cancelEscrow:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving cancelEscrow in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -1395,7 +1395,7 @@ export class CreateConditionalEscrowComponent implements OnInit, AfterViewInit {
                this.ui.setError(`${error.message || 'Unknown error'}`);
                this.escrowOwnerField = this.currentWallet.address; // safe fallback
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving getEscrowOwnerAddress in ${this.executionTime} ms ${executionTimeSeconds} seconds`);

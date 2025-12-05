@@ -645,22 +645,22 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if(activeTab === 'setTrustline') {
-                              <button type="button" class="btn-primary-blue" (click)="setTrustLine()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Set Trustline' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="setTrustLine()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Set Trustline' }}</button>
                               } @else if (activeTab === 'removeTrustline') {
-                              <button type="button" class="btn-primary-red" (click)="removeTrustline()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Remove Trustline' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="removeTrustline()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Remove Trustline' }}</button>
                               } @else if (activeTab === 'issueCurrency') {
-                              <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Issue Currency' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Issue Currency' }}</button>
                               } @else if (activeTab === 'clawbackTokens') {
-                              <button type="button" class="btn-primary-red" (click)="clawbackTokens()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Clawback Tokens' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="clawbackTokens()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Clawback Tokens' }}</button>
                               } @else if (activeTab === 'addNewIssuers') {
-                              <button type="button" class="btn-primary-blue" (click)="addToken(newCurrency, newIssuer, true)" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Add Currency/Issuer' }}</button>
-                              <button type="button" class="btn-primary-blue" (click)="removeToken(currencyFieldDropDownValue, selectedIssuer)" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Remove Currency/Issuer' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="addToken(newCurrency, newIssuer, true)" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Add Currency/Issuer' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="removeToken(currencyFieldDropDownValue, selectedIssuer)" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Remove Currency/Issuer' }}</button>
                               }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                          </div>
 
                          <!-- Spinner -->
-                         @if (ui.spinner) {
+                         @if (ui.spinner()) {
                          <div class="spinner-row">
                               <div class="spinner"></div>
                               <span>{{ ui.spinnerMessage || 'Loading...' }}</span>

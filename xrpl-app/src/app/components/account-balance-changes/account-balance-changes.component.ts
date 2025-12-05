@@ -335,7 +335,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           reset ? (this.loadingInitial = true) : (this.loadingMore = true);
 
           // Show spinner immediately - use the main spinner, not loadingMore
-          this.ui.spinner = true;
+          this.ui.spinner.set(true);
           this.ui.spinnerMessage = 'Loading balance changes...';
           const spinnerStartTime = Date.now();
           const minSpinnerTime = 400;
@@ -448,7 +448,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                // Wait for the remaining time before hiding spinner and updating loading flags
                setTimeout(() => {
                     // Hide spinner and update loading flags together
-                    this.ui.spinner = false;
+                    this.ui.spinner.set(false);
                     reset ? (this.loadingInitial = false) : (this.loadingMore = false);
 
                     this.cdr.detectChanges();

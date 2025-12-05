@@ -229,4 +229,13 @@ export class XrplCacheService {
           }
           return snapshot;
      }
+
+     getNetworkSnapshot(address: string, force = false, xrplService: XrplService) {
+          return this.getOrFetch(`snapshot-${address}`, async () => {
+               const client = await this.getClient(() => xrplService.getClient());
+               const [data, fee, ledger] = await Promise.all([this.getAccountData(address, force), this.getFee(this.xrplService, force), this.xrplService.getLastLedgerIndex(client)]);
+
+               return { ...data, fee, currentLedger: ledger };
+          });
+     }
 }

@@ -277,7 +277,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                console.error('Error in getTickets:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving getTickets in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -333,14 +333,14 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Ticket Creation (no funds will be moved)...' : 'Submitting Ticket Creation to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Ticket Creation (no funds will be moved)...' : 'Submitting Ticket Creation to Ledger...', 200);
 
                this.ui.setPaymentTx(ticketCreateTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, ticketCreateTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -365,7 +365,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -374,7 +374,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Tickets created successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -395,7 +395,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                console.error('Error in createTicket:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving createTicket in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -470,13 +470,13 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                          continue;
                     }
 
-                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? `Simulating Ticket Delete ${ticketSeq}...` : `Submitting Ticket Delete for ticket ${ticketSeq}...`, 200);
+                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? `Simulating Ticket Delete ${ticketSeq}...` : `Submitting Ticket Delete for ticket ${ticketSeq}...`, 200);
 
                     this.ui.setPaymentTx(accountSetTx);
                     this.updatePaymentTx();
 
                     let response: any;
-                    if (this.ui.isSimulateEnabled) {
+                    if (this.ui.isSimulateEnabled()) {
                          response = await this.xrplTransactions.simulateTransaction(client, accountSetTx);
                     } else {
                          const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -520,7 +520,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                     this.ui.clearWarning(); // nothing missing → hide the panel
                }
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = `${ticketsSuccessfullyDeleted} Ticket(s) deleted successfully!`;
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -540,7 +540,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
                console.error('Error in deleteTicket:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving deleteTicket in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -671,7 +671,7 @@ export class CreateTicketsComponent implements OnInit, AfterViewInit {
 
      clearFields(all = true) {
           if (all) {
-               this.ui.isSimulateEnabled = false;
+               this.ui.isSimulateEnabled.set(false);
                this.ui.clearMessages();
                this.ui.clearWarning();
           }

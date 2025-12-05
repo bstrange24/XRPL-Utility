@@ -1,5 +1,5 @@
 <!-- Spinner -->
-@if (txUiService.spinner) {
+@if (txUiService.spinner()) {
 <div class="spinner-row">
      <div class="spinner"></div>
      <span>{{ txUiService.spinnerMessage || 'Loading...' }}</span>
@@ -58,7 +58,7 @@
 @if (txUiService.txSignal().length > 0) {
 <div class="tx-preview-container">
      <div class="tx-header">
-          <h5 class="tx-title">Credential Transaction</h5>
+          <h5 class="tx-title">Transaction JSON</h5>
           <div class="tx-actions">
                <button class="copy-btn" (click)="copyUtilService.copyTxSignal()" title="Copy JSON">
                     <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>

@@ -39,6 +39,12 @@ export class ValidationService {
           this.rules.set(rule.transactionType, rule);
      }
 
+     private getValueByPath(obj: any, path: string): any {
+          if (!obj || !path) return undefined;
+
+          return path.split('.').reduce((acc, part) => acc?.[part], obj);
+     }
+
      async validate(transactionType: string, context: ValidationContext): Promise<string[]> {
           const rule = this.rules.get(transactionType);
           if (!rule) {
@@ -50,9 +56,14 @@ export class ValidationService {
           // Check required fields
           if (rule.requiredFields) {
                for (const field of rule.requiredFields) {
-                    if (!context.inputs[field]) {
-                         errors.push(`${this.capitalize(field)} is required`);
+                    const value = this.getValueByPath(context.inputs, field);
+
+                    if (value === undefined || value === null || value === '') {
+                         errors.push(`${this.capitalize(field.split('.')[1])} is required`);
                     }
+                    // if (!context.inputs[field]) {
+                    // errors.push(`${this.capitalize(field)} is required`);
+                    // }
                }
                // if (errors.length > 0) return errors;
           }
@@ -82,8 +93,9 @@ export class ValidationService {
 
      private isValidAddress(field: string): ValidatorFn {
           return ctx => {
-               const value = ctx.inputs[field];
-               return value && !xrpl.isValidAddress(value) ? `${this.capitalize(field)} is not a valid XRP address` : null;
+               // const value = ctx.inputs[field];
+               const value = this.getValueByPath(ctx.inputs, field);
+               return value && !xrpl.isValidAddress(value) ? `${this.capitalize(field.split('.')[1])} is required` : null;
           };
      }
 
@@ -457,6 +469,10 @@ export class ValidationService {
           };
      }
 
+     private getSeed(ctx: any) {
+          return ctx.inputs['wallet']?.seed || ctx.inputs['regularKey']?.seed || (ctx.inputs['multiSign']?.seeds?.length ? ctx.inputs['multiSign'].seeds[0] : null);
+     }
+
      private registerBuiltInRules() {
           // AccountInfo
           this.registerRule({
@@ -669,17 +685,23 @@ export class ValidationService {
           // PermissionedDomainSet Actions
           this.registerRule({
                transactionType: 'PermissionedDomainSet',
-               requiredFields: ['seed', 'subject', 'credentialType'], // adjust as needed
+               requiredFields: ['wallet.seed', 'subject.subject'],
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
                          return null;
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    // Destination address valid
+                    this.isValidAddress('subject.subject'),
+                    // this.notSelf('senderAddress', 'subject.address'),
+                    this.requireDestinationTagIfNeededNewDestination(),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -692,22 +714,21 @@ export class ValidationService {
 
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
-
-                    // Destination address valid
-                    this.isValidAddress('subject'),
                ],
           });
 
           // PermissionedDomainSet Actions
           this.registerRule({
                transactionType: 'PermissionedDomainDelete',
-               requiredFields: ['seed', 'domainId'],
+               requiredFields: ['wallet.seed', 'domain.domainId'],
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 

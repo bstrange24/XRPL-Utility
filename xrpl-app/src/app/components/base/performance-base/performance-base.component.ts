@@ -30,7 +30,7 @@ export class PerformanceBaseComponent {
                if (this.environment() !== 'mainnet') {
                     console.log(`Leaving ${name} in ${elapsed}ms (${(elapsed / 1000).toFixed(2)}s)`);
                }
-               this.executionTime.set(`Execution time: ${elapsed}ms`);
+               this.executionTime.set(`Execution time: ${elapsed} ms (${(elapsed / 1000).toFixed(2)} sec)`);
           }
      }
 

@@ -901,7 +901,7 @@ input:focus+.slider {
 .button-row {
      display: flex;
      gap: 0.75rem;
-     margin-top: 1rem;
+     /* margin-top: 1rem; */
 }
 
 .btn-primary-red {
@@ -1724,7 +1724,7 @@ pre[class*='language-'] {
      align-items: flex-start;
      padding: 12px 16px;
      border-radius: 6px;
-     margin-top: 16px;
+     /* margin-top: 16px; */
      transition: all 0.3s ease-in-out;
      word-wrap: break-word;
      max-width: 100%;

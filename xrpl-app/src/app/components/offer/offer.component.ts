@@ -579,7 +579,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                console.error('Error in getOffers:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving getOffers in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -755,7 +755,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                console.error('Error in getOrderBook:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving getOrderBook in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -848,14 +848,14 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                          return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
-                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Trustline (no changes will be made)...' : 'Submitting Trustline to Ledger...', 200);
+                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Trustline (no changes will be made)...' : 'Submitting Trustline to Ledger...', 200);
 
                     this.ui.setPaymentTx(trustSetTx);
                     this.updatePaymentTx();
 
                     let response: any;
 
-                    if (this.ui.isSimulateEnabled) {
+                    if (this.ui.isSimulateEnabled()) {
                          response = await this.xrplTransactions.simulateTransaction(client, trustSetTx);
                     } else {
                          const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -880,12 +880,12 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                          const resultMsg = this.utilsService.getTransactionResultMessage(response);
                          const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                         console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                         console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                          (response.result as any).errorMessage = userMessage;
                     }
                }
 
-               const xrpReserve = await this.xrplService.getXrpReserveRequirements(accountInfo, serverInfo);
+               const xrpReserve = this.xrplService.getXrpReserveRequirements(accountInfo, serverInfo);
                console.log(`Initial XRP Balance ${initialXrpBalance} (drops): ${xrpl.xrpToDrops(initialXrpBalance)}`);
 
                // Build currency objects
@@ -1112,14 +1112,14 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Create Offer (no changes will be made)...' : 'Submitting Create Offer to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Create Offer (no changes will be made)...' : 'Submitting Create Offer to Ledger...', 200);
 
                this.ui.setPaymentTx(offerCreateTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, offerCreateTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -1144,7 +1144,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -1219,7 +1219,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Offer created successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.getExistingOffers(updatedAccountObjects, wallet.classicAddress);
@@ -1236,7 +1236,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                console.error('Error in createOffer:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving createOffer in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -1304,13 +1304,13 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                          return this.ui.setError('Insufficient XRP to complete transaction');
                     }
 
-                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? `Simulating Cancel Offer ${offerSeq}...` : `Submitting Cancel Offer for offer sequence ${offerSeq}...`, 200);
+                    this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? `Simulating Cancel Offer ${offerSeq}...` : `Submitting Cancel Offer for offer sequence ${offerSeq}...`, 200);
 
                     this.ui.setPaymentTx(offerCancelTx);
                     this.updatePaymentTx();
 
                     let response: any;
-                    if (this.ui.isSimulateEnabled) {
+                    if (this.ui.isSimulateEnabled()) {
                          response = await this.xrplTransactions.simulateTransaction(client, offerCancelTx);
                     } else {
                          const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -1345,7 +1345,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
 
                this.ui.setSuccess(this.ui.result);
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Cancelled offer successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -1365,7 +1365,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                console.error('Error in cancelOffer:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving cancelOffer in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -1727,7 +1727,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                return;
           }
 
-          this.ui.spinner = true;
+          this.ui.spinner.set(true);
           this.ui.showSpinnerWithDelay('Calculating required amount...', 500);
 
           try {
@@ -1834,7 +1834,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                this.phnixExchangeXrp = 'Error';
                this.weSpendAmountField = '0';
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                let executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving updateTokenBalanceAndExchangeReverse in ${executionTime}ms`);
           }
@@ -1850,7 +1850,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                return;
           }
 
-          this.ui.spinner = true;
+          this.ui.spinner.set(true);
           this.ui.showSpinnerWithDelay('Calculating best rate...', 500);
 
           try {
@@ -1949,7 +1949,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                this.phnixExchangeXrp = 'Error';
                this.weWantAmountField = '0';
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                let executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving updateTokenBalanceAndExchange in ${executionTime}ms`);
           }

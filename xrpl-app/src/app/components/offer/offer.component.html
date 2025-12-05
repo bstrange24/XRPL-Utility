@@ -461,19 +461,19 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if (activeTab === 'getOffers') {
-                              <button type="button" class="btn-primary-blue" (click)="getOffers()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Get Offers' }}</button>
-                              <button type="button" class="btn-primary-blue" (click)="getOrderBook()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Get Orderbook' }}</button>
-                              <button type="button" class="btn-primary-green" (click)="createOffer()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create Offer' }}</button>
-                              <!-- <button type="button" class="btn-primary-green" (click)="getTokenBalance()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Get Token Balance' }}</button> -->
-                              <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Invert Order' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="getOffers()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Get Offers' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="getOrderBook()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Get Orderbook' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="createOffer()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create Offer' }}</button>
+                              <!-- <button type="button" class="btn-primary-green" (click)="getTokenBalance()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Get Token Balance' }}</button> -->
+                              <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Invert Order' }}</button>
                               } @else if(activeTab === 'cancelOffer') {
-                              <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Cancel Offer' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Cancel Offer' }}</button>
                               <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               }
                          </div>
 
                          <!-- Spinner -->
-                         @if (ui.spinner) {
+                         @if (ui.spinner()) {
                          <div class="spinner-row">
                               <div class="spinner"></div>
                               <span>{{ ui.spinnerMessage || 'Loading...' }}</span>

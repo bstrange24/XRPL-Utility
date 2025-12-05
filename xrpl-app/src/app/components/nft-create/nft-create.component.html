@@ -591,17 +591,17 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if(activeTab === 'create') {
-                              <button type="button" class="btn-primary-blue" (click)="mintNFT()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create NFT' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="mintNFT()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create NFT' }}</button>
                               } @else if (activeTab === 'burn') {
-                              <button type="button" class="btn-primary-red" (click)="burnNFT()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Burn NFT' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="burnNFT()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Burn NFT' }}</button>
                               } @else if (activeTab === 'updateNFTMetadata') {
-                              <button type="button" class="btn-primary-green" (click)="updateNFTMetadata()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Modify NFT Meta Data' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="updateNFTMetadata()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Modify NFT Meta Data' }}</button>
                               }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>
 
                          <!-- Spinner -->
-                         @if (ui.spinner) {
+                         @if (ui.spinner()) {
                          <div class="spinner-row">
                               <div class="spinner"></div>
                               <span>{{ ui.spinnerMessage || 'Loading...' }}</span>

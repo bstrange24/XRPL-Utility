@@ -161,126 +161,16 @@
                               </div>
                               }
 
-                              <!-- Switches -->
-                              <div class="switch-group">
-                                   <!-- Memo group -->
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                        <span class="slider"></span>
-                                        Add Memo
-                                   </label>
-
-                                   <!-- Multi Signing Enabled group -->
-                                   @if (multiSigningEnabled()) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                        <span class="slider"></span>
-                                        Use Multi-Sign
-                                   </label>
-                                   }
-
-                                   <!-- Regular Key Signing Enabled-->
-                                   @if (regularKeySigningEnabled()) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                                        <span class="slider"></span>
-                                        Use Regular Key
-                                   </label>
-                                   }
-
-                                   <!-- Use Ticket for tx -->
-                                   @if (ticketArray().length > 0) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                                        <span class="slider"></span>
-                                        Use Ticket
-                                   </label>
-                                   }
-
-                                   <!-- Simulate tx -->
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="txUiService.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="txUiService.toggleSimulate($event)" />
-                                        <span class="slider"></span>
-                                        Simulate
-                                   </label>
-                              </div>
-
-                              <!-- Memo Field -->
-                              @if (isMemoEnabled()) {
-                              <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-                              }
-
-                              <!-- Sign tx with Mult Sign address -->
-                              @if (useMultiSign()) {
-                              <div class="multisign-grid">
-                                   <div class="multisign-field">
-                                        <label for="signers">Signers</label>
-                                        <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                                   </div>
-                                   <div class="multisign-field">
-                                        <label for="seeds">Seeds</label>
-                                        <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                                   </div>
-                                   <div class="multisign-field quorum-field">
-                                        <label for="quorum">Quorum</label>
-                                        <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Sign tx with Regular key address -->
-                              @if (isRegularKeyAddress()) {
-                              <div class="regular-key-fields">
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="regKeyAddress">Regular Key Address</label>
-                                             <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                                        </div>
-                                   </div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="regKeySeed">Regular Key Seed</label>
-                                             <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                        </div>
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Get ticket -->
-                              @if (isTicket()) {
-                              <div class="ticket-fields">
-                                   <div class="form-group">
-                                        <label for="ticketSeq">Ticket Sequence</label>
-                                        @if (multiSelectMode()) {
-                                        <div>
-                                             <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                                  @for (ticket of ticketArray(); track trackByTicket($index, ticket)) {
-                                                  <option [value]="ticket">{{ ticket }}</option>
-                                                  }
-                                             </select>
-                                        </div>
-                                        } @else {
-                                        <div>
-                                             <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                                  <option value="" disabled>Select a ticket</option>
-                                                  @for (ticket of ticketArray(); track trackByTicket($index, ticket)) {
-                                                  <option [value]="ticket">{{ ticket }}</option>
-                                                  }
-                                             </select>
-                                        </div>
-                                        }
-                                   </div>
-                              </div>
-                              }
+                              <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="activeTab" [multiSigningEnabled]="multiSigningEnabled" [regularKeySigningEnabled]="regularKeySigningEnabled" />
 
                               <!-- Action buttons -->
                               <div class="button-row">
                                    @if (activeTab() === 'set') {
-                                   <button type="button" class="btn-primary-blue" (click)="setDid()" [disabled]="txUiService.spinner">{{ txUiService.spinner ? 'Processing...' : 'Set DID' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="setDid()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Set DID' }}</button>
                                    } @else if (activeTab() === 'delete') {
-                                   <button type="button" class="btn-primary-red" (click)="deleteDid()" [disabled]="txUiService.spinner">{{ txUiService.spinner ? 'Processing...' : 'Delete DID' }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="deleteDid()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Delete DID' }}</button>
                                    }
-                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
+                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()">Clear Fields</button>
                               </div>
                          </div>
 

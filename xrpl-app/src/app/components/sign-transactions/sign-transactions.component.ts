@@ -343,7 +343,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.error('Error in getAccountDetails:', error);
                this.ui.setError(error.message || 'Unknown error');
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving getAccountDetails in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -502,7 +502,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.error('Error in unsignedTransaction:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving unsignedTransaction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -553,7 +553,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.buttonLoading.signed = false;
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving signedTransaction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -607,7 +607,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -616,7 +616,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Transaction completed successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -640,7 +640,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.error('Error in submitTransaction:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.buttonLoading.submit = false;
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -721,7 +721,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.error('Error in submitMultiSignedTransaction:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving submitMultiSignedTransaction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -777,7 +777,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.error('Error in signForMultiSign:', error);
                this.ui.setError(`Error: ${error.message || error}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.buttonLoading.multiSign = false;
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);

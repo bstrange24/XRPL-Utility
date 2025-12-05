@@ -1,0 +1,93 @@
+@if (showWhenTab === '*' || (Array.isArray(showWhenTab) ? showWhenTab.includes(activeTab?.() ?? '') : showWhenTab === activeTab?.())) {
+<div class="switch-group">
+     @if (showMemo) {
+     <label class="switch">
+          <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
+          <span class="slider"></span> Add Memo
+     </label>
+     } @if (showMultiSign && multiSigningEnabled()) {
+     <label class="switch">
+          <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
+          <span class="slider"></span> Use Multi-Sign
+     </label>
+     } @if (showRegularKey && regularKeySigningEnabled()) {
+     <label class="switch">
+          <input type="checkbox" [(ngModel)]="isRegularKeyAddress" name="isRegularKeyAddress" />
+          <span class="slider"></span> Use Regular Key
+     </label>
+     } @if (showTicket && ticketArray().length > 0) {
+     <label class="switch">
+          <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
+          <span class="slider"></span> Use Ticket
+     </label>
+     } @if (showSimulate) {
+     <label class="switch">
+          <input type="checkbox" [(ngModel)]="txUiService.isSimulateEnabled" (ngModelChange)="toggleSimulate($event)" name="isSimulateEnabled" />
+          <span class="slider"></span> Simulate
+     </label>
+     }
+</div>
+
+<!-- Check if memo slider is enabled -->
+@if (isMemoEnabled()) {
+<textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
+}
+
+<!-- Check if Multi sign slider is enabled -->
+@if (useMultiSign()) {
+<div class="multisign-grid">
+     <div class="multisign-field">
+          <label>Signers</label>
+          <textarea [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
+     </div>
+     <div class="multisign-field">
+          <label>Seeds</label>
+          <textarea [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
+     </div>
+     <div class="multisign-field quorum-field">
+          <label>Quorum</label>
+          <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
+     </div>
+</div>
+}
+
+<!-- Check if Regular Key slider is enabled -->
+@if (isRegularKeyAddress()) {
+<div class="regular-key-fields">
+     <div class="form-row">
+          <div class="form-group">
+               <label>Regular Key Address</label>
+               <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
+          </div>
+     </div>
+     <div class="form-row">
+          <div class="form-group">
+               <label>Regular Key Seed</label>
+               <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
+          </div>
+     </div>
+</div>
+}
+
+<!-- Check if Ticket slider is enabled -->
+@if (isTicket() && showTicket && ticketArray().length > 0) {
+<div class="ticket-fields">
+     <div class="form-group">
+          <label>Ticket Sequence</label>
+          @if (multiSelectMode()) {
+          <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
+               @for (ticket of ticketArray(); track ticket) {
+               <option [value]="ticket">{{ ticket }}</option>
+               }
+          </select>
+          } @else {
+          <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
+               <option value="" disabled>Select a ticket</option>
+               @for (ticket of ticketArray(); track ticket) {
+               <option [value]="ticket">{{ ticket }}</option>
+               }
+          </select>
+          }
+     </div>
+</div>
+} }

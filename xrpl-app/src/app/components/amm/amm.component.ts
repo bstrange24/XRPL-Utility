@@ -674,7 +674,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                console.error('Error in getAMMPoolInfo:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving getAMMPoolInfo in ${this.executionTime}ms`);
           }
@@ -782,14 +782,14 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating AMM Creation (no funds will be moved)...' : 'Submitting AMM Creation to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating AMM Creation (no funds will be moved)...' : 'Submitting AMM Creation to Ledger...', 200);
 
                this.ui.setPaymentTx(ammCreateTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, ammCreateTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -816,7 +816,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -825,7 +825,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'AMM created successfully!';
                     const assetDef: xrpl.Currency = { currency: 'XRP' };
                     const asset2Def: xrpl.Currency = {
@@ -850,7 +850,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                console.error('Error in createAMM:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving createAMM in ${this.executionTime}ms`);
           }
@@ -974,14 +974,14 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating AMM Deposit (no funds will be moved)...' : 'Submitting AMM Deposit to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating AMM Deposit (no funds will be moved)...' : 'Submitting AMM Deposit to Ledger...', 200);
 
                this.ui.setPaymentTx(ammDepositTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, ammDepositTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -1006,7 +1006,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -1015,7 +1015,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'AMM Deposti successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
@@ -1033,7 +1033,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                console.error('Error in depositToAMM:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving depositToAMM in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -1196,14 +1196,14 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating AMM Withdrawal (no funds will be moved)...' : 'Submitting AMM Withdrawal to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating AMM Withdrawal (no funds will be moved)...' : 'Submitting AMM Withdrawal to Ledger...', 200);
 
                this.ui.setPaymentTx(ammWithdrawTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, ammWithdrawTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -1228,7 +1228,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -1238,7 +1238,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                this.withdrawlLpTokenFromPoolField = '';
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'AMM Withdrawl successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true)]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
@@ -1255,7 +1255,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                console.error('Error in withdrawlTokenFromAMM:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving withdrawlTokenFromAMM in ${this.executionTime}ms`);
           }
@@ -1355,14 +1355,14 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating AMM Clawback (no funds will be moved)...' : 'Submitting AMM Clawback to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating AMM Clawback (no funds will be moved)...' : 'Submitting AMM Clawback to Ledger...', 200);
 
                this.ui.setPaymentTx(ammClawbackTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, ammClawbackTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -1387,7 +1387,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -1396,7 +1396,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'AMM Clawback successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
@@ -1412,7 +1412,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                console.error('Error in clawbackFromAMM:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving clawbackFromAMM in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -1477,14 +1477,14 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating Swap via AMM (no changes will be made)...' : 'Submitting Swap via AMM to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Swap via AMM (no changes will be made)...' : 'Submitting Swap via AMM to Ledger...', 200);
 
                this.ui.setPaymentTx(swapPaymentTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, swapPaymentTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -1509,7 +1509,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -1518,7 +1518,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'Swap via AMM successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
@@ -1535,7 +1535,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                console.error('Error in swapViaAMM:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving swapViaAMM in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -1595,14 +1595,14 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     return this.ui.setError('Insufficient XRP to complete transaction');
                }
 
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled ? 'Simulating AMM Delete (no changes will be made)...' : 'Submitting AMM Delete to Ledger...', 200);
+               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating AMM Delete (no changes will be made)...' : 'Submitting AMM Delete to Ledger...', 200);
 
                this.ui.setPaymentTx(deleteAmmTx);
                this.updatePaymentTx();
 
                let response: any;
 
-               if (this.ui.isSimulateEnabled) {
+               if (this.ui.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, deleteAmmTx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
@@ -1627,7 +1627,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
                     return this.ui.setError(userMessage);
                } else {
@@ -1636,7 +1636,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
 
                this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled) {
+               if (!this.ui.isSimulateEnabled()) {
                     this.ui.successMessage = 'AMM Delete successfully!';
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
@@ -1652,7 +1652,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                console.error('Error in deleteAMM:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving deleteAMM in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -1706,7 +1706,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                return;
           }
 
-          this.ui.spinner = true;
+          this.ui.spinner.set(true);
           this.ui.showSpinnerWithDelay('Calculating required amount...', 500);
 
           try {
@@ -1813,7 +1813,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                this.phnixExchangeXrp = 'Error';
                this.weSpendAmountField = '0';
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                let executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving updateTokenBalanceAndExchangeReverse in ${executionTime}ms`);
           }
@@ -1829,7 +1829,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                return;
           }
 
-          this.ui.spinner = true;
+          this.ui.spinner.set(true);
           this.ui.showSpinnerWithDelay('Calculating best rate...', 500);
 
           try {
@@ -1928,7 +1928,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                this.phnixExchangeXrp = 'Error';
                this.weWantAmountField = '0';
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                let executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving updateTokenBalanceAndExchange in ${executionTime}ms`);
           }
@@ -1978,7 +1978,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
           }
-          this.ui.isSimulateEnabled = false;
+          this.ui.isSimulateEnabled.set(false);
           this.weSpendAmountField = '';
           this.weWantAmountField = '';
           this.isMemoEnabled = false;

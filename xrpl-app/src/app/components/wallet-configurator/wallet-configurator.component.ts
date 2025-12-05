@@ -251,7 +251,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                console.error('Error in getAccountDetails:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving getAccountDetails in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -271,7 +271,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, this.encryptionType);
                const client = await this.xrplService.getClient();
                await this.refreshWallets(client, [faucetWallet.address]);
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.ui.clearWarning();
                this.ui.setTxResult(faucetWallet);
                this.updateTxResult();
@@ -279,7 +279,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                console.error('Error in generateNewAccount:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.buttonLoading.generateNewWalletFromSeed = false;
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -310,7 +310,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                this.updateDestinations();
 
                await this.refreshWallets(client, [faucetWallet.address]);
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.ui.clearWarning();
                this.ui.setSuccess(`Successfully added ${faucetWallet.address}`);
           } catch (error: any) {
@@ -321,7 +321,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                     this.ui.setError(`${error.message}`);
                }
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.buttonLoading.deriveWalletFromFamilySeed = false;
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -341,7 +341,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                const faucetWallet = await this.walletGenerator.generateNewWalletFromMnemonic(this.wallets, this.environment, this.encryptionType);
                const client = await this.xrplService.getClient();
                await this.refreshWallets(client, [faucetWallet.address]);
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.ui.clearWarning();
                this.ui.setTxResult(faucetWallet);
                this.updateTxResult();
@@ -349,7 +349,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                console.error('Error in generateNewWalletFromMnemonic:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.buttonLoading.generateNewWalletFromMnemonic = false;
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -380,7 +380,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                this.updateDestinations();
 
                await this.refreshWallets(client, [faucetWallet.address]);
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.ui.clearWarning();
                this.ui.setSuccess(`Successfully added ${faucetWallet.address}`);
           } catch (error: any) {
@@ -391,7 +391,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                     this.ui.setError(`${error.message}`);
                }
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.buttonLoading.deriveWalletFromMnemonic = false;
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -411,7 +411,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                const faucetWallet = await this.walletGenerator.generateNewWalletFromSecretNumbers(this.wallets, this.environment, this.encryptionType);
                const client = await this.xrplService.getClient();
                await this.refreshWallets(client, [faucetWallet.address]);
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.ui.clearWarning();
                this.ui.setTxResult(faucetWallet);
                this.updateTxResult();
@@ -419,7 +419,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                console.error('Error in generateNewWalletFromSecretNumbers:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.buttonLoading.generateNewWalletFromSecretNumbers = false;
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -450,7 +450,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                this.updateDestinations();
 
                await this.refreshWallets(client, [faucetWallet.address]);
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.ui.clearWarning();
                this.ui.setSuccess(`Successfully added ${faucetWallet.address}`);
           } catch (error: any) {
@@ -461,7 +461,7 @@ export class WalletConfiguratorComponent implements OnInit, AfterViewInit {
                     this.ui.setError(`${error.message}`);
                }
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.buttonLoading.deriveWalletFromSecretNumbers = false;
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);

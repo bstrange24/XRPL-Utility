@@ -31,7 +31,7 @@ export class XrplTransactionExecutorService {
           }
 
           // 3. Show spinner
-          this.txUiService.showSpinnerWithDelay(this.txUiService.isSimulateEnabled ? simulateMessage : submitMessage, 200);
+          this.txUiService.showSpinnerWithDelay(this.txUiService.isSimulateEnabled() ? simulateMessage : submitMessage, 200);
 
           // 4. Set preview
           this.txUiService.setTxSignal(tx);
@@ -39,7 +39,7 @@ export class XrplTransactionExecutorService {
           let response: any;
 
           try {
-               if (this.txUiService.isSimulateEnabled) {
+               if (this.txUiService.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, tx);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(useMultiSign, isRegularKeyAddress, regularKeySeed);
@@ -63,7 +63,7 @@ export class XrplTransactionExecutorService {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.txUiService.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.txUiService.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
 
                     // CRITICAL: Keep this so your <app-transaction-preview> shows the nice message
                     if (response.result) {
@@ -90,7 +90,7 @@ export class XrplTransactionExecutorService {
                this.txUiService.setError(msg);
                return { success: false, error: msg };
           } finally {
-               this.txUiService.spinner = false;
+               this.txUiService.spinner.set(false);
           }
      }
 
@@ -209,6 +209,66 @@ export class XrplTransactionExecutorService {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Delegate Action (no changes will be made)...',
                submitMessage: 'Delegating Action on Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async accountDelete(
+          tx: xrpl.AccountDelete,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating Account Delete (no changes will be made)...',
+               submitMessage: 'Deleting Account on Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async permissionedDomainSet(
+          tx: xrpl.PermissionedDomainSet,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating Permissioned Domain Set (no changes will be made)...',
+               submitMessage: 'Setting Permissioned Domain on Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async permissionedDomainDelete(
+          tx: xrpl.PermissionedDomainDelete,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating Permission Domain Delete (no changes will be made)...',
+               submitMessage: 'Deleting Permission Domain on Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });

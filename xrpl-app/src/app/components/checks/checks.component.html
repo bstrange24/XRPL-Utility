@@ -465,18 +465,18 @@
                               <!-- Action buttons -->
                               <div class="button-row">
                                    @switch (activeTab) { @case ('create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Create Check' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create Check' }}</button>
                                    } @case ('cash') {
-                                   <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Cash Check' }}</button>
+                                   <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Cash Check' }}</button>
                                    } @case ('cancel') {
-                                   <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Cancel Check' }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Cancel Check' }}</button>
                                    } }
-                                   <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields" [disabled]="ui.spinner">Clear Fields</button>
+                                   <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields" [disabled]="ui.spinner()">Clear Fields</button>
                               </div>
                          </div>
 
                          <!-- Spinner -->
-                         @if (ui.spinner) {
+                         @if (ui.spinner()) {
                          <div class="spinner-row">
                               <div class="spinner"></div>
                               <span>{{ ui.spinnerMessage || 'Loading...' }}</span>

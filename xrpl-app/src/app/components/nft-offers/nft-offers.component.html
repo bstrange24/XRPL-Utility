@@ -795,21 +795,21 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if(activeTab === 'buy') {
-                              <button type="button" class="btn-primary-green" (click)="buyNFT()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Buy NFT' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="buyNFT()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Buy NFT' }}</button>
                               } @else if (activeTab === 'sell') {
-                              <button type="button" class="btn-primary-blue" (click)="sellNFT()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Sell NFT' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="sellNFT()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Sell NFT' }}</button>
                               } @else if (activeTab === 'buyOffer') {
-                              <button type="button" class="btn-primary-green" (click)="createOffer('Buy')" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Buy NFT Offer' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="createOffer('Buy')" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Buy NFT Offer' }}</button>
                               }@else if (activeTab === 'sellOffer') {
-                              <button type="button" class="btn-primary-blue" (click)="createOffer('Sell')" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Sell NFT Offer' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="createOffer('Sell')" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Sell NFT Offer' }}</button>
                               }@else if (activeTab === 'cancelOffer') {
-                              <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="ui.spinner">{{ ui.spinner ? 'Processing...' : 'Cancel NFT Offer' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Cancel NFT Offer' }}</button>
                               }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>
 
                          <!-- Spinner -->
-                         @if (ui.spinner) {
+                         @if (ui.spinner()) {
                          <div class="spinner-row">
                               <div class="spinner"></div>
                               <span>{{ ui.spinnerMessage || 'Loading...' }}</span>

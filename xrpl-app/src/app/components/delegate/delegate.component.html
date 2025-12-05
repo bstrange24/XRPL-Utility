@@ -94,213 +94,101 @@
                }
 
                <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab()">
-                         <div class="tab-content-container">
+                    <div class="tab-content-container">
+                         <div [@tabTransition]="activeTab()">
                               <!-- Left Form Fields -->
-                              <div class="tab-content-container form-fields-container">
-                                   <div class="form-row" style="padding-bottom: 0.8em">
-                                        <div class="form-group">
-                                             <label>Destination</label>
+                              <div class="form-row" style="padding-bottom: 0.8em">
+                                   <div class="form-group">
+                                        <label>Destination</label>
 
-                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
+                                        <div class="combobox-container" (clickOutside)="closeDropdown()">
+                                             <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
 
-                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                                  </button>
-                                             </div>
+                                             <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
+                                                  <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                                             </button>
                                         </div>
+                                   </div>
 
-                                        <div class="form-group">
-                                             <label></label>
-                                        </div>
+                                   <div class="form-group">
+                                        <label></label>
+                                   </div>
 
-                                        <!-- Dropdown template -->
-                                        <ng-template #dropdownTemplate>
-                                             <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations(); track trackByWalletAddress($index, dest)) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="highlightedIndex() === $index" (click)="selectDestination(dest.address)">
-                                                       <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet().address) {
-                                                            <span class="self-badge">Current Account</span>
-                                                            }
-                                                       </div>
-                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
+                                   <!-- Dropdown template -->
+                                   <ng-template #dropdownTemplate>
+                                        <div class="combobox-dropdown-overlay">
+                                             @for (dest of filteredDestinations(); track trackByWalletAddress($index, dest)) {
+                                             <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="highlightedIndex() === $index" (click)="selectDestination(dest.address)">
+                                                  <div class="item-name">
+                                                       {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet().address) {
+                                                       <span class="self-badge">Current Account</span>
+                                                       }
                                                   </div>
-                                                  } @empty {
-                                                  <div class="combobox-empty">No matching addresses</div>
+                                                  <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
+                                                  <!-- <div class="item-address">{{ dest.address }}</div> -->
+                                             </div>
+                                             } @empty {
+                                             <div class="combobox-empty">No matching addresses</div>
+                                             }
+                                        </div>
+                                   </ng-template>
+                              </div>
+
+                              <div class="flags-wrapper">
+                                   <!-- Flags header -->
+                                   <div class="token-flags-header">
+                                        <lucide-icon name="flag" size="20"></lucide-icon>
+                                        <span class="token-flags-title">Delegate Action Flags</span>
+                                   </div>
+
+                                   <div>
+                                        <div class="form-row-account-flags" style="display: flex; gap: 20px; flex-wrap: wrap">
+                                             <div style="flex: 1; min-width: 300px">
+                                                  @for (action of leftActions; track action.id) {
+                                                  <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="selected.has(action.id)" (click)="toggleSelection(action.id, $event)">
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" [id]="action.key + '-left'" [checked]="selected.has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title-account-flags">{{ action.key }}</span>
+                                                       </div>
+                                                       <div class="flag-value">{{ action.id }} {{action.txType}}</div>
+                                                       <div class="flag-desc">{{ action.description }}</div>
+                                                  </div>
                                                   }
                                              </div>
-                                        </ng-template>
-                                   </div>
 
-                                   <div class="flags-wrapper">
-                                        <!-- Flags header -->
-                                        <div class="token-flags-header">
-                                             <lucide-icon name="flag" size="20"></lucide-icon>
-                                             <span class="token-flags-title">Delegate Action Flags</span>
-                                        </div>
-
-                                        <div>
-                                             <div class="form-row-account-flags" style="display: flex; gap: 20px; flex-wrap: wrap">
-                                                  <div style="flex: 1; min-width: 300px">
-                                                       @for (action of leftActions; track action.id) {
-                                                       <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="selected.has(action.id)" (click)="toggleSelection(action.id, $event)">
-                                                            <div class="flag-header-account">
-                                                                 <input type="checkbox" [id]="action.key + '-left'" [checked]="selected.has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
-                                                                 <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                                      <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                                 </svg>
-                                                                 <span class="flag-title-account-flags">{{ action.key }}</span>
-                                                            </div>
-                                                            <div class="flag-value">{{ action.id }} {{action.txType}}</div>
-                                                            <div class="flag-desc">{{ action.description }}</div>
+                                             <div style="flex: 1; min-width: 300px">
+                                                  @for (action of rightActions; track action.id) {
+                                                  <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="selected.has(action.id)" (click)="toggleSelection(action.id, $event)">
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" [id]="action.key + '-right'" [checked]="selected.has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title-account-flags">{{ action.key }}</span>
                                                        </div>
-                                                       }
+                                                       <div class="flag-value">{{ action.id }} {{action.txType}}</div>
+                                                       <div class="flag-desc">{{ action.description }}</div>
                                                   </div>
-
-                                                  <div style="flex: 1; min-width: 300px">
-                                                       @for (action of rightActions; track action.id) {
-                                                       <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="selected.has(action.id)" (click)="toggleSelection(action.id, $event)">
-                                                            <div class="flag-header-account">
-                                                                 <input type="checkbox" [id]="action.key + '-right'" [checked]="selected.has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
-                                                                 <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                                      <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                                 </svg>
-                                                                 <span class="flag-title-account-flags">{{ action.key }}</span>
-                                                            </div>
-                                                            <div class="flag-value">{{ action.id }} {{action.txType}}</div>
-                                                            <div class="flag-desc">{{ action.description }}</div>
-                                                       </div>
-                                                       }
-                                                  </div>
+                                                  }
                                              </div>
                                         </div>
                                    </div>
                               </div>
                          </div>
 
-                         <!-- Switches -->
-                         <div class="switch-group">
-                              <!-- Memo group -->
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                   <span class="slider"></span>
-                                   Add Memo
-                              </label>
-
-                              <!-- Multi Signing Enabled group -->
-                              @if (multiSigningEnabled()) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                   <span class="slider"></span>
-                                   Use Multi-Sign
-                              </label>
-                              }
-
-                              <!-- Regular Key Signing Enabled-->
-                              @if (regularKeySigningEnabled()) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                                   <span class="slider"></span>
-                                   Use Regular Key
-                              </label>
-                              }
-
-                              <!-- Use Ticket for tx -->
-                              @if (ticketArray().length > 0) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                                   <span class="slider"></span>
-                                   Use Ticket
-                              </label>
-                              }
-
-                              <!-- Simulate tx -->
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="txUiService.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="txUiService.toggleSimulate($event)" />
-                                   <span class="slider"></span>
-                                   Simulate
-                              </label>
-                         </div>
-
-                         <!-- Memo Field -->
-                         @if (isMemoEnabled()) {
-                         <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-                         }
-
-                         <!-- Sign tx with Mult Sign address -->
-                         @if (useMultiSign()) {
-                         <div class="multisign-grid">
-                              <div class="multisign-field">
-                                   <label for="signers">Signers</label>
-                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                              </div>
-                              <div class="multisign-field">
-                                   <label for="seeds">Seeds</label>
-                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                              </div>
-                              <div class="multisign-field quorum-field">
-                                   <label for="quorum">Quorum</label>
-                                   <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Sign tx with Regular key address -->
-                         @if (isRegularKeyAddress()) {
-                         <div class="regular-key-fields">
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="regKeyAddress">Regular Key Address</label>
-                                        <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                                   </div>
-                              </div>
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="regKeySeed">Regular Key Seed</label>
-                                        <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                   </div>
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Get ticket -->
-                         @if (isTicket()) {
-                         <div class="ticket-fields">
-                              <div class="form-group">
-                                   <label for="ticketSeq">Ticket Sequence</label>
-                                   @if (multiSelectMode()) {
-                                   <div>
-                                        <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                             @for (ticket of ticketArray(); track trackByTicket($index, ticket)) {
-                                             <option [value]="ticket">{{ ticket }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                                   } @else {
-                                   <div>
-                                        <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                             <option value="" disabled>Select a ticket</option>
-                                             @for (ticket of ticketArray(); track trackByTicket($index, ticket)) {
-                                             <option [value]="ticket">{{ ticket }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                                   }
-                              </div>
-                         </div>
-                         }
+                         <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="activeTab" [multiSigningEnabled]="multiSigningEnabled" [regularKeySigningEnabled]="regularKeySigningEnabled" />
 
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if (activeTab() === 'set') {
-                              <button type="button" class="btn-primary-blue" (click)="delegateActions('delegate')" [disabled]="txUiService.spinner">{{ txUiService.spinner ? 'Processing...' : 'Delegate Actions' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="delegateActions('delegate')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Delegate Actions' }}</button>
                               } @else if (activeTab() === 'delete') {
-                              <button type="button" class="btn-primary-red" (click)="delegateActions('clear')" [disabled]="txUiService.spinner">{{ txUiService.spinner ? 'Processing...' : 'Clear Delegated Actions' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="delegateActions('clear')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Clear Delegated Actions' }}</button>
                               }
-                              <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
+                              <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()">Clear Fields</button>
                          </div>
 
                          <!-- Execution time -->

@@ -135,14 +135,14 @@ export class WalletPanelComponent implements OnInit {
                const faucetWallet = await this.walletGenerator.generateNewAccount(this.wallets, this.environment, AppConstants.ENCRYPTION.ED25519);
                const client = await this.xrplService.getClient();
                await this.walletDataService.refreshWallets(client, this.wallets, this.selectedWalletIndex, [faucetWallet.address]);
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.ui.clearWarning();
                this.syncSelectedIndex();
           } catch (error: any) {
                console.error('Error in generateNewAccount:', error);
                this.ui.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner = false;
+               this.ui.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving generateNewAccount in ${this.executionTime} ms ${executionTimeSeconds} seconds`);

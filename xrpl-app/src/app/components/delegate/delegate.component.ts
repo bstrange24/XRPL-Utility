@@ -27,30 +27,7 @@ import { TransactionPreviewComponent } from '../transaction-preview/transaction-
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
-
-interface ValidationInputs {
-     selectedAccount?: string;
-     senderAddress?: string;
-     accountInfo?: any;
-     seed?: string;
-     destination?: string;
-     amount?: string;
-     sequence?: string;
-     isRegularKeyAddress?: boolean;
-     regularKeyAddress?: string;
-     regularKeyAccount?: string;
-     regularKeyAccountSeeds?: string;
-     regularKeySeed?: string;
-     useMultiSign?: boolean;
-     multiSignSeeds?: string;
-     multiSignAddresses?: string;
-     isTicket?: boolean;
-     selectedSingleTicket?: string;
-     selectedTicket?: string;
-     signerQuorum?: number;
-     signers?: { account: string; weight: number }[];
-}
+import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 
 interface XRPLPermissionEntry {
      Permission: {
@@ -79,7 +56,7 @@ interface DelegateAction {
 @Component({
      selector: 'app-delegate',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TooltipLinkComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './delegate.component.html',
      styleUrl: './delegate.component.css',
@@ -115,32 +92,9 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      currentWallet = signal<Wallet>({} as Wallet);
      hasWallets = computed(() => this.wallets().length > 0);
 
-     // Credential lists
-     // existingCredentials = signal<CredentialItem[]>([]);
-     // subjectCredentials = signal<CredentialItem[]>([]);
-
-     // Filtered credentials — derived state, fully reactive
-     // filteredExisting = computed(() => this.filterCredentials(this.existingCredentials(), this.credentialSearchTerm()));
-     // filteredSubject = computed(() => this.filterCredentials(this.subjectCredentials(), this.credentialSearchTerm()));
-     // credentialSearchTerm = signal<string>('');
-     // selectedCredentials = signal<CredentialItem | null>(null);
-     // createdCredentials = signal<boolean>(true);
-     // subjectCredential = signal<boolean>(true);
-
      // Form & UI State
      destinationField = signal<string>('');
      infoPanelExpanded = signal(false);
-     isRegularKeyAddress = signal<boolean>(false);
-     regularKeyAddress = signal<string>('');
-     regularKeySeed = signal<string>('');
-     useMultiSign = signal<boolean>(false);
-     multiSignAddress = signal<string>('');
-     multiSignSeeds = signal<string>('');
-     isTicket = signal<boolean>(false);
-     selectedSingleTicket = signal<string>('');
-     selectedTicket = signal<string>('');
-     memoField = signal<string>('');
-     isMemoEnabled = signal<boolean>(false);
 
      // Dropdown
      customDestinations = signal<{ name?: string; address: string }[]>([]);
@@ -159,14 +113,8 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      private overlayRef: OverlayRef | null = null;
      url = signal<string>('');
      public destinationSearch$ = new Subject<string>();
-     selectedTickets = signal<string[]>([]);
-     multiSelectMode = signal<boolean>(false);
-     signers = signal<{ account: string; seed: string; weight: number }[]>([{ account: '', seed: '', weight: 1 }]);
-     signerQuorum = signal<number>(0);
      multiSigningEnabled = signal<boolean>(false);
      regularKeySigningEnabled = signal<boolean>(false);
-     ticketArray = signal<string[]>([]);
-     masterKeyDisabled = signal<boolean>(false);
      credentialData = signal<string>('');
      subject = signal<string>('');
      selectedWalletIndex = signal<number>(0);
@@ -177,22 +125,29 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
 
      constructor() {
           super();
-          this.txUiService.clearTxSignal();
-          this.txUiService.clearTxResultSignal();
+          this.txUiService.clearAllOptionsAndMessages(); // Reset shared state
           effect(() => this.updateInfoMessage());
           effect(() => {
-               this.destinations.set([...this.wallets().map(w => ({ name: w.name ?? `Wallet ${w.address.slice(0, 8)}`, address: w.address } as DropdownItem)), ...this.customDestinations()]);
+               this.destinations.set([
+                    ...this.wallets().map(
+                         w =>
+                              ({
+                                   name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
+                                   address: w.address,
+                              } as DropdownItem)
+                    ),
+                    ...this.customDestinations(),
+               ]);
           });
      }
 
      ngOnInit() {
+          this.loadCustomDestinations();
           this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
           this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
 
           const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
           this.url.set(AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET);
-
-          this.loadCustomDestinations();
           this.setupWalletSubscriptions();
           this.setupDropdownSubscriptions();
      }
@@ -208,27 +163,38 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           if (stored) this.customDestinations.set(JSON.parse(stored));
      }
 
-     private setupWalletSubscriptions(): void {
+     private async setupWalletSubscriptions() {
           this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
                this.wallets.set(wallets);
-
                if (this.hasWallets() && !this.currentWallet().address) {
                     const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
                     const wallet = wallets[idx];
-                    if (wallet) this.currentWallet.set({ ...wallet });
+                    if (wallet) this.selectWallet(wallet);
                }
           });
 
-          this.walletManagerService.selectedIndex$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(index => {
+          this.walletManagerService.selectedIndex$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async index => {
                const wallet = this.wallets()[index];
                if (wallet) {
-                    this.currentWallet.set({ ...wallet });
+                    this.selectWallet(wallet);
                     this.xrplCache.invalidateAccountCache(wallet.address);
                     this.txUiService.clearTxSignal();
                     this.txUiService.clearTxResultSignal();
-                    this.getAccountDetails(false);
+                    await this.getAccountDetails(false);
                }
           });
+     }
+
+     private selectWallet(wallet: Wallet): void {
+          this.currentWallet.set({ ...wallet });
+          this.txUiService.currentWallet.set({ ...wallet });
+          this.xrplCache.invalidateAccountCache(wallet.address);
+
+          // Prevent self as destination
+          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address || this.destinationField();
+          if (currentDest === wallet.address) {
+               this.destinationField.set('');
+          }
      }
 
      private setupDropdownSubscriptions(): void {
@@ -256,32 +222,21 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           this.createdDelegations.update(val => !val);
      }
 
-     async toggleMultiSign() {
-          try {
-               this.utilsService.toggleMultiSign(this.useMultiSign(), this.signers(), (await this.getWallet()).classicAddress);
-          } catch (error: any) {
-               this.txUiService.setError(`${error.message}`);
-          }
-     }
-
      toggleInfoPanel() {
           this.infoPanelExpanded.update(expanded => !expanded);
           this.updateInfoMessage(); // Rebuild the HTML with new state
      }
 
-     onWalletSelected(wallet: Wallet) {
-          this.currentWallet.set({ ...wallet });
-          // Prevent setting self as the destination after switching wallet
-          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address || this.destinationField();
-          if (currentDest === wallet.address) {
-               this.destinationField.set('');
-          }
+     onWalletSelected(wallet: Wallet): void {
+          this.selectWallet(wallet);
      }
 
      async setTab(tab: 'set'): Promise<void> {
           this.activeTab.set(tab);
-          this.clearFields(true);
-          await this.getAccountDetails();
+          this.txUiService.clearTxSignal();
+          this.txUiService.clearTxResultSignal();
+          this.txUiService.clearAllOptions();
+          await this.getAccountDetails(true);
      }
 
      private async getClient(): Promise<xrpl.Client> {
@@ -308,8 +263,8 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      async getAccountDetails(forceRefresh = false): Promise<void> {
           await this.withPerf('getAccountDetails', async () => {
                try {
-                    const client = await this.getClient();
-                    const wallet = await this.getWallet();
+                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
 
                     const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
@@ -323,38 +278,24 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
                     this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
 
-                    this.refreshUIData(wallet, accountInfo, accountObjects);
-                    this.clearFields(false);
+                    this.refreshUiState(wallet, accountInfo, accountObjects);
+                    this.txUiService.clearAllOptionsAndMessages();
                } catch (error: any) {
                     console.error('Error in getAccountDetails:', error);
-                    this.txUiService.setError(`${error.message || 'Unknown error'}`);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
-                    this.txUiService.spinner = false;
+                    this.txUiService.spinner.set(false);
                }
           });
      }
 
      async delegateActions(delegate: 'delegate' | 'clear') {
           await this.withPerf('delegateActions', async () => {
-               this.txUiService.clearMessages();
-               this.txUiService.updateSpinnerMessage(``);
-
-               const inputs: ValidationInputs = {
-                    seed: this.currentWallet().seed,
-                    isRegularKeyAddress: this.isRegularKeyAddress(),
-                    regularKeyAddress: this.isRegularKeyAddress() ? this.regularKeyAddress() : undefined,
-                    regularKeySeed: this.isRegularKeyAddress() ? this.regularKeySeed() : undefined,
-                    useMultiSign: this.useMultiSign(),
-                    multiSignAddresses: this.useMultiSign() ? this.multiSignAddress() : undefined,
-                    multiSignSeeds: this.useMultiSign() ? this.multiSignSeeds() : undefined,
-                    isTicket: this.isTicket(),
-                    selectedTicket: this.selectedTicket(),
-                    selectedSingleTicket: this.selectedSingleTicket(),
-               };
+               this.txUiService.clearAllOptionsAndMessages();
+               this.txUiService.updateSpinnerMessageSignal('');
 
                try {
-                    const client = await this.getClient();
-                    const wallet = await this.getWallet();
+                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                     const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
@@ -364,9 +305,21 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
 
                     const isShortForm = this.destinationField().includes('...');
                     const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address : this.destinationField();
-                    inputs.accountInfo = accountInfo;
-                    inputs.destination = resolvedDestination;
-                    const destination = resolvedDestination;
+                    const inputs = this.txUiService.getValidationInputs({
+                         wallet: this.currentWallet(),
+                         network: {
+                              accountInfo,
+                              fee,
+                              currentLedger,
+                         },
+                         destination: {
+                              address: resolvedDestination,
+                              tag: '',
+                         },
+                    });
+                    // const inputs = this.txUiService.getValidationInputs(this.currentWallet(), '');
+                    // inputs.accountInfo = accountInfo;
+                    // inputs.destination = resolvedDestination;
 
                     const errors = await this.validationService.validate('DelegateActions', { inputs, client, accountInfo });
                     if (errors.length > 0) {
@@ -399,7 +352,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     const delegateSetTx: xrpl.DelegateSet = {
                          TransactionType: 'DelegateSet',
                          Account: wallet.classicAddress,
-                         Authorize: destination,
+                         Authorize: resolvedDestination,
                          Permissions: permissions,
                          Fee: fee,
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
@@ -408,25 +361,25 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     await this.setTxOptionalFields(client, delegateSetTx, wallet, accountInfo, 'delegateActions');
 
                     const result = await this.txExecutor.delegateActions(delegateSetTx, wallet, client, {
-                         useMultiSign: this.useMultiSign(),
-                         isRegularKeyAddress: this.isRegularKeyAddress(),
-                         regularKeySeed: this.regularKeySeed(),
-                         multiSignAddress: this.multiSignAddress(),
-                         multiSignSeeds: this.multiSignSeeds(),
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
                     if (!result.success) return;
 
-                    if (!this.txUiService.isSimulateEnabled) {
+                    if (this.txUiService.isSimulateEnabled()) {
+                         this.txUiService.successMessage = 'Simulated Delegate action successfully!';
+                    } else {
                          this.txUiService.successMessage = 'Delegate action successfully!';
                          await this.refreshAfterTx(client, wallet, resolvedDestination, true);
-                    } else {
-                         this.txUiService.successMessage = 'Simulated Delegate action successfully!';
                     }
                } catch (error: any) {
                     console.error('Error in delegateAction:', error);
-                    this.txUiService.setError(`${error.message || 'Unknown error'}`);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
-                    this.txUiService.spinner = false;
+                    this.txUiService.spinner.set(false);
                }
           });
      }
@@ -449,48 +402,30 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      }
 
      private async setTxOptionalFields(client: xrpl.Client, delegateSetTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
-          if (this.selectedSingleTicket()) {
-               const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket()));
-               if (!exists) throw new Error(`Ticket ${this.selectedSingleTicket()} not found`);
-               this.utilsService.setTicketSequence(delegateSetTx, this.selectedSingleTicket(), true);
-          } else {
-               if (this.multiSelectMode() && this.selectedTickets().length > 0) {
-                    console.log('Setting multiple tickets:', this.selectedTickets());
-                    this.utilsService.setTicketSequence(delegateSetTx, accountInfo.result.account_data.Sequence, false);
+          if (this.txUiService.isTicket()) {
+               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               if (ticket) {
+                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
+                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
+                    this.utilsService.setTicketSequence(delegateSetTx, ticket, true);
                }
           }
-          if (this.memoField()) this.utilsService.setMemoField(delegateSetTx, this.memoField());
+
+          if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
+               this.utilsService.setMemoField(delegateSetTx, this.txUiService.memoField());
+          }
      }
 
-     private async refreshAfterTx(client: any, wallet: any, resolvedDestination: string | null, addNewDestinationFromUser: boolean) {
+     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
           try {
                const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
                this.getExistingDelegations(accountObjects, wallet.classicAddress);
-               resolvedDestination ? await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error) : await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
-               if (addNewDestinationFromUser) this.addNewDestinationFromUser();
-               this.refreshUIData(wallet, accountInfo, accountObjects);
-               this.utilsService.loadSignerList(wallet.classicAddress, this.signers());
-               this.updateTickets(accountObjects);
-               this.clearFields(false);
+               destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+               if (addDest) this.addNewDestinationFromUser();
+               this.refreshUiState(wallet, accountInfo, accountObjects);
                this.updateInfoMessage();
           } catch (error: any) {
                console.error('Error in refreshAfterTx:', error);
-          }
-     }
-
-     private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
-          // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
-          this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
-          this.refreshUiAccountInfo(updatedAccountInfo);
-     }
-
-     private updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
-          const tickets = this.utilsService.getAccountTickets(accountObjects);
-          this.ticketArray.update(() => [...tickets]);
-          if (this.multiSelectMode()) {
-               this.selectedSingleTicket.set(this.utilsService.cleanUpMultiSelection(this.selectedTickets(), tickets));
-          } else {
-               this.selectedSingleTicket.set(this.utilsService.cleanUpSingleSelection(this.selectedTickets(), tickets));
           }
      }
 
@@ -500,48 +435,44 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           });
      }
 
-     public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
-          // Tickets
-          this.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
-          this.selectedTicket.set(this.ticketArray()[0] || this.selectedTicket());
-          // Signer accounts
+     private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
+          // Update multi-sign & regular key flags
+          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
+          this.regularKeySigningEnabled.set(hasRegularKey);
+
+          // Update service state
+          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
+
           const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
-          this.signerQuorum.set(signerQuorum);
-          const hasSignerAccounts = signerAccounts?.length > 0;
-          this.checkForMultiSigners(hasSignerAccounts, wallet);
-          // Boolean flags
-          this.multiSigningEnabled.set(hasSignerAccounts);
-          this.useMultiSign.set(false);
-          this.masterKeyDisabled.set(Boolean(accountInfo?.result?.account_flags?.disableMasterKey));
-          this.clearFields(false);
-     }
+          const hasSignerList = signerAccounts?.length > 0;
+          this.txUiService.signerQuorum.set(signerQuorum);
+          const checkForMultiSigner = signerAccounts?.length > 0;
+          checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
 
-     private checkForMultiSigners(hasSignerAccounts: boolean, wallet: xrpl.Wallet) {
-          if (hasSignerAccounts) {
-               const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
-               this.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
-          } else {
-               this.signerQuorum.set(0);
-               this.multiSignAddress.set('No Multi-Sign address configured for account');
-               this.multiSignSeeds.set('');
-               this.storageService.removeValue('signerEntries');
+          this.multiSigningEnabled.set(hasSignerList);
+          if (hasSignerList) {
+               const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+               this.txUiService.signers.set(entries);
           }
+
+          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
+
+          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
+          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
      }
 
-     public refreshUiAccountInfo(accountInfo: xrpl.AccountInfoResponse): void {
-          const accountData = accountInfo?.result?.account_data;
-          if (!accountData) return;
-          const regularKey = accountData.RegularKey;
-          const isMasterKeyDisabled = accountInfo?.result?.account_flags?.disableMasterKey ?? false;
-          // Set regular key properties
-          const rkProps = this.utilsService.setRegularKeyProperties(regularKey, accountData.Account) || { regularKeyAddress: 'No RegularKey configured for account', regularKeySeed: '', isRegularKeyAddress: false };
-          this.regularKeyAddress.set(rkProps.regularKeyAddress);
-          this.regularKeySeed.set(rkProps.regularKeySeed);
-          // Set master key property
-          this.masterKeyDisabled.set(isMasterKeyDisabled);
-          // Set regular key signing enabled flag
-          this.regularKeySigningEnabled.set(!!regularKey);
+     private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
+          const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+          this.txUiService.signers.set(signerEntries);
+          this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
+          this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
+     }
+
+     private clearMultiSignersConfiguration(): void {
+          this.txUiService.signerQuorum.set(0);
+          this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
+          this.txUiService.multiSignSeeds.set('');
+          this.storageService.removeValue('signerEntries');
      }
 
      private updateDestinations(): void {
@@ -568,10 +499,11 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           return wallet;
      }
 
-     private addNewDestinationFromUser() {
+     private addNewDestinationFromUser(): void {
           const addr = this.destinationField().includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address : this.destinationField();
+
           if (addr && xrpl.isValidAddress(addr) && !this.destinations().some(d => d.address === addr)) {
-               this.customDestinations.update(dest => [...dest, { name: `Custom ${dest.length + 1}`, address: addr }]);
+               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: addr }]);
                this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
                this.updateDestinations();
           }
@@ -610,26 +542,11 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      }
 
      get safeWarningMessage() {
-          return this.txUiService.warningMessage?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
      }
 
-     clearFields(all = true) {
-          if (all) {
-               this.txUiService.successMessage = '';
-               this.txUiService.clearTxSignal();
-               this.txUiService.clearTxResultSignal();
-               this.txUiService.isSimulateEnabled = false;
-               this.txUiService.clearMessages();
-               this.txUiService.clearWarning();
-          }
-
-          this.isRegularKeyAddress.set(false);
-          this.useMultiSign.set(false);
-          this.selectedSingleTicket.set('');
-          this.isTicket.set(false);
-          this.selectedTicket.set('');
-          this.isMemoEnabled.set(false);
-          this.memoField.set('');
+     clearFields() {
+          this.txUiService.clearAllOptionsAndMessages();
      }
 
      filterDestinations() {
@@ -637,7 +554,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           if (query === '') {
                this.filteredDestinations.set([...this.destinations()]);
           } else {
-               this.filteredDestinations.set(this.destinations().filter(d => d.address.toLowerCase().includes(query) || (d.name && d.name.toLowerCase().includes(query))));
+               this.filteredDestinations.set(this.destinations().filter(d => d.address.toLowerCase().includes(query) || d.name?.toLowerCase().includes(query)));
           }
           this.highlightedIndex.set(this.filteredDestinations().length > 0 ? 0 : -1);
      }

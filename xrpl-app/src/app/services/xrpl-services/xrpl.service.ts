@@ -1029,7 +1029,7 @@ export class XrplService {
           }
      }
 
-     async getXrpReserveRequirements(accountInfo: any, server_info: any) {
+     getXrpReserveRequirements(accountInfo: any, server_info: any) {
           try {
                const currentReserve = accountInfo.result.account_data.Reserve;
                const ownerCount = accountInfo.result.account_data.OwnerCount;
