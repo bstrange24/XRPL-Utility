@@ -87,13 +87,11 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      domainSearchQuery = signal<string>('');
      // Destination Dropdown
      customDestinations = signal<{ name?: string; address: string }[]>([]);
-     showDropdown = signal<boolean>(false);
      private overlayRef: OverlayRef | null = null;
      private domainOverlayRef: OverlayRef | null = null;
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
      destinationTagField = signal<string>('');
-     dropdownOpen: boolean = false;
 
      // Permissioned Domain Specific
      credentialType = signal<string>('KYCCredential');
@@ -147,7 +145,9 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                return list;
           }
 
-          return this.destinations().filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
+          return this.destinations()
+               .filter(d => d.address !== this.currentWallet().address)
+               .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
      });
 
      domainDisplay = computed(() => {
@@ -188,16 +188,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.setupDropdownSubscriptions();
      }
 
-     ngAfterViewInit(): void {
-          fromEvent<KeyboardEvent>(document, 'keydown')
-               .pipe(
-                    filter(e => e.key === 'Escape'),
-                    takeUntilDestroyed(this.destroyRef)
-               )
-               .subscribe(() => {
-                    if (this.showDropdown()) this.closeDropdown();
-               });
-     }
+     ngAfterViewInit(): void {}
 
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
@@ -239,7 +230,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      }
 
      private setupDropdownSubscriptions(): void {
-          this.dropdownService.filtered$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(list => {});
+          // this.dropdownService.filtered$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(list => {});
           this.dropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
      }
 
@@ -266,6 +257,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
 
      async setTab(tab: 'set' | 'delete'): Promise<void> {
           this.activeTab.set(tab);
+          this.destinationSearchQuery.set('');
           this.txUiService.clearAllOptionsAndMessages();
           await this.getPermissionedDomainForAccount();
      }
@@ -312,13 +304,12 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
+                    const issuerAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    const isShortForm = this.selectedDestinationAddress().includes('...');
-                    const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.selectedDestinationAddress(), this.destinations())?.address : this.selectedDestinationAddress();
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
                          network: { accountInfo, accountObjects, fee, currentLedger },
-                         subject: { subject: resolvedDestination },
+                         subject: { subject: issuerAddress },
                     });
 
                     const errors = await this.validationService.validate('PermissionedDomainSet', { inputs, client, accountInfo });
@@ -332,7 +323,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                          AcceptedCredentials: [
                               {
                                    Credential: {
-                                        Issuer: resolvedDestination,
+                                        Issuer: issuerAddress,
                                         CredentialType: Buffer.from(this.credentialType() || 'defaultCredentialType', 'utf8').toString('hex'),
                                    },
                               },
@@ -353,7 +344,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                     if (!result.success) return;
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Set Permissioned Domain successfully!' : 'Set Permissioned Domain successfully!';
-                    await this.refreshAfterTx(client, wallet, null, true);
+                    await this.refreshAfterTx(client, wallet, issuerAddress, true);
                } catch (error: any) {
                     console.error('Error in permissionedDomainSet:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -484,7 +475,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
           this.getCreatedPermissionedDomains(accountObjects, wallet.classicAddress);
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-          if (addDest) this.addNewDestinationFromUser();
+          if (addDest) this.addNewDestinationFromUser(destination ? destination : '');
           this.refreshUiState(wallet, accountInfo, accountObjects);
      }
 
@@ -550,11 +541,9 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           return `${address.slice(0, 8)}...${address.slice(-6)}`;
      }
 
-     private addNewDestinationFromUser(): void {
-          const addr = this.selectedDestinationAddress().includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.selectedDestinationAddress(), this.destinations())?.address : this.selectedDestinationAddress();
-
-          if (addr && xrpl.isValidAddress(addr) && !this.destinations().some(d => d.address === addr)) {
-               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: addr }]);
+     private addNewDestinationFromUser(destination: string): void {
+          if (destination && xrpl.isValidAddress(destination) && !this.destinations().some(d => d.address === destination)) {
+               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
                this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
                this.updateDestinations();
           }
@@ -574,27 +563,13 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     openDropdown(): void {
-          this.dropdownService.setItems(this.destinations());
-          this.dropdownService.filter(this.destinationSearchQuery());
-          this.dropdownService.openDropdown();
-     }
-
-     closeDropdown(): void {
-          this.dropdownService.closeDropdown();
-     }
-
-     toggleDropdown(): void {
-          this.dropdownService.setItems(this.destinations());
-          this.dropdownService.toggleDropdown();
-     }
-
      onDestinationInput(event: Event): void {
           const value = (event.target as HTMLInputElement).value;
+
           this.destinationSearchQuery.set(value);
           this.selectedDestinationAddress.set(''); // clear selection when typing
 
-          this.dropdownService.filter(value);
+          // this.dropdownService.filter(value);
           if (value) {
                this.dropdownService.openDropdown();
           }
@@ -612,8 +587,41 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           if (this.filteredDestinations().length === 0) return;
      }
 
+     openDropdown(): void {
+          this.dropdownService.setItems(this.destinations());
+          // this.dropdownService.filter(this.destinationSearchQuery());
+
+          // Always reset search when opening fresh
+          this.destinationSearchQuery.set('');
+          this.dropdownService.openDropdown();
+     }
+
+     closeDropdown(): void {
+          this.dropdownService.closeDropdown();
+
+          if (this.overlayRef) {
+               this.overlayRef.dispose();
+               this.overlayRef = null;
+          }
+
+          if (this.domainOverlayRef) {
+               this.domainOverlayRef.dispose();
+               this.domainOverlayRef = null;
+          }
+     }
+
+     toggleDropdown(): void {
+          this.dropdownService.setItems(this.destinations());
+          this.dropdownService.toggleDropdown();
+     }
+
      private openDropdownInternal(): void {
           if (this.overlayRef?.hasAttached()) return;
+
+          if (this.overlayRef) {
+               this.overlayRef.dispose(); // CRITICAL
+               this.overlayRef = null;
+          }
 
           const positionStrategy = this.overlay
                .position()
@@ -645,6 +653,12 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
 
      openDomainDropdown(): void {
           if (this.domainOverlayRef?.hasAttached()) return;
+
+          // Always destroy first — no exceptions
+          if (this.domainOverlayRef) {
+               this.domainOverlayRef.dispose();
+               this.domainOverlayRef = null;
+          }
 
           const positionStrategy = this.overlay
                .position()

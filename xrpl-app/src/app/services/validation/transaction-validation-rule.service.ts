@@ -95,7 +95,13 @@ export class ValidationService {
           return ctx => {
                // const value = ctx.inputs[field];
                const value = this.getValueByPath(ctx.inputs, field);
-               return value && !xrpl.isValidAddress(value) ? `${this.capitalize(field.split('.')[1])} is required` : null;
+               if (!value) {
+                    return `${this.capitalize(field.split('.')[1])} is required`;
+               }
+               if (value && !xrpl.isValidAddress(value)) {
+                    return 'Invalid XRP Address';
+               }
+               return null;
           };
      }
 
