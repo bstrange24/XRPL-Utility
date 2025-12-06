@@ -94,7 +94,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      destinationTagField = signal<string>('');
 
      // Permissioned Domain Specific
-     credentialType = signal<string>('KYCCredential');
+     credentialType = signal<string>('');
      domainId = signal<string>('');
      createdDomains = signal(false);
      createdPermissionedDomains = signal<any[]>([]);
@@ -310,6 +310,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                          wallet: this.currentWallet(),
                          network: { accountInfo, accountObjects, fee, currentLedger },
                          subject: { subject: issuerAddress },
+                         credentials: { credentialType: this.credentialType() },
                     });
 
                     const errors = await this.validationService.validate('PermissionedDomainSet', { inputs, client, accountInfo });
@@ -560,6 +561,10 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      }
 
      clearFields() {
+          this.credentialType.set('');
+          this.selectedDestinationAddress.set('');
+          this.domainId.set('');
+          this.selectedDomainId.set(null);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
