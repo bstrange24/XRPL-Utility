@@ -83,9 +83,9 @@
                                         @for (domain of info.permissionedDomainsToShow; track domain.index) {
                                         <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px">
                                              <!-- Green check -->
-                                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3.5">
+                                             <!-- <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3.5">
                                                   <path d="M20 6 9 17l-5-5" />
-                                             </svg>
+                                             </svg> -->
 
                                              <!-- Only the text part is the explorer link -->
                                              <app-tooltip-link [href]="explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer" style="flex: 1; min-width: 0">
@@ -94,6 +94,10 @@
                                                   <div style="color: #555; font-size: 0.88em; display: flex; align-items: center; gap: 8px">
                                                        <span>Domain ID:</span>
                                                        <code style="font-size: 0.95em">{{ domain.index.slice(0,10) }}...{{ domain.index.slice(-8) }}</code>
+                                                  </div>
+                                                  <div style="color: #555; font-size: 0.88em; display: flex; align-items: center; gap: 8px">
+                                                       <span>Credential</span>
+                                                       <code style="font-size: 0.95em">{{ domain.AcceptedCredentials }}</code>
                                                   </div>
                                              </app-tooltip-link>
 
@@ -127,63 +131,42 @@
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab()">
                               <div class="form-row">
-                                   <!-- Subject / Issuer -->
+                                   <!-- Credential Issuer -->
                                    @if (activeTab() === 'set') {
                                    <div class="form-group">
-                                        <label>Subject</label>
+                                        <label>Issuer</label>
 
                                         <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                             <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
+                                             <input #dropdownOrigin type="text" [value]="destinationDisplay()" (input)="onDestinationInput($event)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" placeholder="Enter or select destination address" class="combobox-input" autocomplete="off" />
 
                                              <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
                                                   <lucide-icon name="chevron-down" size="18"></lucide-icon>
                                              </button>
                                         </div>
-                                   </div>
 
-                                   <!-- Destination Dropdown template -->
-                                   <ng-template #dropdownTemplate>
-                                        <!-- DESTINATION INPUT -->
-                                        <div class="combobox-wrapper" (click)="$event.stopPropagation()">
-                                             <label class="form-label">Destination</label>
+                                        <ng-template #dropdownTemplate>
+                                             <div class="combobox-wrapper" (click)="$event.stopPropagation()">
+                                                  <!-- <div class="combobox-input-wrapper"> -->
+                                                  <!-- <input type="text" class="combobox-input" [value]="destinationSearchQuery()" (input)="onDestinationInput($event)" (keydown.arrowDown)="moveHighlight(1)" (keydown.arrowUp)="moveHighlight(-1)" (keydown.enter)="selectHighlighted()" placeholder="Search by name or address" autocomplete="off" /> -->
+                                                  <!-- </div> -->
 
-                                             <div class="combobox-input-wrapper">
-                                                  <input type="text" class="combobox-input" placeholder="Search by name or address" (input)="onDestinationInput()" (focus)="openDropdown()" (keydown.arrowDown)="moveHighlight(1)" (keydown.arrowUp)="moveHighlight(-1)" (keydown.enter)="selectHighlighted()" autocomplete="off" />
-                                             </div>
-
-                                             <!-- DESTINATION DROPDOWN -->
-                                             <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations(); track trackByWalletAddress($index, dest)) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="highlightedIndex() === $index" (click)="selectDestination(dest.address)">
-                                                       <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet().address) {
-                                                            <span class="self-badge"> Current Account </span>
-                                                            }
+                                                  <div class="combobox-dropdown-overlay">
+                                                       @for (dest of filteredDestinations(); track trackByWalletAddress($index, dest)) {
+                                                       <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="selectedDestinationAddress() === dest.address" (click)="selectDestination(dest.address)">
+                                                            <div class="item-name">
+                                                                 {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet().address) {
+                                                                 <span class="self-badge"> Current Account </span>
+                                                                 }
+                                                            </div>
+                                                            <div class="item-address">{{ dest.address.slice(0, 6) }}...{{ dest.address.slice(-6) }}</div>
                                                        </div>
-
-                                                       <div class="item-address">{{ dest.address | slice: 0 : 6 }}...{{ dest.address | slice: -6 }}</div>
-                                                  </div>
-                                                  } @empty {
-                                                  <div class="combobox-empty">No matching addresses</div>
-                                                  }
-                                             </div>
-                                        </div>
-
-                                        <!-- <div class="combobox-dropdown-overlay">
-                                             @for (dest of filteredDestinations(); track trackByWalletAddress($index, dest)) {
-                                             <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="highlightedIndex() === $index" (click)="selectDestination(dest.address)">
-                                                  <div class="item-name">
-                                                       {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet().address) {
-                                                       <span class="self-badge">Current Account</span>
+                                                       } @empty {
+                                                       <div class="combobox-empty">No matching addresses</div>
                                                        }
                                                   </div>
-                                                  <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
                                              </div>
-                                             } @empty {
-                                             <div class="combobox-empty">No matching addresses</div>
-                                             }
-                                        </div> -->
-                                   </ng-template>
+                                        </ng-template>
+                                   </div>
 
                                    <!-- Credential Type-->
                                    <div class="form-group">
@@ -194,31 +177,54 @@
                               </div>
 
                               <!-- Permissioned Domain Dropdown -->
-                              @if (activeTab() === 'delete') { @if (createdPermissionedDomains().length > 0) {
+                              @if (activeTab() === 'delete') {
+                              <!-- Permissioned Domain Dropdown -->
+                              @if (createdPermissionedDomains().length > 0) {
                               <div class="form-row" style="margin-bottom: 0.8em">
                                    <div class="form-group">
-                                        <label for="permissionedDomainSelect">Select Permissioned Domain:</label>
-                                        <div>
-                                             <select id="permissionedDomainSelect" name="permissionedDomainSelect" [(ngModel)]="selectedPermissionedDomain" (ngModelChange)="onSelectPermissionedDomain($event)">
-                                                  <option [ngValue]="null">Select an Permissioned Domain</option>
+                                        <label>Select a Permissioned Domain to delete:</label>
 
-                                                  @for (permissionedDomain of createdPermissionedDomains(); track permissionedDomain.index) {
-                                                  <option [ngValue]="permissionedDomain.index">{{ permissionedDomain.index }}</option>
-                                                  }
-                                             </select>
+                                        <div class="combobox-container" (clickOutside)="closeDomainDropdown()">
+                                             <input #domainDropdownOrigin type="text" [value]="domainDisplay()" (input)="onDomainInput($event)" (focus)="openDomainDropdown()" (keyup.arrowdown)="onArrowDown()" placeholder="Search or select a domain..." class="combobox-input" autocomplete="off" />
+
+                                             <button class="combobox-toggle" (click)="openDomainDropdown()" type="button">
+                                                  <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                                             </button>
                                         </div>
                                    </div>
                               </div>
-                              }
 
-                              <!-- Domain ID -->
+                              <!-- Custom Dropdown Template -->
+                              <ng-template #domainDropdownTemplate>
+                                   <div class="combobox-wrapper" (click)="$event.stopPropagation()">
+                                        <!-- <div class="combobox-input-wrapper"> -->
+                                        <!-- <input type="text" class="combobox-input" [value]="domainSearchQuery()" (input)="onDomainInput($event)" placeholder="Search Domain ID..." autocomplete="off" /> -->
+                                        <!-- </div> -->
+
+                                        <div class="combobox-dropdown-overlay" style="max-height: 300px; overflow-y: auto">
+                                             @for (domain of filteredDomains(); track domain.index) {
+                                             <div class="combobox-item" [class.highlighted]="selectedDomainId() === domain.index" (click)="selectDomain(domain.index)">
+                                                  <div class="item-name">{{ domain.index }}</div>
+                                                  <div class="item-address">{{ domain.index }}</div>
+                                                  @if (domain.AcceptedCredentials) {
+                                                  <div style="font-size: 0.8em; color: #666; margin-top: 4px">Credentials: {{ domain.AcceptedCredentials.length || 1 }}</div>
+                                                  }
+                                             </div>
+                                             } @empty {
+                                             <div class="combobox-empty">No domains found</div>
+                                             }
+                                        </div>
+                                   </div>
+                              </ng-template>
+
+                              <!-- Domain ID Field (still there, auto-filled) -->
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="domainId">Domain ID</label>
-                                        <input type="text" [(ngModel)]="domainId" name="domainId" />
+                                        <input type="text" [(ngModel)]="domainId" name="domainId" placeholder="" />
                                    </div>
                               </div>
-                              }
+                              }}
 
                               <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="activeTab" [multiSigningEnabled]="multiSigningEnabled" [regularKeySigningEnabled]="regularKeySigningEnabled" />
 

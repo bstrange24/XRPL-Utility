@@ -55,4 +55,8 @@ export class DestinationDropdownService {
           }
           return this.formatShort(item.address);
      }
+
+     formatDomainId(id: string): string {
+          return `${id.slice(0, 12)}...${id.slice(-10)}`;
+     }
 }

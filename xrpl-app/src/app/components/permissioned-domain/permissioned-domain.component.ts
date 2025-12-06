@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef, ChangeDetectionStrategy, computed, DestroyRef, effect, signal } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, inject, TemplateRef, ViewContainerRef, ChangeDetectionStrategy, computed, DestroyRef, effect, signal, model } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -6,11 +6,9 @@ import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule, Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
 import { PermissionedDomainSet, PermissionedDomainDelete } from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
-import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -22,12 +20,9 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { fromEvent, Subject, takeUntil } from 'rxjs';
+import { fromEvent } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { WithImplicitCoercion } from 'buffer';
-import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
+import { filter } from 'rxjs/operators';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
@@ -64,6 +59,11 @@ interface PermissionedDomainInfo {
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionedDomainComponent extends PerformanceBaseComponent implements OnInit, AfterViewInit {
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
+     @ViewChild('domainDropdownOrigin') domainDropdownOrigin!: ElementRef;
+     @ViewChild('domainDropdownTemplate') domainDropdownTemplate!: TemplateRef<any>;
+
      private readonly destroyRef = inject(DestroyRef);
      private readonly overlay = inject(Overlay);
      private readonly viewContainerRef = inject(ViewContainerRef);
@@ -82,24 +82,20 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-
-     // public destinationSearch$ = new Subject<string>();
-
-     // Form fields
-     destinationField = signal<string>('');
+     // Domain Dropdown State
+     selectedDomainId = signal<string | null>(null);
+     domainSearchQuery = signal<string>('');
+     // Destination Dropdown
+     customDestinations = signal<{ name?: string; address: string }[]>([]);
+     showDropdown = signal<boolean>(false);
+     private overlayRef: OverlayRef | null = null;
+     private domainOverlayRef: OverlayRef | null = null;
+     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
+     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
      destinationTagField = signal<string>('');
      dropdownOpen: boolean = false;
 
-     // Dropdown
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
-     highlightedIndex = signal<number>(-1);
-     showDropdown = signal<boolean>(false);
-     private overlayRef: OverlayRef | null = null;
-
      // Permissioned Domain Specific
-     selectedPermissionedDomain = signal<string | null>(null);
      credentialType = signal<string>('KYCCredential');
      domainId = signal<string>('');
      createdDomains = signal(false);
@@ -133,17 +129,40 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           ...this.customDestinations(),
      ]);
 
+     destinationDisplay = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return this.destinationSearchQuery(); // while typing → show typed text
+
+          const dest = this.destinations().find(d => d.address === addr);
+          if (!dest) return addr;
+
+          return this.dropdownService.formatDisplay(dest);
+     });
+
      filteredDestinations = computed(() => {
-          const q = (this.destinationField() || '').trim().toLowerCase();
+          const q = this.destinationSearchQuery().trim().toLowerCase();
+          const list = this.destinations();
 
-          const list = q === '' ? this.destinations() : this.destinations().filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
+          if (q === '') {
+               return list;
+          }
 
-          // update highlighted index on microtask so it doesn't block the render
-          queueMicrotask(() => {
-               this.highlightedIndex.set(list.length > 0 ? 0 : -1);
-          });
+          return this.destinations().filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
+     });
 
-          return list;
+     domainDisplay = computed(() => {
+          const id = this.selectedDomainId();
+          if (!id) return this.domainSearchQuery() || '';
+          return this.dropdownService.formatDomainId(id);
+     });
+
+     filteredDomains = computed(() => {
+          const q = this.domainSearchQuery().trim().toLowerCase();
+          const list = this.createdPermissionedDomains();
+
+          if (q === '') return list;
+
+          return list.filter(d => d.index.toLowerCase().includes(q));
      });
 
      infoData = computed(() => {
@@ -161,18 +180,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           super();
           this.txUiService.clearAllOptionsAndMessages(); // Reset shared state
           effect(() => this.txUiService.setInfoData(this.infoData()));
-          // effect(() => {
-          //      this.destinations.set([
-          //           ...this.wallets().map(
-          //                w =>
-          //                     ({
-          //                          name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
-          //                          address: w.address,
-          //                     } as DropdownItem)
-          //           ),
-          //           ...this.customDestinations(),
-          //      ]);
-          // });
      }
 
      ngOnInit(): void {
@@ -225,32 +232,19 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.xrplCache.invalidateAccountCache(wallet.address);
 
           // Prevent self as destination
-          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address || this.destinationField();
+          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.selectedDestinationAddress(), this.destinations())?.address || this.selectedDestinationAddress();
           if (currentDest === wallet.address) {
-               this.destinationField.set('');
+               this.selectedDestinationAddress.set('');
           }
      }
 
      private setupDropdownSubscriptions(): void {
-          this.dropdownService.filtered$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(list => {
-               // this.filteredDestinations.set(list);
-               this.highlightedIndex.set(list.length > 0 ? 0 : -1);
-          });
-
+          this.dropdownService.filtered$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(list => {});
           this.dropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
      }
 
-     onSelectPermissionedDomain(domainId: string | null) {
-          if (!domainId) {
-               this.resetDomainDropDown();
-               return;
-          }
-          this.selectedPermissionedDomain.set(domainId);
-          this.domainId.set(domainId ?? '');
-     }
-
      resetDomainDropDown() {
-          this.selectedPermissionedDomain.set(null);
+          this.selectedDomainId.set(null);
           this.domainId.set('');
      }
 
@@ -318,10 +312,9 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-                    const { accountInfo, accountObjects, fee, currentLedger } = await this.xrplCache.getNetworkSnapshot(wallet.classicAddress, false, this.xrplService);
-                    // const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    const isShortForm = this.destinationField().includes('...');
-                    const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address : this.destinationField();
+                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
+                    const isShortForm = this.selectedDestinationAddress().includes('...');
+                    const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.selectedDestinationAddress(), this.destinations())?.address : this.selectedDestinationAddress();
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
                          network: { accountInfo, accountObjects, fee, currentLedger },
@@ -438,18 +431,25 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                          index: obj.index,
                          AcceptedCredentials: obj.AcceptedCredentials
                               ? JSON.stringify(
-                                     obj.AcceptedCredentials.map((item: { Credential: { CredentialType: WithImplicitCoercion<string> } }) => ({
-                                          ...item,
-                                          Credential: {
-                                               ...item.Credential,
-                                               CredentialType: Buffer.from(item.Credential.CredentialType, 'hex').toString('utf8'),
-                                          },
-                                     })),
+                                     obj.AcceptedCredentials.map(
+                                          (item: {
+                                               Credential: {
+                                                    CredentialType: any;
+                                                    Issuer?: string; // Assuming Issuer exists in the original data
+                                               };
+                                          }) => ({
+                                               ...item,
+                                               Credential: {
+                                                    ...item.Credential,
+                                                    CredentialType: Buffer.from(item.Credential.CredentialType, 'hex').toString('utf8'),
+                                                    Issuer: item.Credential.Issuer, // Adjust based on actual structure
+                                               },
+                                          })
+                                     ),
                                      null,
-                                     2
+                                     ''
                                 )
                               : 'N/A',
-
                          Owner: obj.Owner,
                          Sequence: obj.Sequence,
                     };
@@ -551,7 +551,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      }
 
      private addNewDestinationFromUser(): void {
-          const addr = this.destinationField().includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address : this.destinationField();
+          const addr = this.selectedDestinationAddress().includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.selectedDestinationAddress(), this.destinations())?.address : this.selectedDestinationAddress();
 
           if (addr && xrpl.isValidAddress(addr) && !this.destinations().some(d => d.address === addr)) {
                this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: addr }]);
@@ -574,44 +574,9 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     moveHighlight(step: number) {
-          const max = this.filteredDestinations().length - 1;
-          const next = Math.min(max, Math.max(0, this.highlightedIndex() + step));
-          this.highlightedIndex.set(next);
-     }
-
-     selectHighlighted() {
-          const current = this.filteredDestinations()[this.highlightedIndex()];
-          if (current) {
-               this.selectDestination(current.address);
-               this.closeDropdown();
-          }
-     }
-
-     onArrowDown() {
-          if (!this.showDropdown() || this.filteredDestinations().length === 0) return;
-          this.highlightedIndex.update(idx => (idx + 1) % this.filteredDestinations().length);
-     }
-
-     // selectHighlighted() {
-     //      if (this.highlightedIndex() >= 0 && this.filteredDestinations()[this.highlightedIndex()]) {
-     //           const addr = this.filteredDestinations()[this.highlightedIndex()].address;
-     //           if (addr !== this.currentWallet().address) {
-     //                this.destinationField.set(addr);
-     //                this.closeDropdown(); // Also close on Enter
-     //           }
-     //      }
-     // }
-
-     // openDropdown(): void {
-     //      this.dropdownService.setItems(this.destinations());
-     //      this.dropdownService.filter(this.destinationField());
-     //      this.dropdownService.openDropdown();
-     // }
-
      openDropdown(): void {
-          this.dropdownService.setItems(this.destinations()); // <-- call destinations()
-          this.dropdownService.filter(this.destinationField());
+          this.dropdownService.setItems(this.destinations());
+          this.dropdownService.filter(this.destinationSearchQuery());
           this.dropdownService.openDropdown();
      }
 
@@ -619,35 +584,56 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.dropdownService.closeDropdown();
      }
 
-     toggleDropdown() {
+     toggleDropdown(): void {
           this.dropdownService.setItems(this.destinations());
           this.dropdownService.toggleDropdown();
      }
 
-     onDestinationInput(): void {
-          this.dropdownService.filter(this.destinationField() || '');
-          this.dropdownService.openDropdown();
+     onDestinationInput(event: Event): void {
+          const value = (event.target as HTMLInputElement).value;
+          this.destinationSearchQuery.set(value);
+          this.selectedDestinationAddress.set(''); // clear selection when typing
+
+          this.dropdownService.filter(value);
+          if (value) {
+               this.dropdownService.openDropdown();
+          }
      }
 
-     selectDestination(address: string) {
+     selectDestination(address: string): void {
           if (address === this.currentWallet().address) return;
-          const dest = this.destinations().find((d: { address: string }) => d.address === address);
-          this.destinationField.set(dest ? this.dropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`);
+
+          this.selectedDestinationAddress.set(address); // ← Store raw address
+          this.destinationSearchQuery.set(''); // ← Clear typing
           this.closeDropdown();
+     }
+
+     onArrowDown() {
+          if (this.filteredDestinations().length === 0) return;
      }
 
      private openDropdownInternal(): void {
           if (this.overlayRef?.hasAttached()) return;
-          const strategy = this.overlay
+
+          const positionStrategy = this.overlay
                .position()
                .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]);
+               .withPositions([
+                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+               ])
+               .withPush(false)
+               .withFlexibleDimensions(false)
+               .withViewportMargin(8);
+
           this.overlayRef = this.overlay.create({
                hasBackdrop: true,
                backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy: strategy,
-               scrollStrategy: this.overlay.scrollStrategies.close(),
+               positionStrategy,
+               scrollStrategy: this.overlay.scrollStrategies.reposition(), // Better than close()
+               width: this.dropdownOrigin.nativeElement.getBoundingClientRect().width, // Match input width!
           });
+
           this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
           this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
      }
@@ -655,5 +641,46 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      private closeDropdownInternal(): void {
           this.overlayRef?.detach();
           this.overlayRef = null;
+     }
+
+     openDomainDropdown(): void {
+          if (this.domainOverlayRef?.hasAttached()) return;
+
+          const positionStrategy = this.overlay
+               .position()
+               .flexibleConnectedTo(this.domainDropdownOrigin)
+               .withPositions([
+                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+               ]);
+
+          this.domainOverlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy,
+               scrollStrategy: this.overlay.scrollStrategies.reposition(),
+               width: this.domainDropdownOrigin.nativeElement.getBoundingClientRect().width,
+          });
+
+          this.domainOverlayRef.attach(new TemplatePortal(this.domainDropdownTemplate, this.viewContainerRef));
+          this.domainOverlayRef.backdropClick().subscribe(() => this.closeDomainDropdown());
+     }
+
+     closeDomainDropdown(): void {
+          this.domainOverlayRef?.detach();
+          this.domainOverlayRef = null;
+     }
+
+     selectDomain(domainId: string): void {
+          this.selectedDomainId.set(domainId);
+          this.domainId.set(domainId); // Auto-fill the Domain ID field
+          this.domainSearchQuery.set(''); // Clear search
+          this.closeDomainDropdown();
+     }
+
+     onDomainInput(event: Event): void {
+          const value = (event.target as HTMLInputElement).value;
+          this.domainSearchQuery.set(value);
+          this.selectedDomainId.set(null); // Clear selection while typing
      }
 }
