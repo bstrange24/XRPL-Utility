@@ -20,9 +20,7 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { fromEvent } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { filter } from 'rxjs/operators';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
@@ -31,23 +29,6 @@ import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
-
-interface PermissionedDomainInfo {
-     AcceptedCredentials: {
-          Credential: {
-               CredentialType: string; // hex string for type, e.g. "4B5943..."
-               Issuer: string; // XRPL account address
-          };
-     }[];
-     Flags: number;
-     LedgerEntryType: 'PermissionedDomain';
-     Owner: string; // XRPL account address
-     OwnerNode: string;
-     PreviousTxnID: string; // Hash of previous transaction
-     PreviousTxnLgrSeq: number; // Ledger sequence of that transaction
-     Sequence: number; // Sequence of this object
-     index: string; // Ledger object index (hash)
-}
 
 @Component({
      selector: 'app-permissioned-domain',
@@ -91,7 +72,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      private domainOverlayRef: OverlayRef | null = null;
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
-     destinationTagField = signal<string>('');
 
      // Permissioned Domain Specific
      credentialType = signal<string>('');
@@ -103,21 +83,8 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      activeTab = signal<'set' | 'delete'>('set');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     hasWallets = computed(() => this.wallets().length > 0);
      infoPanelExpanded = signal(false);
-     multiSigningEnabled = signal<boolean>(false);
-     regularKeySigningEnabled = signal<boolean>(false);
      subject = signal<string>('');
-     selectedWalletIndex = signal<number>(0);
-     editingIndex!: (index: number) => boolean;
-     tempName = signal<string>('');
-     filterQuery = signal<string>('');
-     showCredentialDropdown = signal<boolean>(false);
-
-     explorerUrl = computed(() => {
-          const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
-          return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
-     });
 
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
@@ -176,10 +143,11 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           };
      });
 
+     hasWallets = computed(() => this.wallets().length > 0);
+
      constructor() {
           super();
-          this.txUiService.clearAllOptionsAndMessages(); // Reset shared state
-          effect(() => this.txUiService.setInfoData(this.infoData()));
+          this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
@@ -230,7 +198,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      }
 
      private setupDropdownSubscriptions(): void {
-          // this.dropdownService.filtered$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(list => {});
           this.dropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
      }
 
@@ -273,8 +240,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      async getPermissionedDomainForAccount(forceRefresh = false): Promise<void> {
           await this.withPerf('getPermissionedDomainForAccount', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
-
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
@@ -286,7 +251,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
 
                     this.getCreatedPermissionedDomains(accountObjects, wallet.classicAddress);
                     this.refreshUiState(wallet, accountInfo, accountObjects);
-                    this.txUiService.clearAllOptionsAndMessages();
                } catch (error: any) {
                     console.error('Error in getPermissionedDomainForAccount:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -299,8 +263,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      async permissionedDomainSet() {
           await this.withPerf('permissionedDomainSet', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
-
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
@@ -358,12 +320,10 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      async permissionedDomainDelete() {
           await this.withPerf('permissionedDomainDelete', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
-
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
+
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
                          network: { accountInfo, accountObjects, fee, currentLedger },
@@ -489,7 +449,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
           // Update multi-sign & regular key flags
           const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.regularKeySigningEnabled.set(hasRegularKey);
+          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
           // Update service state
           this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
@@ -500,7 +460,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           const checkForMultiSigner = signerAccounts?.length > 0;
           checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
 
-          this.multiSigningEnabled.set(hasSignerList);
+          this.txUiService.multiSigningEnabled.set(hasSignerList);
           if (hasSignerList) {
                const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
                this.txUiService.signers.set(entries);

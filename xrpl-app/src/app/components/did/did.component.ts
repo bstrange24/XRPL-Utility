@@ -1,13 +1,12 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, ElementRef, inject, OnInit, signal, TemplateRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, OnInit, signal, TemplateRef, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { DIDDelete, DIDSet } from 'xrpl';
-import { DropdownItem } from '../../models/dropdown-item.model';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../services/util-service/utils.service';
@@ -61,6 +60,8 @@ interface DidData {
 })
 export class DidComponent extends PerformanceBaseComponent implements OnInit {
      private readonly destroyRef = inject(DestroyRef);
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
 
      // Services
      public readonly utilsService = inject(UtilsService);
@@ -75,20 +76,12 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-
      // Reactive State (Signals)
      activeTab = signal<'set' | 'delete'>('set');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     hasWallets = computed(() => this.wallets().length > 0);
-
      credentialSearchTerm = signal<string>('');
      infoPanelExpanded = signal(false);
-     multiSigningEnabled = signal<boolean>(false);
-     regularKeySigningEnabled = signal<boolean>(false);
-
      createdDids = signal<boolean>(false);
      existingDid = signal<DidItem[]>([]);
 
@@ -123,22 +116,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           destinationAddress: '',
      });
 
-     url = signal<string>('');
-     credentialData = signal<string>('');
-     subject = signal<string>('');
-     selectedWalletIndex = signal<number>(0);
-     createdCredentials = signal<boolean>(true);
-     subjectCredential = signal<boolean>(true);
-     editingIndex!: (index: number) => boolean;
-     tempName = signal<string>('');
-     filterQuery = signal<string>('');
-     showCredentialDropdown = signal<boolean>(false);
-
-     explorerUrl = computed(() => {
-          const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
-          return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
-     });
-
      infoData = computed(() => {
           const wallet = this.currentWallet();
           if (!wallet?.address) {
@@ -158,9 +135,11 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           };
      });
 
+     hasWallets = computed(() => this.wallets().length > 0);
+
      constructor() {
           super();
-          this.txUiService.clearAllOptionsAndMessages(); // Reset shared state
+          this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
@@ -195,18 +174,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           this.xrplCache.invalidateAccountCache(wallet.address);
      }
 
-     trackByAddress(index: number, item: DropdownItem): string {
-          return item.address;
-     }
-
-     trackByWalletAddress(index: number, wallet: any) {
-          return wallet.address;
-     }
-
-     trackByTicket(index: number, ticket: any) {
-          return ticket;
-     }
-
      toggleCreatedDids() {
           this.createdDids.update(val => !val);
      }
@@ -231,9 +198,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      async setTab(tab: 'set' | 'delete'): Promise<void> {
           this.activeTab.set(tab);
-          this.txUiService.clearTxSignal();
-          this.txUiService.clearTxResultSignal();
-          this.txUiService.clearAllOptions();
+          this.txUiService.clearAllOptionsAndMessages();
           await this.getDidForAccount();
      }
 
@@ -242,10 +207,8 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      }
 
      async getDidForAccount(forceRefresh = false): Promise<void> {
+          this.txUiService.clearAllOptionsAndMessages();
           await this.withPerf('getDidForAccount', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
-
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
@@ -257,41 +220,11 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                     });
 
                     if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                    }
-
-                    // Just set the signal — computed() does all the work!
-                    this.getExistingDid(accountObjects, wallet.classicAddress);
-                    this.refreshUiState(wallet, accountInfo, accountObjects);
-
-                    this.txUiService.clearAllOptionsAndMessages();
-               } catch (error: any) {
-                    console.error('Error in getDidForAccount:', error);
-                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
-               } finally {
-                    this.txUiService.spinner.set(false);
-               }
-          });
-     }
-
-     async getDidForAccount1(forceRefresh = false): Promise<void> {
-          await this.withPerf('getDidForAccount', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
-
-               try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-
-                    const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
-
-                    const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                         return this.txUiService.setError(errors.join('\n• '));
                     }
 
                     this.getExistingDid(accountObjects, wallet.classicAddress);
                     this.refreshUiState(wallet, accountInfo, accountObjects);
-                    this.txUiService.clearAllOptionsAndMessages();
                } catch (error: any) {
                     console.error('Error in getDidForAccount:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -304,18 +237,10 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      async setDid() {
           await this.withPerf('setDid', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
-
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-
                     const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-                    // const inputs = this.txUiService.getValidationInputs(this.currentWallet(), '');
-                    // inputs.didDocument = this.didDetails().document || undefined;
-                    // inputs.didUri = this.didDetails().uri || undefined;
-                    // inputs.didData = this.didDetails().data || undefined;
-                    // inputs.accountInfo = accountInfo;
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
                          network: {
@@ -332,7 +257,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
                     const errors = await this.validationService.validate('DIDSet', { inputs, client, accountInfo });
                     if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                         return this.txUiService.setError(errors.join('\n• '));
                     }
 
                     let didSetTx: DIDSet = {
@@ -368,12 +293,10 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      async deleteDid() {
           await this.withPerf('deleteDid', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
-
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-
                     const [{ accountInfo, accountObjects }, currentLedger, fee] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getLastLedgerIndex(client), this.xrplCache.getFee(this.xrplService, false)]);
+
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
                          network: {
@@ -382,8 +305,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                               currentLedger,
                          },
                     });
-                    // const inputs = this.txUiService.getValidationInputs(this.currentWallet(), '');
-                    // inputs.accountInfo = accountInfo;
 
                     const errors = await this.validationService.validate('DIDdelete', { inputs, client, accountInfo });
                     if (errors.length > 0) {
@@ -497,7 +418,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
           // Update multi-sign & regular key flags
           const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.regularKeySigningEnabled.set(hasRegularKey);
+          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
           // Update service state
           this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
@@ -508,7 +429,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           const checkForMultiSigner = signerAccounts?.length > 0;
           checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
 
-          this.multiSigningEnabled.set(hasSignerList);
+          this.txUiService.multiSigningEnabled.set(hasSignerList);
           if (hasSignerList) {
                const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
                this.txUiService.signers.set(entries);

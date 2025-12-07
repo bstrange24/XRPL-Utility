@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
@@ -106,31 +106,6 @@ export interface ValidationInputs {
      };
 }
 
-// interface ValidationInputs {
-//      accountInfo: any;
-//      senderAddress?: string;
-//      subject?: string;
-//      seed?: string;
-//      destination?: string;
-//      destinationTag?: string;
-//      isRegularKeyAddress?: boolean;
-//      regularKeyAddress?: string;
-//      regularKeySeed?: string;
-//      useMultiSign?: boolean;
-//      multiSignAddresses?: string;
-//      multiSignSeeds?: string;
-//      isTicket?: boolean;
-//      selectedSingleTicket?: string;
-//      selectedTicket?: string; // for multi-ticket mode
-//      signerQuorum?: number;
-//      signers?: { account: string; weight: number }[];
-//      didDocument?: any;
-//      didUri?: any;
-//      didData?: any;
-//      date?: any;
-//      domainId?: string;
-// }
-
 @Injectable({ providedIn: 'root' })
 export class TransactionUiService {
      constructor(private sanitizer: DomSanitizer, private xrplService: XrplService) {}
@@ -162,6 +137,7 @@ export class TransactionUiService {
      multiSelectMode = signal(false);
      ticketArray = signal<string[]>([]);
      regularKeySigningEnabled = signal(false);
+     multiSigningEnabled = signal(false);
      spinner = signal(false);
 
      // Optional: current wallet if needed
@@ -176,6 +152,11 @@ export class TransactionUiService {
      executionTime = signal<string>('');
      url = signal<string>('');
      domainId = signal<string>('');
+
+     explorerUrl = computed(() => {
+          const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
+          return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
+     });
 
      private _infoData = new BehaviorSubject<any | null>(null);
      infoData$ = this._infoData.asObservable();
@@ -215,6 +196,10 @@ export class TransactionUiService {
      setUrl() {
           const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
           this.url.set(AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET);
+     }
+
+     getUrl() {
+          return this.url();
      }
 
      paymentTx: any[] = [];
@@ -541,6 +526,7 @@ export class TransactionUiService {
           this.useMultiSign.set(false);
           this.isRegularKeyAddress.set(false);
           this.regularKeySigningEnabled.set(false);
+          this.multiSigningEnabled.set(false);
           this.isTicket.set(false);
           this.isSimulateEnabled.set(false);
           this.memoField.set('');
@@ -552,6 +538,7 @@ export class TransactionUiService {
           // this.clearAllOptions();
           this.errorMessage = '';
           this.errorMessageSignal.set(null);
+          this.updateSpinnerMessageSignal('');
           this.clearTxResultSignal();
           this.clearTxSignal();
           this.clearMessages();

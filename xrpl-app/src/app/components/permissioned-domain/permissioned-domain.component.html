@@ -57,7 +57,7 @@
                }
 
                <!-- Info Message -->
-               @if (txUiService.infoData$ | async; as info) {
+               @if (infoData(); as info) {
                <div class="info-message-wrapper">
                     <div class="info-panel">
                          <div class="info-text">
@@ -69,7 +69,7 @@
                               </div>
 
                               <!-- COLLAPSIBLE PERMISSIONED DOMAIN LIST -->
-                              @if (info.permissionedDomainsToShow?.length > 0) {
+                              @if (info.permissionedDomainCount > 0) {
                               <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05)">
                                    <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
                                         <span> Permissioned Domains ({{ info.permissionedDomainCount }})</span>
@@ -88,7 +88,7 @@
                                              </svg> -->
 
                                              <!-- Only the text part is the explorer link -->
-                                             <app-tooltip-link [href]="explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer" style="flex: 1; min-width: 0">
+                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer" style="flex: 1; min-width: 0">
                                                   <div style="font-weight: 500; margin-bottom: 4px">{{ domain.Domain || 'Permissioned Domain' }}</div>
 
                                                   <div style="color: #555; font-size: 0.88em; display: flex; align-items: center; gap: 8px">
@@ -226,7 +226,7 @@
                               </div>
                               }}
 
-                              <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="activeTab" [multiSigningEnabled]="multiSigningEnabled" [regularKeySigningEnabled]="regularKeySigningEnabled" />
+                              <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                               <!-- Action buttons -->
                               <div class="button-row">

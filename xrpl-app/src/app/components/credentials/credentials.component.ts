@@ -7,7 +7,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { Subject } from 'rxjs';
 import * as xrpl from 'xrpl';
 import { CredentialAccept, CredentialCreate, CredentialDelete, rippleTimeToISOTime } from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
@@ -75,8 +74,8 @@ interface CredentialData {
 export class CreateCredentialsComponent extends PerformanceBaseComponent implements OnInit, AfterViewInit {
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-     @ViewChild('domainDropdownOrigin') domainDropdownOrigin!: ElementRef;
-     @ViewChild('domainDropdownTemplate') domainDropdownTemplate!: TemplateRef<any>;
+     @ViewChild('credentialIdDropdownOrigin') credentialIdDropdownOrigin!: ElementRef<HTMLInputElement>;
+     @ViewChild('credentialIdDropdownTemplate') credentialIdDropdownTemplate!: TemplateRef<any>;
      @ViewChild('credentialInput', { static: false }) inputElement!: ElementRef<HTMLInputElement>;
 
      private readonly destroyRef = inject(DestroyRef);
@@ -98,32 +97,30 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
      // Domain Dropdown State
-     selectedDomainId = signal<string | null>(null);
-     domainSearchQuery = signal<string>('');
+     // selectedDomainId = signal<string | null>(null);
+     credentialIdSearchQuery = signal<string>('');
      // Destination Dropdown
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      private overlayRef: OverlayRef | null = null;
-     private domainOverlayRef: OverlayRef | null = null;
+     private credentialIdOverlayRef: OverlayRef | null = null;
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
      destinationTagField = signal<string>('');
      // Reactive State (Signals)
      activeTab = signal<'create' | 'accept' | 'delete' | 'verify'>('create');
-     url = signal<string>('');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     hasWallets = computed(() => this.wallets().length > 0);
 
      // Credential lists
      existingCredentials = signal<CredentialItem[]>([]);
      subjectCredentials = signal<CredentialItem[]>([]);
 
      // Filtered credentials — derived state, fully reactive
-     filteredExisting = computed(() => this.filterCredentials(this.existingCredentials(), this.credentialSearchTerm()));
-     filteredSubject = computed(() => this.filterCredentials(this.subjectCredentials(), this.credentialSearchTerm()));
+     filteredExisting = computed(() => this.filterCredentials(this.existingCredentials(), this.credentialIdSearchTerm()));
+     filteredSubject = computed(() => this.filterCredentials(this.subjectCredentials(), this.credentialIdSearchTerm()));
 
      // Form & UI State
-     credentialSearchTerm = signal<string>('');
+     credentialIdSearchTerm = signal<string>('');
      destinationField = signal<string>('');
      credentialID = signal<string>('');
      credentialType = signal<string>('');
@@ -149,10 +146,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           uri: 'ipfs://bafybeiexamplehash',
      });
 
-     public destinationSearch$ = new Subject<string>();
      private decodeCache = new Map<string, string>();
-     multiSigningEnabled = signal<boolean>(false);
-     regularKeySigningEnabled = signal<boolean>(false);
      credentialData = signal<string>('');
      subject = signal<string>('');
      selectedWalletIndex = signal<number>(0);
@@ -162,11 +156,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      tempName = signal<string>('');
      filterQuery = signal<string>('');
      showCredentialDropdown = signal<boolean>(false);
-
-     explorerUrl = computed(() => {
-          const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
-          return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
-     });
 
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
@@ -197,6 +186,21 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           return this.destinations()
                .filter(d => d.address !== this.currentWallet().address)
                .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
+     });
+
+     credentialIdDisplay = computed(() => {
+          const id = this.credentialID();
+          if (!id) return this.credentialIdSearchQuery() || '';
+          return this.dropdownService.formatDomainId(id);
+     });
+
+     filteredcredentialIds = computed(() => {
+          const q = this.credentialIdSearchQuery().trim().toLowerCase();
+          const list = this.existingCredentials();
+
+          if (q === '') return list;
+
+          return list.filter(d => d.index.toLowerCase().includes(q));
      });
 
      infoData = computed(() => {
@@ -244,9 +248,11 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           };
      });
 
+     hasWallets = computed(() => this.wallets().length > 0);
+
      constructor() {
           super();
-          this.txUiService.clearAllOptionsAndMessages(); // Reset shared state
+          this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
@@ -301,6 +307,11 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.dropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
      }
 
+     resetCredentialIdDropDown() {
+          // this.selectedDomainId.set(null);
+          this.credentialID.set('');
+     }
+
      onSelectCredentials(credential: CredentialItem | null) {
           if (!credential) {
                this.selectedCredentials.set(null);
@@ -344,11 +355,13 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
      async setTab(tab: 'create' | 'accept' | 'delete' | 'verify'): Promise<void> {
           this.activeTab.set(tab);
-          this.txUiService.setError('');
-          this.txUiService.clearTxSignal();
-          this.txUiService.clearTxResultSignal();
-          this.txUiService.clearAllOptions();
+          this.destinationSearchQuery.set('');
+          this.txUiService.clearAllOptionsAndMessages();
           await this.getAllCredentialsForAccount();
+     }
+
+     toggleCreatedDomains() {
+          // this.createdDomains.update(val => !val);
      }
 
      private async getClient(): Promise<xrpl.Client> {
@@ -365,6 +378,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
      async getCredentialsForAccount(forceRefresh = false): Promise<void> {
           await this.withPerf('getCredentialsForAccount', async () => {
+               this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
@@ -376,7 +390,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
                     this.parseCredentials(accountObjects, wallet.classicAddress);
                     this.refreshUiState(wallet, accountInfo, accountObjects);
-                    this.txUiService.clearAllOptionsAndMessages();
                } catch (error: any) {
                     console.error('Error in getCredentialsForAccount:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -389,7 +402,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      async createCredential() {
           await this.withPerf('createCredential', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
 
                const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
 
@@ -447,8 +459,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      async deleteCredentials() {
           await this.withPerf('createCredential', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
-
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
@@ -491,7 +501,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
-
                     if (!result.success) return;
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Credential delete successfully!' : 'Credential removed successfully!';
@@ -508,7 +517,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      async acceptCredentials() {
           await this.withPerf('acceptCredentials', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
 
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
@@ -572,7 +580,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      async verifyCredential(binary: boolean): Promise<boolean | void> {
           await this.withPerf('verifyCredential', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
 
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
@@ -752,27 +759,27 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.utilsService.logObjects('subjectCredentials', mapped);
      }
 
-     filteredCredentials = computed(() => {
-          const term = this.credentialSearchTerm(); // we'll use a signal for search term
-          const creds = this.existingCredentials();
+     // filteredCredentials = computed(() => {
+     //      const term = this.credentialSearchTerm(); // we'll use a signal for search term
+     //      const creds = this.existingCredentials();
 
-          if (!term) return creds;
-          if (!creds || creds.length === 0) return [];
+     //      if (!term) return creds;
+     //      if (!creds || creds.length === 0) return [];
 
-          const lower = term.toLowerCase();
-          return creds.filter(c => (c.CredentialType || '').toLowerCase().includes(lower) || (c.Issuer || '').toLowerCase().includes(lower) || (c.Subject || '').toLowerCase().includes(lower) || (c.index || '').toLowerCase().includes(lower));
-     });
+     //      const lower = term.toLowerCase();
+     //      return creds.filter(c => (c.CredentialType || '').toLowerCase().includes(lower) || (c.Issuer || '').toLowerCase().includes(lower) || (c.Subject || '').toLowerCase().includes(lower) || (c.index || '').toLowerCase().includes(lower));
+     // });
 
-     filteredAcceptableCredentials = computed(() => {
-          const term = this.credentialSearchTerm();
-          const creds = this.subjectCredentials();
+     // filteredAcceptableCredentials = computed(() => {
+     //      const term = this.credentialSearchTerm();
+     //      const creds = this.subjectCredentials();
 
-          if (!term) return creds;
-          if (!creds || creds.length === 0) return [];
+     //      if (!term) return creds;
+     //      if (!creds || creds.length === 0) return [];
 
-          const lower = term.toLowerCase();
-          return creds.filter(c => (c.CredentialType || '').toLowerCase().includes(lower) || (c.Issuer || '').toLowerCase().includes(lower) || (c.Subject || '').toLowerCase().includes(lower) || (c.index || '').toLowerCase().includes(lower));
-     });
+     //      const lower = term.toLowerCase();
+     //      return creds.filter(c => (c.CredentialType || '').toLowerCase().includes(lower) || (c.Issuer || '').toLowerCase().includes(lower) || (c.Subject || '').toLowerCase().includes(lower) || (c.index || '').toLowerCase().includes(lower));
+     // });
 
      private async getWallet(): Promise<xrpl.Wallet> {
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
@@ -817,7 +824,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
           // Update multi-sign & regular key flags
           const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.regularKeySigningEnabled.set(hasRegularKey);
+          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
           // Update service state
           this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
@@ -828,7 +835,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           const checkForMultiSigner = signerAccounts?.length > 0;
           checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
 
-          this.multiSigningEnabled.set(hasSignerList);
+          this.txUiService.multiSigningEnabled.set(hasSignerList);
           if (hasSignerList) {
                const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
                this.txUiService.signers.set(entries);
@@ -897,24 +904,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           // Just set signals — infoData() recomputes automatically!
           this.existingCredentials.set(issued);
           this.subjectCredentials.set(received);
-     }
-
-     private parseCredentials1(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
-          const objs = accountObjects.result.account_objects ?? [];
-
-          const issued = objs
-               .filter(o => o.LedgerEntryType === 'Credential' && o.Issuer === address)
-               .map(o => this.mapCredential(o))
-               .sort((a, b) => (a.Expiration || '').localeCompare(b.Expiration || ''));
-
-          const received = objs
-               .filter(o => o.LedgerEntryType === 'Credential' && o.Subject === address)
-               .map(o => this.mapCredential(o))
-               .sort((a, b) => (a.Expiration || '').localeCompare(b.Expiration || ''));
-
-          this.existingCredentials.set(issued);
-          this.subjectCredentials.set(received);
-          console.log(`existingCredentials ${this.existingCredentials()} subjectCredentials ${this.subjectCredentials()}`);
      }
 
      private mapCredential(obj: any): CredentialItem {
@@ -1024,9 +1013,9 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                this.overlayRef = null;
           }
 
-          if (this.domainOverlayRef) {
-               this.domainOverlayRef.dispose();
-               this.domainOverlayRef = null;
+          if (this.credentialIdOverlayRef) {
+               this.credentialIdOverlayRef.dispose();
+               this.credentialIdOverlayRef = null;
           }
      }
 
@@ -1069,5 +1058,52 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      private closeDropdownInternal(): void {
           this.overlayRef?.detach();
           this.overlayRef = null;
+     }
+
+     openCredentialIdDropdown(): void {
+          if (this.credentialIdOverlayRef?.hasAttached()) return;
+
+          // Always destroy first — no exceptions
+          if (this.credentialIdOverlayRef) {
+               this.credentialIdOverlayRef.dispose();
+               this.credentialIdOverlayRef = null;
+          }
+
+          const positionStrategy = this.overlay
+               .position()
+               .flexibleConnectedTo(this.credentialIdDropdownOrigin)
+               .withPositions([
+                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+               ]);
+
+          this.credentialIdOverlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy,
+               scrollStrategy: this.overlay.scrollStrategies.reposition(),
+               width: this.credentialIdDropdownOrigin.nativeElement.getBoundingClientRect().width,
+          });
+
+          this.credentialIdOverlayRef.attach(new TemplatePortal(this.credentialIdDropdownTemplate, this.viewContainerRef));
+          this.credentialIdOverlayRef.backdropClick().subscribe(() => this.closeCredentialIdDropdown());
+     }
+
+     closeCredentialIdDropdown(): void {
+          this.credentialIdOverlayRef?.detach();
+          this.credentialIdOverlayRef = null;
+     }
+
+     selectCredentialId(domainId: string): void {
+          // this.selectedDomainId.set(domainId);
+          this.credentialID.set(domainId); // Auto-fill the Domain ID field
+          this.credentialIdSearchQuery.set(''); // Clear search
+          this.closeCredentialIdDropdown();
+     }
+
+     onCredentialIdInput(event: Event): void {
+          const value = (event.target as HTMLInputElement).value;
+          this.credentialIdSearchQuery.set(value);
+          // this.selectedDomainId.set(null); // Clear selection while typing
      }
 }

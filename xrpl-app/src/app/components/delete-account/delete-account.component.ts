@@ -94,11 +94,6 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      serverInfo = signal<any>(null);
      accountObjects = signal<any>(null);
 
-     explorerUrl = computed(() => {
-          const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
-          return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
-     });
-
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
                name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
