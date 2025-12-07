@@ -57,7 +57,8 @@
                }
 
                <!-- Info Message -->
-               @if (txUiService.infoData$ | async; as info) {
+               <!-- @if (txUiService.infoData$ | async; as info) { -->
+               @if (infoData(); as info) {
                <div class="info-message-wrapper"></div>
 
                <div class="info-panel">

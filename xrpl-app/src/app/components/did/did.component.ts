@@ -35,7 +35,7 @@ interface DidItem {
      index: string;
      DIDDocument: string;
      Data: string;
-     URI?: string;
+     URI: string;
 }
 
 interface DidData {
@@ -134,15 +134,36 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      filterQuery = signal<string>('');
      showCredentialDropdown = signal<boolean>(false);
 
+     explorerUrl = computed(() => {
+          const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
+          return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
+     });
+
+     infoData = computed(() => {
+          const wallet = this.currentWallet();
+          if (!wallet?.address) {
+               return null;
+          }
+
+          const walletName = wallet.name || 'Selected wallet';
+          const dids = this.existingDid();
+          const didCount = dids.length;
+          const mode = this.activeTab();
+
+          return {
+               walletName,
+               mode,
+               didCount,
+               existingDid: dids,
+          };
+     });
+
      constructor() {
           super();
           this.txUiService.clearAllOptionsAndMessages(); // Reset shared state
-          effect(() => this.updateInfoMessage());
      }
 
      ngOnInit(): void {
-          const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
-          this.url.set(AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET);
           this.setupWalletSubscriptions();
      }
 
@@ -202,7 +223,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      toggleInfoPanel() {
           this.infoPanelExpanded.update(expanded => !expanded);
-          this.updateInfoMessage(); // Rebuild the HTML with new state
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -227,18 +247,49 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                this.txUiService.updateSpinnerMessageSignal('');
 
                try {
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
+                    const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
+
+                    const errors = await this.validationService.validate('AccountInfo', {
+                         inputs: { seed: this.currentWallet().seed, accountInfo },
+                         client,
+                         accountInfo,
+                    });
+
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    }
+
+                    // Just set the signal — computed() does all the work!
+                    this.getExistingDid(accountObjects, wallet.classicAddress);
+                    this.refreshUiState(wallet, accountInfo, accountObjects);
+
+                    this.txUiService.clearAllOptionsAndMessages();
+               } catch (error: any) {
+                    console.error('Error in getDidForAccount:', error);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+               } finally {
+                    this.txUiService.spinner.set(false);
+               }
+          });
+     }
+
+     async getDidForAccount1(forceRefresh = false): Promise<void> {
+          await this.withPerf('getDidForAccount', async () => {
+               this.txUiService.clearAllOptionsAndMessages();
+               this.txUiService.updateSpinnerMessageSignal('');
+
+               try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
 
                     const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
-                    if (errors.length) {
-                         this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                         return;
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                     }
 
                     this.getExistingDid(accountObjects, wallet.classicAddress);
-                    this.updateInfoMessage();
                     this.refreshUiState(wallet, accountInfo, accountObjects);
                     this.txUiService.clearAllOptionsAndMessages();
                } catch (error: any) {
@@ -431,15 +482,10 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet): Promise<void> {
-          try {
-               const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-               this.getExistingDid(accountObjects, wallet.classicAddress);
-               await this.refreshWallets(client, [wallet.classicAddress]);
-               this.refreshUiState(wallet, accountInfo, accountObjects);
-               this.updateInfoMessage();
-          } catch (error: any) {
-               console.error('Error in refreshAfterTx:', error);
-          }
+          const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
+          this.getExistingDid(accountObjects, wallet.classicAddress);
+          await this.refreshWallets(client, [wallet.classicAddress]);
+          this.refreshUiState(wallet, accountInfo, accountObjects);
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -486,21 +532,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
           this.txUiService.multiSignSeeds.set('');
           this.storageService.removeValue('signerEntries');
-     }
-
-     private updateInfoMessage(): void {
-          if (!this.currentWallet().address) {
-               this.txUiService.setInfoData(null);
-               return;
-          }
-
-          const walletName = this.currentWallet().name || 'Selected wallet';
-          this.txUiService.setInfoData({
-               walletName,
-               mode: this.activeTab(),
-               didCount: this.existingDid().length,
-               existingDid: this.existingDid(),
-          });
      }
 
      formatXrplTimestamp(timestamp: number): string {

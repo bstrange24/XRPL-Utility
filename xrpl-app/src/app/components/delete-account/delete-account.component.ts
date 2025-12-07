@@ -2,7 +2,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, TemplateRef, ViewChild, ViewContainerRef, computed, effect, inject, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, TemplateRef, ViewChild, ViewContainerRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -42,6 +42,11 @@ import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.compon
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeleteAccountComponent extends PerformanceBaseComponent implements OnInit, AfterViewInit {
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
+     @ViewChild('domainDropdownOrigin') domainDropdownOrigin!: ElementRef;
+     @ViewChild('domainDropdownTemplate') domainDropdownTemplate!: TemplateRef<any>;
+
      private readonly destroyRef = inject(DestroyRef);
      private readonly overlay = inject(Overlay);
      private readonly viewContainerRef = inject(ViewContainerRef);
@@ -53,15 +58,22 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
-     private readonly destinationDropdownService = inject(DestinationDropdownService);
+     private readonly dropdownService = inject(DestinationDropdownService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
+     // Domain Dropdown State
+     selectedDomainId = signal<string | null>(null);
+     domainSearchQuery = signal<string>('');
+     // Destination Dropdown
+     customDestinations = signal<{ name?: string; address: string }[]>([]);
+     private overlayRef: OverlayRef | null = null;
+     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
+     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
+     destinationTagField = signal<string>('');
 
      // Page-specific state only
      activeTab = signal<'deleteAccount'>('deleteAccount');
@@ -69,41 +81,171 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      currentWallet = signal<Wallet>({} as Wallet);
      hasWallets = computed(() => this.wallets().length > 0);
 
-     destinationField = signal<string>('');
-     destinationTagField = signal<string>('');
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
-     destinations = signal<DropdownItem[]>([]);
-     canDelete = signal(false);
-     deleteBlockers = signal<string[]>([]);
-
-     filteredDestinations = signal<DropdownItem[]>([]);
-     highlightedIndex = signal<number>(-1);
-     showDropdown = signal<boolean>(false);
-     private overlayRef: OverlayRef | null = null;
-
-     accountInfo = signal<any>(null);
      multiSigningEnabled = signal<boolean>(false);
      regularKeySigningEnabled = signal<boolean>(false);
 
-     filterQuery = signal<string>('');
      selectedWalletIndex = signal<number>(0);
+     editingIndex!: (index: number) => boolean;
+     tempName = signal<string>('');
+     filterQuery = signal<string>('');
+
+     // Account state signals
+     accountInfo = signal<any>(null);
+     serverInfo = signal<any>(null);
+     accountObjects = signal<any>(null);
+
+     explorerUrl = computed(() => {
+          const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
+          return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
+     });
+
+     destinations = computed(() => [
+          ...this.wallets().map((w: DropdownItem) => ({
+               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
+               address: w.address,
+          })),
+          ...this.customDestinations(),
+     ]);
+
+     destinationDisplay = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return this.destinationSearchQuery(); // while typing → show typed text
+
+          const dest = this.destinations().find(d => d.address === addr);
+          if (!dest) return addr;
+
+          return this.dropdownService.formatDisplay(dest);
+     });
+
+     filteredDestinations = computed(() => {
+          const q = this.destinationSearchQuery().trim().toLowerCase();
+          const list = this.destinations();
+
+          if (q === '') {
+               return list;
+          }
+
+          return this.destinations()
+               .filter(d => d.address !== this.currentWallet().address)
+               .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
+     });
+
+     infoData = computed(() => {
+          const wallet = this.currentWallet();
+          if (!wallet?.address) {
+               return { walletName: '', message: '' };
+          }
+
+          const walletName = wallet.name || 'Selected wallet';
+          const acc = this.accountInfo()?.result?.account_data;
+          const flags = this.accountInfo()?.result?.account_flags;
+          const srv = this.serverInfo()?.result?.info?.validated_ledger;
+          const objects = this.accountObjects();
+
+          if (!acc) {
+               return {
+                    walletName,
+                    message: `<code>${walletName}</code> wallet can be deleted.`,
+               };
+          }
+
+          // === Extract data safely ===
+          const hasRegularKey = !!acc.RegularKey;
+          const hasSignerList = !!flags?.enableSignerList;
+          const ownerCount = Number(acc.OwnerCount || 0);
+          const ticketCount = Number(acc.TicketCount || 0);
+          const hasHooks = Array.isArray(acc.Hooks) && acc.Hooks.length > 0;
+          const lastTxLedger = Number(acc.PreviousTxnLgrSeq ?? 0);
+          const currentLedger = Number(srv?.seq ?? 0);
+
+          // === Build blockers ===
+          const issues: string[] = [];
+          if (hasRegularKey) issues.push('This account has a Regular Key configured.');
+          if (hasSignerList) issues.push('This account has a Signer List configured.');
+          if (ownerCount > 0) issues.push(`This account has <strong>${ownerCount}</strong> owner object${ownerCount !== 1 ? 's' : ''} (trust lines, offers, escrows, checks, etc.).`);
+          if (ticketCount > 0) issues.push(`This account has <strong>${ticketCount}</strong> allocated Ticket${ticketCount !== 1 ? 's' : ''}. All tickets must be used or canceled.`);
+          if (hasHooks) issues.push('This account has one or more Hooks installed. All Hooks must be removed first.');
+
+          // === 256-ledger rule ===
+          if (lastTxLedger > 0 && currentLedger > 0) {
+               const ledgersSinceLastTx = currentLedger - lastTxLedger;
+               const required = 256;
+               if (ledgersSinceLastTx < required) {
+                    const remaining = required - ledgersSinceLastTx;
+                    const approxMinutes = Math.ceil((remaining * 4) / 60);
+                    issues.push(`This account made a recent transaction. You must wait <strong>${remaining} more ledgers</strong> (~ ${approxMinutes} minute${approxMinutes !== 1 ? 's' : ''}) before deletion is allowed.`);
+               }
+          }
+
+          // === Build message ===
+          let message = `<code>${walletName}</code> wallet `;
+
+          if (issues.length === 0) {
+               message += `<strong>can be deleted</strong>. There are no blocking configurations on this account.<br><br>`;
+          } else {
+               message += `has the following configuration that <strong>prevents deletion</strong>:<ul>`;
+               issues.forEach(i => (message += `<li>${i}</li>`));
+               message += `</ul>`;
+          }
+
+          // === Requirements list ===
+          message += `<strong>Requirements for successful account deletion:</strong><ul>
+    <li>All owner objects must be deleted first (trust lines, offers, escrows, checks, NFTs, etc.)</li>
+    <li>All Tickets must be used or canceled (TicketCount must be 0)</li>
+    <li>All Hooks must be removed (if any are installed)</li>
+    <li>The account must send all remaining XRP to another account</li>
+    <li>The account must have no Regular Key configured</li>
+    <li>The account must have no active Signer List</li>
+  </ul>`;
+
+          // === Balance check ===
+          const balanceXrp = Number(xrpl.dropsToXrp(String(acc.Balance)));
+          const baseReserve = Number(this.serverInfo()?.result?.info?.reserve_base_xrp ?? 10);
+          const ownerReserve = Number(this.serverInfo()?.result?.info?.reserve_inc_xrp ?? 2);
+          const totalReserve = baseReserve + ownerCount * ownerReserve;
+          const minNeeded = totalReserve + 2; // +2 XRP delete fee
+
+          if (balanceXrp < minNeeded) {
+               message += `<br><strong>Warning:</strong> Insufficient balance. Account needs at least <strong>${minNeeded.toFixed(6)} XRP</strong> (${totalReserve.toFixed(6)} reserve + 2 XRP deletion fee).`;
+          }
+
+          return { walletName, message };
+     });
+
+     // Update blockers & canDelete from the same source
+     deleteBlockers = computed(() => {
+          const issues: string[] = [];
+          const acc = this.accountInfo()?.result?.account_data;
+          const flags = this.accountInfo()?.result?.account_flags;
+          if (!acc) return issues;
+
+          const hasRegularKey = !!acc.RegularKey;
+          const hasSignerList = !!flags?.enableSignerList;
+          const ownerCount = Number(acc.OwnerCount || 0);
+          const ticketCount = Number(acc.TicketCount || 0);
+          const hasHooks = Array.isArray(acc.Hooks) && acc.Hooks.length > 0;
+
+          if (hasRegularKey) issues.push('Regular Key set');
+          if (hasSignerList) issues.push('Signer List active');
+          if (ownerCount > 0) issues.push(`${ownerCount} owner objects`);
+          if (ticketCount > 0) issues.push(`${ticketCount} tickets allocated`);
+          if (hasHooks) issues.push('Hooks installed');
+
+          // Add ledger wait if needed
+          const lastTx = Number(acc.PreviousTxnLgrSeq ?? 0);
+          const current = Number(this.serverInfo()?.result?.info?.validated_ledger?.seq ?? 0);
+          if (lastTx > 0 && current > 0 && current - lastTx < 256) {
+               issues.push(`Waiting ${256 - (current - lastTx)} ledgers`);
+          }
+
+          return issues;
+     });
+
+     canDelete = computed(() => this.deleteBlockers().length === 0);
 
      constructor() {
           super();
           this.txUiService.clearAllOptionsAndMessages(); // Reset shared state
-          effect(() => this.updateInfoMessage(null, null));
-          effect(() => {
-               this.destinations.set([
-                    ...this.wallets().map(
-                         w =>
-                              ({
-                                   name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
-                                   address: w.address,
-                              } as DropdownItem)
-                    ),
-                    ...this.customDestinations(),
-               ]);
-          });
      }
 
      ngOnInit(): void {
@@ -112,11 +254,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           this.setupDropdownSubscriptions();
      }
 
-     ngAfterViewInit(): void {
-          document.addEventListener('keydown', e => {
-               if (e.key === 'Escape' && this.showDropdown()) this.closeDropdown();
-          });
-     }
+     ngAfterViewInit(): void {}
 
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
@@ -154,19 +292,14 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           this.xrplCache.invalidateAccountCache(wallet.address);
 
           // Prevent self as destination
-          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address || this.destinationField();
+          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.selectedDestinationAddress(), this.destinations())?.address || this.selectedDestinationAddress();
           if (currentDest === wallet.address) {
-               this.destinationField.set('');
+               this.selectedDestinationAddress.set('');
           }
      }
 
      private setupDropdownSubscriptions(): void {
-          this.destinationDropdownService.filtered$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(list => {
-               this.filteredDestinations.set(list);
-               this.highlightedIndex.set(list.length > 0 ? 0 : -1);
-          });
-
-          this.destinationDropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
+          this.dropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
      }
 
      trackByAddress(index: number, item: DropdownItem): string {
@@ -177,6 +310,10 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           return wallet.address;
      }
 
+     copyAndToast(text: string, label: string = 'Content') {
+          this.copyUtilService.copyAndToast(text, label);
+     }
+
      onWalletSelected(wallet: Wallet): void {
           this.selectWallet(wallet);
           const idx = this.wallets().findIndex(w => w.address === wallet.address);
@@ -185,33 +322,41 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           }
      }
 
+     async setTab(tab: 'deleteAccount'): Promise<void> {
+          this.activeTab.set(tab);
+          this.destinationSearchQuery.set('');
+          this.txUiService.clearAllOptionsAndMessages();
+          await this.getAccountDetails();
+     }
+
      private async getClient(): Promise<xrpl.Client> {
           return this.xrplCache.getClient(() => this.xrplService.getClient());
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
           await this.withPerf('getAccountDetails', async () => {
-               this.txUiService.clearMessages();
-               this.txUiService.updateSpinnerMessage('');
+               this.txUiService.clearAllOptionsAndMessages();
+               this.txUiService.updateSpinnerMessageSignal('');
 
                try {
-                    const client = await this.getClient();
-                    const wallet = await this.getWallet();
-
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, serverInfo] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh), this.xrplCache.getServerInfo(this.xrplService)]);
 
                     const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
-                    if (errors.length) {
-                         this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                         return;
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                     }
 
-                    this.updateInfoMessage(accountInfo, serverInfo);
+                    // Just set signals — computed() does the rest!
+                    this.accountInfo.set(accountInfo);
+                    this.accountObjects.set(accountObjects);
+                    this.serverInfo.set(serverInfo);
+
                     this.refreshUiState(wallet, accountInfo, accountObjects);
                     this.txUiService.clearAllOptionsAndMessages();
                } catch (error: any) {
                     console.error('Error in getAccountDetails:', error);
-                    return this.txUiService.setError(`${error.message || 'Unknown error'}`);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
                     this.txUiService.spinner.set(false);
                }
@@ -222,37 +367,17 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           await this.withPerf('deleteAccount', async () => {
                this.txUiService.clearMessages();
 
-               if (!this.destinationField()) {
-                    return this.txUiService.setError('Destination cannot be empty.');
-               }
-
-               const resolvedDestination = this.destinationField().includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address : this.destinationField();
-
-               if (!resolvedDestination || !xrpl.isValidAddress(resolvedDestination)) {
-                    return this.txUiService.setError('Invalid destination address.');
-               }
+               const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
 
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-
                     const [accountInfo, accountObjects, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.checkAccountObjectsForDeletion(client, wallet.classicAddress), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
 
-                    // const inputs = this.txUiService.getValidationInputs(this.currentWallet(), resolvedDestination, this.destinationTagField());
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
-                         network: {
-                              accountInfo,
-                              accountObjects,
-                              currentLedger,
-                              serverInfo,
-                         },
-                         destination: {
-                              address: resolvedDestination,
-                              tag: '',
-                         },
-                         sequence: {
-                              sequenceId: accountInfo.result.account_data.Sequence,
-                         },
+                         network: { accountInfo, accountObjects, currentLedger, serverInfo },
+                         destination: { address: destinationAddress, tag: '' },
+                         sequence: { sequenceId: accountInfo.result.account_data.Sequence },
                     });
 
                     const errors = await this.validationService.validate('AccountDelete', { inputs, client, accountInfo, accountObjects, currentLedger, serverInfo });
@@ -263,7 +388,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                     const tx: xrpl.AccountDelete = {
                          TransactionType: 'AccountDelete',
                          Account: wallet.classicAddress,
-                         Destination: resolvedDestination,
+                         Destination: destinationAddress,
                          Sequence: accountInfo.result.account_data.Sequence,
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
                     };
@@ -277,7 +402,6 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
-
                     if (!result.success) return;
 
                     if (this.txUiService.isSimulateEnabled()) {
@@ -285,11 +409,11 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                     } else {
                          this.txUiService.successMessage = 'Account deleted successfully!';
                          this.deleteWalletAfterDeleteTx(this.selectedWalletIndex());
-                         await this.refreshAfterTx(client, resolvedDestination);
+                         await this.refreshAfterTx(client, destinationAddress);
                     }
                } catch (error: any) {
                     console.error('Error in deleteAccount:', error);
-                    return this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
                     this.txUiService.spinner.set(false);
                }
@@ -331,12 +455,9 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      }
 
      private async refreshAfterTx(client: xrpl.Client, destination: string): Promise<void> {
-          try {
-               await this.refreshWallets(client, [destination]);
-               this.getAccountDetails(true);
-          } catch (error: any) {
-               console.error('Error in refreshAfterTx:', error);
-          }
+          await this.refreshWallets(client, [destination]);
+          this.addNewDestinationFromUser(destination ? destination : '');
+          this.getAccountDetails(true);
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -385,113 +506,28 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           this.storageService.removeValue('signerEntries');
      }
 
-     private addNewDestinationFromUser(): void {
-          const addr = this.destinationField().includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address : this.destinationField();
-
-          if (addr && xrpl.isValidAddress(addr) && !this.destinations().some(d => d.address === addr)) {
-               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: addr }]);
-               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
-          }
+     updateDestinations() {
+          // Optional: persist destinations
+          const allItems = [
+               ...this.wallets().map(wallet => ({
+                    name: wallet.name ?? this.truncateAddress(wallet.address),
+                    address: wallet.address,
+               })),
+               ...this.customDestinations(),
+          ];
+          this.storageService.set('destinations', allItems);
      }
 
-     private updateInfoMessage(accountInfo: any, serverInfo: any): void {
-          if (!this.currentWallet().address) {
-               this.txUiService.setInfoData(null);
-               return;
+     private truncateAddress(address: string): string {
+          return `${address.slice(0, 8)}...${address.slice(-6)}`;
+     }
+
+     private addNewDestinationFromUser(destination: string): void {
+          if (destination && xrpl.isValidAddress(destination) && !this.destinations().some(d => d.address === destination)) {
+               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
+               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
+               this.updateDestinations();
           }
-
-          const walletName = this.currentWallet().name || 'Selected wallet';
-
-          if (!accountInfo?.result) {
-               let message = `<code>${walletName}</code> wallet can be deleted.`;
-               this.txUiService.setInfoData({
-                    walletName,
-                    message: message,
-               });
-               return;
-          }
-
-          const accountData = accountInfo.result.account_data;
-          const accountFlags = accountInfo.result.account_flags;
-
-          const hasRegularKey = !!accountData.RegularKey;
-          const hasSignerList = !!accountFlags.enableSignerList;
-          const ownerCount = Number(accountData.OwnerCount || 0);
-
-          const ticketCount = Number(accountData.TicketCount || 0);
-          const hasHooks = Array.isArray(accountData.Hooks) && accountData.Hooks.length > 0;
-
-          // === Build blocking issues ===
-          const issues: string[] = [];
-          if (hasRegularKey) issues.push('This account has a Regular Key configured.');
-          if (hasSignerList) issues.push('This account has a Signer List configured.');
-          if (ownerCount > 0) issues.push(`This account has <strong>${ownerCount}</strong> owner object${ownerCount !== 1 ? 's' : ''} (trust lines, offers, escrows, checks, etc.).`);
-          if (ticketCount > 0) issues.push(`This account has <strong>${ticketCount}</strong> allocated Ticket${ticketCount !== 1 ? 's' : ''}. All tickets must be used or canceled.`);
-          if (hasHooks) issues.push('This account has one or more Hooks installed. All Hooks must be removed first.');
-
-          // === Time-based deletion rule (256 ledgers) ===
-          const lastTxLedger = Number(accountData.PreviousTxnLgrSeq ?? 0);
-
-          // You must pass this into the function (or fetch it in here if you prefer)
-          const currentLedger = Number(serverInfo.result.info.validated_ledger.seq ?? 0);
-
-          if (lastTxLedger > 0 && currentLedger > 0) {
-               const ledgersSinceLastTx = currentLedger - lastTxLedger;
-               const required = 256;
-
-               if (ledgersSinceLastTx < required) {
-                    const remaining = required - ledgersSinceLastTx;
-                    const approxMinutes = Math.ceil((remaining * 4) / 60); // ~4 seconds per ledger
-                    issues.push(`This account made a recent transaction. You must wait <strong>${remaining} more ledgers</strong> ` + `(~ ${approxMinutes} minute${approxMinutes !== 1 ? 's' : ''}) before deletion is allowed.`);
-               }
-          }
-
-          let message = `<code>${walletName}</code> wallet `;
-
-          if (issues.length === 0) {
-               message += `<strong>can be deleted</strong>. There are no blocking configurations on this account.`;
-               this.txUiService.setInfoData({
-                    walletName,
-                    message: message,
-               });
-               this.canDelete.set(issues.length === 0);
-               return;
-          } else {
-               message += `has the following configuration that <strong>prevents deletion</strong>:<ul>`;
-               issues.forEach(i => (message += `<li>${i}</li>`));
-               message += `</ul>`;
-          }
-
-          // === Requirements ===
-          message += `<strong>Requirements for successful account deletion:</strong><ul>
-  <li>All owner objects must be deleted first (trust lines, offers, escrows, checks, NFTs, etc.)</li>
-  <li>All Tickets must be used or canceled (TicketCount must be 0)</li>
-  <li>All Hooks must be removed (if any are installed)</li>
-  <li>The account must send all remaining XRP to another account</li>
-  <li>The account must have no Regular Key configured</li>
-  <li>The account must have no active Signer List</li>
-</ul>`;
-
-          // === Balance check – safe & type-correct ===
-          const balanceXrp = Number(xrpl.dropsToXrp(String(accountData.Balance))); // ← cast to string first
-
-          const baseReserveXrp = Number(serverInfo.xrpReserve?.baseReserve ?? 10);
-          const ownerReserveXrp = Number(serverInfo.xrpReserve?.ownerReserve ?? 2);
-          const totalReserveXrp = baseReserveXrp + ownerCount * ownerReserveXrp;
-          const deleteFeeXrp = 2; // AccountDelete fee
-          const minimumNeededXrp = totalReserveXrp + deleteFeeXrp;
-
-          if (balanceXrp < minimumNeededXrp) {
-               message += `<br><strong>Warning:</strong> Insufficient balance. ` + `Account needs at least <strong>${minimumNeededXrp.toFixed(6)} XRP</strong> ` + `(${totalReserveXrp.toFixed(6)} reserve + 2 XRP deletion fee).`;
-          }
-
-          this.deleteBlockers.set(issues);
-          this.canDelete.set(issues.length === 0);
-
-          this.txUiService.setInfoData({
-               walletName,
-               message: message,
-          });
      }
 
      get deleteWalletTooltip(): string {
@@ -511,78 +547,88 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      }
 
      clearFields() {
+          this.selectedDestinationAddress.set('');
+          this.destinationTagField.set('');
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     filterDestinations() {
-          const query = this.filterQuery().trim().toLowerCase();
-          if (query === '') {
-               this.filteredDestinations.set([...this.destinations()]);
-          } else {
-               this.filteredDestinations.set(this.destinations().filter(d => d.address.toLowerCase().includes(query) || d.name?.toLowerCase().includes(query)));
-          }
-          this.highlightedIndex.set(this.filteredDestinations().length > 0 ? 0 : -1);
-     }
+     onDestinationInput(event: Event): void {
+          const value = (event.target as HTMLInputElement).value;
 
-     onArrowDown() {
-          if (!this.showDropdown || this.filteredDestinations().length === 0) return;
-          this.highlightedIndex.update(idx => (idx + 1) % this.filteredDestinations().length);
-     }
+          this.destinationSearchQuery.set(value);
+          this.selectedDestinationAddress.set(''); // clear selection when typing
 
-     selectHighlighted() {
-          if (this.highlightedIndex() >= 0 && this.filteredDestinations()[this.highlightedIndex()]) {
-               const addr = this.filteredDestinations()[this.highlightedIndex()].address;
-               if (addr !== this.currentWallet().address) {
-                    this.destinationField.set(addr);
-                    this.closeDropdown(); // Also close on Enter
-               }
+          if (value) {
+               this.dropdownService.openDropdown();
           }
      }
 
-     openDropdown(): void {
-          this.destinationDropdownService.setItems(this.destinations());
-          this.destinationDropdownService.filter(this.destinationField());
-          this.destinationDropdownService.openDropdown();
-     }
-
-     closeDropdown() {
-          this.destinationDropdownService.closeDropdown();
-     }
-
-     toggleDropdown() {
-          this.destinationDropdownService.setItems(this.destinations());
-          this.destinationDropdownService.toggleDropdown();
-     }
-
-     onDestinationInput() {
-          this.destinationDropdownService.filter(this.destinationField() || '');
-          this.destinationDropdownService.openDropdown();
-     }
-
-     selectDestination(address: string) {
+     selectDestination(address: string): void {
           if (address === this.currentWallet().address) return;
-          const dest = this.destinations().find((d: { address: string }) => d.address === address);
-          this.destinationField.set(dest ? this.destinationDropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`);
+
+          this.selectedDestinationAddress.set(address); // ← Store raw address
+          this.destinationSearchQuery.set(''); // ← Clear typing
           this.closeDropdown();
      }
 
-     private openDropdownInternal() {
+     onArrowDown() {
+          if (this.filteredDestinations().length === 0) return;
+     }
+
+     openDropdown(): void {
+          this.dropdownService.setItems(this.destinations());
+
+          // Always reset search when opening fresh
+          this.destinationSearchQuery.set('');
+          this.dropdownService.openDropdown();
+     }
+
+     closeDropdown(): void {
+          this.dropdownService.closeDropdown();
+
+          if (this.overlayRef) {
+               this.overlayRef.dispose();
+               this.overlayRef = null;
+          }
+     }
+
+     toggleDropdown(): void {
+          this.dropdownService.setItems(this.destinations());
+          this.dropdownService.toggleDropdown();
+     }
+
+     private openDropdownInternal(): void {
           if (this.overlayRef?.hasAttached()) return;
-          const strategy = this.overlay
+
+          if (this.overlayRef) {
+               this.overlayRef.dispose(); // CRITICAL
+               this.overlayRef = null;
+          }
+
+          const positionStrategy = this.overlay
                .position()
                .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]);
+               .withPositions([
+                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+               ])
+               .withPush(false)
+               .withFlexibleDimensions(false)
+               .withViewportMargin(8);
+
           this.overlayRef = this.overlay.create({
                hasBackdrop: true,
                backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy: strategy,
-               scrollStrategy: this.overlay.scrollStrategies.close(),
+               positionStrategy,
+               scrollStrategy: this.overlay.scrollStrategies.reposition(), // Better than close()
+               width: this.dropdownOrigin.nativeElement.getBoundingClientRect().width, // Match input width!
           });
+
           this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
           this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
      }
 
-     private closeDropdownInternal() {
+     private closeDropdownInternal(): void {
           this.overlayRef?.detach();
           this.overlayRef = null;
      }

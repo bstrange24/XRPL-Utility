@@ -497,10 +497,9 @@ export class ValidationService {
           // AccountDelete
           this.registerRule({
                transactionType: 'AccountDelete',
-               requiredFields: ['seed', 'destination'],
+               requiredFields: ['wallet.seed', 'destination.address'],
                validators: [
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
+                    this.isValidAddress('destination.address'),
                     this.requireDestinationTagIfNeeded(),
 
                     ctx => {
@@ -691,7 +690,7 @@ export class ValidationService {
           // PermissionedDomainSet Actions
           this.registerRule({
                transactionType: 'PermissionedDomainSet',
-               requiredFields: ['wallet.seed', 'subject.subject'],
+               requiredFields: ['wallet.seed', 'subject.subject', 'credentials.credentialType'],
                validators: [
                     ctx => {
                          const seed = this.getSeed(ctx);
@@ -757,13 +756,15 @@ export class ValidationService {
           // DIDSet Actions
           this.registerRule({
                transactionType: 'DIDSet',
-               requiredFields: ['seed', 'didDocument', 'didUri', 'didData'],
+               requiredFields: ['wallet.seed', 'did.document', 'did.uri', 'did.data'],
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 

@@ -457,7 +457,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           return wallet;
      }
 
-     private async setTxOptionalFields(client: xrpl.Client, permissionDomainTx: any, wallet: xrpl.Wallet, accountInfo: any) {
+     private async setTxOptionalFields(client: xrpl.Client, permissionDomainTx: any, wallet: xrpl.Wallet, accountInfo: any): Promise<void> {
           if (this.txUiService.isTicket()) {
                const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
                if (ticket) {
@@ -574,7 +574,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.destinationSearchQuery.set(value);
           this.selectedDestinationAddress.set(''); // clear selection when typing
 
-          // this.dropdownService.filter(value);
           if (value) {
                this.dropdownService.openDropdown();
           }
@@ -594,7 +593,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
 
      openDropdown(): void {
           this.dropdownService.setItems(this.destinations());
-          // this.dropdownService.filter(this.destinationSearchQuery());
 
           // Always reset search when opening fresh
           this.destinationSearchQuery.set('');
