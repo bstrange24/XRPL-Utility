@@ -143,6 +143,8 @@ export class TransactionUiService {
      spinnerMessage: string = '';
      private toastId = 0;
 
+     errorMessageSignal = signal<string | null>(null);
+
      isMemoEnabled = signal(false);
      useMultiSign = signal(false);
      isRegularKeyAddress = signal(false);
@@ -247,6 +249,7 @@ export class TransactionUiService {
           this.successMessageSignal.set('');
           this.successMessage = null;
           this.errorMessage = null;
+          this.errorMessageSignal.set(null);
           this.clearMessages();
      }
 
@@ -355,6 +358,7 @@ export class TransactionUiService {
 
           this.successMessage = message;
           this.errorMessage = null;
+          this.errorMessageSignal.set(null);
 
           // Only set a hash when simulate is OFF
           this.txHash = !this.isSimulateEnabled ? hash || null : null;
@@ -377,6 +381,7 @@ export class TransactionUiService {
                isSuccess: this.isSuccess,
           });
           this.errorMessage = message;
+          this.errorMessageSignal.set(message);
           this.successMessage = null;
 
           // Only set a hash if not simulated
@@ -545,6 +550,8 @@ export class TransactionUiService {
 
      clearAllOptionsAndMessages() {
           // this.clearAllOptions();
+          this.errorMessage = '';
+          this.errorMessageSignal.set(null);
           this.clearTxResultSignal();
           this.clearTxSignal();
           this.clearMessages();

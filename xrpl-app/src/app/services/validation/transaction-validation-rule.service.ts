@@ -791,13 +791,15 @@ export class ValidationService {
           // DIDdelete Actions
           this.registerRule({
                transactionType: 'DIDdelete',
-               requiredFields: ['seed'],
+               requiredFields: ['wallet.seed'],
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -820,13 +822,15 @@ export class ValidationService {
           // CredentialCreate Actions
           this.registerRule({
                transactionType: 'CredentialCreate',
-               requiredFields: ['seed', 'destination', 'credentialType', 'date'], // adjust as needed
+               requiredFields: ['wallet.seed', 'credentials.credentialType', 'credentials.subject', 'credentials.date'], // adjust as needed
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -845,20 +849,22 @@ export class ValidationService {
                     this.multiSign(),
 
                     // Destination address valid
-                    this.isValidAddress('subject'),
+                    this.isValidAddress('credentials.subject'),
                ],
           });
 
           // CredentialDelete Actions
           this.registerRule({
                transactionType: 'CredentialDelete',
-               requiredFields: ['seed', 'credentialID'], // adjust as needed
+               requiredFields: ['wallet.seed', 'credentials.credentialId'], // adjust as needed
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -875,22 +881,21 @@ export class ValidationService {
 
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
-
-                    // Destination address valid
-                    this.isValidAddress('subject'),
                ],
           });
 
           // CredentialAccept Actions
           this.registerRule({
                transactionType: 'CredentialAccept',
-               requiredFields: ['seed', 'credentialID'], // adjust as needed
+               requiredFields: ['wallet.seed', 'credentials.credentialId'], // adjust as needed
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -907,22 +912,21 @@ export class ValidationService {
 
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
-
-                    // Destination address valid
-                    this.isValidAddress('subject'),
                ],
           });
 
           // CredentialVerify Actions
           this.registerRule({
                transactionType: 'CredentialVerify',
-               requiredFields: ['seed', 'credentialID'], // adjust as needed
+               requiredFields: ['wallet.seed', 'credentials.credentialId'], // adjust as needed
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -939,9 +943,6 @@ export class ValidationService {
 
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
-
-                    // Destination address valid
-                    this.isValidAddress('subject'),
                ],
           });
 
