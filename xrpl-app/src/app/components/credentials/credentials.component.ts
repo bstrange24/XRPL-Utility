@@ -2,7 +2,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, TemplateRef, ViewChild, ViewContainerRef, computed, effect, inject, signal } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, TemplateRef, ViewChild, ViewContainerRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -76,7 +76,8 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
      @ViewChild('credentialIdDropdownOrigin') credentialIdDropdownOrigin!: ElementRef<HTMLInputElement>;
      @ViewChild('credentialIdDropdownTemplate') credentialIdDropdownTemplate!: TemplateRef<any>;
-     @ViewChild('credentialInput', { static: false }) inputElement!: ElementRef<HTMLInputElement>;
+     @ViewChild('domainDropdownOrigin') domainDropdownOrigin!: ElementRef<HTMLInputElement>;
+     @ViewChild('acceptedCredentialIdDropdownTemplate') acceptedCredentialIdDropdownTemplate!: TemplateRef<any>;
 
      private readonly destroyRef = inject(DestroyRef);
      private readonly overlay = inject(Overlay);
@@ -96,10 +97,8 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
-     // Domain Dropdown State
-     // selectedDomainId = signal<string | null>(null);
-     credentialIdSearchQuery = signal<string>('');
      // Destination Dropdown
+     credentialIdSearchQuery = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      private overlayRef: OverlayRef | null = null;
      private credentialIdOverlayRef: OverlayRef | null = null;
@@ -126,6 +125,8 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      credentialType = signal<string>('');
      selectedCredentials = signal<CredentialItem | null>(null);
      infoPanelExpanded = signal(false);
+     private decodeCache = new Map<string, string>();
+     subject = signal<string>('');
 
      // Credential Form Data
      credential = signal<CredentialData>({
@@ -145,17 +146,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           hash: '',
           uri: 'ipfs://bafybeiexamplehash',
      });
-
-     private decodeCache = new Map<string, string>();
-     credentialData = signal<string>('');
-     subject = signal<string>('');
-     selectedWalletIndex = signal<number>(0);
-     createdCredentials = signal<boolean>(true);
-     subjectCredential = signal<boolean>(true);
-     editingIndex!: (index: number) => boolean;
-     tempName = signal<string>('');
-     filterQuery = signal<string>('');
-     showCredentialDropdown = signal<boolean>(false);
 
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
@@ -196,10 +186,9 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
      filteredcredentialIds = computed(() => {
           const q = this.credentialIdSearchQuery().trim().toLowerCase();
-          const list = this.existingCredentials();
+          const list = this.activeTab() === 'accept' ? this.subjectCredentials() : this.existingCredentials();
 
           if (q === '') return list;
-
           return list.filter(d => d.index.toLowerCase().includes(q));
      });
 
@@ -307,30 +296,15 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.dropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
      }
 
-     resetCredentialIdDropDown() {
-          // this.selectedDomainId.set(null);
-          this.credentialID.set('');
-     }
-
      onSelectCredentials(credential: CredentialItem | null) {
           if (!credential) {
-               this.selectedCredentials.set(null);
-               this.credentialID.set('');
-               this.credentialType.set('');
+               this.resetCredentialIdDropDown();
                return;
           }
           // Keep the search term that led to this selection!
           this.selectedCredentials.set(credential); // store the whole object
           this.credentialID.set(credential.index);
           this.credentialType.set(credential.CredentialType || '');
-     }
-
-     toggleCreatedCredentials() {
-          this.createdCredentials.update(val => !val);
-     }
-
-     toggleSubjectCredentials() {
-          this.subjectCredential.update(val => !val);
      }
 
      trackByCredentialIndex(index: number, cred: CredentialItem) {
@@ -356,12 +330,9 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      async setTab(tab: 'create' | 'accept' | 'delete' | 'verify'): Promise<void> {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
+          this.resetCredentialIdDropDown();
           this.txUiService.clearAllOptionsAndMessages();
           await this.getAllCredentialsForAccount();
-     }
-
-     toggleCreatedDomains() {
-          // this.createdDomains.update(val => !val);
      }
 
      private async getClient(): Promise<xrpl.Client> {
@@ -970,6 +941,12 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
      }
 
+     resetCredentialIdDropDown() {
+          this.selectedCredentials.set(null);
+          this.credentialID.set('');
+          this.credentialType.set('');
+     }
+
      clearFields() {
           this.txUiService.clearAllOptionsAndMessages();
      }
@@ -1061,6 +1038,44 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      }
 
      openCredentialIdDropdown(): void {
+          if (this.credentialIdOverlayRef?.hasAttached()) return;
+
+          if (this.credentialIdOverlayRef) {
+               this.credentialIdOverlayRef.dispose();
+               this.credentialIdOverlayRef = null;
+          }
+
+          // Choose correct origin and template based on current tab
+          const isAcceptTab = this.activeTab() === 'accept';
+          const originEl = isAcceptTab ? this.domainDropdownOrigin : this.credentialIdDropdownOrigin;
+          const template = isAcceptTab ? this.acceptedCredentialIdDropdownTemplate : this.credentialIdDropdownTemplate;
+
+          if (!originEl) {
+               console.warn('Dropdown origin not found for tab:', this.activeTab());
+               return;
+          }
+
+          const positionStrategy = this.overlay
+               .position()
+               .flexibleConnectedTo(originEl)
+               .withPositions([
+                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+               ]);
+
+          this.credentialIdOverlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy,
+               scrollStrategy: this.overlay.scrollStrategies.reposition(),
+               width: originEl.nativeElement.getBoundingClientRect().width,
+          });
+
+          this.credentialIdOverlayRef.attach(new TemplatePortal(template, this.viewContainerRef));
+          this.credentialIdOverlayRef.backdropClick().subscribe(() => this.closeCredentialIdDropdown());
+     }
+
+     openCredentialIdDropdown1(): void {
           if (this.credentialIdOverlayRef?.hasAttached()) return;
 
           // Always destroy first — no exceptions

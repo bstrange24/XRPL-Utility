@@ -528,6 +528,25 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.txUiService.clearAllOptionsAndMessages();
      }
 
+     onDestinationInput(event: Event): void {
+          const value = (event.target as HTMLInputElement).value;
+
+          this.destinationSearchQuery.set(value);
+          this.selectedDestinationAddress.set(''); // clear selection when typing
+
+          if (value) {
+               this.dropdownService.openDropdown();
+          }
+     }
+
+     selectDestination(address: string): void {
+          if (address === this.currentWallet().address) return;
+
+          this.selectedDestinationAddress.set(address); // ← Store raw address
+          this.destinationSearchQuery.set(''); // ← Clear typing
+          this.closeDropdown();
+     }
+
      onArrowDown() {
           if (this.filteredDestinations().length === 0) return;
      }
@@ -557,18 +576,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      toggleDropdown(): void {
           this.dropdownService.setItems(this.destinations());
           this.dropdownService.toggleDropdown();
-     }
-
-     onDestinationInput() {
-          this.dropdownService.filter(this.destinationField() || '');
-          this.dropdownService.openDropdown();
-     }
-
-     selectDestination(address: string) {
-          if (address === this.currentWallet().address) return;
-          const dest = this.destinations().find((d: { address: string }) => d.address === address);
-          this.destinationField.set(dest ? this.dropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`);
-          this.closeDropdown();
      }
 
      private openDropdownInternal(): void {

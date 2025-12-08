@@ -63,6 +63,12 @@ interface DelegateAction {
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountDelegateComponent extends PerformanceBaseComponent implements OnInit, AfterViewInit {
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
+     @ViewChild('domainDropdownOrigin') domainDropdownOrigin!: ElementRef;
+     @ViewChild('domainDropdownTemplate') domainDropdownTemplate!: TemplateRef<any>;
+     @ViewChild('credentialInput', { static: false }) inputElement!: ElementRef<HTMLInputElement>;
+
      private readonly destroyRef = inject(DestroyRef);
      private readonly overlay = inject(Overlay);
      private readonly viewContainerRef = inject(ViewContainerRef);
@@ -81,24 +87,25 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
-     // ViewChildren & Template
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-     @ViewChild('credentialInput', { static: false }) inputElement!: ElementRef<HTMLInputElement>;
-
+     // Domain Dropdown State
+     selectedDomainId = signal<string | null>(null);
+     domainSearchQuery = signal<string>('');
+     // Destination Dropdown
+     customDestinations = signal<{ name?: string; address: string }[]>([]);
+     private overlayRef: OverlayRef | null = null;
+     private domainOverlayRef: OverlayRef | null = null;
+     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
+     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
      // Reactive State (Signals)
-     activeTab = signal<'set' | 'delete'>('set');
+     activeTab = signal<'set' | 'clear' | 'delegate'>('set');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     hasWallets = computed(() => this.wallets().length > 0);
 
      // Form & UI State
      destinationField = signal<string>('');
      infoPanelExpanded = signal(false);
 
      // Dropdown
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
-     destinations = signal<DropdownItem[]>([]);
      dropdownOpen = signal<boolean>(false);
      actions: DelegateAction[] = AppConstants.DELEGATE_ACTIONS;
      selected: Set<number> = new Set<number>();
@@ -107,10 +114,8 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      rightActions: any;
      createdDelegations = signal<boolean>(false);
      existingDelegations = signal<XRPLDelegate[]>([]);
-     filteredDestinations = signal<DropdownItem[]>([]);
      highlightedIndex = signal<number>(-1);
      showDropdown = signal<boolean>(false);
-     private overlayRef: OverlayRef | null = null;
      url = signal<string>('');
      public destinationSearch$ = new Subject<string>();
      multiSigningEnabled = signal<boolean>(false);
@@ -118,45 +123,97 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      credentialData = signal<string>('');
      subject = signal<string>('');
      selectedWalletIndex = signal<number>(0);
-     editingIndex!: (index: number) => boolean;
-     tempName = signal<string>('');
-     filterQuery = signal<string>('');
      showCredentialDropdown = signal<boolean>(false);
+
+     destinations = computed(() => [
+          ...this.wallets().map((w: DropdownItem) => ({
+               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
+               address: w.address,
+          })),
+          ...this.customDestinations(),
+     ]);
+
+     destinationDisplay = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return this.destinationSearchQuery(); // while typing → show typed text
+
+          const dest = this.destinations().find(d => d.address === addr);
+          if (!dest) return addr;
+
+          return this.dropdownService.formatDisplay(dest);
+     });
+
+     filteredDestinations = computed(() => {
+          const q = this.destinationSearchQuery().trim().toLowerCase();
+          const list = this.destinations();
+
+          if (q === '') {
+               return list;
+          }
+
+          return this.destinations()
+               .filter(d => d.address !== this.currentWallet().address)
+               .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
+     });
+
+     domainDisplay = computed(() => {
+          const id = this.selectedDomainId();
+          if (!id) return this.domainSearchQuery() || '';
+          return this.dropdownService.formatDomainId(id);
+     });
+
+     filteredDomains = computed(() => {
+          const q = this.domainSearchQuery().trim().toLowerCase();
+          const list = this.existingDelegations();
+
+          if (q === '') return list;
+
+          return list.filter(d => d.index.toLowerCase().includes(q));
+     });
+
+     infoData = computed(() => {
+          const wallet = this.currentWallet();
+          if (!wallet?.address) {
+               return null;
+          }
+
+          const walletName = wallet.name || 'Selected wallet';
+          const delegationCount = this.existingDelegations().length;
+
+          let message: string;
+
+          if (delegationCount === 0) {
+               message = `<code>${walletName}</code> wallet has no delegations.`;
+          } else {
+               const delegationDescription = delegationCount === 1 ? 'delegation' : 'delegations';
+               message = `<code>${walletName}</code> wallet has <strong>${delegationCount}</strong> ${delegationDescription}.`;
+          }
+
+          return {
+               walletName,
+               message,
+               mode: this.activeTab(),
+               delegationCount,
+               existingDelegations: this.existingDelegations(),
+          };
+     });
+
+     hasWallets = computed(() => this.wallets().length > 0);
 
      constructor() {
           super();
-          this.txUiService.clearAllOptionsAndMessages(); // Reset shared state
-          effect(() => this.updateInfoMessage());
-          effect(() => {
-               this.destinations.set([
-                    ...this.wallets().map(
-                         w =>
-                              ({
-                                   name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
-                                   address: w.address,
-                              } as DropdownItem)
-                    ),
-                    ...this.customDestinations(),
-               ]);
-          });
+          this.txUiService.clearAllOptionsAndMessages();
      }
 
-     ngOnInit() {
+     ngOnInit(): void {
           this.loadCustomDestinations();
           this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
           this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
-
-          const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
-          this.url.set(AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET);
           this.setupWalletSubscriptions();
           this.setupDropdownSubscriptions();
      }
 
-     ngAfterViewInit(): void {
-          document.addEventListener('keydown', e => {
-               if (e.key === 'Escape' && this.showDropdown()) this.closeDropdown();
-          });
-     }
+     ngAfterViewInit(): void {}
 
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
@@ -219,18 +276,16 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
 
      toggleInfoPanel() {
           this.infoPanelExpanded.update(expanded => !expanded);
-          this.updateInfoMessage(); // Rebuild the HTML with new state
      }
 
      onWalletSelected(wallet: Wallet): void {
           this.selectWallet(wallet);
      }
 
-     async setTab(tab: 'set'): Promise<void> {
+     async setTab(tab: 'clear' | 'delegate'): Promise<void> {
           this.activeTab.set(tab);
-          this.txUiService.clearTxSignal();
-          this.txUiService.clearTxResultSignal();
-          this.txUiService.clearAllOptions();
+          this.destinationSearchQuery.set('');
+          this.txUiService.clearAllOptionsAndMessages();
           await this.getAccountDetails(true);
      }
 
@@ -259,8 +314,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           await this.withPerf('getAccountDetails', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
 
                     const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
@@ -274,7 +328,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
 
                     this.refreshUiState(wallet, accountInfo, accountObjects);
-                    this.txUiService.clearAllOptionsAndMessages();
                } catch (error: any) {
                     console.error('Error in getAccountDetails:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -288,16 +341,10 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           await this.withPerf('delegateActions', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-                    const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-
-                    if (this.destinationField() === '') {
-                         return this.txUiService.setError(`Destination cannot be empty.`);
-                    }
-
-                    const isShortForm = this.destinationField().includes('...');
-                    const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address : this.destinationField();
+                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
                          network: {
@@ -306,13 +353,10 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                               currentLedger,
                          },
                          destination: {
-                              address: resolvedDestination,
+                              address: destinationAddress,
                               tag: '',
                          },
                     });
-                    // const inputs = this.txUiService.getValidationInputs(this.currentWallet(), '');
-                    // inputs.accountInfo = accountInfo;
-                    // inputs.destination = resolvedDestination;
 
                     const errors = await this.validationService.validate('DelegateActions', { inputs, client, accountInfo });
                     if (errors.length > 0) {
@@ -345,7 +389,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     const delegateSetTx: xrpl.DelegateSet = {
                          TransactionType: 'DelegateSet',
                          Account: wallet.classicAddress,
-                         Authorize: resolvedDestination,
+                         Authorize: destinationAddress,
                          Permissions: permissions,
                          Fee: fee,
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
@@ -362,12 +406,8 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     });
                     if (!result.success) return;
 
-                    if (this.txUiService.isSimulateEnabled()) {
-                         this.txUiService.successMessage = 'Simulated Delegate action successfully!';
-                    } else {
-                         this.txUiService.successMessage = 'Delegate action successfully!';
-                         await this.refreshAfterTx(client, wallet, resolvedDestination, true);
-                    }
+                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Delegate action successfully!' : 'Delegate action successfully!';
+                    await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in delegateAction:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -380,18 +420,23 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      private getExistingDelegations(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
           const mapped = (checkObjects.result.account_objects ?? [])
                .filter((obj: any) => obj.LedgerEntryType === 'Delegate')
-               .map((obj: any) => {
-                    return {
-                         LedgerEntryType: obj.LedgerEntryType,
-                         index: obj.index,
-                         Authorize: obj.Authorize,
-                         Permissions: obj.Permissions,
-                         Flags: obj.Flags,
-                    };
-               });
-          // .sort((a, b) => a.Expiration.localeCompare(b.Expiration));
+               .map((obj: any) => ({
+                    LedgerEntryType: obj.LedgerEntryType,
+                    index: obj.index,
+                    Authorize: obj.Authorize,
+                    Permissions: obj.Permissions,
+                    Flags: obj.Flags,
+               }));
+
+          // This triggers infoData() to recompute automatically
           this.existingDelegations.set(mapped);
           this.utilsService.logObjects('existingDelegations', mapped);
+     }
+
+     private async getWallet(): Promise<xrpl.Wallet> {
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
+          if (!wallet) throw new Error('Wallet could not be created');
+          return wallet;
      }
 
      private async setTxOptionalFields(client: xrpl.Client, delegateSetTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
@@ -410,12 +455,11 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
-               const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-               this.getExistingDelegations(accountObjects, wallet.classicAddress);
-               destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-               if (addDest) this.addNewDestinationFromUser();
-               this.refreshUiState(wallet, accountInfo, accountObjects);
-               this.updateInfoMessage();
+          const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
+          this.getExistingDelegations(accountObjects, wallet.classicAddress);
+          destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+          if (addDest && destination) this.addNewDestinationFromUser(destination);
+          this.refreshUiState(wallet, accountInfo, accountObjects);
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -464,16 +508,15 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           this.storageService.removeValue('signerEntries');
      }
 
-     private updateDestinations(): void {
-          const walletItems: DropdownItem[] = this.wallets().map(wallet => ({
-               name: wallet.name ?? this.truncateAddress(wallet.address),
-               address: wallet.address,
-          }));
-
-          const allItems = [...walletItems, ...this.customDestinations()];
-          this.destinations.set(allItems);
-
-          // Optional: persist (you had this before)
+     updateDestinations() {
+          // Optional: persist destinations
+          const allItems = [
+               ...this.wallets().map(wallet => ({
+                    name: wallet.name ?? this.truncateAddress(wallet.address),
+                    address: wallet.address,
+               })),
+               ...this.customDestinations(),
+          ];
           this.storageService.set('destinations', allItems);
      }
 
@@ -481,18 +524,9 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           return `${address.slice(0, 8)}...${address.slice(-6)}`;
      }
 
-     private async getWallet(): Promise<xrpl.Wallet> {
-          const encryption = this.currentWallet().encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
-          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, encryption as 'ed25519' | 'secp256k1');
-          if (!wallet) throw new Error('Wallet could not be created');
-          return wallet;
-     }
-
-     private addNewDestinationFromUser(): void {
-          const addr = this.destinationField().includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address : this.destinationField();
-
-          if (addr && xrpl.isValidAddress(addr) && !this.destinations().some(d => d.address === addr)) {
-               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: addr }]);
+     private addNewDestinationFromUser(destination: string): void {
+          if (destination && xrpl.isValidAddress(destination) && !this.destinations().some(d => d.address === destination)) {
+               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
                this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
                this.updateDestinations();
           }
@@ -504,32 +538,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           });
      }
 
-     private updateInfoMessage(): void {
-          if (!this.currentWallet().address) {
-               this.txUiService.setInfoData(null);
-               return;
-          }
-
-          const walletName = this.currentWallet().name || 'Selected wallet';
-          const delegationCount = this.existingDelegations.length;
-
-          let message: string;
-
-          if (delegationCount === 0) {
-               message = `<code>${walletName}</code> wallet has no delegations.`;
-          } else {
-               const delegationDescription = delegationCount === 1 ? 'delegation' : 'delegations';
-               message = `<code>${walletName}</code> wallet has ${delegationCount} ${delegationDescription}.`;
-          }
-
-          this.txUiService.setInfoData({
-               walletName,
-               mode: this.activeTab(),
-               didCount: this.existingDelegations().length,
-               existingDid: this.existingDelegations(),
-          });
-     }
-
      get safeWarningMessage() {
           return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
      }
@@ -538,33 +546,31 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     filterDestinations() {
-          const query = this.filterQuery().trim().toLowerCase();
-          if (query === '') {
-               this.filteredDestinations.set([...this.destinations()]);
-          } else {
-               this.filteredDestinations.set(this.destinations().filter(d => d.address.toLowerCase().includes(query) || d.name?.toLowerCase().includes(query)));
+     onDestinationInput(event: Event): void {
+          const value = (event.target as HTMLInputElement).value;
+
+          this.destinationSearchQuery.set(value);
+          this.selectedDestinationAddress.set(''); // clear selection when typing
+
+          if (value) {
+               this.dropdownService.openDropdown();
           }
-          this.highlightedIndex.set(this.filteredDestinations().length > 0 ? 0 : -1);
      }
 
      clearDelegateActions() {
           this.selected.clear();
      }
 
-     onArrowDown() {
-          if (!this.showDropdown || this.filteredDestinations().length === 0) return;
-          this.highlightedIndex.update(idx => (idx + 1) % this.filteredDestinations().length);
+     selectDestination(address: string): void {
+          if (address === this.currentWallet().address) return;
+
+          this.selectedDestinationAddress.set(address); // ← Store raw address
+          this.destinationSearchQuery.set(''); // ← Clear typing
+          this.closeDropdown();
      }
 
-     selectHighlighted() {
-          if (this.highlightedIndex() >= 0 && this.filteredDestinations()[this.highlightedIndex()]) {
-               const addr = this.filteredDestinations()[this.highlightedIndex()].address;
-               if (addr !== this.currentWallet().address) {
-                    this.destinationField.set(addr);
-                    this.closeDropdown(); // Also close on Enter
-               }
-          }
+     onArrowDown() {
+          if (this.filteredDestinations().length === 0) return;
      }
 
      openDropdown(): void {
@@ -592,18 +598,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      toggleDropdown(): void {
           this.dropdownService.setItems(this.destinations());
           this.dropdownService.toggleDropdown();
-     }
-
-     onDestinationInput() {
-          this.dropdownService.filter(this.destinationField() || '');
-          this.dropdownService.openDropdown();
-     }
-
-     selectDestination(address: string) {
-          if (address === this.currentWallet().address) return;
-          const dest = this.destinations().find((d: { address: string }) => d.address === address);
-          this.destinationField.set(dest ? this.dropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`);
-          this.closeDropdown();
      }
 
      private openDropdownInternal(): void {
