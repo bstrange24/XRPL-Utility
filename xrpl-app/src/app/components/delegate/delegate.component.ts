@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, TemplateRef, inject, signal, computed, effect, DestroyRef, ChangeDetectionStrategy, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, TemplateRef, inject, signal, computed, effect, DestroyRef, ChangeDetectionStrategy, ViewContainerRef, HostListener } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
@@ -62,12 +62,9 @@ interface DelegateAction {
      styleUrl: './delegate.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountDelegateComponent extends PerformanceBaseComponent implements OnInit, AfterViewInit {
+export class AccountDelegateComponent extends PerformanceBaseComponent implements OnInit {
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-     @ViewChild('domainDropdownOrigin') domainDropdownOrigin!: ElementRef;
-     @ViewChild('domainDropdownTemplate') domainDropdownTemplate!: TemplateRef<any>;
-     @ViewChild('credentialInput', { static: false }) inputElement!: ElementRef<HTMLInputElement>;
 
      private readonly destroyRef = inject(DestroyRef);
      private readonly overlay = inject(Overlay);
@@ -93,11 +90,12 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      // Destination Dropdown
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      private overlayRef: OverlayRef | null = null;
-     private domainOverlayRef: OverlayRef | null = null;
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
+     highlightedIndex = signal<number>(-1);
+
      // Reactive State (Signals)
-     activeTab = signal<'set' | 'clear' | 'delegate'>('set');
+     activeTab = signal<'clear' | 'delegate'>('delegate');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
 
@@ -114,7 +112,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      rightActions: any;
      createdDelegations = signal<boolean>(false);
      existingDelegations = signal<XRPLDelegate[]>([]);
-     highlightedIndex = signal<number>(-1);
      showDropdown = signal<boolean>(false);
      url = signal<string>('');
      public destinationSearch$ = new Subject<string>();
@@ -156,26 +153,9 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
      });
 
-     domainDisplay = computed(() => {
-          const id = this.selectedDomainId();
-          if (!id) return this.domainSearchQuery() || '';
-          return this.dropdownService.formatDomainId(id);
-     });
-
-     filteredDomains = computed(() => {
-          const q = this.domainSearchQuery().trim().toLowerCase();
-          const list = this.existingDelegations();
-
-          if (q === '') return list;
-
-          return list.filter(d => d.index.toLowerCase().includes(q));
-     });
-
      infoData = computed(() => {
           const wallet = this.currentWallet();
-          if (!wallet?.address) {
-               return null;
-          }
+          if (!wallet?.address) return null;
 
           const walletName = wallet.name || 'Selected wallet';
           const delegationCount = this.existingDelegations().length;
@@ -213,8 +193,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           this.setupDropdownSubscriptions();
      }
 
-     ngAfterViewInit(): void {}
-
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
           if (stored) this.customDestinations.set(JSON.parse(stored));
@@ -235,8 +213,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                if (wallet) {
                     this.selectWallet(wallet);
                     this.xrplCache.invalidateAccountCache(wallet.address);
-                    this.txUiService.clearTxSignal();
-                    this.txUiService.clearTxResultSignal();
+                    this.txUiService.clearAllOptionsAndMessages();
                     await this.getAccountDetails(false);
                }
           });
@@ -319,7 +296,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
 
                     const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
                     if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                         return this.txUiService.setError(errors.join('\n• '));
                     }
 
                     this.getExistingDelegations(accountObjects, wallet.classicAddress);
@@ -347,20 +324,13 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
-                         network: {
-                              accountInfo,
-                              fee,
-                              currentLedger,
-                         },
-                         destination: {
-                              address: destinationAddress,
-                              tag: '',
-                         },
+                         network: { accountInfo, fee, currentLedger },
+                         destination: { address: destinationAddress, tag: '' },
                     });
 
                     const errors = await this.validationService.validate('DelegateActions', { inputs, client, accountInfo });
                     if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                         return this.txUiService.setError(errors.join('\n• '));
                     }
 
                     let permissions: { Permission: { PermissionValue: string } }[] = [];
@@ -404,7 +374,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
-                    if (!result.success) return;
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Delegate action successfully!' : 'Delegate action successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
@@ -548,9 +518,9 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
 
      onDestinationInput(event: Event): void {
           const value = (event.target as HTMLInputElement).value;
-
           this.destinationSearchQuery.set(value);
           this.selectedDestinationAddress.set(''); // clear selection when typing
+          this.highlightedIndex.set(value ? 0 : -1); // highlight first when typing
 
           if (value) {
                this.dropdownService.openDropdown();
@@ -569,8 +539,42 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           this.closeDropdown();
      }
 
-     onArrowDown() {
-          if (this.filteredDestinations().length === 0) return;
+     onKeyDown(event: KeyboardEvent): void {
+          const items = this.filteredDestinations();
+          if (items.length === 0) {
+               this.highlightedIndex.set(-1);
+               return;
+          }
+
+          let index = this.highlightedIndex();
+
+          if (event.key === 'ArrowDown') {
+               event.preventDefault(); // Prevent cursor to end
+               index = index < items.length - 1 ? index + 1 : 0;
+          } else if (event.key === 'ArrowUp') {
+               event.preventDefault();
+               index = index <= 0 ? items.length - 1 : index - 1;
+          } else if (event.key === 'Enter') {
+               event.preventDefault();
+               if (index >= 0 && index < items.length) {
+                    this.selectDestination(items[index].address);
+               }
+               return;
+          } else if (event.key === 'Escape') {
+               this.closeDropdown();
+               return;
+          } else {
+               // For any other key, reset highlight
+               index = -1;
+          }
+
+          this.highlightedIndex.set(index);
+
+          // Optional: scroll highlighted item into view
+          setTimeout(() => {
+               const el = document.querySelector('.combobox-item.highlighted') as HTMLElement;
+               el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          });
      }
 
      openDropdown(): void {
@@ -588,16 +592,21 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                this.overlayRef.dispose();
                this.overlayRef = null;
           }
-
-          if (this.domainOverlayRef) {
-               this.domainOverlayRef.dispose();
-               this.domainOverlayRef = null;
-          }
      }
 
      toggleDropdown(): void {
           this.dropdownService.setItems(this.destinations());
           this.dropdownService.toggleDropdown();
+     }
+
+     @HostListener('document:focusin', ['$event'])
+     onDocumentFocusIn(event: FocusEvent) {
+          if (this.overlayRef?.hasAttached()) {
+               const focusedInside = this.dropdownOrigin.nativeElement.contains(event.target) || this.overlayRef.overlayElement.contains(event.target as Node);
+               if (!focusedInside) {
+                    this.closeDropdown();
+               }
+          }
      }
 
      private openDropdownInternal(): void {
@@ -626,6 +635,8 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                scrollStrategy: this.overlay.scrollStrategies.reposition(), // Better than close()
                width: this.dropdownOrigin.nativeElement.getBoundingClientRect().width, // Match input width!
           });
+          // Reset highlight when opening
+          this.highlightedIndex.set(-1);
 
           this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
           this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
@@ -634,5 +645,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      private closeDropdownInternal(): void {
           this.overlayRef?.detach();
           this.overlayRef = null;
+          this.highlightedIndex.set(-1); // reset on close
      }
 }

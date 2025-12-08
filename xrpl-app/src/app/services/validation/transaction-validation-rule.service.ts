@@ -205,6 +205,48 @@ export class ValidationService {
           };
      }
 
+     private validDestinationTag(): ValidatorFn {
+          return ctx => {
+               const value = ctx.inputs['paymentXrp']?.destinationTag;
+               if (!value) return null; // optional
+
+               const num = Number(value);
+               if (isNaN(num) || num < 0 || num > 4294967295 || !Number.isInteger(num)) {
+                    return 'Destination Tag must be an integer between 0 and 4294967295';
+               }
+               return null;
+          };
+     }
+
+     private validSourceTag(): ValidatorFn {
+          return ctx => {
+               const value = ctx.inputs['paymentXrp']?.sourceTag;
+               if (!value) return null;
+
+               const num = Number(value);
+               if (isNaN(num) || num < 0 || num > 4294967295 || !Number.isInteger(num)) {
+                    return 'Source Tag must be an integer between 0 and 4294967295';
+               }
+               return null;
+          };
+     }
+
+     private validInvoiceId(): ValidatorFn {
+          return ctx => {
+               const value = ctx.inputs['paymentXrp']?.invoiceId;
+               if (!value) return null;
+
+               const hex = value.toString().replace(/[^0-9a-fA-F]/g, '');
+               if (hex.length === 0) {
+                    return 'Invoice ID contains no valid hex characters';
+               }
+               if (hex.length > 64) {
+                    return 'Invoice ID cannot exceed 64 hex characters (256 bits)';
+               }
+               return null;
+          };
+     }
+
      private requireDestinationTagIfNeededNewDestination(): ValidatorFn {
           return async ctx => {
                const dest = ctx.inputs['formattedDestination'];
@@ -320,7 +362,7 @@ export class ValidationService {
 
      private positiveAmount(): ValidatorFn {
           return ctx => {
-               const value = (ctx.inputs['amount'] || '').toString().trim();
+               const value = ctx.inputs['paymentXrp']?.amount;
 
                // If field is empty, let requiredFields handle it
                if (value === '') return null;
@@ -550,41 +592,45 @@ export class ValidationService {
                ],
           });
 
-          // Payment
+          // PaymentXrp
           this.registerRule({
-               transactionType: 'Payment',
-               requiredFields: ['amount', 'destination'],
+               transactionType: 'PaymentXrp',
+               requiredFields: ['wallet.seed', 'paymentXrp.amount', 'paymentXrp.destination'],
                validators: [
-                    this.positiveAmount(),
-
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
-                    // Destination address valid
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
+                    this.positiveAmount(),
+                    // // Destination address valid
+                    this.isValidAddress('paymentXrp.destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
+
+                    this.validDestinationTag(),
+                    this.validSourceTag(),
+                    this.validInvoiceId(),
 
                     this.optionalNumeric('destinationTag', 0),
                     this.optionalNumeric('sourceTag', 0),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
+                    // // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
+                    // // Ticket validation
                     this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    // // Regular Key signing requirements (only if selected and not multi-signing)
                     ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    // // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
 
                     this.invoiceId(),

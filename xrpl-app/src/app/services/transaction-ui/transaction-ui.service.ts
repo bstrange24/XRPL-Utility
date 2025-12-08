@@ -55,6 +55,19 @@ export interface ValidationInputs {
           tag?: string;
      };
 
+     // ---- Amount ----
+     amountXrp?: {
+          amount?: string;
+     };
+
+     paymentXrp?: {
+          amount?: string;
+          destination?: string;
+          destinationTag?: string;
+          sourceTag?: string;
+          invoiceId?: any;
+     };
+
      // ---- Multi-Sign ----
      multiSign?: {
           enabled: boolean;
@@ -120,6 +133,10 @@ export class TransactionUiService {
 
      errorMessageSignal = signal<string | null>(null);
 
+     amountField = signal('');
+     destinationTagField = signal('');
+     invoiceIdField = signal('');
+     sourceTagField = signal('');
      isMemoEnabled = signal(false);
      useMultiSign = signal(false);
      isRegularKeyAddress = signal(false);
@@ -403,6 +420,16 @@ export class TransactionUiService {
                address?: string;
                tag?: string;
           };
+          amountXrp?: {
+               amount?: string;
+          };
+          paymentXrp?: {
+               amount?: string;
+               destination?: string;
+               destinationTag?: string;
+               sourceTag?: string;
+               invoiceId?: any;
+          };
           subject?: {
                subject?: string;
           };
@@ -436,6 +463,14 @@ export class TransactionUiService {
                network: options.network,
 
                destination: options.destination,
+               amountXrp: options.amountXrp,
+               paymentXrp: {
+                    amount: this.amountField(),
+                    destination: options?.paymentXrp?.destination,
+                    destinationTag: this.destinationTagField(),
+                    sourceTag: this.sourceTagField(),
+                    invoiceId: this.invoiceIdField(),
+               },
 
                multiSign: {
                     enabled: this.useMultiSign(),
@@ -469,7 +504,7 @@ export class TransactionUiService {
 
                domain: {
                     domainId: options.domain?.domainId ?? this.domainId(),
-                    date: options.domain?.date, //new Date().toISOString(),
+                    date: options.domain?.date,
                },
 
                subject: {
@@ -485,41 +520,6 @@ export class TransactionUiService {
                },
           };
      }
-
-     // getValidationInputs1(wallet: Wallet, destination: string, destinationTag: string = '', accountInfo?: any): ValidationInputs {
-     //      return {
-     //           // Core wallet info
-     //           seed: wallet.seed,
-     //           senderAddress: wallet.address,
-     //           accountInfo: accountInfo,
-
-     //           // Destination
-     //           destination,
-     //           destinationTag: destinationTag || undefined,
-
-     //           // === Multi-Sign ===
-     //           useMultiSign: this.useMultiSign(),
-     //           multiSignAddresses: this.useMultiSign() ? this.multiSignAddress() : undefined,
-     //           multiSignSeeds: this.useMultiSign() ? this.multiSignSeeds() : undefined,
-     //           signerQuorum: this.signerQuorum(),
-     //           signers: this.signers(), // array of { account, seed, weight }
-
-     //           // === Regular Key ===
-     //           isRegularKeyAddress: this.isRegularKeyAddress(),
-     //           regularKeyAddress: this.isRegularKeyAddress() ? this.regularKeyAddress() : undefined,
-     //           regularKeySeed: this.isRegularKeyAddress() ? this.regularKeySeed() : undefined,
-
-     //           // === Ticket ===
-     //           isTicket: this.isTicket(),
-     //           selectedSingleTicket: this.selectedSingleTicket() || undefined,
-     //           selectedTicket:
-     //                this.selectedTickets().length > 0
-     //                     ? this.selectedTickets()[0] // validator usually only needs first
-     //                     : undefined,
-
-     //           domainId: this.domainId(),
-     //      };
-     // }
 
      clearAllOptions() {
           this.isMemoEnabled.set(false);

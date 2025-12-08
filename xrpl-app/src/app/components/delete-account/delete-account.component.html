@@ -38,7 +38,6 @@
                }
 
                <!-- Info Message -->
-               <!-- Info Message -->
                @if (infoData(); as info) {
                <div class="info-panel">
                     <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -7.7px"></ng-icon>
@@ -61,10 +60,10 @@
                                    <!-- Destination and Destination Tag -->
                                    @if (activeTab() === 'deleteAccount') {
                                    <div class="form-group">
-                                        <label>Destination</label>
+                                        <label for="destination">Destination</label>
 
                                         <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                             <input #dropdownOrigin type="text" [value]="destinationDisplay()" (input)="onDestinationInput($event)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" placeholder="Enter or select destination address" class="combobox-input" autocomplete="off" />
+                                             <input #dropdownOrigin type="text" [value]="destinationDisplay()" (input)="onDestinationInput($event)" (focus)="openDropdown()" (keydown)="onKeyDown($event)" placeholder="Enter or select destination address" class="combobox-input" autocomplete="off" />
 
                                              <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
                                                   <lucide-icon name="chevron-down" size="18"></lucide-icon>
@@ -79,7 +78,7 @@
 
                                                   <div class="combobox-dropdown-overlay">
                                                        @for (dest of filteredDestinations(); track trackByWalletAddress($index, dest)) {
-                                                       <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="selectedDestinationAddress() === dest.address" (click)="selectDestination(dest.address)">
+                                                       <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="highlightedIndex() === $index" (click)="selectDestination(dest.address)">
                                                             <div class="item-name">
                                                                  {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet().address) {
                                                                  <span class="self-badge"> Current Account </span>
@@ -95,13 +94,13 @@
                                         </ng-template>
                                    </div>
                                    <div class="form-group">
-                                        <label>Destination Tag (opt)</label>
-                                        <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
+                                        <label for="destinationTagField">Destination Tag (opt)</label>
+                                        <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
                                    </div>
                                    }
                               </div>
 
-                              <app-transaction-options [activeTab]="activeTab" [multiSigningEnabled]="multiSigningEnabled" [regularKeySigningEnabled]="regularKeySigningEnabled" />
+                              <app-transaction-options [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                               <!-- Action buttons -->
                               <div class="button-row">

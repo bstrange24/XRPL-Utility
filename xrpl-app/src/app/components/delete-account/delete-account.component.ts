@@ -2,7 +2,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, TemplateRef, ViewChild, ViewContainerRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, OnInit, TemplateRef, ViewChild, ViewContainerRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -41,11 +41,9 @@ import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.compon
      styleUrl: './delete-account.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DeleteAccountComponent extends PerformanceBaseComponent implements OnInit, AfterViewInit {
+export class DeleteAccountComponent extends PerformanceBaseComponent implements OnInit {
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-     @ViewChild('domainDropdownOrigin') domainDropdownOrigin!: ElementRef;
-     @ViewChild('domainDropdownTemplate') domainDropdownTemplate!: TemplateRef<any>;
 
      private readonly destroyRef = inject(DestroyRef);
      private readonly overlay = inject(Overlay);
@@ -73,16 +71,13 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      private overlayRef: OverlayRef | null = null;
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
-     destinationTagField = signal<string>('');
+     highlightedIndex = signal<number>(-1);
 
      // Page-specific state only
      activeTab = signal<'deleteAccount'>('deleteAccount');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
      hasWallets = computed(() => this.wallets().length > 0);
-
-     multiSigningEnabled = signal<boolean>(false);
-     regularKeySigningEnabled = signal<boolean>(false);
 
      selectedWalletIndex = signal<number>(0);
      editingIndex!: (index: number) => boolean;
@@ -93,6 +88,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      accountInfo = signal<any>(null);
      serverInfo = signal<any>(null);
      accountObjects = signal<any>(null);
+     blockingObjects = signal<any>(null);
 
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
@@ -135,7 +131,8 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           const acc = this.accountInfo()?.result?.account_data;
           const flags = this.accountInfo()?.result?.account_flags;
           const srv = this.serverInfo()?.result?.info?.validated_ledger;
-          const objects = this.accountObjects();
+          const blockingObjects = this.blockingObjects();
+          const blockingObjectsCount = blockingObjects.result.account_objects.length;
 
           if (!acc) {
                return {
@@ -145,6 +142,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           }
 
           // === Extract data safely ===
+
           const hasRegularKey = !!acc.RegularKey;
           const hasSignerList = !!flags?.enableSignerList;
           const ownerCount = Number(acc.OwnerCount || 0);
@@ -152,14 +150,16 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           const hasHooks = Array.isArray(acc.Hooks) && acc.Hooks.length > 0;
           const lastTxLedger = Number(acc.PreviousTxnLgrSeq ?? 0);
           const currentLedger = Number(srv?.seq ?? 0);
+          const totalCount = ownerCount + blockingObjectsCount;
 
           // === Build blockers ===
           const issues: string[] = [];
           if (hasRegularKey) issues.push('This account has a Regular Key configured.');
           if (hasSignerList) issues.push('This account has a Signer List configured.');
-          if (ownerCount > 0) issues.push(`This account has <strong>${ownerCount}</strong> owner object${ownerCount !== 1 ? 's' : ''} (trust lines, offers, escrows, checks, etc.).`);
+          if (totalCount > 0) issues.push(`This account has <strong>${totalCount}</strong> owner object${totalCount !== 1 ? 's' : ''} (trust lines, offers, escrows, checks, etc.).`);
           if (ticketCount > 0) issues.push(`This account has <strong>${ticketCount}</strong> allocated Ticket${ticketCount !== 1 ? 's' : ''}. All tickets must be used or canceled.`);
           if (hasHooks) issues.push('This account has one or more Hooks installed. All Hooks must be removed first.');
+          ('Escrow');
 
           // === 256-ledger rule ===
           if (lastTxLedger > 0 && currentLedger > 0) {
@@ -240,7 +240,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
 
      constructor() {
           super();
-          this.txUiService.clearAllOptionsAndMessages(); // Reset shared state
+          this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
@@ -248,8 +248,6 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           this.setupWalletSubscriptions();
           this.setupDropdownSubscriptions();
      }
-
-     ngAfterViewInit(): void {}
 
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
@@ -274,8 +272,8 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                if (wallet) {
                     this.selectWallet(wallet);
                     this.xrplCache.invalidateAccountCache(wallet.address);
-                    this.txUiService.clearTxSignal();
-                    this.txUiService.clearTxResultSignal();
+                    this.txUiService.clearAllOptionsAndMessages();
+                    this.clearInputFields();
                     await this.getAccountDetails(false);
                }
           });
@@ -331,21 +329,20 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      async getAccountDetails(forceRefresh = false): Promise<void> {
           await this.withPerf('getAccountDetails', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
-
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const [{ accountInfo, accountObjects }, serverInfo] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh), this.xrplCache.getServerInfo(this.xrplService)]);
+                    const [{ accountInfo, accountObjects }, serverInfo, blockingObjects] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh), this.xrplCache.getServerInfo(this.xrplService), this.xrplService.checkAccountObjectsForDeletion(client, wallet.classicAddress)]);
 
                     const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
                     if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                         return this.txUiService.setError(errors.join('\n• '));
                     }
 
                     // Just set signals — computed() does the rest!
                     this.accountInfo.set(accountInfo);
                     this.accountObjects.set(accountObjects);
                     this.serverInfo.set(serverInfo);
+                    this.blockingObjects.set(blockingObjects);
 
                     this.refreshUiState(wallet, accountInfo, accountObjects);
                     this.txUiService.clearAllOptionsAndMessages();
@@ -361,23 +358,21 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      async deleteAccount(): Promise<void> {
           await this.withPerf('deleteAccount', async () => {
                this.txUiService.clearMessages();
-
-               const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
-
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
-                    const [accountInfo, accountObjects, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.checkAccountObjectsForDeletion(client, wallet.classicAddress), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
+                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const [accountInfo, accountObjects, currentLedger, serverInfo] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplService.checkAccountObjectsForDeletion(client, wallet.classicAddress), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
                          network: { accountInfo, accountObjects, currentLedger, serverInfo },
-                         destination: { address: destinationAddress, tag: '' },
-                         sequence: { sequenceId: accountInfo.result.account_data.Sequence },
+                         destination: { address: destinationAddress },
+                         sequence: { sequenceId: accountInfo.result.account_data.Sequence.toString() },
                     });
 
                     const errors = await this.validationService.validate('AccountDelete', { inputs, client, accountInfo, accountObjects, currentLedger, serverInfo });
                     if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                         return this.txUiService.setError(errors.join('\n• '));
                     }
 
                     const tx: xrpl.AccountDelete = {
@@ -397,7 +392,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
-                    if (!result.success) return;
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     if (this.txUiService.isSimulateEnabled()) {
                          this.txUiService.successMessage = 'Simulated Account delete successfully!';
@@ -440,8 +435,8 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                }
           }
 
-          if (this.destinationTagField()) {
-               this.utilsService.setDestinationTag(tx, this.destinationTagField());
+          if (this.txUiService.destinationTagField()) {
+               this.utilsService.setDestinationTag(tx, this.txUiService.destinationTagField());
           }
 
           if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
@@ -451,7 +446,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
 
      private async refreshAfterTx(client: xrpl.Client, destination: string): Promise<void> {
           await this.refreshWallets(client, [destination]);
-          this.addNewDestinationFromUser(destination ? destination : '');
+          this.addNewDestinationFromUser(destination ?? '');
           this.getAccountDetails(true);
      }
 
@@ -464,7 +459,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
           // Update multi-sign & regular key flags
           const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.regularKeySigningEnabled.set(hasRegularKey);
+          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
           // Update service state
           this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
@@ -475,7 +470,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           const checkForMultiSigner = signerAccounts?.length > 0;
           checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
 
-          this.multiSigningEnabled.set(hasSignerList);
+          this.txUiService.multiSigningEnabled.set(hasSignerList);
           if (hasSignerList) {
                const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
                this.txUiService.signers.set(entries);
@@ -542,16 +537,20 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      }
 
      clearFields() {
-          this.selectedDestinationAddress.set('');
-          this.destinationTagField.set('');
+          this.clearInputFields();
           this.txUiService.clearAllOptionsAndMessages();
+     }
+
+     clearInputFields() {
+          this.selectedDestinationAddress.set('');
+          this.txUiService.destinationTagField.set('');
      }
 
      onDestinationInput(event: Event): void {
           const value = (event.target as HTMLInputElement).value;
-
           this.destinationSearchQuery.set(value);
           this.selectedDestinationAddress.set(''); // clear selection when typing
+          this.highlightedIndex.set(value ? 0 : -1); // highlight first when typing
 
           if (value) {
                this.dropdownService.openDropdown();
@@ -566,8 +565,42 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           this.closeDropdown();
      }
 
-     onArrowDown() {
-          if (this.filteredDestinations().length === 0) return;
+     onKeyDown(event: KeyboardEvent): void {
+          const items = this.filteredDestinations();
+          if (items.length === 0) {
+               this.highlightedIndex.set(-1);
+               return;
+          }
+
+          let index = this.highlightedIndex();
+
+          if (event.key === 'ArrowDown') {
+               event.preventDefault(); // Prevent cursor to end
+               index = index < items.length - 1 ? index + 1 : 0;
+          } else if (event.key === 'ArrowUp') {
+               event.preventDefault();
+               index = index <= 0 ? items.length - 1 : index - 1;
+          } else if (event.key === 'Enter') {
+               event.preventDefault();
+               if (index >= 0 && index < items.length) {
+                    this.selectDestination(items[index].address);
+               }
+               return;
+          } else if (event.key === 'Escape') {
+               this.closeDropdown();
+               return;
+          } else {
+               // For any other key, reset highlight
+               index = -1;
+          }
+
+          this.highlightedIndex.set(index);
+
+          // Optional: scroll highlighted item into view
+          setTimeout(() => {
+               const el = document.querySelector('.combobox-item.highlighted') as HTMLElement;
+               el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          });
      }
 
      openDropdown(): void {
@@ -590,6 +623,16 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      toggleDropdown(): void {
           this.dropdownService.setItems(this.destinations());
           this.dropdownService.toggleDropdown();
+     }
+
+     @HostListener('document:focusin', ['$event'])
+     onDocumentFocusIn(event: FocusEvent) {
+          if (this.overlayRef?.hasAttached()) {
+               const focusedInside = this.dropdownOrigin.nativeElement.contains(event.target) || this.overlayRef.overlayElement.contains(event.target as Node);
+               if (!focusedInside) {
+                    this.closeDropdown();
+               }
+          }
      }
 
      private openDropdownInternal(): void {
@@ -618,6 +661,8 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                scrollStrategy: this.overlay.scrollStrategies.reposition(), // Better than close()
                width: this.dropdownOrigin.nativeElement.getBoundingClientRect().width, // Match input width!
           });
+          // Reset highlight when opening
+          this.highlightedIndex.set(-1);
 
           this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
           this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
@@ -626,5 +671,6 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      private closeDropdownInternal(): void {
           this.overlayRef?.detach();
           this.overlayRef = null;
+          this.highlightedIndex.set(-1); // reset on close
      }
 }

@@ -12,20 +12,10 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
-
           <!-- Right form -->
           <div class="form-panel">
-               <!-- Menu bar -->
-               <!-- <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'send'" (click)="setTab('send')">
-                         <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon>
-                         Send XRP
-                    </button>
-               </div> -->
-
                <!-- Send XRP Menu -->
-               @if (activeTab === 'send') {
+               @if (activeTab() === 'send') {
                <div style="padding-top: 2em">
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
@@ -40,288 +30,102 @@
                }
 
                <!-- Dynamic info panel -->
-               @if (ui.infoMessage) {
+               @if (infoData()) {
                <div class="info-panel">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="ui.safeInfo"></div>
+                    <div class="info-panel-content">
+                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                         <div class="info-text" [innerHTML]="infoData()"></div>
+                    </div>
                </div>
                }
 
                <!-- Warning Message -->
-               @if (ui.warningMessage) {
+               @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="ui.safeWarning"></div>
+                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
                </div>
                }
 
                <form #theForm="ngForm" class="send-form">
                     <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab">
+                         <div [@tabTransition]="activeTab()">
                               <!-- Amount and Destination -->
-                              <div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>XRP Amount</label>
-                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label for="amountField">XRP Amount</label>
+                                        <input type="text" placeholder="e.g. 10.5" [ngModel]="txUiService.amountField()" (ngModelChange)="txUiService.amountField.set($event)" name="amountField" />
+                                   </div>
+                                   <div class="form-group">
+                                        <label for="destination">Destination</label>
+
+                                        <div class="combobox-container" (clickOutside)="closeDropdown()">
+                                             <input #dropdownOrigin type="text" [value]="destinationDisplay()" (input)="onDestinationInput($event)" (focus)="openDropdown()" (keydown)="onKeyDown($event)" placeholder="Enter or select destination address" class="combobox-input" autocomplete="off" />
+
+                                             <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
+                                                  <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                                             </button>
                                         </div>
-                                        <div class="form-group">
-                                             <label>Destination</label>
+                                   </div>
 
-                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
-
-                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                                  </button>
-                                             </div>
-                                        </div>
-
-                                        <!-- Dropdown template -->
-                                        <ng-template #dropdownTemplate>
+                                   <!-- Destination Dropdown template -->
+                                   <ng-template #dropdownTemplate>
+                                        <div class="combobox-wrapper" (click)="$event.stopPropagation()">
                                              <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations; track trackByAddress($index, dest)) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
+                                                  @for (dest of filteredDestinations(); track trackByWalletAddress($index, dest)) {
+                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="highlightedIndex() === $index" (click)="selectDestination(dest.address)">
                                                        <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
-                                                            <span class="self-badge">Current Account</span>
+                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet().address) {
+                                                            <span class="self-badge"> Current Account </span>
                                                             }
                                                        </div>
-                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
+                                                       <div class="item-address">{{ dest.address.slice(0, 6) }}...{{ dest.address.slice(-6) }}</div>
                                                   </div>
                                                   } @empty {
                                                   <div class="combobox-empty">No matching addresses</div>
                                                   }
                                              </div>
-                                        </ng-template>
-                                   </div>
+                                        </div>
+                                   </ng-template>
                               </div>
 
                               <!-- Destination Tag and Source Tag -->
-                              <div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Destination Tag (opt)</label>
-                                             <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
-                                        </div>
-                                        <div class="form-group">
-                                             <label>Source Tag (opt)</label>
-                                             <input type="text" [(ngModel)]="sourceTagField" name="sourceTagField" />
-                                        </div>
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label for="destinationTagField">Destination Tag (opt)</label>
+                                        <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
+                                   </div>
+
+                                   <div class="form-group">
+                                        <label for="sourceTagField">Source Tag (optional)</label>
+                                        <input type="text" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" name="sourceTagField" />
                                    </div>
                               </div>
 
                               <!-- Invoice ID -->
-                              <div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Invoice ID (opt)</label>
-                                             <input type="text" [(ngModel)]="invoiceIdField" name="invoiceIdField" />
-                                        </div>
-                                   </div>
-                              </div>
-
-                              <!-- Switches -->
-                              <div class="switch-group">
-                                   <!-- Memo group -->
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                        <span class="slider"></span>
-                                        Add Memo
-                                   </label>
-
-                                   <!-- Multi Signing Enabled group -->
-                                   @if (multiSigningEnabled) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                        <span class="slider"></span>
-                                        Use Multi-Sign
-                                   </label>
-                                   }
-
-                                   <!-- Regular Key Signing Enabled-->
-                                   @if (regularKeySigningEnabled) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                                        <span class="slider"></span>
-                                        Use Regular Key
-                                   </label>
-                                   }
-
-                                   <!-- Use Ticket for tx -->
-                                   @if (ticketArray.length > 0) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                                        <span class="slider"></span>
-                                        Use Ticket
-                                   </label>
-                                   }
-
-                                   <!-- Simulate tx -->
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="ui.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="ui.toggleSimulate($event)" />
-                                        <span class="slider"></span>
-                                        Simulate
-                                   </label>
-                              </div>
-
-                              <!-- Memo Field -->
-                              @if (isMemoEnabled) {
-                              <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-                              }
-
-                              <!-- Sign tx with Mult Sign address -->
-                              @if (useMultiSign) {
-                              <div class="multisign-grid">
-                                   <div class="multisign-field">
-                                        <label>Signers</label>
-                                        <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                                   </div>
-                                   <div class="multisign-field">
-                                        <label>Seeds</label>
-                                        <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                                   </div>
-                                   <div class="multisign-field quorum-field">
-                                        <label>Quorum</label>
-                                        <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Sign tx with Regular key address -->
-                              @if (isRegularKeyAddress) {
-                              <div class="regular-key-fields">
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Regular Key Address</label>
-                                             <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                                        </div>
-                                   </div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Regular Key Seed</label>
-                                             <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                        </div>
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Get ticket -->
-                              @if (isTicket) {
-                              <div class="ticket-fields">
+                              <div class="form-row">
                                    <div class="form-group">
-                                        <label>Ticket Sequence</label>
-                                        @if (multiSelectMode) {
-                                        <div>
-                                             <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                                  @for (ticket of ticketArray; track ticket) {
-                                                  <option [value]="ticket">{{ ticket }}</option>
-                                                  }
-                                             </select>
-                                        </div>
-                                        } @else {
-                                        <div>
-                                             <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                                  <option value="" disabled>Select a ticket</option>
-                                                  @for (ticket of ticketArray; track ticket) {
-                                                  <option [value]="ticket">{{ ticket }}</option>
-                                                  }
-                                             </select>
-                                        </div>
-                                        }
+                                        <label for="invoiceIdField">Invoice ID (optional)</label>
+                                        <input type="text" placeholder="e.g. INV_123" [ngModel]="txUiService.invoiceIdField()" (ngModelChange)="txUiService.invoiceIdField.set($event)" name="invoiceIdField" />
                                    </div>
                               </div>
-                              }
+
+                              <app-transaction-options [showWhenTab]="['send']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Send XRP' }}</button>
-                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
+                                   <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Send XRP' }}</button>
+                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()">Clear Fields</button>
                               </div>
 
-                              <!-- Spinner -->
-                              @if (ui.spinner()) {
-                              <div class="spinner-row">
-                                   <div class="spinner"></div>
-                                   <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
+                              <!-- Execution time -->
+                              <div style="display: flex">
+                                   <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                               </div>
-                              }
-
-                              <!-- Success message -->
-                              @if (ui.isSuccess && !ui.isError) {
-                              <div class="success-message">
-                                   <lucide-icon name="check" size="20"></lucide-icon>
-                                   <div class="success-text">
-                                        @if (ui.txHash && !ui.isSimulateEnabled) {
-                                        <span>{{ui.successMessage}}</span><br /><br />
-                                        <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                        } @else {
-                                        <span>{{ui.successMessage}}</span>
-                                        }
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Error message -->
-                              @if (ui.isError && ui.result) {
-                              <div class="tx-message error">
-                                   <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
-                                   <div class="tx-text">
-                                        <!-- Display Tx Hash if we are not in simulation mode-->
-                                        @if (ui.txHash && !ui.isSimulateEnabled) {
-                                        <span>{{ ui.result }}</span><br />
-                                        <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                        } @else {
-                                        <span>{{ ui.result }}</span>
-                                        }
-                                   </div>
-                              </div>
-                              }
+                              <app-transaction-preview></app-transaction-preview>
                          </div>
                     </div>
                </form>
-
-               <!-- Tx Preview -->
-               @if (ui.paymentTx.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h5 class="tx-title">Payment Transaction</h5>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTx()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTx()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
-               </div>
-               }
-
-               <!-- Tx Result Preview -->
-               @if (ui.txResult.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h3 class="tx-title">Transaction Result</h3>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
-               </div>
-               }
           </div>
      </div>
 </div>

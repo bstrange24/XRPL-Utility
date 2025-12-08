@@ -1821,6 +1821,15 @@ pre[class*='language-'] {
      stroke: #0ea5e9;
 }
 
+.info-panel-content {
+     display: flex;
+     align-items: center;
+     /* ← this aligns icon and text vertically centered */
+     gap: 10px;
+     /* ← space between icon and text */
+     line-height: 1.5;
+}
+
 .info-text strong {
      font-weight: 600;
 }

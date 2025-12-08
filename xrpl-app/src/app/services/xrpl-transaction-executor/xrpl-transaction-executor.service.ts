@@ -6,7 +6,6 @@ import { UtilsService } from '../util-service/utils.service';
 import { XrplCacheService } from '../xrpl-cache/xrpl-cache.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { XrplTransactionService } from '../xrpl-transactions/xrpl-transaction.service';
-import { CredentialAccept, CredentialCreate, CredentialDelete } from 'xrpl';
 
 export interface TxExecutionOptions {
      simulateMessage: string;
@@ -92,6 +91,26 @@ export class XrplTransactionExecutorService {
           } finally {
                this.txUiService.spinner.set(false);
           }
+     }
+
+     async sendXrpPayment(
+          tx: xrpl.Payment,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {}
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulated XRP payment (no changes will be made)...',
+               submitMessage: 'Submitting XRP payment to Ledger...',
+               amount: this.txUiService.amountField(),
+               ...options,
+          });
      }
 
      async createCredential(

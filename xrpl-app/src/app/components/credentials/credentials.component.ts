@@ -2,7 +2,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, TemplateRef, ViewChild, ViewContainerRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, OnInit, TemplateRef, ViewChild, ViewContainerRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -71,17 +71,17 @@ interface CredentialData {
      styleUrl: './credentials.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateCredentialsComponent extends PerformanceBaseComponent implements OnInit, AfterViewInit {
+export class CreateCredentialsComponent extends PerformanceBaseComponent implements OnInit {
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-     @ViewChild('credentialIdDropdownOrigin') credentialIdDropdownOrigin!: ElementRef<HTMLInputElement>;
-     @ViewChild('credentialIdDropdownTemplate') credentialIdDropdownTemplate!: TemplateRef<any>;
-     @ViewChild('domainDropdownOrigin') domainDropdownOrigin!: ElementRef<HTMLInputElement>;
-     @ViewChild('acceptedCredentialIdDropdownTemplate') acceptedCredentialIdDropdownTemplate!: TemplateRef<any>;
+     @ViewChild('credentialInput') credentialInput!: ElementRef<HTMLInputElement>;
+     @ViewChild('unifiedCredentialDropdownTemplate') unifiedCredentialDropdownTemplate!: TemplateRef<any>;
 
      private readonly destroyRef = inject(DestroyRef);
      private readonly overlay = inject(Overlay);
      private readonly viewContainerRef = inject(ViewContainerRef);
+     private overlayRef: OverlayRef | null = null;
+     private credentialIdOverlayRef: OverlayRef | null = null;
 
      // Services
      public readonly utilsService = inject(UtilsService);
@@ -100,11 +100,12 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      // Destination Dropdown
      credentialIdSearchQuery = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
-     private overlayRef: OverlayRef | null = null;
-     private credentialIdOverlayRef: OverlayRef | null = null;
+
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
-     destinationTagField = signal<string>('');
+     highlightedIndex = signal<number>(-1);
+     highlightedCredentialIdIndex = signal<number>(-1);
+
      // Reactive State (Signals)
      activeTab = signal<'create' | 'accept' | 'delete' | 'verify'>('create');
      wallets = signal<Wallet[]>([]);
@@ -120,7 +121,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
      // Form & UI State
      credentialIdSearchTerm = signal<string>('');
-     destinationField = signal<string>('');
      credentialID = signal<string>('');
      credentialType = signal<string>('');
      selectedCredentials = signal<CredentialItem | null>(null);
@@ -180,16 +180,35 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
      credentialIdDisplay = computed(() => {
           const id = this.credentialID();
-          if (!id) return this.credentialIdSearchQuery() || '';
-          return this.dropdownService.formatDomainId(id);
+          const type = this.credentialType();
+
+          if (!id && !type) {
+               return this.credentialIdSearchQuery() || ''; // while typing
+          }
+
+          if (!id) return type;
+
+          // Nice display when selected
+          return `${type || 'Credential'} • ${id.slice(0, 10)}...${id.slice(-8)}`;
      });
 
      filteredcredentialIds = computed(() => {
           const q = this.credentialIdSearchQuery().trim().toLowerCase();
           const list = this.activeTab() === 'accept' ? this.subjectCredentials() : this.existingCredentials();
 
+          // If empty query → show all
           if (q === '') return list;
-          return list.filter(d => d.index.toLowerCase().includes(q));
+
+          return list.filter(cred => {
+               const indexMatch = cred.index.toLowerCase().includes(q);
+               const typeMatch = cred.CredentialType?.toLowerCase().includes(q) ?? false;
+
+               // Optional: also search by issuer/subject for power users
+               const issuerMatch = cred.Issuer?.toLowerCase().includes(q) ?? false;
+               const subjectMatch = cred.Subject?.toLowerCase().includes(q) ?? false;
+
+               return indexMatch || typeMatch || issuerMatch || subjectMatch;
+          });
      });
 
      infoData = computed(() => {
@@ -251,8 +270,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.populateDefaultDateTime();
      }
 
-     ngAfterViewInit(): void {}
-
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
           if (stored) this.customDestinations.set(JSON.parse(stored));
@@ -273,8 +290,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                if (wallet) {
                     this.selectWallet(wallet);
                     this.xrplCache.invalidateAccountCache(wallet.address);
-                    this.txUiService.clearTxSignal();
-                    this.txUiService.clearTxResultSignal();
+                    this.txUiService.clearAllOptionsAndMessages();
                     await this.getCredentialsForAccount(false);
                }
           });
@@ -356,7 +372,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
                     const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
                     if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                         return this.txUiService.setError(errors.join('\n• '));
                     }
 
                     this.parseCredentials(accountObjects, wallet.classicAddress);
@@ -373,11 +389,10 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      async createCredential() {
           await this.withPerf('createCredential', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-
-               const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
-
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
+
+                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
                     console.debug('expirationDate:', this.credential().subject.expirationDate);
@@ -414,7 +429,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
-                    if (!result.success) return;
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Setting Credential successfully!' : 'Created credential successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
@@ -472,10 +487,11 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
-                    if (!result.success) return;
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Credential delete successfully!' : 'Credential removed successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
+                    this.resetCredentialIdDropDown();
                } catch (error: any) {
                     console.error('Error in deleteCredentials:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -498,6 +514,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                          network: {
                               accountInfo,
                          },
+                         credentials: { credentialId: this.credentialID() },
                     });
 
                     const errors = await this.validationService.validate('CredentialAccept', { inputs, client, accountInfo });
@@ -535,7 +552,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
-                    if (!result.success) return;
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated accepting credential successfully!' : 'Credential accepted successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
@@ -948,14 +965,15 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      }
 
      clearFields() {
+          this.resetCredentialIdDropDown();
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      onDestinationInput(event: Event): void {
           const value = (event.target as HTMLInputElement).value;
-
           this.destinationSearchQuery.set(value);
           this.selectedDestinationAddress.set(''); // clear selection when typing
+          this.highlightedIndex.set(value ? 0 : -1); // highlight first when typing
 
           if (value) {
                this.dropdownService.openDropdown();
@@ -970,8 +988,67 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.closeDropdown();
      }
 
-     onArrowDown() {
-          if (this.filteredDestinations().length === 0) return;
+     onKeyDown(event: KeyboardEvent): void {
+          const isDestinationOpen = this.overlayRef?.hasAttached() ?? false;
+          const isCredentialOpen = this.credentialIdOverlayRef?.hasAttached() ?? false;
+
+          if (!isDestinationOpen && !isCredentialOpen) return;
+
+          // Get the correct list and index signal
+          let items: any[] = [];
+          let currentIndexSignal = -1;
+          let selectCallback: ((item: any) => void) | null = null;
+
+          if (isDestinationOpen) {
+               items = this.filteredDestinations();
+               currentIndexSignal = this.highlightedIndex();
+               selectCallback = item => this.selectDestination(item.address);
+          } else if (isCredentialOpen) {
+               items = this.filteredcredentialIds();
+               currentIndexSignal = this.highlightedCredentialIdIndex();
+               selectCallback = item => this.selectCredentialId(item.index);
+          }
+
+          if (items.length === 0) {
+               this.highlightedIndex.set(-1);
+               this.highlightedCredentialIdIndex.set(-1);
+               return;
+          }
+
+          let index = currentIndexSignal;
+
+          if (event.key === 'ArrowDown') {
+               event.preventDefault();
+               index = index < items.length - 1 ? index + 1 : 0;
+          } else if (event.key === 'ArrowUp') {
+               event.preventDefault();
+               index = index <= 0 ? items.length - 1 : index - 1;
+          } else if (event.key === 'Enter') {
+               event.preventDefault();
+               if (index >= 0 && index < items.length && selectCallback) {
+                    selectCallback(items[index]);
+               }
+               return;
+          } else if (event.key === 'Escape') {
+               if (isDestinationOpen) this.closeDropdown();
+               else this.closeCredentialIdDropdown();
+               return;
+          } else {
+               index = -1; // reset on any other key
+          }
+
+          // Update correct highlight index
+          if (isDestinationOpen) {
+               this.highlightedIndex.set(index);
+          } else {
+               this.highlightedCredentialIdIndex.set(index);
+          }
+
+          // Scroll into view
+          setTimeout(() => {
+               const el = document.querySelector('.combobox-item.highlighted') as HTMLElement;
+               el?.scrollIntoView({ block: 'nearest' });
+          });
      }
 
      openDropdown(): void {
@@ -984,21 +1061,49 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
      closeDropdown(): void {
           this.dropdownService.closeDropdown();
-
-          if (this.overlayRef) {
-               this.overlayRef.dispose();
-               this.overlayRef = null;
-          }
-
-          if (this.credentialIdOverlayRef) {
-               this.credentialIdOverlayRef.dispose();
-               this.credentialIdOverlayRef = null;
-          }
+          this.overlayRef?.dispose();
+          this.overlayRef = null;
+          this.highlightedIndex.set(-1);
      }
 
      toggleDropdown(): void {
           this.dropdownService.setItems(this.destinations());
           this.dropdownService.toggleDropdown();
+     }
+
+     @HostListener('document:focusin', ['$event'])
+     onGlobalFocusIn(event: FocusEvent) {
+          const target = event.target as Node;
+
+          let shouldCloseDestination = false;
+          let shouldCloseDomain = false;
+
+          // Check destination dropdown
+          if (this.overlayRef?.hasAttached()) {
+               const destInside = this.dropdownOrigin.nativeElement.contains(target) || this.overlayRef.overlayElement.contains(target);
+
+               if (!destInside) {
+                    shouldCloseDestination = true;
+               }
+          }
+
+          // Check domain dropdown
+          if (this.credentialIdOverlayRef?.hasAttached()) {
+               const domainInside = this.credentialInput.nativeElement.contains(target) || this.credentialIdOverlayRef.overlayElement.contains(target);
+
+               if (!domainInside) {
+                    shouldCloseDomain = true;
+               }
+          }
+
+          // Close only the ones that lost focus
+          if (shouldCloseDestination) {
+               this.closeDropdown(); // closes destination dropdown + disposes overlayRef
+          }
+          4;
+          if (shouldCloseDomain) {
+               this.closeCredentialIdDropdown(); // closes domain dropdown + disposes domainOverlayRef
+          }
      }
 
      private openDropdownInternal(): void {
@@ -1027,6 +1132,8 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                scrollStrategy: this.overlay.scrollStrategies.reposition(), // Better than close()
                width: this.dropdownOrigin.nativeElement.getBoundingClientRect().width, // Match input width!
           });
+          // Reset highlight when opening
+          this.highlightedIndex.set(-1);
 
           this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
           this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
@@ -1040,24 +1147,12 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      openCredentialIdDropdown(): void {
           if (this.credentialIdOverlayRef?.hasAttached()) return;
 
-          if (this.credentialIdOverlayRef) {
-               this.credentialIdOverlayRef.dispose();
-               this.credentialIdOverlayRef = null;
-          }
-
-          // Choose correct origin and template based on current tab
-          const isAcceptTab = this.activeTab() === 'accept';
-          const originEl = isAcceptTab ? this.domainDropdownOrigin : this.credentialIdDropdownOrigin;
-          const template = isAcceptTab ? this.acceptedCredentialIdDropdownTemplate : this.credentialIdDropdownTemplate;
-
-          if (!originEl) {
-               console.warn('Dropdown origin not found for tab:', this.activeTab());
-               return;
-          }
+          // Dispose old if exists
+          this.credentialIdOverlayRef?.dispose();
 
           const positionStrategy = this.overlay
                .position()
-               .flexibleConnectedTo(originEl)
+               .flexibleConnectedTo(this.credentialInput)
                .withPositions([
                     { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
                     { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
@@ -1068,57 +1163,38 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                backdropClass: 'cdk-overlay-transparent-backdrop',
                positionStrategy,
                scrollStrategy: this.overlay.scrollStrategies.reposition(),
-               width: originEl.nativeElement.getBoundingClientRect().width,
+               width: this.credentialInput.nativeElement.getBoundingClientRect().width,
           });
 
-          this.credentialIdOverlayRef.attach(new TemplatePortal(template, this.viewContainerRef));
-          this.credentialIdOverlayRef.backdropClick().subscribe(() => this.closeCredentialIdDropdown());
-     }
-
-     openCredentialIdDropdown1(): void {
-          if (this.credentialIdOverlayRef?.hasAttached()) return;
-
-          // Always destroy first — no exceptions
-          if (this.credentialIdOverlayRef) {
-               this.credentialIdOverlayRef.dispose();
-               this.credentialIdOverlayRef = null;
-          }
-
-          const positionStrategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.credentialIdDropdownOrigin)
-               .withPositions([
-                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
-                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
-               ]);
-
-          this.credentialIdOverlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy,
-               scrollStrategy: this.overlay.scrollStrategies.reposition(),
-               width: this.credentialIdDropdownOrigin.nativeElement.getBoundingClientRect().width,
-          });
-
-          this.credentialIdOverlayRef.attach(new TemplatePortal(this.credentialIdDropdownTemplate, this.viewContainerRef));
+          this.highlightedCredentialIdIndex.set(-1);
+          this.credentialIdOverlayRef.attach(new TemplatePortal(this.unifiedCredentialDropdownTemplate, this.viewContainerRef));
           this.credentialIdOverlayRef.backdropClick().subscribe(() => this.closeCredentialIdDropdown());
      }
 
      closeCredentialIdDropdown(): void {
           this.credentialIdOverlayRef?.detach();
           this.credentialIdOverlayRef = null;
+          this.highlightedCredentialIdIndex.set(-1);
      }
 
-     selectCredentialId(domainId: string): void {
-          // this.selectedDomainId.set(domainId);
-          this.credentialID.set(domainId); // Auto-fill the Domain ID field
-          this.credentialIdSearchQuery.set(''); // Clear search
+     selectCredentialId(cred: CredentialItem): void {
+          this.credentialID.set(cred.index);
+          this.credentialType.set(cred.CredentialType || ''); // This is the key!
+
+          // Optional: Show nice display in input (optional but recommended)
+          this.credentialIdSearchQuery.set(''); // clears the search box
+
           this.closeCredentialIdDropdown();
      }
+
+     // selectCredentialId(domainId: string): void {
+     //      this.credentialID.set(domainId); // Auto-fill the Domain ID field
+     //      this.credentialIdSearchQuery.set(''); // Clear search
+     //      this.closeCredentialIdDropdown();
+     // }
 
      onCredentialIdInput(event: Event): void {
           const value = (event.target as HTMLInputElement).value;
           this.credentialIdSearchQuery.set(value);
-          // this.selectedDomainId.set(null); // Clear selection while typing
      }
 }

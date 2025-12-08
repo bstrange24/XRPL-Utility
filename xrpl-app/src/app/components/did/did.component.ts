@@ -1,7 +1,7 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, OnInit, signal, TemplateRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -60,8 +60,6 @@ interface DidData {
 })
 export class DidComponent extends PerformanceBaseComponent implements OnInit {
      private readonly destroyRef = inject(DestroyRef);
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
 
      // Services
      public readonly utilsService = inject(UtilsService);
@@ -276,8 +274,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
-
-                    if (!result.success) return;
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Set DID successfully' : 'Set DID successfully!';
                     await this.refreshAfterTx(client, wallet);
@@ -336,7 +333,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
-                    if (!result.success) return;
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated DID deletion successfully!' : 'DID deleted successfully!';
                     await this.refreshAfterTx(client, wallet);

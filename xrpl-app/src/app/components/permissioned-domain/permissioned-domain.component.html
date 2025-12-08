@@ -137,7 +137,7 @@
                                         <label>Issuer</label>
 
                                         <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                             <input #dropdownOrigin type="text" [value]="destinationDisplay()" (input)="onDestinationInput($event)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" placeholder="Enter or select destination address" class="combobox-input" autocomplete="off" />
+                                             <input #dropdownOrigin type="text" [value]="destinationDisplay()" (input)="onDestinationInput($event)" (focus)="openDropdown()" (keydown)="onKeyDown($event)" placeholder="Enter or select destination address" class="combobox-input" autocomplete="off" />
 
                                              <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
                                                   <lucide-icon name="chevron-down" size="18"></lucide-icon>
@@ -152,7 +152,7 @@
 
                                                   <div class="combobox-dropdown-overlay">
                                                        @for (dest of filteredDestinations(); track trackByWalletAddress($index, dest)) {
-                                                       <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="selectedDestinationAddress() === dest.address" (click)="selectDestination(dest.address)">
+                                                       <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="highlightedIndex() === $index" (click)="selectDestination(dest.address)">
                                                             <div class="item-name">
                                                                  {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet().address) {
                                                                  <span class="self-badge"> Current Account </span>
@@ -185,7 +185,7 @@
                                         <label>Select a Permissioned Domain to delete:</label>
 
                                         <div class="combobox-container" (clickOutside)="closeDomainDropdown()">
-                                             <input #domainDropdownOrigin type="text" [value]="domainDisplay()" (input)="onDomainInput($event)" (focus)="openDomainDropdown()" (keyup.arrowdown)="onArrowDown()" placeholder="Search or select a domain..." class="combobox-input" autocomplete="off" />
+                                             <input #domainDropdownOrigin type="text" [value]="domainDisplay()" (input)="onDomainInput($event)" (focus)="openDomainDropdown()" (keydown)="onKeyDown($event)" placeholder="Search or select a domain..." class="combobox-input" autocomplete="off" />
 
                                              <button class="combobox-toggle" (click)="openDomainDropdown()" type="button">
                                                   <lucide-icon name="chevron-down" size="18"></lucide-icon>
@@ -203,7 +203,7 @@
 
                                         <div class="combobox-dropdown-overlay" style="max-height: 300px; overflow-y: auto">
                                              @for (domain of filteredDomains(); track domain.index) {
-                                             <div class="combobox-item" [class.highlighted]="selectedDomainId() === domain.index" (click)="selectDomain(domain.index)">
+                                             <div class="combobox-item" [class.highlighted]="highlightedDomainIndex() === $index" (click)="selectDomain(domain.index)">
                                                   <div class="item-name">{{ domain.index }}</div>
                                                   <div class="item-address">{{ domain.index }}</div>
                                                   @if (domain.AcceptedCredentials) {

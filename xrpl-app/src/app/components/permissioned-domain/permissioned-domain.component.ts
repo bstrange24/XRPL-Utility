@@ -1,4 +1,4 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, inject, TemplateRef, ViewContainerRef, ChangeDetectionStrategy, computed, DestroyRef, effect, signal, model } from '@angular/core';
+import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, inject, TemplateRef, ViewContainerRef, ChangeDetectionStrategy, computed, DestroyRef, signal, HostListener } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -39,7 +39,7 @@ import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.compon
      styleUrl: './permissioned-domain.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PermissionedDomainComponent extends PerformanceBaseComponent implements OnInit, AfterViewInit {
+export class PermissionedDomainComponent extends PerformanceBaseComponent implements OnInit {
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
      @ViewChild('domainDropdownOrigin') domainDropdownOrigin!: ElementRef;
@@ -68,8 +68,8 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      domainSearchQuery = signal<string>('');
      // Destination Dropdown
      customDestinations = signal<{ name?: string; address: string }[]>([]);
-     private overlayRef: OverlayRef | null = null;
-     private domainOverlayRef: OverlayRef | null = null;
+     overlayRef: OverlayRef | null = null;
+     domainOverlayRef: OverlayRef | null = null;
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
 
@@ -85,6 +85,8 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal(false);
      subject = signal<string>('');
+     highlightedIndex = signal<number>(-1);
+     highlightedDomainIndex = signal<number>(-1);
 
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
@@ -128,7 +130,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           const list = this.createdPermissionedDomains();
 
           if (q === '') return list;
-
           return list.filter(d => d.index.toLowerCase().includes(q));
      });
 
@@ -156,8 +157,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.setupDropdownSubscriptions();
      }
 
-     ngAfterViewInit(): void {}
-
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
           if (stored) this.customDestinations.set(JSON.parse(stored));
@@ -178,8 +177,8 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                if (wallet) {
                     this.selectWallet(wallet);
                     this.xrplCache.invalidateAccountCache(wallet.address);
-                    this.txUiService.clearTxSignal();
-                    this.txUiService.clearTxResultSignal();
+                    this.txUiService.clearAllOptionsAndMessages();
+                    this.clearInputFields();
                     await this.getPermissionedDomainForAccount(false);
                }
           });
@@ -206,6 +205,10 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.domainId.set('');
      }
 
+     toggleCreatedDomains() {
+          this.createdDomains.update(val => !val);
+     }
+
      trackByWalletAddress(index: number, wallet: any) {
           return wallet.address;
      }
@@ -229,10 +232,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           await this.getPermissionedDomainForAccount();
      }
 
-     toggleCreatedDomains() {
-          this.createdDomains.update(val => !val);
-     }
-
      private async getClient(): Promise<xrpl.Client> {
           return this.xrplCache.getClient(() => this.xrplService.getClient());
      }
@@ -246,7 +245,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
 
                     const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
                     if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                         return this.txUiService.setError(errors.join('\n• '));
                     }
 
                     this.getCreatedPermissionedDomains(accountObjects, wallet.classicAddress);
@@ -277,7 +276,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
 
                     const errors = await this.validationService.validate('PermissionedDomainSet', { inputs, client, accountInfo });
                     if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                         return this.txUiService.setError(errors.join('\n• '));
                     }
 
                     const permissionedDomainTx: PermissionedDomainSet = {
@@ -304,7 +303,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
-                    if (!result.success) return;
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Set Permissioned Domain successfully!' : 'Set Permissioned Domain successfully!';
                     await this.refreshAfterTx(client, wallet, issuerAddress, true);
@@ -332,7 +331,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
 
                     const errors = await this.validationService.validate('PermissionedDomainDelete', { inputs, client, accountInfo });
                     if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                         return this.txUiService.setError(errors.join('\n• '));
                     }
 
                     const permissionDomainFound = accountObjects.result.account_objects.find((line: any) => {
@@ -361,7 +360,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
                     });
-                    if (!result.success) return;
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Permisioned Domain deletion successfully!' : 'Permissioned Domain deleted successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
@@ -434,9 +433,12 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
+
           this.getCreatedPermissionedDomains(accountObjects, wallet.classicAddress);
+
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-          if (addDest) this.addNewDestinationFromUser(destination ? destination : '');
+
+          if (addDest) this.addNewDestinationFromUser(destination ?? '');
           this.refreshUiState(wallet, accountInfo, accountObjects);
      }
 
@@ -521,18 +523,22 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      }
 
      clearFields() {
+          this.clearInputFields();
+          this.txUiService.clearAllOptionsAndMessages();
+     }
+
+     clearInputFields() {
           this.credentialType.set('');
           this.selectedDestinationAddress.set('');
           this.domainId.set('');
           this.selectedDomainId.set(null);
-          this.txUiService.clearAllOptionsAndMessages();
      }
 
      onDestinationInput(event: Event): void {
           const value = (event.target as HTMLInputElement).value;
-
           this.destinationSearchQuery.set(value);
           this.selectedDestinationAddress.set(''); // clear selection when typing
+          this.highlightedIndex.set(value ? 0 : -1); // highlight first when typing
 
           if (value) {
                this.dropdownService.openDropdown();
@@ -547,8 +553,51 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.closeDropdown();
      }
 
-     onArrowDown() {
-          if (this.filteredDestinations().length === 0) return;
+     onKeyDown(event: KeyboardEvent): void {
+          // Determine which dropdown is currently open
+          const isDestinationOpen = this.overlayRef?.hasAttached() ?? false;
+          const isDomainOpen = this.domainOverlayRef?.hasAttached() ?? false;
+
+          if (!isDestinationOpen && !isDomainOpen) return;
+
+          const items = isDestinationOpen ? this.filteredDestinations() : this.filteredDomains();
+
+          const currentIndexSignal = isDestinationOpen ? this.highlightedIndex : this.highlightedDomainIndex;
+
+          let index = currentIndexSignal();
+
+          if (event.key === 'ArrowDown') {
+               event.preventDefault();
+               index = index < items.length - 1 ? index + 1 : 0;
+          } else if (event.key === 'ArrowUp') {
+               event.preventDefault();
+               index = index <= 0 ? items.length - 1 : index - 1;
+          } else if (event.key === 'Enter') {
+               event.preventDefault();
+               if (index >= 0 && index < items.length) {
+                    if (isDestinationOpen) {
+                         this.selectDestination(items[index].address);
+                    } else {
+                         this.selectDomain(items[index].index);
+                    }
+               }
+               return;
+          } else if (event.key === 'Escape') {
+               if (isDestinationOpen) this.closeDropdown();
+               else this.closeDomainDropdown();
+               return;
+          } else {
+               // Any other key → reset highlight
+               index = -1;
+          }
+
+          currentIndexSignal.set(index);
+
+          // Scroll into view
+          setTimeout(() => {
+               const el = document.querySelector('.combobox-item.highlighted') as HTMLElement;
+               el?.scrollIntoView({ block: 'nearest' });
+          });
      }
 
      openDropdown(): void {
@@ -561,21 +610,49 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
 
      closeDropdown(): void {
           this.dropdownService.closeDropdown();
-
-          if (this.overlayRef) {
-               this.overlayRef.dispose();
-               this.overlayRef = null;
-          }
-
-          if (this.domainOverlayRef) {
-               this.domainOverlayRef.dispose();
-               this.domainOverlayRef = null;
-          }
+          this.overlayRef?.dispose();
+          this.overlayRef = null;
+          this.highlightedIndex.set(-1);
      }
 
      toggleDropdown(): void {
           this.dropdownService.setItems(this.destinations());
           this.dropdownService.toggleDropdown();
+     }
+
+     @HostListener('document:focusin', ['$event'])
+     onGlobalFocusIn(event: FocusEvent) {
+          const target = event.target as Node;
+
+          let shouldCloseDestination = false;
+          let shouldCloseDomain = false;
+
+          // Check destination dropdown
+          if (this.overlayRef?.hasAttached()) {
+               const destInside = this.dropdownOrigin.nativeElement.contains(target) || this.overlayRef.overlayElement.contains(target);
+
+               if (!destInside) {
+                    shouldCloseDestination = true;
+               }
+          }
+
+          // Check domain dropdown
+          if (this.domainOverlayRef?.hasAttached()) {
+               const domainInside = this.domainDropdownOrigin.nativeElement.contains(target) || this.domainOverlayRef.overlayElement.contains(target);
+
+               if (!domainInside) {
+                    shouldCloseDomain = true;
+               }
+          }
+
+          // Close only the ones that lost focus
+          if (shouldCloseDestination) {
+               this.closeDropdown(); // closes destination dropdown + disposes overlayRef
+          }
+          4;
+          if (shouldCloseDomain) {
+               this.closeDomainDropdown(); // closes domain dropdown + disposes domainOverlayRef
+          }
      }
 
      private openDropdownInternal(): void {
@@ -604,6 +681,8 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                scrollStrategy: this.overlay.scrollStrategies.reposition(), // Better than close()
                width: this.dropdownOrigin.nativeElement.getBoundingClientRect().width, // Match input width!
           });
+          // Reset highlight when opening
+          this.highlightedIndex.set(-1);
 
           this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
           this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
@@ -638,14 +717,17 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                scrollStrategy: this.overlay.scrollStrategies.reposition(),
                width: this.domainDropdownOrigin.nativeElement.getBoundingClientRect().width,
           });
+          // Reset highlight when opening
+          this.highlightedDomainIndex.set(-1);
 
           this.domainOverlayRef.attach(new TemplatePortal(this.domainDropdownTemplate, this.viewContainerRef));
           this.domainOverlayRef.backdropClick().subscribe(() => this.closeDomainDropdown());
      }
 
      closeDomainDropdown(): void {
-          this.domainOverlayRef?.detach();
+          this.domainOverlayRef?.dispose();
           this.domainOverlayRef = null;
+          this.highlightedDomainIndex.set(-1);
      }
 
      selectDomain(domainId: string): void {
