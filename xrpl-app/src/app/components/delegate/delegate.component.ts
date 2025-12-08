@@ -74,7 +74,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
-     private readonly destinationDropdownService = inject(DestinationDropdownService);
+     private readonly dropdownService = inject(DestinationDropdownService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
@@ -191,19 +191,14 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           this.xrplCache.invalidateAccountCache(wallet.address);
 
           // Prevent self as destination
-          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.destinationField(), this.destinations())?.address || this.destinationField();
+          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.selectedDestinationAddress(), this.destinations())?.address || this.selectedDestinationAddress();
           if (currentDest === wallet.address) {
-               this.destinationField.set('');
+               this.selectedDestinationAddress.set('');
           }
      }
 
      private setupDropdownSubscriptions(): void {
-          this.destinationDropdownService.filtered$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(list => {
-               this.filteredDestinations.set(list);
-               this.highlightedIndex.set(list.length > 0 ? 0 : -1);
-          });
-
-          this.destinationDropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
+          this.dropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
      }
 
      trackByWalletAddress(index: number, wallet: any): string {
@@ -262,15 +257,15 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
           await this.withPerf('getAccountDetails', async () => {
+               this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
 
                     const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
-                    if (errors.length) {
-                         this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                         return;
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                     }
 
                     this.getExistingDelegations(accountObjects, wallet.classicAddress);
@@ -292,8 +287,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      async delegateActions(delegate: 'delegate' | 'clear') {
           await this.withPerf('delegateActions', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.updateSpinnerMessageSignal('');
-
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
@@ -417,16 +410,12 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
-          try {
                const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
                this.getExistingDelegations(accountObjects, wallet.classicAddress);
                destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
                if (addDest) this.addNewDestinationFromUser();
                this.refreshUiState(wallet, accountInfo, accountObjects);
                this.updateInfoMessage();
-          } catch (error: any) {
-               console.error('Error in refreshAfterTx:', error);
-          }
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -438,7 +427,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
           // Update multi-sign & regular key flags
           const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.regularKeySigningEnabled.set(hasRegularKey);
+          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
           // Update service state
           this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
@@ -449,7 +438,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           const checkForMultiSigner = signerAccounts?.length > 0;
           checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
 
-          this.multiSigningEnabled.set(hasSignerList);
+          this.txUiService.multiSigningEnabled.set(hasSignerList);
           if (hasSignerList) {
                const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
                this.txUiService.signers.set(entries);
@@ -579,49 +568,76 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      }
 
      openDropdown(): void {
-          this.destinationDropdownService.setItems(this.destinations());
-          this.destinationDropdownService.filter(this.destinationField());
-          this.destinationDropdownService.openDropdown();
+          this.dropdownService.setItems(this.destinations());
+
+          // Always reset search when opening fresh
+          this.destinationSearchQuery.set('');
+          this.dropdownService.openDropdown();
      }
 
-     closeDropdown() {
-          this.destinationDropdownService.closeDropdown();
+     closeDropdown(): void {
+          this.dropdownService.closeDropdown();
+
+          if (this.overlayRef) {
+               this.overlayRef.dispose();
+               this.overlayRef = null;
+          }
+
+          if (this.domainOverlayRef) {
+               this.domainOverlayRef.dispose();
+               this.domainOverlayRef = null;
+          }
      }
 
-     toggleDropdown() {
-          this.destinationDropdownService.setItems(this.destinations());
-          this.destinationDropdownService.toggleDropdown();
+     toggleDropdown(): void {
+          this.dropdownService.setItems(this.destinations());
+          this.dropdownService.toggleDropdown();
      }
 
      onDestinationInput() {
-          this.destinationDropdownService.filter(this.destinationField() || '');
-          this.destinationDropdownService.openDropdown();
+          this.dropdownService.filter(this.destinationField() || '');
+          this.dropdownService.openDropdown();
      }
 
      selectDestination(address: string) {
           if (address === this.currentWallet().address) return;
           const dest = this.destinations().find((d: { address: string }) => d.address === address);
-          this.destinationField.set(dest ? this.destinationDropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`);
+          this.destinationField.set(dest ? this.dropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`);
           this.closeDropdown();
      }
 
-     private openDropdownInternal() {
+     private openDropdownInternal(): void {
           if (this.overlayRef?.hasAttached()) return;
-          const strategy = this.overlay
+
+          if (this.overlayRef) {
+               this.overlayRef.dispose(); // CRITICAL
+               this.overlayRef = null;
+          }
+
+          const positionStrategy = this.overlay
                .position()
                .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]);
+               .withPositions([
+                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+               ])
+               .withPush(false)
+               .withFlexibleDimensions(false)
+               .withViewportMargin(8);
+
           this.overlayRef = this.overlay.create({
                hasBackdrop: true,
                backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy: strategy,
-               scrollStrategy: this.overlay.scrollStrategies.close(),
+               positionStrategy,
+               scrollStrategy: this.overlay.scrollStrategies.reposition(), // Better than close()
+               width: this.dropdownOrigin.nativeElement.getBoundingClientRect().width, // Match input width!
           });
+
           this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
           this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
      }
 
-     private closeDropdownInternal() {
+     private closeDropdownInternal(): void {
           this.overlayRef?.detach();
           this.overlayRef = null;
      }

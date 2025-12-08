@@ -656,13 +656,15 @@ export class ValidationService {
           // Delegate Actions
           this.registerRule({
                transactionType: 'DelegateActions',
-               requiredFields: ['seed', 'destination'],
+               requiredFields: ['wallet.seed', 'destination.address'],
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
