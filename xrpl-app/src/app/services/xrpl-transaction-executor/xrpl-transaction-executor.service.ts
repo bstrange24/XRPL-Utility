@@ -18,8 +18,8 @@ export interface TxExecutionOptions {
 export class XrplTransactionExecutorService {
      constructor(private xrplTransactions: XrplTransactionService, private utilsService: UtilsService, private txUiService: TransactionUiService, private xrplCache: XrplCacheService, private xrplService: XrplService) {}
 
-     async execute<T extends xrpl.Transaction>(client: xrpl.Client, wallet: xrpl.Wallet, tx: T, options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string }): Promise<{ success: true; hash: string } | { success: false; error: string }> {
-          const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', amount = '0', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', isRegularKeyAddress = false, regularKeySeed = '' } = options;
+     async execute<T extends xrpl.Transaction>(client: xrpl.Client, wallet: xrpl.Wallet, tx: T, options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; multipleTx?: boolean }): Promise<{ success: true; hash: string } | { success: false; error: string }> {
+          const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', amount = '0', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', isRegularKeyAddress = false, regularKeySeed = '', multipleTx = false } = options;
 
           // 1. Get fresh data in parallel
           const [{ accountInfo, accountObjects }, { fee, serverInfo }] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFeeAndServerInfo(this.xrplService, { forceRefresh: false })]);
@@ -33,7 +33,10 @@ export class XrplTransactionExecutorService {
           this.txUiService.showSpinnerWithDelay(this.txUiService.isSimulateEnabled() ? simulateMessage : submitMessage, 200);
 
           // 4. Set preview
-          this.txUiService.setTxSignal(tx);
+          if (multipleTx) {
+          } else {
+               this.txUiService.setTxSignal(tx);
+          }
 
           let response: any;
 
@@ -53,7 +56,11 @@ export class XrplTransactionExecutorService {
                }
 
                // 5. Handle result
-               this.txUiService.setTxResultSignal(response.result);
+               if (multipleTx) {
+                    this.txUiService.setTxMultipleResultSignal(response.result);
+               } else {
+                    this.txUiService.setTxResultSignal(response.result);
+               }
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                // Inside XrplTransactionExecutorService.execute()
@@ -70,7 +77,11 @@ export class XrplTransactionExecutorService {
                     }
 
                     // Update the signal so preview updates immediately
-                    this.txUiService.setTxResultSignal(response.result);
+                    if (multipleTx) {
+                         this.txUiService.setTxMultipleResultSignal(response.result);
+                    } else {
+                         this.txUiService.setTxResultSignal(response.result);
+                    }
 
                     // Show error panel/toast
                     this.txUiService.setError(userMessage);
@@ -81,7 +92,12 @@ export class XrplTransactionExecutorService {
                // Success!
                this.txUiService.setSuccess(this.txUiService.result);
                const hash = response.result.hash ?? response.result.tx_json?.hash ?? 'unknown';
+
+               // if (multipleTx) {
+               // this.txUiService.addTxMultipleHashesSignal(hash);
+               // } else {
                this.txUiService.txHash = hash;
+               // }
 
                return { success: true, hash };
           } catch (err: any) {
@@ -91,6 +107,48 @@ export class XrplTransactionExecutorService {
           } finally {
                this.txUiService.spinner.set(false);
           }
+     }
+
+     async ticketCreate(
+          tx: xrpl.TicketCreate,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+               multipleTx?: boolean;
+          } = {}
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulated Ticket create (no changes will be made)...',
+               submitMessage: 'Submitting Ticket create to Ledger...',
+               amount: '0',
+               ...options,
+          });
+     }
+
+     async ticketDelete(
+          tx: xrpl.AccountSet,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+               multipleTx?: boolean;
+          } = {}
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulated Ticket delete (no changes will be made)...',
+               submitMessage: 'Submitting Ticket delete to Ledger...',
+               amount: '0',
+               ...options,
+          });
      }
 
      async sendXrpPayment(
@@ -103,6 +161,7 @@ export class XrplTransactionExecutorService {
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
                regularKeySeed?: string;
+               multipleTx?: boolean;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
@@ -123,6 +182,7 @@ export class XrplTransactionExecutorService {
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
                regularKeySeed?: string;
+               multipleTx?: boolean;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
@@ -143,6 +203,7 @@ export class XrplTransactionExecutorService {
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
                regularKeySeed?: string;
+               multipleTx?: boolean;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
@@ -163,6 +224,7 @@ export class XrplTransactionExecutorService {
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
                regularKeySeed?: string;
+               multipleTx?: boolean;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
@@ -183,6 +245,7 @@ export class XrplTransactionExecutorService {
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
                regularKeySeed?: string;
+               multipleTx?: boolean;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
@@ -203,6 +266,7 @@ export class XrplTransactionExecutorService {
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
                regularKeySeed?: string;
+               multipleTx?: boolean;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
@@ -223,6 +287,7 @@ export class XrplTransactionExecutorService {
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
                regularKeySeed?: string;
+               multipleTx?: boolean;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
@@ -243,6 +308,7 @@ export class XrplTransactionExecutorService {
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
                regularKeySeed?: string;
+               multipleTx?: boolean;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
@@ -263,6 +329,7 @@ export class XrplTransactionExecutorService {
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
                regularKeySeed?: string;
+               multipleTx?: boolean;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
@@ -283,6 +350,7 @@ export class XrplTransactionExecutorService {
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
                regularKeySeed?: string;
+               multipleTx?: boolean;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {

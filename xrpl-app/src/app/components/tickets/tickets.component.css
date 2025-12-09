@@ -1,0 +1,44 @@
+/* Make the dropdown look like credential one */
+.ticket-dropdown {
+     background: white;
+     border: 1px solid #d1d5db;
+     border-radius: 8px;
+     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+     font-size: 0.95rem;
+}
+
+.ticket-item {
+     transition: background-color 0.15s ease;
+}
+
+.ticket-item:hover,
+.ticket-item.highlighted {
+     background-color: #f3f4f6 !important;
+}
+
+.ticket-item input[type="checkbox"] {
+     accent-color: #3b82f6;
+     /* Nice blue */
+     border-radius: 4px;
+}
+
+/* Optional: Better focus outline */
+.combobox-input:focus {
+     outline: 2px solid #3b82f6;
+     outline-offset: -2px;
+}
+
+/* Selected count badge */
+.selected-count-badge {
+     position: absolute;
+     right: 40px;
+     top: 50%;
+     transform: translateY(-50%);
+     background: #3b82f6;
+     color: white;
+     font-size: 0.75rem;
+     font-weight: 600;
+     padding: 2px 8px;
+     border-radius: 12px;
+     pointer-events: none;
+}

@@ -127,7 +127,6 @@ export class TransactionUiService {
      isError: boolean = false;
      isSuccess: boolean = false;
      result: string = '';
-     // spinner: boolean = false;
      spinnerMessage: string = '';
      private toastId = 0;
 
@@ -164,6 +163,7 @@ export class TransactionUiService {
      paymentTxSignal = signal<any[]>([]);
      txSignal = signal<any[]>([]);
      txResultSignal = signal<any[]>([]);
+     txHashSignal = signal<string[]>([]);
      successMessageSignal = signal<string>('');
      spinnerMessageSignal = signal<string>('');
      executionTime = signal<string>('');
@@ -194,8 +194,16 @@ export class TransactionUiService {
           this.txResultSignal.set(Array.isArray(result) ? result : [result]);
      }
 
+     setTxMultipleResultSignal(result: any) {
+          this.txResultSignal.update(arr => [...arr, result]);
+     }
+
      setExecutionTime(time: string) {
           this.executionTime.set(time);
+     }
+
+     addTxHashSignal(tx: any) {
+          this.txHashSignal.update(arr => [...arr, tx]);
      }
 
      addTxSignal(tx: any) {
