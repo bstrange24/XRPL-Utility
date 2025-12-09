@@ -74,35 +74,9 @@
                </div>
                }
 
-               <!-- Multiple Transaction Results Panel -->
-               <!-- @if (txUiService.txMultipleHashesSignal().length > 0) {
-               <div class="info-panel" style="margin-top: 1.5rem; border-left: 4px solid #22c55e; background: #f0fdf4">
-                    <div class="info-panel-content">
-                         <ng-icon name="heroCheckCircle" size="22" class="text-green-600 info-icon"></ng-icon>
-                         <div>
-                              <div class="info-text">
-                                   <strong> @if (txUiService.isSimulateEnabled()) { Simulated deletion of {{ selectedTicketSequences().length }} ticket(s) successfully! } @else { {{ selectedTicketSequences().length }} ticket(s) deleted successfully! } </strong>
-                                   <div class="mt-3 text-sm text-gray-700">Transaction hashes:</div>
-                                   <div class="mt-2 space-y-2">
-                                        @for (hash of txUiService.txMultipleHashesSignal(); track hash) {
-                                        <div class="flex items-center gap-3 font-mono text-sm bg-green-50 px-3 py-2 rounded border border-green-200">
-                                             <a [href]="txUiService.explorerUrl() + '/transactions/' + hash" target="_blank" class="text-blue-600 hover:underline break-all flex-1"> {{ hash }} </a>
-                                             <button (click)="copyUtilService.copyToClipboard(hash)" class="text-gray-600 hover:text-gray-800 transition">
-                                                  <lucide-icon name="copy" size="16"></lucide-icon>
-                                             </button>
-                                        </div>
-                                        }
-                                   </div>
-                              </div>
-                         </div>
-                    </div>
-               </div>
-               } -->
-
                <form #theForm="ngForm" class="send-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab()">
-                              <!-- @switch (activeTab()) { -->
                               <!-- Create tickets -->
                               @if (activeTab() === 'create') {
                               <div class="form-row">
@@ -124,12 +98,32 @@
                                              <button class="combobox-toggle" (click)="toggleTicketDropdown()" type="button">
                                                   <lucide-icon name="chevron-down" size="18"></lucide-icon>
                                              </button>
-                                             @if (selectedTicketSequences().length > 0) {
-                                             <div class="selected-count-badge">{{ selectedTicketSequences().length }} selected</div>
-                                             }
                                         </div>
                                    </div>
                               </div>
+
+                              <!-- NEW: Selected Tickets Chips -->
+                              @if (selectedTicketSequences().length > 0) {
+                              <div class="ticket-container">
+                                   <!-- List of selected tickets -->
+                                   <div class="ticket-list">
+                                        @for (ticketSeq of selectedTicketSequences(); track ticketSeq) {
+                                        <div class="ticket-item">
+                                             <span class="ticket-number">{{ ticketSeq }}</span>
+
+                                             <button type="button" class="ticket-remove" (click)="toggleTicketSelection(ticketSeq)" aria-label="Remove ticket">
+                                                  <ng-icon name="heroXCircle" size="16" color="red"></ng-icon>
+                                             </button>
+                                        </div>
+                                        }
+                                   </div>
+
+                                   <!-- Footer row -->
+                                   <div class="ticket-footer">
+                                        <button type="button" class="clear-btn" (click)="clearAllSelections()">Clear all</button>
+                                   </div>
+                              </div>
+                              }
 
                               <!-- Dropdown Template -->
                               <ng-template #ticketDropdownTemplate>

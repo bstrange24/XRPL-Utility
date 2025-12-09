@@ -194,8 +194,8 @@ export class TransactionUiService {
           this.txResultSignal.set(Array.isArray(result) ? result : [result]);
      }
 
-     setTxMultipleResultSignal(result: any) {
-          this.txResultSignal.update(arr => [...arr, result]);
+     addTxResultSignal(tx: any) {
+          this.txResultSignal.update(arr => [...arr, tx]);
      }
 
      setExecutionTime(time: string) {
@@ -216,6 +216,10 @@ export class TransactionUiService {
 
      clearTxResultSignal() {
           this.txResultSignal.set([]);
+     }
+
+     clearTxHashSignal() {
+          this.txHashSignal.set([]);
      }
 
      setUrl() {
@@ -414,7 +418,6 @@ export class TransactionUiService {
       * Returns a fully populated ValidationInputs object
       * Used by all transaction pages (Send, Delete, TrustSet, etc.)
       */
-
      getValidationInputs(options: {
           wallet: Wallet;
           network?: {
@@ -548,6 +551,7 @@ export class TransactionUiService {
           this.errorMessageSignal.set(null);
           this.updateSpinnerMessageSignal('');
           this.clearTxResultSignal();
+          this.clearTxHashSignal();
           this.clearTxSignal();
           this.clearMessages();
           this.clearWarning();

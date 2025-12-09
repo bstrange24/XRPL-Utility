@@ -73,8 +73,6 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      activeTab = signal<'create' | 'delete'>('create');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
-     accountInfo = signal<any>(null);
      selectedSingleTicket = signal<string>('');
      selectedTickets = signal<string[]>([]);
      multiSelectMode = signal(false);
@@ -83,7 +81,6 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      ticketCountField = signal<string>('');
      deleteTicketSequence = signal<string>('');
      walletTicketCount = signal<number>(0);
-     totalTickets = signal<number>(0);
 
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
@@ -218,8 +215,6 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                     }
 
                     this.walletTicketCount.set(ticketObjects.result.account_objects.length);
-                    // Just set the signal — infoMessage() recomputes automatically!
-                    this.accountInfo.set(accountInfo);
                     this.refreshUiState(wallet, accountInfo, accountObjects);
                } catch (error: any) {
                     console.error('Error in getTickets:', error);
@@ -301,10 +296,22 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                          return;
                     }
 
+                    // === SHOW ONE SPINNER FOR THE ENTIRE BATCH ===
+                    const total = ticketsToDelete.length;
+                    const isSimulate = this.txUiService.isSimulateEnabled();
+                    this.txUiService.showSpinnerWithDelay(isSimulate ? `Simulating deletion of ${total} ticket(s)...` : `Deleting ${total} ticket(s)...`, 200);
+
                     let ticketsSuccessfullyDeleted = 0;
                     const invalidTickets: string[] = [];
+                    const deletedHashes: string[] = [];
 
-                    for (const ticketSeq of ticketsToDelete) {
+                    for (let i = 0; i < ticketsToDelete.length; i++) {
+                         const ticketSeq = ticketsToDelete[i];
+
+                         // Update spinner with progress BEFORE calling executor
+                         const progressMsg = isSimulate ? `Simulating ticket ${i + 1}/${total}...` : `Deleting ticket ${i + 1}/${total}...`;
+                         this.txUiService.updateSpinnerMessage(progressMsg);
+
                          const ticketExists = ticketObjects.result.account_objects.some((ticket: any) => ticket.TicketSequence === Number(ticketSeq));
                          let currentLedger = await this.xrplService.getLastLedgerIndex(client);
 
@@ -331,17 +338,27 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                               regularKeySeed: this.txUiService.regularKeySeed(),
                               multiSignAddress: this.txUiService.multiSignAddress(),
                               multiSignSeeds: this.txUiService.multiSignSeeds(),
-                              multipleTx: true,
+                              suppressIndividualFeedback: true,
+                              customSpinnerMessage: progressMsg, // ← This preserves your message
                          });
-                         if (!result.success) {
-                              return this.txUiService.setError(`${result.error}`);
+
+                         if (result.success) {
+                              ticketsSuccessfullyDeleted++;
+                              deletedHashes.push(result.hash!);
                          } else {
-                              ticketsSuccessfullyDeleted += 1;
-                              this.txUiService.addTxHashSignal(result.hash); // ← push to array
+                              this.txUiService.setError(`${result.error}`);
+                              return;
                          }
                     }
 
-                    this.utilsService.setSuccess(this.utilsService.result);
+                    // === FINAL SUCCESS - ONLY ONCE ===
+                    if (ticketsSuccessfullyDeleted > 0) {
+                         // Push all collected hashes ONCE
+                         deletedHashes.forEach(hash => this.txUiService.addTxHashSignal(hash));
+
+                         this.utilsService.setSuccess(this.utilsService.result);
+                         this.txUiService.successMessage = isSimulate ? `Simulated deletion of ${ticketsSuccessfullyDeleted} ticket(s) successfully!` : `${ticketsSuccessfullyDeleted} ticket(s) deleted successfully!`;
+                    }
 
                     // Show one warning that contains *all* missing tickets
                     if (invalidTickets.length) {
@@ -352,15 +369,9 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                          this.txUiService.clearWarning(); // nothing missing → hide the panel
                     }
 
-                    if (!this.txUiService.isSimulateEnabled()) {
-                         this.txUiService.successMessage = `${ticketsSuccessfullyDeleted} Ticket(s) deleted successfully!`;
-
-                         const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-                         this.walletTicketCount.set(this.utilsService.getAccountTickets(updatedAccountObjects).length);
-                         await this.refreshAfterTx(client, wallet, null, true);
-                    } else {
-                         this.txUiService.successMessage = 'Simulated Ticket creation successfully!';
-                    }
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Ticket deletion successfully!' : `${ticketsSuccessfullyDeleted} Ticket(s) deleted successfully!`;
+                    await this.refreshAfterTx(client, wallet, null, true);
+                    this.clearAllSelections();
                } catch (error: any) {
                     console.error('Error in deleteTicket:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -393,8 +404,8 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
 
-          // This triggers infoMessage() to update automatically
-          this.accountInfo.set(accountInfo);
+          const ticketObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['Ticket']);
+          this.walletTicketCount.set(ticketObjects.result.account_objects.length);
 
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
           if (addDest && destination) this.addNewDestinationFromUser(destination);
@@ -493,15 +504,8 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      }
 
      clearFields() {
-          this.clearInputFields();
+          this.clearAllSelections();
           this.txUiService.clearAllOptionsAndMessages();
-     }
-
-     clearInputFields() {
-          this.txUiService.amountField.set('');
-          this.txUiService.destinationTagField.set('');
-          this.txUiService.invoiceIdField.set('');
-          this.txUiService.sourceTagField.set('');
      }
 
      openTicketDropdown(): void {

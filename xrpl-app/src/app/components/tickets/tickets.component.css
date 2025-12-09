@@ -33,12 +33,104 @@
      position: absolute;
      right: 40px;
      top: 50%;
-     transform: translateY(-50%);
-     background: #3b82f6;
-     color: white;
+     transform: translateY(-65%);
+     background: #e0f2fe;
+     color: #0c4a6e;
      font-size: 0.75rem;
      font-weight: 600;
      padding: 2px 8px;
      border-radius: 12px;
      pointer-events: none;
+}
+
+.selected-tickets-chips {
+     animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+     from {
+          opacity: 0;
+          transform: translateY(-4px);
+     }
+
+     to {
+          opacity: 1;
+          transform: translateY(0);
+     }
+}
+
+.ticket-container {
+     margin-top: 12px;
+     margin-bottom: 20px;
+     padding: 12px;
+     border: 1px solid #e5e7eb;
+     border-radius: 8px;
+     background: #fafafa;
+}
+
+.ticket-list {
+     display: flex;
+     flex-wrap: wrap;
+     gap: 8px;
+}
+
+.ticket-item {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     padding: 6px 10px;
+     border: 1px solid #e2e8f0;
+     background: white;
+     border-radius: 6px;
+     transition: background 0.15s ease;
+}
+
+.ticket-item:hover {
+     background: #f8fafc;
+}
+
+.ticket-number {
+     font-weight: 500;
+     color: #1e293b;
+     font-size: 0.95rem;
+}
+
+.ticket-remove {
+     border: none;
+     background: transparent;
+     padding: 2px;
+     cursor: pointer;
+     border-radius: 4px;
+}
+
+.ticket-remove:hover ng-icon {
+     stroke: #dc2626;
+     /* red */
+}
+
+.ticket-footer {
+     margin-top: 12px;
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+}
+
+.ticket-count {
+     color: #0c4a6e;
+     font-size: 0.9rem;
+}
+
+.clear-btn {
+     padding: 4px 10px;
+     border-radius: 6px;
+     font-size: 0.85rem;
+     border: none;
+     background: #ef4444;
+     color: white;
+     cursor: pointer;
+     transition: background 0.15s ease;
+}
+
+.clear-btn:hover {
+     background: #dc2626;
 }

@@ -11,29 +11,32 @@
 <div class="success-message">
      <lucide-icon name="check" size="20"></lucide-icon>
      <div class="success-text">
-          @if (txUiService.txHash && !txUiService.isSimulateEnabled) {
+          <!-- @if (txUiService.txHashSignal() && !txUiService.isSimulateEnabled()) {
           <span>{{txUiService.successMessage}}</span><br /><br />
-          <span>Transaction hash: <a [href]="`${url()}tx/` + txUiService.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHash }} </a></span>
+          <span>Transaction hash: <a [href]="`${url()}tx/` + txUiService.txHashSignal()" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashSignal() }} </a></span>
           } @else {
           <span>{{txUiService.successMessage}}</span>
-          }
+          } -->
 
           <!-- Multiple Hashes -->
-          @if (txUiService.txHashes.length > 1 && !txUiService.isSimulateEnabled) {
+          @if (txUiService.txHashSignal() && !txUiService.isSimulateEnabled()) {
+          <span>{{txUiService.successMessage}}</span>
           <div class="tx-hashes">
-               @for (hash of txUiService.txHashes; track hash; let i = $index) {
+               @for (hash of txUiService.txHashSignal(); track hash; let i = $index) {
                <div class="tx-hash-item">
                     Transaction {{ i + 1 }} hash:
                     <a [href]="url() + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
                </div>
                }
           </div>
+          } @else {
+          <span>{{txUiService.successMessage}}</span>
           }
 
           <!-- Single hash -->
-          @if (txUiService.txHashes.length === 1 && !txUiService.isSimulateEnabled) {
-          <span>Transaction hash: <a [href]="url() + 'tx/' + txUiService.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashes[0] }} </a></span>
-          }
+          <!-- @if (txUiService.txHashSignal().length === 1 && !txUiService.isSimulateEnabled()) {
+          <span>Transaction hash: <a [href]="url() + 'tx/' + txUiService.txHashSignal()[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashSignal()[0] }} </a></span>
+          } -->
      </div>
 </div>
 }
@@ -44,9 +47,9 @@
      <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
      <div class="tx-text">
           <!-- Display Tx Hash if we are not in simulation mode-->
-          @if (txUiService.txHash && !txUiService.isSimulateEnabled) {
+          @if (txUiService.txHashSignal() && !txUiService.isSimulateEnabled()) {
           <span>{{ txUiService.result }}</span><br />
-          <span>Transaction hash: <a [href]="`${url()}tx/` + txUiService.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHash }} </a></span>
+          <span>Transaction hash: <a [href]="`${url()}tx/` + txUiService.txHashSignal()" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashSignal() }} </a></span>
           } @else {
           <span>{{ txUiService.result }}</span>
           }
