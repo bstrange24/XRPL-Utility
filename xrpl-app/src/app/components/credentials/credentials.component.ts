@@ -504,7 +504,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      async acceptCredentials() {
           await this.withPerf('acceptCredentials', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, currentLedger, fee] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getLastLedgerIndex(client), this.xrplCache.getFee(this.xrplService, false)]);

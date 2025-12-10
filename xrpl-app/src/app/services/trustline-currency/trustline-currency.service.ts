@@ -1,10 +1,8 @@
-// services/trustline-currency/trustline-currency.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { StorageService } from '../local-storage/storage.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { UtilsService } from '../util-service/utils.service';
-import * as xrpl from 'xrpl';
 import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
 
 interface IssuerItem {
@@ -22,9 +20,9 @@ export class TrustlineCurrencyService {
      selectedIssuer$ = new BehaviorSubject<string>('');
      balance$ = new BehaviorSubject<string>('0'); // ← NEW: balance for currency + issuer
 
-     private currentWalletAddress = '';
-     private currentCurrency = '';
-     private currentIssuer = '';
+     private currentWalletAddress = signal<string>('');
+     private currentCurrency = signal<string>('');
+     private currentIssuer = signal<string>('');
 
      // Cache gateway balances per wallet (8 sec)
      private balanceCache = new Map<string, { data: any; timestamp: number }>();
@@ -34,6 +32,28 @@ export class TrustlineCurrencyService {
      }
 
      private loadFromStorage() {
+          const data = this.storage.getKnownIssuers('knownIssuers');
+          if (data) {
+               // ← DEFENSIVE: Make sure every value is an array
+               const normalized: Record<string, string[]> = {};
+               for (const [currency, issuers] of Object.entries(data)) {
+                    if (Array.isArray(issuers)) {
+                         normalized[currency] = issuers;
+                    } else if (issuers && typeof issuers === 'object') {
+                         // Convert object { "0": "r...", "1": "r..." } → array
+                         normalized[currency] = Object.values(issuers) as string[];
+                    } else {
+                         normalized[currency] = [];
+                    }
+               }
+               normalized['XRP'] = []; // always ensure XRP exists
+
+               this.knownTrustLinesIssuers = normalized;
+               this.updateCurrencies();
+          }
+     }
+
+     private loadFromStorage1() {
           const data = this.storage.getKnownIssuers('knownIssuers');
           if (data) {
                this.knownTrustLinesIssuers = data;
@@ -72,8 +92,8 @@ export class TrustlineCurrencyService {
                return;
           }
 
-          this.currentCurrency = currency;
-          this.currentWalletAddress = walletAddress || this.currentWalletAddress;
+          this.currentCurrency.set(currency);
+          this.currentWalletAddress.set(walletAddress || this.currentWalletAddress());
 
           await this.loadIssuersForCurrency(currency);
           await this.updateBalanceForCurrentCombo();
@@ -81,12 +101,38 @@ export class TrustlineCurrencyService {
 
      // Called when user picks an issuer
      selectIssuer(issuer: string) {
-          this.currentIssuer = issuer;
+          this.currentIssuer.set(issuer);
           this.selectedIssuer$.next(issuer);
           this.updateBalanceForCurrentCombo();
      }
 
      private async loadIssuersForCurrency(currency: string) {
+          let known = this.knownTrustLinesIssuers[currency] || [];
+
+          if (!Array.isArray(known)) {
+               console.warn(`Corrupted issuer list for ${currency}, resetting`);
+               known = [];
+               this.knownTrustLinesIssuers[currency] = [];
+          }
+
+          const issuers: IssuerItem[] = known
+               .map(addr => ({
+                    name: this.getNiceName(addr, currency),
+                    address: addr,
+               }))
+               .sort((a, b) => a.name.localeCompare(b.name));
+
+          this.issuers$.next(issuers);
+
+          if (issuers.length > 0 && (!this.currentIssuer() || !known.includes(this.currentIssuer()))) {
+               this.selectIssuer(issuers[0].address);
+          } else if (issuers.length === 0) {
+               this.selectedIssuer$.next('');
+               this.balance$.next('0');
+          }
+     }
+
+     private async loadIssuersForCurrency1(currency: string) {
           const known = this.knownTrustLinesIssuers[currency] || [];
           const issuers: IssuerItem[] = known
                .map(addr => ({
@@ -98,7 +144,7 @@ export class TrustlineCurrencyService {
           this.issuers$.next(issuers);
 
           // Auto-select first issuer
-          if (issuers.length > 0 && (!this.currentIssuer || !known.includes(this.currentIssuer))) {
+          if (issuers.length > 0 && (!this.currentIssuer || !known.includes(this.currentIssuer()))) {
                this.selectIssuer(issuers[0].address);
           } else if (issuers.length === 0) {
                this.selectedIssuer$.next('');
@@ -132,7 +178,7 @@ export class TrustlineCurrencyService {
           const cacheKey = `${this.currentWalletAddress}_${this.currentCurrency}`;
           const cached = this.balanceCache.get(cacheKey);
           if (cached && Date.now() - cached.timestamp < 8000) {
-               const balance = this.extractBalance(cached.data, this.currentCurrency, this.currentIssuer);
+               const balance = this.extractBalance(cached.data, this.currentCurrency(), this.currentIssuer());
                this.balance$.next(balance);
                return;
           }
@@ -140,11 +186,11 @@ export class TrustlineCurrencyService {
           try {
                const client = await this.xrplService.getClient();
                // const wallet = await this.utils.getWalletFromAddress(this.currentWalletAddress);
-               const gatewayBalances = await this.xrplService.getTokenBalance(client, this.currentWalletAddress, 'validated', '');
+               const gatewayBalances = await this.xrplService.getTokenBalance(client, this.currentWalletAddress(), 'validated', '');
 
                this.balanceCache.set(cacheKey, { data: gatewayBalances, timestamp: Date.now() });
 
-               const balance = this.extractBalance(gatewayBalances, this.currentCurrency, this.currentIssuer);
+               const balance = this.extractBalance(gatewayBalances, this.currentCurrency(), this.currentIssuer());
                this.balance$.next(balance);
           } catch (e) {
                console.warn('Failed to load balance for currency+issuer', e);
@@ -182,10 +228,10 @@ export class TrustlineCurrencyService {
      }
 
      getSelectedCurrency(): string {
-          return this.currentCurrency;
+          return this.currentCurrency();
      }
 
      getSelectedIssuer(): string {
-          return this.currentIssuer;
+          return this.currentIssuer();
      }
 }

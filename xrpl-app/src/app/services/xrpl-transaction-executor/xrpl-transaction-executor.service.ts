@@ -169,6 +169,66 @@ export class XrplTransactionExecutorService {
           });
      }
 
+     async checkCreate(
+          tx: xrpl.CheckCreate,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {}
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulated Check create (no changes will be made)...',
+               submitMessage: 'Submitting Check create to Ledger...',
+               amount: '0',
+               ...options,
+          });
+     }
+
+     async checkCancel(
+          tx: xrpl.CheckCancel,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {}
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulated Check cancel (no changes will be made)...',
+               submitMessage: 'Submitting Check cancel to Ledger...',
+               amount: '0',
+               ...options,
+          });
+     }
+
+     async checkCash(
+          tx: xrpl.CheckCash,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {}
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulated Check cash (no changes will be made)...',
+               submitMessage: 'Submitting Check cash to Ledger...',
+               amount: '0',
+               ...options,
+          });
+     }
+
      async createCredential(
           tx: xrpl.CredentialCreate,
           wallet: xrpl.Wallet,

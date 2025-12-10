@@ -12,9 +12,7 @@ export class ToastService {
      toasts = signal<Toast[]>([]);
      private isShowing = signal<boolean>(false);
 
-     constructor() {
-          console.log('🔥 ToastService instance created', Math.random());
-     }
+     constructor() {}
 
      success(message: string, duration = 2000) {
           this.show({ message, type: 'success' }, duration);

@@ -139,6 +139,21 @@ export class XrplCacheService {
           return accountObjects;
      }
 
+     async getAccountObjectsWithType(address: string, forceRefresh?: boolean, type?: string): Promise<xrpl.AccountObjectsResponse> {
+          const infoKey = `account:${address}:info:${type}`;
+          const objectsKey = `account:${address}:objects:${type}`;
+          const client = await this.getClient(() => this.xrplService.getClient());
+
+          if (forceRefresh) {
+               this.invalidate(infoKey);
+               this.invalidate(objectsKey);
+          }
+
+          const [getAccountObjectsWithType] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', type ? type : ''), 10000)]);
+
+          return getAccountObjectsWithType;
+     }
+
      /** Get current transaction fee (drops or XRP) – cached for 8 seconds (fees change slowly) */
      async getFee(xrplService: XrplService, forceRefresh = false): Promise<string> {
           const network = xrplService.getNet().environment;
