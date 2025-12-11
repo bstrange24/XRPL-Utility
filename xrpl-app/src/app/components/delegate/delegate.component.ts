@@ -28,6 +28,7 @@ import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
+import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 
 interface XRPLPermissionEntry {
      Permission: {
@@ -56,21 +57,14 @@ interface DelegateAction {
 @Component({
      selector: 'app-delegate',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './delegate.component.html',
      styleUrl: './delegate.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountDelegateComponent extends PerformanceBaseComponent implements OnInit {
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-
      private readonly destroyRef = inject(DestroyRef);
-     private readonly overlay = inject(Overlay);
-     private readonly viewContainerRef = inject(ViewContainerRef);
-
-     // Services
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
      private readonly walletManagerService = inject(WalletManagerService);
@@ -84,23 +78,15 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
-     // Domain Dropdown State
-     selectedDomainId = signal<string | null>(null);
-     domainSearchQuery = signal<string>('');
-     // Destination Dropdown
      customDestinations = signal<{ name?: string; address: string }[]>([]);
-     private overlayRef: OverlayRef | null = null;
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
-     highlightedIndex = signal<number>(-1);
 
      // Reactive State (Signals)
      activeTab = signal<'clear' | 'delegate'>('delegate');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
 
-     // Form & UI State
-     destinationField = signal<string>('');
      infoPanelExpanded = signal(false);
 
      // Dropdown
@@ -112,15 +98,25 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      rightActions: any;
      createdDelegations = signal<boolean>(false);
      existingDelegations = signal<XRPLDelegate[]>([]);
-     showDropdown = signal<boolean>(false);
-     url = signal<string>('');
-     public destinationSearch$ = new Subject<string>();
-     multiSigningEnabled = signal<boolean>(false);
-     regularKeySigningEnabled = signal<boolean>(false);
-     credentialData = signal<string>('');
      subject = signal<string>('');
      selectedWalletIndex = signal<number>(0);
-     showCredentialDropdown = signal<boolean>(false);
+
+     selectedDestinationItem = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return null;
+          return this.destinationItems().find(d => d.id === addr) || null;
+     });
+
+     destinationItems = computed(() => {
+          const currentAddr = this.currentWallet().address;
+
+          return this.destinations().map(d => ({
+               id: d.address,
+               display: d.name || 'Unknown Wallet',
+               secondary: d.address,
+               isCurrentAccount: d.address === currentAddr,
+          }));
+     });
 
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
@@ -190,7 +186,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
           this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
           this.setupWalletSubscriptions();
-          this.setupDropdownSubscriptions();
      }
 
      private loadCustomDestinations(): void {
@@ -229,10 +224,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           if (currentDest === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
-     }
-
-     private setupDropdownSubscriptions(): void {
-          this.dropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
      }
 
      trackByWalletAddress(index: number, wallet: any): string {
@@ -516,135 +507,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     onDestinationInput(event: Event): void {
-          const value = (event.target as HTMLInputElement).value;
-          this.destinationSearchQuery.set(value);
-          this.selectedDestinationAddress.set(''); // clear selection when typing
-          this.highlightedIndex.set(value ? 0 : -1); // highlight first when typing
-
-          if (value) {
-               this.dropdownService.openDropdown();
-          }
-     }
-
      clearDelegateActions() {
           this.selected.clear();
-     }
-
-     selectDestination(address: string): void {
-          if (address === this.currentWallet().address) return;
-
-          this.selectedDestinationAddress.set(address); // ← Store raw address
-          this.destinationSearchQuery.set(''); // ← Clear typing
-          this.closeDropdown();
-     }
-
-     onKeyDown(event: KeyboardEvent): void {
-          const items = this.filteredDestinations();
-          if (items.length === 0) {
-               this.highlightedIndex.set(-1);
-               return;
-          }
-
-          let index = this.highlightedIndex();
-
-          if (event.key === 'ArrowDown') {
-               event.preventDefault(); // Prevent cursor to end
-               index = index < items.length - 1 ? index + 1 : 0;
-          } else if (event.key === 'ArrowUp') {
-               event.preventDefault();
-               index = index <= 0 ? items.length - 1 : index - 1;
-          } else if (event.key === 'Enter') {
-               event.preventDefault();
-               if (index >= 0 && index < items.length) {
-                    this.selectDestination(items[index].address);
-               }
-               return;
-          } else if (event.key === 'Escape') {
-               this.closeDropdown();
-               return;
-          } else {
-               // For any other key, reset highlight
-               index = -1;
-          }
-
-          this.highlightedIndex.set(index);
-
-          // Optional: scroll highlighted item into view
-          setTimeout(() => {
-               const el = document.querySelector('.combobox-item.highlighted') as HTMLElement;
-               el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-          });
-     }
-
-     openDropdown(): void {
-          this.dropdownService.setItems(this.destinations());
-
-          // Always reset search when opening fresh
-          this.destinationSearchQuery.set('');
-          this.dropdownService.openDropdown();
-     }
-
-     closeDropdown(): void {
-          this.dropdownService.closeDropdown();
-
-          if (this.overlayRef) {
-               this.overlayRef.dispose();
-               this.overlayRef = null;
-          }
-     }
-
-     toggleDropdown(): void {
-          this.dropdownService.setItems(this.destinations());
-          this.dropdownService.toggleDropdown();
-     }
-
-     @HostListener('document:focusin', ['$event'])
-     onDocumentFocusIn(event: FocusEvent) {
-          if (this.overlayRef?.hasAttached()) {
-               const focusedInside = this.dropdownOrigin.nativeElement.contains(event.target) || this.overlayRef.overlayElement.contains(event.target as Node);
-               if (!focusedInside) {
-                    this.closeDropdown();
-               }
-          }
-     }
-
-     private openDropdownInternal(): void {
-          if (this.overlayRef?.hasAttached()) return;
-
-          if (this.overlayRef) {
-               this.overlayRef.dispose(); // CRITICAL
-               this.overlayRef = null;
-          }
-
-          const positionStrategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([
-                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
-                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
-               ])
-               .withPush(false)
-               .withFlexibleDimensions(false)
-               .withViewportMargin(8);
-
-          this.overlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy,
-               scrollStrategy: this.overlay.scrollStrategies.reposition(), // Better than close()
-               width: this.dropdownOrigin.nativeElement.getBoundingClientRect().width, // Match input width!
-          });
-          // Reset highlight when opening
-          this.highlightedIndex.set(-1);
-
-          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
-          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
-     }
-
-     private closeDropdownInternal(): void {
-          this.overlayRef?.detach();
-          this.overlayRef = null;
-          this.highlightedIndex.set(-1); // reset on close
      }
 }

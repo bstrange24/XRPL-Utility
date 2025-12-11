@@ -100,7 +100,7 @@
                                    <div class="button-group">
                                         <button class="icon-btn copy-check-id" (click)="copyDelegateId(chk.index); $event.stopPropagation(); $event.preventDefault()" title="Copy Credential ID" type="button">
                                              <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}entry/` + chk.index" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
+                                             <a [href]="txUiService.explorerUrl() + 'entry/' + chk.index" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
                                                   <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
                                              </a>
                                         </button>
@@ -119,44 +119,9 @@
                               <!-- Left Form Fields -->
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Destination</label>
-
-                                        <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                             <input #dropdownOrigin type="text" [value]="destinationDisplay()" (input)="onDestinationInput($event)" (focus)="openDropdown()" (keydown)="onKeyDown($event)" placeholder="Enter or select destination address" class="combobox-input" autocomplete="off" />
-
-                                             <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                  <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                             </button>
-                                        </div>
+                                        <label for="destination">Destination</label>
+                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                    </div>
-
-                                   <!-- <div class="form-group">
-                                        <label></label>
-                                   </div> -->
-
-                                   <!-- Dropdown template -->
-                                   <ng-template #dropdownTemplate>
-                                        <div class="combobox-wrapper" (click)="$event.stopPropagation()">
-                                             <!-- <div class="combobox-input-wrapper"> -->
-                                             <!-- <input type="text" class="combobox-input" [value]="destinationSearchQuery()" (input)="onDestinationInput($event)" (keydown.arrowDown)="moveHighlight(1)" (keydown.arrowUp)="moveHighlight(-1)" (keydown.enter)="selectHighlighted()" placeholder="Search by name or address" autocomplete="off" /> -->
-                                             <!-- </div> -->
-
-                                             <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations(); track trackByWalletAddress($index, dest)) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="highlightedIndex() === $index" (click)="selectDestination(dest.address)">
-                                                       <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet().address) {
-                                                            <span class="self-badge"> Current Account </span>
-                                                            }
-                                                       </div>
-                                                       <div class="item-address">{{ dest.address.slice(0, 6) }}...{{ dest.address.slice(-6) }}</div>
-                                                  </div>
-                                                  } @empty {
-                                                  <div class="combobox-empty">No matching addresses</div>
-                                                  }
-                                             </div>
-                                        </div>
-                                   </ng-template>
                               </div>
 
                               <div class="flags-wrapper">
@@ -204,7 +169,7 @@
                               </div>
                          </div>
 
-                         <app-transaction-options [showWhenTab]="['clear','delete']" [activeTab]="activeTab" [multiSigningEnabled]="multiSigningEnabled" [regularKeySigningEnabled]="regularKeySigningEnabled" />
+                         <app-transaction-options [showWhenTab]="['clear','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                          <!-- Action buttons -->
                          <div class="button-row">
