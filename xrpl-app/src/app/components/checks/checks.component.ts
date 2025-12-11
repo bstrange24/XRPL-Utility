@@ -114,7 +114,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      newIssuer = signal<string>('');
      tokenToRemove = signal<string>('');
      selectedWalletIndex = signal<number>(0);
-     // issuers: { name?: string; address: string }[] = [];
      issuers = signal<{ name?: string; address: string }[]>([]);
      lastCurrency = signal<string>('');
      lastIssuer = signal<string>('');
@@ -295,12 +294,9 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.onIssuerChange(address); // your existing logic runs
      }
 
-     // Add this computed signal in your SendChecksComponent class
      infoData = computed(() => {
           const wallet = this.currentWallet();
-          if (!wallet?.address) {
-               return null;
-          }
+          if (!wallet?.address) return null;
 
           const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
           let checkCount = 0;
@@ -414,8 +410,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.xrplCache.invalidateAccountCache(wallet.address);
 
           // Prevent self as destination
-          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.selectedDestinationAddress(), this.destinations())?.address || this.selectedDestinationAddress();
-          if (currentDest === wallet.address) {
+          if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
      }
@@ -571,7 +566,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     //      }
                     // } else if (this.currencyFieldDropDownValue() !== 'MPT') {
                     //      if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, checkCreateTx, destinationAddress)) {
-                    //           return this.txExecutor.setError('ERROR: Not enough IOU balance for this transaction');
+                    //           return this.txUiService.setError('ERROR: Not enough IOU balance for this transaction');
                     //      }
                     // }
 

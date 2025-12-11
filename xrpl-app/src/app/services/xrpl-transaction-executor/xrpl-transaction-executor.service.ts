@@ -408,4 +408,64 @@ export class XrplTransactionExecutorService {
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
      }
+
+     async createEscrow(
+          tx: xrpl.EscrowCreate,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating Escrow create (no changes will be made)...',
+               submitMessage: 'Creating escrow on Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async finishEscrow(
+          tx: xrpl.EscrowFinish,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating Escrow finish (no changes will be made)...',
+               submitMessage: 'Finishing escrow on Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async cancelEscrow(
+          tx: xrpl.EscrowCancel,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating Escrow cancel (no changes will be made)...',
+               submitMessage: 'Cancelling escrow on Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
 }

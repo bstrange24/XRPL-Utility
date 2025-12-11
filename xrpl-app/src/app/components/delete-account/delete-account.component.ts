@@ -264,8 +264,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           this.xrplCache.invalidateAccountCache(wallet.address);
 
           // Prevent self as destination
-          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.selectedDestinationAddress(), this.destinations())?.address || this.selectedDestinationAddress();
-          if (currentDest === wallet.address) {
+          if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
      }

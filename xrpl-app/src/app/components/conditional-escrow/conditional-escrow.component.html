@@ -12,28 +12,26 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
-
           <!-- Right form -->
           <div class="form-panel">
                <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'create'" (click)="setTab('create')">
+                    <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Create Escrow
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'finish'" (click)="setTab('finish')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'finish'" (click)="setTab('finish')">
                          <lucide-icon name="split-icon" size="20"></lucide-icon>
                          Finish Escrow
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'cancel'" (click)="setTab('cancel')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'cancel'" (click)="setTab('cancel')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
                          Cancel Escrow
                     </button>
                </div>
 
                <!-- Create Menu -->
-               @if (activeTab === 'create') {
+               @if (activeTab() === 'create') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -48,7 +46,7 @@
                }
 
                <!-- Finish Menu -->
-               @if (activeTab === 'finish') {
+               @if (activeTab() === 'finish') {
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
@@ -63,7 +61,7 @@
                }
 
                <!-- Cancel Menu -->
-               @if (activeTab === 'cancel') {
+               @if (activeTab() === 'cancel') {
                <div>
                     <div class="submenu-info-text">
                          <div class="red-button-submenu">
@@ -78,190 +76,114 @@
                }
 
                <!-- Info Message -->
-               @if (ui.infoMessage) {
-               <div class="info-panel">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="ui.safeInfo"></div>
+               @if (infoData(); as info) {
+               <div class="info-message-wrapper">
+                    <div class="info-panel">
+                         <div class="info-text">
+                              <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
+                                   <code>{{ info.walletName }}</code>
+                                   @if (info.escrowCount === 0) { has no outstanding escrows. } @else { has <strong>{{ info.escrowCount }}</strong> escrow{{ info.escrowCount === 1 ? '' : 's' }} @switch (info.activeTab) { @case ('create') { created. } @case ('finish') { that can be finished. } @case ('cancel') { that can be cancelled. } } } @if (info.links) {
+                                   <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
+                                   }
+                              </div>
+
+                              @if (info.escrowCount > 0) {
+                              <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
+                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
+                                        <span> @switch (info.activeTab) { @case ('create') { Outstanding Escrows } @case ('finish') { Finishable Escrows } @case ('cancel') { Cancellable Escrows } } ({{ info.escrowCount }}) </span>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
+                                             <path d="M6 9l6 6 6-6" />
+                                        </svg>
+                                   </div>
+
+                                   @if (infoPanelExpanded()) {
+                                   <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
+                                        @for (escrow of info.escrowsToShow; track escrow.index) {
+                                        <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
+                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + escrow.index" tooltipText="View Escrow on XRPL Explorer">
+                                                  <div style="font-weight: 500; margin-bottom: 4px">{{ escrow.amount }} @if (info.activeTab === 'create' || info.activeTab === 'cancel') { → {{ escrow.destination.slice(0,7) + '...' + escrow.destination.slice(-7) }} } @if (info.activeTab === 'finish') { ← {{ escrow.sender.slice(0,7) + '...' + escrow.sender.slice(-7) }} }</div>
+                                                  <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
+                                                       <div>Sequence: <code>{{ escrow.index }}</code></div>
+                                                       @if (escrow.finishAfter) {
+                                                       <div>Finishes: <code>{{ formatXrplTimestamp(escrow.finishAfter) }}</code></div>
+                                                       } @if (escrow.cancelAfter) {
+                                                       <div>Cancellable after: <code>{{ formatXrplTimestamp(escrow.cancelAfter) }}</code></div>
+                                                       }
+                                                  </div>
+                                             </app-tooltip-link>
+
+                                             <button (click)="copyAndToast(escrow.index, 'Escrow Sequence'); $event.stopPropagation()" class="copy-btn" title="Copy Sequence">
+                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                  </svg>
+                                             </button>
+                                        </li>
+                                        }
+                                   </ul>
+                                   }
+                              </div>
+                              }
+                         </div>
+                    </div>
                </div>
                }
 
                <!-- Warning Message -->
-               @if (ui.warningMessage) {
+               @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="ui.safeWarning"></div>
+                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
                </div>
                }
-
-               <!-- Outstanding Escrows on selected account -->
-               @if (activeTab === 'create' && existingEscrow.length > 0) {
-               <div class="outstanding-checks-panel">
-                    <!-- Header – clickable to expand/collapse -->
-                    <div class="panel-header" (click)="toggleOutstandingEscrows()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing Escrows ({{ existingEscrow.length }})
-                         </h3>
-                    </div>
-
-                    <!-- Collapsible content with smooth height animation -->
-                    <div class="payment-channel-list-container" [style.max-height]="outstandingEscrowCollapsed ? '0' : (existingEscrow.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         @if (!outstandingEscrowCollapsed) {
-                         <div class="checks-list">
-                              @for (chk of existingEscrow; track chk.TxHash) {
-                              <div class="check-card">
-                                   <div class="check-amount">{{ formatIOUXrpAmountOutstanding(chk.Amount) }} to <strong>{{ chk.Destination }}</strong></div>
-
-                                   @if (chk.CancelAfter || chk.FinishAfter || chk.DestinationTag || chk.invoiceId) {
-                                   <div class="check-extras">
-                                        <!-- Cancel After  -->
-                                        @if (chk.CancelAfter) {
-                                        <span class="badge badge-expire"> Cancel After {{ formatXrplTimestamp(chk.CancelAfter) }} </span>
-                                        }
-
-                                        <!-- Finish After  -->
-                                        @if (chk.FinishAfter) {
-                                        <span class="badge badge-expire" [title]="chk.FinishAfter"> Finish After: {{ formatXrplTimestamp(chk.FinishAfter) }} </span>
-                                        }
-
-                                        <!-- Destination Tag  -->
-                                        @if (chk.DestinationTag) {
-                                        <span class="badge badge-tag">Dest Tag: {{ chk.DestinationTag }}</span>
-                                        }
-                                   </div>
-                                   }
-
-                                   <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyEscrowTxHash(chk.TxHash); $event.stopPropagation(); $event.preventDefault()" title="Copy Escrow Hash" type="button">
-                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}entry/` + chk.TxHash" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
-                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
-                                             </a>
-                                        </button>
-                                   </div>
-                              </div>
-                              }
-                         </div>
-                         }
-                    </div>
-               </div>
-               }
-
-               <!-- ==================== EXISTING MPT ==================== -->
-               @if (activeTab === 'create' && exsitingMpt.length > 0) {
-               <div class="outstanding-checks-panel">
-                    <div class="panel-header" (click)="toggleOutstandingMpt()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing MPT ({{ exsitingMpt.length }})
-                         </h3>
-                    </div>
-
-                    <div class="payment-channel-list-container" [style.max-height]="outstandingMptCollapsed ? '0' : (exsitingMpt.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         @if (!outstandingMptCollapsed) {
-                         <div class="checks-list">
-                              @for (chk of exsitingMpt; track chk.mpt_issuance_id) {
-                              <div class="check-card">
-                                   <div class="check-amount">LedgerEntryType: {{ chk.LedgerEntryType }} MPT Amount: {{ chk.MPTAmount }} <strong>MPT Issuance ID: {{ chk.mpt_issuance_id }}</strong></div>
-
-                                   <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyMptIssuanceIdHash(chk.mpt_issuance_id); $event.stopPropagation(); $event.preventDefault()" title="Copy MPT Issuance ID" type="button">
-                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}entry/` + chk.mpt_issuance_id" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
-                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
-                                             </a>
-                                        </button>
-                                   </div>
-                              </div>
-                              }
-                         </div>
-                         }
-                    </div>
-               </div>
-               }
-
-               <!-- ==================== EXISTING IOUs ==================== -->
-               @if (activeTab === 'create' && existingIOUs.length > 0) {
-               <div class="outstanding-checks-panel">
-                    <div class="panel-header" (click)="toggleOutstandingIOU()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing IOUs ({{ existingIOUs.length }})
-                         </h3>
-                    </div>
-
-                    <div class="payment-channel-list-container" [style.max-height]="outstandingIOUCollapsed ? '0' : (existingIOUs.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         @if (!outstandingIOUCollapsed) {
-                         <div class="checks-list">
-                              @for (chk of existingIOUs; track chk.Balance.currency + chk.Balance.value) {
-                              <div class="check-card">
-                                   <div class="check-amount">Currency: {{ chk.Balance.currency }} Amount: {{ chk.Balance.value }}</div>
-                                   <div class="check-amount"><strong>Issuer: {{ chk.HighLimit.issuer }}</strong></div>
-
-                                   <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyIOUIssuanceAddress(chk.mpt_issuance_id); $event.stopPropagation(); $event.preventDefault()" title="Copy IOU Issuer" type="button">
-                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}entry/` + chk.mpt_issuance_id" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
-                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
-                                             </a>
-                                        </button>
-                                   </div>
-                              </div>
-                              }
-                         </div>
-                         }
-                    </div>
-               </div>
-               }
-               <!-- No checks message (shown when collapsed AND zero checks) -->
-               <!-- <div *ngIf="activeTab === 'create' && existingChecks.length === 0" class="no-data">
-                    <lucide-icon name="check" size="20"></lucide-icon>
-                    No outstanding checks.
-               </div> -->
 
                <form #theForm="ngForm" class="send-form">
                     <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab">
-                              @switch (activeTab) { @case ('create') {
+                         <div [@tabTransition]="activeTab()">
+                              @if(activeTab() === 'create') {
                               <!-- Currency + Amount -->
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Currency Code</label>
-                                        <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="onCurrencyChange($event)" name="currencyField">
-                                             @for (curr of availableCurrencies; track curr) {
-                                             <option [value]="curr">{{ curr }}</option>
-                                             }
-                                        </select>
+                                        <label for="currencyCodeCreate">Currency Code</label>
+                                        <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                             <ng-template #itemTemplate let-item>
+                                                  <div class="flex items-center gap-2">
+                                                       @if (item.id === 'XRP') {
+                                                       <span class="text-yellow-500 font-bold">XRP</span>
+                                                       } @else {
+                                                       <span>{{ item.display }}</span>
+                                                       }
+                                                       <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                  </div>
+                                             </ng-template>
+                                        </app-select-search-dropdown>
                                    </div>
                                    <div class="form-group">
-                                        <label>Amount</label>
+                                        <label for="amount">Amount</label>
                                         <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
                                    </div>
                               </div>
 
                               <!-- Issuer (non-XRP, non-MPT) -->
-                              @if (currencyFieldDropDownValue !== 'XRP' && currencyFieldDropDownValue !== 'MPT') {
+                              @if (currencyFieldDropDownValue() !== 'XRP' && currencyFieldDropDownValue() !== 'MPT') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Issuer</label>
-                                        <select id="issuerFields" [(ngModel)]="issuerFields" (ngModelChange)="onIssuerChange($event)" name="issuerFields">
-                                             @for (iss of issuers; track iss.address; let i = $index) {
-                                             <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
-                                             }
-                                        </select>
+                                        <label for="issuer">Issuer</label>
+                                        <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                                    </div>
                                    <div class="form-group">
-                                        <label>Currency Balance</label>
+                                        <label for="currencyBalance">Currency Balance</label>
                                         <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly />
                                    </div>
                               </div>
                               }
 
                               <!-- MPT Issuance ID -->
-                              @if (currencyFieldDropDownValue === 'MPT') {
+                              @if (currencyFieldDropDownValue() === 'MPT') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>MPT Issuance ID</label>
+                                        <label for="mptIssuanceId">MPT Issuance ID</label>
                                         <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" />
                                    </div>
                               </div>
@@ -270,36 +192,12 @@
                               <!-- Destination + Tag -->
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Destination</label>
-
-                                        <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                             <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
-
-                                             <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                  <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                             </button>
-                                        </div>
+                                        <label for="destination">Destination</label>
+                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                    </div>
 
-                                   <!-- Dropdown template -->
-                                   <ng-template #dropdownTemplate>
-                                        <div class="combobox-dropdown-overlay">
-                                             @for (dest of filteredDestinations; track trackByAddress($index, dest)) {
-                                             <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
-                                                  <div class="item-name">
-                                                       {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
-                                                       <span class="self-badge">Current Account</span>
-                                                       }
-                                                  </div>
-                                                  <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                             </div>
-                                             } @empty {
-                                             <div class="combobox-empty">No matching addresses</div>
-                                             }
-                                        </div>
-                                   </ng-template>
                                    <div class="form-group">
-                                        <label>Destination Tag</label>
+                                        <label for="destinationTag">Destination Tag</label>
                                         <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
                                    </div>
                               </div>
@@ -322,11 +220,11 @@
                               <!-- Finish Time -->
                               <div class="form-row">
                                    <div class="form-group" style="padding-bottom: 10px">
-                                        <label>Finish Time</label>
+                                        <label for="finishTime">Finish Time</label>
                                         <input type="text" id="escrowFinishTimeField" placeholder="Enter time" [(ngModel)]="escrowFinishTimeField" name="escrowFinishTimeField" />
                                    </div>
                                    <div class="form-group" style="padding-bottom: 10px">
-                                        <label>Finish Time Unit</label>
+                                        <label for="finishTimeUnit">Finish Time Unit</label>
                                         <select id="escrowFinishTimeUnit" [(ngModel)]="escrowFinishTimeUnit" name="escrowFinishTimeUnit">
                                              <option value="seconds">Seconds</option>
                                              <option value="minutes">Minutes</option>
@@ -339,11 +237,11 @@
                               <!-- Cancel Time -->
                               <div class="form-row">
                                    <div class="form-group" style="padding-bottom: 10px">
-                                        <label>Cancel Time</label>
+                                        <label for="cancelTime">Cancel Time</label>
                                         <input type="text" id="escrowCancelTimeField" placeholder="Enter time" [(ngModel)]="escrowCancelTimeField" name="escrowCancelTimeField" />
                                    </div>
                                    <div class="form-group" style="padding-bottom: 10px">
-                                        <label>Cancel Time Unit</label>
+                                        <label for="cancelTimeUnit">Cancel Time Unit</label>
                                         <select id="escrowCancelTimeUnit" [(ngModel)]="escrowCancelTimeUnit" name="escrowCancelTimeUnit">
                                              <option value="seconds">Seconds</option>
                                              <option value="minutes">Minutes</option>
@@ -355,18 +253,26 @@
                               }
 
                               <!-- Finish -->
-                              @case ('finish') {
+                              @if (activeTab() === 'finish' || activeTab() === 'cancel') {
                               <div class="form-row">
-                                   <div class="form-group" style="padding-bottom: 10px">
-                                        <label>Escrow Owner</label>
-                                        <input type="text" id="escrowOwnerField" [(ngModel)]="escrowOwnerField" name="escrowOwnerField" />
+                                   <div class="form-group">
+                                        <label for="selectEscrow">Select Escrow to {{ activeTab() === 'finish' ? 'Finish' : 'Cancel' }}</label>
+                                        <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available"> </app-select-search-dropdown>
                                    </div>
                               </div>
 
                               <div class="form-row">
-                                   <div class="form-group" style="margin-bottom: 1em">
+                                   <div class="form-group">
                                         <label>Escrow Sequence ID</label>
                                         <input type="text" [(ngModel)]="escrowSequenceNumberField" name="escrowSequenceNumberField" />
+                                   </div>
+                              </div>
+
+                              @if (activeTab() === 'finish') {
+                              <div class="form-row">
+                                   <div class="form-group" style="padding-bottom: 10px">
+                                        <label>Escrow Owner</label>
+                                        <input type="text" id="escrowOwnerField" [(ngModel)]="escrowOwnerField" name="escrowOwnerField" />
                                    </div>
                               </div>
 
@@ -384,275 +290,37 @@
                                         <input type="text" [(ngModel)]="escrowFulfillmentField" name="escrowFulfillmentField" />
                                    </div>
                               </div>
-
-                              @if (expiredOrFulfilledEscrows.length > 0) {
-                              <div class="form-row">
-                                   <div class="form-group" style="margin-bottom: 1em">
-                                        <label>Available Escrows to finish</label>
-                                        <select [(ngModel)]="selectedEscrow" name="selectedEscrow" class="form-control" (ngModelChange)="onEscrowSelect($event)">
-                                             <option [ngValue]="null" disabled>Select an escrow to finish</option>
-                                             @for (chk of expiredOrFulfilledEscrows; track chk.Sender) {
-                                             <option [ngValue]="chk">Amount in {{ formatIOUXrpAmountUI(chk.Amount) }} from {{ chk.Sender }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                              </div>
                               } }
 
-                              <!-- Cancel -->
-                              @case ('cancel') {
-                              <div class="form-row">
-                                   <div class="form-group" style="margin-bottom: 1em">
-                                        <label>Escrow Sequence ID</label>
-                                        <input type="text" [(ngModel)]="escrowSequenceNumberField" name="escrowSequenceNumberField" />
-                                   </div>
-                              </div>
-
-                              @if (expiredOrFulfilledEscrows.length > 0) {
-                              <div class="form-row">
-                                   <div class="form-group" style="margin-bottom: 1em">
-                                        <label>Available Escrows to cancel</label>
-                                        <select [(ngModel)]="selectedEscrow" name="selectedEscrow" class="form-control" (ngModelChange)="onEscrowSelect($event)">
-                                             <option [ngValue]="null" disabled>Select an escrow to cancel</option>
-                                             @for (chk of expiredOrFulfilledEscrows; track chk.Sequence + chk.Amount) {
-                                             <option [ngValue]="chk">Amount in {{ formatIOUXrpAmountUI(chk.Amount) }} to {{ chk.Destination }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                              </div>
-                              } } }
-
-                              <!-- Switches -->
-                              <div class="switch-group">
-                                   <!-- Memo group -->
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                        <span class="slider"></span>
-                                        Add Memo
-                                   </label>
-
-                                   <!-- Multi Signing Enabled group -->
-                                   @if (multiSigningEnabled) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                        <span class="slider"></span>
-                                        Use Multi-Sign
-                                   </label>
-                                   }
-
-                                   <!-- Regular Key Signing Enabled-->
-                                   @if (regularKeySigningEnabled) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                                        <span class="slider"></span>
-                                        Use Regular Key
-                                   </label>
-                                   }
-
-                                   <!-- Use Ticket for tx -->
-                                   @if (ticketArray.length > 0) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                                        <span class="slider"></span>
-                                        Use Ticket
-                                   </label>
-                                   }
-
-                                   <!-- Simulate tx -->
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="ui.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="ui.toggleSimulate($event)" />
-                                        <span class="slider"></span>
-                                        Simulate
-                                   </label>
-                              </div>
-
-                              <!-- Memo Field -->
-                              @if (isMemoEnabled) {
-                              <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-                              }
-
-                              <!-- Sign tx with Mult Sign address -->
-                              @if (useMultiSign) {
-                              <div class="multisign-grid">
-                                   <div class="multisign-field">
-                                        <label>Signers</label>
-                                        <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                                   </div>
-                                   <div class="multisign-field">
-                                        <label>Seeds</label>
-                                        <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                                   </div>
-                                   <div class="multisign-field quorum-field">
-                                        <label>Quorum</label>
-                                        <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Sign tx with Regular key address -->
-                              @if (isRegularKeyAddress) {
-                              <div class="regular-key-fields">
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Regular Key Address</label>
-                                             <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                                        </div>
-                                   </div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Regular Key Seed</label>
-                                             <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                        </div>
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Get ticket -->
-                              @if (isTicket) {
-                              <div class="ticket-fields">
-                                   <div class="form-group">
-                                        <label>Ticket Sequence</label>
-                                        @if (multiSelectMode) {
-                                        <div>
-                                             <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                                  @for (ticket of ticketArray; track ticket) {
-                                                  <option [value]="ticket">{{ ticket }}</option>
-                                                  }
-                                             </select>
-                                        </div>
-                                        } @else {
-                                        <div>
-                                             <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                                  <option value="" disabled>Select a ticket</option>
-                                                  @for (ticket of ticketArray; track ticket) {
-                                                  <option [value]="ticket">{{ ticket }}</option>
-                                                  }
-                                             </select>
-                                        </div>
-                                        }
-                                   </div>
-                              </div>
-                              }
+                              <app-transaction-options [showWhenTab]="['create', 'finish','cancel']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   @switch (activeTab) {
+                                   @switch (activeTab()) {
                                    <!-- create buttons -->
                                    @case ('create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createConditionalEscrow()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create Escrow' }}</button>
-                                   <button type="button" class="btn-primary-green" (click)="getCondition(); $event.preventDefault();" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Generate Condition' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="createConditionalEscrow()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create Escrow' }}</button>
+                                   <button type="button" class="btn-primary-green" (click)="getCondition(); $event.preventDefault();" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Generate Condition' }}</button>
                                    }
                                    <!-- finish buttons -->
                                    @case ('finish') {
-                                   <button type="button" class="btn-primary-green" (click)="finishConditionalEscrow()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Finish Escrow' }}</button>
+                                   <button type="button" class="btn-primary-green" (click)="finishConditionalEscrow()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Finish Escrow' }}</button>
                                    }
                                    <!-- claim buttons -->
                                    @case ('cancel') {
-                                   <button type="button" class="btn-primary-red" (click)="cancelEscrow()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Cancel Escrow' }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="cancelEscrow()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Escrow' }}</button>
                                    } }
                                    <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                               </div>
-                         </div>
 
-                         <!-- Spinner -->
-                         @if (ui.spinner()) {
-                         <div class="spinner-row">
-                              <div class="spinner"></div>
-                              <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
-                         </div>
-                         }
-
-                         <!-- Success message -->
-                         @if (ui.isSuccess && !ui.isError) {
-                         <div class="success-message">
-                              <lucide-icon name="check" size="20"></lucide-icon>
-                              <div class="success-text">
-                                   @if (ui.txHash && !ui.isSimulateEnabled) {
-                                   <span>{{ui.successMessage}}</span><br /><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                   } @else {
-                                   <span>{{ui.successMessage}}</span>
-                                   }
-
-                                   <!-- Multiple Hashes -->
-                                   @if (ui.txHashes.length > 1 && !ui.isSimulateEnabled) {
-                                   <div class="tx-hashes">
-                                        @for (hash of ui.txHashes; track hash; let i = $index) {
-                                        <div class="tx-hash-item">
-                                             Transaction {{ i + 1 }} hash:
-                                             <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
-                                        </div>
-                                        }
-                                   </div>
-                                   }
-
-                                   <!-- Single hash -->
-                                   @if (ui.txHashes.length === 1 && !ui.isSimulateEnabled) {
-                                   <span>Transaction hash: <a [href]="url + 'tx/' + ui.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHashes[0] }} </a></span>
-                                   }
+                              <!-- Execution time -->
+                              <div style="display: flex">
+                                   <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                               </div>
+                              <app-transaction-preview></app-transaction-preview>
                          </div>
-                         }
-
-                         <!-- Error message -->
-                         @if (ui.isError && ui.result) {
-                         <div class="tx-message error">
-                              <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
-                              <div class="tx-text">
-                                   <!-- Display Tx Hash if we are not in simulation mode-->
-                                   @if (ui.txHash && !ui.isSimulateEnabled) {
-                                   <span>{{ ui.result }}</span><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                   } @else {
-                                   <span>{{ ui.result }}</span>
-                                   }
-                              </div>
-                         </div>
-                         }
                     </div>
                </form>
-
-               <!-- Tx Preview -->
-               @if (ui.paymentTx.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h5 class="tx-title">Escrow Transaction</h5>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTx()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTx()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
-               </div>
-               }
-
-               <!-- Tx Result Preview -->
-               @if (ui.txResult.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h3 class="tx-title">Transaction Result</h3>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
-               </div>
-               }
           </div>
      </div>
 </div>
