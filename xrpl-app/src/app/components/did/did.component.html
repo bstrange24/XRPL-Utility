@@ -58,7 +58,6 @@
 
                <!-- Info Message -->
                @if (infoData(); as info) {
-
                <div class="info-panel">
                     <div class="info-text">
                          <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
@@ -68,7 +67,7 @@
                               @switch (info.mode) { @case ('set') { @if (info.didCount === 0) { has not created a DID yet. } @else { has a DID set. Only <strong>1</strong> DID can exist per account. } } @case ('delete') { @if (info.didCount === 0) { has no DID to delete. } @else { has <strong>1</strong> DID that can be deleted. } } }
                          </div>
 
-                         <!-- COLLAPSIBLE DID PANEL – only shown when a DID actually exists -->
+                         <!-- Collapsable DID panel only shown when a DID actually exists -->
                          @if (info.existingDid.length === 1) {
                          <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05)">
                               <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
@@ -83,10 +82,6 @@
 
                               @if (infoPanelExpanded()) {
                               <div style="margin-top: 14px; font-size: 0.92em; line-height: 1">
-                                   <!-- Green check -->
-                                   <!-- <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="3.5">
-                                        <path d="M20 6 9 17l-5-5" />
-                                   </svg> -->
                                    <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + info.existingDid[0].index" tooltipText="View DID entry on XRPL Explorer">
                                         <div style="font-weight: 500; color: #0c4a6e; cursor: pointer">DID Ledger Entry</div>
                                         <div style="color: #555; margin-top: 10px; word-break: break-all"><strong>Index:</strong> {{ info.existingDid[0].index }}</div>
@@ -134,33 +129,26 @@
                          <div [@tabTransition]="activeTab()">
                               @if (activeTab() === 'set' && existingDid().length <= 0) {
                               <div class="form-row">
-                                   <!-- DID Document -->
-                                   <!-- @if (activeTab() === 'set') { -->
                                    <div class="form-group">
                                         <label for="didDocument">DID Document</label>
                                         <textarea style="width: 100%; height: 200px; max-width: 100%; font-size: 0.95rem" id="didDocument" placeholder="DID Document" [(ngModel)]="didDetails().document" name="didDocument"></textarea>
                                    </div>
-                                   <!-- } -->
-                              </div>
-
-                              <!-- Credential Type-->
-                              <div class="form-row">
-                                   <!-- @if (activeTab() === 'set') { -->
-                                   <div class="form-group">
-                                        <label for="uri">URI</label>
-                                        <input type="text" [(ngModel)]="didDetails().uri" placeholder="DID URI" name="uri" />
-                                   </div>
-                                   <!-- } -->
                               </div>
 
                               <!-- URI -->
                               <div class="form-row">
-                                   <!-- @if (activeTab() === 'set') { -->
+                                   <div class="form-group">
+                                        <label for="uri">URI</label>
+                                        <input type="text" [(ngModel)]="didDetails().uri" placeholder="DID URI" name="uri" />
+                                   </div>
+                              </div>
+
+                              <!-- Did Data -->
+                              <div class="form-row">
                                    <div class="form-group">
                                         <label for="didData">DID Data</label>
                                         <textarea style="width: 100%; height: 200px; max-width: 100%; font-size: 0.95rem" id="didData" placeholder="DID Data" [(ngModel)]="didDetails().data" name="didData"></textarea>
                                    </div>
-                                   <!-- } -->
                               </div>
                               }
 

@@ -11,6 +11,7 @@ export interface SelectItem {
      isCurrentAccount?: boolean;
      isCurrentCode?: boolean;
      isCurrentToken?: boolean;
+     pending?: boolean;
 }
 
 @Component({

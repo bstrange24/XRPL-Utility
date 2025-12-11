@@ -31,6 +31,11 @@
                          @if (item.isCurrentToken) {
                          <span class="current-token-badge">Current Token</span>
                          }
+
+                         <!-- Pending for credentials -->
+                         @if (item.pending) {
+                         <span class="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full">Pending</span>
+                         }
                     </div>
 
                     <div class="item-address">{{ item.secondary }}</div>
