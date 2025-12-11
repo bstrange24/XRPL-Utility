@@ -2,6 +2,13 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { DropdownItem } from '../../models/dropdown-item.model';
 
+export interface SelectItem {
+     id: string;
+     display: string;
+     secondary?: string;
+     isCurrentAccount?: boolean;
+}
+
 @Injectable({
      providedIn: 'root',
 })
@@ -10,12 +17,22 @@ export class DestinationDropdownService {
      isOpen$ = this._isOpen.asObservable();
 
      private _allItems: DropdownItem[] = [];
+     private _allSelectedItems: SelectItem[] = [];
+
      private _filtered = new BehaviorSubject<DropdownItem[]>([]);
+     private _filteredSelectedItems = new BehaviorSubject<SelectItem[]>([]);
+
      filtered$ = this._filtered.asObservable();
+     filteredSelectedItems$ = this._filteredSelectedItems.asObservable();
 
      setItems(items: DropdownItem[]): void {
           this._allItems = items || [];
           this._filtered.next(this._allItems);
+     }
+
+     setSelectedItems(items: SelectItem[]): void {
+          this._allSelectedItems = items || [];
+          this._filteredSelectedItems.next(this._allSelectedItems);
      }
 
      openDropdown(): void {

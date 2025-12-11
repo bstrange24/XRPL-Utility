@@ -1,11 +1,10 @@
-import { Component, OnInit, ElementRef, ViewChild, inject, TemplateRef, ViewContainerRef, computed, DestroyRef, signal, HostListener, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { OverlayModule, Overlay, OverlayRef } from '@angular/cdk/overlay';
-import { TemplatePortal } from '@angular/cdk/portal';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { CheckCreate, CheckCash, CheckCancel } from 'xrpl';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
@@ -30,6 +29,7 @@ import { TrustlineCurrencyService } from '../../services/trustline-currency/trus
 import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
+import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 
 interface MPToken {
      LedgerEntryType: 'MPToken';
@@ -53,24 +53,14 @@ interface IssuerItem {
 @Component({
      selector: 'app-checks',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './checks.component.html',
      styleUrl: './checks.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendChecksComponent extends PerformanceBaseComponent implements OnInit {
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-     @ViewChild('unifiedCheckDropdownTemplate') unifiedCheckDropdownTemplate!: TemplateRef<any>;
-     @ViewChild('checkInput') checkInput!: ElementRef<HTMLInputElement>;
-
      private readonly destroyRef = inject(DestroyRef);
-     private readonly overlay = inject(Overlay);
-     private readonly viewContainerRef = inject(ViewContainerRef);
-     private overlayRef: OverlayRef | null = null;
-
-     // Services
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
      private readonly walletManagerService = inject(WalletManagerService);
@@ -89,25 +79,18 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
-     highlightedIndex = signal<number>(-1);
-     highlightedCredentialIdIndex = signal<number>(-1);
-     // Check ID Dropdown State
      checkIdSearchQuery = signal<string>('');
-     highlightedCheckIdIndex = signal<number>(-1);
-     private checkIdOverlayRef: OverlayRef | null = null;
 
      // Reactive State (Signals)
      activeTab = signal<'create' | 'cash' | 'cancel'>('create');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal(false);
-
      amountField = signal<string>('');
      destinationField = signal<string>('');
      destinationTagField = signal<string>('');
      sourceTagField = signal<string>('');
      invoiceIdField = signal<string>('');
-
      currencyFieldDropDownValue = signal<string>('XRP');
      checkExpirationTime = signal<string>('seconds');
      issuerFields = signal<string>('');
@@ -119,7 +102,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      isMptEnabled = signal(false);
      currencyBalanceField = signal<string>('0');
      gatewayBalance = signal<string>('0');
-     private knownTrustLinesIssuers = signal<{ [key: string]: string[] }>({ XRP: [] });
+     private readonly knownTrustLinesIssuers = signal<{ [key: string]: string[] }>({ XRP: [] });
      issuerToRemove = signal<string>('');
      currencies = signal<string[]>([]);
      userAddedCurrencyFieldDropDownValue = signal<string[]>([]);
@@ -131,40 +114,90 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      newIssuer = signal<string>('');
      tokenToRemove = signal<string>('');
      selectedWalletIndex = signal<number>(0);
-     issuers: { name?: string; address: string }[] = [];
+     // issuers: { name?: string; address: string }[] = [];
+     issuers = signal<{ name?: string; address: string }[]>([]);
      lastCurrency = signal<string>('');
      lastIssuer = signal<string>('');
      cancellableChecks = signal<any[]>([]);
      cashableChecks = signal<any[]>([]);
      existingChecks = signal<any[]>([]);
      outstandingChecksCollapsed = signal(true);
-     editingIndex!: (index: number) => boolean;
-     tempName = signal<string>('');
-     filterQuery = signal<string>('');
-     // isLoadingChecks = signal(false);
+     currencyChangeTrigger = signal(0);
 
-     // Add these computed signals
-     // isAmountValid = computed(() => {
-     //      const val = this.amountField().trim();
-     //      if (!val) return false;
-     //      const num = parseFloat(val);
-     //      return !isNaN(num) && num > 0;
-     // });
+     selectedCheckItem = computed(() => {
+          const id = this.checkIdField();
+          if (!id) return null;
+          return this.checkItems().find(item => item.id === id) || null;
+     });
 
-     // isDestinationValid = computed(() => {
-     //      const addr = this.selectedDestinationAddress() || this.destinationSearchQuery().trim();
-     //      return xrpl.isValidAddress(addr);
-     // });
+     checkItems = computed(() => {
+          const list = this.activeTab() === 'cash' ? this.cashableChecks() : this.cancellableChecks();
 
-     // isCheckIdValid = computed(() => {
-     //      return this.checkIdField().length === 64 && /^[A-F0-9]{64}$/i.test(this.checkIdField());
-     // });
+          return list.map(check => {
+               const addr = this.activeTab() === 'cash' ? check.sender : check.destination;
+               const shortAddr = addr?.slice(0, 8) + '...' + addr?.slice(-6);
 
-     // canCreateCheck = computed(() => this.isAmountValid() && this.isDestinationValid() && this.currentWallet().address);
+               return {
+                    id: check.id,
+                    display: `${this.formatIOUXrpAmountOutstanding(check.sendMax)} ${this.activeTab() === 'cash' ? '←' : '→'} ${shortAddr}`,
+                    secondary: check.id,
+                    isCurrentAccount: false, // checks can't be current account
+               };
+          });
+     });
 
-     // canCashCheck = computed(() => this.isAmountValid() && this.isCheckIdValid() && this.checkIdField());
+     onCheckSelected(item: SelectItem | null) {
+          this.checkIdField.set(item?.id || '');
+     }
 
-     // canCancelCheck = computed(() => this.isCheckIdValid() && this.checkIdField());
+     selectedDestinationItem = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return null;
+          return this.destinationItems().find(d => d.id === addr) || null;
+     });
+
+     destinationItems = computed(() => {
+          const currentAddr = this.currentWallet().address;
+
+          return this.destinations().map(d => ({
+               id: d.address,
+               display: d.name || 'Unknown Wallet',
+               secondary: d.address,
+               isCurrentAccount: d.address === currentAddr,
+          }));
+     });
+
+     currencyItems = computed(() => {
+          const currentCode = this.currencyFieldDropDownValue();
+          return this.availableCurrencies.map(curr => ({
+               id: curr,
+               display: curr === 'XRP' ? 'XRP' : curr,
+               // secondary: curr === 'XRP' ? 'Native XRPL currency' : 'Issued token',
+               // secondary: curr === 'XRP' ? 'Native currency' : `${this.trustlineCurrency.getIssuersForCurrency(curr).length} issuer(s)`,
+               secondary:
+                    curr === 'XRP'
+                         ? 'Native currency'
+                         : (() => {
+                                const count = this.trustlineCurrency.getIssuersForCurrency(curr).length;
+                                return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
+                           })(),
+               isCurrentAccount: false,
+               isCurrentCode: curr === currentCode, // This one!
+               isCurrentToken: false,
+          }));
+     });
+
+     selectedCurrencyItem = computed(() => {
+          const code = this.currencyFieldDropDownValue();
+          if (!code) return null;
+          return this.currencyItems().find(item => item.id === code) || null;
+     });
+
+     onCurrencySelected(item: SelectItem | null) {
+          const currency = item?.id || 'XRP';
+          this.currencyFieldDropDownValue.set(currency);
+          this.onCurrencyChange(currency); // triggers issuer reload + balance update
+     }
 
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
@@ -236,6 +269,32 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           });
      });
 
+     issuerItems = computed(() => {
+          const currentIssuer = this.trustlineCurrency.getSelectedIssuer();
+          return this.issuers().map((iss, i) => ({
+               id: iss.address,
+               display: iss.name || `Issuer ${i + 1}`,
+               secondary: iss.address.slice(0, 7) + '...' + iss.address.slice(-7),
+               isCurrentAccount: false,
+               isCurrentCode: false,
+               isCurrentToken: iss.address === currentIssuer, // This one!
+          }));
+     });
+
+     selectedIssuerAddress = computed(() => this.trustlineCurrency.getSelectedIssuer());
+
+     selectedIssuerItem = computed(() => {
+          const addr = this.trustlineCurrency.getSelectedIssuer(); // ← read directly from service
+          if (!addr) return null;
+          return this.issuerItems().find((item: { id: string }) => item.id === addr) || null;
+     });
+
+     onIssuerSelected(item: SelectItem | null) {
+          const address = item?.id || '';
+          this.trustlineCurrency.selectIssuer(address);
+          this.onIssuerChange(address); // your existing logic runs
+     }
+
      // Add this computed signal in your SendChecksComponent class
      infoData = computed(() => {
           const wallet = this.currentWallet();
@@ -296,9 +355,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.refreshStoredIssuers();
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
-          this.setupDropdownSubscriptions();
-          // this.populateDefaultDateTime();
-
           this.currencyFieldDropDownValue.set('XRP');
 
           // Subscribe once
@@ -311,7 +367,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           });
 
           this.trustlineCurrency.issuers$.subscribe(issuers => {
-               this.issuers = issuers;
+               this.issuers.set(issuers);
           });
 
           this.trustlineCurrency.selectedIssuer$.subscribe(issuer => {
@@ -364,10 +420,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           }
      }
 
-     private setupDropdownSubscriptions(): void {
-          this.dropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
-     }
-
      trackByAddress(index: number, item: DropdownItem): string {
           return item.address;
      }
@@ -414,7 +466,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      async getChecks(forceRefresh = false): Promise<void> {
           await this.withPerf('getChecks', async () => {
-               // this.isLoadingChecks.set(true);
                this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
@@ -438,7 +489,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     console.error('Error in getChecks:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
-                    // this.isLoadingChecks.set(false);
                     this.txUiService.spinner.set(false);
                }
           });
@@ -449,7 +499,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const [{ accountInfo, accountObjects }, checkObjects, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getAccountObjectsWithType(this.currentWallet().address, true, 'check'), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
+                    const [{ accountInfo, accountObjects }, trustLines, checkObjects, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getAccountObjectsWithType(this.currentWallet().address, true, 'check'), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
                     const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const [destinationAccountInfo] = await Promise.all([this.xrplService.getAccountInfo(client, destinationAddress, 'validated', '')]);
@@ -492,6 +542,12 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
                     };
 
+                    if (this.currencyFieldDropDownValue() !== 'MPT') {
+                         if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, checkCreateTx, this.issuerFields())) {
+                              return this.txUiService.setError('ERROR: Not enough IOU balance for this transaction');
+                         }
+                    }
+
                     await this.setTxOptionalFields(client, checkCreateTx, wallet, accountInfo, 'create');
 
                     const result = await this.txExecutor.checkCreate(checkCreateTx, wallet, client, {
@@ -520,7 +576,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     // }
 
                     if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
-                         // await this.updateCurrencyBalance(gatewayBalances, wallet);
                          this.onCurrencyChange(this.currencyFieldDropDownValue());
                     }
 
@@ -586,12 +641,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          Fee: fee,
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
                     };
-
-                    if (this.currencyFieldDropDownValue() !== 'MPT') {
-                         if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, checkCashTx, this.issuerFields())) {
-                              return this.txUiService.setError('ERROR: Not enough IOU balance for this transaction');
-                         }
-                    }
 
                     await this.setTxOptionalFields(client, checkCashTx, wallet, accountInfo, 'cash');
 
@@ -768,7 +817,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      private async setTxOptionalFields(client: xrpl.Client, checkTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (txType === 'create') {
                if (this.expirationTimeField && this.expirationTimeField() != '') {
-                    const checkExpiration = this.utilsService.addTime(parseInt(this.expirationTimeField()), this.checkExpirationTime() as 'seconds' | 'minutes' | 'hours' | 'days').toString();
+                    const checkExpiration = this.utilsService.addTime(Number.parseInt(this.expirationTimeField()), this.checkExpirationTime() as 'seconds' | 'minutes' | 'hours' | 'days').toString();
                     this.utilsService.setExpiration(checkTx, Number(checkExpiration));
                }
 
@@ -780,7 +829,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     this.utilsService.setSourceTagField(checkTx, this.txUiService.sourceTagField());
                }
 
-               if (this.destinationTagField() && parseInt(this.destinationTagField()) > 0) {
+               if (this.destinationTagField() && Number.parseInt(this.destinationTagField()) > 0) {
                     this.utilsService.setDestinationTag(checkTx, this.destinationTagField());
                }
           }
@@ -805,7 +854,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.getCashableChecks(accountObjects, wallet.classicAddress);
           this.getCancelableChecks(accountObjects, wallet.classicAddress);
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-          if (addDest) this.addNewDestinationFromUser(destination ? destination : '');
+          if (addDest) this.addNewDestinationFromUser(destination || '');
           this.refreshUiState(wallet, accountInfo, accountObjects);
      }
 
@@ -933,7 +982,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      }
 
      formatInvoiceId(invoiceId: any): string {
-          return this.utilsService.formatInvoiceId(invoiceId ? invoiceId : '');
+          return this.utilsService.formatInvoiceId(invoiceId || '');
      }
 
      formatXrplTimestamp(timestamp: number): string {
@@ -966,18 +1015,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.checkIdField.set('');
           this.checkIdSearchQuery.set('');
           this.txUiService.clearAllOptionsAndMessages();
-          // if (!excludeCheckId) {
-          //      // this.resetCheckIdDropDown();
-          // }
-          // this.amountField.set('');
-          // this.selectedIssuer.set('');
-          // this.currencyFieldDropDownValue.set('XRP');
-          // this.destinationTagField.set('');
-          // this.sourceTagField.set('');
-          // this.invoiceIdField.set('');
-          // this.expirationTimeField.set('');
-          // this.checkExpirationTime.set('seconds');
-          // this.txUiService.clearAllOptionsAndMessages();
      }
 
      resetCheckIdDropDown() {
@@ -987,6 +1024,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      onCurrencyChange(currency: string) {
           this.trustlineCurrency.selectCurrency(currency, this.currentWallet().address);
+          this.currencyChangeTrigger.update(n => n + 1); // ← forces dropdown reset
      }
 
      onIssuerChange(issuer: string) {
@@ -1039,240 +1077,12 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                // No currencies left
                this.currencyFieldDropDownValue.set('');
                this.issuerFields.set('');
-               this.issuers = [];
+               this.issuers.set([]);
           }
      }
 
      getIssuerForCheck(checks: any[], checkIndex: string): string | null {
           const check = checks.find(c => c.index === checkIndex);
           return check?.SendMax?.issuer || null;
-     }
-
-     onDestinationInput(event: Event): void {
-          const value = (event.target as HTMLInputElement).value;
-          this.destinationSearchQuery.set(value);
-          this.selectedDestinationAddress.set(''); // clear selection when typing
-          this.highlightedIndex.set(value ? 0 : -1); // highlight first when typing
-
-          if (value) {
-               this.dropdownService.openDropdown();
-          }
-     }
-
-     selectDestination(address: string): void {
-          if (address === this.currentWallet().address) return;
-
-          this.selectedDestinationAddress.set(address); // ← Store raw address
-          this.destinationSearchQuery.set(''); // ← Clear typing
-          this.closeDropdown();
-     }
-
-     onKeyDown(event: KeyboardEvent): void {
-          const isDestinationOpen = this.overlayRef?.hasAttached() ?? false;
-          const isCredentialOpen = this.checkIdOverlayRef?.hasAttached() ?? false;
-
-          if (!isDestinationOpen && !isCredentialOpen) return;
-
-          // Get the correct list and index signal
-          let items: any[] = [];
-          let currentIndexSignal = -1;
-          let selectCallback: ((item: any) => void) | null = null;
-
-          if (isDestinationOpen) {
-               items = this.filteredDestinations();
-               currentIndexSignal = this.highlightedIndex();
-               selectCallback = item => this.selectDestination(item.address);
-          } else if (isCredentialOpen) {
-               items = this.filteredCheckIds();
-               currentIndexSignal = this.highlightedCheckIdIndex();
-               selectCallback = item => this.selectCheckId(item);
-          }
-
-          if (items.length === 0) {
-               this.highlightedIndex.set(-1);
-               this.highlightedCredentialIdIndex.set(-1);
-               return;
-          }
-
-          let index = currentIndexSignal;
-
-          if (event.key === 'ArrowDown') {
-               event.preventDefault();
-               index = index < items.length - 1 ? index + 1 : 0;
-          } else if (event.key === 'ArrowUp') {
-               event.preventDefault();
-               index = index <= 0 ? items.length - 1 : index - 1;
-          } else if (event.key === 'Enter') {
-               event.preventDefault();
-               if (index >= 0 && index < items.length && selectCallback) {
-                    selectCallback(items[index]);
-               }
-               return;
-          } else if (event.key === 'Escape') {
-               if (isDestinationOpen) this.closeDropdown();
-               else this.closeCheckIdDropdown();
-               return;
-          } else {
-               index = -1; // reset on any other key
-          }
-
-          // Update correct highlight index
-          if (isDestinationOpen) {
-               this.highlightedIndex.set(index);
-          } else {
-               this.highlightedCheckIdIndex.set(index);
-          }
-
-          // Scroll into view
-          setTimeout(() => {
-               const el = document.querySelector('.combobox-item.highlighted') as HTMLElement;
-               el?.scrollIntoView({ block: 'nearest' });
-          });
-     }
-
-     openDropdown(): void {
-          this.dropdownService.setItems(this.destinations());
-
-          // Always reset search when opening fresh
-          this.destinationSearchQuery.set('');
-          this.dropdownService.openDropdown();
-     }
-
-     closeDropdown(): void {
-          this.dropdownService.closeDropdown();
-          this.overlayRef?.dispose();
-          this.overlayRef = null;
-          this.highlightedIndex.set(-1);
-     }
-
-     toggleDropdown(): void {
-          this.dropdownService.setItems(this.destinations());
-          this.dropdownService.toggleDropdown();
-     }
-
-     @HostListener('document:focusin', ['$event'])
-     onGlobalFocusIn(event: FocusEvent) {
-          const target = event.target as Node;
-
-          let shouldCloseDestination = false;
-          let shouldCloseDomain = false;
-
-          // Check destination dropdown
-          if (this.overlayRef?.hasAttached()) {
-               const destInside = this.dropdownOrigin.nativeElement.contains(target) || this.overlayRef.overlayElement.contains(target);
-
-               if (!destInside) {
-                    shouldCloseDestination = true;
-               }
-          }
-
-          // Check domain dropdown
-          if (this.checkIdOverlayRef?.hasAttached()) {
-               const domainInside = this.checkInput.nativeElement.contains(target) || this.checkIdOverlayRef.overlayElement.contains(target);
-
-               if (!domainInside) {
-                    shouldCloseDomain = true;
-               }
-          }
-
-          // Close only the ones that lost focus
-          if (shouldCloseDestination) {
-               this.closeDropdown(); // closes destination dropdown + disposes overlayRef
-          }
-          4;
-          if (shouldCloseDomain) {
-               this.closeCheckIdDropdown(); // closes domain dropdown + disposes domainOverlayRef
-          }
-     }
-
-     private openDropdownInternal(): void {
-          if (this.overlayRef?.hasAttached()) return;
-
-          if (this.overlayRef) {
-               this.overlayRef.dispose(); // CRITICAL
-               this.overlayRef = null;
-          }
-
-          const positionStrategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([
-                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
-                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
-               ])
-               .withPush(false)
-               .withFlexibleDimensions(false)
-               .withViewportMargin(8);
-
-          this.overlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy,
-               scrollStrategy: this.overlay.scrollStrategies.reposition(), // Better than close()
-               width: this.dropdownOrigin.nativeElement.getBoundingClientRect().width, // Match input width!
-          });
-          // Reset highlight when opening
-          this.highlightedIndex.set(-1);
-
-          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
-          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
-     }
-
-     private closeDropdownInternal(): void {
-          this.overlayRef?.detach();
-          this.overlayRef = null;
-     }
-
-     openCheckIdDropdown(): void {
-          if (this.checkIdOverlayRef?.hasAttached()) return;
-
-          // Critical: Ensure checkInput is available
-          if (!this.checkInput?.nativeElement) {
-               console.warn('checkInput not ready yet');
-               return;
-          }
-
-          this.checkIdOverlayRef?.dispose();
-
-          const positionStrategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.checkInput)
-               .withPositions([
-                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
-                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
-               ])
-               .withPush(false);
-
-          this.checkIdOverlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy,
-               scrollStrategy: this.overlay.scrollStrategies.reposition(),
-               width: this.checkInput.nativeElement.getBoundingClientRect().width,
-          });
-
-          this.highlightedCheckIdIndex.set(-1);
-          this.checkIdOverlayRef.attach(new TemplatePortal(this.unifiedCheckDropdownTemplate, this.viewContainerRef));
-          this.checkIdOverlayRef.backdropClick().subscribe(() => this.closeCheckIdDropdown());
-     }
-
-     closeCheckIdDropdown(): void {
-          this.checkIdOverlayRef?.detach();
-          this.checkIdOverlayRef = null;
-          this.highlightedCheckIdIndex.set(-1);
-     }
-
-     selectCheckId(check: any): void {
-          this.checkIdField.set(check.id); // This now works!
-          this.checkIdSearchQuery.set(''); // Clear search
-          this.closeCheckIdDropdown();
-     }
-
-     onCheckIdInput(event: Event): void {
-          const value = (event.target as HTMLInputElement).value;
-          this.checkIdSearchQuery.set(value);
-
-          // THIS IS THE MISSING LINE:
-          this.checkIdField.set(value); // Keep the actual model in sync!
      }
 }

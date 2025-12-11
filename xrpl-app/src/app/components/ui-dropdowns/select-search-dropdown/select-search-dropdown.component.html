@@ -1,0 +1,41 @@
+<div class="combobox-container">
+     <input #inputEl type="text" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (keydown)="onKeydown($event)" [placeholder]="placeholder()" class="combobox-input" autocomplete="off" />
+
+     <button type="button" (click)="toggle()" class="combobox-toggle">
+          <lucide-icon name="chevron-down" size="18"></lucide-icon>
+     </button>
+</div>
+
+<!-- Register template portal -->
+<ng-template #dropdown let-data>
+     <div class="combobox-wrapper-stop">
+          <div class="combobox-dropdown-overlay">
+               @if (filteredItems().length === 0) {
+               <div class="combobox-empty">{{ emptyMessage() }}</div>
+               } @for (item of filteredItems(); track item.id; let i = $index) {
+               <div class="combobox-item" [class.highlighted]="highlightedIndex() === i || item.id === value()?.id" [class.current-account]="item.isCurrentAccount" [class.current-code]="item.isCurrentCode" [class.current-token]="item.isCurrentToken" (click)="(item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) ? null : onSelect(item)">
+                    <div class="item-name">
+                         {{ item.display }}
+
+                         <!-- Current Account (for destination wallet) -->
+                         @if (item.isCurrentAccount) {
+                         <span class="current-account-badge">Current Account</span>
+                         }
+
+                         <!-- Current Code (for currency code dropdown) -->
+                         @if (item.isCurrentCode) {
+                         <span class="current-code-badge">Current Code</span>
+                         }
+
+                         <!-- Current Token (for issuer dropdown) -->
+                         @if (item.isCurrentToken) {
+                         <span class="current-token-badge">Current Token</span>
+                         }
+                    </div>
+
+                    <div class="item-address">{{ item.secondary }}</div>
+               </div>
+               }
+          </div>
+     </div>
+</ng-template>

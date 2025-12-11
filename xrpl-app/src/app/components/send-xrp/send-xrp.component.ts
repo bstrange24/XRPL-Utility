@@ -1,11 +1,10 @@
-import { Component, OnInit, ElementRef, ViewChild, inject, TemplateRef, ViewContainerRef, ChangeDetectionStrategy, DestroyRef, signal, computed, HostListener } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, DestroyRef, signal, computed } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { OverlayModule, Overlay, OverlayRef } from '@angular/cdk/overlay';
-import { TemplatePortal } from '@angular/cdk/portal';
+import { OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { UtilsService } from '../../services/util-service/utils.service';
@@ -24,28 +23,22 @@ import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 
 @Component({
      selector: 'app-send-xrp',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendXrpModernComponent extends PerformanceBaseComponent implements OnInit {
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-
      private readonly destroyRef = inject(DestroyRef);
-     private readonly overlay = inject(Overlay);
-     private readonly viewContainerRef = inject(ViewContainerRef);
-
-     // Services
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
      private readonly walletManagerService = inject(WalletManagerService);
@@ -75,6 +68,22 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal(false);
      accountInfo = signal<any>(null);
+     selectedDestinationItem = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return null;
+          return this.destinationItems().find(d => d.id === addr) || null;
+     });
+
+     destinationItems = computed(() => {
+          const currentAddr = this.currentWallet().address;
+
+          return this.destinations().map(d => ({
+               id: d.address,
+               display: d.name || 'Unknown Wallet',
+               secondary: d.address,
+               isCurrentAccount: d.address === currentAddr,
+          }));
+     });
 
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
@@ -133,7 +142,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      ngOnInit(): void {
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
-          this.setupDropdownSubscriptions();
      }
 
      private loadCustomDestinations(): void {
@@ -175,11 +183,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           }
      }
 
-     private setupDropdownSubscriptions(): void {
-          this.dropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
-     }
-
-     trackByWalletAddress(index: number, wallet: any) {
+     trackByWalletAddress(index: number, wallet: any): string {
           return wallet.address;
      }
 
@@ -400,133 +404,5 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.txUiService.destinationTagField.set('');
           this.txUiService.invoiceIdField.set('');
           this.txUiService.sourceTagField.set('');
-     }
-
-     onDestinationInput(event: Event): void {
-          const value = (event.target as HTMLInputElement).value;
-          this.destinationSearchQuery.set(value);
-          this.selectedDestinationAddress.set(''); // clear selection when typing
-          this.highlightedIndex.set(value ? 0 : -1); // highlight first when typing
-
-          if (value) {
-               this.dropdownService.openDropdown();
-          }
-     }
-
-     selectDestination(address: string): void {
-          if (address === this.currentWallet().address) return;
-
-          this.selectedDestinationAddress.set(address); // ← Store raw address
-          this.destinationSearchQuery.set(''); // ← Clear typing
-          this.closeDropdown();
-     }
-
-     onKeyDown(event: KeyboardEvent): void {
-          const items = this.filteredDestinations();
-          if (items.length === 0) {
-               this.highlightedIndex.set(-1);
-               return;
-          }
-
-          let index = this.highlightedIndex();
-
-          if (event.key === 'ArrowDown') {
-               event.preventDefault(); // Prevent cursor to end
-               index = index < items.length - 1 ? index + 1 : 0;
-          } else if (event.key === 'ArrowUp') {
-               event.preventDefault();
-               index = index <= 0 ? items.length - 1 : index - 1;
-          } else if (event.key === 'Enter') {
-               event.preventDefault();
-               if (index >= 0 && index < items.length) {
-                    this.selectDestination(items[index].address);
-               }
-               return;
-          } else if (event.key === 'Escape') {
-               this.closeDropdown();
-               return;
-          } else {
-               // For any other key, reset highlight
-               index = -1;
-          }
-
-          this.highlightedIndex.set(index);
-
-          // Optional: scroll highlighted item into view
-          setTimeout(() => {
-               const el = document.querySelector('.combobox-item.highlighted') as HTMLElement;
-               el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-          });
-     }
-
-     openDropdown(): void {
-          this.dropdownService.setItems(this.destinations());
-
-          // Always reset search when opening fresh
-          this.destinationSearchQuery.set('');
-          this.dropdownService.openDropdown();
-     }
-
-     closeDropdown(): void {
-          this.dropdownService.closeDropdown();
-
-          if (this.overlayRef) {
-               this.overlayRef.dispose();
-               this.overlayRef = null;
-          }
-     }
-
-     toggleDropdown(): void {
-          this.dropdownService.setItems(this.destinations());
-          this.dropdownService.toggleDropdown();
-     }
-
-     @HostListener('document:focusin', ['$event'])
-     onDocumentFocusIn(event: FocusEvent) {
-          if (this.overlayRef?.hasAttached()) {
-               const focusedInside = this.dropdownOrigin.nativeElement.contains(event.target) || this.overlayRef.overlayElement.contains(event.target as Node);
-               if (!focusedInside) {
-                    this.closeDropdown();
-               }
-          }
-     }
-
-     private openDropdownInternal(): void {
-          if (this.overlayRef?.hasAttached()) return;
-
-          if (this.overlayRef) {
-               this.overlayRef.dispose(); // CRITICAL
-               this.overlayRef = null;
-          }
-
-          const positionStrategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([
-                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
-                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
-               ])
-               .withPush(false)
-               .withFlexibleDimensions(false)
-               .withViewportMargin(8);
-
-          this.overlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy,
-               scrollStrategy: this.overlay.scrollStrategies.reposition(), // Better than close()
-               width: this.dropdownOrigin.nativeElement.getBoundingClientRect().width, // Match input width!
-          });
-          // Reset highlight when opening
-          this.highlightedIndex.set(-1);
-
-          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
-          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
-     }
-
-     private closeDropdownInternal(): void {
-          this.overlayRef?.detach();
-          this.overlayRef = null;
-          this.highlightedIndex.set(-1); // reset on close
      }
 }

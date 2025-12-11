@@ -74,9 +74,6 @@
                     </div>
                </div>
                }
-               <!-- @if (isLoadingChecks()) { -->
-               <!-- <div class="combobox-empty">Loading checks...</div> -->
-               <!-- } -->
 
                <!-- Info Message -->
                @if (infoData(); as info) {
@@ -171,15 +168,22 @@
                               <!-- Currency + Amount -->
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Currency Code</label>
-                                        <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="onCurrencyChange($event)" name="currencyField">
-                                             @for (curr of availableCurrencies; track curr) {
-                                             <option [value]="curr">{{ curr }}</option>
-                                             }
-                                        </select>
+                                        <label for="currencyCodeCreate">Currency Code</label>
+                                        <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                             <ng-template #itemTemplate let-item>
+                                                  <div class="flex items-center gap-2">
+                                                       @if (item.id === 'XRP') {
+                                                       <span class="text-yellow-500 font-bold">XRP</span>
+                                                       } @else {
+                                                       <span>{{ item.display }}</span>
+                                                       }
+                                                       <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                  </div>
+                                             </ng-template>
+                                        </app-select-search-dropdown>
                                    </div>
                                    <div class="form-group">
-                                        <label>Amount</label>
+                                        <label for="amount">Amount</label>
                                         <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
                                    </div>
                               </div>
@@ -188,15 +192,11 @@
                               @if (currencyFieldDropDownValue() !== 'XRP') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Issuer</label>
-                                        <select id="issuerFields" [(ngModel)]="issuerFields" (ngModelChange)="onIssuerChange($event)" name="issuerFields">
-                                             @for (iss of issuers; track iss.address) {
-                                             <option [value]="iss.address">{{ iss.name }} ({{ iss.address | slice:0:8 }}...{{ iss.address | slice:-6 }})</option>
-                                             }
-                                        </select>
+                                        <label for="issuer">Issuer</label>
+                                        <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                                    </div>
                                    <div class="form-group">
-                                        <label>Currency Balance</label>
+                                        <label for="currencyBalance">Currency Balance</label>
                                         <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly />
                                    </div>
                               </div>
@@ -205,39 +205,12 @@
                               <!-- Destination + Tag -->
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Destination</label>
-
-                                        <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                             <input #dropdownOrigin type="text" [value]="destinationDisplay()" (input)="onDestinationInput($event)" (focus)="openDropdown()" (keydown)="onKeyDown($event)" placeholder="Enter or select destination address" class="combobox-input" autocomplete="off" />
-
-                                             <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                  <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                             </button>
-                                        </div>
+                                        <label for="destination">Destination</label>
+                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                    </div>
 
-                                   <!-- Destination Dropdown template -->
-                                   <ng-template #dropdownTemplate>
-                                        <div class="combobox-wrapper" (click)="$event.stopPropagation()">
-                                             <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations(); track trackByWalletAddress($index, dest)) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet().address" [class.highlighted]="highlightedIndex() === $index" (click)="selectDestination(dest.address)">
-                                                       <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet().address) {
-                                                            <span class="self-badge"> Current Account </span>
-                                                            }
-                                                       </div>
-                                                       <div class="item-address">{{ dest.address.slice(0, 6) }}...{{ dest.address.slice(-6) }}</div>
-                                                  </div>
-                                                  } @empty {
-                                                  <div class="combobox-empty">No matching addresses</div>
-                                                  }
-                                             </div>
-                                        </div>
-                                   </ng-template>
-
                                    <div class="form-group">
-                                        <label>Destination Tag</label>
+                                        <label for="destinationTag">Destination Tag</label>
                                         <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
                                    </div>
                               </div>
@@ -245,12 +218,12 @@
                               <!-- Source Tag & Invoice ID (create only) -->
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Source Tag (opt)</label>
+                                        <label for="sourceTag">Source Tag (opt)</label>
                                         <input type="text" [(ngModel)]="sourceTagField" name="sourceTagField" />
                                    </div>
 
                                    <div class="form-group">
-                                        <label>Invoice ID (opt)</label>
+                                        <label for="invoiceId">Invoice ID (opt)</label>
                                         <input type="text" [(ngModel)]="invoiceIdField" name="invoiceIdField" />
                                    </div>
                               </div>
@@ -258,12 +231,12 @@
                               <!-- Expiration (create only) -->
                               <div class="form-row">
                                    <div class="form-group" style="padding-bottom: 10px">
-                                        <label>Expiration Amount</label>
+                                        <label for="expirationAmount">Expiration Amount</label>
                                         <input type="text" id="expirationTimeField" placeholder="Enter time" [(ngModel)]="expirationTimeField" name="expirationTimeField" />
                                    </div>
 
                                    <div class="form-group" style="padding-bottom: 10px">
-                                        <label>Expiration Time</label>
+                                        <label for="expirationTime">Expiration Time</label>
                                         <select id="checkExpirationTime" [(ngModel)]="checkExpirationTime" name="checkExpirationTime">
                                              <option value="seconds">Seconds</option>
                                              <option value="minutes">Minutes</option>
@@ -278,16 +251,23 @@
                               @case ('cash') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Currency Code</label>
-                                        <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="onCurrencyChange($event)" name="currencyField">
-                                             @for (curr of availableCurrencies; track curr) {
-                                             <option [value]="curr">{{ curr }}</option>
-                                             }
-                                        </select>
+                                        <label for="currencyCodeCash">Currency Code</label>
+                                        <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                             <ng-template #itemTemplate let-item>
+                                                  <div class="flex items-center gap-2">
+                                                       @if (item.id === 'XRP') {
+                                                       <span class="text-yellow-500 font-bold">XRP</span>
+                                                       } @else {
+                                                       <span>{{ item.display }}</span>
+                                                       }
+                                                       <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                  </div>
+                                             </ng-template>
+                                        </app-select-search-dropdown>
                                    </div>
 
                                    <div class="form-group">
-                                        <label>Amount</label>
+                                        <label for="amount">Amount</label>
                                         <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
                                    </div>
                               </div>
@@ -296,17 +276,11 @@
                               @if (currencyFieldDropDownValue() !== 'XRP') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Issuer</label>
-                                        <select id="issuerField" [(ngModel)]="selectedIssuer" name="issuerField" (ngModelChange)="onIssuerChange($event)">
-                                             <option value="" disabled selected>Select an issuer</option>
-                                             @for (iss of issuers; track iss.address; let i = $index) {
-                                             <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
-                                             }
-                                        </select>
+                                        <label for="issuer">Issuer</label>
+                                        <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                                    </div>
-
                                    <div class="form-group">
-                                        <label>Currency Balance</label>
+                                        <label for="currencyBalance">Currency Balance</label>
                                         <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly />
                                    </div>
                               </div>
@@ -314,38 +288,12 @@
 
                               <!-- Unified Check ID Dropdown - Works for cash & cancel -->
                               @if (activeTab() === 'cash' || activeTab() === 'cancel') {
-                              <div class="form-row" style="margin-bottom: 0.8em">
+                              <div class="form-row">
                                    <div class="form-group">
-                                        <label for="checkSelect">Select Check:</label>
-                                        <div class="combobox-container" (clickOutside)="closeCheckIdDropdown()">
-                                             <input #checkInput type="text" [value]="checkIdInputDisplay()" (input)="onCheckIdInput($event)" (focus)="openCheckIdDropdown()" (keydown)="onKeyDown($event)" placeholder="Search or select a check..." class="combobox-input" autocomplete="off" />
-
-                                             <button class="combobox-toggle" (click)="openCheckIdDropdown()" type="button">
-                                                  <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                             </button>
-                                        </div>
+                                        <label for="selectCheck">Select Check:</label>
+                                        <app-select-search-dropdown [items]="checkItems()" [value]="selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
                                    </div>
                               </div>
-
-                              <!-- Shared Check Dropdown Template -->
-                              <ng-template #unifiedCheckDropdownTemplate>
-                                   <div class="combobox-wrapper" (click)="$event.stopPropagation()">
-                                        <div class="combobox-dropdown-overlay" style="max-height: 300px; overflow-y: auto">
-                                             @for (check of filteredCheckIds(); track check.id) {
-                                             <div class="combobox-item" [class.highlighted]="highlightedCheckIdIndex() === $index" (click)="selectCheckId(check)">
-                                                  <div class="item-name font-medium">{{ formatIOUXrpAmountOutstanding(check.sendMax) }} @if (activeTab() === 'cash') { ← {{ (check.sender || 'Unknown').slice(0,8) + '...' + (check.sender || '').slice(-6) }} } @else { → {{ (check.destination || 'Unknown').slice(0,8) + '...' + (check.destination || '').slice(-6) }} }</div>
-                                                  <div class="item-address text-sm text-gray-600">
-                                                       {{ check.id.slice(0, 16) }}...{{ check.id.slice(-12) }}
-                                                       <span class="mx-2">•</span>
-                                                       Check ID
-                                                  </div>
-                                             </div>
-                                             } @empty {
-                                             <div class="combobox-empty">@if (activeTab() === 'cash') { No checks to cash } @else { No checks to cancel }</div>
-                                             }
-                                        </div>
-                                   </div>
-                              </ng-template>
                               }
 
                               <app-transaction-options [showWhenTab]="['create', 'cash','cancel']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
@@ -353,14 +301,11 @@
                               <!-- Action buttons -->
                               <div class="button-row">
                                    @if (activeTab() === 'create') {
-                                   <!-- <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="!canCreateCheck() || txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create Check' }}</button> -->
                                    <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create Check' }}</button>
                                    } @else if (activeTab() === 'cash') {
-                                   <!-- <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="!canCashCheck() || txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Cash Check' }}</button> -->
                                    <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Cash Check' }}</button>
                                    } @else if(activeTab() === 'cancel') {
-                                   <!-- <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="!canCancelCheck() || txUiService.spinner()">>{{ txUiService.spinner() ? 'Processing...' : 'Cancel Check' }}</button> -->
-                                   <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="txUiService.spinner()">>{{ txUiService.spinner() ? 'Processing...' : 'Cancel Check' }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Check' }}</button>
                                    }
                                    <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.spinner()">Clear Fields</button>
                               </div>

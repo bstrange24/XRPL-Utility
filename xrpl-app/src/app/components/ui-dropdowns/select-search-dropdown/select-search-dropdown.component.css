@@ -1,0 +1,196 @@
+.combobox-container {
+     position: relative;
+     display: flex;
+     flex-direction: column;
+}
+
+.combobox-input {
+     width: 100%;
+     padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+     border: 1px solid #cbd5e1;
+     border-radius: 6px;
+     font-size: 0.95rem;
+     background: white;
+}
+
+.combobox-toggle {
+     position: absolute;
+     right: 8px;
+     top: 25%;
+     transform: translateY(-50%);
+     background: none;
+     border: none;
+     cursor: pointer;
+     padding: 4px;
+     color: #666;
+}
+
+.combobox-toggle:hover {
+     color: #333;
+}
+
+.combobox-wrapper-stop {
+     width: 100%;
+     border-radius: 8px;
+}
+
+.combobox-wrapper {
+     width: 100%;
+     box-sizing: border-box;
+     border: none !important;
+     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+     border-radius: 8px;
+     overflow: hidden;
+     background: white;
+}
+
+/* This wrapper creates a new containing block and forces GPU layer */
+.destination-combobox-wrapper {
+     position: relative;
+     display: inline-block;
+     width: 100%;
+
+     /* This is the magic: creates a new stacking context + GPU layer */
+     transform: translateZ(0);
+     -webkit-transform: translateZ(0);
+}
+
+/* Now dropdown can be absolute and escape clipping */
+.combobox-dropdown {
+     top: 100%;
+     left: 0;
+     right: 0;
+     margin-top: 8px;
+     max-height: 380px;
+     overflow-y: auto;
+     background: white;
+     border: 1px solid #cbd5e1;
+     border-radius: 12px;
+     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
+     z-index: 99999;
+     padding: 8px 0;
+     /* These ensure no clipping */
+     transform: translateZ(0);
+     -webkit-transform: translateZ(0);
+     backface-visibility: hidden;
+     /* Clean scrollbar */
+     scrollbar-width: thin;
+     scrollbar-color: #94a3b8 #f8fafc;
+}
+
+.item-name {
+     font-weight: 600;
+     font-size: 0.95rem;
+     color: #1e40af;
+}
+
+.item-address {
+     font-family: 'Courier New', monospace;
+     font-size: 0.84rem;
+     color: #64748b;
+     margin-top: 2px;
+}
+
+.combobox-empty {
+     padding: 1rem;
+     text-align: center;
+     color: #94a3b8;
+     font-style: italic;
+}
+
+.combobox-dropdown::-webkit-scrollbar {
+     width: 10px;
+}
+
+.combobox-dropdown::-webkit-scrollbar-track {
+     background: #f8fafc;
+     border-radius: 10px;
+}
+
+.combobox-dropdown::-webkit-scrollbar-thumb {
+     background: #94a3b8;
+     border-radius: 10px;
+     border: 2px solid #f8fafc;
+}
+
+.combobox-dropdown::-webkit-scrollbar-thumb:hover {
+     background: #94a3b8;
+}
+
+.combobox-dropdown-portal {
+     max-height: 420px;
+     overflow-y: auto;
+     background: white;
+     border: 1px solid #cbd5e1;
+     border-radius: 12px;
+     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+     padding: 8px 0;
+     backdrop-filter: blur(10px);
+     scrollbar-width: thin;
+}
+
+.combobox-dropdown-overlay {
+     max-height: 420px;
+     overflow-y: auto;
+     background: white;
+     border: 1px solid #cbd5e1;
+     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
+     padding: 8px 0;
+     min-width: 387px;
+     backdrop-filter: blur(12px);
+     width: calc(100% - 2px) !important;
+     box-sizing: border-box;
+     border-radius: 12px !important;
+     margin-top: 4px;
+}
+
+.combobox-item {
+     padding: 12px 16px;
+     cursor: pointer;
+     transition: background 0.15s;
+}
+
+.combobox-item:last-child {
+     border-bottom: none !important;
+}
+
+.combobox-item:hover,
+.combobox-item.highlighted {
+     background: #f0f7ff;
+}
+
+.cdk-overlay-pane,
+.cdk-overlay-pane * {
+     position: fixed !important;
+}
+
+
+.combobox-item.current-account {
+     background: #f8fafc;
+     border-left: 3px solid #10b981;
+     position: relative;
+     pointer-events: none;
+     cursor: not-allowed;
+     padding-left: 13px !important;
+}
+
+.combobox-item.current-account::before {
+     content: "";
+     color: #10b981;
+     font-weight: bold;
+     position: absolute;
+     left: 8px;
+     top: 50%;
+     transform: translateY(-50%);
+     font-size: 10px;
+}
+
+.current-account-badge,
+.current-code-badge,
+.current-token-badge {
+     color: #10b981;
+     font-size: 0.75rem;
+     font-weight: 600;
+     margin-left: 6px;
+     opacity: 0.9;
+}
