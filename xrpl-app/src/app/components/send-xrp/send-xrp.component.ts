@@ -187,7 +187,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
           this.txUiService.clearAllOptionsAndMessages();
-          await this.onAccountChange();
+          await this.onAccountChange(true);
      }
 
      private async getClient(): Promise<xrpl.Client> {
