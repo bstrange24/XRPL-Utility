@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { OverlayModule, OverlayRef } from '@angular/cdk/overlay';
+import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { UtilsService } from '../../services/util-service/utils.service';
@@ -52,22 +52,15 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
-     // Domain Dropdown State
-     selectedDomainId = signal<string | null>(null);
-     domainSearchQuery = signal<string>('');
-     // Destination Dropdown
      customDestinations = signal<{ name?: string; address: string }[]>([]);
-     private overlayRef: OverlayRef | null = null;
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
-     highlightedIndex = signal<number>(-1);
-
-     // Reactive State (Signals)
      activeTab = signal<'send'>('send');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal(false);
      accountInfo = signal<any>(null);
+
      selectedDestinationItem = computed(() => {
           const addr = this.selectedDestinationAddress();
           if (!addr) return null;

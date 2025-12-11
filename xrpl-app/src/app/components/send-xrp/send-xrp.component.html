@@ -57,7 +57,7 @@
                                         <input type="text" placeholder="e.g. 10.5" [ngModel]="txUiService.amountField()" (ngModelChange)="txUiService.amountField.set($event)" name="amountField" />
                                    </div>
                                    <div class="form-group">
-                                        <label>Destination</label>
+                                        <label for="destination">Destination</label>
                                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                    </div>
                               </div>

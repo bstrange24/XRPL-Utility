@@ -1,8 +1,8 @@
 import { animate, style, transition, trigger } from '@angular/animations';
-import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, OnInit, TemplateRef, ViewChild, ViewContainerRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -31,25 +31,19 @@ import { DownloadUtilService } from '../../services/download-util/download-util.
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
+import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 
 @Component({
      selector: 'app-delete-account',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './delete-account.component.html',
      styleUrl: './delete-account.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeleteAccountComponent extends PerformanceBaseComponent implements OnInit {
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-
      private readonly destroyRef = inject(DestroyRef);
-     private readonly overlay = inject(Overlay);
-     private readonly viewContainerRef = inject(ViewContainerRef);
-
-     // Services
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
      private readonly walletManagerService = inject(WalletManagerService);
@@ -68,27 +62,35 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      domainSearchQuery = signal<string>('');
      // Destination Dropdown
      customDestinations = signal<{ name?: string; address: string }[]>([]);
-     private overlayRef: OverlayRef | null = null;
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
-     highlightedIndex = signal<number>(-1);
-
-     // Page-specific state only
      activeTab = signal<'deleteAccount'>('deleteAccount');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     hasWallets = computed(() => this.wallets().length > 0);
 
      selectedWalletIndex = signal<number>(0);
-     editingIndex!: (index: number) => boolean;
-     tempName = signal<string>('');
-     filterQuery = signal<string>('');
-
      // Account state signals
      accountInfo = signal<any>(null);
      serverInfo = signal<any>(null);
      accountObjects = signal<any>(null);
      blockingObjects = signal<any>(null);
+
+     selectedDestinationItem = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return null;
+          return this.destinationItems().find(d => d.id === addr) || null;
+     });
+
+     destinationItems = computed(() => {
+          const currentAddr = this.currentWallet().address;
+
+          return this.destinations().map(d => ({
+               id: d.address,
+               display: d.name || 'Unknown Wallet',
+               secondary: d.address,
+               isCurrentAccount: d.address === currentAddr,
+          }));
+     });
 
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
@@ -98,28 +100,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           ...this.customDestinations(),
      ]);
 
-     destinationDisplay = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return this.destinationSearchQuery(); // while typing → show typed text
-
-          const dest = this.destinations().find(d => d.address === addr);
-          if (!dest) return addr;
-
-          return this.dropdownService.formatDisplay(dest);
-     });
-
-     filteredDestinations = computed(() => {
-          const q = this.destinationSearchQuery().trim().toLowerCase();
-          const list = this.destinations();
-
-          if (q === '') {
-               return list;
-          }
-
-          return this.destinations()
-               .filter(d => d.address !== this.currentWallet().address)
-               .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
-     });
+     hasWallets = computed(() => this.wallets().length > 0);
 
      infoData = computed(() => {
           const wallet = this.currentWallet();
@@ -156,10 +137,9 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           const issues: string[] = [];
           if (hasRegularKey) issues.push('This account has a Regular Key configured.');
           if (hasSignerList) issues.push('This account has a Signer List configured.');
-          if (totalCount > 0) issues.push(`This account has <strong>${totalCount}</strong> owner object${totalCount !== 1 ? 's' : ''} (trust lines, offers, escrows, checks, etc.).`);
-          if (ticketCount > 0) issues.push(`This account has <strong>${ticketCount}</strong> allocated Ticket${ticketCount !== 1 ? 's' : ''}. All tickets must be used or canceled.`);
+          if (totalCount > 0) issues.push(`This account has <strong>${totalCount}</strong> owner object${totalCount == 1 ? '' : 's'} (trust lines, offers, escrows, checks, etc.).`);
+          if (ticketCount > 0) issues.push(`This account has <strong>${ticketCount}</strong> allocated Ticket${ticketCount == 1 ? '' : 's'}. All tickets must be used or canceled.`);
           if (hasHooks) issues.push('This account has one or more Hooks installed. All Hooks must be removed first.');
-          ('Escrow');
 
           // === 256-ledger rule ===
           if (lastTxLedger > 0 && currentLedger > 0) {
@@ -246,7 +226,6 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      ngOnInit(): void {
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
-          this.setupDropdownSubscriptions();
      }
 
      private loadCustomDestinations(): void {
@@ -289,10 +268,6 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           if (currentDest === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
-     }
-
-     private setupDropdownSubscriptions(): void {
-          this.dropdownService.isOpen$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(open => (open ? this.openDropdownInternal() : this.closeDropdownInternal()));
      }
 
      trackByAddress(index: number, item: DropdownItem): string {
@@ -529,7 +504,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      }
 
      stripHtml(text: string): string {
-          return text.replace(/<\/?[^>]+(>|$)/g, '');
+          return text.replaceAll(/<\/?[^>]+(>|$)/g, '');
      }
 
      get safeWarningMessage() {
@@ -544,133 +519,5 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      clearInputFields() {
           this.selectedDestinationAddress.set('');
           this.txUiService.destinationTagField.set('');
-     }
-
-     onDestinationInput(event: Event): void {
-          const value = (event.target as HTMLInputElement).value;
-          this.destinationSearchQuery.set(value);
-          this.selectedDestinationAddress.set(''); // clear selection when typing
-          this.highlightedIndex.set(value ? 0 : -1); // highlight first when typing
-
-          if (value) {
-               this.dropdownService.openDropdown();
-          }
-     }
-
-     selectDestination(address: string): void {
-          if (address === this.currentWallet().address) return;
-
-          this.selectedDestinationAddress.set(address); // ← Store raw address
-          this.destinationSearchQuery.set(''); // ← Clear typing
-          this.closeDropdown();
-     }
-
-     onKeyDown(event: KeyboardEvent): void {
-          const items = this.filteredDestinations();
-          if (items.length === 0) {
-               this.highlightedIndex.set(-1);
-               return;
-          }
-
-          let index = this.highlightedIndex();
-
-          if (event.key === 'ArrowDown') {
-               event.preventDefault(); // Prevent cursor to end
-               index = index < items.length - 1 ? index + 1 : 0;
-          } else if (event.key === 'ArrowUp') {
-               event.preventDefault();
-               index = index <= 0 ? items.length - 1 : index - 1;
-          } else if (event.key === 'Enter') {
-               event.preventDefault();
-               if (index >= 0 && index < items.length) {
-                    this.selectDestination(items[index].address);
-               }
-               return;
-          } else if (event.key === 'Escape') {
-               this.closeDropdown();
-               return;
-          } else {
-               // For any other key, reset highlight
-               index = -1;
-          }
-
-          this.highlightedIndex.set(index);
-
-          // Optional: scroll highlighted item into view
-          setTimeout(() => {
-               const el = document.querySelector('.combobox-item.highlighted') as HTMLElement;
-               el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-          });
-     }
-
-     openDropdown(): void {
-          this.dropdownService.setItems(this.destinations());
-
-          // Always reset search when opening fresh
-          this.destinationSearchQuery.set('');
-          this.dropdownService.openDropdown();
-     }
-
-     closeDropdown(): void {
-          this.dropdownService.closeDropdown();
-
-          if (this.overlayRef) {
-               this.overlayRef.dispose();
-               this.overlayRef = null;
-          }
-     }
-
-     toggleDropdown(): void {
-          this.dropdownService.setItems(this.destinations());
-          this.dropdownService.toggleDropdown();
-     }
-
-     @HostListener('document:focusin', ['$event'])
-     onDocumentFocusIn(event: FocusEvent) {
-          if (this.overlayRef?.hasAttached()) {
-               const focusedInside = this.dropdownOrigin.nativeElement.contains(event.target) || this.overlayRef.overlayElement.contains(event.target as Node);
-               if (!focusedInside) {
-                    this.closeDropdown();
-               }
-          }
-     }
-
-     private openDropdownInternal(): void {
-          if (this.overlayRef?.hasAttached()) return;
-
-          if (this.overlayRef) {
-               this.overlayRef.dispose(); // CRITICAL
-               this.overlayRef = null;
-          }
-
-          const positionStrategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([
-                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
-                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
-               ])
-               .withPush(false)
-               .withFlexibleDimensions(false)
-               .withViewportMargin(8);
-
-          this.overlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy,
-               scrollStrategy: this.overlay.scrollStrategies.reposition(), // Better than close()
-               width: this.dropdownOrigin.nativeElement.getBoundingClientRect().width, // Match input width!
-          });
-          // Reset highlight when opening
-          this.highlightedIndex.set(-1);
-
-          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
-          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
-     }
-
-     private closeDropdownInternal(): void {
-          this.overlayRef?.detach();
-          this.overlayRef = null;
-          this.highlightedIndex.set(-1); // reset on close
      }
 }
