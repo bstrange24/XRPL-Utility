@@ -230,12 +230,7 @@
                                         <div class="form-group">
                                              <label>Cancel After Time</label>
                                              <input type="text" id="paymentChannelCancelAfterTimeField" placeholder="Enter time" [(ngModel)]="paymentChannelCancelAfterTimeField" name="paymentChannelCancelAfterTimeField" />
-                                             <select id="paymentChannelCancelAfterTimeUnit" [(ngModel)]="paymentChannelCancelAfterTimeUnit" name="paymentChannelCancelAfterTimeUnit">
-                                                  <option value="seconds">Seconds</option>
-                                                  <option value="minutes">Minutes</option>
-                                                  <option value="hours">Hours</option>
-                                                  <option value="days">Days</option>
-                                             </select>
+                                             <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedCancelAfterTimeUnit()" (valueChange)="paymentChannelCancelAfterTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
                                         </div>
                                         }
                                    </div>

@@ -339,6 +339,18 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           };
      });
 
+     timeUnitItems = computed(() => [
+          { id: 'seconds', display: 'Seconds' },
+          { id: 'minutes', display: 'Minutes' },
+          { id: 'hours', display: 'Hours' },
+          { id: 'days', display: 'Days' },
+     ]);
+
+     selectedTimeUnitItem = computed(() => {
+          const unit = this.checkExpirationTime();
+          return this.timeUnitItems().find(i => i.id === unit) || null;
+     });
+
      hasWallets = computed(() => this.wallets().length > 0);
 
      constructor() {

@@ -223,7 +223,11 @@
                                         <label for="finishTime">Finish Time</label>
                                         <input type="text" id="escrowFinishTimeField" placeholder="Enter time" [(ngModel)]="escrowFinishTimeField" name="escrowFinishTimeField" />
                                    </div>
-                                   <div class="form-group" style="padding-bottom: 10px">
+                                   <div class="form-group">
+                                        <label>Finish Time Unit</label>
+                                        <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedEscrowCancelTimeUnit()" (valueChange)="escrowCancelTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
+                                   </div>
+                                   <!-- <div class="form-group" style="padding-bottom: 10px">
                                         <label for="finishTimeUnit">Finish Time Unit</label>
                                         <select id="escrowFinishTimeUnit" [(ngModel)]="escrowFinishTimeUnit" name="escrowFinishTimeUnit">
                                              <option value="seconds">Seconds</option>
@@ -231,7 +235,7 @@
                                              <option value="hours">Hours</option>
                                              <option value="days">Days</option>
                                         </select>
-                                   </div>
+                                   </div> -->
                               </div>
 
                               <!-- Cancel Time -->
@@ -240,7 +244,11 @@
                                         <label for="cancelTime">Cancel Time</label>
                                         <input type="text" id="escrowCancelTimeField" placeholder="Enter time" [(ngModel)]="escrowCancelTimeField" name="escrowCancelTimeField" />
                                    </div>
-                                   <div class="form-group" style="padding-bottom: 10px">
+                                   <div class="form-group">
+                                        <label>Cancel Time Unit</label>
+                                        <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedEscrowCancelTimeUnit()" (valueChange)="escrowCancelTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
+                                   </div>
+                                   <!-- <div class="form-group" style="padding-bottom: 10px">
                                         <label for="cancelTimeUnit">Cancel Time Unit</label>
                                         <select id="escrowCancelTimeUnit" [(ngModel)]="escrowCancelTimeUnit" name="escrowCancelTimeUnit">
                                              <option value="seconds">Seconds</option>
@@ -248,7 +256,7 @@
                                              <option value="hours">Hours</option>
                                              <option value="days">Days</option>
                                         </select>
-                                   </div>
+                                   </div> -->
                               </div>
                               }
 

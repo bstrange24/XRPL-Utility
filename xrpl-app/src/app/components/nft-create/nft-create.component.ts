@@ -134,20 +134,21 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      transferFeeField = signal<string>('');
      totalFlagsValue = signal<number>(0);
      totalFlagsHex = signal<string>('0x0');
-     currencyBalanceField = signal<string>('');
-     gatewayBalance = signal<string>('');
-     private knownTrustLinesIssuers: { [key: string]: string[] } = { XRP: [] };
+     currencyBalanceField = signal<string>('0');
+     gatewayBalance = signal<string>('0');
+     private readonly knownTrustLinesIssuers = signal<{ [key: string]: string[] }>({ XRP: [] });
      issuerToRemove = signal<string>('');
-     currencies: string[] = [];
+     currencies = signal<string[]>([]);
+     userAddedCurrencyFieldDropDownValue = signal<string[]>([]);
      userAddedissuerFields = signal<string>('');
-     allKnownIssuers: string[] = [];
-     storedIssuers: IssuerItem[] = [];
+     allKnownIssuers = signal<string[]>([]);
+     storedIssuers = signal<IssuerItem[]>([]);
      selectedIssuer = signal<string>('');
      newCurrency = signal<string>('');
      newIssuer = signal<string>('');
      tokenToRemove = signal<string>('');
      showTrustlineOptions = signal<boolean>(false);
-     issuers: { name?: string; address: string }[] = [];
+     issuers = signal<{ name?: string; address: string }[]>([]);
      lastCurrency = signal<string>('');
      lastIssuer = signal<string>('');
      trustlineFlags: Record<string, boolean> = { ...AppConstants.TRUSTLINE.FLAGS };
@@ -156,7 +157,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      ledgerFlagMap = AppConstants.TRUSTLINE.LEDGER_FLAG_MAP;
      showManageTokens = signal<boolean>(false);
      encryptionType = signal<string>('');
-     accountTrustlines: any = [];
+     accountTrustlines = signal<any[]>([]);
      isUpdateMetaData = signal<boolean>(false);
      isUpdateNFTMetaData = signal<boolean>(false);
      isBatchModeEnabled = signal<boolean>(false);
@@ -168,7 +169,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      isNFTokenMinterEnabled = signal<boolean>(false);
      nfTokenMinterAddress = signal<string>('');
      tickSize = signal<string>('');
-     // selectedNft: string | null = null; // stores NFTokenID
+     // selectedNft = signal<string | null>(null);
      isMessageKey = signal<boolean>(false);
      destinationFields = signal<string>('');
      newDestination = signal<string>('');
@@ -177,10 +178,10 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      domain = signal<string>('');
      memo = signal<string>('');
      taxonField = signal<string>('');
-     burnableNft: { checked: any } | undefined;
-     onlyXrpNft: { checked: any } | undefined;
-     transferableNft: { checked: any } | undefined;
-     mutableNft: { checked: any } | undefined;
+     burnableNft = signal<{ checked: any } | undefined>(undefined);
+     onlyXrpNft = signal<{ checked: any } | undefined>(undefined);
+     transferableNft = signal<{ checked: any } | undefined>(undefined);
+     mutableNft = signal<{ checked: any } | undefined>(undefined);
      batchMode: 'allOrNothing' | 'onlyOne' | 'untilFailure' | 'independent' = 'allOrNothing';
      minterAddressField = signal<string>('');
      issuerAddressField = signal<string>('');
@@ -289,7 +290,6 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
           const count = nfts.length;
 
           const links = count > 0 ? `<a href="${baseUrl}account/${address}/nfts" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View NFTs</a>` : '';
-          console.log('links', links);
 
           const nftsToShow = this.infoPanelExpanded()
                ? nfts.map((nft: { NFTokenID: any; URI: any; Taxon: any; Sequence: any; TransferFee: any; Flags: any }) => ({
@@ -333,7 +333,6 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
           this.nftIdField.set(item?.id || '');
      }
 
-     // Time Unit Dropdown
      timeUnitItems = computed(() => [
           { id: 'seconds', display: 'Seconds' },
           { id: 'minutes', display: 'Minutes' },
@@ -349,7 +348,6 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      constructor() {
           super();
           this.txUiService.clearAllOptionsAndMessages();
-          // this.burnCheckboxHandlerBound = (e: Event) => this.burnCheckboxHandler(e);
      }
 
      ngOnInit(): void {
@@ -379,7 +377,6 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
                const wallet = this.wallets()[index];
                if (wallet) {
                     this.selectWallet(wallet);
-                    this.xrplCache.invalidateAccountCache(wallet.address);
                     this.clearFields(true);
                     await this.getNFT(true);
                }
@@ -410,17 +407,12 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
           return wallet.address;
      }
 
-     // onSelectNft(nftId: string | null) {
-     //      this.selectedNft = nftId;
-     //      this.nftIdField.set(nftId ?? '');
-     // }
-
      toggleExistingNfts() {
           this.existingNftsCollapsed.set(!this.existingNftsCollapsed);
      }
 
      toggleInfoPanel() {
-          this.infoPanelExpanded.update(expanded => !expanded);
+          this.infoPanelExpanded.update(v => !v);
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -471,7 +463,6 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      }
 
      async mintNFT() {
-          console.log('Entering mintNFT');
           await this.withPerf('mintNFT', async () => {
                this.txUiService.clearAllOptionsAndMessages();
 
@@ -1033,7 +1024,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      }
 
      get availableCurrencies(): string[] {
-          return Object.keys(this.knownTrustLinesIssuers)
+          return Object.keys(this.knownTrustLinesIssuers())
                .filter(c => c !== 'XRP')
                .sort((a, b) => a.localeCompare(b));
      }

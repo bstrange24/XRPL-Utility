@@ -235,7 +235,12 @@
                                         <input type="text" id="expirationTimeField" placeholder="Enter time" [(ngModel)]="expirationTimeField" name="expirationTimeField" />
                                    </div>
 
-                                   <div class="form-group" style="padding-bottom: 10px">
+                                   <div class="form-group">
+                                        <label>Check Expiration Unit</label>
+                                        <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedTimeUnitItem()" (valueChange)="checkExpirationTime.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
+                                   </div>
+
+                                   <!-- <div class="form-group" style="padding-bottom: 10px">
                                         <label for="expirationTime">Expiration Time</label>
                                         <select id="checkExpirationTime" [(ngModel)]="checkExpirationTime" name="checkExpirationTime">
                                              <option value="seconds">Seconds</option>
@@ -243,7 +248,7 @@
                                              <option value="hours">Hours</option>
                                              <option value="days">Days</option>
                                         </select>
-                                   </div>
+                                   </div> -->
                               </div>
                               }
 

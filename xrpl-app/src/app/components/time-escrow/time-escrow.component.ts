@@ -377,6 +377,23 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           };
      });
 
+     timeUnitItems = computed(() => [
+          { id: 'seconds', display: 'Seconds' },
+          { id: 'minutes', display: 'Minutes' },
+          { id: 'hours', display: 'Hours' },
+          { id: 'days', display: 'Days' },
+     ]);
+
+     selectedEscrowFinishTimeUnit = computed(() => {
+          const unit = this.escrowFinishTimeUnit();
+          return this.timeUnitItems().find(i => i.id === unit) || null;
+     });
+
+     selectedEscrowCancelTimeUnit = computed(() => {
+          const unit = this.escrowCancelTimeUnit();
+          return this.timeUnitItems().find(i => i.id === unit) || null;
+     });
+
      hasWallets = computed(() => this.wallets().length > 0);
 
      constructor() {

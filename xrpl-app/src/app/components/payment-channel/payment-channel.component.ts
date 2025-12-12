@@ -213,6 +213,18 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           };
      });
 
+     timeUnitItems = computed(() => [
+          { id: 'seconds', display: 'Seconds' },
+          { id: 'minutes', display: 'Minutes' },
+          { id: 'hours', display: 'Hours' },
+          { id: 'days', display: 'Days' },
+     ]);
+
+     selectedCancelAfterTimeUnit = computed(() => {
+          const unit = this.paymentChannelCancelAfterTimeUnit();
+          return this.timeUnitItems().find(i => i.id === unit) || null;
+     });
+
      hasWallets = computed(() => this.wallets().length > 0);
 
      constructor() {
