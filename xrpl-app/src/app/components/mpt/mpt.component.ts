@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, afterRenderEffect, DestroyRef, signal, computed } from '@angular/core';
+import { OnInit, Component, inject, DestroyRef, signal, computed, ChangeDetectionStrategy } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -57,6 +57,7 @@ interface IssuerItem {
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './mpt.component.html',
      styleUrl: './mpt.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MptComponent extends PerformanceBaseComponent implements OnInit {
      private readonly destroyRef = inject(DestroyRef);
@@ -200,7 +201,8 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
 
           const mptsToShow = this.infoPanelExpanded()
                ? this.existingMpts().map(m => ({
-                      id: m.mpt_issuance_id || m.id,
+                      mpt_issuance_id: m.mpt_issuance_id || 'We have issues',
+                      id: m.id || 'We have big issues',
                       amount: m.amount,
                       isHolder: m.isHolder,
                       maxAmount: m.MaximumAmount,
@@ -222,14 +224,19 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           const t = this.existingMpts()
                // .filter(m => m.mpt_issuance_id) // Only show entries with a valid issuance ID
                .map(m => {
-                    const isHolder = m.LedgerEntryType === 'MPToken' ? 'MPToken' : 'MPTokenIssuance';
-                    const amount = isHolder ? m.OutstandingAmount || '0' : m.MPTAmount || '0';
+                    const type = m.LedgerEntryType === 'MPToken' ? 'MPToken' : 'MPTokenIssuance';
+                    let isHolder = false;
+                    if (type === 'MPToken') {
+                         isHolder = true;
+                    }
+                    const amount = isHolder ? m.MPTAmount || '0' : m.OutstandingAmount || '0';
 
                     const displayAmount = amount !== '0' ? amount : '0';
 
                     return {
                          id: m.mpt_issuance_id ? m.mpt_issuance_id : m.id,
-                         display: `MPT • ${displayAmount} ${isHolder ? 'issued' : 'held'} • ${isHolder ? `${m.MaximumAmount} outstanding` : 'issued'} `,
+                         // display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'} • ${isHolder ? `${m.MaximumAmount} outstanding` : 'issued'}`,
+                         display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'}`,
                          secondary: m.mpt_issuance_id ? m.mpt_issuance_id.slice(0, 12) + '...' + m.mpt_issuance_id.slice(-10) : m.id.slice(0, 12) + '...' + m.id.slice(-10),
                          isCurrentAccount: false,
                          isCurrentCode: false,
@@ -443,6 +450,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                          Fee: fee,
                     };
 
+                    console.log('authorizeFlag', authorizeFlag);
                     if (authorizeFlag === 'N') {
                          mPTokenAuthorizeTx.Flags = xrpl.MPTokenAuthorizeFlags.tfMPTUnauthorize;
                     }
@@ -496,12 +504,12 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                     console.debug(`MPT Account Objects: `, mptokenObjects);
                     const mptokens = mptokenObjects.result.account_objects.filter((o: any) => o.LedgerEntryType === 'MPTToken' || o.LedgerEntryType === 'MPTokenIssuance' || o.LedgerEntryType === 'MPToken');
                     console.debug(`MPT Objects: `, mptokens);
-                    console.debug('MPT Issuance ID:', this.mptIssuanceIdField);
+                    console.debug('MPT Issuance ID:', this.mptIssuanceIdField());
 
-                    const accountIssuerToken = mptokens.some((obj: any) => obj.mpt_issuance_id === this.mptIssuanceIdField);
+                    const accountIssuerToken = mptokens.some((obj: any) => obj.mpt_issuance_id === this.mptIssuanceIdField());
 
                     if (!accountIssuerToken) {
-                         return this.txUiService.setError(`ERROR: MPT issuance ID ${this.mptIssuanceIdField} was not issued by ${wallet.classicAddress}.`);
+                         return this.txUiService.setError(`ERROR: MPT issuance ID ${this.mptIssuanceIdField()} was not issued by ${wallet.classicAddress}.`);
                     }
 
                     const mPTokenIssuanceSetTx: xrpl.MPTokenIssuanceSet = {
@@ -528,6 +536,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                     } else {
                          this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? `Simulated MPT Unlock successfully!` : `MPT Unlock successfully!`;
                     }
+                    await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in setMptLocked:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -571,13 +580,13 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
 
                     const walletMptTokens = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPTokenIssuance');
                     console.debug(`Wallet MPT Tokens:`, walletMptTokens);
-                    console.debug('MPT Issuance ID:', this.mptIssuanceIdField);
-                    const walletMptToken = walletMptTokens.find((obj: any) => obj.mpt_issuance_id === this.mptIssuanceIdField);
+                    console.debug('MPT Issuance ID:', this.mptIssuanceIdField());
+                    const walletMptToken = walletMptTokens.find((obj: any) => obj.mpt_issuance_id === this.mptIssuanceIdField());
 
                     const mptTokens = destObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPToken');
                     console.debug(`Destination MPT Tokens:`, mptTokens);
-                    console.debug('MPT Issuance ID:', this.mptIssuanceIdField);
-                    const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === this.mptIssuanceIdField);
+                    console.debug('MPT Issuance ID:', this.mptIssuanceIdField());
+                    const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === this.mptIssuanceIdField());
 
                     if (!authorized) {
                          return this.txUiService.setError(`ERROR: Destination ${destinationAddress} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField()}). Please ensure authorization has been completed.`);
@@ -777,7 +786,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                     result.push({
                          LedgerEntryType: 'MPTokenIssuance',
                          id: issuance.index,
-                         mpt_issuance_id: id,
+                         mpt_issuance_id: issuance.mpt_issuance_id,
                          MPTAmount: '0',
                          OutstandingAmount: issuance.OutstandingAmount || '0',
                          MaximumAmount: issuance.MaximumAmount || 'Unlimited',
@@ -794,71 +803,6 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
 
           this.existingMpts.set(result);
           this.utilsService.logObjects('existingMpts (holders + issuers)', result);
-     }
-
-     // private getExistingMpts(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-     //      const issuances = new Map<string, any>(); // issuanceID → issuance object
-     //      const holdings: any[] = [];
-
-     //      (accountObjects.result.account_objects ?? []).forEach(obj => {
-     //           const objAny = obj as any;
-     //           if (objAny.LedgerEntryType === 'MPTokenIssuance') {
-     //                issuances.set(objAny.MPTokenIssuanceID, objAny);
-     //           } else if (objAny.LedgerEntryType === 'MPToken' && objAny.Account === classicAddress) {
-     //                holdings.push(objAny);
-     //           }
-     //      });
-
-     //      const mapped = holdings.map(holding => {
-     //           const issuance = issuances.get(holding.MPTokenIssuanceID);
-     //           const amount = holding.MPTAmount || '0';
-
-     //           return {
-     //                LedgerEntryType: 'MPToken',
-     //                id: holding.index,
-     //                mpt_issuance_id: holding.MPTokenIssuanceID,
-     //                MPTAmount: amount,
-     //                OutstandingAmount: issuance?.OutstandingAmount || 'N/A',
-     //                MaximumAmount: issuance?.MaximumAmount || 'Unlimited',
-     //                TransferFee: issuance?.TransferFee || '0',
-     //                MPTokenMetadata: issuance?.MPTokenMetadata || 'N/A',
-     //                Flags: holding.Flags || 0,
-     //                AssetScale: issuance?.AssetScale || 'N/A',
-     //                Issuer: issuance?.Account || 'Unknown',
-     //           };
-     //      });
-
-     //      this.existingMpts.set(mapped);
-     //      this.utilsService.logObjects('existingMpts (holder + issuer)', mapped);
-     // }
-
-     private getExistingMpts1(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          const mapped = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => (obj.LedgerEntryType === 'MPTokenIssuance' || obj.LedgerEntryType === 'MPToken') && (obj.Account === classicAddress || obj.Issuer === classicAddress))
-               .map((obj: any) => {
-                    return {
-                         AssetScale: obj.AssetScale ? obj.AssetScale : 'N/A',
-                         Flags: obj.Flags,
-                         Issuer: obj.Issuer ? obj.Issuer : 'N/A',
-                         LedgerEntryType: obj.LedgerEntryType,
-                         MPTokenMetadata: obj.MPTokenMetadata ? obj.MPTokenMetadata : 'N/A',
-                         MaximumAmount: obj.MaximumAmount ? obj.MaximumAmount : 'N/A',
-                         MPTAmount: obj.MPTAmount ? obj.MPTAmount : 'N/A',
-                         MPTokenIssuanceID: obj.MPTokenIssuanceID ? obj.MPTokenIssuanceID : 'N/A',
-                         OutstandingAmount: obj.OutstandingAmount ? obj.OutstandingAmount : 'N/A',
-                         Account: obj.Account ? obj.Account : 'N/A',
-                         TransferFee: obj.TransferFee ? obj.TransferFee : 'N/A',
-                         id: obj.index ? obj.index : 'N/A',
-                         mpt_issuance_id: obj.mpt_issuance_id ? obj.mpt_issuance_id : 'N/A',
-                    };
-               })
-               .sort((a, b) => {
-                    const seqA = (a as any).Sequence ?? Number.MAX_SAFE_INTEGER;
-                    const seqB = (b as any).Sequence ?? Number.MAX_SAFE_INTEGER;
-                    return seqA - seqB;
-               });
-          this.existingMpts.set(mapped);
-          this.utilsService.logObjects('existingMpts', mapped);
      }
 
      toggleFlag(key: 'canLock' | 'isRequireAuth' | 'canEscrow' | 'canClawback' | 'canTransfer' | 'canTrade') {
@@ -1091,13 +1035,6 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           });
      }
 
-     copyTx() {
-          const json = JSON.stringify(this.txUiService.paymentTx, null, 2);
-          navigator.clipboard.writeText(json).then(() => {
-               this.txUiService.showToastMessage('Transaction JSON copied!');
-          });
-     }
-
      get safeWarningMessage() {
           return this.txUiService.warningMessage?.replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;');
      }
@@ -1122,5 +1059,6 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           this.amountField.set('');
           this.mptIssuanceIdField.set('');
           this.ticketSequence.set('');
+          this.txUiService.clearAllOptionsAndMessages();
      }
 }

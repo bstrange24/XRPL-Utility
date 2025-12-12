@@ -170,7 +170,8 @@
                                                        }
                                                   </div>
                                                   <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
-                                                       <div>ID: <code>{{ mpt.id.slice(0,12) }}...{{ mpt.id.slice(-10) }}</code></div>
+                                                       <div>MPT Issuance ID: <code>{{ mpt.mpt_issuance_id.slice(0,12) }}...{{ mpt.mpt_issuance_id.slice(-10) }}</code></div>
+                                                       <!-- <div>ID: <code>{{ mpt.id.slice(0,12) }}...{{ mpt.id.slice(-10) }}</code></div> -->
                                                        @if (mpt.amount && mpt.amount !== '0') {
                                                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800"> {{ mpt.amount }} {{ mpt.isHolder ? 'held' : 'issued' }} </span>
                                                        } @if (mpt.transferFee) {
@@ -245,13 +246,22 @@
                                    @if (activeTab() === 'authorize' || activeTab() === 'unauthorize' || activeTab() === 'lock' || activeTab() === 'unlock') {
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label for="destination">Destination</label>
-                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                        </div>
-
-                                        <div class="form-group">
                                              <label>MPT Issuance ID</label>
                                              <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
+                                        </div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Select MPT to send</label>
+                                             <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                                        </div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label for="destination">Destination</label>
+                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
                                    </div>
                                    }
@@ -260,16 +270,14 @@
                                    @if (activeTab() === 'send') {
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>MPT Amount</label>
-                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group">
                                              <label>MPT Issuance ID</label>
                                              <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
                                         </div>
+                                   </div>
+
+                                   <div class="form-group">
+                                        <label>Select MPT to send</label>
+                                        <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
                                    </div>
 
                                    <!-- Destination (create only) -->
@@ -277,6 +285,10 @@
                                         <div class="form-group">
                                              <label for="destination">Destination</label>
                                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                                        </div>
+                                        <div class="form-group">
+                                             <label>MPT Amount</label>
+                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
                                         </div>
                                    </div>
                                    }
@@ -312,10 +324,6 @@
 
                                         <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
                                    </div>
-
-                                   <!-- Hidden field to keep ngModel happy -->
-                                   <!-- <input type="hidden" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" /> -->
-                                   <!-- }  -->
                                    }
                               </div>
 

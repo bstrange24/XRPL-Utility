@@ -173,6 +173,8 @@ export class TransactionUiService {
      explorerUrl = computed(() => {
           const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
           return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
+          // const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
+          // return AppConstants.XRPL_EXPLORER_URL[env] || AppConstants.XRPL_EXPLORER_URL.DEVNET;
      });
 
      private _infoData = new BehaviorSubject<any | null>(null);

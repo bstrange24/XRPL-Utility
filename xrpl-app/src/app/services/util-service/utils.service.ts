@@ -1407,7 +1407,7 @@ export class UtilsService {
           if (resultMsg === 'tecEXPIRED') return 'Transaction or object has expired.';
           if (resultMsg === 'tecDUPLICATE') return 'Transaction is duplicate or conflicts with existing one.';
           if (resultMsg === 'tecKILLED') return 'Offer or object was killed (e.g., expired/cancelled).';
-          if (resultMsg === 'tecHAS_OBLIGATIONS') return 'Account cannot be deleted — still has obligations (issued tokens).';
+          if (resultMsg === 'tecHAS_OBLIGATIONS') return 'Action cannot be executed — still has obligations (issued tokens).';
           if (resultMsg === 'tecTOO_SOON') return 'Too soon to perform this action (e.g., clawback cooldown).';
 
           // =============================
