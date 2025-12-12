@@ -113,7 +113,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           const flags = this.accountInfo()?.result?.account_flags;
           const srv = this.serverInfo()?.result?.info?.validated_ledger;
           const blockingObjects = this.blockingObjects();
-          const blockingObjectsCount = blockingObjects.result.account_objects.length;
+          const blockingObjectsCount = blockingObjects?.result?.account_objects?.length;
 
           if (!acc) {
                return {

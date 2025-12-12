@@ -1,15 +1,12 @@
-import { OnInit, AfterViewInit, Component, ElementRef, ViewChild, ChangeDetectorRef, ViewChildren, QueryList, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { OnInit, Component, inject, computed, DestroyRef, signal, ChangeDetectionStrategy } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { OverlayModule, Overlay, OverlayRef } from '@angular/cdk/overlay';
-import { TemplatePortal } from '@angular/cdk/portal';
-import { XrplService } from '../../services/xrpl-services/xrpl.service';
+import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
-import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -18,39 +15,20 @@ import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
-import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
+import { DestinationDropdownService, SelectItem } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { Subject, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
-
-declare var Prism: any;
-
-interface ValidationInputs {
-     accountInfo?: any;
-     seed?: string;
-     amount?: string;
-     issuer?: string;
-     currency?: string;
-     accountObjects?: any;
-     formattedDestination?: any;
-     destination?: string;
-     destinationTag?: string;
-     isRegularKeyAddress?: boolean;
-     regularKeyAddress?: string;
-     regularKeySeed?: string;
-     useMultiSign?: boolean;
-     multiSignSeeds?: string;
-     multiSignAddresses?: string;
-     isTicket?: boolean;
-     selectedSingleTicket?: string;
-     selectedTicket?: string;
-     signerQuorum?: number;
-     signers?: { account: string; weight: number }[];
-}
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ToastService } from '../../services/toast/toast.service';
+import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
+import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
+import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
+import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
+import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
+import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
+import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 
 interface RippleState {
      LedgerEntryType: 'RippleState';
@@ -80,108 +58,88 @@ interface IssuerItem {
 @Component({
      selector: 'app-trustlines',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './trustlines.component.html',
      styleUrl: './trustlines.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TrustlinesComponent implements OnInit, AfterViewInit {
-     private destroy$ = new Subject<void>();
-     private readonly injector = inject(Injector);
-     public destinationSearch$ = new Subject<string>();
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-     @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
-     @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
+export class TrustlinesComponent extends PerformanceBaseComponent implements OnInit {
+     private readonly destroyRef = inject(DestroyRef);
+     public readonly utilsService = inject(UtilsService);
+     private readonly storageService = inject(StorageService);
+     private readonly walletManagerService = inject(WalletManagerService);
+     public readonly txUiService = inject(TransactionUiService);
+     private readonly walletDataService = inject(WalletDataService);
+     private readonly validationService = inject(ValidationService);
+     private readonly dropdownService = inject(DestinationDropdownService);
+     private readonly xrplCache = inject(XrplCacheService);
+     public readonly downloadUtilService = inject(DownloadUtilService);
+     public readonly copyUtilService = inject(CopyUtilService);
+     public readonly toastService = inject(ToastService);
+     public readonly txExecutor = inject(XrplTransactionExecutorService);
+     public readonly trustlineCurrency = inject(TrustlineCurrencyService);
 
-     // Form fields
-     activeTab: string = 'setTrustline';
-     amountField = '';
-     destinationField: string = '';
-     destinationTagField = '';
-     sourceTagField = '';
-     invoiceIdField = '';
-     memoField: string = '';
-     isMemoEnabled: boolean = false;
-     useMultiSign: boolean = false;
-     isRegularKeyAddress: boolean = false;
-     isTicket: boolean = false;
-     selectedSingleTicket: string = '';
-     selectedTickets: string[] = [];
-     multiSelectMode: boolean = false;
-     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
-     selectedTicket: string = '';
+     // Destination Dropdown
+     customDestinations = signal<{ name?: string; address: string }[]>([]);
+     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
+     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
+     checkIdSearchQuery = signal<string>('');
 
-     // Wallet state (now driven by WalletPanelComponent via service)
-     currentWallet: Wallet = {} as Wallet;
-     wallets: Wallet[] = [];
-     hasWallets: boolean = true;
-     environment = '';
-     url = '';
-     showDropdown: boolean = false;
-     dropdownOpen: boolean = false;
+     // Reactive State (Signals)
+     activeTab = signal<'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'clawbackTokens' | 'addNewIssuers'>('setTrustline');
+     wallets = signal<Wallet[]>([]);
+     currentWallet = signal<Wallet>({} as Wallet);
+     infoPanelExpanded = signal(false);
+     amountField = signal<string>('');
+     destinationField = signal<string>('');
+     destinationTagField = signal<string>('');
+     sourceTagField = signal<string>('');
+     invoiceIdField = signal<string>('');
+     currencyFieldDropDownValue = signal<string>('XRP');
+     checkExpirationTime = signal<string>('seconds');
+     issuerFields = signal<string>('');
+     expirationTimeField = signal<string>('');
+     ticketSequence = signal<string>('');
+     checkIdField = signal<string>('');
+     outstandingChecks = signal<string>('');
+     mptIssuanceIdField = signal<string>('');
+     isMptEnabled = signal(false);
+     currencyBalanceField = signal<string>('0');
+     gatewayBalance = signal<string>('0');
+     private readonly knownTrustLinesIssuers = signal<{ [key: string]: string[] }>({ XRP: [] });
+     issuerToRemove = signal<string>('');
+     currencies = signal<string[]>([]);
+     userAddedCurrencyFieldDropDownValue = signal<string[]>([]);
+     userAddedissuerFields = signal<string>('');
+     allKnownIssuers = signal<string[]>([]);
+     storedIssuers = signal<IssuerItem[]>([]);
+     selectedIssuer = signal<string>('');
+     newCurrency = signal<string>('');
+     newIssuer = signal<string>('');
+     tokenToRemove = signal<string>('');
+     selectedWalletIndex = signal<number>(0);
+     issuers = signal<{ name?: string; address: string }[]>([]);
+     lastCurrency = signal<string>('');
+     lastIssuer = signal<string>('');
+     cancellableChecks = signal<any[]>([]);
+     cashableChecks = signal<any[]>([]);
+     existingChecks = signal<any[]>([]);
+     outstandingChecksCollapsed = signal<boolean>(true);
+     currencyChangeTrigger = signal(0);
 
-     // Multi-sign & Regular Key
-     multiSignAddress: string = '';
-     multiSignSeeds: string = '';
-     signerQuorum: number = 0;
-     regularKeyAddress: string = '';
-     regularKeySeed: string = '';
-     multiSigningEnabled: boolean = false;
-     regularKeySigningEnabled: boolean = false;
-     ticketArray: string[] = [];
-     masterKeyDisabled: boolean = false;
+     showTrustlineOptions = signal<boolean>(false);
+     existingMptsCollapsed = signal<boolean>(true);
+     outstandingIOUCollapsed = signal<boolean>(true);
 
-     // Dropdown
-     private overlayRef: OverlayRef | null = null;
-     filteredDestinations: DropdownItem[] = [];
-     highlightedIndex = -1;
-     destinations: DropdownItem[] = [];
-     customDestinations: { name?: string; address: string }[] = [];
-
-     // Code preview
-     private lastPaymentTx = '';
-     private lastTxResult = '';
-     executionTime = '';
-
-     // Trustline Specific
-     private issuerFieldSubject = new Subject<void>();
-     private destinationInputSubject = new Subject<string>();
-     currencyFieldDropDownValue: string = '';
-     issuerFields: string = '';
-     currencyBalanceField: string = '';
-     gatewayBalance: string = '';
-     ticketSequence: string = '';
-     outstandingChecks: string = '';
-     private knownTrustLinesIssuers: { [key: string]: string[] } = { XRP: [] };
-     issuerToRemove: string = '';
-     currencies: string[] = [];
-     userAddedCurrencyFieldDropDownValue: string[] = [];
-     userAddedissuerFields: string = '';
-     allKnownIssuers: string[] = [];
-     storedIssuers: IssuerItem[] = [];
-     selectedIssuer: string = '';
-     newCurrency: string = '';
-     newIssuer: string = '';
-     tokenToRemove: string = '';
-     showTrustlineOptions: boolean = false;
-     selectedWalletIndex: number = 0;
-     issuers: { name?: string; address: string }[] = [];
-     lastCurrency: string = '';
-     lastIssuer: string = '';
      trustlineFlags: Record<string, boolean> = { ...AppConstants.TRUSTLINE.FLAGS };
      trustlineFlagList = AppConstants.TRUSTLINE.FLAG_LIST;
      flagMap = AppConstants.TRUSTLINE.FLAG_MAP;
      ledgerFlagMap = AppConstants.TRUSTLINE.LEDGER_FLAG_MAP;
-     showManageTokens = false;
-     encryptionType: string = '';
-     accountTrustlines: any = [];
-     existingMpts: any = [];
-     existingIOUs: any = [];
-     existingMptsCollapsed: boolean = true;
-     outstandingIOUCollapsed: boolean = true;
-     editingIndex!: (index: number) => boolean;
-     tempName: string = '';
+     accountTrustlines = signal<any[]>([]);
+     existingMpts = signal<any[]>([]);
+     existingIOUs = signal<any[]>([]);
+
      flags = {
           tfSetfAuth: false,
           tfSetNoRipple: false,
@@ -191,9 +149,8 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           tfSetDeepFreeze: false,
           tfClearDeepFreeze: false,
      };
-     totalFlagsValue = 0;
-     totalFlagsHex = '0x0';
-     filterQuery: string = '';
+     totalFlagsValue = signal<number>(0);
+     totalFlagsHex = signal<string>('0x0');
 
      private flagValues = {
           tfSetfAuth: 0x00010000,
@@ -205,141 +162,252 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           tfClearDeepFreeze: 0x00800000,
      };
 
-     constructor(
-          private xrplService: XrplService,
-          private utilsService: UtilsService,
-          private storageService: StorageService,
-          private xrplTransactions: XrplTransactionService,
-          private walletManagerService: WalletManagerService,
-          public ui: TransactionUiService,
-          public downloadUtilService: DownloadUtilService,
-          public copyUtilService: CopyUtilService,
-          private walletDataService: WalletDataService,
-          private validationService: ValidationService,
-          private overlay: Overlay,
-          private viewContainerRef: ViewContainerRef,
-          private destinationDropdownService: DestinationDropdownService,
-          private cdr: ChangeDetectorRef,
-          private trustlineCurrency: TrustlineCurrencyService
-     ) {}
+     selectedDestinationItem = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return null;
+          return this.destinationItems().find(d => d.id === addr) || null;
+     });
 
-     ngOnInit() {
+     destinationItems = computed(() => {
+          const currentAddr = this.currentWallet().address;
+
+          return this.destinations().map(d => ({
+               id: d.address,
+               display: d.name || 'Unknown Wallet',
+               secondary: d.address,
+               isCurrentAccount: d.address === currentAddr,
+          }));
+     });
+
+     currencyItems = computed(() => {
+          const currentCode = this.currencyFieldDropDownValue();
+          return this.availableCurrencies.map(curr => ({
+               id: curr,
+               display: curr === 'XRP' ? 'XRP' : curr,
+               // secondary: curr === 'XRP' ? 'Native XRPL currency' : 'Issued token',
+               // secondary: curr === 'XRP' ? 'Native currency' : `${this.trustlineCurrency.getIssuersForCurrency(curr).length} issuer(s)`,
+               secondary:
+                    curr === 'XRP'
+                         ? 'Native currency'
+                         : (() => {
+                                const count = this.trustlineCurrency.getIssuersForCurrency(curr).length;
+                                return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
+                           })(),
+               isCurrentAccount: false,
+               isCurrentCode: curr === currentCode, // This one!
+               isCurrentToken: false,
+          }));
+     });
+
+     selectedCurrencyItem = computed(() => {
+          const code = this.currencyFieldDropDownValue();
+          if (!code) return null;
+          return this.currencyItems().find(item => item.id === code) || null;
+     });
+
+     onCurrencySelected(item: SelectItem | null) {
+          const currency = item?.id || 'XRP';
+          this.currencyFieldDropDownValue.set(currency);
+          this.onCurrencyChange(currency); // triggers issuer reload + balance update
+     }
+
+     destinations = computed(() => [
+          ...this.wallets().map((w: DropdownItem) => ({
+               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
+               address: w.address,
+          })),
+          ...this.customDestinations(),
+     ]);
+
+     destinationDisplay = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return this.destinationSearchQuery(); // while typing → show typed text
+
+          const dest = this.destinations().find(d => d.address === addr);
+          if (!dest) return addr;
+
+          return this.dropdownService.formatDisplay(dest);
+     });
+
+     filteredDestinations = computed(() => {
+          const q = this.destinationSearchQuery().trim().toLowerCase();
+          const list = this.destinations();
+
+          if (q === '') {
+               return list;
+          }
+
+          return this.destinations()
+               .filter(d => d.address !== this.currentWallet().address)
+               .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
+     });
+
+     issuerItems = computed(() => {
+          const currentIssuer = this.trustlineCurrency.getSelectedIssuer();
+          return this.issuers().map((iss, i) => ({
+               id: iss.address,
+               display: iss.name || `Issuer ${i + 1}`,
+               secondary: iss.address.slice(0, 7) + '...' + iss.address.slice(-7),
+               isCurrentAccount: false,
+               isCurrentCode: false,
+               isCurrentToken: iss.address === currentIssuer, // This one!
+          }));
+     });
+
+     selectedIssuerAddress = computed(() => this.trustlineCurrency.getSelectedIssuer());
+
+     selectedIssuerItem = computed(() => {
+          const addr = this.trustlineCurrency.getSelectedIssuer(); // ← read directly from service
+          if (!addr) return null;
+          return this.issuerItems().find((item: { id: string }) => item.id === addr) || null;
+     });
+
+     onIssuerSelected(item: SelectItem | null) {
+          const address = item?.id || '';
+          this.trustlineCurrency.selectIssuer(address);
+          this.onIssuerChange(address); // your existing logic runs
+     }
+
+     infoData = computed(() => {
+          const wallet = this.currentWallet();
+          if (!wallet?.address) return null;
+
+          const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
+          const baseUrl = this.txUiService.explorerUrl();
+          const address = wallet.address;
+
+          // Just count — NO heavy mapping!
+          const allTrustlines = this.existingIOUs();
+          const count = allTrustlines.length;
+
+          // Super lightweight links
+          const links = count > 0 ? `<a href="${baseUrl}account/${address}/tokens" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View tokens</a>` : '';
+
+          // Only build list when panel is expanded — this is the key!
+          const trustlinesToShow = this.infoPanelExpanded()
+               ? allTrustlines.map(tl => {
+                      const balance = tl.Balance.value;
+                      const limit = tl.HighLimit?.issuer === address ? tl.HighLimit.value : tl.LowLimit?.value;
+                      const issuer = tl.HighLimit?.issuer === address ? tl.LowLimit.issuer : tl.HighLimit?.issuer;
+
+                      const flags = Object.entries(AppConstants.TRUSTLINE.LEDGER_FLAG_MAP)
+                           .filter(([_, v]) => tl.Flags & v)
+                           .map(([k]) =>
+                                k
+                                     .replace('lsf', '')
+                                     .replace(/([A-Z])/g, ' $1')
+                                     .trim()
+                           );
+
+                      return {
+                           currency: tl.Balance.currency,
+                           issuer,
+                           balance,
+                           limit,
+                           flags,
+                      };
+                 })
+               : [];
+
+          return {
+               walletName,
+               activeTab: this.activeTab(),
+               trustlineCount: count,
+               trustlinesToShow,
+               links,
+          };
+     });
+
+     hasWallets = computed(() => this.wallets().length > 0);
+
+     constructor() {
+          super();
+          this.txUiService.clearAllOptionsAndMessages();
+     }
+
+     ngOnInit(): void {
           this.loadKnownIssuers();
           this.refreshStoredIssuers();
-
-          this.environment = this.xrplService.getNet().environment;
-          const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
-          this.url = AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET;
-
-          // === 1. Listen to wallet list changes (wallets$.valueChanges) ===
-          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
-               this.wallets = wallets;
-               this.hasWallets = wallets.length > 0;
-
-               // Rebuild destination dropdown whenever wallets change
-               this.updateDestinations();
-
-               // Only set currentWallet on first load if nothing is selected yet
-               if (this.hasWallets && !this.currentWallet?.address) {
-                    const selectedIndex = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    const selectedWallet = wallets[selectedIndex];
-                    if (selectedWallet) {
-                         this.currentWallet = { ...selectedWallet };
-                         this.getTrustlinesForAccount();
-                    }
-               }
-          });
-
-          // === 2. Listen to selected wallet index changes (ONLY update if address actually changes) ===
-          this.walletManagerService.selectedIndex$
-               .pipe(
-                    map(index => this.wallets[index]?.address),
-                    distinctUntilChanged(), // ← Prevents unnecessary emissions
-                    filter(address => !!address), // ← Ignore invalid/undefined
-                    takeUntil(this.destroy$)
-               )
-               .subscribe(selectedAddress => {
-                    const wallet = this.wallets.find(w => w.address === selectedAddress);
-                    if (wallet && this.currentWallet.address !== wallet.address) {
-                         console.log('Wallet switched via panel →', wallet.name, wallet.address);
-                         this.currentWallet = { ...wallet };
-                         this.getTrustlinesForAccount(); // Refresh UI for new wallet
-                    }
-               });
-
-          // === 3. Load custom destinations from storage ===
-          const stored = this.storageService.get('customDestinations');
-          this.customDestinations = stored ? JSON.parse(stored) : [];
-          this.updateDestinations();
-
-          // === 4. Dropdown search integration (unchanged) ===
-          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => this.destinationDropdownService.filter(query));
-
-          this.destinationDropdownService.setItems(this.destinations);
-
-          this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
-               this.filteredDestinations = list;
-               this.highlightedIndex = list.length > 0 ? 0 : -1;
-               this.cdr.detectChanges();
-          });
-
-          this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
-               open ? this.openDropdownInternal() : this.closeDropdownInternal();
-          });
+          this.loadCustomDestinations();
+          this.setupWalletSubscriptions();
+          this.currencyFieldDropDownValue.set('XRP');
 
           // Subscribe once
           this.trustlineCurrency.currencies$.subscribe(currencies => {
-               this.currencies = currencies;
-               if (currencies.length > 0 && !this.currencyFieldDropDownValue) {
-                    this.currencyFieldDropDownValue = currencies[0];
-                    this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue, this.currentWallet.address);
+               this.currencies.set(currencies);
+               if (currencies.length > 0 && !this.currencyFieldDropDownValue()) {
+                    this.currencyFieldDropDownValue.set(currencies[0]);
+                    this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
                }
           });
 
           this.trustlineCurrency.issuers$.subscribe(issuers => {
-               this.issuers = issuers;
+               this.issuers.set(issuers);
           });
 
           this.trustlineCurrency.selectedIssuer$.subscribe(issuer => {
-               this.issuerFields = issuer;
+               this.issuerFields.set(issuer);
           });
 
           this.trustlineCurrency.balance$.subscribe(balance => {
-               this.currencyBalanceField = balance; // ← This is your live balance!
+               this.currencyBalanceField.set(balance); // ← This is your live balance!
           });
      }
 
-     ngAfterViewInit() {
-          this.scheduleHighlight();
+     private loadCustomDestinations(): void {
+          const stored = this.storageService.get('customDestinations');
+          if (stored) this.customDestinations.set(JSON.parse(stored));
      }
 
-     ngOnDestroy() {
-          this.destroy$.next();
-          this.destroy$.complete();
+     private async setupWalletSubscriptions() {
+          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
+               this.wallets.set(wallets);
+               if (this.hasWallets() && !this.currentWallet().address) {
+                    const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
+                    const wallet = wallets[idx];
+                    if (wallet) {
+                         this.clearFields(true);
+                         this.selectWallet(wallet);
+                    }
+               }
+          });
+
+          this.walletManagerService.selectedIndex$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async index => {
+               const wallet = this.wallets()[index];
+               if (wallet) {
+                    this.selectWallet(wallet);
+                    this.xrplCache.invalidateAccountCache(wallet.address);
+                    this.clearFields(true);
+                    await this.getTrustlinesForAccount(false);
+               }
+          });
+     }
+
+     private selectWallet(wallet: Wallet): void {
+          this.currentWallet.set({ ...wallet });
+          this.txUiService.currentWallet.set({ ...wallet });
+          this.xrplCache.invalidateAccountCache(wallet.address);
+
+          // Prevent self as destination
+          if (this.selectedDestinationAddress() === wallet.address) {
+               this.selectedDestinationAddress.set('');
+          }
      }
 
      trackByAddress(index: number, item: DropdownItem): string {
           return item.address;
      }
 
-     trackByWalletAddress(index: number, wallet: Wallet): string {
+     trackByWalletAddress(index: number, wallet: any): string {
           return wallet.address;
      }
 
      toggleExistingMpts() {
-          this.existingMptsCollapsed = !this.existingMptsCollapsed;
+          this.existingMptsCollapsed.set(!this.existingMptsCollapsed());
      }
 
      toggleOutstandingIOU() {
-          this.outstandingIOUCollapsed = !this.outstandingIOUCollapsed;
-     }
-
-     async toggleMultiSign() {
-          try {
-               this.utilsService.toggleMultiSign(this.useMultiSign, this.signers, (await this.getWallet()).classicAddress);
-          } catch (error: any) {
-               this.ui.setError(`${error.message}`);
-          }
+          this.outstandingIOUCollapsed.set(!this.outstandingIOUCollapsed());
      }
 
      onFlagChange(flag: string) {
@@ -350,44 +418,33 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           }
      }
 
-     onWalletSelected(wallet: Wallet) {
-          this.currentWallet = { ...wallet };
-
-          // Prevent self-destination
-          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address || this.destinationField;
-          if (currentDest === wallet.address) {
-               this.destinationField = '';
-          }
-
-          // Re-load currency + issuer balance for new wallet
-          if (this.currencyFieldDropDownValue) {
-               this.onCurrencyChange(this.currencyFieldDropDownValue);
-          }
-
-          this.getTrustlinesForAccount();
+     toggleInfoPanel() {
+          this.infoPanelExpanded.update(v => !v);
      }
 
-     async setTab(tab: string) {
-          const previousTab = this.activeTab;
-          this.activeTab = tab;
+     onWalletSelected(wallet: Wallet): void {
+          this.selectWallet(wallet);
+     }
 
-          // Only clear messages when actually changing tabs
-          if (previousTab !== tab) {
-               this.ui.clearMessages();
-               this.ui.clearWarning();
-          }
+     copyAndToast(text: string, label: string = 'Content') {
+          this.copyUtilService.copyAndToast(text, label);
+     }
 
-          if (Object.keys(this.knownTrustLinesIssuers).length > 0 && this.issuerFields === '') {
-               this.currencyFieldDropDownValue = Object.keys(this.knownTrustLinesIssuers)[0];
+     async setTab(tab: 'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'clawbackTokens' | 'addNewIssuers'): Promise<void> {
+          this.activeTab.set(tab);
+          this.destinationSearchQuery.set('');
+
+          if (Object.keys(this.knownTrustLinesIssuers).length > 0 && this.issuerFields() === '') {
+               this.currencyFieldDropDownValue.set(Object.keys(this.knownTrustLinesIssuers)[0]);
           }
 
           // === 1. Handle flag state FIRST ===
-          if (this.activeTab === 'removeTrustline') {
+          if (this.activeTab() === 'removeTrustline') {
                // Smart detection: only enable what's needed
-               if (this.currentWallet.address) {
+               if (this.currentWallet().address) {
                     try {
                          const client = await this.xrplService.getClient();
-                         const accountObjects = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', '');
+                         const accountObjects = await this.xrplService.getAccountObjects(client, this.currentWallet().address, 'validated', '');
                          this.setRemoveFlagsBasedOnExistingTrustline(accountObjects);
                     } catch (err) {
                          // Fallback: enable both (safe default)
@@ -405,741 +462,397 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                this.updateFlagTotal();
           }
 
-          // === 2. Normal tab logic ===
-          if (this.activeTab !== 'addNewIssuers') {
-               const client = await this.xrplService.getClient();
-               const accountObjects = await this.xrplService.getAccountObjects(client, this.currentWallet.address, 'validated', '');
-
-               this.getExistingMpts(accountObjects, this.currentWallet.address);
-               this.getExistingIOUs(accountObjects, this.currentWallet.address);
-               if (this.currencyFieldDropDownValue) {
-                    this.onCurrencyChange(this.currencyFieldDropDownValue);
-               }
-
-               // Only clear ALL flags when NOT in remove mode
-               if (this.activeTab !== 'removeTrustline') {
-                    this.clearFlagsValue();
-               }
-
-               this.ui.clearMessages();
-               this.clearFields(true);
+          if (this.activeTab() === 'removeTrustline') {
+               this.amountField.set('0');
           }
 
-          if (this.activeTab === 'removeTrustline') {
-               this.amountField = '0';
-          }
-          this.updateInfoMessage();
+          this.clearFields(true);
+          await this.getTrustlinesForAccount(true);
      }
 
-     async getTrustlinesForAccount() {
+     private async getClient(): Promise<xrpl.Client> {
+          return this.xrplCache.getClient(() => this.xrplService.getClient());
+     }
+
+     async getTrustlinesForAccount(forceRefresh = false): Promise<void> {
           console.log('Entering getTrustlinesForAccount');
-          const startTime = Date.now();
-          this.ui.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+          await this.withPerf('getChecks', async () => {
+               this.txUiService.clearAllOptionsAndMessages();
 
-          try {
-               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+               try {
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
+                    const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
 
-               const [accountInfo, accountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
+                    const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.join('\n• '));
+                    }
 
-               const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
-               if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    this.getExistingMpts(accountObjects, wallet.classicAddress);
+                    this.getExistingIOUs(accountObjects, wallet.classicAddress);
+
+                    if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT' && this.issuerFields() !== '') {
+                         this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
+                    }
+
+                    this.refreshUiState(wallet, accountInfo, accountObjects);
+               } catch (error: any) {
+                    console.error('Error in getTrustlinesForAccount:', error);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+               } finally {
+                    this.txUiService.spinner.set(false);
                }
-
-               this.getExistingMpts(accountObjects, this.currentWallet.address);
-               this.getExistingIOUs(accountObjects, this.currentWallet.address);
-
-               // const tokenBalance = await this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '');
-               // const parsedBalances = this.parseAllGatewayBalances(tokenBalance, wallet);
-               // this.currencyBalanceField = parsedBalances?.[this.currencyFieldDropDownValue]?.[this.issuerFields] ?? '0';
-               // this.setCachedAccountData(this.currentWallet.address, { accountObjects, tokenBalance });
-               this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue, this.currentWallet.address);
-
-               this.refreshUIData(wallet, accountInfo, accountObjects);
-               this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-               this.updateTrustLineFlagsInUI(accountObjects, wallet);
-               this.updateTickets(accountObjects);
-               this.clearFlagsValue();
-               this.clearFields(false);
-               this.updateInfoMessage();
-               this.cdr.detectChanges();
-          } catch (error: any) {
-               console.error('Error in getTrustlinesForAccount:', error);
-               this.ui.setError(`${error.message || 'Unknown error'}`);
-          } finally {
-               this.ui.spinner.set(false);
-               this.executionTime = (Date.now() - startTime).toString();
-               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
-               console.log(`Leaving getTrustlinesForAccount in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
-          }
+          });
      }
 
      async setTrustLine() {
-          console.log('Entering setTrustLine');
-          const startTime = Date.now();
-          this.ui.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+          await this.withPerf('setTrustLine', async () => {
+               this.txUiService.clearAllOptionsAndMessages();
+               try {
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-          const inputs: ValidationInputs = {
-               seed: this.currentWallet.seed,
-               issuer: this.issuerFields,
-               currency: this.currencyFieldDropDownValue,
-               amount: this.amountField,
-               isRegularKeyAddress: this.isRegularKeyAddress,
-               regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
-               regularKeySeed: this.isRegularKeyAddress ? this.regularKeySeed : undefined,
-               useMultiSign: this.useMultiSign,
-               multiSignAddresses: this.useMultiSign ? this.multiSignAddress : undefined,
-               multiSignSeeds: this.useMultiSign ? this.multiSignSeeds : undefined,
-               isTicket: this.isTicket,
-               selectedTicket: this.selectedTicket,
-               selectedSingleTicket: this.selectedSingleTicket,
-          };
+                    const [accountInfo, fee, currentLedger, accountLines, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplService.getXrplServerInfo(client, 'current', '')]);
+                    // this.utilsService.logAccountInfoObjects(accountInfo, null);
+                    // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+                    // this.utilsService.logObjects(`accountLines`, accountLines);
 
-          try {
-               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    // inputs.accountInfo = accountInfo;
 
-               const [accountInfo, fee, currentLedger, accountLines, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplService.getXrplServerInfo(client, 'current', '')]);
-               // this.utilsService.logAccountInfoObjects(accountInfo, null);
-               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
-               // this.utilsService.logObjects(`accountLines`, accountLines);
+                    // const errors = await this.validationService.validate('TrustSet', { inputs, client, accountInfo });
+                    // if (errors.length > 0) {
+                    //      return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    // }
 
-               inputs.accountInfo = accountInfo;
-
-               const errors = await this.validationService.validate('TrustSet', { inputs, client, accountInfo });
-               if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-               }
-
-               if (this.trustlineFlags['tfSetNoRipple'] && this.trustlineFlags['tfClearNoRipple']) {
-                    return this.ui.setError('ERROR: Cannot set both tfSetNoRipple and tfClearNoRipple');
-               }
-               if (this.trustlineFlags['tfSetFreeze'] && this.trustlineFlags['tfClearFreeze']) {
-                    return this.ui.setError('ERROR: Cannot set both tfSetFreeze and tfClearFreeze');
-               }
-
-               let currencyFieldTemp = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
-               if (!/^[A-Z0-9]{3}$|^[0-9A-Fa-f]{40}$/.test(currencyFieldTemp)) {
-                    throw new Error('Invalid currency code. Must be a 3-character code (e.g., USDC) or 40-character hex.');
-               }
-
-               // Calculate flags
-               // let flags = 0;
-               // Object.entries(this.trustlineFlags).forEach(([key, value]) => {
-               //      if (value) {
-               //           flags |= AppConstants.TRUSTLINE.FLAG_MAP[key as keyof typeof AppConstants.TRUSTLINE.FLAG_MAP];
-               //      }
-               // });
-
-               let trustSetTx: xrpl.TrustSet = {
-                    TransactionType: 'TrustSet',
-                    Account: wallet.classicAddress,
-                    LimitAmount: {
-                         currency: currencyFieldTemp,
-                         issuer: this.issuerFields,
-                         value: this.amountField,
-                    },
-                    // Flags: flags,
-                    Flags: this.totalFlagsValue,
-                    Fee: fee,
-                    LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-               };
-
-               await this.setTxOptionalFields(client, trustSetTx, wallet, accountInfo);
-
-               if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, trustSetTx, fee)) {
-                    return this.ui.setError('Insufficient XRP to complete transaction');
-               }
-
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Setting Trustline (no changes will be made)...' : 'Submitting Trustset to Ledger...', 200);
-
-               this.ui.setPaymentTx(trustSetTx);
-               this.updatePaymentTx();
-
-               let response: any;
-
-               if (this.ui.isSimulateEnabled()) {
-                    response = await this.xrplTransactions.simulateTransaction(client, trustSetTx);
-               } else {
-                    const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
-
-                    const signedTx = await this.xrplTransactions.signTransaction(client, wallet, trustSetTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
-
-                    if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign Payment transaction.');
+                    if (this.trustlineFlags['tfSetNoRipple'] && this.trustlineFlags['tfClearNoRipple']) {
+                         return this.txUiService.setError('ERROR: Cannot set both tfSetNoRipple and tfClearNoRipple');
+                    }
+                    if (this.trustlineFlags['tfSetFreeze'] && this.trustlineFlags['tfClearFreeze']) {
+                         return this.txUiService.setError('ERROR: Cannot set both tfSetFreeze and tfClearFreeze');
                     }
 
-                    response = await this.xrplTransactions.submitTransaction(client, signedTx);
+                    let currencyFieldTemp = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue());
+                    if (!/^[A-Z0-9]{3}$|^[0-9A-Fa-f]{40}$/.test(currencyFieldTemp)) {
+                         throw new Error('Invalid currency code. Must be a 3-character code (e.g., USDC) or 40-character hex.');
+                    }
+
+                    // Calculate flags
+                    // let flags = 0;
+                    // Object.entries(this.trustlineFlags).forEach(([key, value]) => {
+                    //      if (value) {
+                    //           flags |= AppConstants.TRUSTLINE.FLAG_MAP[key as keyof typeof AppConstants.TRUSTLINE.FLAG_MAP];
+                    //      }
+                    // });
+
+                    let trustSetTx: xrpl.TrustSet = {
+                         TransactionType: 'TrustSet',
+                         Account: wallet.classicAddress,
+                         LimitAmount: {
+                              currency: currencyFieldTemp,
+                              issuer: this.issuerFields(),
+                              value: this.amountField(),
+                         },
+                         // Flags: flags,
+                         Flags: this.totalFlagsValue(),
+                         Fee: fee,
+                         LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                    };
+
+                    await this.setTxOptionalFields(client, trustSetTx, wallet, accountInfo);
+
+                    const result = await this.txExecutor.setTrustline(trustSetTx, wallet, client, {
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    });
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
+
+                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Trustline set successfully!' : 'Trustline set successfully!';
+                    this.onCurrencyChange(this.currencyFieldDropDownValue());
+                    await this.refreshAfterTx(client, wallet, null, false);
+               } catch (error: any) {
+                    console.error('Error in setTrustLine:', error);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+               } finally {
+                    this.txUiService.spinner.set(false);
                }
-
-               // this.utilsService.logObjects('response', response);
-               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
-
-               this.ui.setTxResult(response.result);
-               this.updateTxResult();
-
-               const isSuccess = this.utilsService.isTxSuccessful(response);
-               if (!isSuccess) {
-                    const resultMsg = this.utilsService.getTransactionResultMessage(response);
-                    const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-
-                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-                    (response.result as any).errorMessage = userMessage;
-                    return this.ui.setError(userMessage);
-               } else {
-                    this.ui.setSuccess(this.ui.result);
-               }
-
-               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
-
-               if (!this.ui.isSimulateEnabled()) {
-                    this.ui.successMessage = 'Trustline set successfully!';
-                    const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-
-                    this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
-                    this.getExistingIOUs(updatedAccountObjects, wallet.classicAddress);
-
-                    this.onCurrencyChange(this.currencyFieldDropDownValue);
-                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
-
-                    // Add new destination if valid and not already present
-                    this.addNewDestinationFromUser();
-
-                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                    this.updateTickets(updatedAccountObjects);
-                    this.clearFields(false);
-                    this.updateInfoMessage();
-                    this.cdr.detectChanges();
-               } else {
-                    this.ui.successMessage = 'Simulated Trustline set successfully!';
-               }
-          } catch (error: any) {
-               console.error('Error in setTrustLine:', error);
-               this.ui.setError(`${error.message || 'Unknown error'}`);
-          } finally {
-               this.ui.spinner.set(false);
-               this.executionTime = (Date.now() - startTime).toString();
-               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
-               console.log(`Leaving setTrustLine in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
-          }
+          });
      }
 
      async removeTrustline() {
-          console.log('Entering removeTrustline');
-          const startTime = Date.now();
-          this.ui.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+          await this.withPerf('removeTrustline', async () => {
+               this.txUiService.clearAllOptionsAndMessages();
+               try {
+                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
-          const inputs: ValidationInputs = {
-               seed: this.currentWallet.seed,
-               issuer: this.issuerFields,
-               currency: this.currencyFieldDropDownValue,
-               destination: this.destinationField,
-               isRegularKeyAddress: this.isRegularKeyAddress,
-               regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
-               regularKeySeed: this.isRegularKeyAddress ? this.regularKeySeed : undefined,
-               useMultiSign: this.useMultiSign,
-               multiSignAddresses: this.useMultiSign ? this.multiSignAddress : undefined,
-               multiSignSeeds: this.useMultiSign ? this.multiSignSeeds : undefined,
-               isTicket: this.isTicket,
-               selectedTicket: this.selectedTicket,
-               selectedSingleTicket: this.selectedSingleTicket,
-          };
+                    const [accountInfo, serverInfo, fee, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getXrplServerInfo(client, 'current', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client)]);
+                    // this.utilsService.logAccountInfoObjects(accountInfo, null);
+                    // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 
-          try {
-               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    // inputs.accountInfo = accountInfo;
 
-               const [accountInfo, serverInfo, fee, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getXrplServerInfo(client, 'current', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client)]);
-               // this.utilsService.logAccountInfoObjects(accountInfo, null);
-               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+                    // const errors = await this.validationService.validate('RemoveTrustline', { inputs, client, accountInfo });
+                    // if (errors.length > 0) {
+                    //      return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    // }
 
-               inputs.accountInfo = accountInfo;
-
-               const errors = await this.validationService.validate('RemoveTrustline', { inputs, client, accountInfo });
-               if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-               }
-
-               if (this.trustlineFlags['tfSetNoRipple'] && this.trustlineFlags['tfClearNoRipple']) {
-                    return this.ui.setError('ERROR: Cannot set both tfSetNoRipple and tfClearNoRipple');
-               }
-               if (this.trustlineFlags['tfSetFreeze'] && this.trustlineFlags['tfClearFreeze']) {
-                    return this.ui.setError('ERROR: Cannot set both tfSetFreeze and tfClearFreeze');
-               }
-
-               const trustLines = await this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', '');
-               this.utilsService.logObjects('trustLines', trustLines);
-
-               const trustLine = trustLines.result.lines.find((line: any) => {
-                    const lineCurrency = this.utilsService.decodeIfNeeded(line.currency);
-                    return line.account === this.issuerFields && lineCurrency === this.currencyFieldDropDownValue;
-               });
-
-               if (!trustLine) {
-                    this.ui.setError(`No trust line found for ${this.currencyFieldDropDownValue} to issuer ${this.issuerFields}`);
-                    return;
-               }
-
-               const check = this.canRemoveTrustline(trustLine);
-               if (!check.canRemove) {
-                    return this.ui.setError(`Cannot remove trustline ${trustLine.currency}/${trustLine.account}: ${check.reasons}`);
-               }
-
-               let currencyFieldTemp = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
-
-               const trustSetTx: xrpl.TrustSet = {
-                    TransactionType: 'TrustSet',
-                    Account: wallet.classicAddress,
-                    LimitAmount: {
-                         currency: currencyFieldTemp,
-                         issuer: this.issuerFields,
-                         value: '0',
-                    },
-                    Fee: fee,
-                    LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-               };
-
-               // trustSetTx.Flags = xrpl.TrustSetFlags.tfClearNoRipple | xrpl.TrustSetFlags.tfClearFreeze;
-               trustSetTx.Flags = this.totalFlagsValue;
-
-               await this.setTxOptionalFields(client, trustSetTx, wallet, accountInfo);
-
-               if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, trustSetTx, fee)) {
-                    return this.ui.setError('Insufficient XRP to complete transaction');
-               }
-
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Removing Trustline (no changes will be made)...' : 'Submitting to Ledger...', 200);
-
-               this.ui.setPaymentTx(trustSetTx);
-               this.updatePaymentTx();
-
-               let response: any;
-
-               if (this.ui.isSimulateEnabled()) {
-                    response = await this.xrplTransactions.simulateTransaction(client, trustSetTx);
-               } else {
-                    const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
-
-                    const signedTx = await this.xrplTransactions.signTransaction(client, wallet, trustSetTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
-
-                    if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign transaction.');
+                    if (this.trustlineFlags['tfSetNoRipple'] && this.trustlineFlags['tfClearNoRipple']) {
+                         return this.txUiService.setError('ERROR: Cannot set both tfSetNoRipple and tfClearNoRipple');
+                    }
+                    if (this.trustlineFlags['tfSetFreeze'] && this.trustlineFlags['tfClearFreeze']) {
+                         return this.txUiService.setError('ERROR: Cannot set both tfSetFreeze and tfClearFreeze');
                     }
 
-                    response = await this.xrplTransactions.submitTransaction(client, signedTx);
+                    const trustLines = await this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', '');
+                    this.utilsService.logObjects('trustLines', trustLines);
+
+                    const trustLine = trustLines.result.lines.find((line: any) => {
+                         const lineCurrency = this.utilsService.decodeIfNeeded(line.currency);
+                         return line.account === this.issuerFields && lineCurrency === this.currencyFieldDropDownValue();
+                    });
+
+                    if (!trustLine) {
+                         this.txUiService.setError(`No trust line found for ${this.currencyFieldDropDownValue()} to issuer ${this.issuerFields}`);
+                         return;
+                    }
+
+                    const check = this.canRemoveTrustline(trustLine);
+                    if (!check.canRemove) {
+                         return this.txUiService.setError(`Cannot remove trustline ${trustLine.currency}/${trustLine.account}: ${check.reasons}`);
+                    }
+
+                    let currencyFieldTemp = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue());
+
+                    const trustSetTx: xrpl.TrustSet = {
+                         TransactionType: 'TrustSet',
+                         Account: wallet.classicAddress,
+                         LimitAmount: {
+                              currency: currencyFieldTemp,
+                              issuer: this.issuerFields(),
+                              value: '0',
+                         },
+                         Fee: fee,
+                         LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                    };
+
+                    // trustSetTx.Flags = xrpl.TrustSetFlags.tfClearNoRipple | xrpl.TrustSetFlags.tfClearFreeze;
+                    trustSetTx.Flags = this.totalFlagsValue();
+
+                    await this.setTxOptionalFields(client, trustSetTx, wallet, accountInfo);
+
+                    const result = await this.txExecutor.removeTrustline(trustSetTx, wallet, client, {
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    });
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
+
+                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Trustline removal successfully!' : 'Trustline removed successfully!';
+                    await this.refreshAfterTx(client, wallet, null, false);
+               } catch (error: any) {
+                    console.error('Error in removeTrustline:', error);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+               } finally {
+                    this.txUiService.spinner.set(false);
                }
-
-               // this.utilsService.logObjects('response', response);
-               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
-
-               this.ui.setTxResult(response.result);
-               this.updateTxResult();
-
-               const isSuccess = this.utilsService.isTxSuccessful(response);
-               if (!isSuccess) {
-                    const resultMsg = this.utilsService.getTransactionResultMessage(response);
-                    const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-
-                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-                    (response.result as any).errorMessage = userMessage;
-                    return this.ui.setError(userMessage);
-               } else {
-                    this.ui.setSuccess(this.ui.result);
-               }
-
-               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
-
-               if (!this.ui.isSimulateEnabled()) {
-                    this.ui.successMessage = 'Trustline removed successfully!';
-                    const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-
-                    this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
-                    this.getExistingIOUs(updatedAccountObjects, wallet.classicAddress);
-
-                    await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
-
-                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                    this.updateTickets(updatedAccountObjects);
-                    this.clearFields(false);
-                    this.updateInfoMessage();
-                    this.cdr.detectChanges();
-               } else {
-                    this.ui.successMessage = 'Simulated Trustline removal successfully!';
-               }
-          } catch (error: any) {
-               console.error('Error in removeTrustline:', error);
-               this.ui.setError(`${error.message || 'Unknown error'}`);
-          } finally {
-               this.ui.spinner.set(false);
-               this.executionTime = (Date.now() - startTime).toString();
-               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
-               console.log(`Leaving removeTrustline in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
-          }
+          });
      }
 
      async issueCurrency() {
-          console.log('Entering issueCurrency');
-          const startTime = Date.now();
-          this.ui.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+          await this.withPerf('issueCurrency', async () => {
+               this.txUiService.clearAllOptionsAndMessages();
 
-          const inputs: ValidationInputs = {
-               seed: this.currentWallet.seed,
-               currency: this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue),
-               issuer: this.issuerFields,
-               destinationTag: this.destinationTagField,
-               amount: this.amountField,
-               destination: this.destinationField,
-               isRegularKeyAddress: this.isRegularKeyAddress,
-               useMultiSign: this.useMultiSign,
-               regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
-               regularKeySeed: this.isRegularKeyAddress ? this.regularKeySeed : undefined,
-               multiSignAddresses: this.useMultiSign ? this.multiSignAddress : undefined,
-               multiSignSeeds: this.useMultiSign ? this.multiSignSeeds : undefined,
-               isTicket: this.isTicket,
-               selectedTicket: this.selectedTicket,
-               selectedSingleTicket: this.selectedSingleTicket,
-          };
+               try {
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-          try {
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
+                    let [accountInfo, fee, lastLedgerIndex, trustLines, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplService.getXrplServerInfo(client, 'current', '')]);
+                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
 
-               let [accountInfo, fee, lastLedgerIndex, trustLines, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplService.getXrplServerInfo(client, 'current', '')]);
-               this.utilsService.logAccountInfoObjects(accountInfo, null);
-               this.utilsService.logLedgerObjects(fee, lastLedgerIndex, serverInfo);
-               this.utilsService.logObjects('trustLines', trustLines);
+                    // this.utilsService.logAccountInfoObjects(accountInfo, null);
+                    // this.utilsService.logLedgerObjects(fee, lastLedgerIndex, serverInfo);
+                    // this.utilsService.logObjects('trustLines', trustLines);
 
-               if (this.destinationField === '') {
-                    return this.ui.setError(`Destination cannot be empty.`);
+                    // const errors = await this.validationService.validate('IssueCurrency', { inputs, client, accountInfo });
+                    // if (errors.length > 0) {
+                    //      return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    // }
+
+                    // const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
+
+                    // const accountFlags = accountInfo.result.account_data.Flags;
+                    // const asfDefaultRipple = 0x00800000;
+
+                    // if ((accountFlags & asfDefaultRipple) === 0) {
+                    //      // Need to enable DefaultRipple first
+                    //      const accountSetTx: xrpl.AccountSet = {
+                    //           TransactionType: 'AccountSet',
+                    //           Account: wallet.classicAddress,
+                    //           SetFlag: 8, // asfDefaultRipple
+                    //           Fee: fee,
+                    //           LastLedgerSequence: lastLedgerIndex + AppConstants.LAST_LEDGER_ADD_TIME,
+                    //      };
+
+                    //      await this.setTxOptionalFields(client, accountSetTx, wallet, accountInfo);
+
+                    //      if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, accountSetTx, fee)) {
+                    //           return this.txUiService.setError('Insufficient XRP to complete transaction');
+                    //      }
+
+                    //      // this.txUiService.showSpinnerWithDelay(this.txUiService.isSimulateEnabled() ? 'Simulating Set Default Ripple (no changes will be made)...' : 'Submitting Set Default Ripple to Ledger...', 200);
+
+                    //      // this.txUiService.paymentTx.push(accountSetTx);
+                    //      // this.updatePaymentTx();
+
+                    //      let response: any;
+
+                    //      if (this.txUiService.isSimulateEnabled()) {
+                    //           response = await this.xrplTransactions.simulateTransaction(client, accountSetTx);
+                    //      } else {
+                    //           const signedTx = await this.xrplTransactions.signTransaction(client, wallet, accountSetTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
+
+                    //           if (!signedTx) {
+                    //                return this.txUiService.setError('ERROR: Failed to sign AccountSet transaction.');
+                    //           }
+
+                    //           const response = await this.xrplTransactions.submitTransaction(client, signedTx);
+
+                    //           // this.utilsService.logObjects('response', response);
+                    //           // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
+
+                    //            this.txUiService.setTxResult(response.result);
+                    // this.updateTxResult();
+
+                    //           const isSuccess = this.utilsService.isTxSuccessful(response);
+                    //           if (!isSuccess) {
+                    //                const resultMsg = this.utilsService.getTransactionResultMessage(response);
+                    //                const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
+
+                    //                console.error(`Transaction ${this.txUiService.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    //                (response.result as any).errorMessage = userMessage;
+                    //                return this.txUiService.setError(userMessage);
+                    //                return;
+                    //           }
+                    //      }
+                    //      // Update lastLedgerIndex for next transaction
+                    //      lastLedgerIndex = await this.xrplService.getLastLedgerIndex(client);
+                    // }
+
+                    // PHASE 4: Prepare Payment transaction for currency issuance
+                    const curr = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue());
+                    const paymentTx: xrpl.Payment = {
+                         TransactionType: 'Payment',
+                         Account: wallet.classicAddress,
+                         Destination: destinationAddress,
+                         Amount: {
+                              currency: curr,
+                              value: this.amountField(),
+                              issuer: this.issuerFields(),
+                         },
+                         Fee: fee,
+                         LastLedgerSequence: lastLedgerIndex + AppConstants.LAST_LEDGER_ADD_TIME,
+                    };
+
+                    await this.setTxOptionalFields(client, paymentTx, wallet, accountInfo);
+
+                    const result = await this.txExecutor.issueCurrency(paymentTx, wallet, client, {
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    });
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
+
+                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Issued currency successfully!' : 'Simulated Issued currency successfully!';
+                    this.onCurrencyChange(this.currencyFieldDropDownValue());
+                    await this.refreshAfterTx(client, wallet, null, false);
+               } catch (error: any) {
+                    console.error('Error in issueCurrency:', error);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+               } finally {
+                    this.txUiService.spinner.set(false);
                }
-               const isShortForm = this.destinationField.includes('...');
-               const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
-
-               inputs.destination = resolvedDestination;
-               inputs.accountInfo = accountInfo;
-
-               const errors = await this.validationService.validate('IssueCurrency', { inputs, client, accountInfo });
-               if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-               }
-
-               const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
-
-               // const accountFlags = accountInfo.result.account_data.Flags;
-               // const asfDefaultRipple = 0x00800000;
-
-               // if ((accountFlags & asfDefaultRipple) === 0) {
-               //      // Need to enable DefaultRipple first
-               //      const accountSetTx: xrpl.AccountSet = {
-               //           TransactionType: 'AccountSet',
-               //           Account: wallet.classicAddress,
-               //           SetFlag: 8, // asfDefaultRipple
-               //           Fee: fee,
-               //           LastLedgerSequence: lastLedgerIndex + AppConstants.LAST_LEDGER_ADD_TIME,
-               //      };
-
-               //      await this.setTxOptionalFields(client, accountSetTx, wallet, accountInfo);
-
-               //      if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, accountSetTx, fee)) {
-               //           return this.ui.setError('Insufficient XRP to complete transaction');
-               //      }
-
-               //      // this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Set Default Ripple (no changes will be made)...' : 'Submitting Set Default Ripple to Ledger...', 200);
-
-               //      // this.ui.paymentTx.push(accountSetTx);
-               //      // this.updatePaymentTx();
-
-               //      let response: any;
-
-               //      if (this.ui.isSimulateEnabled()) {
-               //           response = await this.xrplTransactions.simulateTransaction(client, accountSetTx);
-               //      } else {
-               //           const signedTx = await this.xrplTransactions.signTransaction(client, wallet, accountSetTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
-
-               //           if (!signedTx) {
-               //                return this.ui.setError('ERROR: Failed to sign AccountSet transaction.');
-               //           }
-
-               //           const response = await this.xrplTransactions.submitTransaction(client, signedTx);
-
-               //           // this.utilsService.logObjects('response', response);
-               //           // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
-
-               //            this.ui.setTxResult(response.result);
-               // this.updateTxResult();
-
-               //           const isSuccess = this.utilsService.isTxSuccessful(response);
-               //           if (!isSuccess) {
-               //                const resultMsg = this.utilsService.getTransactionResultMessage(response);
-               //                const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-
-               //                console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-               //                (response.result as any).errorMessage = userMessage;
-               //                return this.ui.setError(userMessage);
-               //                return;
-               //           }
-               //      }
-               //      // Update lastLedgerIndex for next transaction
-               //      lastLedgerIndex = await this.xrplService.getLastLedgerIndex(client);
-               // }
-
-               // PHASE 4: Prepare Payment transaction for currency issuance
-               const curr = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
-               const paymentTx: xrpl.Payment = {
-                    TransactionType: 'Payment',
-                    Account: wallet.classicAddress,
-                    Destination: resolvedDestination,
-                    Amount: {
-                         currency: curr,
-                         value: this.amountField,
-                         issuer: this.issuerFields,
-                    },
-                    Fee: fee,
-                    LastLedgerSequence: lastLedgerIndex + AppConstants.LAST_LEDGER_ADD_TIME,
-               };
-
-               await this.setTxOptionalFields(client, paymentTx, wallet, accountInfo);
-
-               if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, paymentTx, fee)) {
-                    return this.ui.setError('Insufficient XRP to complete transaction');
-               }
-
-               // if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, paymentTx, resolvedDestination)) {
-               //      return this.ui.setError('ERROR: Not enough IOU balance for this transaction');
-               // }
-
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Currency Issuance (no changes will be made)...' : 'Submitting Currency Issuance to Ledger...', 200);
-
-               this.ui.setPaymentTx(paymentTx);
-               this.updatePaymentTx();
-
-               let response: any;
-
-               if (this.ui.isSimulateEnabled()) {
-                    response = await this.xrplTransactions.simulateTransaction(client, paymentTx);
-               } else {
-                    const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
-
-                    const signedTx = await this.xrplTransactions.signTransaction(client, wallet, paymentTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
-
-                    if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign Payment transaction.');
-                    }
-
-                    response = await this.xrplTransactions.submitTransaction(client, signedTx);
-               }
-
-               // this.utilsService.logObjects('response', response);
-               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
-
-               this.ui.setTxResult(response.result);
-               this.updateTxResult();
-
-               const isSuccess = this.utilsService.isTxSuccessful(response);
-               if (!isSuccess) {
-                    const resultMsg = this.utilsService.getTransactionResultMessage(response);
-                    const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-
-                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-                    (response.result as any).errorMessage = userMessage;
-                    return this.ui.setError(userMessage);
-               } else {
-                    this.ui.setSuccess(this.ui.result);
-               }
-
-               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
-
-               if (!this.ui.isSimulateEnabled()) {
-                    this.ui.successMessage = 'Issued currency successfully!';
-
-                    const [updatedAccountInfo, updatedAccountObjects, gatewayBalances] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
-
-                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
-
-                    this.addNewDestinationFromUser();
-
-                    this.onCurrencyChange(this.currencyFieldDropDownValue);
-                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                    this.updateTickets(updatedAccountObjects);
-                    this.clearFields(false);
-                    this.updateInfoMessage();
-                    this.cdr.detectChanges();
-               } else {
-                    this.ui.successMessage = 'Simulated Issued currency successfully!';
-               }
-          } catch (error: any) {
-               console.error('Error in issueCurrency:', error);
-               this.ui.setError(`${error.message || 'Unknown error'}`);
-          } finally {
-               this.ui.spinner.set(false);
-               this.executionTime = (Date.now() - startTime).toString();
-               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
-               console.log(`Leaving issueCurrency in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
-          }
+          });
      }
 
      async clawbackTokens() {
-          console.log('Entering clawbackTokens');
-          const startTime = Date.now();
-          this.ui.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+          await this.withPerf('clawbackTokens', async () => {
+               this.txUiService.clearAllOptionsAndMessages();
+               try {
+                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
-          const inputs: ValidationInputs = {
-               seed: this.currentWallet.seed,
-               issuer: this.issuerFields,
-               currency: this.currencyFieldDropDownValue,
-               amount: this.amountField,
-               destination: this.destinationField,
-               isRegularKeyAddress: this.isRegularKeyAddress,
-               regularKeyAddress: this.isRegularKeyAddress ? this.regularKeyAddress : undefined,
-               regularKeySeed: this.isRegularKeyAddress ? this.regularKeySeed : undefined,
-               useMultiSign: this.useMultiSign,
-               multiSignAddresses: this.useMultiSign ? this.multiSignAddress : undefined,
-               multiSignSeeds: this.useMultiSign ? this.multiSignSeeds : undefined,
-               isTicket: this.isTicket,
-               selectedTicket: this.selectedTicket,
-               selectedSingleTicket: this.selectedSingleTicket,
-          };
+                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const [accountInfo, accountObjects, trustLines, serverInfo, fee, currentLedger] = await Promise.all([
+                         this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
+                         this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''),
+                         this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''),
+                         this.xrplService.getXrplServerInfo(client, 'current', ''),
+                         this.xrplService.calculateTransactionFee(client),
+                         this.xrplService.getLastLedgerIndex(client),
+                    ]);
+                    // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
+                    // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
+                    // this.utilsService.logObjects('trustLines', trustLines);
 
-          try {
-               const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    // const errors = await this.validationService.validate('ClawbackTokens', { inputs, client, accountInfo });
+                    // if (errors.length > 0) {
+                    //      return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    // }
 
-               const [accountInfo, accountObjects, trustLines, serverInfo, fee, currentLedger] = await Promise.all([
-                    this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
-                    this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''),
-                    this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''),
-                    this.xrplService.getXrplServerInfo(client, 'current', ''),
-                    this.xrplService.calculateTransactionFee(client),
-                    this.xrplService.getLastLedgerIndex(client),
-               ]);
-               // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
-               // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
-               // this.utilsService.logObjects('trustLines', trustLines);
-
-               if (this.destinationField === '') {
-                    return this.ui.setError(`Destination cannot be empty.`);
-               }
-               const isShortForm = this.destinationField.includes('...');
-               const resolvedDestination = isShortForm ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
-
-               inputs.destination = resolvedDestination;
-               inputs.accountInfo = accountInfo;
-
-               const errors = await this.validationService.validate('ClawbackTokens', { inputs, client, accountInfo });
-               if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-               }
-
-               const currencyFieldTemp = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
-               if (!/^[A-Z0-9]{3}$|^[0-9A-Fa-f]{40}$/.test(currencyFieldTemp)) {
-                    throw new Error('Invalid currency code. Must be a 3-character code (e.g., USDC) or 40-character hex.');
-               }
-
-               let clawbackTx: xrpl.Clawback = {
-                    TransactionType: 'Clawback',
-                    Account: wallet.classicAddress,
-                    Amount: {
-                         currency: currencyFieldTemp,
-                         issuer: resolvedDestination,
-                         value: this.amountField,
-                    },
-                    Fee: fee,
-                    LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-               };
-
-               await this.setTxOptionalFields(client, clawbackTx, wallet, accountInfo);
-
-               if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, clawbackTx, fee)) {
-                    return this.ui.setError('Insufficient XRP to complete transaction');
-               }
-
-               if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, clawbackTx, resolvedDestination)) {
-                    return this.ui.setError('ERROR: Not enough IOU balance for this transaction');
-               }
-
-               this.ui.showSpinnerWithDelay(this.ui.isSimulateEnabled() ? 'Simulating Token Clawback (no tokens will be moved)...' : 'Submitting Clawback to Ledger...', 200);
-
-               this.ui.paymentTx.push(clawbackTx);
-               this.updatePaymentTx();
-
-               let response: any;
-
-               if (this.ui.isSimulateEnabled()) {
-                    response = await this.xrplTransactions.simulateTransaction(client, clawbackTx);
-               } else {
-                    const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
-
-                    const signedTx = await this.xrplTransactions.signTransaction(client, wallet, clawbackTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
-
-                    if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign transaction.');
+                    const currencyFieldTemp = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue());
+                    if (!/^[A-Z0-9]{3}$|^[0-9A-Fa-f]{40}$/.test(currencyFieldTemp)) {
+                         throw new Error('Invalid currency code. Must be a 3-character code (e.g., USDC) or 40-character hex.');
                     }
 
-                    response = await this.xrplTransactions.submitTransaction(client, signedTx);
+                    let clawbackTx: xrpl.Clawback = {
+                         TransactionType: 'Clawback',
+                         Account: wallet.classicAddress,
+                         Amount: {
+                              currency: currencyFieldTemp,
+                              issuer: destinationAddress,
+                              value: this.amountField(),
+                         },
+                         Fee: fee,
+                         LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                    };
+
+                    await this.setTxOptionalFields(client, clawbackTx, wallet, accountInfo);
+
+                    const result = await this.txExecutor.clawbackTokens(clawbackTx, wallet, client, {
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    });
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
+
+                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Clawback tokens successfully!' : 'Simulated Escrow cancel successfully!';
+                    this.onCurrencyChange(this.currencyFieldDropDownValue());
+                    await this.refreshAfterTx(client, wallet, null, false);
+
+                    // if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, clawbackTx, fee)) {
+                    //      return this.txUiService.setError('Insufficient XRP to complete transaction');
+                    // }
+
+                    // if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, clawbackTx, resolvedDestination)) {
+                    //      return this.txUiService.setError('ERROR: Not enough IOU balance for this transaction');
+                    // }
+               } catch (error: any) {
+                    console.error('Error in clawbackTokens:', error);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+               } finally {
+                    this.txUiService.spinner.set(false);
                }
-
-               // this.utilsService.logObjects('response', response);
-               // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
-
-               this.ui.setTxResult(response.result);
-               this.updateTxResult();
-
-               const isSuccess = this.utilsService.isTxSuccessful(response);
-               if (!isSuccess) {
-                    const resultMsg = this.utilsService.getTransactionResultMessage(response);
-                    const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-
-                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-                    (response.result as any).errorMessage = userMessage;
-                    return this.ui.setError(userMessage);
-               } else {
-                    this.ui.setSuccess(this.ui.result);
-               }
-
-               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
-
-               if (!this.ui.isSimulateEnabled()) {
-                    this.ui.successMessage = 'Clawback tokens successfully!';
-
-                    const [updatedAccountInfo, updatedAccountObjects, gatewayBalancePromise] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '')]);
-
-                    await this.refreshWallets(client, [wallet.classicAddress, resolvedDestination]).catch(console.error);
-
-                    this.addNewDestinationFromUser();
-
-                    this.getExistingMpts(updatedAccountObjects, wallet.classicAddress);
-                    this.getExistingIOUs(updatedAccountObjects, wallet.classicAddress);
-
-                    // await this.updateCurrencyBalance(gatewayBalances, wallet);
-                    this.onCurrencyChange(this.currencyFieldDropDownValue);
-                    this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                    this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                    this.updateTickets(updatedAccountObjects);
-                    this.clearFields(false);
-                    this.updateInfoMessage();
-                    this.cdr.detectChanges();
-               } else {
-                    this.ui.successMessage = 'Simulated Escrow cancel successfully!';
-               }
-          } catch (error: any) {
-               console.error('Error in clawbackTokens:', error);
-               this.ui.setError(`${error.message || 'Unknown error'}`);
-          } finally {
-               this.ui.spinner.set(false);
-               this.executionTime = (Date.now() - startTime).toString();
-               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
-               console.log(`Leaving clawbackTokens in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
-          }
+          });
      }
 
      private getExistingMpts(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          this.existingMpts = (checkObjects.result.account_objects ?? [])
+          // this.existingMpts
+          const mapped = (checkObjects.result.account_objects ?? [])
                .filter((obj: any) => {
                     if (obj.LedgerEntryType !== 'MPToken') return true;
                     const amount = obj.MPTAmount || obj.OutstandingAmount || '0';
@@ -1165,11 +878,13 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     const seqB = (b as any).Sequence ?? Number.MAX_SAFE_INTEGER;
                     return seqA - seqB;
                });
-          this.utilsService.logObjects('existingMpts', this.existingMpts);
+          this.existingIOUs.set(mapped);
+          this.utilsService.logObjects('existingMpts - filtered', mapped);
      }
 
-     private getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string): RippleState[] {
-          this.existingIOUs = (accountObjects.result.account_objects ?? [])
+     private getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+          // this.existingIOUs
+          const mapped = (accountObjects.result.account_objects ?? [])
                .filter((obj: any): obj is xrpl.LedgerEntry.RippleState => {
                     if (obj.LedgerEntryType !== 'RippleState') return false;
 
@@ -1206,123 +921,138 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     };
                })
                .sort((a, b) => a.HighLimit.issuer.localeCompare(b.HighLimit.issuer));
-
-          this.utilsService.logObjects('existingIOUs - filtered', this.existingIOUs);
-          return this.existingIOUs;
+          this.existingIOUs.set(mapped);
+          this.utilsService.logObjects('existingIOUs - filtered', mapped);
      }
 
      get availableCurrencies(): string[] {
-          return Object.keys(this.knownTrustLinesIssuers)
-               .filter(c => c !== 'XRP')
-               .sort((a, b) => a.localeCompare(b));
+          return [
+               ...Object.keys(this.knownTrustLinesIssuers())
+                    .filter(c => c && c !== 'XRP' && c !== 'MPT')
+                    .sort((a, b) => a.localeCompare(b)),
+          ];
+     }
+
+     private async getWallet(): Promise<xrpl.Wallet> {
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
+          if (!wallet) throw new Error('Wallet could not be created');
+          return wallet;
      }
 
      private async setTxOptionalFields(client: xrpl.Client, trustSetTx: any, wallet: xrpl.Wallet, accountInfo: any) {
-          if (this.selectedSingleTicket) {
-               const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
-               if (!exists) throw new Error(`Ticket ${this.selectedSingleTicket} not found`);
-               this.utilsService.setTicketSequence(trustSetTx, this.selectedSingleTicket, true);
-          } else {
-               if (this.multiSelectMode && this.selectedTickets.length > 0) {
-                    console.log('Setting multiple tickets:', this.selectedTickets);
-                    this.utilsService.setTicketSequence(trustSetTx, accountInfo.result.account_data.Sequence, false);
+          if (this.txUiService.isTicket()) {
+               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               if (ticket) {
+                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
+                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
+                    this.utilsService.setTicketSequence(trustSetTx, ticket, true);
                }
           }
 
-          if (this.destinationTagField && parseInt(this.destinationTagField) > 0) this.utilsService.setDestinationTag(trustSetTx, this.destinationTagField);
-          if (this.memoField) this.utilsService.setMemoField(trustSetTx, this.memoField);
-     }
-
-     private refreshUIData(wallet: xrpl.Wallet, updatedAccountInfo: any, updatedAccountObjects: xrpl.AccountObjectsResponse) {
-          // this.utilsService.logAccountInfoObjects(updatedAccountInfo, updatedAccountObjects);
-          this.refreshUiAccountObjects(updatedAccountObjects, updatedAccountInfo, wallet);
-          this.refreshUiAccountInfo(updatedAccountInfo);
-     }
-
-     updateTickets(accountObjects: xrpl.AccountObjectsResponse) {
-          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
-          if (this.multiSelectMode) {
-               this.selectedSingleTicket = this.utilsService.cleanUpMultiSelection(this.selectedTickets, this.ticketArray);
-          } else {
-               this.selectedSingleTicket = this.utilsService.cleanUpSingleSelection(this.selectedTickets, this.ticketArray);
+          if (this.destinationTagField() && Number.parseInt(this.destinationTagField()) > 0) {
+               this.utilsService.setDestinationTag(trustSetTx, this.destinationTagField());
           }
+
+          if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
+               this.utilsService.setMemoField(trustSetTx, this.txUiService.memoField());
+          }
+     }
+
+     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
+          const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
+          this.getExistingIOUs(accountObjects, wallet.classicAddress);
+          this.getExistingMpts(accountObjects, wallet.classicAddress);
+          destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+          if (addDest) this.addNewDestinationFromUser(destination || '');
+          this.refreshUiState(wallet, accountInfo, accountObjects);
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(client, this.wallets, this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-               this.currentWallet = { ...newCurrent };
+          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+               this.currentWallet.set({ ...newCurrent });
           });
      }
 
-     public refreshUiAccountObjects(accountObjects: xrpl.AccountObjectsResponse, accountInfo: xrpl.AccountInfoResponse, wallet: xrpl.Wallet): void {
-          // Tickets
-          this.ticketArray = this.utilsService.getAccountTickets(accountObjects);
-          this.selectedTicket = this.ticketArray[0] || this.selectedTicket;
+     private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
+          // Update multi-sign & regular key flags
+          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
+          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
-          // Signer accounts
+          // Update service state
+          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
+
           const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
-          this.signerQuorum = signerQuorum;
-          const hasSignerAccounts = signerAccounts?.length > 0;
-          this.checkForMultiSigners(hasSignerAccounts, wallet);
+          const hasSignerList = signerAccounts?.length > 0;
+          this.txUiService.signerQuorum.set(signerQuorum);
+          const checkForMultiSigner = signerAccounts?.length > 0;
+          checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
 
-          // Boolean flags
-          this.multiSigningEnabled = hasSignerAccounts;
-          this.useMultiSign = false;
-          this.masterKeyDisabled = Boolean(accountInfo?.result?.account_flags?.disableMasterKey);
-
-          this.clearFields(false);
-     }
-
-     private checkForMultiSigners(hasSignerAccounts: boolean, wallet: xrpl.Wallet) {
-          if (hasSignerAccounts) {
-               const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.multiSignAddress = signerEntries.map((e: { Account: any }) => e.Account).join(',\n');
-               this.multiSignSeeds = signerEntries.map((e: { seed: any }) => e.seed).join(',\n');
-          } else {
-               this.signerQuorum = 0;
-               this.multiSignAddress = 'No Multi-Sign address configured for account';
-               this.multiSignSeeds = '';
-               this.storageService.removeValue('signerEntries');
+          this.txUiService.multiSigningEnabled.set(hasSignerList);
+          if (hasSignerList) {
+               const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+               this.txUiService.signers.set(entries);
           }
+
+          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
+
+          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
+          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
      }
 
-     public refreshUiAccountInfo(accountInfo: xrpl.AccountInfoResponse): void {
-          const accountData = accountInfo?.result?.account_data;
-          if (!accountData) return;
+     private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
+          const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+          this.txUiService.signers.set(signerEntries);
+          this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
+          this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
+     }
 
-          const regularKey = accountData.RegularKey;
-          const isMasterKeyDisabled = accountInfo?.result?.account_flags?.disableMasterKey ?? false;
-
-          // Set regular key properties
-          const rkProps = this.utilsService.setRegularKeyProperties(regularKey, accountData.Account) || { regularKeyAddress: 'No RegularKey configured for account', regularKeySeed: '', isRegularKeyAddress: false };
-          this.regularKeyAddress = rkProps.regularKeyAddress;
-          this.regularKeySeed = rkProps.regularKeySeed;
-
-          // Set master key property
-          this.masterKeyDisabled = isMasterKeyDisabled;
-
-          // Set regular key signing enabled flag
-          this.regularKeySigningEnabled = !!regularKey;
+     private clearMultiSignersConfiguration(): void {
+          this.txUiService.signerQuorum.set(0);
+          this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
+          this.txUiService.multiSignSeeds.set('');
+          this.storageService.removeValue('signerEntries');
      }
 
      updateDestinations() {
-          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          this.destinationDropdownService.setItems(this.destinations);
+          // Optional: persist destinations
+          const allItems = [
+               ...this.wallets().map(wallet => ({
+                    name: wallet.name ?? this.truncateAddress(wallet.address),
+                    address: wallet.address,
+               })),
+               ...this.customDestinations(),
+          ];
+          this.storageService.set('destinations', allItems);
+          this.ensureDefaultNotSelected();
+     }
+
+     ensureDefaultNotSelected() {
+          const currentAddress = this.currentWallet().address;
+          if (currentAddress && this.destinations().length > 0) {
+               if (!this.destinations() || this.destinationField() === currentAddress) {
+                    const nonSelectedDest = this.destinations().find((d: { address: string }) => d.address !== currentAddress);
+                    this.selectedDestinationAddress.set(nonSelectedDest ? nonSelectedDest.address : this.destinations()[0].address);
+               }
+          }
+     }
+
+     private truncateAddress(address: string): string {
+          return `${address.slice(0, 8)}...${address.slice(-6)}`;
      }
 
      private updateTrustLineFlagsInUI(accountObjects: xrpl.AccountObjectsResponse, wallet: xrpl.Wallet) {
           // Start clean
           Object.keys(this.flags).forEach(k => (this.flags[k as keyof typeof this.flags] = false));
 
-          const encoded = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
+          const encoded = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue());
           const walletAddr = wallet.classicAddress || wallet.address;
 
           const state = accountObjects.result.account_objects.find((obj): obj is xrpl.LedgerEntry.RippleState => {
-               return obj.LedgerEntryType === 'RippleState' && obj.Balance?.currency === encoded && (obj.LowLimit?.issuer === walletAddr || obj.HighLimit?.issuer === walletAddr) && (obj.LowLimit?.issuer === this.issuerFields || obj.HighLimit?.issuer === this.issuerFields);
+               return obj.LedgerEntryType === 'RippleState' && obj.Balance?.currency === encoded && (obj.LowLimit?.issuer === walletAddr || obj.HighLimit?.issuer === walletAddr) && (obj.LowLimit?.issuer === this.issuerFields() || obj.HighLimit?.issuer === this.issuerFields());
           });
 
           if (!state) {
-               if (this.activeTab !== 'removeTrustline') this.clearFlagsValue();
+               if (this.activeTab() !== 'removeTrustline') this.clearFlagsValue();
                return;
           }
 
@@ -1330,7 +1060,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           const isLowSide = state.LowLimit?.issuer === walletAddr;
           const map = AppConstants.TRUSTLINE.LEDGER_FLAG_MAP;
 
-          if (this.activeTab === 'removeTrustline') {
+          if (this.activeTab() === 'removeTrustline') {
                // ONLY enable the flags that are actually blocking removal
                if (flags & map.lsfNoRipple) this.flags.tfClearNoRipple = true;
                if (isLowSide ? flags & map.lsfLowFreeze : flags & map.lsfHighFreeze) this.flags.tfClearFreeze = true;
@@ -1352,13 +1082,13 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           this.flags.tfClearDeepFreeze = false;
           this.flags.tfSetfAuth = false; // ← This was your bug!
 
-          if (!this.currencyFieldDropDownValue || !this.issuerFields || !this.currentWallet.address) return;
+          if (!this.currencyFieldDropDownValue() || !this.issuerFields || !this.currentWallet().address) return;
 
-          const encoded = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue);
-          const walletAddr = this.currentWallet.classicAddress || this.currentWallet.address;
+          const encoded = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue());
+          const walletAddr = this.currentWallet().classicAddress || this.currentWallet().address;
 
           const state = accountObjects.result.account_objects.find((obj): obj is xrpl.LedgerEntry.RippleState => {
-               return obj.LedgerEntryType === 'RippleState' && obj.Balance?.currency === encoded && (obj.LowLimit?.issuer === walletAddr || obj.HighLimit?.issuer === walletAddr) && (obj.LowLimit?.issuer === this.issuerFields || obj.HighLimit?.issuer === this.issuerFields);
+               return obj.LedgerEntryType === 'RippleState' && obj.Balance?.currency === encoded && (obj.LowLimit?.issuer === walletAddr || obj.HighLimit?.issuer === walletAddr) && (obj.LowLimit?.issuer === this.issuerFields() || obj.HighLimit?.issuer === this.issuerFields());
           });
 
           if (!state) return;
@@ -1392,12 +1122,12 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           if (this.flags.tfSetDeepFreeze) sum |= this.flagValues.tfSetDeepFreeze;
           if (this.flags.tfClearDeepFreeze) sum |= this.flagValues.tfClearDeepFreeze;
 
-          this.totalFlagsValue = sum;
-          this.totalFlagsHex = '0x' + sum.toString(16).toUpperCase().padStart(8, '0');
+          this.totalFlagsValue.set(sum);
+          this.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
      }
 
      clearFlagsValue() {
-          if (this.activeTab !== 'removeTrustline') {
+          if (this.activeTab() !== 'removeTrustline') {
                this.flags = {
                     tfSetfAuth: false,
                     tfSetNoRipple: false,
@@ -1407,60 +1137,45 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                     tfSetDeepFreeze: false,
                     tfClearDeepFreeze: false,
                };
-               this.totalFlagsValue = 0;
-               this.totalFlagsHex = '0x0';
+               this.totalFlagsValue.set(0);
+               this.totalFlagsHex.set('0x0');
           }
      }
 
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
-               this.amountField = '';
-               this.destinationTagField = '';
-               this.newCurrency = '';
-               this.newIssuer = '';
+               this.amountField.set('');
+               this.destinationTagField.set('');
+               this.newCurrency.set('');
+               this.newIssuer.set('');
                this.clearFlagsValue();
           }
-          this.isMemoEnabled = false;
-          this.memoField = '';
-          this.ticketSequence = '';
-          this.isTicket = false;
-          this.cdr.detectChanges();
+          this.ticketSequence.set('');
      }
 
-     private async getWallet() {
-          const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
-          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
-          if (!wallet) {
-               throw new Error('ERROR: Wallet could not be created or is undefined');
-          }
-          return wallet;
-     }
-
-     private addNewDestinationFromUser() {
-          const addr = this.destinationField.includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
-
-          if (addr && xrpl.isValidAddress(addr) && !this.destinations.some(d => d.address === addr)) {
-               this.customDestinations.push({ name: `Custom ${this.customDestinations.length + 1}`, address: addr });
-               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
+     private addNewDestinationFromUser(destination: string): void {
+          if (destination && xrpl.isValidAddress(destination) && !this.destinations().some(d => d.address === destination)) {
+               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
+               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
                this.updateDestinations();
           }
      }
 
      copyMptId(mpt_issuance_id: string) {
           navigator.clipboard.writeText(mpt_issuance_id).then(() => {
-               this.ui.showToastMessage('MPT Issuance ID copied!');
+               this.txUiService.showToastMessage('MPT Issuance ID copied!');
           });
      }
 
      copyCheckId(checkId: string) {
           navigator.clipboard.writeText(checkId).then(() => {
-               this.ui.showToastMessage('Check ID copied!');
+               this.txUiService.showToastMessage('Check ID copied!');
           });
      }
 
      copyIOUIssuanceAddress(mpt_issuance_id: string) {
           navigator.clipboard.writeText(mpt_issuance_id).then(() => {
-               this.ui.showToastMessage('IOU Token Issuer copied!');
+               this.txUiService.showToastMessage('IOU Token Issuer copied!');
           });
      }
 
@@ -1473,7 +1188,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           };
 
           const count = this.existingIOUs.length;
-          const description = tabDescriptions[this.activeTab] || 'trustline';
+          const description = tabDescriptions[this.activeTab()] || 'trustline';
 
           const walletName = this.currentWallet.name || 'selected';
 
@@ -1486,11 +1201,11 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                message = `<code>${walletName}</code> wallet has <strong>${count}</strong> ${trustlineWord}${description.includes('trustline') ? '' : ` ${description}`}.`;
 
                // Add link to view tokens
-               const link = `${this.url}account/${this.currentWallet.address}/tokens`;
+               const link = `${this.txUiService.explorerUrl}account/${this.currentWallet().address}/tokens`;
                message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View tokens on XRPL Win</a>`;
           }
 
-          this.ui.setInfoMessage(message);
+          this.txUiService.setInfoMessage(message);
      }
 
      decodeMptFlagsForUi(flags: number): string {
@@ -1551,7 +1266,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      }
 
      formatInvoiceId(invoiceId: any): string {
-          return this.utilsService.formatInvoiceId(invoiceId ? invoiceId : '');
+          return this.utilsService.formatInvoiceId(invoiceId || '');
      }
 
      formatXrplTimestamp(timestamp: number): string {
@@ -1559,13 +1274,13 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      }
 
      get safeWarningMessage() {
-          return this.ui.warningMessage?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
      }
 
      private loadKnownIssuers() {
           const data = this.storageService.getKnownIssuers('knownIssuers');
           if (data) {
-               this.knownTrustLinesIssuers = data;
+               this.knownTrustLinesIssuers.set(data);
                this.updateCurrencies();
           }
      }
@@ -1573,7 +1288,7 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      addToken(newToken: string, newIssuerAddress: any, toggleCurrencyField: boolean) {
           const issuerAddress = typeof newIssuerAddress === 'string' ? newIssuerAddress : newIssuerAddress?.address;
           if (!newToken?.trim() || !issuerAddress?.trim()) {
-               this.ui.setError('Currency and issuer required');
+               this.txUiService.setError('Currency and issuer required');
                return;
           }
 
@@ -1581,30 +1296,30 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           const issuer = issuerAddress.trim();
 
           if (!this.utilsService.isValidCurrencyCode(currency)) {
-               this.ui.setError('Invalid currency code');
+               this.txUiService.setError('Invalid currency code');
                return;
           }
           if (!xrpl.isValidAddress(issuer)) {
-               this.ui.setError('Invalid issuer address');
+               this.txUiService.setError('Invalid issuer address');
                return;
           }
 
-          if (!this.knownTrustLinesIssuers[currency]) {
-               this.knownTrustLinesIssuers[currency] = [];
+          if (!this.knownTrustLinesIssuers()[currency]) {
+               this.knownTrustLinesIssuers()[currency] = [];
           }
-          if (this.knownTrustLinesIssuers[currency].includes(issuer)) {
-               this.ui.setError('Issuer already exists');
+          if (this.knownTrustLinesIssuers()[currency].includes(issuer)) {
+               this.txUiService.setError('Issuer already exists');
                return;
           }
 
-          this.knownTrustLinesIssuers[currency].push(issuer);
-          this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers);
+          this.knownTrustLinesIssuers()[currency].push(issuer);
+          this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers());
           this.updateCurrencies();
           this.refreshStoredIssuers();
 
           if (toggleCurrencyField) {
-               this.currencyFieldDropDownValue = currency;
-               this.trustlineCurrency.selectCurrency(currency, this.currentWallet.address);
+               this.currencyFieldDropDownValue.set(currency);
+               this.trustlineCurrency.selectCurrency(currency, this.currentWallet().address);
           }
 
           // THIS IS THE KEY LINE
@@ -1613,52 +1328,53 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
           //      this.trustlineCurrency.selectCurrency(currency, this.currentWallet.address);
           // }
 
-          this.ui.setSuccess(`Added ${currency} issuer`);
+          this.txUiService.setSuccess(`Added ${currency} issuer`);
      }
 
      removeToken(tokenToRemove: string, removeIssuerAddress?: any) {
           if (!tokenToRemove) {
-               this.ui.setError('Select a token');
+               this.txUiService.setError('Select a token');
                return;
           }
 
           const currency = tokenToRemove.trim();
-          if (!this.knownTrustLinesIssuers[currency]) {
-               this.ui.setError('Currency not found');
+          if (!this.knownTrustLinesIssuers()[currency]) {
+               this.txUiService.setError('Currency not found');
                return;
           }
 
           if (!removeIssuerAddress) {
-               delete this.knownTrustLinesIssuers[currency];
+               delete this.knownTrustLinesIssuers()[currency];
           } else {
                const issuer = typeof removeIssuerAddress === 'string' ? removeIssuerAddress : removeIssuerAddress.address;
-               this.knownTrustLinesIssuers[currency] = this.knownTrustLinesIssuers[currency].filter(i => i !== issuer);
-               if (this.knownTrustLinesIssuers[currency].length === 0) {
-                    delete this.knownTrustLinesIssuers[currency];
+               this.knownTrustLinesIssuers()[currency] = this.knownTrustLinesIssuers()[currency].filter(i => i !== issuer);
+               if (this.knownTrustLinesIssuers()[currency].length === 0) {
+                    delete this.knownTrustLinesIssuers()[currency];
                }
           }
 
-          this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers);
+          this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers());
           this.updateCurrencies();
           this.refreshStoredIssuers();
 
           // RELOAD ISSUERS FOR CURRENT CURRENCY
-          if (this.currencyFieldDropDownValue && this.currencies.includes(this.currencyFieldDropDownValue)) {
-               this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue, this.currentWallet.address);
+          if (this.currencyFieldDropDownValue() && this.currencies().includes(this.currencyFieldDropDownValue())) {
+               this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
           } else if (this.currencies.length > 0) {
-               this.currencyFieldDropDownValue = this.currencies[0];
-               this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue, this.currentWallet.address);
+               this.currencyFieldDropDownValue.set(this.currencies()[0]);
+               this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
           } else {
-               this.currencyFieldDropDownValue = '';
-               this.issuerFields = '';
-               this.issuers = [];
+               this.currencyFieldDropDownValue.set('');
+               this.issuerFields.set('');
+               this.issuers.set([]);
           }
 
-          this.ui.setSuccess('Token removed');
+          this.txUiService.setSuccess('Token removed');
      }
 
      onCurrencyChange(currency: string) {
-          this.trustlineCurrency.selectCurrency(currency, this.currentWallet.address);
+          this.trustlineCurrency.selectCurrency(currency, this.currentWallet().address);
+          this.currencyChangeTrigger.update(n => n + 1); // ← forces dropdown reset
      }
 
      onIssuerChange(issuer: string) {
@@ -1666,47 +1382,52 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
      }
 
      private refreshStoredIssuers() {
-          this.storedIssuers = [];
-          for (const currency in this.knownTrustLinesIssuers) {
+          const issuers: IssuerItem[] = [];
+          const knownIssuers = this.knownTrustLinesIssuers();
+
+          for (const currency in knownIssuers) {
                if (currency === 'XRP') continue;
-               for (const address of this.knownTrustLinesIssuers[currency]) {
-                    this.storedIssuers.push({
+               for (const address of knownIssuers[currency]) {
+                    issuers.push({
                          name: currency,
                          address: address,
                     });
                }
           }
           // Optional: sort by currency
-          this.storedIssuers.sort((a, b) => a.name.localeCompare(b.name));
+          issuers.sort((a: IssuerItem, b: IssuerItem) => a.name.localeCompare(b.name));
+          this.storedIssuers.set(issuers);
      }
 
      private updateCurrencies() {
           // Get all currencies except XRP
           const allCurrencies = Object.keys(this.knownTrustLinesIssuers);
           const filtered = allCurrencies.filter(c => c !== 'XRP');
+          // allCurrencies.push('MPT');
 
           // Sort alphabetically
-          this.currencies = filtered.sort((a, b) => a.localeCompare(b));
+          const sorted = filtered.sort((a, b) => a.localeCompare(b));
+          this.currencies.set(sorted);
 
           // AUTO-SELECT FIRST CURRENCY — SAFE WAY
-          if (this.currencies.length > 0) {
+          if (sorted.length > 0) {
                // Only set if nothing is selected OR current selection is invalid/removed
-               const shouldSelectFirst = !this.currencyFieldDropDownValue || !this.currencies.includes(this.currencyFieldDropDownValue);
+               const shouldSelectFirst = !this.currencyFieldDropDownValue() || !sorted.includes(this.currencyFieldDropDownValue());
 
                if (shouldSelectFirst) {
-                    this.currencyFieldDropDownValue = this.currencies[0];
+                    this.currencyFieldDropDownValue.set(sorted[0]);
                     // Trigger issuer load — but do it in next tick so binding is ready
                     Promise.resolve().then(() => {
-                         if (this.currencyFieldDropDownValue) {
-                              this.onCurrencyChange(this.currencyFieldDropDownValue);
+                         if (this.currencyFieldDropDownValue()) {
+                              this.onCurrencyChange(this.currencyFieldDropDownValue());
                          }
                     });
                }
           } else {
                // No currencies left
-               this.currencyFieldDropDownValue = '';
-               this.issuerFields = '';
-               this.issuers = [];
+               this.currencyFieldDropDownValue.set('');
+               this.issuerFields.set('');
+               this.issuers.set([]);
           }
      }
 
@@ -1736,116 +1457,5 @@ export class TrustlinesComponent implements OnInit, AfterViewInit {
                canRemove: reasons.length === 0,
                reasons,
           };
-     }
-
-     filterDestinations() {
-          const query = this.filterQuery.trim().toLowerCase();
-
-          if (query === '') {
-               this.filteredDestinations = [...this.destinations];
-          } else {
-               this.filteredDestinations = this.destinations.filter(d => d.address.toLowerCase().includes(query) || (d.name && d.name.toLowerCase().includes(query)));
-          }
-
-          this.highlightedIndex = this.filteredDestinations.length > 0 ? 0 : -1;
-     }
-
-     onArrowDown() {
-          if (!this.showDropdown || this.filteredDestinations.length === 0) return;
-          this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredDestinations.length;
-     }
-
-     selectHighlighted() {
-          if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
-               const addr = this.filteredDestinations[this.highlightedIndex].address;
-               if (addr !== this.currentWallet.address) {
-                    this.destinationField = addr;
-                    this.closeDropdown(); // Also close on Enter
-               }
-          }
-     }
-
-     // Dropdown controls
-     openDropdown() {
-          this.destinationDropdownService.setItems(this.destinations);
-          this.destinationDropdownService.filter(this.destinationField || '');
-          this.destinationDropdownService.openDropdown();
-     }
-
-     closeDropdown() {
-          this.destinationDropdownService.closeDropdown();
-     }
-
-     toggleDropdown() {
-          this.destinationDropdownService.setItems(this.destinations);
-          this.destinationDropdownService.toggleDropdown();
-     }
-
-     onDestinationInput() {
-          this.destinationDropdownService.filter(this.destinationField || '');
-          this.destinationDropdownService.openDropdown();
-     }
-
-     selectDestination(address: string) {
-          if (address === this.currentWallet.address) return;
-          const dest = this.destinations.find(d => d.address === address);
-          this.destinationField = dest ? this.destinationDropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`;
-          this.closeDropdown();
-     }
-
-     private openDropdownInternal() {
-          if (this.overlayRef?.hasAttached()) return;
-
-          const strategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]);
-
-          this.overlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy: strategy,
-               scrollStrategy: this.overlay.scrollStrategies.close(),
-          });
-
-          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
-          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
-     }
-
-     private closeDropdownInternal() {
-          this.overlayRef?.detach();
-          this.overlayRef = null;
-     }
-
-     updatePaymentTx() {
-          this.scheduleHighlight();
-     }
-
-     updateTxResult() {
-          this.scheduleHighlight();
-     }
-
-     private scheduleHighlight() {
-          afterRenderEffect(
-               () => {
-                    const paymentStr = JSON.stringify(this.ui.paymentTx, null, 2);
-                    const resultStr = JSON.stringify(this.ui.txResult, null, 2);
-
-                    if (this.paymentJson?.nativeElement && paymentStr !== this.lastPaymentTx) {
-                         this.paymentJson.nativeElement.textContent = paymentStr;
-                         Prism.highlightElement(this.paymentJson.nativeElement);
-                         this.lastPaymentTx = paymentStr;
-                    }
-
-                    if (this.txResultJson?.nativeElement && resultStr !== this.lastTxResult) {
-                         this.txResultJson.nativeElement.textContent = resultStr;
-                         Prism.highlightElement(this.txResultJson.nativeElement);
-                         this.lastTxResult = resultStr;
-                    }
-
-                    this.cdr.detectChanges();
-               },
-               { injector: this.injector }
-          );
      }
 }

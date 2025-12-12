@@ -12,36 +12,34 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
-
           <!-- Right form -->
           <div class="form-panel">
                <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'setTrustline'" (click)="setTab('setTrustline')">
+                    <button class="menu-btn active" [class.active]="activeTab() === 'setTrustline'" (click)="setTab('setTrustline')">
                          <ng-icon name="heroAdjustmentsVertical" size="20" class="text-red-600"></ng-icon>
-                         Set Trustline
+                         Set
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'removeTrustline'" (click)="setTab('removeTrustline')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'removeTrustline'" (click)="setTab('removeTrustline')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Remove Trustline
+                         Remove
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'issueCurrency'" (click)="setTab('issueCurrency')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'issueCurrency'" (click)="setTab('issueCurrency')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
                          Issue Currency
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'clawbackTokens'" (click)="setTab('clawbackTokens')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'clawbackTokens'" (click)="setTab('clawbackTokens')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Clawback Tokens
+                         Clawback
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'addNewIssuers'" (click)="setTab('addNewIssuers')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'addNewIssuers'" (click)="setTab('addNewIssuers')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Add/Remove Issuers
                     </button>
                </div>
 
                <!-- Create Menu -->
-               @if (activeTab === 'setTrustline') {
+               @if (activeTab() === 'setTrustline') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -56,7 +54,7 @@
                }
 
                <!-- Remove Trustline Menu -->
-               @if (activeTab === 'removeTrustline') {
+               @if (activeTab() === 'removeTrustline') {
                <div>
                     <div class="submenu-info-text">
                          <div class="red-button-submenu">
@@ -71,7 +69,7 @@
                }
 
                <!-- Issue Currency Menu -->
-               @if (activeTab === 'issueCurrency') {
+               @if (activeTab() === 'issueCurrency') {
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
@@ -86,7 +84,7 @@
                }
 
                <!-- Clawback Tokens Menu -->
-               @if (activeTab === 'clawbackTokens') {
+               @if (activeTab() === 'clawbackTokens') {
                <div>
                     <div class="submenu-info-text">
                          <div class="red-button-submenu">
@@ -101,7 +99,7 @@
                }
 
                <!-- Add/Remove New Issuers Menu -->
-               @if (activeTab === 'addNewIssuers') {
+               @if (activeTab() === 'addNewIssuers') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -116,182 +114,107 @@
                }
 
                <!-- Dynamic info panel -->
-               @if (ui.infoMessage) {
+               @if (txUiService.infoMessage) {
                <div class="info-panel">
                     <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="ui.safeInfo"></div>
+                    <div class="info-text" [innerHTML]="txUiService.safeInfo"></div>
+               </div>
+               }
+
+               <!-- Trustlines Info Panel - Collapsible & Beautiful -->
+               @if (infoData(); as info) {
+               <div class="info-message-wrapper">
+                    <div class="info-panel">
+                         <div class="info-text">
+                              <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
+                                   <code>{{ info.walletName }}</code>
+
+                                   @if (info.trustlineCount === 0) { has no trustlines. } @else { has <strong>{{ info.trustlineCount }}</strong> trustline{{ info.trustlineCount === 1 ? '' : 's' }} @switch (info.activeTab) { @case ('setTrustline') { available to set. } @case ('removeTrustline') { that can be removed. } @case ('issueCurrency') { available for issuing tokens. } @case ('clawbackTokens') { that support clawback. } @case ('addNewIssuers') { configured. } } } @if (info.links) {
+                                   <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
+                                   }
+                              </div>
+
+                              @if (info.trustlineCount > 0) {
+                              <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
+                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
+                                        <span> @switch (info.activeTab) { @case ('setTrustline') { Available Trustlines } @case ('removeTrustline') { Removable Trustlines } @case ('issueCurrency') { Issuable Trustlines } @case ('clawbackTokens') { Clawback-Enabled Trustlines } @case ('addNewIssuers') { Configured Trustlines } } ({{ info.trustlineCount }}) </span>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
+                                             <path d="M6 9l6 6 6-6" />
+                                        </svg>
+                                   </div>
+
+                                   @if (infoPanelExpanded()) {
+                                   <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
+                                        @for (tl of info.trustlinesToShow; track tl.currency + tl.issuer) {
+                                        <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
+                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'account/' + tl.issuer + '/tokens'" tooltipText="View issuer tokens on XRPL Explorer">
+                                                  <div style="font-weight: 500; margin-bottom: 4px">
+                                                       <strong>{{ tl.currency }}</strong>
+                                                       @if (tl.balance !== '0') {
+                                                       <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800"> {{ tl.balance }} held </span>
+                                                       }
+                                                  </div>
+                                                  <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
+                                                       <div>Issuer: <code>{{ tl.issuer.slice(0,10) }}...{{ tl.issuer.slice(-8) }}</code></div>
+                                                       <div>Limit: {{ tl.limit }} • Balance: {{ tl.balance }}</div>
+                                                       @if (tl.flags.length > 0) {
+                                                       <div>Flags: {{ tl.flags.join(', ') }}</div>
+                                                       }
+                                                  </div>
+                                             </app-tooltip-link>
+
+                                             <button (click)="copyAndToast(tl.issuer, 'Issuer Address'); $event.stopPropagation()" class="copy-btn" title="Copy Issuer Address">
+                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                  </svg>
+                                             </button>
+                                        </li>
+                                        }
+                                   </ul>
+                                   }
+                              </div>
+                              }
+                         </div>
+                    </div>
                </div>
                }
 
                <!-- Warning Message -->
-               @if (ui.warningMessage) {
+               @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="ui.safeWarning"></div>
-               </div>
-               }
-
-               <!-- Existing IOUs -->
-               @if (activeTab !== 'addNewIssuers' && existingIOUs.length > 0) {
-               <div class="outstanding-checks-panel">
-                    <div class="panel-header" (click)="toggleOutstandingIOU()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing IOUs ({{ existingIOUs.length }})
-                         </h3>
-                    </div>
-
-                    <div class="payment-channel-list-container" [style.max-height]="outstandingIOUCollapsed ? '0' : (existingIOUs.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         @if (!outstandingIOUCollapsed) {
-                         <div class="checks-list">
-                              @for (chk of existingIOUs; track chk.Balance.currency + chk.Balance.value) {
-                              <div class="check-card">
-                                   <div class="check-amount">Currency: {{ chk.Balance.currency }} Amount: {{ chk.Balance.value }}</div>
-                                   <div class="check-amount"><strong>Issuer: {{ chk.HighLimit.issuer }}</strong></div>
-
-                                   <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyIOUIssuanceAddress(chk.HighLimit.issuer); $event.stopPropagation(); $event.preventDefault()" title="Copy IOU Issuer" type="button">
-                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}account/` + chk.HighLimit.issuer + `/tokens`" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
-                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
-                                             </a>
-                                        </button>
-                                   </div>
-                              </div>
-                              }
-                         </div>
-                         }
-                    </div>
-               </div>
-               }
-
-               <!-- Existing MPTs -->
-               @if (activeTab !== 'addNewIssuers' && existingMpts.length > 0) {
-               <div class="outstanding-checks-panel">
-                    <!-- Header – clickable to expand/collapse -->
-                    <div class="panel-header" (click)="toggleExistingMpts()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing MPTs ({{ existingMpts.length }})
-                         </h3>
-                    </div>
-
-                    <!-- Collapsible content with smooth height animation -->
-                    <div class="checks-list-container" [style.max-height]="existingMptsCollapsed ? '0': (existingMpts.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         @if (!existingMptsCollapsed) {
-                         <div class="checks-list">
-                              @for (chk of existingMpts; track chk.id) {
-                              <div class="check-card">
-                                   <div class="check-extras">
-                                        <!-- LedgerEntryType  -->
-                                        @if (chk.LedgerEntryType) {
-                                        <span class="badge badge-expire"> LedgerEntryType: {{ chk.LedgerEntryType }} </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> LedgerEntryType: Not set </span>
-                                        }
-
-                                        <!-- Issuer  -->
-                                        @if (chk.Issuer) {
-                                        <span class="badge badge-expire"> Issuer: {{ chk.Issuer }} </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> Issuer: Not set </span>
-                                        }
-
-                                        <!-- Flags  -->
-                                        @if (chk.Flags !== undefined) {
-                                        <span class="badge badge-expire">
-                                             Flags: {{ decodeMptFlagsForUi(chk.Flags) }}
-                                             <span class="flag-original">({{ chk.Flags }})</span>
-                                        </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> Flags: Not set </span>
-                                        }
-
-                                        <!-- Line break between Flags and MPT Issuance ID -->
-                                        <div class="line-break"></div>
-
-                                        <!-- MPT Issuance ID  -->
-                                        @if (chk.mpt_issuance_id) {
-                                        <span class="badge badge-expire"> MPT Issuance ID: {{ chk.mpt_issuance_id | slice:0:6 }}...{{ chk.mpt_issuance_id | slice:-6 }}</span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> MPT Issuance ID: Not set </span>
-                                        }
-
-                                        <!-- AssetScale  -->
-                                        @if (chk.AssetScale) {
-                                        <span class="badge badge-tag"> AssetScale: {{ chk.AssetScale }} </span>
-                                        } @else {
-                                        <span class="badge badge-tag-not-set"> AssetScale: Not set </span>
-                                        }
-
-                                        <!-- MaximumAmount  -->
-                                        @if (chk.MaximumAmount) {
-                                        <span class="badge badge-invoice"> MaximumAmount: {{ chk.MaximumAmount }} </span>
-                                        } @else {
-                                        <span class="badge badge-invoice-not-set"> MaximumAmount: Not set</span>
-                                        }
-
-                                        <!-- OutstandingAmount  -->
-                                        @if (chk.OutstandingAmount) {
-                                        <span class="badge badge-invoice"> OutstandingAmount: {{ chk.OutstandingAmount }} </span>
-                                        } @else {
-                                        <span class="badge badge-invoice-not-set"> OutstandingAmount: Not set</span>
-                                        }
-
-                                        <!-- TransferFee  -->
-                                        @if (chk.TransferFee) {
-                                        <span class="badge badge-invoice"> TransferFee: {{ chk.TransferFee }} </span>
-                                        } @else {
-                                        <span class="badge badge-invoice-not-set"> TransferFee: Not set</span>
-                                        }
-
-                                        <!-- MPTokenMetadata  -->
-                                        @if (chk.MPTokenMetadata) {
-                                        <span class="badge badge-invoice"> MPTokenMetadata: {{ chk.MPTokenMetadata | slice:0:6 }}...{{ chk.MPTokenMetadata | slice:-6 }}</span>
-                                        } @else {
-                                        <span class="badge badge-invoice-not-set"> MPTokenMetadata: Not set</span>
-                                        }
-                                   </div>
-
-                                   <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyMptId(chk.mpt_issuance_id); $event.stopPropagation(); $event.preventDefault()" title="Copy MPT Issuance ID" type="button">
-                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}mpt/` + chk.mpt_issuance_id" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
-                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
-                                             </a>
-                                        </button>
-                                   </div>
-                              </div>
-                              }
-                         </div>
-                         }
-                    </div>
+                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
                </div>
                }
 
                <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab">
+                    <div [@tabTransition]="activeTab()">
                          <div class="tab-content-columns">
                               <div class="tab-content-container form-fields-container">
-                                   @if (activeTab === 'setTrustline' || activeTab === 'removeTrustline' || activeTab === 'issueCurrency' || activeTab === 'clawbackTokens') {
+                                   @if (activeTab() === 'setTrustline' || activeTab() === 'removeTrustline' || activeTab() === 'issueCurrency' || activeTab() === 'clawbackTokens') {
                                    <!-- Currency Code and Issuer-->
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>Currency Code</label>
-                                             <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" (ngModelChange)="onCurrencyChange($event)" name="currencyField">
-                                                  @for (curr of currencies; track curr) {
-                                                  <option [value]="curr">{{ curr }}</option>
-                                                  }
-                                             </select>
+                                             <label for="currencyCodeCash">Currency Code</label>
+                                             <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                                  <ng-template #itemTemplate let-item>
+                                                       <div class="flex items-center gap-2">
+                                                            @if (item.id === 'XRP') {
+                                                            <span class="text-yellow-500 font-bold">XRP</span>
+                                                            } @else {
+                                                            <span>{{ item.display }}</span>
+                                                            }
+                                                            <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                       </div>
+                                                  </ng-template>
+                                             </app-select-search-dropdown>
                                         </div>
 
                                         <div class="form-group">
-                                             <label>Issuer</label>
-                                             <select id="issuerFields" [(ngModel)]="issuerFields" (ngModelChange)="onIssuerChange($event)" name="issuerFields">
-                                                  @for (iss of issuers; track iss.address) {
-                                                  <option [value]="iss.address">{{ iss.name }} ({{ iss.address | slice:0:8 }}...{{ iss.address | slice:-6 }})</option>
-                                                  }
-                                             </select>
+                                             <label for="issuer">Issuer</label>
+                                             <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                                         </div>
                                    </div>
 
@@ -310,40 +233,14 @@
                                    }
 
                                    <!-- Destination and Destination Tag -->
-                                   @if (activeTab === 'issueCurrency' || activeTab === 'clawbackTokens') {
+                                   @if (activeTab() === 'issueCurrency' || activeTab() === 'clawbackTokens') {
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>Destination</label>
-
-                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
-
-                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                                  </button>
-                                             </div>
+                                             <label for="destination">Destination</label>
+                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
 
-                                        <!-- Dropdown template -->
-                                        <ng-template #dropdownTemplate>
-                                             <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations; track dest.address) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
-                                                       <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
-                                                            <span class="self-badge">Current Account</span>
-                                                            }
-                                                       </div>
-                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
-                                                  </div>
-                                                  } @empty {
-                                                  <div class="combobox-empty">No matching addresses</div>
-                                                  }
-                                             </div>
-                                        </ng-template>
-
-                                        @if (activeTab === 'issueCurrency') {
+                                        @if (activeTab() === 'issueCurrency') {
                                         <div class="form-group">
                                              <label>Destination Tag</label>
                                              <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
@@ -353,7 +250,7 @@
                                    }
 
                                    <!-- Destination (create only) -->
-                                   @if (activeTab === 'addNewIssuers') {
+                                   @if (activeTab() === 'addNewIssuers') {
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Add Currency</label>
@@ -368,30 +265,31 @@
 
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>Currency</label>
-                                             <select id="currencyField" [(ngModel)]="currencyFieldDropDownValue" name="currencyField">
-                                                  <!-- <option value="">-- Select Issuer --</option> -->
-                                                  @for (curr of availableCurrencies; track curr) {
-                                                  <option [value]="curr">{{ curr }}</option>
-                                                  }
-                                             </select>
+                                             <label for="currencyCodeCash">Currency Code</label>
+                                             <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                                  <ng-template #itemTemplate let-item>
+                                                       <div class="flex items-center gap-2">
+                                                            @if (item.id === 'XRP') {
+                                                            <span class="text-yellow-500 font-bold">XRP</span>
+                                                            } @else {
+                                                            <span>{{ item.display }}</span>
+                                                            }
+                                                            <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                       </div>
+                                                  </ng-template>
+                                             </app-select-search-dropdown>
                                         </div>
 
                                         <div class="form-group">
-                                             <label>Issuer</label>
-                                             <select id="storedIssuers" [(ngModel)]="selectedIssuer" name="storedIssuers">
-                                                  <!-- <option value="">-- Select Issuer --</option> -->
-                                                  @for (iss of storedIssuers; track iss.address) {
-                                                  <option [value]="iss.address">{{ iss.name }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
-                                                  }
-                                             </select>
+                                             <label for="issuer">Issuer</label>
+                                             <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                                         </div>
                                    </div>
                                    }
                               </div>
 
                               <!-- ==================== RIGHT: PAYMENT CHANNEL FLAGS ==================== -->
-                              @if (activeTab === 'setTrustline' || activeTab === 'removeTrustline') {
+                              @if (activeTab() === 'setTrustline' || activeTab() === 'removeTrustline') {
                               <div class="tab-content-container flags-container" style="min-width: 570px">
                                    <div class="flags-wrapper">
                                         <!-- Header -->
@@ -401,7 +299,7 @@
                                         </div>
 
                                         <!-- Set Trustline tab — Only "Set" flags -->
-                                        @if (activeTab === 'setTrustline') {
+                                        @if (activeTab() === 'setTrustline') {
                                         <!-- tfSetfAuth -->
                                         <!-- <div class="form-row-account-flags"> -->
                                         <div class="flag-item-account-flags" [class.enabled]="flags.tfSetfAuth" (click)="toggleFlag('tfSetfAuth')">
@@ -461,7 +359,7 @@
                                         <!-- ======================================== -->
                                         <!-- REMOVE TRUSTLINE TAB — Only "Clear" flags -->
                                         <!-- ======================================== -->
-                                        @if (activeTab === 'removeTrustline') {
+                                        @if (activeTab() === 'removeTrustline') {
                                         <!-- <div class="form-row-account-flags"> -->
                                         <!-- tfClearNoRipple -->
                                         <div class="flag-item-account-flags" [class.enabled]="flags.tfClearNoRipple">
@@ -521,226 +419,39 @@
                                         <!-- ======================================== -->
                                         <div class="flags-total" style="margin-top: 20px; padding: 12px; background: rgba(0, 0, 0, 0.05); border-radius: 8px">
                                              <span class="total-label">Total Flags Value:</span>
-                                             <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
+                                             <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
                                         </div>
                                    </div>
                               </div>
                               }
                          </div>
 
-                         <!-- Switches -->
-                         @if(activeTab !== 'addNewIssuers') {
-                         <div class="switch-group">
-                              <!-- Memo group -->
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                   <span class="slider"></span>
-                                   Add Memo
-                              </label>
-
-                              <!-- Multi Signing Enabled group -->
-                              @if (multiSigningEnabled) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                   <span class="slider"></span>
-                                   Use Multi-Sign
-                              </label>
-                              }
-
-                              <!-- Regular Key Signing Enabled-->
-                              @if (regularKeySigningEnabled) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                                   <span class="slider"></span>
-                                   Use Regular Key
-                              </label>
-                              }
-
-                              <!-- Use Ticket for tx -->
-                              @if (activeTab !== 'delete' && ticketArray.length > 0) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                                   <span class="slider"></span>
-                                   Use Ticket
-                              </label>
-                              }
-
-                              <!-- Simulate tx -->
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="ui.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="ui.toggleSimulate($event)" />
-                                   <span class="slider"></span>
-                                   Simulate
-                              </label>
-                         </div>
-                         }
-
-                         <!-- Memo Field -->
-                         @if (isMemoEnabled) {
-                         <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-                         }
-
-                         <!-- Sign tx with Mult Sign address -->
-                         @if (useMultiSign) {
-                         <div class="multisign-grid">
-                              <div class="multisign-field">
-                                   <label>Signers</label>
-                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                              </div>
-                              <div class="multisign-field">
-                                   <label>Seeds</label>
-                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                              </div>
-                              <div class="multisign-field quorum-field">
-                                   <label>Quorum</label>
-                                   <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Sign tx with Regular key address -->
-                         @if (isRegularKeyAddress) {
-                         <div class="regular-key-fields">
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Address</label>
-                                        <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                                   </div>
-                              </div>
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Seed</label>
-                                        <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                   </div>
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Get ticket -->
-                         @if (isTicket) {
-                         <div class="ticket-fields">
-                              <div class="form-group">
-                                   <label>Ticket Sequence</label>
-                                   @if (multiSelectMode) {
-                                   <div>
-                                        <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                             @for (ticket of ticketArray; track ticket) {
-                                             <option [value]="ticket">{{ ticket }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                                   } @else {
-                                   <div>
-                                        <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                             <option value="" disabled>Select a ticket</option>
-                                             @for (ticket of ticketArray; track ticket) {
-                                             <option [value]="ticket">{{ ticket }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                                   }
-                              </div>
-                         </div>
-                         }
+                         <app-transaction-options [showWhenTab]="['create', 'cash','cancel']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                          <!-- Action buttons -->
                          <div class="button-row">
-                              @if(activeTab === 'setTrustline') {
-                              <button type="button" class="btn-primary-blue" (click)="setTrustLine()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Set Trustline' }}</button>
-                              } @else if (activeTab === 'removeTrustline') {
-                              <button type="button" class="btn-primary-red" (click)="removeTrustline()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Remove Trustline' }}</button>
-                              } @else if (activeTab === 'issueCurrency') {
-                              <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Issue Currency' }}</button>
-                              } @else if (activeTab === 'clawbackTokens') {
-                              <button type="button" class="btn-primary-red" (click)="clawbackTokens()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Clawback Tokens' }}</button>
-                              } @else if (activeTab === 'addNewIssuers') {
-                              <button type="button" class="btn-primary-blue" (click)="addToken(newCurrency, newIssuer, true)" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Add Currency/Issuer' }}</button>
-                              <button type="button" class="btn-primary-blue" (click)="removeToken(currencyFieldDropDownValue, selectedIssuer)" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Remove Currency/Issuer' }}</button>
+                              @if(activeTab() === 'setTrustline') {
+                              <button type="button" class="btn-primary-blue" (click)="setTrustLine()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Set Trustline' }}</button>
+                              } @else if (activeTab() === 'removeTrustline') {
+                              <button type="button" class="btn-primary-red" (click)="removeTrustline()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove Trustline' }}</button>
+                              } @else if (activeTab() === 'issueCurrency') {
+                              <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Issue Currency' }}</button>
+                              } @else if (activeTab() === 'clawbackTokens') {
+                              <button type="button" class="btn-primary-red" (click)="clawbackTokens()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Clawback Tokens' }}</button>
+                              } @else if (activeTab() === 'addNewIssuers') {
+                              <button type="button" class="btn-primary-blue" (click)="addToken(newCurrency(), newIssuer, true)" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Add Currency/Issuer' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="removeToken(currencyFieldDropDownValue(), selectedIssuer)" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove Currency/Issuer' }}</button>
                               }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                          </div>
 
-                         <!-- Spinner -->
-                         @if (ui.spinner()) {
-                         <div class="spinner-row">
-                              <div class="spinner"></div>
-                              <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
+                         <!-- Execution time -->
+                         <div style="display: flex">
+                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                          </div>
-                         }
-
-                         <!-- Success message -->
-                         @if (ui.isSuccess && !ui.isError) {
-                         <div class="success-message">
-                              <lucide-icon name="check" size="20"></lucide-icon>
-                              <div class="success-text">
-                                   @if (ui.txHash && !ui.isSimulateEnabled) {
-                                   <span>{{ui.successMessage}}</span><br /><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                   } @else {
-                                   <span>{{ui.successMessage}}</span>
-                                   }
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Error message -->
-                         @if (ui.isError && ui.result) {
-                         <div class="tx-message error">
-                              <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
-                              <div class="tx-text">
-                                   <!-- Display Tx Hash if we are not in simulation mode-->
-                                   @if (ui.txHash && !ui.isSimulateEnabled) {
-                                   <span>{{ ui.result }}</span><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                   } @else {
-                                   <span>{{ ui.result }}</span>
-                                   }
-                              </div>
-                         </div>
-                         }
+                         <app-transaction-preview></app-transaction-preview>
                     </div>
                </form>
-
-               <!-- Tx Preview -->
-               @if (ui.paymentTx.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h5 class="tx-title">Trustline Transaction</h5>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTx()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTx()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
-               </div>
-               }
-
-               <!-- Tx Result Preview -->
-               @if (ui.txResult.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h3 class="tx-title">Transaction Result</h3>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
-               </div>
-               }
           </div>
      </div>
 </div>
