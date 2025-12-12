@@ -12,41 +12,39 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
-
           <!-- Right form -->
           <div class="form-panel">
                <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'create'" (click)="setTab('create')">
+                    <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Create MPT
                     </button>
-                    <button class="menu-btn active" [class.active]="activeTab === 'unauthorize'" (click)="setTab('unauthorize')">
+                    <button class="menu-btn active" [class.active]="activeTab() === 'unauthorize'" (click)="setTab('unauthorize')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Auth/Unauth
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'send'" (click)="setTab('send')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'send'" (click)="setTab('send')">
                          <ng-icon name="heroBanknotes" size="20" class="text-red-600"></ng-icon>
                          Send Payment
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'lock'" (click)="setTab('lock')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'lock'" (click)="setTab('lock')">
                          <!-- <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon> -->
                          <ng-icon name="heroLockOpen" size="20" class="text-red-600"></ng-icon>
                          Lock/Unlock
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'clawback'" (click)="setTab('clawback')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'clawback'" (click)="setTab('clawback')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
                          Clawback
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'destroy'" (click)="setTab('destroy')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'destroy'" (click)="setTab('destroy')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
                          Destroy
                     </button>
                </div>
 
                <!-- Create Menu -->
-               @if (activeTab === 'create') {
+               @if (activeTab() === 'create') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -61,7 +59,7 @@
                }
 
                <!-- Authorize/Unauthorize Menu -->
-               @if (activeTab === 'authorize' || activeTab === 'unauthorize') {
+               @if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -76,7 +74,7 @@
                }
 
                <!-- Fund Menu -->
-               @if (activeTab === 'send') {
+               @if (activeTab() === 'send') {
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
@@ -92,7 +90,7 @@
                }
 
                <!-- Claim Menu -->
-               @if (activeTab === 'lock' || activeTab === 'unlock') {
+               @if (activeTab() === 'lock' || activeTab() === 'unlock') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -107,7 +105,7 @@
                }
 
                <!-- Close Menu -->
-               @if (activeTab === 'clawback') {
+               @if (activeTab() === 'clawback') {
                <div>
                     <div class="submenu-info-text">
                          <div class="red-button-submenu">
@@ -122,7 +120,7 @@
                }
 
                <!-- Close Menu -->
-               @if (activeTab === 'destroy') {
+               @if (activeTab() === 'destroy') {
                <div>
                     <div class="submenu-info-text">
                          <div class="red-button-submenu">
@@ -137,133 +135,83 @@
                }
 
                <!-- Dynamic info panel -->
-               @if (ui.infoMessage) {
-               <div class="info-panel">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="ui.safeInfo"></div>
+               <!-- MPT Info Panel - Collapsible & Premium -->
+               @if (infoData(); as info) {
+               <div class="info-message-wrapper">
+                    <div class="info-panel">
+                         <div class="info-text">
+                              <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
+                                   <code>{{ info.walletName }}</code>
+
+                                   @if (info.mptCount === 0) { has no Multi-Purpose Tokens. } @else { has <strong>{{ info.mptCount }}</strong> Multi-Purpose Token{{ info.mptCount === 1 ? '' : 's' }}. } @if (info.links) {
+                                   <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
+                                   }
+                              </div>
+
+                              @if (info.mptCount > 0) {
+                              <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
+                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
+                                        <span>Multi-Purpose Tokens ({{ info.mptCount }})</span>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
+                                             <path d="M6 9l6 6 6-6" />
+                                        </svg>
+                                   </div>
+
+                                   @if (infoPanelExpanded()) {
+                                   <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
+                                        @for (mpt of info.mptsToShow; track mpt.id) {
+                                        <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
+                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + mpt.id" tooltipText="View MPT on XRPL Explorer">
+                                                  <div style="font-weight: 500; margin-bottom: 4px">
+                                                       <strong>MPT</strong>
+                                                       @if (mpt.amount) {
+                                                       <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800"> {{ mpt.amount }} {{ mpt.isHolder ? 'held' : 'issued' }} </span>
+                                                       }
+                                                  </div>
+                                                  <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
+                                                       <div>ID: <code>{{ mpt.id.slice(0,12) }}...{{ mpt.id.slice(-10) }}</code></div>
+                                                       @if (mpt.amount && mpt.amount !== '0') {
+                                                       <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800"> {{ mpt.amount }} {{ mpt.isHolder ? 'held' : 'issued' }} </span>
+                                                       } @if (mpt.transferFee) {
+                                                       <div>Transfer Fee: {{ mpt.transferFee / 1000 }}%</div>
+                                                       }
+                                                       <div>Flags: {{ mpt.flags.length ? mpt.flags: 'None' }}</div>
+                                                  </div>
+                                             </app-tooltip-link>
+
+                                             <button (click)="copyAndToast(mpt.id, 'MPT ID'); $event.stopPropagation()" class="copy-btn" title="Copy MPT ID">
+                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                  </svg>
+                                             </button>
+                                        </li>
+                                        }
+                                   </ul>
+                                   }
+                              </div>
+                              }
+                         </div>
+                    </div>
                </div>
                }
 
                <!-- Warning Message -->
-               @if (ui.warningMessage) {
+               @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="ui.safeWarning"></div>
-               </div>
-               }
-
-               <!-- Outstanding Checks on selected account -->
-               @if (existingMpts.length > 0) {
-               <div class="outstanding-checks-panel">
-                    <!-- Header – clickable to expand/collapse -->
-                    <div class="panel-header" (click)="toggleExistingMpts()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing MPTs ({{ existingMpts.length }})
-                         </h3>
-                    </div>
-
-                    <!-- Collapsible content with smooth height animation -->
-                    <div class="checks-list-container" [style.max-height]="existingMptsCollapsed ? '0': (existingMpts.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         @if (!existingMptsCollapsed) {
-                         <div class="checks-list">
-                              @for (chk of existingMpts; track chk.id) {
-                              <div class="check-card">
-                                   <div class="check-extras">
-                                        <!-- LedgerEntryType  -->
-                                        @if (chk.LedgerEntryType) {
-                                        <span class="badge badge-expire"> LedgerEntryType: {{ chk.LedgerEntryType }} </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> LedgerEntryType: Not set </span>
-                                        }
-
-                                        <!-- Issuer  -->
-                                        @if (chk.MPToken === 'MPTokenIssuance' && chk.Issuer) {
-                                        <span class="badge badge-expire"> Issuer: {{ chk.Issuer }} </span>
-                                        }
-
-                                        <!-- Flags  -->
-                                        @if (chk.Flags !== undefined) {
-                                        <span class="badge badge-expire">
-                                             Flags: {{ decodeMptFlagsForUi(chk.Flags) }}
-                                             <span class="flag-original">({{ chk.Flags }})</span>
-                                        </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set"> Flags: Not set </span>
-                                        }
-
-                                        <!-- Line break between Flags and MPT Issuance ID -->
-                                        <div class="line-break"></div>
-
-                                        <!-- MPT Issuance ID  -->
-                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.mpt_issuance_id) {
-                                        <span class="badge badge-expire"> MPT Issuance ID: {{ chk.mpt_issuance_id | slice:0:6 }}...{{ chk.mpt_issuance_id | slice:-6 }}</span>
-                                        }
-
-                                        <!-- MPToken Issuance ID  -->
-                                        @if (chk.LedgerEntryType === 'MPToken' && chk.MPTokenIssuanceID) {
-                                        <span class="badge badge-expire"> MPToken Issuance ID: {{ chk.MPTokenIssuanceID}}</span>
-                                        }
-
-                                        <!-- AssetScale  -->
-                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.AssetScale) {
-                                        <span class="badge badge-tag"> AssetScale: {{ chk.AssetScale }} </span>
-                                        }
-
-                                        <!-- MaximumAmount  -->
-                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.MaximumAmount) {
-                                        <span class="badge badge-invoice"> MaximumAmount: {{ chk.MaximumAmount }} </span>
-                                        }
-
-                                        <!-- OutstandingAmount  -->
-                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.OutstandingAmount) {
-                                        <span class="badge badge-invoice"> OutstandingAmount: {{ chk.OutstandingAmount }} </span>
-                                        }
-
-                                        <!-- MPTAmount  -->
-                                        @if (chk.LedgerEntryType === 'MPToken' && chk.MPTAmount) {
-                                        <span class="badge badge-invoice"> MPTAmount: {{ chk.MPTAmount }} </span>
-                                        }
-
-                                        <!-- TransferFee  -->
-                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.TransferFee) {
-                                        <span class="badge badge-invoice"> TransferFee: {{ chk.TransferFee }} </span>
-                                        }
-
-                                        <!-- MPTokenMetadata  -->
-                                        @if (chk.LedgerEntryType === 'MPTokenIssuance' && chk.MPTokenMetadata) {
-                                        <span class="badge badge-invoice"> MPTokenMetadata: {{ chk.MPTokenMetadata | slice:0:6 }}...{{ chk.MPTokenMetadata | slice:-6 }}</span>
-                                        }
-
-                                        <!-- Account  -->
-                                        @if (chk.LedgerEntryType === 'MPToken' && chk.Account) {
-                                        <span class="badge badge-invoice"> Account: {{ chk.Account }}</span>
-                                        }
-                                   </div>
-
-                                   <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyMptId(chk.mpt_issuance_id); $event.stopPropagation(); $event.preventDefault()" title="Copy MPT Issuance ID" type="button">
-                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}mpt/` + chk.mpt_issuance_id" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
-                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
-                                             </a>
-                                        </button>
-                                   </div>
-                              </div>
-                              }
-                         </div>
-                         }
-                    </div>
+                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
                </div>
                }
 
                <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab">
+                    <div [@tabTransition]="activeTab()">
                          <div class="tab-content-columns">
                               <!-- ==================== LEFT: FORM FIELDS ==================== -->
                               <div class="tab-content-container form-fields-container">
                                    <!-- Create sections -->
-                                   @if(activeTab === 'create') {
+                                   @if(activeTab() === 'create') {
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Asset Scale</label>
@@ -294,38 +242,12 @@
                                    }
 
                                    <!-- MPT IssuanceId sections -->
-                                   @if (activeTab === 'authorize' || activeTab === 'unauthorize' || activeTab === 'lock' || activeTab === 'unlock') {
+                                   @if (activeTab() === 'authorize' || activeTab() === 'unauthorize' || activeTab() === 'lock' || activeTab() === 'unlock') {
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>Destination</label>
-
-                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
-
-                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                                  </button>
-                                             </div>
+                                             <label for="destination">Destination</label>
+                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
-
-                                        <!-- Dropdown template -->
-                                        <ng-template #dropdownTemplate>
-                                             <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations; track dest.address) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
-                                                       <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
-                                                            <span class="self-badge">Current Account</span>
-                                                            }
-                                                       </div>
-                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
-                                                  </div>
-                                                  } @empty {
-                                                  <div class="combobox-empty">No matching addresses</div>
-                                                  }
-                                             </div>
-                                        </ng-template>
 
                                         <div class="form-group">
                                              <label>MPT Issuance ID</label>
@@ -335,7 +257,7 @@
                                    }
 
                                    <!-- Send MPT sections -->
-                                   @if (activeTab === 'send') {
+                                   @if (activeTab() === 'send') {
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>MPT Amount</label>
@@ -353,42 +275,16 @@
                                    <!-- Destination (create only) -->
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>Destination</label>
-
-                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
-
-                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                                  </button>
-                                             </div>
+                                             <label for="destination">Destination</label>
+                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
-
-                                        <!-- Dropdown template -->
-                                        <ng-template #dropdownTemplate>
-                                             <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations; track dest.address) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
-                                                       <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
-                                                            <span class="self-badge">Current Account</span>
-                                                            }
-                                                       </div>
-                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
-                                                  </div>
-                                                  } @empty {
-                                                  <div class="combobox-empty">No matching addresses</div>
-                                                  }
-                                             </div>
-                                        </ng-template>
                                    </div>
                                    }
 
                                    <!-- Clawback/Destroy MPT sections -->
-                                   @if (activeTab === 'clawback' || activeTab === 'destroy') {
+                                   @if (activeTab() === 'clawback' || activeTab() === 'destroy') {
                                    <!-- Clawback MPT sections -->
-                                   @if(activeTab === 'clawback') {
+                                   @if(activeTab() === 'clawback') {
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Amount to Clawback</label>
@@ -397,35 +293,9 @@
 
                                         <!-- Destination -->
                                         <div class="form-group">
-                                             <label>Destination</label>
-
-                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
-
-                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                                  </button>
-                                             </div>
+                                             <label for="destination">Destination</label>
+                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
-
-                                        <!-- Dropdown template -->
-                                        <ng-template #dropdownTemplate>
-                                             <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations; track dest.address) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
-                                                       <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
-                                                            <span class="self-badge">Current Account</span>
-                                                            }
-                                                       </div>
-                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
-                                                  </div>
-                                                  } @empty {
-                                                  <div class="combobox-empty">No matching addresses</div>
-                                                  }
-                                             </div>
-                                        </ng-template>
                                    </div>
                                    }
 
@@ -436,25 +306,21 @@
                                         </div>
                                    </div>
 
-                                   @if (existingMpts.length > 0) {
-                                   <div class="form-row">
-                                        <div class="form-group" style="margin-bottom: 1em">
-                                             <label>Available Escrows to cancel</label>
-                                             <select [(ngModel)]="selectedMpt" name="selectedMpt" class="form-control" (ngModelChange)="onMptSelect($event)">
-                                                  <option [ngValue]="null" disabled>Select an MPT to Clawback</option>
-                                                  @for (chk of existingMpts; track chk.Sequence) {
-                                                  <!-- Make sure we have an issuer -->
-                                                  @if (chk.LedgerEntryType === 'MPTokenIssuance') {
-                                                  <option [ngValue]="chk">MPT Issuance ID: {{chk.mpt_issuance_id}} Outstanding Amount {{ chk.OutstandingAmount }}</option>
-                                                  } }
-                                             </select>
-                                        </div>
+                                   <!-- @if (existingMpts().length > 0) { -->
+                                   <div class="form-group">
+                                        <label>Select MPT to Clawback</label>
+
+                                        <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
                                    </div>
-                                   } }
+
+                                   <!-- Hidden field to keep ngModel happy -->
+                                   <!-- <input type="hidden" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" /> -->
+                                   <!-- }  -->
+                                   }
                               </div>
 
                               <!-- MPT Flags -->
-                              @if (activeTab === 'create') {
+                              @if (activeTab() === 'create') {
                               <div class="tab-content-container flags-container" style="min-width: 550px">
                                    <div class="flags-wrapper">
                                         <div class="token-flags-header">
@@ -463,7 +329,7 @@
                                         </div>
 
                                         <!-- tfRenew -->
-                                        @if (activeTab === 'create') {
+                                        @if (activeTab() === 'create') {
                                         <div class="flag-item-account-flags" [class.enabled]="flags.canLock" (click)="toggleFlag('canLock')">
                                              <div class="flag-header-account">
                                                   <input type="checkbox" id="canLock" name="canLock" [checked]="flags.canLock" class="flag-checkbox" />
@@ -478,7 +344,7 @@
                                         }
 
                                         <!-- tfClose -->
-                                        @if (activeTab === 'create') {
+                                        @if (activeTab() === 'create') {
                                         <div class="flag-item-account-flags" [class.enabled]="flags.isRequireAuth" (click)="toggleFlag('isRequireAuth')">
                                              <div class="flag-header">
                                                   <input type="checkbox" [checked]="flags.isRequireAuth" class="flag-checkbox" disabled />
@@ -493,7 +359,7 @@
                                         }
 
                                         <!-- tfClose -->
-                                        @if (activeTab === 'create') {
+                                        @if (activeTab() === 'create') {
                                         <div class="flag-item" [class.enabled]="flags.canEscrow" (click)="toggleFlag('canEscrow')">
                                              <div class="flag-header">
                                                   <input type="checkbox" [checked]="flags.canEscrow" class="flag-checkbox" disabled />
@@ -508,7 +374,7 @@
                                         }
 
                                         <!-- tfClose -->
-                                        @if (activeTab === 'create') {
+                                        @if (activeTab() === 'create') {
                                         <div class="flag-item" [class.enabled]="flags.canTrade" (click)="toggleFlag('canTrade')">
                                              <div class="flag-header">
                                                   <input type="checkbox" [checked]="flags.canTrade" class="flag-checkbox" disabled />
@@ -523,7 +389,7 @@
                                         }
 
                                         <!-- tfClose -->
-                                        @if (activeTab === 'create') {
+                                        @if (activeTab() === 'create') {
                                         <div class="flag-item" [class.enabled]="flags.canTransfer" (click)="toggleFlag('canTransfer')">
                                              <div class="flag-header">
                                                   <input type="checkbox" [checked]="flags.canTransfer" class="flag-checkbox" disabled />
@@ -538,7 +404,7 @@
                                         }
 
                                         <!-- tfClose -->
-                                        @if (activeTab === 'create') {
+                                        @if (activeTab() === 'create') {
                                         <div class="flag-item" [class.enabled]="flags.canClawback" (click)="toggleFlag('canClawback')">
                                              <div class="flag-header">
                                                   <input type="checkbox" [checked]="flags.canClawback" class="flag-checkbox" disabled />
@@ -553,10 +419,10 @@
                                         }
 
                                         <!-- TOTAL FLAGS VALUE -->
-                                        @if (activeTab === 'create') {
+                                        @if (activeTab() === 'create') {
                                         <div class="flags-total">
                                              <span class="total-label">Total Flags Value:</span>
-                                             <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
+                                             <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
                                         </div>
                                         }
                                    </div>
@@ -564,237 +430,35 @@
                               }
                          </div>
 
-                         <!-- Switches -->
-                         <div class="switch-group">
-                              <!-- Memo group -->
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                   <span class="slider"></span>
-                                   Add Memo
-                              </label>
-
-                              <!-- Multi Signing Enabled group -->
-                              @if (multiSigningEnabled) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                   <span class="slider"></span>
-                                   Use Multi-Sign
-                              </label>
-                              }
-
-                              <!-- Regular Key Signing Enabled-->
-                              @if (regularKeySigningEnabled) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                                   <span class="slider"></span>
-                                   Use Regular Key
-                              </label>
-                              }
-
-                              <!-- Use Ticket for tx -->
-                              @if (ticketArray.length > 0) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                                   <span class="slider"></span>
-                                   Use Ticket
-                              </label>
-                              }
-
-                              <!-- Simulate tx -->
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="ui.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="ui.toggleSimulate($event)" />
-                                   <span class="slider"></span>
-                                   Simulate
-                              </label>
-                         </div>
-
-                         <!-- Memo Field -->
-                         @if (isMemoEnabled) {
-                         <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-                         }
-
-                         <!-- Sign tx with Mult Sign address -->
-                         @if (useMultiSign) {
-                         <div class="multisign-grid">
-                              <div class="multisign-field">
-                                   <label>Signers</label>
-                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                              </div>
-                              <div class="multisign-field">
-                                   <label>Seeds</label>
-                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                              </div>
-                              <div class="multisign-field quorum-field">
-                                   <label>Quorum</label>
-                                   <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Sign tx with Regular key address -->
-                         @if (isRegularKeyAddress) {
-                         <div class="regular-key-fields">
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Address</label>
-                                        <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                                   </div>
-                              </div>
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Seed</label>
-                                        <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                   </div>
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Get ticket -->
-                         @if (isTicket) {
-                         <div class="ticket-fields">
-                              <div class="form-group">
-                                   <label>Ticket Sequence</label>
-                                   @if (multiSelectMode) {
-                                   <div>
-                                        <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                             @for (ticket of ticketArray; track ticket) {
-                                             <option [value]="ticket">{{ ticket }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                                   } @else {
-                                   <div>
-                                        <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                             <option value="" disabled>Select a ticket</option>
-                                             @for (ticket of ticketArray; track ticket) {
-                                             <option [value]="ticket">{{ ticket }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                                   }
-                              </div>
-                         </div>
-                         }
+                         <app-transaction-options [showWhenTab]="['create', 'authorize','unauthorize','send','lock','unlock','clawback', 'destroy']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                          <!-- Action buttons -->
                          <div class="button-row">
-                              @if(activeTab === 'create') {
-                              <button type="button" class="btn-primary-blue" (click)="createMpt()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create MPT' }}</button>
-                              } @else if (activeTab === 'authorize' || activeTab === 'unauthorize') {
-                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('Y')" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Authorize MPT' }}</button>
-                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('N')" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Unauthorize MPT' }}</button>
-                              } @else if (activeTab === 'send') {
-                              <button type="button" class="btn-primary-green" (click)="sendMpt()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Send MPT' }}</button>
-                              } @else if (activeTab === 'lock' || activeTab === 'unlock') {
-                              <button type="button" class="btn-primary-orange" (click)="setMptLockUnlock('Y')" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Lock MPT' }}</button>
-                              <button type="button" class="btn-primary-blue" (click)="setMptLockUnlock('N')" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Unlock MPT' }}</button>
-                              } @else if (activeTab === 'clawback') {
-                              <button type="button" class="btn-primary-red" (click)="clawbackMpt()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Clawback MPT' }}</button>
+                              @if(activeTab() === 'create') {
+                              <button type="button" class="btn-primary-blue" (click)="createMpt()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create MPT' }}</button>
+                              } @else if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
+                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('Y')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Authorize MPT' }}</button>
+                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('N')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Unauthorize MPT' }}</button>
+                              } @else if (activeTab() === 'send') {
+                              <button type="button" class="btn-primary-green" (click)="sendMpt()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Send MPT' }}</button>
+                              } @else if (activeTab() === 'lock' || activeTab() === 'unlock') {
+                              <button type="button" class="btn-primary-orange" (click)="setMptLockUnlock('Y')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Lock MPT' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="setMptLockUnlock('N')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Unlock MPT' }}</button>
+                              } @else if (activeTab() === 'clawback') {
+                              <button type="button" class="btn-primary-red" (click)="clawbackMpt()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Clawback MPT' }}</button>
                               } @else {
-                              <button type="button" class="btn-primary-red" (click)="destroyMpt()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Destroy MPT' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="destroyMpt()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Destroy MPT' }}</button>
                               }
                               <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>
-
-                         <!-- Spinner -->
-                         @if (ui.spinner()) {
-                         <div class="spinner-row">
-                              <div class="spinner"></div>
-                              <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
-                         </div>
-                         }
-
-                         <!-- Success message -->
-                         @if (ui.isSuccess && !ui.isError) {
-                         <div class="success-message">
-                              <lucide-icon name="check" size="20"></lucide-icon>
-                              <div class="success-text">
-                                   @if (ui.txHash && !ui.isSimulateEnabled) {
-                                   <span>{{ui.successMessage}}</span><br /><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                   } @else {
-                                   <span>{{ui.successMessage}}</span>
-                                   }
-
-                                   <!-- Multiple Hashes -->
-                                   @if (ui.txHashes.length > 1 && !ui.isSimulateEnabled) {
-                                   <div class="tx-hashes">
-                                        @for (hash of ui.txHashes; track hash; let i = $index) {
-                                        <div class="tx-hash-item">
-                                             Transaction {{ i + 1 }} hash:
-                                             <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
-                                        </div>
-                                        }
-                                   </div>
-                                   }
-
-                                   <!-- Single hash -->
-                                   @if (ui.txHashes.length === 1 && !ui.isSimulateEnabled) {
-                                   <span>Transaction hash: <a [href]="url + 'tx/' + ui.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHashes[0] }} </a></span>
-                                   }
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Error message -->
-                         @if (ui.isError && ui.result) {
-                         <div class="tx-message error">
-                              <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
-                              <div class="tx-text">
-                                   <!-- Display Tx Hash if we are not in simulation mode-->
-                                   @if (ui.txHash && !ui.isSimulateEnabled) {
-                                   <span>{{ ui.result }}</span><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                   } @else {
-                                   <span>{{ ui.result }}</span>
-                                   }
-                              </div>
-                         </div>
-                         }
                     </div>
+
+                    <!-- Execution time -->
+                    <div style="display: flex">
+                         <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                    </div>
+                    <app-transaction-preview></app-transaction-preview>
                </form>
-
-               <!-- Tx Preview -->
-               @if (ui.paymentTx.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h5 class="tx-title">Payment Transaction</h5>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTx()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTx()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
-               </div>
-               }
-
-               <!-- Tx Result Preview -->
-               @if (ui.txResult.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h3 class="tx-title">Transaction Result</h3>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
-               </div>
-               }
           </div>
      </div>
 </div>
