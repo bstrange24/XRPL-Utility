@@ -12,42 +12,40 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
-
           <!-- Right form -->
           <div class="form-panel">
                <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'create'" (click)="setTab('create')">
+                    <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Create Firewall
                     </button>
 
-                    <button class="menu-btn active" [class.active]="activeTab === 'modify'" (click)="setTab('modify')">
+                    <button class="menu-btn active" [class.active]="activeTab() === 'modify'" (click)="setTab('modify')">
                          <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
-                         Modify Firewall
+                         Modify
                     </button>
 
-                    <button class="menu-btn active" [class.active]="activeTab === 'authorize'" (click)="setTab('authorize')">
+                    <button class="menu-btn active" [class.active]="activeTab() === 'authorize'" (click)="setTab('authorize')">
                          <!-- <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon> -->
                          <lucide-angular name="shield-ellipsis" size="20" class="text-red-600" style="padding-top: 5px"></lucide-angular>
-                         Authorize Firewall
+                         Authorize
                     </button>
 
-                    <button class="menu-btn active" [class.active]="activeTab === 'unauthorize'" (click)="setTab('unauthorize')">
+                    <button class="menu-btn active" [class.active]="activeTab() === 'unauthorize'" (click)="setTab('unauthorize')">
                          <!-- <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon> -->
                          <lucide-icon name="shield-ellipsis" size="23" style="padding-top: 5px"></lucide-icon>
-                         Unauthorize Firewall
+                         Unauthorize
                     </button>
 
-                    <button class="menu-btn active" [class.active]="activeTab === 'delete'" (click)="setTab('delete')">
+                    <button class="menu-btn active" [class.active]="activeTab() === 'delete'" (click)="setTab('delete')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Delete Firewall
+                         Delete
                     </button>
                </div>
 
                <!-- Create firewall Menu -->
-               @if (activeTab === 'create') {
+               @if (activeTab() === 'create') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -62,7 +60,7 @@
                }
 
                <!-- Update firewall Menu -->
-               @if (activeTab === 'modify') {
+               @if (activeTab() === 'modify') {
 
                <div>
                     <div class="submenu-info-text">
@@ -78,7 +76,7 @@
                }
 
                <!-- Authorize firewall Menu -->
-               @if (activeTab === 'authorize') {
+               @if (activeTab() === 'authorize') {
                <div>
                     <div class="submenu-info-text">
                          <div class="orange-button-submenu">
@@ -93,7 +91,7 @@
                }
 
                <!-- Unauthorize firewall Menu -->
-               @if (activeTab === 'unauthorize') {
+               @if (activeTab() === 'unauthorize') {
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
@@ -109,7 +107,7 @@
                }
 
                <!-- Delete firewall Menu -->
-               @if (activeTab === 'delete') {
+               @if (activeTab() === 'delete') {
                <div>
                     <div class="submenu-info-text">
                          <div class="red-button-submenu">
@@ -124,18 +122,18 @@
                }
 
                <!-- Info Message -->
-               @if (ui.infoMessage) {
+               @if (txUiService.infoMessage) {
                <div class="info-panel">
                     <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="ui.safeInfo"></div>
+                    <div class="info-text" [innerHTML]="txUiService.safeInfo"></div>
                </div>
                }
 
                <!-- Warning Message -->
-               @if (ui.warningMessage) {
+               @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="ui.safeWarning"></div>
+                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
                </div>
                }
 
@@ -202,16 +200,20 @@
 
                <form #theForm="ngForm" class="send-form">
                     <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab">
+                         <div [@tabTransition]="activeTab()">
                               <div>
                                    <div class="form-row">
                                         <!-- Finish Time -->
                                         <div class="form-group">
                                              <label>Finish Time</label>
-                                             <input type="text" id="timePeriodField" placeholder="Enter time" [(ngModel)]="timePeriodField" name="timePeriodField" />
+                                             <input type="text" id="finishTimePeriodField" placeholder="Enter time" [(ngModel)]="finishTimePeriodField" name="finishTimePeriodField" />
+                                        </div>
+                                        <div class="form-group">
+                                             <label>Finish Time Unit</label>
+                                             <app-select-search-dropdown [items]="timeUnitItems()" [value]="finishTimeUnit()" (valueChange)="finishTimePeriodUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
                                         </div>
                                         <!-- Finish Time Unit -->
-                                        <div class="form-group">
+                                        <!-- <div class="form-group">
                                              <label>Finish Time Unit</label>
                                              <select id="timePeriodUnit" [(ngModel)]="timePeriodUnit" name="timePeriodUnit">
                                                   <option value="seconds">Seconds</option>
@@ -219,16 +221,20 @@
                                                   <option value="hours">Hours</option>
                                                   <option value="days">Days</option>
                                              </select>
-                                        </div>
+                                        </div> -->
                                    </div>
                                    <div class="form-row">
                                         <!-- Cancel Time -->
                                         <div class="form-group">
                                              <label>Cancel Time</label>
-                                             <input type="text" id="timePeriodStartField" placeholder="Enter time" [(ngModel)]="timePeriodStartField" name="timePeriodStartField" />
+                                             <input type="text" id="cancelTimePeriodField" placeholder="Enter time" [(ngModel)]="cancelTimePeriodField" name="cancelTimePeriodField" />
                                         </div>
                                         <!-- Cancel Time Unit -->
                                         <div class="form-group">
+                                             <label>Cancel Time Unit</label>
+                                             <app-select-search-dropdown [items]="timeUnitItems()" [value]="cancelTimeUnit()" (valueChange)="cancelTimePeriodUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
+                                        </div>
+                                        <!-- <div class="form-group">
                                              <label>Cancel Time Unit</label>
                                              <select id="timePeriodStartUnit" [(ngModel)]="timePeriodStartUnit" name="timePeriodStartUnit">
                                                   <option value="seconds">Seconds</option>
@@ -236,7 +242,7 @@
                                                   <option value="hours">Hours</option>
                                                   <option value="days">Days</option>
                                              </select>
-                                        </div>
+                                        </div> -->
                                    </div>
                                    <div class="form-row">
                                         <!-- Total Out -->
@@ -259,17 +265,17 @@
                                         <div class="form-group">
                                              <label>Whitelist Addresses</label>
 
-                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
+                                             <!-- <div class="combobox-container" (clickOutside)="closeDropdown()">
                                                   <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="onDestinationInput()" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
 
                                                   <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
                                                        <lucide-icon name="chevron-down" size="18"></lucide-icon>
                                                   </button>
-                                             </div>
+                                             </div> -->
                                         </div>
 
                                         <!-- Dropdown template -->
-                                        <ng-template #dropdownTemplate>
+                                        <!-- <ng-template #dropdownTemplate>
                                              <div class="combobox-dropdown-overlay">
                                                   @for (dest of filteredDestinations; track dest.address) {
                                                   <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
@@ -279,13 +285,12 @@
                                                             }
                                                        </div>
                                                        <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                                       <!-- <div class="item-address">{{ dest.address }}</div> -->
                                                   </div>
                                                   } @empty {
                                                   <div class="combobox-empty">No matching addresses</div>
                                                   }
                                              </div>
-                                        </ng-template>
+                                        </ng-template> -->
                                         <!-- <div class="form-group">
                                              <label for="destinationFields">Whitelist Addresses</label>
                                              <select id="destinationFields" [(ngModel)]="destinationField" name="destinationFields">
@@ -298,37 +303,14 @@
                                              <input type="text" id="backupAccountField" [(ngModel)]="backupAccountField" name="backupAccountField" />
                                         </div>
                                    </div>
+
                                    <!-- Destination + Tag -->
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>Destination</label>
-
-                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
-
-                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                                  </button>
-                                             </div>
+                                             <label for="destination">Destination</label>
+                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
 
-                                        <!-- Dropdown template -->
-                                        <ng-template #dropdownTemplate>
-                                             <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations; track trackByAddress($index, dest)) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
-                                                       <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
-                                                            <span class="self-badge">Current Account</span>
-                                                            }
-                                                       </div>
-                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                                  </div>
-                                                  } @empty {
-                                                  <div class="combobox-empty">No matching addresses</div>
-                                                  }
-                                             </div>
-                                        </ng-template>
                                         <div class="form-group">
                                              <label>Destination Tag</label>
                                              <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
@@ -337,283 +319,31 @@
                               </div>
                          </div>
 
-                         <div>
-                              <!-- Switches -->
-                              <div class="switch-group">
-                                   <!-- Memo group -->
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                        <span class="slider"></span>
-                                        Add Memo
-                                   </label>
+                         <app-transaction-options [showWhenTab]="['create', 'modify','authorize','unauthorize','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
-                                   <!-- Multi Signing Enabled group -->
-                                   @if (multiSigningEnabled) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                        <span class="slider"></span>
-                                        Use Multi-Sign
-                                   </label>
-                                   }
-
-                                   <!-- Regular Key Signing Enabled-->
-                                   @if (regularKeySigningEnabled) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                                        <span class="slider"></span>
-                                        Use Regular Key
-                                   </label>
-                                   }
-
-                                   <!-- Use Ticket for tx -->
-                                   @if (ticketArray.length > 0) {
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                                        <span class="slider"></span>
-                                        Use Ticket
-                                   </label>
-                                   }
-
-                                   <!-- Simulate tx -->
-                                   <label class="switch">
-                                        <input type="checkbox" [(ngModel)]="ui.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="ui.toggleSimulate($event)" />
-                                        <span class="slider"></span>
-                                        Simulate
-                                   </label>
-                              </div>
-
-                              <!-- Memo Field -->
-                              @if (isMemoEnabled) {
-                              <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
+                         <!-- Action buttons -->
+                         <div class="button-row">
+                              @if (activeTab() === 'create') {
+                              <button type="button" class="btn-primary-blue" (click)="createFirewall()">Create Firewall</button>
+                              } @else if (activeTab() === 'modify') {
+                              <button type="button" class="btn-primary-blue" (click)="modifyFirewall()">Modify Firewall</button>
+                              } @else if (activeTab() === 'authorize') {
+                              <button type="button" class="btn-primary-orange" (click)="authorizeFirewall('Y')">Authorize Firewall</button>
+                              } @else if (activeTab() === 'unauthorize') {
+                              <button type="button" class="btn-primary-green" (click)="authorizeFirewall('N')">Unauthorize Firewall</button>
+                              } @else if (activeTab() === 'delete') {
+                              <button type="button" class="btn-primary-red" (click)="deleteFirewall()">Delete Firewall</button>
                               }
-
-                              <!-- Sign tx with Mult Sign address -->
-                              @if (useMultiSign) {
-                              <div class="multisign-grid">
-                                   <div class="multisign-field">
-                                        <label>Signers</label>
-                                        <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                                   </div>
-                                   <div class="multisign-field">
-                                        <label>Seeds</label>
-                                        <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                                   </div>
-                                   <div class="multisign-field quorum-field">
-                                        <label>Quorum</label>
-                                        <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Sign tx with Regular key address -->
-                              @if (isRegularKeyAddress) {
-                              <div class="regular-key-fields">
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Regular Key Address</label>
-                                             <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                                        </div>
-                                   </div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Regular Key Seed</label>
-                                             <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                        </div>
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Get ticket -->
-                              @if (isTicket) {
-                              <div class="ticket-fields">
-                                   <div class="form-group">
-                                        <label>Ticket Sequence</label>
-                                        @if (multiSelectMode) {
-                                        <div>
-                                             <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                                  @for (ticket of ticketArray; track ticket) {
-                                                  <option [value]="ticket">{{ ticket }}</option>
-                                                  }
-                                             </select>
-                                        </div>
-                                        } @else {
-                                        <div>
-                                             <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                                  <option value="" disabled>Select a ticket</option>
-                                                  @for (ticket of ticketArray; track ticket) {
-                                                  <option [value]="ticket">{{ ticket }}</option>
-                                                  }
-                                             </select>
-                                        </div>
-                                        }
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Action buttons -->
-                              <div class="button-row">
-                                   @if (activeTab === 'create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createFirewall()">Create Firewall</button>
-                                   } @else if (activeTab === 'modify') {
-                                   <button type="button" class="btn-primary-blue" (click)="modifyFirewall()">Modify Firewall</button>
-                                   } @else if (activeTab === 'authorize') {
-                                   <button type="button" class="btn-primary-orange" (click)="authorizeFirewall('Y')">Authorize Firewall</button>
-                                   } @else if (activeTab === 'unauthorize') {
-                                   <button type="button" class="btn-primary-green" (click)="authorizeFirewall('N')">Unauthorize Firewall</button>
-                                   } @else if (activeTab === 'delete') {
-                                   <button type="button" class="btn-primary-red" (click)="deleteFirewall()">Delete Firewall</button>
-                                   }
-                                   <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
-                              </div>
-
-                              <!-- Spinner -->
-                              @if (ui.spinner()) {
-                              <div class="spinner-row">
-                                   <div class="spinner"></div>
-                                   <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
-                              </div>
-                              }
-
-                              <!-- Success message -->
-                              @if (ui.isSuccess && !ui.isError) {
-                              <div class="success-message">
-                                   <lucide-icon name="check" size="20"></lucide-icon>
-                                   <div class="success-text">
-                                        @if (ui.txHash && !ui.isSimulateEnabled) {
-                                        <span>{{ui.successMessage}}</span><br /><br />
-                                        <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                        } @else {
-                                        <span>{{ui.successMessage}}</span>
-                                        }
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Error message -->
-                              @if (ui.isError && ui.result) {
-                              <div class="tx-message error">
-                                   <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
-                                   <div class="tx-text">
-                                        <!-- Display Tx Hash if we are not in simulation mode-->
-                                        @if (ui.txHash && !ui.isSimulateEnabled) {
-                                        <span>{{ ui.result }}</span><br />
-                                        <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                        } @else {
-                                        <span>{{ ui.result }}</span>
-                                        }
-                                   </div>
-                              </div>
-                              }
+                              <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>
+
+                         <!-- Execution time -->
+                         <div style="display: flex">
+                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                         </div>
+                         <app-transaction-preview></app-transaction-preview>
                     </div>
                </form>
-
-               <!-- Tx Preview -->
-               @if (ui.paymentTx.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h5 class="tx-title">Payment Transaction</h5>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTx()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTx()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
-               </div>
-               }
-
-               <!-- Tx Result Preview -->
-               @if (ui.txResult.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h3 class="tx-title">Transaction Result</h3>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
-               </div>
-               }
           </div>
      </div>
 </div>
-
-<!-- 
-                        
-                                   
-          
-                
-                    <div class="button-container">
-                         <tr>
-                              <td colspan="2" style="display: flex; align-items: center; gap: 5px; margin-left: 5px">
-                                   <label>Show Manage Tokens</label>
-                                   <label class="switch" style="margin-left: 10px">
-                                        <input type="checkbox" [(ngModel)]="showManageTokens" name="showManageTokens" />
-                                        <span class="slider round"></span>
-                                   </label>
-                              </td>
-                         </tr>
-
-                         <tr *ngIf="showManageTokens">
-                              <fieldset style="margin-top: 10px">
-                                   <legend style="color: white">Manage Whitelist Address</legend>
-                                   <div style="margin-bottom: 10px">
-                                        <label>Add Whitelist Address: </label>
-                                        <input type="text" [(ngModel)]="newWhitelistAddress" placeholder="Whitelist Address" name="newWhitelistAddress" style="width: 300px; margin-right: 10px" />
-                                        <button type="button" (click)="addWhitelistAddress()">Add</button>
-                                   </div>
-                                   <div>
-                                        <label>Remove Whitelist Address: </label>
-                                        <select [(ngModel)]="whitelistAddressToRemove" name="whitelistAddressToRemove" class="timeUnit" style="width: 293px; height: 25px">
-                                             <option value="">Select a whitelist address</option>
-                                             <option *ngFor="let address of whitelistAddresses" [value]="address">{{address}}</option>
-                                        </select>
-                                        <button type="button" (click)="removeWhitelistAddress()">Remove</button>
-                                   </div>
-                              </fieldset>
-                         </tr>
-
-                         <table style="text-align: left; width: 100%">
-                              <th></th>
-                              <tr>
-                                   <td colspan="2">
-                                        <button type="button" (click)="getFirewallDetails()">Get Firewall Info</button>
-                                        <button type="button" (click)="createFirewall()">Create Firewall</button>
-                                        <button type="button" (click)="updateFirewall()">Update Firewall</button>
-                                        <button type="button" (click)="authorizeFirewall('Y')">Authorize Firewall</button>
-                                        <button type="button" (click)="authorizeFirewall('N')">Unauthorize Firewall</button>
-                                        <button type="button" (click)="deleteFirewall()">Delete Firewall</button>
-                                        <button type="button" (click)="clearFields(true)">Clear Fields</button>
-                                   </td>
-                              </tr>
-                         </table>
-                    </div>
-               </div>
-
-                         <tr>
-                              <td></td>
-                              <td *ngIf="masterKeyDisabled">
-                                   <span [style.color]="'red'">Master Key is disabled. Use multi-sign or regular key to sign transactions.</span>
-                              </td>
-                         </tr>
- 
-                    </table>
-               </div>
-          </div>
-     </fieldset>
-</form> -->

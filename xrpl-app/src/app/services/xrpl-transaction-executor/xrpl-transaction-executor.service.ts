@@ -283,7 +283,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Credentials Accept (no changes will be made)...',
-               submitMessage: 'Accepting Credential on Ledger...',
+               submitMessage: 'Accepting Credential on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -303,7 +303,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating DID Set (no changes will be made)...',
-               submitMessage: 'Setting DID on Ledger...',
+               submitMessage: 'Setting DID on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -323,7 +323,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating DID Delete (no changes will be made)...',
-               submitMessage: 'Deleting DID on Ledger...',
+               submitMessage: 'Deleting DID on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -343,7 +343,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Delegate Action (no changes will be made)...',
-               submitMessage: 'Delegating Action on Ledger...',
+               submitMessage: 'Delegating Action on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -363,7 +363,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Account Delete (no changes will be made)...',
-               submitMessage: 'Deleting Account on Ledger...',
+               submitMessage: 'Deleting Account on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -383,7 +383,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Permissioned Domain Set (no changes will be made)...',
-               submitMessage: 'Setting Permissioned Domain on Ledger...',
+               submitMessage: 'Setting Permissioned Domain on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -403,7 +403,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Permission Domain Delete (no changes will be made)...',
-               submitMessage: 'Deleting Permission Domain on Ledger...',
+               submitMessage: 'Deleting Permission Domain on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -423,7 +423,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Escrow create (no changes will be made)...',
-               submitMessage: 'Creating escrow on Ledger...',
+               submitMessage: 'Creating escrow on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -443,7 +443,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Escrow finish (no changes will be made)...',
-               submitMessage: 'Finishing escrow on Ledger...',
+               submitMessage: 'Finishing escrow on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -463,7 +463,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Escrow cancel (no changes will be made)...',
-               submitMessage: 'Cancelling escrow on Ledger...',
+               submitMessage: 'Cancelling escrow on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -483,7 +483,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Escrow cancel (no changes will be made)...',
-               submitMessage: 'Cancelling escrow on Ledger...',
+               submitMessage: 'Cancelling escrow on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -503,7 +503,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Escrow cancel (no changes will be made)...',
-               submitMessage: 'Cancelling escrow on Ledger...',
+               submitMessage: 'Cancelling escrow on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -523,7 +523,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Escrow cancel (no changes will be made)...',
-               submitMessage: 'Cancelling escrow on Ledger...',
+               submitMessage: 'Cancelling escrow on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -543,7 +543,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Trustline set (no changes will be made)...',
-               submitMessage: 'Setting Trustline on Ledger...',
+               submitMessage: 'Setting Trustline on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -563,7 +563,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Trustline removal (no changes will be made)...',
-               submitMessage: 'Removing Trustline on Ledger...',
+               submitMessage: 'Removing Trustline on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -583,7 +583,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Currency issuance (no changes will be made)...',
-               submitMessage: 'Issuing Currency on Ledger...',
+               submitMessage: 'Issuing Currency on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -603,7 +603,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Token Clawback (no changes will be made)...',
-               submitMessage: 'Clawing back token on Ledger...',
+               submitMessage: 'Clawing back token on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -623,7 +623,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating MPT create (no changes will be made)...',
-               submitMessage: 'Creating MPT on Ledger...',
+               submitMessage: 'Creating MPT on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -643,7 +643,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating MPT Authorization (no changes will be made)...',
-               submitMessage: 'Modifying MPT Authorization on Ledger...',
+               submitMessage: 'Modifying MPT Authorization on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -663,7 +663,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating MPT Lock/Unlock Clawback (no changes will be made)...',
-               submitMessage: 'Executing MPT Lock/Unlock on Ledger...',
+               submitMessage: 'Executing MPT Lock/Unlock on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -683,7 +683,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating MPT send (no changes will be made)...',
-               submitMessage: 'Sending MPT on Ledger...',
+               submitMessage: 'Sending MPT on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -703,7 +703,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating MPT destroy (no changes will be made)...',
-               submitMessage: 'Destroying MPT on Ledger...',
+               submitMessage: 'Destroying MPT on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -723,7 +723,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating MPT Clawback (no changes will be made)...',
-               submitMessage: 'Clawing back MPT on Ledger...',
+               submitMessage: 'Clawing back MPT on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -743,7 +743,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating NFT mint (no changes will be made)...',
-               submitMessage: 'Minting NFT on Ledger...',
+               submitMessage: 'Minting NFT on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -763,7 +763,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating NFT burn (no changes will be made)...',
-               submitMessage: 'Burned NFT on Ledger...',
+               submitMessage: 'Burned NFT on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -783,7 +783,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Nft meta data update (no changes will be made)...',
-               submitMessage: 'Updating NFT meta data on Ledger...',
+               submitMessage: 'Updating NFT meta data on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -803,7 +803,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating NFT buy (no changes will be made)...',
-               submitMessage: 'Submitting NFT buy on Ledger...',
+               submitMessage: 'Submitting NFT buy on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -823,7 +823,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating NFT sell (no changes will be made)...',
-               submitMessage: 'Submitting NFT sell on Ledger...',
+               submitMessage: 'Submitting NFT sell on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -843,7 +843,7 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating NFT offer create (no changes will be made)...',
-               submitMessage: 'Creating NFT offer on Ledger...',
+               submitMessage: 'Creating NFT offer on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -863,7 +863,88 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating NFT offer cancel (no changes will be made)...',
-               submitMessage: 'Cancelling NFT offer on Ledger...',
+               submitMessage: 'Cancelling NFT offer on the XRP Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     /// Firewall
+     async createFirewall(
+          tx: xrpl.MPTokenIssuanceCreate,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating Firewall create (no changes will be made)...',
+               submitMessage: 'Creating Firewall on the XRP Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async modifyFirewall(
+          tx: xrpl.MPTokenAuthorize,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating Firewall modification (no changes will be made)...',
+               submitMessage: 'Modifying Firewall on the XRP Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async authorizeFlag(
+          tx: xrpl.Payment,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating Firewall authorization (no changes will be made)...',
+               submitMessage: 'Authorizing Firewall on the XRP Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async deleteFirewall(
+          tx: xrpl.MPTokenIssuanceDestroy,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating Firewall delete (no changes will be made)...',
+               submitMessage: 'Deleteing Firewall on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
