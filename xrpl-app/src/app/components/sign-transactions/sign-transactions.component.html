@@ -30,7 +30,7 @@
                }
 
                <!-- Dynamic warning panel  -->
-               @if (ui.warningMessage) {
+               @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
                     <div class="warning-text">{{ safeWarningMessage }}</div>
@@ -46,73 +46,10 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Transaction Type</label>
-
                                              <app-select-search-dropdown [items]="transactionTypeItems()" [value]="selectedTransactionItem()" (valueChange)="onTransactionSelected($event)" [showSecondaryInInput]="false" placeholder="Search transaction type..." emptyMessage="No transaction types available"> </app-select-search-dropdown>
                                         </div>
                                    </div>
                                    }
-                                   <!-- @if (activeTab === 'getAccountDetails') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Transaction Type</label>
-                                             <select class="dropdownTransactionTypes" id="transactionSelect" [(ngModel)]="selectedTransaction" (ngModelChange)="onTransactionChange()" name="transactionSelect">
-                                                  <optgroup label="Basic">
-                                                       <option value="batch">Batch</option>
-                                                       <option value="sendXrp">Send XRP</option>
-                                                  </optgroup>
-
-                                                  <optgroup label="Trustline">
-                                                       <option value="setTrustline">Set Trustline</option>
-                                                       <option value="removeTrustline">Remove Trustline</option>
-                                                       <option value="issueCurrency">Issue Currency</option>
-                                                  </optgroup>
-
-                                                  <optgroup label="Account Flags">
-                                                       <option value="accountFlagSet">Account Flag Set</option>
-                                                       <option value="accountFlagClear">Account Flag Clear</option>
-                                                  </optgroup>
-
-                                                  <optgroup label="Escrow">
-                                                       <option value="createTimeEscrow">Create Time Escrow</option>
-                                                       <option value="finishTimeEscrow">Finish Time Escrow</option>
-                                                       <option value="createConditionEscrow">Create Condition Escrow</option>
-                                                       <option value="finishConditionEscrow">Finish Condition Escrow</option>
-                                                       <option value="cancelEscrow">Cancel Escrow</option>
-                                                  </optgroup>
-
-                                                  <optgroup label="Token Escrow">
-                                                       <option value="createTimeEscrowToken">Create Token Time Escrow</option>
-                                                       <option value="finishTimeEscrowToken">Finish Token Time Escrow</option>
-                                                       <option value="createConditionEscrowToken">Create Token Condition Escrow</option>
-                                                       <option value="finishConditionEscrowToken">Finish Token Condition Escrow</option>
-                                                       <option value="cancelEscrow">Cancel Token Escrow</option>
-                                                  </optgroup>
-
-                                                  <optgroup label="Check">
-                                                       <option value="createCheck">Check Create</option>
-                                                       <option value="cashCheck">Check Cash</option>
-                                                       <option value="cancelCheck">Check Cancel</option>
-                                                  </optgroup>
-
-                                                  <optgroup label="Token Check">
-                                                       <option value="createCheckToken">Check Token Create</option>
-                                                       <option value="cashCheckToken">Check Token Cash</option>
-                                                       <option value="cancelCheck">Check Token Cancel</option>
-                                                  </optgroup>
-
-                                                  <optgroup label="MPT">
-                                                       <option value="createMPT">MPT Create</option>
-                                                       <option value="authorizeMPT">Authorize MPT</option>
-                                                       <option value="unauthorizeMPT">Unauthorize MPT</option>
-                                                       <option value="sendMPT">Send MPT</option>
-                                                       <option value="lockMPT">Lock MPT</option>
-                                                       <option value="unlockMPT">Unlock MPT</option>
-                                                       <option value="destroyMPT">Destroy MPT</option>
-                                                  </optgroup>
-                                             </select>
-                                        </div>
-                                   </div>
-                                   } -->
 
                                    <!-- Switches -->
                                    <div class="switch-group" style="margin-top: 1em">
@@ -152,7 +89,7 @@
 
                                         <!-- Simulate tx -->
                                         <label class="switch">
-                                             <input type="checkbox" [(ngModel)]="ui.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="ui.toggleSimulate($event)" />
+                                             <input type="checkbox" [(ngModel)]="txUiService.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="txUiService.toggleSimulate($event)" />
                                              <span class="slider"></span>
                                              Simulate
                                         </label>
@@ -239,29 +176,29 @@
                                    }
 
                                    <!-- Spinner -->
-                                   @if (ui.spinner()) {
+                                   @if (txUiService.spinner()) {
                                    <div class="spinner-row">
                                         <div class="spinner"></div>
-                                        <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
+                                        <span>{{ txUiService.spinnerMessage || 'Loading...' }}</span>
                                    </div>
                                    }
 
                                    <!-- Success message -->
-                                   @if (ui.isSuccess && !ui.isError) {
+                                   @if (txUiService.isSuccess && !txUiService.isError) {
                                    <div class="success-message">
                                         <lucide-icon name="check" size="20"></lucide-icon>
                                         <div class="success-text">
-                                             @if (ui.txHash && !ui.isSimulateEnabled) {
-                                             <span>{{ui.successMessage}}</span><br /><br />
-                                             <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
+                                             @if (txUiService.txHash && !txUiService.isSimulateEnabled) {
+                                             <span>{{txUiService.successMessage}}</span><br /><br />
+                                             <span>Transaction hash: <a [href]="`${url}tx/` + txUiService.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHash }} </a></span>
                                              } @else {
-                                             <span>{{ui.successMessage}}</span>
+                                             <span>{{txUiService.successMessage}}</span>
                                              }
 
                                              <!-- Multiple Hashes -->
-                                             @if (ui.txHashes.length > 1 && !ui.isSimulateEnabled) {
+                                             @if (txUiService.txHashes.length > 1 && !txUiService.isSimulateEnabled) {
                                              <div class="tx-hashes">
-                                                  @for (hash of ui.txHashes; track hash; let i = $index) {
+                                                  @for (hash of txUiService.txHashes; track hash; let i = $index) {
                                                   <div class="tx-hash-item">
                                                        Transaction {{ i + 1 }} hash:
                                                        <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
@@ -271,28 +208,28 @@
                                              }
 
                                              <!-- Single hash -->
-                                             @if (ui.txHashes.length === 1 && !ui.isSimulateEnabled) {
-                                             <span>Transaction hash: <a [href]="url + 'tx/' + ui.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHashes[0] }} </a></span>
+                                             @if (txUiService.txHashes.length === 1 && !txUiService.isSimulateEnabled) {
+                                             <span>Transaction hash: <a [href]="url + 'tx/' + txUiService.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashes[0] }} </a></span>
                                              }
                                         </div>
                                    </div>
                                    }
 
                                    <!-- Error message -->
-                                   @if (ui.isError && ui.result) {
+                                   @if (txUiService.isError && txUiService.result) {
                                    <div class="tx-message error">
                                         <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
                                         <div class="tx-text">
                                              <!-- Display Tx Hash if we are not in simulation mode-->
-                                             @if (ui.txHash && !ui.isSimulateEnabled) {
-                                             <span>{{ ui.result }}</span><br />
-                                             <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
+                                             @if (txUiService.txHash && !txUiService.isSimulateEnabled) {
+                                             <span>{{ txUiService.result }}</span><br />
+                                             <span>Transaction hash: <a [href]="`${url}tx/` + txUiService.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHash }} </a></span>
                                              }
 
                                              <!-- Multiple Hashes -->
-                                             @if (ui.txErrorHashes.length > 1 && !ui.isSimulateEnabled) {
+                                             @if (txUiService.txErrorHashes.length > 1 && !txUiService.isSimulateEnabled) {
                                              <div class="tx-hashes">
-                                                  @for (hash of ui.txErrorHashes; track hash; let i = $index) {
+                                                  @for (hash of txUiService.txErrorHashes; track hash; let i = $index) {
                                                   <div class="tx-hash-item">
                                                        Transaction {{ i + 1 }} hash:
                                                        <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
@@ -302,10 +239,10 @@
                                              }
 
                                              <!-- Single hash -->
-                                             @if (ui.txErrorHashes.length === 1 && !ui.isSimulateEnabled) {
-                                             <span>Transaction hash: <a [href]="url + 'tx/' + ui.txErrorHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txErrorHashes[0] }} </a></span>
+                                             @if (txUiService.txErrorHashes.length === 1 && !txUiService.isSimulateEnabled) {
+                                             <span>Transaction hash: <a [href]="url + 'tx/' + txUiService.txErrorHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txErrorHashes[0] }} </a></span>
                                              }@else {
-                                             <span>{{ ui.result }}</span><br />
+                                             <span>{{ txUiService.result }}</span><br />
                                              }
                                         </div>
                                    </div>
@@ -321,7 +258,7 @@
                                              </div>
                                         </div>
 
-                                        <pre #txJsonPre class="tx-json language-json editable" [ngClass]="{ 'success': ui.isSuccess }" spellcheck="false" contenteditable="true" (blur)="onTxJsonBlur()" (input)="onTxJsonInput()"><code #txJsonCode class="language-json"></code></pre>
+                                        <pre #txJsonPre class="tx-json language-json editable" [ngClass]="{ 'success': txUiService.isSuccess }" spellcheck="false" contenteditable="true" (blur)="onTxJsonBlur()" (input)="onTxJsonInput()"><code #txJsonCode class="language-json"></code></pre>
                                    </div>
 
                                    <!-- ==== SIGNED TRANSACTION (EDITABLE) ==== -->
@@ -334,7 +271,7 @@
                                              </div>
                                         </div>
 
-                                        <div #signedEditable id="hashField" spellcheck="false" style="color: #669900" class="tx-json language-json editable" contenteditable="true" [ngClass]="{ 'success': ui.isSuccess }" [textContent]="outputField"></div>
+                                        <div #signedEditable id="hashField" spellcheck="false" style="color: #669900" class="tx-json language-json editable" contenteditable="true" [ngClass]="{ 'success': txUiService.isSuccess }" [textContent]="outputField"></div>
                                    </div>
                               </div>
                          </div>
@@ -342,7 +279,7 @@
                </form>
 
                <!-- Tx Result Preview -->
-               @if (ui.txResult.length >0) {
+               @if (txUiService.txResult.length >0) {
                <div class="tx-preview-container">
                     <div class="tx-header">
                          <h3 class="tx-title">Transaction Result</h3>

@@ -6,13 +6,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTableModule } from '@angular/material/table';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule, Overlay, OverlayRef } from '@angular/cdk/overlay';
-import { TemplatePortal } from '@angular/cdk/portal';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
@@ -31,15 +30,10 @@ import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { Subject, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { SignTransactionUtilService } from '../../services/sign-transactions-util/sign-transaction-util.service';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 declare var Prism: any;
-
-interface ValidationInputs {
-     accountInfo?: any;
-     seed?: string;
-}
 
 @Component({
      selector: 'app-sign-transactions',
@@ -147,7 +141,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           private xrplTransactions: XrplTransactionService,
           private walletManagerService: WalletManagerService,
           private signTransactionUtilService: SignTransactionUtilService,
-          public ui: TransactionUiService,
+          public txUiService: TransactionUiService,
           public downloadUtilService: DownloadUtilService,
           public copyUtilService: CopyUtilService,
           private walletDataService: WalletDataService,
@@ -171,6 +165,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                { id: 'setTrustline', display: 'Set Trustline', group: 'Trustline' },
                { id: 'removeTrustline', display: 'Remove Trustline', group: 'Trustline' },
                { id: 'issueCurrency', display: 'Issue Currency', group: 'Trustline' },
+               { id: 'clawback', display: 'Clawback Currency', group: 'Trustline' },
 
                // Account Flags
                { id: 'accountFlagSet', display: 'Account Flag Set', group: 'Account Flags' },
@@ -198,6 +193,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                { id: 'createCheckToken', display: 'Check Token Create', group: 'Token Check' },
                { id: 'cashCheckToken', display: 'Check Token Cash', group: 'Token Check' },
 
+               // Payment Channel
+               { id: 'createPaymentChannel', display: 'Create Payment Channel', group: 'Payment Channel' },
+               { id: 'fundPaymentChannel', display: 'Fund Payment Channel', group: 'Payment Channel' },
+               { id: 'claimPaymentChannel', display: 'Claim Payment Channel', group: 'Payment Channel' },
+               { id: 'closePaymentChannel', display: 'Close Payment Channel', group: 'Payment Channel' },
+
                // MPT
                { id: 'createMPT', display: 'MPT Create', group: 'MPT' },
                { id: 'authorizeMPT', display: 'Authorize MPT', group: 'MPT' },
@@ -209,7 +210,9 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           ].map(item => ({
                id: item.id,
                display: item.display,
-               secondary: item.group,
+               group: item.group,
+               // secondary: item.group,
+               secondary: undefined,
                isCurrentAccount: false,
                isCurrentCode: false,
                isCurrentToken: item.id === current,
@@ -238,9 +241,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
                this.wallets = wallets;
                this.hasWallets = wallets.length > 0;
-
-               // Rebuild destination dropdown whenever wallets change
-               this.updateDestinations();
 
                // Only set currentWallet on first load if nothing is selected yet
                if (this.hasWallets && !this.currentWallet?.address) {
@@ -273,22 +273,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           // === 3. Load custom destinations from storage ===
           const stored = this.storageService.get('customDestinations');
           this.customDestinations = stored ? JSON.parse(stored) : [];
-          this.updateDestinations();
-
-          // === 4. Dropdown search integration (unchanged) ===
-          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => this.destinationDropdownService.filter(query));
-
-          this.destinationDropdownService.setItems(this.destinations);
-
-          this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
-               this.filteredDestinations = list;
-               this.highlightedIndex = list.length > 0 ? 0 : -1;
-               this.cdr.detectChanges();
-          });
-
-          this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
-               open ? this.openDropdownInternal() : this.closeDropdownInternal();
-          });
 
           this.selectedTransaction.set('sendXrp');
           this.clearMessages();
@@ -322,8 +306,8 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      onTransactionChange(): void {
           this.txJson = '';
           this.outputField = '';
-          this.ui.isError = false;
-          this.ui.errorMessage = null;
+          this.txUiService.isError = false;
+          this.txUiService.errorMessage = null;
           this.clearMessages();
           // Enable the newly selected transaction (fills the JSON pane)
           this.enableTransaction();
@@ -333,7 +317,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           try {
                this.utilsService.toggleMultiSign(this.useMultiSign, this.signers, (await this.getWallet()).classicAddress);
           } catch (error: any) {
-               this.ui.setError(`${error.message}`);
+               this.txUiService.setError(`${error.message}`);
           }
      }
 
@@ -384,12 +368,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           const startTime = Date.now();
 
           if (!this.currentWallet?.address || !xrpl.isValidAddress(this.currentWallet.address)) {
-               this.ui.setError('Invalid or missing wallet address');
+               this.txUiService.setError('Invalid or missing wallet address');
                return;
           }
 
-          this.ui.clearMessages();
-          this.ui.clearWarning();
+          this.txUiService.clearMessages();
+          this.txUiService.clearWarning();
 
           try {
                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
@@ -399,7 +383,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
                const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet.seed, accountInfo }, client, accountInfo });
                if (errors.length > 0) {
-                    return this.ui.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                }
 
                this.getSignerAccountsList(accountObjects);
@@ -414,9 +398,9 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                this.enableTransaction();
           } catch (error: any) {
                console.error('Error in getAccountDetails:', error);
-               this.ui.setError(error.message || 'Unknown error');
+               this.txUiService.setError(error.message || 'Unknown error');
           } finally {
-               this.ui.spinner.set(false);
+               this.txUiService.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving getAccountDetails in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -433,114 +417,313 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                     this.setTxJson(this.txJson);
                     break;
                case 'sendXrp':
-                    this.txJson = await this.signTransactionUtilService.createSendXrpRequestText({ client, wallet, isTicketEnabled: this.isTicket, isMemoEnable: this.isMemoEnabled, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'sendXrp',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'setTrustline':
-                    this.txJson = await this.signTransactionUtilService.modifyTrustlineRequestText({ client, wallet, selectedTransaction: 'setTrustline', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'setTrustline',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'removeTrustline':
-                    this.txJson = await this.signTransactionUtilService.modifyTrustlineRequestText({ client, wallet, selectedTransaction: 'removeTrustline', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'removeTrustline',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'issueCurrency':
-                    this.txJson = await this.signTransactionUtilService.issueCurrencyRequestText({ client, wallet, selectedTransaction: 'issueCurrency', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'issueCurrency',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
+                    this.setTxJson(this.txJson);
+                    break;
+               case 'clawback':
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'clawback',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'accountFlagSet':
-                    this.txJson = await this.signTransactionUtilService.modifyAccountFlagsRequestText({ client, wallet, selectedTransaction: 'accountFlagSet', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'accountFlagSet',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'accountFlagClear':
-                    this.txJson = await this.signTransactionUtilService.modifyAccountFlagsRequestText({ client, wallet, selectedTransaction: 'accountFlagSet', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'accountFlagClear',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'createTimeEscrow':
-                    this.txJson = await this.signTransactionUtilService.createTimeEscrowRequestText({ client, wallet, selectedTransaction: 'createTimeEscrow', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'createTimeEscrow',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'finishTimeEscrow':
-                    this.txJson = await this.signTransactionUtilService.finshTimeEscrowRequestText({ client, wallet, selectedTransaction: 'finishTimeEscrow', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'finishTimeEscrow',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'createTimeEscrowToken':
-                    this.txJson = await this.signTransactionUtilService.createTimeEscrowRequestText({ client, wallet, selectedTransaction: 'createTimeEscrowToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'createTimeEscrowToken',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'finishTimeEscrowToken':
-                    this.txJson = await this.signTransactionUtilService.finshTimeEscrowRequestText({ client, wallet, selectedTransaction: 'finishTimeEscrowToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'finishTimeEscrowToken',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'createConditionEscrow':
-                    this.txJson = await this.signTransactionUtilService.createConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'createConditionEscrow', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'createConditionEscrow',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'finishConditionEscrow':
-                    this.txJson = await this.signTransactionUtilService.finsishConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'finishConditionEscrow', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'finishConditionEscrow',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'createConditionEscrowToken':
-                    this.txJson = await this.signTransactionUtilService.createConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'createConditionEscrowToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'createConditionEscrowToken',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'finishConditionEscrowToken':
-                    this.txJson = await this.signTransactionUtilService.finsishConditionalEscrowRequestText({ client, wallet, selectedTransaction: 'finishConditionEscrowToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'finishConditionEscrowToken',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'cancelEscrow':
-                    this.txJson = await this.signTransactionUtilService.cancelEscrowRequestText({ client, wallet, selectedTransaction: 'cancelEscrow', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'cancelEscrow',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'createCheck':
-                    this.txJson = await this.signTransactionUtilService.createCheckRequestText({ client, wallet, selectedTransaction: 'createCheck', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'createCheck',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'createCheckToken':
-                    this.txJson = await this.signTransactionUtilService.createCheckRequestText({ client, wallet, selectedTransaction: 'createCheckToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'createCheckToken',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'cashCheck':
-                    this.txJson = await this.signTransactionUtilService.cashCheckRequestText({ client, wallet, selectedTransaction: 'cashCheck', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'cashCheck',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'cashCheckToken':
-                    this.txJson = await this.signTransactionUtilService.cashCheckRequestText({ client, wallet, selectedTransaction: 'cashCheckToken', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'cashCheckToken',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'cancelCheck':
-                    this.txJson = await this.signTransactionUtilService.cancelCheckRequestText({ client, wallet, selectedTransaction: 'cancelCheck', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'cancelCheck',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'createMPT':
-                    this.txJson = await this.signTransactionUtilService.createMPTRequestText({ client, wallet, selectedTransaction: 'createMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'createMPT',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'authorizeMPT':
-                    this.txJson = await this.signTransactionUtilService.authorizeMPTRequestText({ client, wallet, selectedTransaction: 'authorizeMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'authorizeMPT',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'unauthorizeMPT':
-                    this.txJson = await this.signTransactionUtilService.unauthorizeMPTRequestText({ client, wallet, selectedTransaction: 'unauthorizeMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'unauthorizeMPT',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'sendMPT':
-                    this.txJson = await this.signTransactionUtilService.sendMPTRequestText({ client, wallet, selectedTransaction: 'sendMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'sendMPT',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'lockMPT':
-                    this.txJson = await this.signTransactionUtilService.lockMPTRequestText({ client, wallet, selectedTransaction: 'lockMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'lockMPT',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'unlockMPT':
-                    this.txJson = await this.signTransactionUtilService.unlockMPTRequestText({ client, wallet, selectedTransaction: 'unlockMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'unlockMPT',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
                case 'destroyMPT':
-                    this.txJson = await this.signTransactionUtilService.destroyMPTRequestText({ client, wallet, selectedTransaction: 'destroyMPT', isMemoEnable: this.isMemoEnabled, isTicketEnabled: this.isTicket, ticketSequence: this.selectedSingleTicket });
+                    this.txJson = await this.signTransactionUtilService.buildTransactionText({
+                         client,
+                         wallet,
+                         selectedTransaction: 'destroyMPT',
+                         isTicketEnabled: this.isTicket,
+                         isMemoEnable: this.isMemoEnabled,
+                         ticketSequence: this.selectedSingleTicket,
+                    });
                     this.setTxJson(this.txJson);
                     break;
-               // add others as needed
                default:
                     console.warn(`Unknown transaction type: ${this.selectedTransaction()}`);
           }
@@ -552,12 +735,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           console.log('Entering unsignedTransaction');
           const startTime = Date.now();
           this.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+          this.txUiService.updateSpinnerMessage(``);
 
           try {
-               this.ui.errorMessage = ''; // Clear any prior error
+               this.txUiService.errorMessage = ''; // Clear any prior error
 
-               if (!this.txJson.trim()) return this.ui.setError('Transaction cannot be empty');
+               if (!this.txJson.trim()) return this.txUiService.setError('Transaction cannot be empty');
 
                const editedString = this.txJson.trim();
                let editedJson = JSON.parse(editedString);
@@ -570,12 +753,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.log('Unsigned Transaction hash (hex):', unsignedHash);
 
                this.outputField = unsignedHash; // Set property
-               this.ui.isError = false;
+               this.txUiService.isError = false;
           } catch (error: any) {
                console.error('Error in unsignedTransaction:', error);
-               this.ui.setError(`${error.message || 'Unknown error'}`);
+               this.txUiService.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner.set(false);
+               this.txUiService.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving unsignedTransaction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -586,7 +769,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           console.log('Entering signedTransaction');
           const startTime = Date.now();
           this.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+          this.txUiService.updateSpinnerMessage(``);
           this.buttonLoading.signed = true;
 
           let txToSign: any;
@@ -595,7 +778,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                const wallet = await this.getWallet();
 
                if (!this.txJson.trim()) {
-                    return this.ui.setError('Transaction cannot be empty');
+                    return this.txUiService.setError('Transaction cannot be empty');
                }
 
                const editedString = this.txJson.trim();
@@ -623,10 +806,10 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.log(decodedTx);
           } catch (error: any) {
                console.error('Error in signedTransaction:', error);
-               this.ui.setError(`${error.message || 'Unknown error'}`);
+               this.txUiService.setError(`${error.message || 'Unknown error'}`);
           } finally {
                this.buttonLoading.signed = false;
-               this.ui.spinner.set(false);
+               this.txUiService.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving signedTransaction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -637,7 +820,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           console.log('Entering submitTransaction');
           const startTime = Date.now();
           this.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+          this.txUiService.updateSpinnerMessage(``);
           this.buttonLoading.submit = true;
 
           try {
@@ -645,15 +828,15 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                const wallet = await this.getWallet();
 
                if (!this.outputField.trim()) {
-                    return this.ui.setError('Signed tx blob can not be empty');
+                    return this.txUiService.setError('Signed tx blob can not be empty');
                }
 
                const signedTxBlob = this.outputField.trim();
 
                const txType = this.getTransactionLabel(this.selectedTransaction() ?? '');
-               this.ui.showSpinnerWithDelay(this.isSimulateEnabled ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
+               this.txUiService.showSpinnerWithDelay(this.isSimulateEnabled ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
 
-               // this.ui.setPaymentTx(paymentTx);
+               // this.txUiService.setPaymentTx(paymentTx);
                // this.updatePaymentTx();
 
                let response: any;
@@ -672,7 +855,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                // this.utilsService.logObjects('response', response);
                // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.ui.setTxResult(response.result);
+               this.txUiService.setTxResult(response.result);
                this.updateTxResult();
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
@@ -680,24 +863,21 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                    console.error(`Transaction ${this.ui.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                    console.error(`Transaction ${this.txUiService.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    return this.ui.setError(userMessage);
+                    return this.txUiService.setError(userMessage);
                } else {
-                    this.ui.setSuccess(this.ui.result);
+                    this.txUiService.setSuccess(this.txUiService.result);
                }
 
-               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
+               this.txUiService.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
-               if (!this.ui.isSimulateEnabled()) {
-                    this.ui.successMessage = 'Transaction completed successfully!';
+               if (!this.txUiService.isSimulateEnabled()) {
+                    this.txUiService.successMessage = 'Transaction completed successfully!';
 
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
 
                     await this.refreshWallets(client, [wallet.classicAddress]);
-
-                    // Add new destination if valid and not already present
-                    this.addNewDestinationFromUser();
 
                     this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
                     // Reset selected checkboxes
@@ -707,13 +887,13 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                     this.clearFields(false);
                     this.cdr.detectChanges();
                } else {
-                    this.ui.successMessage = 'Simulated transaction successfully!';
+                    this.txUiService.successMessage = 'Simulated transaction successfully!';
                }
           } catch (error: any) {
                console.error('Error in submitTransaction:', error);
-               this.ui.setError(`${error.message || 'Unknown error'}`);
+               this.txUiService.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner.set(false);
+               this.txUiService.spinner.set(false);
                this.buttonLoading.submit = false;
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -725,11 +905,11 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           console.log('Entering submitMultiSignedTransaction');
           const startTime = Date.now();
           this.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+          this.txUiService.updateSpinnerMessage(``);
 
           try {
                if (!this.outputField.trim()) {
-                    return this.ui.setError('Signed tx blob can not be empty');
+                    return this.txUiService.setError('Signed tx blob can not be empty');
                }
 
                const client = await this.xrplService.getClient();
@@ -739,7 +919,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                console.log('multiSignedTxBlob', multiSignedTxBlob);
 
                const txType = this.getTransactionLabel(this.selectedTransaction() ?? '');
-               this.ui.showSpinnerWithDelay(this.isSimulateEnabled ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
+               this.txUiService.showSpinnerWithDelay(this.isSimulateEnabled ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
 
                let response: any;
 
@@ -757,7 +937,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                // this.utilsService.logObjects('response', response);
                // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-               this.ui.setTxResult(response.result);
+               this.txUiService.setTxResult(response.result);
                this.updateTxResult();
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
@@ -767,12 +947,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
                     console.error(`Transaction ${this.isSimulateEnabled ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                     (response.result as any).errorMessage = userMessage;
-                    this.ui.setError(userMessage);
+                    this.txUiService.setError(userMessage);
                } else {
-                    this.ui.setSuccess(this.ui.result);
+                    this.txUiService.setSuccess(this.txUiService.result);
                }
 
-               this.ui.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
+               this.txUiService.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
 
                if (!this.isSimulateEnabled) {
                     const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
@@ -792,9 +972,9 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                }
           } catch (error: any) {
                console.error('Error in submitMultiSignedTransaction:', error);
-               this.ui.setError(`${error.message || 'Unknown error'}`);
+               this.txUiService.setError(`${error.message || 'Unknown error'}`);
           } finally {
-               this.ui.spinner.set(false);
+               this.txUiService.spinner.set(false);
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
                console.log(`Leaving submitMultiSignedTransaction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
@@ -805,14 +985,14 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           console.log('Entering signForMultiSign');
           const startTime = Date.now();
           this.clearMessages();
-          this.ui.updateSpinnerMessage(``);
+          this.txUiService.updateSpinnerMessage(``);
           this.buttonLoading.multiSign = true;
 
           let txToSign: any;
 
           try {
                if (!this.txJson.trim()) {
-                    return this.ui.setError('Transaction cannot be empty');
+                    return this.txUiService.setError('Transaction cannot be empty');
                }
 
                const editedString = this.txJson.trim();
@@ -831,7 +1011,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                const selectedSigners = this.availableSigners.filter(w => w.isSelectedSigner);
 
                if (!selectedSigners.length) {
-                    return this.ui.setError('Select at least one signer.');
+                    return this.txUiService.setError('Select at least one signer.');
                }
 
                const addresses = selectedSigners.map(acc => acc.address).join(',');
@@ -848,9 +1028,9 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                this.outputField = result.signedTx?.tx_blob ? result.signedTx?.tx_blob : 'Error';
           } catch (error: any) {
                console.error('Error in signForMultiSign:', error);
-               this.ui.setError(`Error: ${error.message || error}`);
+               this.txUiService.setError(`Error: ${error.message || error}`);
           } finally {
-               this.ui.spinner.set(false);
+               this.txUiService.spinner.set(false);
                this.buttonLoading.multiSign = false;
                this.executionTime = (Date.now() - startTime).toString();
                const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
@@ -1040,11 +1220,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           this.regularKeySigningEnabled = !!regularKey;
      }
 
-     updateDestinations() {
-          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          this.destinationDropdownService.setItems(this.destinations);
-     }
-
      private async getWallet() {
           const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
@@ -1052,20 +1227,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                throw new Error('ERROR: Wallet could not be created or is undefined');
           }
           return wallet;
-     }
-
-     private addNewDestinationFromUser() {
-          const addr = this.destinationField.includes('...') ? this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address : this.destinationField;
-
-          if (addr && xrpl.isValidAddress(addr) && !this.destinations.some(d => d.address === addr)) {
-               this.customDestinations.push({ name: `Custom ${this.customDestinations.length + 1}`, address: addr });
-               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations));
-               this.updateDestinations();
-          }
-     }
-
-     get safeWarningMessage() {
-          return this.ui.warningMessage?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
      }
 
      onTxJsonBlur() {
@@ -1111,17 +1272,12 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
      copyCheckId(checkId: string) {
           navigator.clipboard.writeText(checkId).then(() => {
-               this.ui.showToastMessage('Check ID copied!');
+               this.txUiService.showToastMessage('Check ID copied!');
           });
      }
 
-     private setWarning(msg: string | null) {
-          this.ui.setWarning(msg);
-          this.cdr.detectChanges();
-     }
-
-     clearWarning() {
-          this.setWarning(null);
+     get safeWarningMessage() {
+          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
      }
 
      clearFields(all = true) {
@@ -1136,11 +1292,11 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      }
 
      private clearMessages() {
-          this.ui.result = '';
-          this.ui.isError = false;
-          this.ui.isSuccess = false;
-          this.ui.successMessage = '';
-          this.ui.errorMessage = '';
+          this.txUiService.result = '';
+          this.txUiService.isError = false;
+          this.txUiService.isSuccess = false;
+          this.txUiService.successMessage = '';
+          this.txUiService.errorMessage = '';
           this.cdr.detectChanges();
      }
 
@@ -1151,73 +1307,6 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
      getTransactionLabel(key: string): string {
           return (AppConstants.SIGN_TRANSACTION_LABEL_MAP as Record<string, string>)[key] || key;
-     }
-
-     onArrowDown() {
-          if (!this.showDropdown || this.filteredDestinations.length === 0) return;
-          this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredDestinations.length;
-     }
-
-     selectHighlighted() {
-          if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
-               const addr = this.filteredDestinations[this.highlightedIndex].address;
-               if (addr !== this.currentWallet.address) {
-                    this.destinationField = addr;
-                    this.closeDropdown(); // Also close on Enter
-               }
-          }
-     }
-
-     // Dropdown controls
-     openDropdown() {
-          this.destinationDropdownService.setItems(this.destinations);
-          this.destinationDropdownService.filter(this.destinationField || '');
-          this.destinationDropdownService.openDropdown();
-     }
-
-     closeDropdown() {
-          this.destinationDropdownService.closeDropdown();
-     }
-
-     toggleDropdown() {
-          this.destinationDropdownService.setItems(this.destinations);
-          this.destinationDropdownService.toggleDropdown();
-     }
-
-     onDestinationInput() {
-          this.destinationDropdownService.filter(this.destinationField || '');
-          this.destinationDropdownService.openDropdown();
-     }
-
-     selectDestination(address: string) {
-          if (address === this.currentWallet.address) return;
-          const dest = this.destinations.find(d => d.address === address);
-          this.destinationField = dest ? this.destinationDropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`;
-          this.closeDropdown();
-     }
-
-     private openDropdownInternal() {
-          if (this.overlayRef?.hasAttached()) return;
-
-          const strategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]);
-
-          this.overlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy: strategy,
-               scrollStrategy: this.overlay.scrollStrategies.close(),
-          });
-
-          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
-          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
-     }
-
-     private closeDropdownInternal() {
-          this.overlayRef?.detach();
-          this.overlayRef = null;
      }
 
      updatePaymentTx() {
@@ -1232,13 +1321,13 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           // Use the captured injector to run afterRenderEffect  safely
           afterRenderEffect(
                () => {
-                    if (this.ui.paymentTx && this.paymentJson?.nativeElement) {
-                         const json = JSON.stringify(this.ui.paymentTx, null, 2);
+                    if (this.txUiService.paymentTx && this.paymentJson?.nativeElement) {
+                         const json = JSON.stringify(this.txUiService.paymentTx, null, 2);
                          this.paymentJson.nativeElement.textContent = json;
                          Prism.highlightElement(this.paymentJson.nativeElement);
                     }
-                    if (this.ui.txResult && this.txResultJson?.nativeElement) {
-                         const json = JSON.stringify(this.ui.txResult, null, 2);
+                    if (this.txUiService.txResult && this.txResultJson?.nativeElement) {
+                         const json = JSON.stringify(this.txUiService.txResult, null, 2);
                          this.txResultJson.nativeElement.textContent = json;
                          Prism.highlightElement(this.txResultJson.nativeElement);
                     }
@@ -1256,8 +1345,8 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                     }
 
                     /* ---- Error message (plain text) ---- */
-                    if (this.ui.isError && this.ui.errorMessage && this.txJsonCode?.nativeElement) {
-                         this.txJsonCode.nativeElement.textContent = `ERROR: ${this.ui.errorMessage}`;
+                    if (this.txUiService.isError && this.txUiService.errorMessage && this.txJsonCode?.nativeElement) {
+                         this.txJsonCode.nativeElement.textContent = `ERROR: ${this.txUiService.errorMessage}`;
                          // optional: give it a red background
                          this.txJsonPre.nativeElement.classList.add('error');
                     } else {

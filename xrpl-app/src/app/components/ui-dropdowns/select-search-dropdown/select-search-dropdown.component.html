@@ -12,42 +12,29 @@
           <div class="combobox-dropdown-overlay">
                @if (filteredItems().length === 0) {
                <div class="combobox-empty">{{ emptyMessage() }}</div>
+               } @for (item of filteredItems(); track item.id; let i = $index) {
+               <!-- Group Header - only show if group changes or first item -->
+               @if (i === 0 || item.group !== (filteredItems()[i - 1]?.group ?? null)) {
+               <div class="combobox-group-header">{{ item.group || '' }}</div>
                }
 
-               <!-- Loop over dropdown item -->
-               @for (item of filteredItems(); track item.id; let i = $index) {
+               <!-- Item -->
                <div class="combobox-item" [class.highlighted]="highlightedIndex() === i || item.id === value()?.id" [class.current-account]="item.isCurrentAccount" [class.current-code]="item.isCurrentCode" [class.current-token]="item.isCurrentToken" (click)="(item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) ? null : onSelect(item)">
                     <div class="item-name">
-                         {{ item.display }}
-
-                         <!-- Current Account (for destination wallet) -->
-                         @if (item.isCurrentAccount) {
+                         {{ item.display }} @if (item.isCurrentAccount) {
                          <span class="current-account-badge">Current Account</span>
-                         }
-
-                         <!-- Current Code (for currency code dropdown) -->
-                         @if (item.isCurrentCode) {
+                         } @if (item.isCurrentCode) {
                          <span class="current-code-badge">Current Code</span>
-                         }
-
-                         <!-- Current Token (for issuer dropdown) -->
-                         @if (item.isCurrentToken) {
-                         <!-- Signed Tx page -->
-                         @if (item.showSecondaryInInput) {
+                         } @if (item.isCurrentToken) {
                          <span class="current-token-badge">Selected</span>
-                         }
-                         <!-- Current Token (for issuer dropdown) -->
-                         @else {
-                         <span class="current-token-badge">Current Token</span>
-                         } }
-
-                         <!-- Pending for credentials -->
-                         @if (item.pending) {
+                         } @if (item.pending) {
                          <span class="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full">Pending</span>
                          }
                     </div>
 
+                    @if (item.secondary) {
                     <div class="item-address">{{ item.secondary }}</div>
+                    }
                </div>
                }
           </div>

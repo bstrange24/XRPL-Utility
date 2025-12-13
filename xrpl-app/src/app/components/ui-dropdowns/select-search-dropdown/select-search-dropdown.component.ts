@@ -72,6 +72,9 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           if (this.showSecondaryInInput()) {
                const short = sel.secondary ? `${sel.secondary.slice(0, 7)}...${sel.secondary.slice(-7)}` : '';
                return short ? `${sel.display} (${short})` : sel.display;
+          } else if (this.showShortAddress()) {
+               const short = sel.secondary ? `${sel.secondary.slice(0, 7)}...${sel.secondary.slice(-7)}` : '';
+               return short ? `${sel.display} (${short})` : sel.display;
           }
 
           // Otherwise: clean display only
