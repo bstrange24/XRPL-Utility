@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef, ElementRef, ViewChild, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, ElementRef, ViewChild, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef, computed, signal } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatSortModule } from '@angular/material/sort';
 import { MatPaginatorModule } from '@angular/material/paginator';
@@ -26,13 +26,14 @@ import SignerList from 'xrpl/dist/npm/models/ledger/SignerList';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
-import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
+import { DestinationDropdownService, SelectItem } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { Subject, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { SignTransactionUtilService } from '../../services/sign-transactions-util/sign-transaction-util.service';
+import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 declare var Prism: any;
 
 interface ValidationInputs {
@@ -43,7 +44,7 @@ interface ValidationInputs {
 @Component({
      selector: 'app-sign-transactions',
      standalone: true,
-     imports: [CommonModule, FormsModule, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule, OverlayModule, MatAutocompleteModule, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, WalletPanelComponent],
+     imports: [CommonModule, FormsModule, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule, OverlayModule, MatAutocompleteModule, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, WalletPanelComponent, SelectSearchDropdownComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './sign-transactions.component.html',
      styleUrl: './sign-transactions.component.css',
@@ -118,7 +119,8 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
      ownerCount: string = '';
      totalXrpReserves: string = '';
      isSimulateEnabled: boolean = false;
-     selectedTransaction: string | null = null;
+     // selectedTransaction: string | null = null;
+     selectedTransaction = signal<string | null>(null);
      editedTxJson: any = {};
      selectedWalletIndex: number = 0;
      multiSignedTxBlob: string = ''; // Final combined tx blob
@@ -155,6 +157,77 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           private destinationDropdownService: DestinationDropdownService,
           private cdr: ChangeDetectorRef
      ) {}
+
+     // Transaction Type Dropdown Items
+     transactionTypeItems = computed(() => {
+          const current = this.selectedTransaction();
+
+          return [
+               // Basic
+               { id: 'batch', display: 'Batch', group: 'Basic' },
+               { id: 'sendXrp', display: 'Send XRP', group: 'Basic' },
+
+               // Trustline
+               { id: 'setTrustline', display: 'Set Trustline', group: 'Trustline' },
+               { id: 'removeTrustline', display: 'Remove Trustline', group: 'Trustline' },
+               { id: 'issueCurrency', display: 'Issue Currency', group: 'Trustline' },
+
+               // Account Flags
+               { id: 'accountFlagSet', display: 'Account Flag Set', group: 'Account Flags' },
+               { id: 'accountFlagClear', display: 'Account Flag Clear', group: 'Account Flags' },
+
+               // Escrow
+               { id: 'createTimeEscrow', display: 'Create Time Escrow', group: 'Escrow' },
+               { id: 'finishTimeEscrow', display: 'Finish Time Escrow', group: 'Escrow' },
+               { id: 'createConditionEscrow', display: 'Create Condition Escrow', group: 'Escrow' },
+               { id: 'finishConditionEscrow', display: 'Finish Condition Escrow', group: 'Escrow' },
+               { id: 'cancelEscrow', display: 'Cancel Escrow', group: 'Escrow' },
+
+               // Token Escrow
+               { id: 'createTimeEscrowToken', display: 'Create Token Time Escrow', group: 'Token Escrow' },
+               { id: 'finishTimeEscrowToken', display: 'Finish Token Time Escrow', group: 'Token Escrow' },
+               { id: 'createConditionEscrowToken', display: 'Create Token Condition Escrow', group: 'Token Escrow' },
+               { id: 'finishConditionEscrowToken', display: 'Finish Token Condition Escrow', group: 'Token Escrow' },
+
+               // Check
+               { id: 'createCheck', display: 'Check Create', group: 'Check' },
+               { id: 'cashCheck', display: 'Check Cash', group: 'Check' },
+               { id: 'cancelCheck', display: 'Check Cancel', group: 'Check' },
+
+               // Token Check
+               { id: 'createCheckToken', display: 'Check Token Create', group: 'Token Check' },
+               { id: 'cashCheckToken', display: 'Check Token Cash', group: 'Token Check' },
+
+               // MPT
+               { id: 'createMPT', display: 'MPT Create', group: 'MPT' },
+               { id: 'authorizeMPT', display: 'Authorize MPT', group: 'MPT' },
+               { id: 'unauthorizeMPT', display: 'Unauthorize MPT', group: 'MPT' },
+               { id: 'sendMPT', display: 'Send MPT', group: 'MPT' },
+               { id: 'lockMPT', display: 'Lock MPT', group: 'MPT' },
+               { id: 'unlockMPT', display: 'Unlock MPT', group: 'MPT' },
+               { id: 'destroyMPT', display: 'Destroy MPT', group: 'MPT' },
+          ].map(item => ({
+               id: item.id,
+               display: item.display,
+               secondary: item.group,
+               isCurrentAccount: false,
+               isCurrentCode: false,
+               isCurrentToken: item.id === current,
+               showSecondaryInInput: true,
+          }));
+     });
+
+     selectedTransactionItem = computed(() => {
+          const id = this.selectedTransaction();
+          if (!id) return null;
+          return this.transactionTypeItems().find(i => i.id === id) || null;
+     });
+
+     onTransactionSelected(item: SelectItem | null) {
+          const tx = item?.id || '';
+          this.selectedTransaction.set(tx);
+          this.onTransactionChange(); // keep your existing logic
+     }
 
      ngOnInit() {
           this.environment = this.xrplService.getNet().environment;
@@ -217,7 +290,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                open ? this.openDropdownInternal() : this.closeDropdownInternal();
           });
 
-          this.selectedTransaction = 'sendXrp';
+          this.selectedTransaction.set('sendXrp');
           this.clearMessages();
           this.enableTransaction();
           this.cdr.detectChanges();
@@ -354,7 +427,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
           const client = await this.xrplService.getClient();
           const wallet = await this.getWallet();
 
-          switch (this.selectedTransaction) {
+          switch (this.selectedTransaction()) {
                case 'batch':
                     this.txJson = await this.signTransactionUtilService.createBatchpRequestText({ client, wallet });
                     this.setTxJson(this.txJson);
@@ -469,7 +542,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                     break;
                // add others as needed
                default:
-                    console.warn(`Unknown transaction type: ${this.selectedTransaction}`);
+                    console.warn(`Unknown transaction type: ${this.selectedTransaction()}`);
           }
 
           this.cdr.markForCheck();
@@ -577,7 +650,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
 
                const signedTxBlob = this.outputField.trim();
 
-               const txType = this.getTransactionLabel(this.selectedTransaction ?? '');
+               const txType = this.getTransactionLabel(this.selectedTransaction() ?? '');
                this.ui.showSpinnerWithDelay(this.isSimulateEnabled ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
 
                // this.ui.setPaymentTx(paymentTx);
@@ -665,7 +738,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                const multiSignedTxBlob = this.outputField.trim();
                console.log('multiSignedTxBlob', multiSignedTxBlob);
 
-               const txType = this.getTransactionLabel(this.selectedTransaction ?? '');
+               const txType = this.getTransactionLabel(this.selectedTransaction() ?? '');
                this.ui.showSpinnerWithDelay(this.isSimulateEnabled ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
 
                let response: any;
@@ -818,7 +891,7 @@ export class SignTransactionsComponent implements OnInit, AfterViewInit {
                }
           }
 
-          if (typeof editedJson.Amount === 'string' && this.selectedTransaction === 'sendXrp') {
+          if (typeof editedJson.Amount === 'string' && this.selectedTransaction() === 'sendXrp') {
                editedJson.Amount = xrpl.xrpToDrops(editedJson.Amount);
           }
 

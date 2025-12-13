@@ -12,7 +12,10 @@
           <div class="combobox-dropdown-overlay">
                @if (filteredItems().length === 0) {
                <div class="combobox-empty">{{ emptyMessage() }}</div>
-               } @for (item of filteredItems(); track item.id; let i = $index) {
+               }
+
+               <!-- Loop over dropdown item -->
+               @for (item of filteredItems(); track item.id; let i = $index) {
                <div class="combobox-item" [class.highlighted]="highlightedIndex() === i || item.id === value()?.id" [class.current-account]="item.isCurrentAccount" [class.current-code]="item.isCurrentCode" [class.current-token]="item.isCurrentToken" (click)="(item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) ? null : onSelect(item)">
                     <div class="item-name">
                          {{ item.display }}
@@ -29,8 +32,14 @@
 
                          <!-- Current Token (for issuer dropdown) -->
                          @if (item.isCurrentToken) {
-                         <span class="current-token-badge">Current Token</span>
+                         <!-- Signed Tx page -->
+                         @if (item.showSecondaryInInput) {
+                         <span class="current-token-badge">Selected</span>
                          }
+                         <!-- Current Token (for issuer dropdown) -->
+                         @else {
+                         <span class="current-token-badge">Current Token</span>
+                         } }
 
                          <!-- Pending for credentials -->
                          @if (item.pending) {

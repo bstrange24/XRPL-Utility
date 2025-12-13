@@ -11,7 +11,9 @@ export interface SelectItem {
      isCurrentAccount?: boolean;
      isCurrentCode?: boolean;
      isCurrentToken?: boolean;
+     group?: string; // ← NEW: group name
      pending?: boolean;
+     showSecondaryInInput?: boolean;
 }
 
 @Component({
@@ -45,6 +47,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      value = input<SelectItem | null>(null);
      valueChange = output<SelectItem | null>();
      selected = output<SelectItem>();
+     showSecondaryInInput = input<boolean>(true); // default = true (show parentheses)
 
      placeholder = input<string>('Search...');
      emptyMessage = input<string>('No items found');
@@ -59,23 +62,40 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      searchQuery = signal('');
      highlightedIndex = signal(-1);
 
-     // Computed Display Value
      displayValue = computed(() => {
           if (this.searchQuery()) return this.searchQuery();
 
           const sel = this.value();
           if (!sel) return '';
 
-          // Only shorten if showShortAddress is true (default = yes)
-          if (this.showShortAddress()) {
+          // Use the new input to decide
+          if (this.showSecondaryInInput()) {
                const short = sel.secondary ? `${sel.secondary.slice(0, 7)}...${sel.secondary.slice(-7)}` : '';
                return short ? `${sel.display} (${short})` : sel.display;
           }
 
-          // Otherwise: just show display name cleanly
+          // Otherwise: clean display only
           return sel.display;
      });
 
+     // // Computed Display Value
+     // displayValue = computed(() => {
+     //      if (this.searchQuery()) return this.searchQuery();
+
+     //      const sel = this.value();
+     //      if (!sel) return '';
+
+     //      // Only shorten if showShortAddress is true (default = yes)
+     //      if (this.showShortAddress()) {
+     //           const short = sel.secondary ? `${sel.secondary.slice(0, 7)}...${sel.secondary.slice(-7)}` : '';
+     //           return short ? `${sel.display} (${short})` : sel.display;
+     //      }
+
+     //      // Otherwise: just show display name cleanly
+     //      return sel.display;
+     // });
+
+     // OG
      // displayValue = computed(() => {
      //      if (this.searchQuery()) return this.searchQuery();
 

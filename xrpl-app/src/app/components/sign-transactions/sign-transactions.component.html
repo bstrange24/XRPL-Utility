@@ -12,18 +12,8 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
-
           <!-- Right form -->
           <div class="form-panel">
-               <!-- Menu bar -->
-               <!-- <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'getAccountDetails'" (click)="setTab('getAccountDetails')">
-                         <lucide-icon name="signature" size="30" style="padding-top: 8px; color: #1e40af"></lucide-icon>
-                         Sign Transactions
-                    </button>
-               </div> -->
-
                <!-- Modify Flag Menu -->
                @if (activeTab === 'getAccountDetails') {
                <div style="padding-top: 2em">
@@ -53,69 +43,76 @@
                               <!-- Left Form Fields -->
                               <div class="tab-content-container form-fields-container">
                                    @if (activeTab === 'getAccountDetails') {
-                                   <div>
-                                        <div class="form-row">
-                                             <div class="form-group">
-                                                  <label>Transaction Type</label>
-                                                  <select class="dropdownTransactionTypes" id="transactionSelect" [(ngModel)]="selectedTransaction" (ngModelChange)="onTransactionChange()" name="transactionSelect">
-                                                       <optgroup label="Basic">
-                                                            <option value="batch">Batch</option>
-                                                            <option value="sendXrp">Send XRP</option>
-                                                       </optgroup>
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Transaction Type</label>
 
-                                                       <optgroup label="Trustline">
-                                                            <option value="setTrustline">Set Trustline</option>
-                                                            <option value="removeTrustline">Remove Trustline</option>
-                                                            <option value="issueCurrency">Issue Currency</option>
-                                                       </optgroup>
-
-                                                       <optgroup label="Account Flags">
-                                                            <option value="accountFlagSet">Account Flag Set</option>
-                                                            <option value="accountFlagClear">Account Flag Clear</option>
-                                                       </optgroup>
-
-                                                       <optgroup label="Escrow">
-                                                            <option value="createTimeEscrow">Create Time Escrow</option>
-                                                            <option value="finishTimeEscrow">Finish Time Escrow</option>
-                                                            <option value="createConditionEscrow">Create Condition Escrow</option>
-                                                            <option value="finishConditionEscrow">Finish Condition Escrow</option>
-                                                            <option value="cancelEscrow">Cancel Escrow</option>
-                                                       </optgroup>
-
-                                                       <optgroup label="Token Escrow">
-                                                            <option value="createTimeEscrowToken">Create Token Time Escrow</option>
-                                                            <option value="finishTimeEscrowToken">Finish Token Time Escrow</option>
-                                                            <option value="createConditionEscrowToken">Create Token Condition Escrow</option>
-                                                            <option value="finishConditionEscrowToken">Finish Token Condition Escrow</option>
-                                                            <option value="cancelEscrow">Cancel Token Escrow</option>
-                                                       </optgroup>
-
-                                                       <optgroup label="Check">
-                                                            <option value="createCheck">Check Create</option>
-                                                            <option value="cashCheck">Check Cash</option>
-                                                            <option value="cancelCheck">Check Cancel</option>
-                                                       </optgroup>
-
-                                                       <optgroup label="Token Check">
-                                                            <option value="createCheckToken">Check Token Create</option>
-                                                            <option value="cashCheckToken">Check Token Cash</option>
-                                                            <option value="cancelCheck">Check Token Cancel</option>
-                                                       </optgroup>
-
-                                                       <optgroup label="MPT">
-                                                            <option value="createMPT">MPT Create</option>
-                                                            <option value="authorizeMPT">Authorize MPT</option>
-                                                            <option value="unauthorizeMPT">Unauthorize MPT</option>
-                                                            <option value="sendMPT">Send MPT</option>
-                                                            <option value="lockMPT">Lock MPT</option>
-                                                            <option value="unlockMPT">Unlock MPT</option>
-                                                            <option value="destroyMPT">Destroy MPT</option>
-                                                       </optgroup>
-                                                  </select>
-                                             </div>
+                                             <app-select-search-dropdown [items]="transactionTypeItems()" [value]="selectedTransactionItem()" (valueChange)="onTransactionSelected($event)" [showSecondaryInInput]="false" placeholder="Search transaction type..." emptyMessage="No transaction types available"> </app-select-search-dropdown>
                                         </div>
                                    </div>
                                    }
+                                   <!-- @if (activeTab === 'getAccountDetails') {
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Transaction Type</label>
+                                             <select class="dropdownTransactionTypes" id="transactionSelect" [(ngModel)]="selectedTransaction" (ngModelChange)="onTransactionChange()" name="transactionSelect">
+                                                  <optgroup label="Basic">
+                                                       <option value="batch">Batch</option>
+                                                       <option value="sendXrp">Send XRP</option>
+                                                  </optgroup>
+
+                                                  <optgroup label="Trustline">
+                                                       <option value="setTrustline">Set Trustline</option>
+                                                       <option value="removeTrustline">Remove Trustline</option>
+                                                       <option value="issueCurrency">Issue Currency</option>
+                                                  </optgroup>
+
+                                                  <optgroup label="Account Flags">
+                                                       <option value="accountFlagSet">Account Flag Set</option>
+                                                       <option value="accountFlagClear">Account Flag Clear</option>
+                                                  </optgroup>
+
+                                                  <optgroup label="Escrow">
+                                                       <option value="createTimeEscrow">Create Time Escrow</option>
+                                                       <option value="finishTimeEscrow">Finish Time Escrow</option>
+                                                       <option value="createConditionEscrow">Create Condition Escrow</option>
+                                                       <option value="finishConditionEscrow">Finish Condition Escrow</option>
+                                                       <option value="cancelEscrow">Cancel Escrow</option>
+                                                  </optgroup>
+
+                                                  <optgroup label="Token Escrow">
+                                                       <option value="createTimeEscrowToken">Create Token Time Escrow</option>
+                                                       <option value="finishTimeEscrowToken">Finish Token Time Escrow</option>
+                                                       <option value="createConditionEscrowToken">Create Token Condition Escrow</option>
+                                                       <option value="finishConditionEscrowToken">Finish Token Condition Escrow</option>
+                                                       <option value="cancelEscrow">Cancel Token Escrow</option>
+                                                  </optgroup>
+
+                                                  <optgroup label="Check">
+                                                       <option value="createCheck">Check Create</option>
+                                                       <option value="cashCheck">Check Cash</option>
+                                                       <option value="cancelCheck">Check Cancel</option>
+                                                  </optgroup>
+
+                                                  <optgroup label="Token Check">
+                                                       <option value="createCheckToken">Check Token Create</option>
+                                                       <option value="cashCheckToken">Check Token Cash</option>
+                                                       <option value="cancelCheck">Check Token Cancel</option>
+                                                  </optgroup>
+
+                                                  <optgroup label="MPT">
+                                                       <option value="createMPT">MPT Create</option>
+                                                       <option value="authorizeMPT">Authorize MPT</option>
+                                                       <option value="unauthorizeMPT">Unauthorize MPT</option>
+                                                       <option value="sendMPT">Send MPT</option>
+                                                       <option value="lockMPT">Lock MPT</option>
+                                                       <option value="unlockMPT">Unlock MPT</option>
+                                                       <option value="destroyMPT">Destroy MPT</option>
+                                                  </optgroup>
+                                             </select>
+                                        </div>
+                                   </div>
+                                   } -->
 
                                    <!-- Switches -->
                                    <div class="switch-group" style="margin-top: 1em">
