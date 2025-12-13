@@ -475,10 +475,8 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      async getTrustlinesForAccount(forceRefresh = false): Promise<void> {
-          console.log('Entering getTrustlinesForAccount');
           await this.withPerf('getChecks', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);

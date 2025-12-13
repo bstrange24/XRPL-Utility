@@ -113,13 +113,6 @@
                </div>
                }
 
-               <!-- Dynamic info panel -->
-               @if (txUiService.infoMessage) {
-               <div class="info-panel">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="txUiService.safeInfo"></div>
-               </div>
-               }
 
                <!-- Trustlines Info Panel - Collapsible & Beautiful -->
                @if (infoData(); as info) {
