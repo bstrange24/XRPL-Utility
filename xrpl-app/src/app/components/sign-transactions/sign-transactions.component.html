@@ -15,7 +15,7 @@
           <!-- Right form -->
           <div class="form-panel">
                <!-- Modify Flag Menu -->
-               @if (activeTab === 'getAccountDetails') {
+               @if (activeTab() === 'getAccountDetails') {
                <div style="padding-top: 2em">
                     <div class="submenu-info-text">
                          <div class="white-button-submenu">
@@ -38,11 +38,11 @@
                }
 
                <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab">
+                    <div [@tabTransition]="activeTab()">
                          <div class="tab-content-columns">
                               <!-- Left Form Fields -->
                               <div class="tab-content-container form-fields-container">
-                                   @if (activeTab === 'getAccountDetails') {
+                                   @if (activeTab() === 'getAccountDetails') {
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Transaction Type</label>
@@ -51,202 +51,25 @@
                                    </div>
                                    }
 
-                                   <!-- Switches -->
-                                   <div class="switch-group" style="margin-top: 1em">
-                                        <!-- Memo group -->
-                                        <label class="switch">
-                                             <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                             <span class="slider"></span>
-                                             Add Memo
-                                        </label>
-
-                                        <!-- Multi Signing Enabled group -->
-                                        @if (multiSigningEnabled) {
-                                        <label class="switch">
-                                             <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                             <span class="slider"></span>
-                                             Use Multi-Sign
-                                        </label>
-                                        }
-
-                                        <!-- Regular Key Signing Enabled-->
-                                        @if (regularKeySigningEnabled) {
-                                        <label class="switch">
-                                             <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                                             <span class="slider"></span>
-                                             Use Regular Key
-                                        </label>
-                                        }
-
-                                        <!-- Use Ticket for tx -->
-                                        @if (ticketArray.length > 0) {
-                                        <label class="switch">
-                                             <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                                             <span class="slider"></span>
-                                             Use Ticket
-                                        </label>
-                                        }
-
-                                        <!-- Simulate tx -->
-                                        <label class="switch">
-                                             <input type="checkbox" [(ngModel)]="txUiService.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="txUiService.toggleSimulate($event)" />
-                                             <span class="slider"></span>
-                                             Simulate
-                                        </label>
-                                   </div>
-
-                                   <!-- Memo Field -->
-                                   @if (isMemoEnabled) {
-                                   <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-                                   }
-
-                                   <!-- Sign tx with Mult Sign address -->
-                                   @if (useMultiSign) {
-                                   <div class="multisign-grid">
-                                        <div class="multisign-field">
-                                             <label>Signers</label>
-                                             <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                                        </div>
-                                        <div class="multisign-field">
-                                             <label>Seeds</label>
-                                             <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                                        </div>
-                                        <div class="multisign-field quorum-field">
-                                             <label>Quorum</label>
-                                             <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Sign tx with Regular key address -->
-                                   @if (isRegularKeyAddress) {
-                                   <div class="regular-key-fields">
-                                        <div class="form-row">
-                                             <div class="form-group">
-                                                  <label>Regular Key Address</label>
-                                                  <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                                             </div>
-                                        </div>
-                                        <div class="form-row">
-                                             <div class="form-group">
-                                                  <label>Regular Key Seed</label>
-                                                  <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                             </div>
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Get ticket -->
-                                   @if (isTicket) {
-                                   <div class="ticket-fields">
-                                        <div class="form-group">
-                                             <label>Ticket Sequence</label>
-                                             @if (multiSelectMode) {
-                                             <div>
-                                                  <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                                       @for (ticket of ticketArray; track ticket) {
-                                                       <option [value]="ticket">{{ ticket }}</option>
-                                                       }
-                                                  </select>
-                                             </div>
-                                             } @else {
-                                             <div>
-                                                  <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                                       <option value="" disabled>Select a ticket</option>
-                                                       @for (ticket of ticketArray; track ticket) {
-                                                       <option [value]="ticket">{{ ticket }}</option>
-                                                       }
-                                                  </select>
-                                             </div>
-                                             }
-                                        </div>
-                                   </div>
-                                   }
+                                   <app-transaction-options [showWhenTab]="['getAccountDetails']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                                    <!-- Action buttons -->
-                                   @if(activeTab === 'getAccountDetails') {
+                                   @if(activeTab() === 'getAccountDetails') {
                                    <div class="button-row" style="margin-top: 0.8em">
-                                        <button type="button" class="btn-primary-blue" (click)="getTransactionJSON()" [disabled]="buttonLoading.getJson || isAnyButtonLoading">{{ buttonLoading.getJson ? 'Processing...' : 'Get Transaction JSON' }}</button>
+                                        <button type="button" class="btn-primary-blue" (click)="getTransactionJSON()" [disabled]="buttonLoading().getJson || isAnyButtonLoading">{{ buttonLoading().getJson ? 'Processing...' : 'Get Transaction JSON' }}</button>
                                         <!-- <button type="button" (click)="unsignedTransaction()" class="btn-primary">Unsigned Transaction</button> -->
-                                        <button type="button" class="btn-primary-blue" (click)="signedTransaction()" [disabled]="buttonLoading.signed || isAnyButtonLoading">{{ buttonLoading.signed ? 'Processing...' : 'Signed Transaction' }}</button>
-                                        <button type="button" class="btn-primary-blue" (click)="submitTransaction()" [disabled]="buttonLoading.submit || isAnyButtonLoading">{{ buttonLoading.submit ? 'Processing...' : 'Submit Transaction' }}</button>
-                                        <button type="button" class="btn-primary-blue" (click)="signForMultiSign()" [disabled]="buttonLoading.multiSign || isAnyButtonLoading">{{ buttonLoading.multiSign ? 'Processing...' : 'Sign for Multi-Sign' }}</button>
+                                        <button type="button" class="btn-primary-blue" (click)="signedTransaction()" [disabled]="buttonLoading().signed || isAnyButtonLoading">{{ buttonLoading().signed ? 'Processing...' : 'Signed Transaction' }}</button>
+                                        <button type="button" class="btn-primary-blue" (click)="submitTransaction()" [disabled]="buttonLoading().submit || isAnyButtonLoading">{{ buttonLoading().submit ? 'Processing...' : 'Submit Transaction' }}</button>
+                                        <button type="button" class="btn-primary-blue" (click)="signForMultiSign()" [disabled]="buttonLoading().multiSign || isAnyButtonLoading">{{ buttonLoading().multiSign ? 'Processing...' : 'Sign for Multi-Sign' }}</button>
                                         <!-- <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button> -->
                                    </div>
                                    }
 
-                                   <!-- Spinner -->
-                                   @if (txUiService.spinner()) {
-                                   <div class="spinner-row">
-                                        <div class="spinner"></div>
-                                        <span>{{ txUiService.spinnerMessage || 'Loading...' }}</span>
+                                   <!-- Execution time -->
+                                   <div style="display: flex">
+                                        <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                                    </div>
-                                   }
-
-                                   <!-- Success message -->
-                                   @if (txUiService.isSuccess && !txUiService.isError) {
-                                   <div class="success-message">
-                                        <lucide-icon name="check" size="20"></lucide-icon>
-                                        <div class="success-text">
-                                             @if (txUiService.txHash && !txUiService.isSimulateEnabled) {
-                                             <span>{{txUiService.successMessage}}</span><br /><br />
-                                             <span>Transaction hash: <a [href]="`${url}tx/` + txUiService.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHash }} </a></span>
-                                             } @else {
-                                             <span>{{txUiService.successMessage}}</span>
-                                             }
-
-                                             <!-- Multiple Hashes -->
-                                             @if (txUiService.txHashes.length > 1 && !txUiService.isSimulateEnabled) {
-                                             <div class="tx-hashes">
-                                                  @for (hash of txUiService.txHashes; track hash; let i = $index) {
-                                                  <div class="tx-hash-item">
-                                                       Transaction {{ i + 1 }} hash:
-                                                       <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
-                                                  </div>
-                                                  }
-                                             </div>
-                                             }
-
-                                             <!-- Single hash -->
-                                             @if (txUiService.txHashes.length === 1 && !txUiService.isSimulateEnabled) {
-                                             <span>Transaction hash: <a [href]="url + 'tx/' + txUiService.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashes[0] }} </a></span>
-                                             }
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Error message -->
-                                   @if (txUiService.isError && txUiService.result) {
-                                   <div class="tx-message error">
-                                        <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
-                                        <div class="tx-text">
-                                             <!-- Display Tx Hash if we are not in simulation mode-->
-                                             @if (txUiService.txHash && !txUiService.isSimulateEnabled) {
-                                             <span>{{ txUiService.result }}</span><br />
-                                             <span>Transaction hash: <a [href]="`${url}tx/` + txUiService.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHash }} </a></span>
-                                             }
-
-                                             <!-- Multiple Hashes -->
-                                             @if (txUiService.txErrorHashes.length > 1 && !txUiService.isSimulateEnabled) {
-                                             <div class="tx-hashes">
-                                                  @for (hash of txUiService.txErrorHashes; track hash; let i = $index) {
-                                                  <div class="tx-hash-item">
-                                                       Transaction {{ i + 1 }} hash:
-                                                       <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
-                                                  </div>
-                                                  }
-                                             </div>
-                                             }
-
-                                             <!-- Single hash -->
-                                             @if (txUiService.txErrorHashes.length === 1 && !txUiService.isSimulateEnabled) {
-                                             <span>Transaction hash: <a [href]="url + 'tx/' + txUiService.txErrorHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txErrorHashes[0] }} </a></span>
-                                             }@else {
-                                             <span>{{ txUiService.result }}</span><br />
-                                             }
-                                        </div>
-                                   </div>
-                                   }
+                                   <app-transaction-preview></app-transaction-preview>
 
                                    <!-- ==== TRANSACTION JSON (EDITABLE) ==== -->
                                    <div class="tx-preview-container" style="margin-top: 1.5rem">
@@ -266,12 +89,12 @@
                                         <div class="tx-header">
                                              <h5 class="tx-title">Signed Transaction</h5>
                                              <div class="tx-actions">
-                                                  <button type="button" class="copy-btn" (click)="copyUtilService.copySignedTx(outputField)" title="Copy Signed TX"><ng-icon name="heroClipboardDocumentList" size="20"></ng-icon> Copy</button>
-                                                  <button type="button" class="download-btn" (click)="downloadUtilService.downloadSignTxJson(outputField)" title="Download Signed TX"><ng-icon name="heroArrowDownOnSquareStack" size="20"></ng-icon> Download</button>
+                                                  <button type="button" class="copy-btn" (click)="copyUtilService.copySignedTx(outputField())" title="Copy Signed TX"><ng-icon name="heroClipboardDocumentList" size="20"></ng-icon> Copy</button>
+                                                  <button type="button" class="download-btn" (click)="downloadUtilService.downloadSignTxJson(outputField())" title="Download Signed TX"><ng-icon name="heroArrowDownOnSquareStack" size="20"></ng-icon> Download</button>
                                              </div>
                                         </div>
 
-                                        <div #signedEditable id="hashField" spellcheck="false" style="color: #669900" class="tx-json language-json editable" contenteditable="true" [ngClass]="{ 'success': txUiService.isSuccess }" [textContent]="outputField"></div>
+                                        <div #signedEditable id="hashField" spellcheck="false" style="color: #669900" class="tx-json language-json editable" contenteditable="true" [ngClass]="{ 'success': txUiService.isSuccess }" [textContent]="outputField()"></div>
                                    </div>
                               </div>
                          </div>

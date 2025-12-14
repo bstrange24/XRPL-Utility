@@ -136,7 +136,7 @@ export class SignTransactionUtilService {
           sendXrp: ({ wallet, accountInfo, currentLedger, fee }) => ({
                TransactionType: 'Payment',
                Account: wallet.classicAddress,
-               Destination: 'rMiqQ8m11gBUR3XhTstpjJDbTPdcdATCgE',
+               Destination: 'rBz1NF3RcLyCk1YwiWNzAhrMngQkXE1tTP',
                Amount: xrpl.xrpToDrops('0.000001'),
                Fee: fee,
                LastLedgerSequence: currentLedger,
