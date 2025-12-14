@@ -245,55 +245,51 @@
 
                                    <!-- Add new issuers -->
                                    @if (activeTab() === 'addNewIssuers') {
-                                   <div class="form-section">
-                                        <h3 class="section-title">Add New Currency & Issuer</h3>
-
-                                        <div class="form-row">
-                                             <div class="form-group">
-                                                  <label>Add Currency Code</label>
-                                                  <input type="text" [(ngModel)]="newCurrency" name="newCurrency" placeholder="e.g. USDC, EUR, BTC" class="input-field" />
-                                             </div>
-
-                                             <div class="form-group">
-                                                  <label>Add Issuer Address</label>
-                                                  <input type="text" [(ngModel)]="newIssuer" name="newIssuer" placeholder="r..." class="input-field" />
-                                             </div>
+                                   <!-- <h3 class="section-title">Add New Currency & Issuer</h3> -->
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Add Currency Code</label>
+                                             <input type="text" [(ngModel)]="newCurrency" name="newCurrency" placeholder="e.g. USDC, EUR, BTC" class="input-field" />
                                         </div>
 
-                                        <div class="form-row justify-start gap-4 mt-4">
-                                             <button type="button" class="btn-primary-blue" (click)="addNewCurrencyIssuer()" [disabled]="!isAddValid() || txUiService.spinner()">{{ txUiService.spinner() ? 'Adding...' : 'Add Currency/Issuer' }}</button>
+                                        <div class="form-group">
+                                             <label>Add Issuer Address</label>
+                                             <input type="text" [(ngModel)]="newIssuer" name="newIssuer" placeholder="r..." class="input-field" />
                                         </div>
                                    </div>
 
-                                   <div class="form-section mt-8">
-                                        <h3 class="section-title">Manage Existing Currencies & Issuers</h3>
+                                   <!-- <div class="form-row justify-start gap-4 mt-4"> -->
+                                   <div class="form-row">
+                                        <button type="button" class="btn-primary-blue" (click)="addNewCurrencyIssuer()" [disabled]="!isAddValid() || txUiService.spinner()">{{ txUiService.spinner() ? 'Adding...' : 'Add Currency/Issuer' }}</button>
+                                   </div>
+                                   <!-- </div> -->
 
-                                        <div class="form-row">
-                                             <div class="form-group">
-                                                  <label>Select Currency</label>
-                                                  <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No saved currencies">
-                                                       <ng-template #itemTemplate let-item>
-                                                            <div class="flex items-center gap-2">
-                                                                 @if (item.id === 'XRP') {
-                                                                 <span class="text-yellow-500 font-bold">XRP</span>
-                                                                 } @else {
-                                                                 <span>{{ item.display }}</span>
-                                                                 }
-                                                                 <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                                                            </div>
-                                                       </ng-template>
-                                                  </app-select-search-dropdown>
-                                             </div>
-
-                                             <div class="form-group">
-                                                  <label>Select Issuer</label>
-                                                  <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Select issuer to remove..." emptyMessage="No issuers for this currency" />
-                                             </div>
+                                   <!-- <h3 class="section-title">Manage Existing Currencies & Issuers</h3> -->
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>Select Currency</label>
+                                             <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No saved currencies">
+                                                  <ng-template #itemTemplate let-item>
+                                                       <div class="flex items-center gap-2">
+                                                            @if (item.id === 'XRP') {
+                                                            <span class="text-yellow-500 font-bold">XRP</span>
+                                                            } @else {
+                                                            <span>{{ item.display }}</span>
+                                                            }
+                                                            <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                       </div>
+                                                  </ng-template>
+                                             </app-select-search-dropdown>
                                         </div>
 
-                                        <div class="form-row justify-start gap-4 mt-4">
-                                             <button type="button" class="btn-danger" (click)="removeCurrentCurrencyIssuer()" [disabled]="!isRemoveValid() || txUiService.spinner()">{{ txUiService.spinner() ? 'Removing...' : 'Remove Selected Issuer' }}</button>
+                                        <div class="form-group">
+                                             <label>Select Issuer</label>
+                                             <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Select issuer to remove..." emptyMessage="No issuers for this currency" />
                                         </div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <button type="button" class="btn-primary-red" (click)="removeCurrentCurrencyIssuer()" [disabled]="!isRemoveValid() || txUiService.spinner()">{{ txUiService.spinner() ? 'Removing...' : 'Remove Selected Issuer' }}</button>
                                    </div>
                                    }
                                    <!-- @if (activeTab() === 'addNewIssuers') {
@@ -484,11 +480,11 @@
                               <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Issue Currency' }}</button>
                               } @else if (activeTab() === 'clawbackTokens') {
                               <button type="button" class="btn-primary-red" (click)="clawbackTokens()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Clawback Tokens' }}</button>
-                              } @else if (activeTab() === 'addNewIssuers') {
+                              } @if (activeTab() !== 'addNewIssuers') {
+                              <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                               <!-- <button type="button" class="btn-primary-blue" (click)="addNewCurrencyIssuer()" [disabled]="!isAddValid() || txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Add Currency/Issuer' }}</button> -->
                               <!-- <button type="button" class="btn-primary-blue" (click)="removeCurrentCurrencyIssuer()" [disabled]="!isRemoveValid() || txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove Currency/Issuer' }}</button> } -->
                               }
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
                          </div>
 
                          <!-- Execution time -->
