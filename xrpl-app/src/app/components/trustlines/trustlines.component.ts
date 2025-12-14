@@ -107,13 +107,10 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      isMptEnabled = signal(false);
      currencyBalanceField = signal<string>('0');
      gatewayBalance = signal<string>('0');
-     private readonly knownTrustLinesIssuers = signal<{ [key: string]: string[] }>({ XRP: [] });
      issuerToRemove = signal<string>('');
      currencies = signal<string[]>([]);
      userAddedCurrencyFieldDropDownValue = signal<string[]>([]);
      userAddedissuerFields = signal<string>('');
-     allKnownIssuers = signal<string[]>([]);
-     storedIssuers = signal<IssuerItem[]>([]);
      selectedIssuer = signal<string>('');
      newCurrency = signal<string>('');
      newIssuer = signal<string>('');
@@ -326,8 +323,6 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      ngOnInit(): void {
-          this.loadKnownIssuers();
-          this.refreshStoredIssuers();
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
           this.currencyFieldDropDownValue.set('XRP');
@@ -433,10 +428,6 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      async setTab(tab: 'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'clawbackTokens' | 'addNewIssuers'): Promise<void> {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
-
-          if (Object.keys(this.knownTrustLinesIssuers).length > 0 && this.issuerFields() === '') {
-               this.currencyFieldDropDownValue.set(Object.keys(this.knownTrustLinesIssuers)[0]);
-          }
 
           // === 1. Handle flag state FIRST ===
           if (this.activeTab() === 'removeTrustline') {
@@ -924,11 +915,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      get availableCurrencies(): string[] {
-          return [
-               ...Object.keys(this.knownTrustLinesIssuers())
-                    .filter(c => c && c !== 'XRP' && c !== 'MPT')
-                    .sort((a, b) => a.localeCompare(b)),
-          ];
+          return this.trustlineCurrency.getCurrencies(); // or subscribe to currencies$
      }
 
      private async getWallet(): Promise<xrpl.Wallet> {
@@ -1275,101 +1262,6 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
      }
 
-     private loadKnownIssuers() {
-          const data = this.storageService.getKnownIssuers('knownIssuers');
-          if (data) {
-               this.knownTrustLinesIssuers.set(data);
-               this.updateCurrencies();
-          }
-     }
-
-     addToken(newToken: string, newIssuerAddress: any, toggleCurrencyField: boolean) {
-          const issuerAddress = typeof newIssuerAddress === 'string' ? newIssuerAddress : newIssuerAddress?.address;
-          if (!newToken?.trim() || !issuerAddress?.trim()) {
-               this.txUiService.setError('Currency and issuer required');
-               return;
-          }
-
-          const currency = newToken.trim();
-          const issuer = issuerAddress.trim();
-
-          if (!this.utilsService.isValidCurrencyCode(currency)) {
-               this.txUiService.setError('Invalid currency code');
-               return;
-          }
-          if (!xrpl.isValidAddress(issuer)) {
-               this.txUiService.setError('Invalid issuer address');
-               return;
-          }
-
-          if (!this.knownTrustLinesIssuers()[currency]) {
-               this.knownTrustLinesIssuers()[currency] = [];
-          }
-          if (this.knownTrustLinesIssuers()[currency].includes(issuer)) {
-               this.txUiService.setError('Issuer already exists');
-               return;
-          }
-
-          this.knownTrustLinesIssuers()[currency].push(issuer);
-          this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers());
-          this.updateCurrencies();
-          this.refreshStoredIssuers();
-
-          if (toggleCurrencyField) {
-               this.currencyFieldDropDownValue.set(currency);
-               this.trustlineCurrency.selectCurrency(currency, this.currentWallet().address);
-          }
-
-          // THIS IS THE KEY LINE
-          // if (this.currencyFieldDropDownValue === currency || toggleCurrencyField) {
-          //      this.currencyFieldDropDownValue = currency;
-          //      this.trustlineCurrency.selectCurrency(currency, this.currentWallet.address);
-          // }
-
-          this.txUiService.setSuccess(`Added ${currency} issuer`);
-     }
-
-     removeToken(tokenToRemove: string, removeIssuerAddress?: any) {
-          if (!tokenToRemove) {
-               this.txUiService.setError('Select a token');
-               return;
-          }
-
-          const currency = tokenToRemove.trim();
-          if (!this.knownTrustLinesIssuers()[currency]) {
-               this.txUiService.setError('Currency not found');
-               return;
-          }
-
-          if (!removeIssuerAddress) {
-               delete this.knownTrustLinesIssuers()[currency];
-          } else {
-               const issuer = typeof removeIssuerAddress === 'string' ? removeIssuerAddress : removeIssuerAddress.address;
-               this.knownTrustLinesIssuers()[currency] = this.knownTrustLinesIssuers()[currency].filter(i => i !== issuer);
-               if (this.knownTrustLinesIssuers()[currency].length === 0) {
-                    delete this.knownTrustLinesIssuers()[currency];
-               }
-          }
-
-          this.storageService.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers());
-          this.updateCurrencies();
-          this.refreshStoredIssuers();
-
-          // RELOAD ISSUERS FOR CURRENT CURRENCY
-          if (this.currencyFieldDropDownValue() && this.currencies().includes(this.currencyFieldDropDownValue())) {
-               this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
-          } else if (this.currencies.length > 0) {
-               this.currencyFieldDropDownValue.set(this.currencies()[0]);
-               this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
-          } else {
-               this.currencyFieldDropDownValue.set('');
-               this.issuerFields.set('');
-               this.issuers.set([]);
-          }
-
-          this.txUiService.setSuccess('Token removed');
-     }
-
      onCurrencyChange(currency: string) {
           this.trustlineCurrency.selectCurrency(currency, this.currentWallet().address);
           this.currencyChangeTrigger.update(n => n + 1); // ← forces dropdown reset
@@ -1379,53 +1271,74 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           this.trustlineCurrency.selectIssuer(issuer);
      }
 
-     private refreshStoredIssuers() {
-          const issuers: IssuerItem[] = [];
-          const knownIssuers = this.knownTrustLinesIssuers();
+     // Validate inputs before adding
+     public isAddValid(): boolean {
+          const currency = this.newCurrency()?.trim();
+          const issuer = this.newIssuer()?.trim();
 
-          for (const currency in knownIssuers) {
-               if (currency === 'XRP') continue;
-               for (const address of knownIssuers[currency]) {
-                    issuers.push({
-                         name: currency,
-                         address: address,
-                    });
-               }
-          }
-          // Optional: sort by currency
-          issuers.sort((a: IssuerItem, b: IssuerItem) => a.name.localeCompare(b.name));
-          this.storedIssuers.set(issuers);
+          if (!currency || !issuer) return false;
+          if (!this.utilsService.isValidCurrencyCode(currency)) return false;
+          if (!xrpl.isValidAddress(issuer)) return false;
+
+          // Optional: prevent duplicates
+          const existing = this.trustlineCurrency.getIssuersForCurrency(currency);
+          return !existing.includes(issuer);
      }
 
-     private updateCurrencies() {
-          // Get all currencies except XRP
-          const allCurrencies = Object.keys(this.knownTrustLinesIssuers);
-          const filtered = allCurrencies.filter(c => c !== 'XRP');
-          // allCurrencies.push('MPT');
+     // Validate before removing
+     public isRemoveValid(): boolean {
+          const currency = this.currencyFieldDropDownValue();
+          const issuer = this.trustlineCurrency.getSelectedIssuer(); // or this.selectedIssuerAddress()
 
-          // Sort alphabetically
-          const sorted = filtered.sort((a, b) => a.localeCompare(b));
-          this.currencies.set(sorted);
+          return !!currency && currency !== 'XRP' && !!issuer;
+     }
 
-          // AUTO-SELECT FIRST CURRENCY — SAFE WAY
-          if (sorted.length > 0) {
-               // Only set if nothing is selected OR current selection is invalid/removed
-               const shouldSelectFirst = !this.currencyFieldDropDownValue() || !sorted.includes(this.currencyFieldDropDownValue());
+     // Wrapper methods with proper feedback
+     addNewCurrencyIssuer(): void {
+          const currency = this.newCurrency()?.trim();
+          const issuer = this.newIssuer()?.trim();
 
-               if (shouldSelectFirst) {
-                    this.currencyFieldDropDownValue.set(sorted[0]);
-                    // Trigger issuer load — but do it in next tick so binding is ready
-                    Promise.resolve().then(() => {
-                         if (this.currencyFieldDropDownValue()) {
-                              this.onCurrencyChange(this.currencyFieldDropDownValue());
-                         }
-                    });
+          if (!this.isAddValid()) {
+               this.txUiService.setError('Invalid currency code or issuer address, or already exists');
+               return;
+          }
+
+          this.trustlineCurrency.addToken(currency, issuer);
+
+          // Optional: auto-select the newly added currency
+          this.currencyFieldDropDownValue.set(currency);
+          this.onCurrencyChange(currency);
+
+          // Clear inputs
+          this.newCurrency.set('');
+          this.newIssuer.set('');
+
+          this.toastService.success('Currency/Issuer added successfully');
+     }
+
+     removeCurrentCurrencyIssuer(): void {
+          const currency = this.currencyFieldDropDownValue();
+          const issuer = this.trustlineCurrency.getSelectedIssuer();
+
+          if (!this.isRemoveValid()) {
+               this.txUiService.setError('No valid currency or issuer selected to remove');
+               return;
+          }
+
+          this.trustlineCurrency.removeToken(currency, issuer);
+
+          this.toastService.success('Currency/Issuer removed successfully');
+
+          // If we removed the last issuer for this currency, switch to next available
+          const remainingIssuers = this.trustlineCurrency.getIssuersForCurrency(currency);
+          if (remainingIssuers.length === 0) {
+               const available = this.trustlineCurrency.getCurrencies();
+               if (available.length > 0) {
+                    this.currencyFieldDropDownValue.set(available[0]);
+                    this.onCurrencyChange(available[0]);
+               } else {
+                    this.currencyFieldDropDownValue.set('');
                }
-          } else {
-               // No currencies left
-               this.currencyFieldDropDownValue.set('');
-               this.issuerFields.set('');
-               this.issuers.set([]);
           }
      }
 

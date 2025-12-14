@@ -12,7 +12,10 @@ interface IssuerItem {
 
 @Injectable({ providedIn: 'root' })
 export class TrustlineCurrencyService {
-     private knownTrustLinesIssuers: Record<string, string[]> = { XRP: [] };
+     // private knownTrustLinesIssuers: Record<string, string[]> = { XRP: [] };
+     private readonly knownTrustLinesIssuers = signal<Record<string, string[]>>({ XRP: [] });
+     // Public read-only signal for components that need the full map
+     public readonly knownTrustLinesIssuers$ = this.knownTrustLinesIssuers.asReadonly();
 
      // Public observables
      private readonly destroy$ = new Subject<void>();
@@ -68,25 +71,81 @@ export class TrustlineCurrencyService {
           this.balance$.next('0');
      }
 
-     public loadFromStorage() {
+     private loadFromStorage() {
           const data = this.storage.getKnownIssuers('knownIssuers');
           if (data) {
-               // ← DEFENSIVE: Make sure every value is an array
                const normalized: Record<string, string[]> = {};
-               for (const [currency, issuers] of Object.entries(data)) {
+               for (const [currency, issuers] of Object.entries(data as any)) {
                     if (Array.isArray(issuers)) {
                          normalized[currency] = issuers;
                     } else if (issuers && typeof issuers === 'object') {
-                         // Convert object { "0": "r...", "1": "r..." } → array
                          normalized[currency] = Object.values(issuers);
                     } else {
                          normalized[currency] = [];
                     }
                }
-               normalized['XRP'] = []; // always ensure XRP exists
+               normalized['XRP'] = [];
+               this.knownTrustLinesIssuers.set(normalized);
+          } else {
+               this.knownTrustLinesIssuers.set({ XRP: [] });
+          }
+          this.updateCurrencies();
+     }
 
-               this.knownTrustLinesIssuers = normalized;
-               this.updateCurrencies();
+     private saveToStorage() {
+          this.storage.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers());
+     }
+
+     public addToken(currency: string, issuer: string): void {
+          if (!currency?.trim() || !issuer?.trim()) return;
+
+          const curr = currency.trim();
+          const iss = issuer.trim();
+
+          this.knownTrustLinesIssuers.update(map => {
+               if (!map[curr]) {
+                    map[curr] = [];
+               }
+               if (!map[curr].includes(iss)) {
+                    map[curr].push(iss);
+               }
+               return { ...map };
+          });
+
+          this.saveToStorage();
+          this.updateCurrencies();
+     }
+
+     public removeToken(currency: string, issuer?: string): void {
+          if (!currency) return;
+
+          this.knownTrustLinesIssuers.update(map => {
+               if (!map[currency]) return map;
+
+               if (!issuer) {
+                    delete map[currency];
+               } else {
+                    map[currency] = map[currency].filter(i => i !== issuer);
+                    if (map[currency].length === 0) {
+                         delete map[currency];
+                    }
+               }
+               return { ...map };
+          });
+
+          this.saveToStorage();
+          this.updateCurrencies();
+     }
+
+     // Keep existing updateCurrencies logic
+     private updateCurrencies() {
+          const currencies = Object.keys(this.knownTrustLinesIssuers())
+               .filter(c => c !== 'XRP')
+               .sort((a, b) => a.localeCompare(b));
+          this.currencies$.next(currencies);
+
+          if (currencies.length > 0 && !this.currentCurrency()) {
+               this.selectCurrency(currencies[0]);
           }
      }
 
@@ -98,18 +157,6 @@ export class TrustlineCurrencyService {
           }
 
           return currencies.sort((a, b) => a.localeCompare(b));
-     }
-
-     private updateCurrencies() {
-          const currencies = Object.keys(this.knownTrustLinesIssuers)
-               .filter(c => c !== 'XRP')
-               .sort((a, b) => a.localeCompare(b));
-          this.currencies$.next(currencies);
-
-          // Auto-select first currency
-          if (currencies.length > 0 && !this.currentCurrency()) {
-               this.selectCurrency(currencies[0]); // ← CHANGE THIS LINE
-          }
      }
 
      async selectCurrency(currency: string, nothing?: string) {
@@ -147,7 +194,7 @@ export class TrustlineCurrencyService {
      }
 
      private async loadIssuersForCurrency(currency: string) {
-          const known = this.knownTrustLinesIssuers[currency] || [];
+          const known = this.knownTrustLinesIssuers()[currency] || [];
           const issuers: IssuerItem[] = known
                .map(addr => ({
                     name: this.getNiceName(addr, currency),
@@ -268,6 +315,6 @@ export class TrustlineCurrencyService {
           if (!currency || currency === 'XRP') return [];
 
           // knownTrustLinesIssuers is: Record<string, string[]>
-          return this.knownTrustLinesIssuers[currency] || [];
+          return this.knownTrustLinesIssuers()[currency] || [];
      }
 }
