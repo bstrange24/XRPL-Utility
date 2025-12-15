@@ -49,8 +49,9 @@
           <!-- Display Tx Hash if we are not in simulation mode-->
           @if (txUiService.txHashSignal() && !txUiService.isSimulateEnabled()) {
           <span>{{ txUiService.result }}</span><br />
+          @if (txUiService.txHashSignal().length > 0) {
           <span>Transaction hash: <a [href]="`${url()}tx/` + txUiService.txHashSignal()" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashSignal() }} </a></span>
-          } @else {
+          } } @else {
           <span>{{ txUiService.result }}</span>
           }
      </div>

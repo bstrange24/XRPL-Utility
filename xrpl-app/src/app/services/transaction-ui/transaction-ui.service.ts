@@ -390,7 +390,6 @@ export class TransactionUiService {
      // Called when an error occurs
      setError(message: string, hash?: string) {
           this.setErrorProperties();
-          this.setErrorProperties();
           this.handleTransactionResult({
                result: `${message}`,
                isError: this.isError,

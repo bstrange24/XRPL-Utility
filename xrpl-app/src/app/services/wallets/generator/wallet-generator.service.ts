@@ -6,14 +6,21 @@ import { WalletManagerService } from '../manager/wallet-manager.service';
 import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import * as xrpl from 'xrpl';
+import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
+import { Wallet } from 'xrpl';
+import { AppConstants } from '../../../core/app.constants';
 
 @Injectable({
      providedIn: 'root',
 })
 export class WalletGeneratorService {
-     constructor(private xrplService: XrplService, private utilsService: UtilsService, private readonly http: HttpClient, private storageService: StorageService, private walletManager: WalletManagerService) {}
+     constructor(private xrplService: XrplService, private utilsService: UtilsService, private readonly http: HttpClient, private storageService: StorageService, private walletManager: WalletManagerService, private xrplCache: XrplCacheService) {}
 
      private readonly proxyServer = 'http://localhost:3000';
+
+     private async getClient(): Promise<xrpl.Client> {
+          return this.xrplCache.getClient(() => this.xrplService.getClient());
+     }
 
      /**
       * Generates a new wallet from family seed and adds it to the wallets array.
@@ -28,26 +35,53 @@ export class WalletGeneratorService {
           const startTime = Date.now();
           try {
                console.log('encryptionType: ', encryptionType);
-               const wallet = await this.generateWalletFromFamilySeed(environment, encryptionType);
+               let wallet;
+               let newWalletEntry;
+               try {
+                    // Trying to fund from local host service
+                    wallet = await this.generateWalletFromFamilySeed(environment, encryptionType);
 
-               // Delay (e.g. for faucet)
-               await this.utilsService.sleep(6000);
-               console.log('Generated wallet:', wallet);
+                    // Delay (e.g. for faucet)
+                    await this.utilsService.sleep(6000);
+                    console.log('Generated wallet:', wallet);
 
-               // Get current wallets to calculate next name
-               const currentWallets = this.walletManager.getWallets();
-               const nextIndex = currentWallets.length + 1;
+                    // Get current wallets to calculate next name
+                    const currentWallets = this.walletManager.getWallets();
+                    const nextIndex = currentWallets.length + 1;
 
-               // Initialize or update wallet entry
-               const newWalletEntry = {
-                    address: wallet.address,
-                    classicAddress: wallet.address,
-                    seed: wallet.secret.familySeed || '',
-                    mnemonic: '',
-                    secretNumbers: '',
-                    encryptionAlgorithm: wallet.keypair.algorithm || '',
-                    name: `Wallet ${nextIndex}`, // ← AUTO NAME
-               };
+                    // Initialize or update wallet entry
+                    newWalletEntry = {
+                         address: wallet.address,
+                         classicAddress: wallet.address,
+                         seed: wallet.secret.familySeed || '',
+                         mnemonic: '',
+                         secretNumbers: '',
+                         encryptionAlgorithm: wallet.keypair.algorithm || '',
+                         name: `Wallet ${nextIndex}`, // ← AUTO NAME
+                    };
+               } catch (error) {
+                    // If local host fails use the xrpl facuet
+                    wallet = await this.createAndFundWalletWithXrplClient();
+
+                    // Delay (e.g. for faucet)
+                    await this.utilsService.sleep(6000);
+                    console.log('Generated wallet:', wallet.wallet.classicAddress);
+
+                    // Get current wallets to calculate next name
+                    const currentWallets = this.walletManager.getWallets();
+                    const nextIndex = currentWallets.length + 1;
+
+                    // Initialize or update wallet entry
+                    newWalletEntry = {
+                         address: wallet.wallet.classicAddress,
+                         classicAddress: wallet.wallet.classicAddress,
+                         seed: wallet.wallet.seed || '',
+                         mnemonic: '',
+                         secretNumbers: '',
+                         encryptionAlgorithm: AppConstants.ENCRYPTION.ED25519,
+                         name: `Wallet ${nextIndex}`, // ← AUTO NAME
+                    };
+               }
 
                // Persist and notify
                this.walletManager.addWallet(newWalletEntry); // ← uses shared service
@@ -71,14 +105,17 @@ export class WalletGeneratorService {
       * @returns Object containing derived wallet and updated destinations
       * @throws Error if wallet derivation or account validation fails
       */
-     async deriveWalletFromFamilySeed(client: xrpl.Client, encryptionType: string, seed: string, destinations: any, customDestinations: any) {
+     async deriveWalletFromFamilySeed(client: xrpl.Client, seed: string, destinations: any, customDestinations: any) {
           console.log('Entering deriveWalletFromFamilySeed');
           const startTime = Date.now();
           try {
-               const wallet = await this.deriveFromFamilySeed(seed, encryptionType);
-
+               const wallet = await this.deriveFromFamilySeed(seed, AppConstants.ENCRYPTION.ED25519);
                // Return error if the wallet already exist in the application. We do not want duplicate wallets.
                customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
+
+               const walletSecp = await this.deriveFromFamilySeed(seed, AppConstants.ENCRYPTION.SECP256K1);
+               // Return error if the wallet already exist in the application. We do not want duplicate wallets.
+               customDestinations = this.checkIfWalletAlreadyExist(destinations, walletSecp, customDestinations);
 
                // Get current wallets to calculate next name
                const currentWallets = this.walletManager.getWallets();
@@ -165,12 +202,11 @@ export class WalletGeneratorService {
       * @returns Object containing derived wallet and updated destinations
       * @throws Error if wallet derivation fails or account validation fails
       */
-     async deriveWalletFromMnemonic(client: xrpl.Client, encryptionType: string, seed: string, destinations: any, customDestinations: any) {
+     async deriveWalletFromMnemonic(client: xrpl.Client, seed: string, destinations: any, customDestinations: any) {
           console.log('Entering deriveWalletFromMnemonic');
           const startTime = Date.now();
           try {
-               const wallet = await this.deriveFromMnemonic(seed, encryptionType);
-
+               const wallet = await this.deriveFromMnemonic(seed, AppConstants.ENCRYPTION.SECP256K1);
                // Return error if the wallet already exist in the application. We do not want duplicate wallets.
                customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
@@ -260,12 +296,12 @@ export class WalletGeneratorService {
       * @returns Object containing derived wallet and updated destinations
       * @throws Error if wallet derivation fails or account validation fails
       */
-     async deriveWalletFromSecretNumbers(client: xrpl.Client, encryptionType: string, seed: any, destinations: any, customDestinations: any) {
+     async deriveWalletFromSecretNumbers(client: xrpl.Client, seed: any, destinations: any, customDestinations: any) {
           console.log('Entering deriveWalletFromSecretNumbers');
           const startTime = Date.now();
           try {
-               const wallet = await this.deriveFromSecretNumbers(seed, encryptionType);
-
+               const wallet = await this.deriveFromSecretNumbers(seed, AppConstants.ENCRYPTION.SECP256K1);
+               // Return error if the wallet already exist in the application. We do not want duplicate wallets.
                customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
                // Get current wallets to calculate next name
@@ -316,10 +352,33 @@ export class WalletGeneratorService {
                          this.storageService.set('customDestinations', JSON.stringify(customDestinations));
                          break;
                     }
-                    throw new Error(`Wallet already exists in the application.`);
+                    throw new Error(`Wallet already exists in the application with ${wallet.keypair.algorithm} encryption.`);
                }
           }
           return customDestinations;
+     }
+
+     async createAndFundWalletWithXrplClient() {
+          try {
+               const client = this.getClient();
+               // Generate new wallet
+               const wallet = Wallet.generate();
+               console.log(`Generated wallet: ${wallet.address}`);
+
+               let funded = false;
+
+               const fundResult = await (await client).fundWallet(wallet);
+               console.log(`Funded ${fundResult} XRP to ${wallet.address}`);
+               funded = true;
+
+               return {
+                    wallet,
+                    funded,
+               };
+          } catch (error) {
+               console.error('Error creating/funding wallet:', error);
+               throw error;
+          }
      }
 
      // Generate account from Family Seed
