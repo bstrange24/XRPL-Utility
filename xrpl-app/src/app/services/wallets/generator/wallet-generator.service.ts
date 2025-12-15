@@ -109,28 +109,52 @@ export class WalletGeneratorService {
           console.log('Entering deriveWalletFromFamilySeed');
           const startTime = Date.now();
           try {
-               const wallet = await this.deriveFromFamilySeed(seed, AppConstants.ENCRYPTION.ED25519);
-               // Return error if the wallet already exist in the application. We do not want duplicate wallets.
-               customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
+               let wallet;
+               let newWalletEntry: any = {};
+               try {
+                    wallet = await this.deriveFromFamilySeed(seed, AppConstants.ENCRYPTION.ED25519);
+                    // Return error if the wallet already exist in the application. We do not want duplicate wallets.
+                    customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
-               const walletSecp = await this.deriveFromFamilySeed(seed, AppConstants.ENCRYPTION.SECP256K1);
-               // Return error if the wallet already exist in the application. We do not want duplicate wallets.
-               customDestinations = this.checkIfWalletAlreadyExist(destinations, walletSecp, customDestinations);
+                    wallet = await this.deriveFromFamilySeed(seed, AppConstants.ENCRYPTION.SECP256K1);
+                    // Return error if the wallet already exist in the application. We do not want duplicate wallets.
+                    customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
-               // Get current wallets to calculate next name
-               const currentWallets = this.walletManager.getWallets();
-               const nextIndex = currentWallets.length + 1;
+                    // Get current wallets to calculate next name
+                    const currentWallets = this.walletManager.getWallets();
+                    const nextIndex = currentWallets.length + 1;
 
-               // Initialize or update wallet entry
-               const newWalletEntry = {
-                    address: wallet.address,
-                    classicAddress: wallet.address,
-                    seed: wallet.secret.familySeed || '',
-                    mnemonic: '',
-                    secretNumbers: '',
-                    encryptionAlgorithm: wallet.keypair.algorithm || '',
-                    name: `Wallet ${nextIndex}`, // ← AUTO NAME
-               };
+                    // Initialize or update wallet entry
+                    newWalletEntry = {
+                         address: wallet.address,
+                         classicAddress: wallet.address,
+                         seed: wallet.secret.familySeed || '',
+                         mnemonic: '',
+                         secretNumbers: '',
+                         encryptionAlgorithm: wallet.keypair.algorithm || '',
+                         name: `Wallet ${nextIndex}`, // ← AUTO NAME
+                    };
+               } catch (error) {
+                    wallet = await this.deriveFromFamilySeedWithXrplClient(seed);
+
+                    // Return error if the wallet already exist in the application. We do not want duplicate wallets.
+                    customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
+
+                    // Get current wallets to calculate next name
+                    const currentWallets = this.walletManager.getWallets();
+                    const nextIndex = currentWallets.length + 1;
+
+                    // Initialize or update wallet entry
+                    newWalletEntry = {
+                         address: wallet.address,
+                         classicAddress: wallet.address,
+                         seed: wallet.seed || '',
+                         mnemonic: '',
+                         secretNumbers: '',
+                         // encryptionAlgorithm: wallet.keypair.algorithm || '',
+                         name: `Wallet ${nextIndex}`, // ← AUTO NAME
+                    };
+               }
 
                await this.xrplService.getAccountInfo(client, wallet.address, 'validated', '');
 
@@ -352,7 +376,7 @@ export class WalletGeneratorService {
                          this.storageService.set('customDestinations', JSON.stringify(customDestinations));
                          break;
                     }
-                    throw new Error(`Wallet already exists in the application with ${wallet.keypair.algorithm} encryption.`);
+                    throw new Error(`Wallet already exists in the application with ${wallet?.keypair?.algorithm ? wallet.keypair.algorithm : 'XRPL default'} encryption.`);
                }
           }
           return customDestinations;
@@ -379,6 +403,18 @@ export class WalletGeneratorService {
                console.error('Error creating/funding wallet:', error);
                throw error;
           }
+     }
+
+     async deriveFromFamilySeedWithXrplClient(seed: string) {
+          const wallet = Wallet.fromSeed(seed);
+
+          return {
+               address: wallet.address,
+               publicKey: wallet.publicKey,
+               privateKey: wallet.privateKey,
+               seed: wallet.seed,
+               classicAddress: wallet.classicAddress,
+          };
      }
 
      // Generate account from Family Seed
