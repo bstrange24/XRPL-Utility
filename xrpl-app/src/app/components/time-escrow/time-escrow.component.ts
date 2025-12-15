@@ -101,7 +101,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
-     private readonly walletManagerService = inject(WalletManagerService);
+     public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
@@ -540,7 +540,9 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           }
 
           this.clearFields(true);
-          await this.getEscrows(true);
+          if (this.hasWallets()) {
+               await this.getEscrows(true);
+          }
      }
 
      private async getClient(): Promise<xrpl.Client> {

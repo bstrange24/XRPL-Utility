@@ -87,8 +87,8 @@
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Send XRP' }}</button>
-                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()">Clear Fields</button>
+                                   <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Send XRP' }}</button>
+                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="!(walletManagerService.hasWallets$ | async)">Clear Fields</button>
                               </div>
 
                               <!-- Execution time -->

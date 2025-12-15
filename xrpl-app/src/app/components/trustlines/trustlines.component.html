@@ -473,15 +473,15 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if(activeTab() === 'setTrustline') {
-                              <button type="button" class="btn-primary-blue" (click)="setTrustLine()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Set Trustline' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="setTrustLine()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Set Trustline' }}</button>
                               } @else if (activeTab() === 'removeTrustline') {
-                              <button type="button" class="btn-primary-red" (click)="removeTrustline()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove Trustline' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="removeTrustline()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Remove Trustline' }}</button>
                               } @else if (activeTab() === 'issueCurrency') {
-                              <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Issue Currency' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Issue Currency' }}</button>
                               } @else if (activeTab() === 'clawbackTokens') {
-                              <button type="button" class="btn-primary-red" (click)="clawbackTokens()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Clawback Tokens' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="clawbackTokens()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Clawback Tokens' }}</button>
                               } @if (activeTab() !== 'addNewIssuers') {
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button>
+                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
                               <!-- <button type="button" class="btn-primary-blue" (click)="addNewCurrencyIssuer()" [disabled]="!isAddValid() || txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Add Currency/Issuer' }}</button> -->
                               <!-- <button type="button" class="btn-primary-blue" (click)="removeCurrentCurrencyIssuer()" [disabled]="!isRemoveValid() || txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove Currency/Issuer' }}</button> } -->
                               }

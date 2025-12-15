@@ -83,7 +83,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
-     private readonly walletManagerService = inject(WalletManagerService);
+     public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
@@ -437,7 +437,9 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
           this.destinationSearchQuery.set('');
           this.resetFlags();
           this.clearFields(true);
-          await this.getNFT(true);
+          if (this.hasWallets()) {
+               await this.getNFT(true);
+          }
      }
 
      toggleFlags() {}

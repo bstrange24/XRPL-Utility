@@ -428,13 +428,13 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if(activeTab() === 'create') {
-                              <button type="button" class="btn-primary-blue" (click)="mintNFT()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create NFT' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="mintNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create NFT' }}</button>
                               } @else if (activeTab() === 'burn') {
-                              <button type="button" class="btn-primary-red" (click)="burnNFT()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Burn NFT' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="burnNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Burn NFT' }}</button>
                               } @else if (activeTab() === 'updateNFTMetadata') {
-                              <button type="button" class="btn-primary-green" (click)="updateNFTMetadata()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Modify NFT Meta Data' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="updateNFTMetadata()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Modify NFT Meta Data' }}</button>
                               }
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
+                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
                          </div>
                     </div>
                </form>

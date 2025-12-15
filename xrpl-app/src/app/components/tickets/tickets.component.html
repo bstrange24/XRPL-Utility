@@ -158,11 +158,11 @@
                               <!-- Action buttons -->
                               <div class="button-row">
                                    @if (activeTab() === 'create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createTicket()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create Ticket' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="createTicket()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Ticket' }}</button>
                                    } @if (activeTab() === 'delete') {
-                                   <button type="button" class="btn-primary-red" (click)="deleteTicket()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Delete Ticket' }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="deleteTicket()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delete Ticket' }}</button>
                                    }
-                                   <button type="button" (click)="clearFields()" class="btn-secondary-clear-fields">Clear Fields</button>
+                                   <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
                               </div>
 
                               <!-- Execution time -->

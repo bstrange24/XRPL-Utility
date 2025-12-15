@@ -386,17 +386,17 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if(activeTab() === 'buy') {
-                              <button type="button" class="btn-primary-green" (click)="buyNFT()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Buy NFT' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="buyNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Buy NFT' }}</button>
                               } @else if (activeTab() === 'sell') {
-                              <button type="button" class="btn-primary-blue" (click)="sellNFT()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Sell NFT' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="sellNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Sell NFT' }}</button>
                               } @else if (activeTab() === 'buyOffer') {
-                              <button type="button" class="btn-primary-green" (click)="createOffer('Buy')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Buy NFT Offer' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="createOffer('Buy')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Buy NFT Offer' }}</button>
                               }@else if (activeTab() === 'sellOffer') {
-                              <button type="button" class="btn-primary-blue" (click)="createOffer('Sell')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Sell NFT Offer' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="createOffer('Sell')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Sell NFT Offer' }}</button>
                               }@else if (activeTab() === 'cancelOffer') {
-                              <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Cancel NFT Offer' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cancel NFT Offer' }}</button>
                               }
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
+                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
                          </div>
                     </div>
                </form>

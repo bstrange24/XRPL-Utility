@@ -63,7 +63,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
-     private readonly walletManagerService = inject(WalletManagerService);
+     public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
@@ -473,7 +473,9 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           }
 
           this.clearFields(true);
-          await this.getChecks(true);
+          if (this.hasWallets()) {
+               await this.getChecks(true);
+          }
      }
 
      private async getClient(): Promise<xrpl.Client> {

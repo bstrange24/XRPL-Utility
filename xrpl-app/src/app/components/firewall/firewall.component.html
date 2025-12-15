@@ -324,17 +324,17 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if (activeTab() === 'create') {
-                              <button type="button" class="btn-primary-blue" (click)="createFirewall()">Create Firewall</button>
+                              <button type="button" class="btn-primary-blue" (click)="createFirewall()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Firewall' }}</button>
                               } @else if (activeTab() === 'modify') {
-                              <button type="button" class="btn-primary-blue" (click)="modifyFirewall()">Modify Firewall</button>
+                              <button type="button" class="btn-primary-blue" (click)="modifyFirewall()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Modify Firewall' }}</button>
                               } @else if (activeTab() === 'authorize') {
-                              <button type="button" class="btn-primary-orange" (click)="authorizeFirewall('Y')">Authorize Firewall</button>
+                              <button type="button" class="btn-primary-orange" (click)="authorizeFirewall('Y')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Authorize Firewall' }}</button>
                               } @else if (activeTab() === 'unauthorize') {
-                              <button type="button" class="btn-primary-green" (click)="authorizeFirewall('N')">Unauthorize Firewall</button>
+                              <button type="button" class="btn-primary-green" (click)="authorizeFirewall('N')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Unauthorize Firewall' }}</button>
                               } @else if (activeTab() === 'delete') {
-                              <button type="button" class="btn-primary-red" (click)="deleteFirewall()">Delete Firewall</button>
+                              <button type="button" class="btn-primary-red" (click)="deleteFirewall()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delete Firewall' }}</button>
                               }
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
+                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
                          </div>
 
                          <!-- Execution time -->

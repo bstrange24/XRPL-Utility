@@ -1,5 +1,4 @@
 .app-scale {
-     /* transform: scale(0.9); */
      transform-origin: top left;
      width: 111.111%;
      box-sizing: border-box;
@@ -11,10 +10,7 @@
 .main-container {
      max-width: 1280px;
      margin: 0 auto;
-     /* padding: 0 1rem; */
-     /* padding-right: 0.5rem; */
      background-color: aliceblue;
-     /* background-color: white; */
 }
 
 html {
@@ -27,7 +23,6 @@ body {
      padding: 0;
      width: 100%;
      overflow-x: hidden;
-     /* prevents horizontal scroll from 100vw tricks */
 }
 
 body,
@@ -82,7 +77,6 @@ button {
 input:read-only {
      background-color: #eef2f8;
      color: white;
-     border: 0;
      border: 1px solid white;
 }
 
@@ -130,7 +124,6 @@ button:hover {
 
 input[type='text'] {
      flex: 1;
-     background-color: #fff;
      background: #fff;
      color: rgb(56, 56, 56);
      border: 1px solid white;
@@ -220,7 +213,6 @@ input[type='text']:focus {
 .network .dropdown-menu {
      position: absolute;
      top: 100%;
-     /* left: 0; */
      background-color: #1a1c21;
      border: 1px solid #ccc;
      min-width: 160px;
@@ -242,8 +234,12 @@ input[type='text']:focus {
 }
 
 .navbar {
-     padding: 10px 20px;
-     border-radius: 10px;
+     background-color: aliceblue !important;
+     border-radius: 16px;
+     padding: 14px 24px !important;
+     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+     border: 1px solid aliceblue;
+     min-height: 48px;
 }
 
 #navbar-container {
@@ -263,19 +259,40 @@ input[type='text']:focus {
      color: white;
 }
 
-.navbar-links a {
-     color: white;
+.navbar-links a,
+.navbar-links .dropdown-toggle {
+     color: #fff !important;
      text-decoration: none;
      font-size: 0.9rem;
+     font-weight: 500;
+     transition: all 0.2s ease;
+     white-space: nowrap !important;
+     display: inline-block !important;
+     padding: 6px 10px !important;
+     line-height: 1.4 !important;
 }
 
-.navbar-links a:hover {
+.navbar-links a:hover,
+.navbar-links .dropdown-toggle:hover {
+     color: #fff !important;
      text-decoration: none;
 }
 
-.navbar-links a.active {
-     color: #4caf50;
-     font-weight: bold;
+.navbar-links a.active,
+.navbar-links .dropdown-toggle.active,
+.dropdown-menu a.active,
+.accounts-dropdown.active .dropdown-toggle,
+.escrows-dropdown.active .dropdown-toggle {
+     color: #91ed80 !important;
+     font-weight: 700 !important;
+}
+
+.navbar-links .dropdown-menu a.active {
+     color: #55c240 !important;
+     background: linear-gradient(90deg, rgba(85, 194, 64, 0.08), transparent) !important;
+     border-left: 3px solid #55c240 !important;
+     border-radius: 0 6px 6px 0 !important;
+     padding-left: 9px !important;
 }
 
 .navbar-links {
@@ -285,179 +302,72 @@ input[type='text']:focus {
      margin-left: 5em;
 }
 
-.navbar-links .dropdown-toggle,
-.navbar-links a:not(.dropdown-toggle) {
-     white-space: nowrap !important;
-     display: inline-block !important;
-     padding: 6px 10px !important;
-     line-height: 1.4 !important;
-}
-
 .navbar-links>.dropdown {
      display: inline-flex !important;
      align-items: center !important;
      height: auto !important;
 }
 
-.navbar {
-     min-height: 48px;
-     padding: 12px 20px !important;
-}
-
-.dropdown {
-     position: relative;
-}
-
-.dropdown-menu {
-     display: none;
-     position: absolute;
-     top: 100%;
-     /* left: 0; */
-     background-color: #1a1c21;
-     border: 1px solid #ccc;
-     min-width: 160px;
-     z-index: 1000;
-     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-     border-radius: 10px;
-     padding: 4px;
-     color: white;
-}
-
-.dropdown-menu a {
-     display: block;
-     padding: 8px 12px;
-     text-decoration: none;
-     color: white;
-     white-space: nowrap;
-}
-
-.dropdown-menu a:hover {
-     text-decoration: none;
-     background-color: #2a2c31;
-}
-
-.dropdown:hover .dropdown-menu {
-     display: block;
-}
-
-.accounts-dropdown.active .dropdown-toggle {
-     color: #4caf50;
-     font-weight: bold;
-}
-
-.accounts-dropdown {
-     position: relative;
-}
-
-.accounts-dropdown .dropdown-menu {
-     display: none;
-     position: absolute;
-     top: 100%;
-     left: 0;
-     background-color: #1a1c21;
-     border-radius: 10px;
-     padding: 10px;
-     min-width: 200px;
-     z-index: 1000;
-}
-
-.accounts-dropdown:hover .dropdown-menu {
-     display: block;
-}
-
-.accounts-dropdown .dropdown-toggle:hover {
-     color: #4caf50;
-     cursor: pointer;
-}
-
-.accounts-dropdown .dropdown-menu a {
-     display: block;
-     padding: 5px 5px;
-     color: white;
-}
-
-.accounts-dropdown .dropdown-menu a:hover {
-     background-color: #2a2c31;
-     color: #4caf50;
-}
-
-.escrows-dropdown.active .dropdown-toggle {
-     color: #4caf50;
-     font-weight: bold;
-}
-
-.escrows-dropdown {
-     position: relative;
-}
-
-.escrows-dropdown .dropdown-menu {
-     display: none;
-     position: absolute;
-     top: 100%;
-     left: 0;
-     background-color: #1a1c21;
-     border-radius: 10px;
-     padding: 10px;
-     min-width: 200px;
-     z-index: 1000;
-}
-
-.escrows-dropdown:hover .dropdown-menu {
-     display: block;
-}
-
-.escrows-dropdown .dropdown-toggle:hover {
-     color: #4caf50;
-     cursor: pointer;
-}
-
-.escrows-dropdown .dropdown-menu a {
-     display: block;
-     padding: 5px 5px;
-     color: white;
-}
-
-.escrows-dropdown .dropdown-menu a:hover {
-     background-color: #2a2c31;
-     color: #4caf50;
-}
-
-.utils-dropdow.active .dropdown-toggle {
-     color: #4caf50;
-     font-weight: bold;
-}
-
+.dropdown,
+.accounts-dropdown,
+.escrows-dropdown,
 .utils-dropdow {
      position: relative;
 }
 
+.dropdown-menu,
+.accounts-dropdown .dropdown-menu,
+.escrows-dropdown .dropdown-menu,
 .utils-dropdow .dropdown-menu {
      display: none;
      position: absolute;
      top: 100%;
      left: 0;
-     background-color: #1a1c21;
-     border-radius: 10px;
-     padding: 10px;
-     min-width: 200px;
+     background-color: #ffffff !important;
+     border: 1px solid #ffffff;
+     min-width: 160px;
      z-index: 1000;
+     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+     border-radius: 10px;
+     padding: 4px 10px;
+     color: white;
 }
 
+.dropdown-menu a,
+.accounts-dropdown .dropdown-menu a,
+.escrows-dropdown .dropdown-menu a,
+.utils-dropdow .dropdown-menu a {
+     display: block;
+     padding: 8px 12px;
+     text-decoration: none;
+     color: #3b82f6 !important;
+     white-space: nowrap;
+}
+
+.dropdown-menu a:hover,
+.accounts-dropdown .dropdown-menu a:hover,
+.escrows-dropdown .dropdown-menu a:hover,
+.utils-dropdow .dropdown-menu a:hover {
+     background-color: #ffffff !important;
+     color: #91ed80 !important;
+}
+
+.dropdown:hover .dropdown-menu,
+.accounts-dropdown:hover .dropdown-menu,
+.escrows-dropdown:hover .dropdown-menu,
 .utils-dropdow:hover .dropdown-menu {
      display: block;
 }
 
+.accounts-dropdown .dropdown-toggle:hover,
+.escrows-dropdown .dropdown-toggle:hover,
 .utils-dropdow .dropdown-toggle:hover {
      color: #4caf50;
      cursor: pointer;
 }
 
-.utils-dropdow .dropdown-menu a {
-     display: block;
-     padding: 5px 10px;
-     color: white;
-}
-
+.accounts-dropdown .dropdown-menu a:hover,
+.escrows-dropdown .dropdown-menu a:hover,
 .utils-dropdow .dropdown-menu a:hover {
      background-color: #2a2c31;
      color: #4caf50;
@@ -468,9 +378,6 @@ input[type='text']:focus {
      color: #64c1f3;
 }
 
-/* -------------------------------------------------
-   TWO-COLUMN LAYOUT – GRID (no more flex shift)
-   ------------------------------------------------- */
 .content-wrapper {
      background-color: aliceblue;
      color: black;
@@ -481,30 +388,18 @@ input[type='text']:focus {
      padding-top: 20px;
 }
 
-/* Desktop – two columns */
 @media (min-width: 992px) {
      .content-wrapper {
-          /* display: grid; */
           grid-template-columns: 310px 1fr;
           gap: 1.75rem;
           align-items: stretch;
      }
-
-     /* No extra flex rules needed – grid does the job */
-     .wallets-panel,
-     .form-panel {
-          /* display: flex; */
-          flex-direction: column;
-     }
 }
 
-/* ==== PANELS ==== */
 .form-panel {
      background: #fff;
      border-radius: 10px;
-     /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
-     /* padding: 1.5rem; */
      padding-left: 1.5rem;
      padding-right: 1.5rem;
      padding-bottom: 1.5rem;
@@ -519,7 +414,6 @@ input[type='text']:focus {
 
 .wallets-panel {
      flex: 1;
-     /* min-width: 320px; */
      display: flex;
      flex-direction: column;
      gap: 1rem;
@@ -546,7 +440,6 @@ input[type='text']:focus {
      align-items: center;
 }
 
-/* ==== WALLETS ==== */
 .wallet-list {
      display: flex;
      flex-direction: column;
@@ -603,7 +496,6 @@ input[type='text']:focus {
 }
 
 .icon-btn:hover {
-     /* background: #f3f4f6; */
      color: #fff;
 }
 
@@ -613,19 +505,14 @@ input[type='text']:focus {
      stroke: #6b7280;
 }
 
-.icon-btn.refresh svg {
-     width: 15px;
-     height: 15px;
-}
-
-.icon-btn.copy svg {
+.icon-btn.refresh svg,
+.icon-btn.copy svg,
+.icon-btn.delete svg {
      width: 15px;
      height: 15px;
 }
 
 .icon-btn.delete svg {
-     width: 15px;
-     height: 15px;
      stroke: #ef4444;
 }
 
@@ -645,7 +532,6 @@ input[type='text']:focus {
      justify-content: space-between;
 }
 
-/* ==== FORM ==== */
 .send-form {
      display: flex;
      flex-direction: column;
@@ -748,23 +634,16 @@ input[type='text']:focus {
 
 .ticket-dropdown {
      margin-top: 8px;
-     /* space between slider and dropdown */
 }
 
 .ticket-dropdown select {
      width: 100%;
-     /* full width of form-group */
-     min-height: auto;
-     /* let the size attribute control height */
      max-height: 200px;
-     /* optional max height if too many tickets */
 }
 
 .toggle-row {
      display: flex;
      align-items: center;
-     /* justify-content: space-between; */
-     margin-bottom: 0;
      margin-left: 0.3em;
 }
 
@@ -775,104 +654,62 @@ input[type='text']:focus {
      display: contents;
 }
 
-/* ==== SWITCHES ==== */
 .switch-group {
      display: flex;
      flex-wrap: nowrap;
-     /* one line */
-     /* gap: 1rem; */
-     /* ← was 2rem, now 1rem */
      align-items: center;
      justify-content: flex-start;
-     /* margin: 1.0rem 0; */
      margin-top: 0.5rem;
      overflow-x: auto;
-     /* scroll if needed */
      padding-bottom: 0.5rem;
      min-width: 0;
-     /* allows flex children to shrink */
 }
 
-.switch {
-     display: flex;
-     align-items: center;
-     gap: 0.3rem;
-     font-size: 0.8rem;
-     cursor: pointer;
-     white-space: nowrap;
-     user-select: none;
-}
-
-.switch input {
-     opacity: 0;
-     width: 0;
-     height: 0;
-}
-
-/* -------------------------------------------------
-   SMALLER SWITCH – 34×20 px (checked / unchecked)
-   ------------------------------------------------- */
 .switch {
      display: flex;
      align-items: center;
      gap: 0.6rem;
-     /* a little tighter than 0.8rem */
      font-size: 0.85rem;
-     /* optional – makes label look proportional */
      cursor: pointer;
      white-space: nowrap;
      user-select: none;
 }
 
-/* hide native checkbox */
 .switch input {
      opacity: 0;
      width: 0;
      height: 0;
 }
 
-/* TRACK */
 .slider {
      position: relative;
      width: 34px;
-     /* smaller track */
      height: 20px;
-     /* smaller track */
      background: #888;
-     /* neutral off */
      border-radius: 10px;
-     /* half of height */
      transition: background 0.25s ease;
 }
 
-/* THUMB */
 .slider:before {
      content: '';
      position: absolute;
      width: 16px;
-     /* smaller thumb */
      height: 16px;
      left: 2px;
-     /* 2 px gap */
      top: 2px;
-     /* 2 px gap */
      background: white;
      border-radius: 50%;
      transition: transform 0.25s ease;
 }
 
-/* CHECKED STATE */
 input:checked+.slider {
      background: #4caf50;
-     /* green on */
 }
 
 input:checked+.slider:before {
      transform: translateX(14px);
-     /* 34-20 = 14px travel */
 }
 
-/* FOCUS RING (still visible but tighter) */
 input:focus+.slider {
      box-shadow: 0 0 0 2.5px rgba(76, 175, 80, 0.3);
 }
@@ -885,25 +722,27 @@ input:focus+.slider {
      }
 }
 
-/* ==== BUTTONS ==== */
 .btn-danger {
      background: #ef4444;
-     /* red-500 */
      color: white;
 }
 
 .btn-danger:hover {
      background: #dc2626;
-     /* red-600 */
 }
 
 .button-row {
      display: flex;
      gap: 0.75rem;
-     /* margin-top: 1rem; */
 }
 
-.btn-primary-red {
+.btn-primary-red,
+.btn-primary-orange,
+.btn-primary-blue,
+.btn-primary-green,
+.btn-primary,
+.btn-secondary,
+.btn-secondary-clear-fields {
      flex: 1;
      padding: 0.75rem;
      font-weight: 500;
@@ -914,84 +753,34 @@ input:focus+.slider {
 }
 
 .btn-primary-red {
-     background-color: rgba(250, 44, 44, 0.7);
      background: linear-gradient(135deg, rgba(238, 126, 126, 0.7), rgba(245, 19, 19, 0.7));
 }
 
 .btn-primary-red:hover {
-     background-color: rgba(250, 44, 44, 0.7);
      background: linear-gradient(135deg, rgba(238, 126, 126, 0.7), rgba(245, 19, 19, 0.7));
 }
 
 .btn-primary-orange {
-     flex: 1;
-     padding: 0.75rem;
-     font-weight: 500;
-     border: none;
-     border-radius: 10px;
-     cursor: pointer;
-     transition: 0.2s;
-}
-
-.btn-primary-orange {
-     background-color: #ff7f00;
      background: linear-gradient(135deg, rgba(240, 182, 106, 0.7), rgba(245, 147, 0, 0.925));
-}
-
-.btn-primary-red:orange {
      background-color: #ff7f00;
-     background: linear-gradient(135deg, rgba(240, 182, 106, 0.7), rgba(245, 147, 0, 0.925));
 }
 
 .btn-primary-blue {
-     flex: 1;
-     padding: 0.75rem;
-     font-weight: 500;
-     border: none;
-     border-radius: 10px;
-     cursor: pointer;
-     transition: 0.2s;
-}
-
-.btn-primary-blue {
-     background-color: rgba(12, 34, 235, 0.7);
      background: linear-gradient(135deg, #2e7bff 50%, #002cbb 100%);
+     background-color: rgba(12, 34, 235, 0.7);
 }
 
 .btn-primary-blue:hover {
-     background-color: rgba(12, 34, 235, 0.7);
      background: linear-gradient(135deg, #2e7bff 50%, #002cbb 100%);
 }
 
 .btn-primary-green {
-     flex: 1;
-     padding: 0.75rem;
-     font-weight: 500;
-     border: none;
-     border-radius: 10px;
-     cursor: pointer;
-     transition: 0.2s;
-}
-
-.btn-primary-green {
-     background-color: rgba(81, 243, 31, 0.356);
      background: linear-gradient(135deg, rgb(87 255 87 / 50%), rgb(0 137 0 / 100%));
+     background-color: rgba(81, 243, 31, 0.356);
 }
 
 .btn-primary-green:hover {
-     background-color: rgba(81, 243, 31, 0.356);
      background: linear-gradient(135deg, rgb(87 255 87 / 50%), rgb(0 137 0 / 100%));
-}
-
-.btn-primary,
-.btn-secondary {
-     flex: 1;
-     padding: 0.75rem;
-     font-weight: 500;
-     border: none;
-     border-radius: 10px;
-     cursor: pointer;
-     transition: 0.2s;
 }
 
 .btn-primary {
@@ -1013,26 +802,14 @@ input:focus+.slider {
 }
 
 .btn-secondary-clear-fields {
-     flex: 1;
-     padding: 0.75rem;
-     font-weight: 500;
-     border: none;
-     border-radius: 10px;
-     cursor: pointer;
-     transition: 0.2s;
-}
-
-.btn-secondary-clear-fields {
-     background-color: rgba(66, 66, 65, 0.356);
      background: linear-gradient(135deg, #acacad 50%, #3a3a3a 100%);
+     background-color: rgba(66, 66, 65, 0.356);
 }
 
 .btn-secondary-clear-fields:hover {
-     background-color: rgba(66, 66, 65, 0.356);
      background: linear-gradient(135deg, #acacad 50%, #3a3a3a 100%);
 }
 
-/* ==== SPINNER & RESULT ==== */
 .spinner-row {
      display: flex;
      align-items: center;
@@ -1081,9 +858,6 @@ input:focus+.slider {
      color: #991b1b;
 }
 
-/* -------------------------------------------------
-   LEFT PANEL – EXACT REPLICA OF THE SCREENSHOT
-   ------------------------------------------------- */
 .account-card {
      background: #fff;
      border-radius: 16px;
@@ -1123,11 +897,9 @@ input:focus+.slider {
      color: #1a1a1a;
 }
 
-/* + Generate button */
 .generate-btn {
-     /* background: #007bff; */
-     background-color: rgba(12, 34, 235, 0.7);
      background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
+     background-color: rgba(12, 34, 235, 0.7);
      color: white;
      border: none;
      border-radius: 10px;
@@ -1138,8 +910,6 @@ input:focus+.slider {
 }
 
 .generate-btn:hover {
-     /* background: #2563eb; */
-     background-color: rgba(12, 34, 235, 0.7);
      background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
 }
 
@@ -1149,10 +919,8 @@ input:focus+.slider {
      margin-bottom: 0.5rem;
 }
 
-/* Selected Account Card */
 .selected-account-card {
      background: white;
-     /* background: aliceblue; */
      border: 1px solid #e5e7eb;
      border-radius: 10px;
      padding: 1rem;
@@ -1182,7 +950,6 @@ input:focus+.slider {
      font-weight: 600;
 }
 
-/* Details section */
 .details-section {
      border-top: 1px solid #e2e8f0;
      padding-top: 1rem;
@@ -1206,27 +973,18 @@ input:focus+.slider {
      color: #374151;
 }
 
-.highlight {
-     color: #10b981;
-     font-weight: 600;
-}
-
-/* Info: Address + Balance */
 .wallet-info {
      display: flex;
      align-items: center;
      justify-content: space-between;
-     /* pushes icons to far right */
      width: 100%;
 }
 
 .address-line {
      display: flex;
      flex-direction: column;
-     /* padding-top: 8px; */
 }
 
-/* LEFT COLUMN: Address, Balance, Secret */
 .wallet-details {
      flex: 1;
      display: flex;
@@ -1234,7 +992,6 @@ input:focus+.slider {
      gap: 0.15rem;
 }
 
-/* Secret Key UNDER balance */
 .secret-value {
      flex: 1;
      font-family: monospace;
@@ -1252,23 +1009,17 @@ input:focus+.slider {
      display: flex;
      align-items: flex-start;
      gap: 0.75rem;
-}
-
-.wallet-item>.wallet-top-row {
      flex: 1;
      justify-content: space-between;
      min-width: 0;
-     /* allows proper text truncation */
 }
 
 .wallet-address {
      font-family: monospace;
-     /* consistent character width */
      white-space: nowrap;
      overflow: hidden;
      text-overflow: ellipsis;
      max-width: 180px;
-     /* adjust based on layout width */
 }
 
 .wallet-actions {
@@ -1276,7 +1027,6 @@ input:focus+.slider {
      align-items: center;
      gap: 0.4rem;
      margin-left: auto;
-     /* ensures it stays to the right */
      flex-shrink: 0;
 }
 
@@ -1289,13 +1039,8 @@ input:focus+.slider {
      right: 50%;
      margin-left: -50vw;
      margin-right: -50vw;
-     /* background-color: #007bff; */
-     /* background-color: rgba(12, 34, 235, 0.7); */
-     /* background: linear-gradient(135deg, rgba(23, 56, 240, 0.356) 50%, rgba(12, 34, 235, 0.7)100%); */
-     color: white;
      background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
-     /* border-color: #6366f1; */
-     /* box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); */
+     color: white;
 }
 
 .banner-content {
@@ -1326,7 +1071,6 @@ input:focus+.slider {
      backdrop-filter: blur(10px);
 }
 
-/* Mobile: Stack vertically */
 @media (max-width: 768px) {
      .banner-content {
           flex-direction: column;
@@ -1339,8 +1083,6 @@ input:focus+.slider {
      }
 }
 
-
-/* ===== TAB MENU BAR (Create, Send, Authorize, etc.) ===== */
 .menu-bar {
      display: flex;
      border-radius: 10px;
@@ -1393,23 +1135,17 @@ input:focus+.slider {
      content: '';
      position: absolute;
      bottom: -4px;
-     /* places line just below the button */
      left: 0;
      right: 0;
      height: 2px;
      background: #3b82f6;
-     /* same as active border color */
      border-radius: 2px;
 }
 
-/* -------------------------------------------------
-   CONDITIONAL FIELDS – CLEAN LAYOUT
-   ------------------------------------------------- */
 .multisign-grid {
      display: grid;
      grid-template-columns: 2fr 2fr 1fr;
      gap: 1rem;
-     /* spacing between columns */
      align-items: start;
      margin-top: 1rem;
      width: 100%;
@@ -1417,7 +1153,6 @@ input:focus+.slider {
      border: 1px solid #cbd5e1;
      border-radius: 6px;
      resize: vertical;
-     /* min-height: 80px; */
      margin-top: 1em;
 }
 
@@ -1425,7 +1160,6 @@ input:focus+.slider {
      display: flex;
      flex-direction: column;
      min-width: 0;
-     /* allows proper shrinking in grid */
 }
 
 .multisign-field label {
@@ -1439,13 +1173,10 @@ input:focus+.slider {
      border: 1px solid #cbd5e1;
      border-radius: 6px;
      font-size: 0.85rem;
-     /* line-height: 1.4rem; */
      resize: none;
      overflow: hidden;
-     /* remove scrollbars */
      min-height: 8rem;
      box-sizing: border-box;
-     /* background-color: #f3f4f6; */
      cursor: not-allowed;
 }
 
@@ -1454,23 +1185,17 @@ input:focus+.slider {
      border: 1px solid #cbd5e1;
      border-radius: 6px;
      font-size: 0.95rem;
-     /* background-color: #f3f4f6; */
      cursor: not-allowed;
      height: 2rem;
      box-sizing: border-box;
 }
 
-/* Responsive: stack vertically on small screens */
 @media (max-width: 768px) {
      .multisign-grid {
           grid-template-columns: 1fr;
-          gap: 1rem;
      }
 }
 
-/* -------------------------------------------------
-   SECRET SECTION – SEED BELOW + COPY BUTTON
-   ------------------------------------------------- */
 .secret-section {
      display: flex;
      flex-direction: column;
@@ -1484,7 +1209,6 @@ input:focus+.slider {
      display: flex;
      align-items: center;
      justify-content: space-between;
-     /* ensures button stays on right */
 }
 
 .secret-label {
@@ -1497,24 +1221,11 @@ input:focus+.slider {
      gap: 6px;
 }
 
-/* .show-toggle {
-     background: #f3f4f6;
-     border: 1px solid #d1d5db;
-     color: #3b82f6;
-     padding: 0.15rem 0.5rem;
-     border-radius: 6px;
-     font-size: 0.7rem;
-     cursor: pointer;
-     white-space: nowrap;
-     transition: all 0.2s;
-} */
-
 .show-toggle:hover {
      background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      border-color: #93c5fd;
 }
 
-/* Seed container */
 .secret-seed-container {
      display: flex;
      align-items: center;
@@ -1527,8 +1238,6 @@ input:focus+.slider {
      font-size: 0.75rem;
      margin: 0;
      line-height: 1;
-     /* tighten vertical spacing */
-     /* background-color: #eff6ff; */
 }
 
 .secret-seed {
@@ -1563,9 +1272,6 @@ input:focus+.slider {
      height: 14px;
 }
 
-/* -------------------------------------------------
-   PAYMENT TX PREVIEW
-   ------------------------------------------------- */
 .tx-preview-container {
      max-width: 100%;
      overflow-x: auto;
@@ -1582,8 +1288,6 @@ input:focus+.slider {
      justify-content: space-between;
      align-items: center;
      padding: 0.75rem 1rem;
-     /* background: #e0e7ff; */
-     /* background-color: aliceblue; */
      border: 1px solid #c7d2fe;
      border-radius: 8px;
      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
@@ -1607,7 +1311,6 @@ input:focus+.slider {
      align-items: center;
      gap: 0.25rem;
      background: white;
-     /* color: #4f46e5; */
      color: rgba(12, 34, 235, 0.7);
      border: 1px solid #c7d2fe;
      padding: 0.25rem 0.5rem;
@@ -1629,12 +1332,8 @@ input:focus+.slider {
      height: 14px;
 }
 
-/* -------------------------------------------------
-   SYNTAX HIGHLIGHTING (Prism)
-   ------------------------------------------------- */
 .tx-json code span.token.property {
      color: #64c1f3;
-     /* key color */
      margin-right: 4px;
 }
 
@@ -1645,14 +1344,10 @@ pre[class*='language-'] {
 
 .tx-json {
      white-space: pre-wrap !important;
-     /* allow wrapping within <pre> */
      word-break: break-word !important;
-     /* wrap long hashes or signatures */
      overflow-wrap: anywhere;
-     /* break very long tokens anywhere */
      max-width: 100%;
      background-color: #1e1e1e;
-     /* optional for dark theme */
      color: #dcdcdc;
      padding: 1em;
      border-radius: 6px;
@@ -1668,36 +1363,29 @@ pre[class*='language-'] {
      font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
 }
 
-/* Optional: Dark mode variant */
 @media (prefers-color-scheme: dark) {
-     .tx-json {
-          background: #fff;
-     }
 
+     .tx-json,
      .tx-json code {
-          color: #fff;
           background: #fff;
+          color: #fff;
      }
-}
-
-.success-message .success-text {
-     padding-left: 5px;
 }
 
 .success-message {
      display: flex;
-     /* align-items: center; */
      background: #e6ffed;
      color: #1b5e20;
      border: 1px solid #a5d6a7;
      border-radius: 8px;
      padding: 10px 14px;
-     /* margin-top: 12px; */
      margin-bottom: 16px;
-     /* padding-left: 20px; */
-     /* font-weight: 500; */
      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
      animation: fadeIn 0.4s ease-in;
+}
+
+.success-message .success-text {
+     padding-left: 5px;
 }
 
 .success-icon {
@@ -1717,20 +1405,17 @@ pre[class*='language-'] {
      }
 }
 
-/* General layout */
 .tx-message {
      display: flex;
      align-items: flex-start;
      padding: 12px 16px;
      border-radius: 6px;
-     /* margin-top: 16px; */
      transition: all 0.3s ease-in-out;
      word-wrap: break-word;
      max-width: 100%;
      overflow-wrap: anywhere;
 }
 
-/* Icons */
 .tx-icon {
      flex-shrink: 0;
      margin-right: 10px;
@@ -1740,7 +1425,6 @@ pre[class*='language-'] {
      opacity: 0;
 }
 
-/* Success Styles */
 .tx-message.success {
      background-color: #e6f4ea;
      border: 1px solid #34a853;
@@ -1751,7 +1435,6 @@ pre[class*='language-'] {
      color: #34a853;
 }
 
-/* Error Styles */
 .tx-message.error {
      background-color: #fdecea;
      border: 1px solid #f44336;
@@ -1763,7 +1446,6 @@ pre[class*='language-'] {
      color: #f44336;
 }
 
-/* Text container */
 .tx-text {
      flex: 1;
      font-size: 0.95rem;
@@ -1778,19 +1460,14 @@ pre[class*='language-'] {
 
 .tab-content-container {
      position: relative;
-     /* min-height: 200px; */
      min-height: auto;
-     /* adjust based on tallest tab */
      overflow: hidden;
 }
 
-/* ---- INFO PANEL ------------------------------------------------ */
 .info-panel {
-     /* display: flex; */
      align-items: flex-start;
      gap: 0.75rem;
      background: #e0f2fe;
-     /* light sky-blue */
      border: 1px solid #0ea5e9;
      border-radius: 10px;
      padding: 0.75rem 1rem;
@@ -1805,7 +1482,6 @@ pre[class*='language-'] {
 .info-panel a:visited,
 .info-panel a:active {
      color: inherit;
-     /* or specify a color like #1a0dab, blue, black, etc. */
      text-decoration: none;
 }
 
@@ -1823,9 +1499,7 @@ pre[class*='language-'] {
 .info-panel-content {
      display: flex;
      align-items: center;
-     /* ← this aligns icon and text vertically centered */
      gap: 10px;
-     /* ← space between icon and text */
      line-height: 1.5;
 }
 
@@ -1833,18 +1507,15 @@ pre[class*='language-'] {
      font-weight: 600;
 }
 
-/* ---- WARNING PANEL ------------------------------------------------ */
 .warning-panel {
      display: flex;
      align-items: flex-start;
      gap: 0.75rem;
      background: #fef3c7;
-     /* light amber */
      border: 1px solid #f59e0b;
      border-radius: 10px;
      padding: 0.75rem 1rem;
      margin: 0.5rem 0 1rem 0;
-     /* a little space between info & warning */
      font-size: 0.9rem;
      color: #92400e;
      line-height: 1.4;
@@ -1868,19 +1539,12 @@ app-root {
      margin: 0;
      padding: 0;
      background-color: aliceblue;
-     /* background-color: white; */
 }
 
-/* -------------------------------------------------
-   FLAGS Header – SECOND COLUMN
-   ------------------------------------------------- */
 .token-flags-header {
      display: flex;
      align-items: center;
      gap: 0.5rem;
-     /* margin-bottom: 1rem; */
-     /* padding: 0.5rem 0; */
-     /* border-bottom: 1px solid #e5e7eb; */
 }
 
 .token-flags-icon {
@@ -1896,23 +1560,17 @@ app-root {
      padding-bottom: 0.5em;
 }
 
-/* -------------------------------------------------
-   FLAGS – SECOND COLUMN
-   ------------------------------------------------- */
-/* Two-column layout: form + flags */
 .tab-content-columns {
      display: flex;
      gap: 1.5rem;
      flex-wrap: wrap;
 }
 
-/* Left: Form fields */
 .form-fields-container {
      flex: 2;
      min-width: 300px;
 }
 
-/* Right: Flags */
 .flags-container {
      flex: 1;
      min-width: 260px;
@@ -1924,10 +1582,7 @@ app-root {
      display: flex;
      flex-direction: column;
      gap: 0.5rem;
-     /* background: #f9fafb; */
-     /* border: 1px solid #e5e7eb; */
      border-radius: 10px;
-     /* padding: 1rem; */
      padding-bottom: 1em;
      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
@@ -1950,32 +1605,17 @@ app-root {
      border-color: #93c5fd;
 }
 
-/* Default state: tfRenew is white (not green) */
 .flag-item:not(.enabled) {
      background: #fff;
      border-color: #e5e7eb;
 }
 
-/* green when enabled */
 .flag-item.enabled {
      background: #ecfdf5;
      border-color: #34d399;
 }
 
-/* Keep tfClose green by default (it already has .enabled) */
-.flag-item.enabled .flag-title,
-.flag-item.enabled .flag-value,
-.flag-item.enabled .flag-desc {
-     color: inherit;
-}
-
-.flag-header {
-     display: flex;
-     align-items: center;
-     gap: 0.6rem;
-     margin-bottom: 0.85rem;
-}
-
+.flag-header,
 .flag-header-account {
      display: flex;
      align-items: center;
@@ -1983,19 +1623,17 @@ app-root {
      margin-bottom: 0.85rem;
 }
 
+.flag-header>*,
 .flag-header-account>* {
      line-height: 18px !important;
 }
 
 .flag-item-account-flags {
      flex: 1;
-     /* expand to fill height */
      display: flex;
      flex-direction: column;
      justify-content: space-between;
-     /* spread content vertically */
      background-color: #f8fafc;
-     /* optional for visibility */
      border: 1px solid #e2e8f0;
      border-radius: 8px;
      padding: 1rem;
@@ -2008,19 +1646,16 @@ app-root {
      border-color: #93c5fd;
 }
 
-/* Default state: tfRenew is white (not green) */
 .flag-item-account-flags:not(.enabled) {
      background: #fff;
      border-color: #e5e7eb;
 }
 
-/* green when enabled */
 .flag-item-account-flags.enabled {
      background: #ecfdf5;
      border-color: #34d399;
 }
 
-/* hide native checkbox, style with ::after */
 .flag-checkbox {
      appearance: none;
      width: 18px;
@@ -2060,12 +1695,9 @@ app-root {
      font-weight: 600;
      font-size: 0.95rem;
      line-height: 1;
-     /* tight line height */
-     margin-top: 0;
-     margin-bottom: 0;
+     margin: 0;
      display: flex;
      align-items: center;
-     /* color: #1a1a1a; */
 }
 
 .flag-value {
@@ -2088,25 +1720,16 @@ app-root {
      font-size: 0.75rem;
 }
 
-/* total line */
 .flags-total {
      display: flex;
      justify-content: space-between;
      align-items: center;
-     /* padding-top: 0.50rem; */
-     /* padding-bottom: 0.50rem; */
      padding: 0.5rem;
      border: 1px solid #e2e8f0;
      border-radius: 8px;
      background-color: #eef2f8;
-     /* font-weight: 600; */
      color: #1a1a1a;
      font-size: 0.9rem;
-     /* base size for the whole row */
-}
-
-.flag-header>* {
-     line-height: 18px !important;
 }
 
 .total-label {
@@ -2116,13 +1739,8 @@ app-root {
 .total-value {
      font-size: 0.78rem;
      color: #007bff;
-     /* font-family: 'Courier New', monospace; */
-     /* optional: monospace for hex */
-     /* font-weight: 600; */
 }
 
-/* orange like the screenshot */
-/* Responsive: stack on small screens */
 @media (max-width: 992px) {
      .tab-content-columns {
           flex-direction: column;
@@ -2134,13 +1752,11 @@ app-root {
      }
 }
 
-/* Locked flag – cannot be toggled */
 .flag-item.disabled {
      cursor: not-allowed;
      opacity: 0.85;
 }
 
-/* Optional: gray out icon/text to reinforce "locked" */
 .flag-item.disabled .flag-title,
 .flag-item.disabled .flag-desc,
 .flag-item.disabled .flag-value {
@@ -2152,29 +1768,6 @@ app-root {
      font-size: 0.7rem;
      color: #9ca3af;
 }
-
-/* .toast {
-     position: fixed;
-     bottom: 20px;
-     left: 50%;
-     transform: translateX(-50%) translateY(100%);
-     background-color: aliceblue;
-     color: black;
-     padding: 10px 20px;
-     border-radius: 6px;
-     font-size: 0.9rem;
-     opacity: 0;
-     visibility: hidden;
-     transition: all 0.3s ease;
-     z-index: 9999;
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.toast.show {
-     transform: translateX(-50%) translateY(0);
-     opacity: 1;
-     visibility: visible;
-} */
 
 .xrpl-win-link {
      text-decoration: none;
@@ -2217,15 +1810,14 @@ app-root {
      font-weight: 500;
      font-size: medium;
      color: #007bff;
+     line-height: 1;
 }
 
 .clickable-name:hover {
      text-decoration: underline;
 }
 
-/* ---------- OUTSTANDING CHECKS PANEL ---------- */
 .outstanding-checks-panel {
-     /* background: #f8f9fa; */
      border: 1px solid #e9ecef;
      border-radius: 8px;
      padding: 0.5rem;
@@ -2250,9 +1842,6 @@ app-root {
      display: flex;
      flex-direction: column;
      gap: 0.5rem;
-     /* align-items: center; */
-     /* justify-content: space-between; */
-     /* font-size: 0.9rem; */
 }
 
 .check-amount {
@@ -2280,6 +1869,7 @@ app-root {
      padding: 0.15rem 0.35rem;
      border-radius: 4px;
      color: white;
+     transition: background-color 0.4s ease, color 0.4s ease, transform 0.3s ease;
 }
 
 .badge-expire {
@@ -2315,17 +1905,14 @@ app-root {
      background: #6c757d;
 }
 
-/* Container for the two buttons – inline, right-aligned */
 .check-card .button-group {
      position: absolute;
      top: 0.5rem;
      right: 0.5rem;
      display: flex;
      gap: 0.25rem;
-     /* space between copy and link */
 }
 
-/* Reuse most of your existing copy-button styles */
 .link-check-id {
      display: inline-flex;
      align-items: center;
@@ -2344,11 +1931,7 @@ app-root {
      background: #f8f9fa;
 }
 
-/* Copy button: top-right corner */
 .copy-check-id {
-     /* position: absolute; */
-     top: 0.5rem;
-     right: 0.5rem;
      background: none;
      border: none;
      color: #6c757d;
@@ -2359,7 +1942,6 @@ app-root {
 
 .copy-check-id:hover {
      color: #007bff;
-     /* background: #f8f9fa; */
 }
 
 .no-data {
@@ -2377,18 +1959,14 @@ app-root {
      transition: max-height 0.3s ease;
      overflow: hidden;
      max-height: 1000px;
-     /* large enough to show content naturally */
 }
 
-/* Container for smooth collapse */
 .checks-list-container {
      overflow: hidden;
      transition: max-height 0.3s ease;
      max-height: 0;
-     /* default collapsed */
 }
 
-/* Main row: amount + destination */
 .check-main {
      display: flex;
      flex-direction: column;
@@ -2397,43 +1975,27 @@ app-root {
 
 .checks-list {
      padding: 0.5rem 0;
-     display: flex;
-     flex-direction: column;
-     gap: 0.5rem;
 }
 
-/* Optional: subtle hover on header */
 .panel-header:hover {
-     /* background-color: rgba(0, 0, 0, 0.03); */
      border-radius: 3px;
      padding: 0.03rem;
 }
 
-.badge {
-     font-size: 0.65rem;
-     padding: 0.15rem 0.35rem;
-     border-radius: 4px;
-     color: white;
-     transition: background-color 0.4s ease, color 0.4s ease, transform 0.3s ease;
-}
-
 .badge-success {
      background: #28a745;
-     /* green */
+     animation: pulse 1s ease;
 }
 
 .badge-warning {
      background: #ffc107;
-     /* yellow */
      color: #212529;
 }
 
 .badge-danger {
      background: #dc3545;
-     /* red */
 }
 
-/* Optional: small pop animation when color changes */
 .status-badge,
 .canclose-badge {
      will-change: background-color, transform;
@@ -2442,11 +2004,6 @@ app-root {
 .status-badge.badge-success,
 .canclose-badge.badge-success {
      transform: scale(1.02);
-}
-
-.status-badge.badge-danger,
-.canclose-badge.badge-danger {
-     transform: scale(1);
 }
 
 @keyframes pulse {
@@ -2463,79 +2020,47 @@ app-root {
      }
 }
 
-.badge-success {
-     animation: pulse 1s ease;
+.verify-button-submenu,
+.green-button-submenu,
+.blue-button-submenu,
+.white-button-submenu,
+.red-button-submenu,
+.orange-button-submenu {
+     width: 40px;
+     height: 40px;
+     border-radius: 10px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     flex-shrink: 0;
 }
 
 .verify-button-submenu {
      background-color: #ff7f00;
-     width: 40px;
-     height: 40px;
-     border-radius: 10px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     flex-shrink: 0;
 }
 
 .green-button-submenu {
-     background-color: #00ba7c;
      background: linear-gradient(135deg, rgb(87 255 87 / 50%), rgb(0 137 0 / 100%));
-     width: 40px;
-     height: 40px;
-     border-radius: 10px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     flex-shrink: 0;
+     background-color: #00ba7c;
 }
 
 .blue-button-submenu {
-     background-color: #007bff;
      background: linear-gradient(135deg, #2e7bff 50%, #002cbb 100%);
-     width: 40px;
-     height: 40px;
-     border-radius: 10px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     flex-shrink: 0;
+     background-color: #007bff;
 }
 
 .white-button-submenu {
      background-color: #fff;
-     width: 40px;
-     height: 40px;
-     border-radius: 10px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     flex-shrink: 0;
 }
 
 .red-button-submenu {
-     background-color: rgba(250, 44, 44, 0.7);
      background: linear-gradient(135deg, rgba(243, 150, 150, 0.7), rgba(245, 19, 19, 0.7));
-     /* background-color: red; */
-     width: 40px;
-     height: 40px;
-     border-radius: 10px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     flex-shrink: 0;
+     background-color: rgba(250, 44, 44, 0.7);
 }
 
 .orange-button-submenu {
-     background-color: #ff7f00;
      background: linear-gradient(135deg, rgba(240, 182, 106, 0.7), rgba(245, 147, 0, 0.925));
-     width: 40px;
-     height: 40px;
-     border-radius: 10px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     flex-shrink: 0;
+     background-color: #ff7f00;
 }
 
 .submenu-info-text {
@@ -2572,30 +2097,19 @@ app-root {
      margin: 0;
      padding: 0;
      line-height: 1;
-     /* margin-top: 0.5em; */
-     /* no extra margin */
      background-color: aliceblue;
-     /* background-color: white; */
-     /* padding-top: 10px; */
 }
 
 .issuer-checkbox input[type='checkbox'] {
-     /* reset any browser default */
      appearance: none;
      -webkit-appearance: none;
-
-     /* size exactly matches text height */
      width: 1.1em;
      height: 1.1em;
      margin: 0;
      padding: 0;
-
-     /* draw a clean square + checkmark */
      border: 1.5px solid #555;
      border-radius: 3px;
      background: white;
-
-     /* center the checkmark */
      display: flex;
      align-items: center;
      justify-content: center;
@@ -2613,7 +2127,6 @@ app-root {
      font-size: 0.8em;
 }
 
-/* optional – hover effect */
 .issuer-checkbox input[type='checkbox']:hover {
      border-color: #2563eb;
 }
@@ -2621,16 +2134,9 @@ app-root {
 .issuer-label {
      font-size: 0.9rem;
      white-space: nowrap;
-     background-color: rgba(12, 34, 235, 0.7);
      background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
-     /* color: #007bff; */
+     background-color: rgba(12, 34, 235, 0.7);
      color: white;
-     /* background-color: #000000; */
-}
-
-.clickable-name {
-     line-height: 1;
-     /* removes extra top/bottom space */
 }
 
 .avatar-preview {
@@ -2650,13 +2156,9 @@ app-root {
      border: 1.5px solid #b1b1b1;
      border-radius: 8px;
      background: white;
-     /* margin: 0.5em; */
      margin-bottom: 0.8em;
 }
 
-/* -------------------------------------------------
-   MULTI-SIGN SECTION – clean, flag-style layout
-   ------------------------------------------------- */
 .multisign-section {
      display: flex;
      flex-direction: column;
@@ -2664,7 +2166,6 @@ app-root {
      padding: 0.5rem 0;
 }
 
-/* Header (icon + title) – same look as flags header */
 .section-header {
      display: flex;
      align-items: center;
@@ -2678,7 +2179,6 @@ app-root {
      color: #1a1a1a;
 }
 
-/* List of signers */
 .signers-list {
      display: flex;
      flex-direction: column;
@@ -2689,7 +2189,6 @@ app-root {
      border: 1.5px solid #b1b1b1;
      border-radius: 8px;
      background: #fff;
-     /* padding: 0.75rem; */
      margin: 0;
 }
 
@@ -2700,12 +2199,9 @@ app-root {
      color: #4caf50;
 }
 
-/* Row inside each signer (account / seed / weight / remove) */
 .signer-fieldset .form-row {
      display: grid;
-     /* grid-template-columns: 2fr 2fr 1fr auto; */
      grid-template-columns: 3fr 3fr 80px 40px;
-     /* explicit small widths for weight + trash */
      gap: 0.75rem;
      align-items: center;
      width: 100%;
@@ -2713,22 +2209,18 @@ app-root {
 
 .signer-fieldset .form-group {
      min-width: 0;
-     /* <-- critical: allow the grid column to shrink below 200px */
      flex: 0 1 auto;
-     /* prevent inherited flex:1 from forcing width behavior here */
 }
 
 .signer-fieldset .input-number {
      width: 100%;
      max-width: 80px;
-     /* matches the grid column above */
      justify-self: end;
 }
 
 .signer-fieldset .remove-group {
      display: flex;
      justify-content: center;
-     /* center the button in its small column */
      align-items: center;
      padding-top: 20px;
 }
@@ -2751,18 +2243,12 @@ app-root {
           grid-template-columns: 1fr;
      }
 
-     .signer-fieldset .form-group {
-          min-width: 0;
-          flex: 1 1 auto;
-     }
-
      .signer-fieldset .input-number {
           max-width: 100%;
           justify-self: start;
      }
 }
 
-/* Input styling – monospace for XRPL addresses/seeds */
 .input-monospace {
      font-family: 'Courier New', monospace;
      font-size: 0.9rem;
@@ -2773,19 +2259,6 @@ app-root {
      max-width: 80px;
 }
 
-/* Weight & Remove columns */
-.weight-group,
-.remove-group {
-     display: flex;
-     flex-direction: column;
-     justify-content: flex-end;
-}
-
-.remove-group button {
-     align-self: flex-start;
-}
-
-/* Add-Signer / Quorum row (side-by-side) */
 .actions-row {
      display: flex;
      gap: 1rem;
@@ -2793,7 +2266,6 @@ app-root {
      align-items: end;
 }
 
-/* Small buttons (Add / Remove) */
 .btn-sm {
      padding: 0.35rem 0.6rem;
      font-size: 0.85rem;
@@ -2802,11 +2274,6 @@ app-root {
      gap: 0.3rem;
 }
 
-.btn-sm lucide-icon {
-     margin-right: 0;
-}
-
-/* Make the table a bit more spacious */
 .balance-changes-fieldset table {
      font-size: 0.84rem;
 }
@@ -2840,7 +2307,6 @@ app-root {
      background: rgba(255, 255, 255, 0.05);
 }
 
-/* ==== DRAG & DROP LIST CONTAINER ==== */
 cdk-drop-list {
      display: flex;
      flex-direction: column;
@@ -2852,7 +2318,6 @@ cdk-drop-list {
      border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* ==== INDIVIDUAL WALLET CARD ==== */
 .wallet-item {
      margin-bottom: 0.75em;
      align-items: flex-start;
@@ -2882,7 +2347,6 @@ cdk-drop-list {
      background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      border-color: #6366f1;
      color: white;
-     /* box-shadow: white */
      box-shadow: 0 0 0 3px aliceblue;
 }
 
@@ -2894,7 +2358,6 @@ cdk-drop-list {
      color: white !important;
 }
 
-/* ==== DRAG PREVIEW (when dragging) ==== */
 .cdk-drag-preview {
      box-sizing: border-box;
      border-radius: 14px;
@@ -2905,7 +2368,6 @@ cdk-drop-list {
      z-index: 9999;
 }
 
-/* ==== DRAG PLACEHOLDER (empty space while dragging) ==== */
 .cdk-drag-placeholder {
      opacity: 0.15;
      background: #6378f1;
@@ -2914,12 +2376,10 @@ cdk-drop-list {
      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
 }
 
-/* ==== DRAG ANIMATION (smooth movement) ==== */
 .cdk-drag-animating {
      transition: transform 300ms cubic-bezier(0, 0, 0.2, 1);
 }
 
-/* ==== DRAG HANDLE ICON (optional but recommended) ==== */
 .drag-handle {
      cursor: grab;
      opacity: 0.5;
@@ -2935,28 +2395,12 @@ cdk-drop-list {
      cursor: grabbing;
 }
 
-/* Optional: subtle animation when item is dropped */
-.wallet-item.cdk-drag-animating {
-     transition: all 0.3s ease;
-}
-
-.wallet-item .show-toggle lucide-icon {
-     stroke-width: 2.2;
-     opacity: 0.9;
-}
-
-.wallet-item.selected .show-toggle lucide-icon {
-     stroke: white;
-}
-
-/* 1. "Show / Hide" button — matches selected wallet background */
 .wallet-item .show-toggle {
      display: flex;
      align-items: center;
      gap: 6px;
      background: rgba(255, 255, 255, 0.15);
      color: #000000;
-     /* Bright, readable light gray */
      border: 1px solid rgba(255, 255, 255, 0.3);
      padding: 0.45rem 0.8rem;
      border-radius: 10px;
@@ -2971,13 +2415,11 @@ cdk-drop-list {
 .wallet-item .show-toggle:hover {
      background: rgba(255, 255, 255, 0.3);
      color: #000000;
-     /* Full white on hover */
      border-color: rgba(255, 255, 255, 0.5);
      transform: translateY(-1px);
      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
-/* When wallet is selected → make Show button pop with full gradient */
 .wallet-item.selected .show-toggle {
      background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      border: 1px solid rgba(99, 102, 241, 0.7);
@@ -2992,28 +2434,22 @@ cdk-drop-list {
      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
 }
 
-/* 2. Refresh & Copy icons — force white when wallet is selected */
 .wallet-item .icon-btn svg {
      stroke: #94a3b8;
-     /* default grayish for unselected */
      transition: stroke 0.25s ease;
 }
 
 .wallet-item.selected .icon-btn svg {
      stroke: white !important;
-     /* white on selected */
 }
 
-/* Optional: slightly larger + brighter hover on selected wallet */
 .wallet-item.selected .icon-btn:hover svg {
      stroke: #ffffff;
      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
 }
 
-/* Also make delete icon white (currently red) on selected */
 .wallet-item.selected .icon-btn.delete svg {
      stroke: #fca5a5;
-     /* soft red */
 }
 
 .wallet-item.selected .icon-btn.delete:hover svg {
@@ -3022,8 +2458,6 @@ cdk-drop-list {
 
 .line-break {
      width: 100%;
-     /* height: 1px; */
-     /* margin: 8px 0; */
      background-color: #e0e0e0;
 }
 
@@ -3068,20 +2502,15 @@ cdk-drop-list {
      background: white;
 }
 
-/* This wrapper creates a new containing block and forces GPU layer */
 .destination-combobox-wrapper {
      position: relative;
      display: inline-block;
      width: 100%;
-
-     /* This is the magic: creates a new stacking context + GPU layer */
      transform: translateZ(0);
      -webkit-transform: translateZ(0);
 }
 
-/* Now dropdown can be absolute and escape clipping */
 .combobox-dropdown {
-     /* position: absolute !important; */
      top: 100%;
      left: 0;
      right: 0;
@@ -3094,13 +2523,9 @@ cdk-drop-list {
      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18);
      z-index: 99999;
      padding: 8px 0;
-
-     /* These ensure no clipping */
      transform: translateZ(0);
      -webkit-transform: translateZ(0);
      backface-visibility: hidden;
-
-     /* Clean scrollbar */
      scrollbar-width: thin;
      scrollbar-color: #94a3b8 #f8fafc;
 }
@@ -3144,18 +2569,7 @@ cdk-drop-list {
      background: #94a3b8;
 }
 
-.combobox-dropdown-portal {
-     max-height: 420px;
-     overflow-y: auto;
-     background: white;
-     border: 1px solid #cbd5e1;
-     border-radius: 12px;
-     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
-     padding: 8px 0;
-     backdrop-filter: blur(10px);
-     scrollbar-width: thin;
-}
-
+.combobox-dropdown-portal,
 .combobox-dropdown-overlay {
      max-height: 420px;
      overflow-y: auto;
@@ -3164,11 +2578,14 @@ cdk-drop-list {
      border-radius: 12px;
      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.22);
      padding: 8px 0;
-     min-width: 387px;
      backdrop-filter: blur(12px);
+     scrollbar-width: thin;
+}
+
+.combobox-dropdown-overlay {
+     min-width: 387px;
      width: calc(100% - 2px) !important;
      box-sizing: border-box;
-     border-radius: 12px !important;
      margin-top: 4px;
 }
 
@@ -3176,10 +2593,6 @@ cdk-drop-list {
      padding: 12px 16px;
      cursor: pointer;
      transition: background 0.15s;
-}
-
-.combobox-item:last-child {
-     border-bottom: none !important;
 }
 
 .combobox-item:hover,
@@ -3234,9 +2647,7 @@ cdk-drop-list {
      border: 1px solid #ccc;
      border-radius: 4px;
      resize: vertical;
-     /* Allows user to resize if needed */
      white-space: pre-wrap;
-     /* Preserves spaces but wraps text */
      word-wrap: break-word;
 }
 
@@ -3244,7 +2655,6 @@ cdk-drop-list {
      display: flex;
      align-items: center;
      gap: 12px;
-     /* space between dropdown and status */
      flex-wrap: nowrap;
 }
 
@@ -3280,135 +2690,19 @@ cdk-drop-list {
 }
 
 .connection-status.connected .status-text {
-     color: #28a745;
+     color: #16a34a;
 }
 
 .connection-status.disconnected .status-text {
-     color: #dc3545;
+     color: #dc2626;
 }
 
 .connection-status.connecting .status-text {
      color: #ffc107;
 }
 
-@keyframes pulse {
-
-     0%,
-     100% {
-          opacity: 0.7;
-     }
-
-     50% {
-          opacity: 1;
-     }
-}
-
-/* Optional: subtle hover effect */
 .connection-status:hover {
      opacity: 0.9;
-}
-
-/* ============================================= */
-/* NEW NAVBAR STYLE – WHITE BACKGROUND + BLUE LINKS */
-/* ============================================= */
-
-.navbar {
-     /* background-color: white !important; */
-     background-color: aliceblue !important;
-     /* ← White background */
-     border-radius: 16px;
-     /* Slightly softer corners */
-     padding: 14px 24px !important;
-     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-     /* Subtle depth */
-     border: 1px solid aliceblue;
-     /* border: 1px solid white; */
-     /* Light border */
-}
-
-/* THIS IS THE MISSING PIECE – target the actual active link inside dropdowns */
-.navbar-links .dropdown-menu a.active {
-     color: #55c240 !important;
-     font-weight: 700 !important;
-     background: linear-gradient(90deg, rgba(85, 194, 64, 0.08), transparent) !important;
-     border-left: 3px solid #55c240 !important;
-     border-radius: 0 6px 6px 0 !important;
-     padding-left: 9px !important;
-}
-
-/* All navbar links → blue */
-.navbar-links a,
-.navbar-links .dropdown-toggle {
-     color: #fff !important;
-     /* Tailwind blue-500 → nice vibrant blue */
-     font-weight: 500;
-     transition: all 0.2s ease;
-}
-
-/* Hover state */
-.navbar-links a:hover,
-.navbar-links .dropdown-toggle:hover {
-     color: #fff !important;
-     /* Slightly darker blue on hover */
-}
-
-/* Active / selected link → YELLOW */
-.navbar-links a.active,
-.navbar-links .dropdown-toggle.active,
-.dropdown-menu a.active,
-.accounts-dropdown.active .dropdown-toggle,
-.escrows-dropdown.active .dropdown-toggle,
-.dropdown-item.active {
-     color: #91ed80 !important;
-     font-weight: 700 !important;
-}
-
-/* Dropdown menus – keep dark but make them pop on white navbar */
-.dropdown-menu,
-.accounts-dropdown .dropdown-menu,
-.escrows-dropdown .dropdown-menu {
-     background-color: #ffffff !important;
-     /* Dark slate – looks premium */
-     border: 1px solid #ffffff;
-     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-}
-
-/* Dropdown items – white text */
-.dropdown-menu a,
-.accounts-dropdown .dropdown-menu a,
-.escrows-dropdown .dropdown-menu a {
-     color: #3b82f6 !important;
-     /* Light gray-white */
-}
-
-/* Dropdown hover */
-.dropdown-menu a:hover,
-.accounts-dropdown .dropdown-menu a:hover {
-     background-color: #ffffff !important;
-     color: #91ed80 !important;
-     /* Yellow on hover inside dropdown */
-}
-
-/* Optional: make the whole navbar container a bit wider and centered */
-.nav-container {
-     background: transparent;
-     padding: 0;
-     margin-bottom: 1rem;
-}
-
-/* Keep your connection status visible and crisp on white */
-.connection-status {
-     font-weight: 600;
-}
-
-/* Darker green */
-.connection-status.connected .status-text {
-     color: #16a34a;
-}
-
-/* Darker red */
-.connection-status.disconnected .status-text {
-     color: #dc2626;
 }
 
 .navbar-container,
@@ -3418,7 +2712,6 @@ cdk-drop-list {
      letter-spacing: -0.015em;
 }
 
-/* Slightly bolder for active items */
 .navbar-container a.active,
 .navbar-container .dropdown-toggle.active,
 .navbar-container .dropdown-menu a.active,
@@ -3427,7 +2720,6 @@ cdk-drop-list {
      font-weight: 700 !important;
 }
 
-/* Network dropdown button – make it match */
 .network .btn,
 .network .dropdown-toggle-text {
      font-family: 'Inter', system-ui, sans-serif !important;
@@ -3435,29 +2727,10 @@ cdk-drop-list {
      letter-spacing: -0.02em;
 }
 
-/* Connection status text */
 .connection-status .status-text {
      font-family: 'Inter', system-ui, sans-serif !important;
      font-weight: 600 !important;
 }
-
-/* Smooth entrance/exit for toasts */
-.animate-in {
-     animation: slideInFromBottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes slideInFromBottom {
-     from {
-          transform: translateY(100%);
-          opacity: 0;
-     }
-
-     to {
-          transform: translateY(0);
-          opacity: 1;
-     }
-}
-
 
 .toast-wrap {
      position: fixed;

@@ -556,7 +556,7 @@ export class TransactionUiService {
           this.clearTxHashSignal();
           this.clearTxSignal();
           this.clearMessages();
-          this.clearWarning();
+          // this.clearWarning();
           this.successMessage = '';
      }
 }

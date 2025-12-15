@@ -63,7 +63,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
-     private readonly walletManagerService = inject(WalletManagerService);
+     public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
@@ -350,7 +350,9 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           this.destinationSearchQuery.set('');
 
           this.clearFields(true);
-          await this.getMptDetails(true);
+          if (this.hasWallets()) {
+               await this.getMptDetails(true);
+          }
      }
 
      private async getClient(): Promise<xrpl.Client> {

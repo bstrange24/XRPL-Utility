@@ -307,18 +307,18 @@
                                    @switch (activeTab()) {
                                    <!-- create buttons -->
                                    @case ('create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createConditionalEscrow()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create Escrow' }}</button>
-                                   <button type="button" class="btn-primary-green" (click)="getCondition(); $event.preventDefault();" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Generate Condition' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="createConditionalEscrow()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Escrow' }}</button>
+                                   <button type="button" class="btn-primary-green" (click)="getCondition(); $event.preventDefault();" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Generate Condition' }}</button>
                                    }
                                    <!-- finish buttons -->
                                    @case ('finish') {
-                                   <button type="button" class="btn-primary-green" (click)="finishConditionalEscrow()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Finish Escrow' }}</button>
+                                   <button type="button" class="btn-primary-green" (click)="finishConditionalEscrow()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Finish Escrow' }}</button>
                                    }
                                    <!-- claim buttons -->
                                    @case ('cancel') {
-                                   <button type="button" class="btn-primary-red" (click)="cancelEscrow()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Escrow' }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="cancelEscrow()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Escrow' }}</button>
                                    } }
-                                   <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
+                                   <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
                               </div>
 
                               <!-- Execution time -->

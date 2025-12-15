@@ -64,7 +64,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      // Services
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
-     private readonly walletManagerService = inject(WalletManagerService);
+     public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
@@ -170,7 +170,9 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                     this.xrplCache.invalidateAccountCache(wallet.address);
                     this.txUiService.clearTxSignal();
                     this.txUiService.clearTxResultSignal();
-                    await this.getDidForAccount(false);
+                    if (this.hasWallets()) {
+                         await this.getDidForAccount(false);
+                    }
                }
           });
      }
@@ -206,7 +208,9 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      async setTab(tab: 'set' | 'delete'): Promise<void> {
           this.activeTab.set(tab);
           this.txUiService.clearAllOptionsAndMessages();
-          await this.getDidForAccount();
+          if (this.hasWallets()) {
+               await this.getDidForAccount();
+          }
      }
 
      private async getClient(): Promise<xrpl.Client> {

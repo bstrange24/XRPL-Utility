@@ -174,11 +174,11 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if (activeTab() === 'delegate') {
-                              <button type="button" class="btn-primary-blue" (click)="delegateActions('delegate')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Delegate Actions' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="delegateActions('delegate')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delegate Actions' }}</button>
                               } @else if (activeTab() === 'clear') {
-                              <button type="button" class="btn-primary-red" (click)="delegateActions('clear')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Clear Delegated Actions' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="delegateActions('clear')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Clear Delegated Actions' }}</button>
                               }
-                              <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()">Clear Fields</button>
+                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
                          </div>
 
                          <!-- Execution time -->

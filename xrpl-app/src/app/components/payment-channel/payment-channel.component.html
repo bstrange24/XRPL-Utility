@@ -312,22 +312,22 @@
                               @switch (activeTab()) {
                               <!-- create buttons -->
                               @case ('create') {
-                              <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create Channel' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Channel' }}</button>
                               }
                               <!-- close buttons -->
                               @case ('close') {
-                              <button type="button" class="btn-primary-red" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Close Channel' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Close Channel' }}</button>
                               }
                               <!-- claim buttons -->
                               @case ('claim') {
-                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Claim/Renew Channel' }}</button>
-                              <button type="button" class="btn-primary-blue" (click)="generateCreatorClaimSignature()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Generate Claim Signature' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Claim/Renew Channel' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="generateCreatorClaimSignature()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Generate Claim Signature' }}</button>
                               }
                               <!-- fund buttons -->
                               @case ('fund') {
-                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Fund Channel' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Fund Channel' }}</button>
                               } }
-                              <button type="button" (click)="clearFields()" class="btn-secondary-clear-fields">Clear Fields</button>
+                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
                          </div>
 
                          <!-- Execution time -->

@@ -65,7 +65,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
      private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
-     private readonly walletManagerService = inject(WalletManagerService);
+     public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
@@ -485,7 +485,9 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
           }
 
           this.clearFields(true);
-          await this.getFirewallDetails(true);
+          if (this.hasWallets()) {
+               await this.getFirewallDetails(true);
+          }
      }
 
      private async getClient(): Promise<xrpl.Client> {

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { StorageService } from '../../local-storage/storage.service';
 import { NetworkService } from '../../../components/navbar/navbar.component';
-import { distinctUntilChanged, map } from 'rxjs';
+import { distinctUntilChanged, map, shareReplay } from 'rxjs';
 
 export interface Wallet {
      name?: string;
@@ -35,8 +35,14 @@ export class WalletManagerService {
      private selectedIndexSource = new BehaviorSubject<number>(0);
      selectedIndex$ = this.selectedIndexSource.asObservable();
      // Add these near your other subjects/observables
-     private hasWalletsSubject = new BehaviorSubject<boolean>(false);
-     public hasWallets$ = this.hasWalletsSubject.asObservable();
+     // private hasWalletsSubject = new BehaviorSubject<boolean>(false);
+     // public hasWallets$ = this.hasWalletsSubject.asObservable();
+
+     public hasWallets$ = this.wallets$.pipe(
+          map(w => w.length > 0),
+          distinctUntilChanged(),
+          shareReplay(1)
+     );
 
      // Also expose a derived observable directly from wallets$ (preferred)
      public hasWalletsFromWallets$ = this.wallets$.pipe(

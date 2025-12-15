@@ -49,7 +49,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
-     private readonly walletManagerService = inject(WalletManagerService);
+     public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
@@ -200,7 +200,9 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
           this.txUiService.clearAllOptionsAndMessages();
-          await this.getTickets();
+          if (this.hasWallets()) {
+               await this.getTickets();
+          }
      }
 
      private async getClient(): Promise<xrpl.Client> {

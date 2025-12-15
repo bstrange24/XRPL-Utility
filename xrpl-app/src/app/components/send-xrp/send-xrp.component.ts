@@ -41,7 +41,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
-     private readonly walletManagerService = inject(WalletManagerService);
+     public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
@@ -150,6 +150,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                } else {
                     this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
                     this.txUiService.setError('');
+                    this.txUiService.setInfoMessage('');
                }
           });
 
@@ -207,6 +208,9 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      async onAccountChange(forceRefresh = false): Promise<void> {
           await this.withPerf('onAccountChange', async () => {
                this.txUiService.clearAllOptionsAndMessages();
+               if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
+                    throw new Error('Please select a wallet.');
+               }
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);

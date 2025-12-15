@@ -443,21 +443,21 @@
                          <!-- Action buttons -->
                          <div class="button-row">
                               @if(activeTab() === 'create') {
-                              <button type="button" class="btn-primary-blue" (click)="createMpt()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create MPT' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="createMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create MPT' }}</button>
                               } @else if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
-                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('Y')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Authorize MPT' }}</button>
-                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('N')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Unauthorize MPT' }}</button>
+                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('Y')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Authorize MPT' }}</button>
+                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('N')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Unauthorize MPT' }}</button>
                               } @else if (activeTab() === 'send') {
-                              <button type="button" class="btn-primary-green" (click)="sendMpt()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Send MPT' }}</button>
+                              <button type="button" class="btn-primary-green" (click)="sendMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Send MPT' }}</button>
                               } @else if (activeTab() === 'lock' || activeTab() === 'unlock') {
-                              <button type="button" class="btn-primary-orange" (click)="setMptLockUnlock('Y')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Lock MPT' }}</button>
-                              <button type="button" class="btn-primary-blue" (click)="setMptLockUnlock('N')" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Unlock MPT' }}</button>
+                              <button type="button" class="btn-primary-orange" (click)="setMptLockUnlock('Y')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Lock MPT' }}</button>
+                              <button type="button" class="btn-primary-blue" (click)="setMptLockUnlock('N')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Unlock MPT' }}</button>
                               } @else if (activeTab() === 'clawback') {
-                              <button type="button" class="btn-primary-red" (click)="clawbackMpt()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Clawback MPT' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="clawbackMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Clawback MPT' }}</button>
                               } @else {
-                              <button type="button" class="btn-primary-red" (click)="destroyMpt()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Destroy MPT' }}</button>
+                              <button type="button" class="btn-primary-red" (click)="destroyMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Destroy MPT' }}</button>
                               }
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
+                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
                          </div>
                     </div>
 

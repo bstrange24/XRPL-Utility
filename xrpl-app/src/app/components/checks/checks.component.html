@@ -306,13 +306,13 @@
                               <!-- Action buttons -->
                               <div class="button-row">
                                    @if (activeTab() === 'create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create Check' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Check' }}</button>
                                    } @else if (activeTab() === 'cash') {
-                                   <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Cash Check' }}</button>
+                                   <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cash Check' }}</button>
                                    } @else if(activeTab() === 'cancel') {
-                                   <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Check' }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Check' }}</button>
                                    }
-                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.spinner()">Clear Fields</button>
+                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">Clear Fields</button>
                               </div>
                          </div>
 

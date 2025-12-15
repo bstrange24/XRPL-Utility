@@ -70,7 +70,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
-     private readonly walletManagerService = inject(WalletManagerService);
+     public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
@@ -331,7 +331,9 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           this.destinationSearchQuery.set('');
           this.clearFlagsValue();
           this.clearFields();
-          await this.getPaymentChannels(true);
+          if (this.hasWallets()) {
+               await this.getPaymentChannels(true);
+          }
      }
 
      private async getClient(): Promise<xrpl.Client> {
