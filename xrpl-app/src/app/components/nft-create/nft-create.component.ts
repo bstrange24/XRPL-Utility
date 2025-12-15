@@ -485,7 +485,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
                const nftFlags = this.getFlagsValue(this.nftFlags);
 
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                     // this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -543,7 +543,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      //           const batchFlags = this.setBatchFlags();
 
      //           try {
-     //                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+     //                const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
      //                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
      //                // this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -645,7 +645,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
                this.txUiService.clearAllOptionsAndMessages();
 
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                     // this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -712,7 +712,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      //           const batchFlags = this.setBatchFlags();
 
      //           try {
-     //                const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+     //                const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
      //                const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
      //                // this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -811,7 +811,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
           await this.withPerf('updateNFTMetadata', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     const [accountInfo, fee, currentLedger, serverInfo, nftInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', ''), this.xrplService.getAccountNFTs(client, wallet.classicAddress, 'validated', '').catch(() => ({ result: { account_nfts: [] } }))]);
                     this.utilsService.logAccountInfoObjects(accountInfo, null);

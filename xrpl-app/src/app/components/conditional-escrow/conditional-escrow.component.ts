@@ -762,7 +762,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           await this.withPerf('cancelEscrow', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
@@ -1142,7 +1142,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      //      const startTime = Date.now();
 
      //      try {
-     //           const client = await this.xrplService.getClient();
+     //           const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
      //           const accountInfo = await this.xrplService.getAccountObjects(client, this.currentWallet().address, 'validated', '');
 
      //           const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });

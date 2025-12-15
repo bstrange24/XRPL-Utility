@@ -372,7 +372,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           await this.withPerf('handlePaymentChannelAction', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
@@ -568,18 +568,18 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
 
      async getPaymentChannelInfo() {
           if (this.activeTab() === 'close') {
-               const client = await this.xrplService.getClient();
+               const [client] = await Promise.all([this.getClient()]);
                const paymentChannelObjects = await this.xrplService.getAccountObjects(client, this.currentWallet().address, 'validated', 'payment_channel');
                this.getClosablePaymentChannels(paymentChannelObjects, this.currentWallet().address);
           } else if (this.activeTab() === 'create' || this.activeTab() === 'fund' || this.activeTab() === 'renew' || this.activeTab() === 'claim') {
                if (this.activeTab() === 'create' || this.activeTab() === 'fund' || this.activeTab() === 'renew') {
-                    const client = await this.xrplService.getClient();
+                    const [client] = await Promise.all([this.getClient()]);
                     const paymentChannelObjects = await this.xrplService.getAccountObjects(client, this.currentWallet().address, 'validated', 'payment_channel');
                     this.getExistingPaymentChannels(paymentChannelObjects, this.currentWallet().address);
                }
 
                if (this.activeTab() === 'claim') {
-                    const client = await this.xrplService.getClient();
+                    const [client] = await Promise.all([this.getClient()]);
                     const paymentChannelObjects = await this.xrplService.getAccountObjects(client, this.currentWallet().address, 'validated', 'payment_channel');
                     this.getReceivablePaymentChannels(paymentChannelObjects, this.currentWallet().address);
                }
@@ -715,7 +715,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      async generateCreatorClaimSignature() {
           await this.withPerf('generateCreatorClaimSignature', async () => {
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();

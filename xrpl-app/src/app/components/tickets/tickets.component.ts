@@ -239,7 +239,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           await this.withPerf('createTicket', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
                     // const inputs = this.txUiService.getValidationInputs({
@@ -286,7 +286,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           await this.withPerf('deleteTicket', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
                     // const inputs = this.txUiService.getValidationInputs({

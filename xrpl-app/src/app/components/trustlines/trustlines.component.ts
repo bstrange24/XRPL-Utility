@@ -444,7 +444,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                // Smart detection: only enable what's needed
                if (this.currentWallet().address) {
                     try {
-                         const client = await this.xrplService.getClient();
+                         const [client] = await Promise.all([this.getClient()]);
                          const accountObjects = await this.xrplService.getAccountObjects(client, this.currentWallet().address, 'validated', '');
                          this.setRemoveFlagsBasedOnExistingTrustline(accountObjects);
                     } catch (err) {
@@ -585,7 +585,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           await this.withPerf('removeTrustline', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     const [accountInfo, serverInfo, fee, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getXrplServerInfo(client, 'current', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client)]);
                     // this.utilsService.logAccountInfoObjects(accountInfo, null);
@@ -784,7 +784,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           await this.withPerf('clawbackTokens', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
-                    const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
