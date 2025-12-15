@@ -1,19 +1,28 @@
-@media (min-width: 1000px) {
+/* @media (min-width: 1000px) {
      .content-wrapper {
           grid-template-columns: 310px 1fr;
      }
 
      .account-changes-form-panel {
-          min-width: 1200px;
+          min-width: 1100px;
           width: auto;
      }
-}
+} */
+
+/* .account-changes-form-panel {
+     flex: 1;
+     min-width: 0;
+     max-width: none;
+     padding: 20px;
+     box-sizing: border-box;
+     display: flex;
+     flex-direction: column;
+} */
 
 .account-changes-form-panel {
      display: flex !important;
      flex-direction: column;
      height: 100%;
-     /* Take full height of parent */
      padding: 20px;
      box-sizing: border-box;
 }
@@ -22,9 +31,7 @@
      display: flex;
      align-items: center;
      justify-content: flex-start;
-     /* keep everything aligned left */
      gap: 12px;
-     /* spacing between items */
 }
 
 .clear-date-btn {
@@ -102,9 +109,6 @@
      letter-spacing: 0.1px;
 }
 
-
-
-/* Spinner animation */
 .spinner {
      border: 3px solid #f3f3f3;
      border-top: 3px solid #1976d2;
@@ -124,7 +128,6 @@
      }
 }
 
-/* Panel body must also allow growth */
 .panel-body {
      display: flex !important;
      flex-direction: column;
@@ -136,12 +139,9 @@
      display: flex !important;
      flex-direction: column;
      flex: 1;
-     /* This is the key line */
      min-height: 0;
-     /* Required for flex children with overflow */
 }
 
-/* Optional: Add a semi-transparent overlay behind the spinner */
 .balance-panel::before {
      content: '';
      position: absolute;
@@ -156,7 +156,6 @@
      transition: opacity 0.3s ease;
 }
 
-/* Show the overlay when spinner is active */
 .balance-panel:has(.spinner-row)::before {
      opacity: 1;
      pointer-events: all;
@@ -183,18 +182,15 @@
      box-shadow: 0 0 3px rgba(25, 118, 210, 0.5);
 }
 
-/* container becomes relative so icons can be absolutely positioned */
 .search-bar {
      position: relative;
      height: 36px;
-     /* final visual height */
      box-sizing: border-box;
      border: 1px solid #ccc;
      border-radius: 6px;
      background: white;
 }
 
-/* the input fills the container and leaves room for icons */
 .search-bar input[type="text"] {
      display: block;
      width: 100%;
@@ -209,13 +205,11 @@
      appearance: none;
 }
 
-/* remove focus ring that changes dimensions */
 .search-bar input[type="text"]:focus {
      outline: none !important;
      box-shadow: none !important;
 }
 
-/* left icon (search) */
 .search-bar .search-icon,
 .search-bar mat-icon.search-icon {
      position: absolute;
@@ -232,7 +226,6 @@
      font-size: 18px;
 }
 
-/* right icon (clear) */
 .search-bar .clear-icon,
 .search-bar mat-icon.clear-icon {
      position: absolute;
@@ -249,7 +242,6 @@
      font-size: 18px;
 }
 
-/* optional hover affordance */
 .search-bar .clear-icon:hover {
      opacity: 0.9;
      transform: translateY(-50%) scale(1.05);
@@ -275,10 +267,10 @@
      opacity: 1;
 }
 
-/* ====== FINAL CLEAN WHITE THEME + PERFECT STICKY HEADER ====== */
 .virtual-table-container {
-     height: calc(100vh - 380px);
+     flex: 1;
      min-height: 500px;
+     max-height: 100%;
      border-radius: 12px;
      overflow: hidden;
      display: flex;
@@ -291,7 +283,21 @@
      overflow-y: auto;
 }
 
-/* ROWS - ALL ROWS MUST HAVE SAME HEIGHT */
+/* .virtual-table-container {
+     height: calc(100vh - 380px);
+     min-height: 500px;
+     border-radius: 12px;
+     overflow: hidden;
+     display: flex;
+     flex-direction: column;
+     background: #fff;
+}
+
+.viewport {
+     flex: 1;
+     overflow-y: auto;
+} */
+
 .row {
      display: flex;
      align-items: center;
@@ -300,7 +306,6 @@
      border-bottom: 1px solid #f3f4f6;
 }
 
-/* STICKY HEADER - THIS IS THE KEY */
 .table-header {
      display: flex !important;
      align-items: center !important;
@@ -318,7 +323,6 @@
      border-radius: 8px;
 }
 
-/* Regular data rows */
 .data-row {
      background: white;
      transition: background 0.2s;
@@ -328,7 +332,6 @@
      background: #f8fafc;
 }
 
-/* Columns */
 .col {
      flex: 1;
      padding: 0 12px;
@@ -347,22 +350,41 @@
 
 .col.hash {
      flex: 1.8;
-     /* font-family: 'Courier New', monospace; */
      display: flex;
      align-items: center;
      gap: 8px;
 }
 
 .col.type {
-     flex: 1.1;
+     flex: 1.5;
+     /* Give it more space than other columns */
+     min-width: 140px;
+     /* Prevent it from shrinking too much */
+     white-space: normal;
+     /* Allow text wrapping */
+     word-break: break-word;
+     /* Break long words if needed */
+     line-height: 1.4;
+     /* Better readability when wrapped */
+     padding: 8px 12px;
+     /* Extra padding for wrapped text */
      font-weight: 600;
 }
 
+/* .col.type {
+     flex: 1.1;
+     font-weight: 600;
+} */
+
 .col.change {
+     flex: 1;
+}
+
+/* .col.change {
      flex: 1.2;
      text-align: right;
      font-weight: 700;
-}
+} */
 
 .col.fees {
      flex: 1.1;
@@ -402,7 +424,6 @@
      font-size: 0.9em;
 }
 
-/* Links & Copy Button */
 .tx-link {
      color: #2563eb;
      text-decoration: none;
@@ -428,7 +449,6 @@
      color: #2563eb;
 }
 
-/* Loading & Empty States */
 .loading-row,
 .empty-row,
 .end-row {
@@ -448,27 +468,46 @@
 }
 
 
-/* FINAL FIX — ONLY THESE 6 LINES — DELETE EVERYTHING ELSE YOU TRIED */
 .main-container {
-     /* height: 100vh; */
      display: flex;
      flex-direction: column;
 }
 
-/* .content-wrapper {
-     flex: 1;
-     display: grid;
-     grid-template-columns: 310px 1fr;
-     gap: 2rem;
-     padding: 20px;
-     overflow: hidden;
-} */
+.info-panel {
+     background-color: #ebf8ff;
+     border: 1px solid #7dd3fc;
+     border-radius: 8px;
+     padding: 12px 16px;
+     margin: 16px 0;
+     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
 
-/* .account-changes-form-panel,
-.balance-panel,
-.panel-body,
-.virtual-table-container,
-.viewport {
+.info-panel-content {
+     display: flex;
+     align-items: flex-start;
+     gap: 12px;
+}
+
+.info-icon {
+     flex-shrink: 0;
+     margin-top: 2px;
+}
+
+.info-text {
      flex: 1;
-     min-height: 0;
-} */
+     font-size: 14px;
+     line-height: 1.5;
+     color: #0c4a6e;
+}
+
+.info-text strong {
+     font-weight: 600;
+}
+
+.info-text code {
+     background-color: #cffafe;
+     padding: 2px 6px;
+     border-radius: 4px;
+     font-family: 'Courier New', monospace;
+     font-size: 13px;
+}

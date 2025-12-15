@@ -493,6 +493,10 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
                     } else if (tx.Account === address) {
                          type = 'Payment Sent';
                     }
+               } else if (tx.TransactionType === 'PermissionedDomainSet') {
+                    type = 'PDomainSet';
+               } else if (tx.TransactionType === 'PermissionedDomainDelete') {
+                    type = 'PDomainDelete';
                }
 
                const changes: { fees: number; change: number; currency: string; balanceBefore: number; balanceAfter: number }[] = [];
@@ -613,7 +617,7 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
                                    cp = 'Regular Key';
                                    break;
                               case 'AccountSet':
-                                   cp = 'Account Settings';
+                                   cp = 'Account Set';
                                    break;
                               case 'DepositPreauth':
                                    cp = 'Deposit Auth';
@@ -823,6 +827,8 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
                     return '#8BE684';
 
                case 'PermissionedDomainSet':
+               case 'PDomainSet':
+               case 'PDomainDelete':
                case 'PermissionedDomainDelete':
                case 'CredentialCreate':
                case 'CredentialAccept':
@@ -919,65 +925,84 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
                return;
           }
 
-          const walletName = this.currentWallet().name || 'selected';
+          const walletName = this.currentWallet().name || 'Selected wallet';
 
-          if (!this.currentBalance && this.balanceChanges.length === 0) {
-               this.txUiService.setInfoMessage(`<code>${walletName}</code> wallet has no balance change history available.`);
+          if (this.balanceChanges.length === 0) {
+               this.txUiService.setInfoMessage(`<code>${walletName}</code> wallet has no recorded balance changes yet.<br><br>` + `This view shows historical transactions that affected XRP or issued currency balances.`);
                return;
           }
 
-          let messageParts: string[] = [];
+          const totalTx = this.balanceChanges.length;
+          const spendable = parseFloat(this.currentWallet().balance || '0').toFixed(6);
 
-          // // Add balance information
-          // if (this.currentBalance !== undefined) {
-          //      const formattedBalance = this.utilsService.roundToEightDecimals(this.currentBalance);
-          //      messageParts.push(`Current XRP balance: <strong>${formattedBalance} XRP</strong>`);
-          // }
-
-          // // Add balance change summary
-          if (this.balanceChanges.length > 0) {
-               const totalTransactions = this.balanceChanges.length;
-               messageParts.push(`${totalTransactions} balance change${totalTransactions === 1 ? '' : 's'} displayed`);
-          }
-
-          // // Add additional balance information if available
-          // if (this.ownerCount !== undefined && this.ownerCount !== '') {
-          //      messageParts.push(`Owner count: <strong>${this.ownerCount}</strong>`);
-          // }
-
-          // if (this.totalXrpReserves !== undefined && this.totalXrpReserves !== '') {
-          //      const spendableBalance = parseFloat(this.currentWallet.balance || '0');
-          //      messageParts.push(`Total XRP reserves: <strong>${this.totalXrpReserves}</strong>`);
-
-          //      if (spendableBalance >= 0) {
-          //           messageParts.push(`Spendable balance: <strong>${spendableBalance.toFixed(6)} XRP</strong>`);
-          //      }
-          // }
-
-          let message: string;
-          if (messageParts.length === 0) {
-               message = `<code>${walletName}</code> wallet has no balance information available.`;
-          } else {
-               message = `<code>${walletName}</code> wallet balance information:<ul>`;
-               messageParts.forEach(part => {
-                    message += `<li>${part}</li>`;
-               });
-               message += '</ul>';
-          }
-
-          // Add information about what is displayed
-          if (this.balanceChanges.length > 0) {
-               message += "The balance changes table shows all transactions that affected this account's XRP balance and issued currency balances, including:<ul>";
-               message += '<li>Payments sent and received</li>';
-               message += '<li>Trust line balance changes</li>';
-               message += '<li>Automated Market Maker (AMM) deposit, withdrawal, and trade activity</li>';
-               message += '<li>Offer creation and cancellation affecting account balances</li>';
-               message += '<li>Other transactions that modify account balances, etc...</li>';
-               message += '</ul>';
-          }
-
-          this.txUiService.setInfoMessage(message);
+          this.txUiService.setInfoMessage(`<code>${walletName}</code> wallet:<br><br>` + `<strong>${totalTx}</strong> balance change${totalTx === 1 ? '' : 's'} loaded.<br>` + `<strong>Spendable balance:</strong> ${spendable} XRP<br><br>` + `This table displays all transactions affecting account balances, including payments, trust lines, AMM activity, DEX offers, and more.`);
      }
+
+     // updateInfoMessage(): void {
+     //      if (!this.currentWallet()?.address) {
+     //           this.txUiService.setInfoMessage('No wallet is currently selected.');
+     //           return;
+     //      }
+
+     //      const walletName = this.currentWallet().name || 'selected';
+
+     //      if (!this.currentBalance && this.balanceChanges.length === 0) {
+     //           this.txUiService.setInfoMessage(`<code>${walletName}</code> wallet has no balance change history available.`);
+     //           return;
+     //      }
+
+     //      let messageParts: string[] = [];
+
+     //      // // Add balance information
+     //      // if (this.currentBalance !== undefined) {
+     //      //      const formattedBalance = this.utilsService.roundToEightDecimals(this.currentBalance);
+     //      //      messageParts.push(`Current XRP balance: <strong>${formattedBalance} XRP</strong>`);
+     //      // }
+
+     //      // // Add balance change summary
+     //      if (this.balanceChanges.length > 0) {
+     //           const totalTransactions = this.balanceChanges.length;
+     //           messageParts.push(`${totalTransactions} balance change${totalTransactions === 1 ? '' : 's'} displayed`);
+     //      }
+
+     //      // // Add additional balance information if available
+     //      // if (this.ownerCount !== undefined && this.ownerCount !== '') {
+     //      //      messageParts.push(`Owner count: <strong>${this.ownerCount}</strong>`);
+     //      // }
+
+     //      // if (this.totalXrpReserves !== undefined && this.totalXrpReserves !== '') {
+     //      //      const spendableBalance = parseFloat(this.currentWallet.balance || '0');
+     //      //      messageParts.push(`Total XRP reserves: <strong>${this.totalXrpReserves}</strong>`);
+
+     //      //      if (spendableBalance >= 0) {
+     //      //           messageParts.push(`Spendable balance: <strong>${spendableBalance.toFixed(6)} XRP</strong>`);
+     //      //      }
+     //      // }
+
+     //      let message: string;
+     //      if (messageParts.length === 0) {
+     //           message = `<code>${walletName}</code> wallet has no balance information available.`;
+     //      } else {
+     //           message = `<code>${walletName}</code> wallet balance information:<ul>`;
+     //           messageParts.forEach(part => {
+     //                message += `<li>${part}</li>`;
+     //           });
+     //           message += '</ul>';
+     //      }
+
+     //      // Add information about what is displayed
+     //      if (this.balanceChanges.length > 0) {
+     //           message += "The balance changes table shows all transactions that affected this account's XRP balance and issued currency balances, including:<ul>";
+     //           message += '<li>Payments sent and received</li>';
+     //           message += '<li>Trust line balance changes</li>';
+     //           message += '<li>Automated Market Maker (AMM) deposit, withdrawal, and trade activity</li>';
+     //           message += '<li>Offer creation and cancellation affecting account balances</li>';
+     //           message += '<li>Other transactions that modify account balances, etc...</li>';
+     //           message += '</ul>';
+     //      }
+
+     //      this.txUiService.setInfoMessage(message);
+     // }
 
      clearFields() {
           this.clearDateFilter();
