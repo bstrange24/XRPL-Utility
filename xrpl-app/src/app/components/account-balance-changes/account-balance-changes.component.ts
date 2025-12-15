@@ -1,10 +1,10 @@
-import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, ViewChildren, QueryList, ViewContainerRef, afterRenderEffect, TemplateRef, Injector, inject, TrackByFunction } from '@angular/core';
+import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, Injector, inject, computed, DestroyRef, signal } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatTableModule } from '@angular/material/table';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core'; // Required for native date adapter
 import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
@@ -13,10 +13,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
-import { XrplService } from '../../services/xrpl-services/xrpl.service';
+import { FormsModule } from '@angular/forms';
 import * as xrpl from 'xrpl';
-import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
@@ -25,22 +23,24 @@ import { LucideAngularModule } from 'lucide-angular';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { Subject, takeUntil } from 'rxjs';
-import { debounceTime, distinctUntilChanged, pairwise, startWith } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
-import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
-import { TemplatePortal } from '@angular/cdk/portal';
-import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { Router } from '@angular/router';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-
-declare var Prism: any;
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ToastService } from '../../services/toast/toast.service';
+import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
+import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
+import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 
 interface BalanceChange {
      date: Date;
@@ -63,21 +63,41 @@ interface BalanceChange {
      templateUrl: './account-balance-changes.component.html',
      styleUrl: './account-balance-changes.component.css',
 })
-export class AccountChangesComponent implements OnDestroy, AfterViewInit {
+export class AccountChangesComponent extends PerformanceBaseComponent implements OnDestroy, AfterViewInit {
+     private readonly destroyRef = inject(DestroyRef);
+     public readonly utilsService = inject(UtilsService);
+     private readonly storageService = inject(StorageService);
+     public readonly walletManagerService = inject(WalletManagerService);
+     public readonly txUiService = inject(TransactionUiService);
+     private readonly walletDataService = inject(WalletDataService);
+     private readonly validationService = inject(ValidationService);
+     private readonly dropdownService = inject(DestinationDropdownService);
+     private readonly xrplCache = inject(XrplCacheService);
+     public readonly downloadUtilService = inject(DownloadUtilService);
+     public readonly copyUtilService = inject(CopyUtilService);
+     public readonly toastService = inject(ToastService);
+     public readonly txExecutor = inject(XrplTransactionExecutorService);
+     public readonly xrplTransactions = inject(XrplTransactionService);
+     public readonly walletGenerator = inject(WalletGeneratorService);
+     public readonly router = inject(Router);
+     public readonly cdr = inject(ChangeDetectorRef);
+
+     typedDestination = signal<string>('');
+     customDestinations = signal<{ name?: string; address: string }[]>([]);
+     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
+     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
+     activeTab = signal<'balance'>('balance');
+     wallets = signal<Wallet[]>([]);
+     currentWallet = signal<Wallet>({} as Wallet);
+     infoPanelExpanded = signal(false);
+     accountInfo = signal<any>(null);
+
      private destroy$ = new Subject<void>();
-     @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
-     @ViewChild('accountForm') accountForm!: NgForm;
      @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
      @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
-     @ViewChild('signers') signersRef!: ElementRef<HTMLTextAreaElement>;
-     @ViewChild('seeds') seedsRef!: ElementRef<HTMLTextAreaElement>;
-     @ViewChildren('signers, seeds') textareas!: QueryList<ElementRef<HTMLTextAreaElement>>;
      @ViewChild(CdkVirtualScrollViewport) viewport!: CdkVirtualScrollViewport;
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      @ViewChild(MatSort) sort!: MatSort;
-     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef; // We'll add this to the input
-     private overlayRef: OverlayRef | null = null;
      private readonly injector = inject(Injector);
      @ViewChild(MatPaginator) paginator!: MatPaginator;
      displayedColumns: string[] = ['date', 'hash', 'type', 'change', 'currency', 'fees', 'balanceBefore', 'balanceAfter', 'counterparty'];
@@ -90,23 +110,12 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      currencyBalances: Map<string, number> = new Map();
      lastResult: string = '';
      result: string = '';
-     executionTime: string = '';
+     // executionTime: string = '';
      isMessageKey: boolean = false;
      url: string = '';
      filterValue: string = '';
      isExpanded: boolean = false;
-     wallets: Wallet[] = [];
      selectedWalletIndex: number = 0;
-     currentWallet: Wallet = {
-          classicAddress: '',
-          address: '',
-          seed: '',
-          name: undefined,
-          balance: '0',
-          ownerCount: undefined,
-          xrpReserves: undefined,
-          spendableXrp: undefined,
-     };
      private readonly accountLinesCache = new Map<string, any>();
      private readonly accountLinesCacheTime = new Map<string, number>();
      private readonly CACHE_EXPIRY = 30000;
@@ -117,17 +126,14 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      xrpReserves: string = '';
      totalXrpReserves: string = '';
      showSecret: boolean = false;
-     environment: string = '';
-     activeTab = 'balance'; // default
+     // environment: string = '';
      successMessage: string = '';
      encryptionType: string = '';
-     hasWallets: boolean = true;
      showToast: boolean = false;
      toastMessage: string = '';
      editingIndex!: (index: number) => boolean;
      tempName: string = '';
      warningMessage: string | null = null;
-     // Add to class properties
      dateRange: { start: Date | null; end: Date | null } = { start: null, end: null };
      private searchSubject = new Subject<string>();
      // Replace any old paginator-dependent page size use with this constant
@@ -136,116 +142,68 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      private readonly seenHashes = new Set<string>();
      private originalBalanceChanges: BalanceChange[] = []; // Cache full data
 
-     public destinationSearch$ = new Subject<string>();
-
-     // Form fields
-     amountField = '';
-     destinationField: string = '';
-     destinationTagField = '';
-     sourceTagField = '';
-     invoiceIdField = '';
-     memoField: string = '';
-     isMemoEnabled: boolean = false;
-     useMultiSign: boolean = false;
-     isRegularKeyAddress: boolean = false;
-     isTicket: boolean = false;
-     selectedSingleTicket: string = '';
-     selectedTickets: string[] = [];
-     multiSelectMode: boolean = false;
-     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
-     selectedTicket: string = '';
-     showDropdown: boolean = false;
-     dropdownOpen: boolean = false;
-
-     // Multi-sign & Regular Key
-     multiSignAddress: string = '';
-     multiSignSeeds: string = '';
-     signerQuorum: number = 0;
-     regularKeyAddress: string = '';
-     regularKeySeed: string = '';
-     multiSigningEnabled: boolean = false;
-     regularKeySigningEnabled: boolean = false;
-     ticketArray: string[] = [];
-     masterKeyDisabled: boolean = false;
-
-     // Dropdown
-     filteredDestinations: DropdownItem[] = [];
-     highlightedIndex = -1;
-     destinations: DropdownItem[] = [];
-     customDestinations: { name?: string; address: string }[] = [];
-
-     // Account Balance
-     private lastPaymentTx = '';
-     private lastTxResult = '';
-
      onSearchInput(value: string) {
           this.searchSubject.next(value);
      }
 
-     constructor(
-          private readonly xrplService: XrplService,
-          private readonly utilsService: UtilsService,
-          private readonly cdr: ChangeDetectorRef,
-          private readonly storageService: StorageService,
-          private readonly xrplTransactions: XrplTransactionService,
-          private walletGenerator: WalletGeneratorService,
-          private walletManagerService: WalletManagerService,
-          public ui: TransactionUiService,
-          public downloadUtilService: DownloadUtilService,
-          public copyUtilService: CopyUtilService,
-          private walletDataService: WalletDataService,
-          private validationService: ValidationService,
-          private overlay: Overlay,
-          private viewContainerRef: ViewContainerRef,
-          private destinationDropdownService: DestinationDropdownService,
-          private router: Router
-     ) {}
+     selectedDestinationItem = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return null;
+          return this.destinationItems().find(d => d.id === addr) || null;
+     });
+
+     destinationItems = computed(() => {
+          const currentAddr = this.currentWallet().address;
+
+          return this.destinations().map(d => ({
+               id: d.address,
+               display: d.name || 'Unknown Wallet',
+               secondary: d.address,
+               isCurrentAccount: d.address === currentAddr,
+          }));
+     });
+
+     destinations = computed(() => [
+          ...this.wallets().map((w: DropdownItem) => ({
+               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
+               address: w.address,
+          })),
+          ...this.customDestinations(),
+     ]);
+
+     destinationDisplay = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return this.destinationSearchQuery(); // while typing → show typed text
+
+          const dest = this.destinations().find(d => d.address === addr);
+          if (!dest) return addr;
+
+          return this.dropdownService.formatDisplay(dest);
+     });
+
+     filteredDestinations = computed(() => {
+          const q = this.destinationSearchQuery().trim().toLowerCase();
+          const list = this.destinations();
+
+          if (q === '') {
+               return list;
+          }
+
+          return this.destinations()
+               .filter(d => d.address !== this.currentWallet().address)
+               .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
+     });
+
+     hasWallets = computed(() => this.wallets().length > 0);
+
+     constructor() {
+          super();
+          this.txUiService.clearAllOptionsAndMessages();
+     }
 
      ngOnInit() {
-          this.environment = this.xrplService.getNet().environment;
-          const envKey = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
-          this.url = AppConstants.XRPL_WIN_URL[envKey] || AppConstants.XRPL_WIN_URL.DEVNET;
-
-          // Listen to selected wallet changes (critical!)
-          this.walletManagerService.selectedIndex$.pipe(takeUntil(this.destroy$)).subscribe(index => {
-               if (this.wallets[index]) {
-                    this.currentWallet = { ...this.wallets[index] };
-                    // this.onAccountChange();
-               }
-          });
-
-          this.walletManagerService.wallets$.pipe(takeUntil(this.destroy$)).subscribe(wallets => {
-               this.wallets = wallets;
-               this.hasWallets = wallets.length > 0;
-
-               // If panel hasn't emitted yet (e.g. on page load), set current wallet manually
-               if (wallets.length > 0 && !this.currentWallet.address) {
-                    const index = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    this.currentWallet = { ...wallets[index] };
-                    this.onAccountChange();
-               }
-
-               this.updateDestinations();
-          });
-
-          // Load custom destinations
-          const stored = this.storageService.get('customDestinations');
-          this.customDestinations = stored ? JSON.parse(stored) : [];
-          this.updateDestinations();
-
-          // Dropdown service sync
-          this.destinationSearch$.pipe(debounceTime(150), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(query => {
-               this.destinationDropdownService.filter(query);
-          });
-          this.destinationDropdownService.setItems(this.destinations);
-          this.destinationDropdownService.filtered$.pipe(takeUntil(this.destroy$)).subscribe(list => {
-               this.filteredDestinations = list;
-               this.highlightedIndex = list.length > 0 ? 0 : -1;
-               this.cdr.detectChanges();
-          });
-          this.destinationDropdownService.isOpen$.pipe(takeUntil(this.destroy$)).subscribe(open => {
-               open ? this.openDropdownInternal() : this.closeDropdownInternal();
-          });
+          this.loadCustomDestinations();
+          this.setupWalletSubscriptions();
 
           // Debounce search input
           this.searchSubject.pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(searchText => {
@@ -255,6 +213,61 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           console.log('paginator:', this.paginator, 'pageIndex:', this.paginator?.pageIndex, 'pageSize:', this.paginator?.pageSize, 'length:', this.paginator?.length);
      }
 
+     private loadCustomDestinations(): void {
+          const stored = this.storageService.get('customDestinations');
+          if (stored) this.customDestinations.set(JSON.parse(stored));
+     }
+
+     private async setupWalletSubscriptions() {
+          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
+               if (hasWallets) {
+                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
+               } else {
+                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+                    this.txUiService.setError('');
+                    this.txUiService.setInfoMessage('');
+               }
+          });
+
+          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
+               this.wallets.set(wallets);
+               if (this.hasWallets() && !this.currentWallet().address) {
+                    const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
+                    const wallet = wallets[idx];
+                    if (wallet) this.selectWallet(wallet);
+               }
+          });
+
+          this.walletManagerService.selectedIndex$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async index => {
+               const wallet = this.wallets()[index];
+               if (wallet) {
+                    this.selectWallet(wallet);
+                    this.xrplCache.invalidateAccountCache(wallet.address);
+                    this.txUiService.clearAllOptionsAndMessages();
+                    await this.onAccountChange();
+               }
+          });
+     }
+
+     private selectWallet(wallet: Wallet): void {
+          this.currentWallet.set({ ...wallet });
+          this.txUiService.currentWallet.set({ ...wallet });
+          this.xrplCache.invalidateAccountCache(wallet.address);
+
+          // Prevent self as destination
+          if (this.selectedDestinationAddress() === wallet.address) {
+               this.selectedDestinationAddress.set('');
+          }
+     }
+
+     trackByWalletAddress(index: number, wallet: any): string {
+          return wallet.address;
+     }
+
+     onWalletSelected(wallet: Wallet): void {
+          this.selectWallet(wallet);
+     }
+
      ngAfterViewInit() {
           if (this.hasInitialized) return;
           this.hasInitialized = true;
@@ -262,8 +275,6 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           if (this.paginator) {
                console.log('Warning: paginator present but not used for infinite scroll.');
           }
-
-          this.scheduleHighlight();
      }
 
      ngOnDestroy() {
@@ -278,37 +289,19 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           return item.address;
      }
 
-     async toggleMultiSign() {
-          try {
-               this.utilsService.toggleMultiSign(this.useMultiSign, this.signers, (await this.getWallet()).classicAddress);
-          } catch (error: any) {
-               this.ui.setError(`${error.message}`);
-          }
-     }
-
      toggleExpanded() {
           this.isExpanded = !this.isExpanded;
      }
 
-     onWalletSelected(wallet: Wallet) {
-          this.currentWallet = { ...wallet };
-
-          // Prevent setting self as the destination after switching wallet
-          const currentDest = this.walletManagerService.getDestinationFromDisplay(this.destinationField, this.destinations)?.address || this.destinationField;
-          if (currentDest === wallet.address) {
-               this.destinationField = '';
-          }
-
-          // This triggers refresh balance, signer list, etc.
-          this.onAccountChange();
+     async setTab(tab: 'balance'): Promise<void> {
+          this.activeTab.set(tab);
+          this.destinationSearchQuery.set('');
+          this.txUiService.clearAllOptionsAndMessages();
+          await this.onAccountChange();
      }
 
-     setTab(tab: string) {
-          this.activeTab = tab;
-          // this.updateInfoMessage();
-          this.clearFields();
-          this.ui.clearMessages();
-          this.ui.clearWarning();
+     private async getClient(): Promise<xrpl.Client> {
+          return this.xrplCache.getClient(() => this.xrplService.getClient());
      }
 
      async onAccountChange() {
@@ -320,144 +313,140 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      }
 
      async loadBalanceChanges(reset = true) {
-          this.ui.clearMessages();
+          await this.withPerf('loadBalanceChanges', async () => {
+               this.txUiService.clearMessages();
 
-          // Prevent overlapping loads
-          if (reset && this.loadingInitial) {
-               console.log('loadBalanceChanges skipped (initial load in progress)');
-               return;
-          }
-          if (!reset && this.loadingMore) {
-               console.log('loadBalanceChanges skipped (pagination load in progress)');
-               return;
-          }
-
-          reset ? (this.loadingInitial = true) : (this.loadingMore = true);
-
-          // Show spinner immediately - use the main spinner, not loadingMore
-          this.ui.spinner.set(true);
-          this.ui.spinnerMessage = 'Loading balance changes...';
-          const spinnerStartTime = Date.now();
-          const minSpinnerTime = 400;
-
-          // If resetting, clear local state and seenHashes
-          if (reset) {
-               this.balanceChanges = [];
-               this.originalBalanceChanges = [];
-               // this.balanceChangesDataSource.data = [];
-               this.marker = undefined;
-               this.hasMoreData = true;
-               this.seenHashes.clear();
-          }
-
-          console.log('Entering loadBalanceChanges', reset ? '(reset)' : '(load more)');
-          const startTime = Date.now();
-
-          try {
-               const address = this.currentWallet.address;
-               if (!address) {
-                    console.warn('No address set for loadBalanceChanges');
+               // Prevent overlapping loads
+               if (reset && this.loadingInitial) {
+                    console.log('loadBalanceChanges skipped (initial load in progress)');
+                    return;
+               }
+               if (!reset && this.loadingMore) {
+                    console.log('loadBalanceChanges skipped (pagination load in progress)');
                     return;
                }
 
-               const client = await this.xrplService.getClient();
+               reset ? (this.loadingInitial = true) : (this.loadingMore = true);
 
-               // on initial load do some account-level bookkeeping (balances, lines, etc.)
+               // Show spinner immediately - use the main spinner, not loadingMore
+               this.txUiService.spinner.set(true);
+               this.txUiService.spinnerMessage = 'Loading balance changes...';
+               const spinnerStartTime = Date.now();
+               const minSpinnerTime = 400;
+
+               // If resetting, clear local state and seenHashes
                if (reset) {
-                    const [accountInfo, accountLines] = await Promise.all([this.xrplService.getAccountInfo(client, address, 'validated', ''), this.getCachedAccountLines(client, address)]);
+                    this.balanceChanges = [];
+                    this.originalBalanceChanges = [];
+                    // this.balanceChangesDataSource.data = [];
+                    this.marker = undefined;
+                    this.hasMoreData = true;
+                    this.seenHashes.clear();
+               }
 
-                    this.currentBalance = xrpl.dropsToXrp(accountInfo.result.account_data.Balance);
-                    this.currencyBalances.set('XRP', this.currentBalance);
+               console.log('Entering loadBalanceChanges', reset ? '(reset)' : '(load more)');
+               const startTime = Date.now();
 
-                    for (const line of accountLines.result.lines) {
-                         const key = `${line.currency}+${line.account}`;
-                         this.currencyBalances.set(key, Number.parseFloat(line.balance));
+               try {
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
+
+                    // on initial load do some account-level bookkeeping (balances, lines, etc.)
+                    if (reset) {
+                         const [accountInfo, accountLines] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.getCachedAccountLines(client, wallet.classicAddress)]);
+
+                         this.currentBalance = xrpl.dropsToXrp(accountInfo.result.account_data.Balance);
+                         this.currencyBalances.set('XRP', this.currentBalance);
+
+                         for (const line of accountLines.result.lines) {
+                              const key = `${line.currency}+${line.account}`;
+                              this.currencyBalances.set(key, Number.parseFloat(line.balance));
+                         }
+
+                         const { ownerCount, totalXrpReserves } = await this.utilsService.updateOwnerCountAndReserves(client, accountInfo, wallet.classicAddress);
+                         this.ownerCount = ownerCount.toString();
+                         this.totalXrpReserves = totalXrpReserves;
+
+                         const balance = (await client.getXrpBalance(wallet.classicAddress)) - Number.parseFloat(totalXrpReserves || '0');
+                         this.currentWallet().balance = balance.toString();
+
+                         // this.setFilterPredicate();
                     }
 
-                    const { ownerCount, totalXrpReserves } = await this.utilsService.updateOwnerCountAndReserves(client, accountInfo, address);
-                    this.ownerCount = ownerCount.toString();
-                    this.totalXrpReserves = totalXrpReserves;
-
-                    const balance = (await client.getXrpBalance(address)) - Number.parseFloat(totalXrpReserves || '0');
-                    this.currentWallet.balance = balance.toString();
-
-                    // this.setFilterPredicate();
-               }
-
-               if (!this.hasMoreData) {
-                    console.log('No more data to load.');
-                    return;
-               }
-
-               // Use PAGE_SIZE constant. Supply marker for pagination if available
-               const txResponse = await this.xrplService.getAccountTransactions(client, address, this.PAGE_SIZE, this.marker);
-
-               // Defensive checks
-               const txs = txResponse?.result?.transactions ?? [];
-               if (!Array.isArray(txs) || txs.length === 0) {
-                    this.hasMoreData = false;
-                    console.log('No transactions returned for marker; stopping further loads.');
-                    return;
-               }
-
-               console.log(`Fetched ${txs.length} transactions from XRPL (marker: ${this.marker})`);
-
-               const processedTx = this.processTransactionsForBalanceChanges(txs, address);
-
-               // Deduplicate by hash to avoid appending same rows repeatedly
-               const newEntries: BalanceChange[] = [];
-               for (const entry of processedTx) {
-                    if (!entry || !entry.hash) continue;
-                    if (this.seenHashes.has(entry.hash)) {
-                         // skip duplicate
-                         continue;
+                    if (!this.hasMoreData) {
+                         console.log('No more data to load.');
+                         return;
                     }
-                    this.seenHashes.add(entry.hash);
-                    newEntries.push(entry);
-               }
 
-               if (newEntries.length > 0) {
-                    this.balanceChanges.push(...newEntries);
-                    this.originalBalanceChanges = [...this.balanceChanges]; // keep full cache
+                    // Use PAGE_SIZE constant. Supply marker for pagination if available
+                    const txResponse = await this.xrplService.getAccountTransactions(client, wallet.classicAddress, this.PAGE_SIZE, this.marker);
 
-                    // CRITICAL: Trigger array reference change so *cdkVirtualFor sees it
-                    this.balanceChanges = [...this.balanceChanges];
-
-                    // Optional: scroll to top on reset
-                    if (reset && this.viewport) {
-                         setTimeout(() => this.viewport.scrollToIndex(0), 0);
+                    // Defensive checks
+                    const txs = txResponse?.result?.transactions ?? [];
+                    if (!Array.isArray(txs) || txs.length === 0) {
+                         this.hasMoreData = false;
+                         console.log('No transactions returned for marker; stopping further loads.');
+                         return;
                     }
+
+                    console.log(`Fetched ${txs.length} transactions from XRPL (marker: ${this.marker})`);
+
+                    const processedTx = this.processTransactionsForBalanceChanges(txs, wallet.classicAddress);
+
+                    // Deduplicate by hash to avoid appending same rows repeatedly
+                    const newEntries: BalanceChange[] = [];
+                    for (const entry of processedTx) {
+                         if (!entry || !entry.hash) continue;
+                         if (this.seenHashes.has(entry.hash)) {
+                              // skip duplicate
+                              continue;
+                         }
+                         this.seenHashes.add(entry.hash);
+                         newEntries.push(entry);
+                    }
+
+                    if (newEntries.length > 0) {
+                         this.balanceChanges.push(...newEntries);
+                         this.originalBalanceChanges = [...this.balanceChanges]; // keep full cache
+
+                         // CRITICAL: Trigger array reference change so *cdkVirtualFor sees it
+                         this.balanceChanges = [...this.balanceChanges];
+
+                         // Optional: scroll to top on reset
+                         if (reset && this.viewport) {
+                              setTimeout(() => this.viewport.scrollToIndex(0), 0);
+                         }
+                    }
+
+                    // Update marker and hasMoreData
+                    this.marker = txResponse.result.marker;
+                    if (!this.marker) {
+                         this.hasMoreData = false;
+                         console.log('XRPL returned no marker -> reached end of ledger history for this query.');
+                    }
+               } catch (error) {
+                    console.error('Error loading tx:', error);
+                    this.txUiService.setError('Failed to load balance changes');
+               } finally {
+                    // Calculate remaining time to show spinner (minimum time total)
+                    const elapsedSpinnerTime = Date.now() - spinnerStartTime;
+                    const remainingSpinnerTime = Math.max(0, minSpinnerTime - elapsedSpinnerTime);
+
+                    console.log(`Spinner shown for ${elapsedSpinnerTime}ms, waiting ${remainingSpinnerTime}ms more`);
+
+                    // Wait for the remaining time before hiding spinner and updating loading flags
+                    setTimeout(() => {
+                         // Hide spinner and update loading flags together
+                         this.txUiService.spinner.set(false);
+                         reset ? (this.loadingInitial = false) : (this.loadingMore = false);
+
+                         this.cdr.detectChanges();
+
+                         // this.executionTime = (Date.now() - startTime).toString();
+                         // console.log(`Leaving loadBalanceChanges in ${this.executionTime}ms, totalRows=${this.balanceChanges.length}, hasMore=${this.hasMoreData}`);
+                    }, remainingSpinnerTime);
                }
-
-               // Update marker and hasMoreData
-               this.marker = txResponse.result.marker;
-               if (!this.marker) {
-                    this.hasMoreData = false;
-                    console.log('XRPL returned no marker -> reached end of ledger history for this query.');
-               }
-          } catch (error) {
-               console.error('Error loading tx:', error);
-               this.ui.setError('Failed to load balance changes');
-          } finally {
-               // Calculate remaining time to show spinner (minimum time total)
-               const elapsedSpinnerTime = Date.now() - spinnerStartTime;
-               const remainingSpinnerTime = Math.max(0, minSpinnerTime - elapsedSpinnerTime);
-
-               console.log(`Spinner shown for ${elapsedSpinnerTime}ms, waiting ${remainingSpinnerTime}ms more`);
-
-               // Wait for the remaining time before hiding spinner and updating loading flags
-               setTimeout(() => {
-                    // Hide spinner and update loading flags together
-                    this.ui.spinner.set(false);
-                    reset ? (this.loadingInitial = false) : (this.loadingMore = false);
-
-                    this.cdr.detectChanges();
-
-                    this.executionTime = (Date.now() - startTime).toString();
-                    console.log(`Leaving loadBalanceChanges in ${this.executionTime}ms, totalRows=${this.balanceChanges.length}, hasMore=${this.hasMoreData}`);
-               }, remainingSpinnerTime);
-          }
-          this.updateInfoMessage();
+               this.updateInfoMessage();
+          });
      }
 
      private async getCachedAccountLines(client: any, address: string): Promise<any> {
@@ -671,7 +660,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                               balanceAfter: this.utilsService.roundToEightDecimals(finalXrp),
                          });
 
-                         // ✅ Use this counterparty downstream
+                         // Use this counterparty downstream
                          counterparty = cp;
                     } else if (modified.LedgerEntryType === 'RippleState') {
                          let tokenChange = 0;
@@ -730,7 +719,6 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                          balanceBefore: changeItem.balanceBefore,
                          balanceAfter: changeItem.balanceAfter,
                          counterparty,
-                         // NEW: build once, search fast
                          _searchIndex: [type, changeItem.change, changeItem.currency, xrpl.dropsToXrp(fees), changeItem.balanceBefore, changeItem.balanceAfter, counterparty || '', hash, this.formatDateForSearch(date)].join(' ').toLowerCase(),
                     });
                }
@@ -892,16 +880,24 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
      }
 
      updateDestinations() {
-          this.destinations = [...this.wallets.map(w => ({ name: w.name, address: w.address })), ...this.customDestinations];
-          this.destinationDropdownService.setItems(this.destinations);
+          // Optional: persist destinations
+          const allItems = [
+               ...this.wallets().map(wallet => ({
+                    name: wallet.name ?? this.truncateAddress(wallet.address),
+                    address: wallet.address,
+               })),
+               ...this.customDestinations(),
+          ];
+          this.storageService.set('destinations', allItems);
      }
 
-     private async getWallet() {
-          const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
-          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
-          if (!wallet) {
-               throw new Error('Wallet could not be created or is undefined');
-          }
+     private truncateAddress(address: string): string {
+          return `${address.slice(0, 8)}...${address.slice(-6)}`;
+     }
+
+     private async getWallet(): Promise<xrpl.Wallet> {
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
+          if (!wallet) throw new Error('Wallet could not be created');
           return wallet;
      }
 
@@ -909,24 +905,24 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           navigator.clipboard.writeText(text).then(
                () => {
                     console.log('Copied:', text);
-                    this.ui.showToastMessage('Tx Hash copied!');
+                    this.txUiService.showToastMessage('Tx Hash copied!');
                },
                err => {
-                    this.ui.showToastMessage('Clipboard copy failed:', err);
+                    this.txUiService.showToastMessage('Clipboard copy failed:', err);
                }
           );
      }
 
      updateInfoMessage(): void {
-          if (!this.currentWallet?.address) {
-               this.ui.setInfoMessage('No wallet is currently selected.');
+          if (!this.currentWallet()?.address) {
+               this.txUiService.setInfoMessage('No wallet is currently selected.');
                return;
           }
 
-          const walletName = this.currentWallet.name || 'selected';
+          const walletName = this.currentWallet().name || 'selected';
 
           if (!this.currentBalance && this.balanceChanges.length === 0) {
-               this.ui.setInfoMessage(`<code>${walletName}</code> wallet has no balance change history available.`);
+               this.txUiService.setInfoMessage(`<code>${walletName}</code> wallet has no balance change history available.`);
                return;
           }
 
@@ -980,117 +976,18 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
                message += '</ul>';
           }
 
-          this.ui.setInfoMessage(message);
+          this.txUiService.setInfoMessage(message);
      }
 
      clearFields() {
           this.clearDateFilter();
           this.clearFilter();
-          this.ui.clearMessages();
+          this.txUiService.clearMessages();
           this.clearWarning();
           this.cdr.detectChanges();
      }
 
      clearWarning() {
-          this.ui.setWarning(null);
-     }
-
-     onArrowDown() {
-          if (!this.showDropdown || this.filteredDestinations.length === 0) return;
-          this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredDestinations.length;
-     }
-
-     selectHighlighted() {
-          if (this.highlightedIndex >= 0 && this.filteredDestinations[this.highlightedIndex]) {
-               const addr = this.filteredDestinations[this.highlightedIndex].address;
-               if (addr !== this.currentWallet.address) {
-                    this.destinationField = addr;
-                    this.closeDropdown(); // Also close on Enter
-               }
-          }
-     }
-
-     // Dropdown controls
-     openDropdown() {
-          this.destinationDropdownService.setItems(this.destinations);
-          this.destinationDropdownService.filter(this.destinationField || '');
-          this.destinationDropdownService.openDropdown();
-     }
-
-     closeDropdown() {
-          this.destinationDropdownService.closeDropdown();
-     }
-
-     toggleDropdown() {
-          this.destinationDropdownService.setItems(this.destinations);
-          this.destinationDropdownService.toggleDropdown();
-     }
-
-     onDestinationInput() {
-          this.destinationDropdownService.filter(this.destinationField || '');
-          this.destinationDropdownService.openDropdown();
-     }
-
-     selectDestination(address: string) {
-          if (address === this.currentWallet.address) return;
-          const dest = this.destinations.find(d => d.address === address);
-          this.destinationField = dest ? this.destinationDropdownService.formatDisplay(dest) : `${address.slice(0, 6)}...${address.slice(-6)}`;
-          this.closeDropdown();
-     }
-
-     private openDropdownInternal() {
-          if (this.overlayRef?.hasAttached()) return;
-
-          const strategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.dropdownOrigin)
-               .withPositions([{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 }]);
-
-          this.overlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy: strategy,
-               scrollStrategy: this.overlay.scrollStrategies.close(),
-          });
-
-          this.overlayRef.attach(new TemplatePortal(this.dropdownTemplate, this.viewContainerRef));
-          this.overlayRef.backdropClick().subscribe(() => this.closeDropdown());
-     }
-
-     private closeDropdownInternal() {
-          this.overlayRef?.detach();
-          this.overlayRef = null;
-     }
-
-     updatePaymentTx() {
-          this.scheduleHighlight();
-     }
-
-     updateTxResult() {
-          this.scheduleHighlight();
-     }
-
-     private scheduleHighlight() {
-          afterRenderEffect(
-               () => {
-                    const paymentStr = JSON.stringify(this.ui.paymentTx, null, 2);
-                    const resultStr = JSON.stringify(this.ui.txResult, null, 2);
-
-                    if (this.paymentJson?.nativeElement && paymentStr !== this.lastPaymentTx) {
-                         this.paymentJson.nativeElement.textContent = paymentStr;
-                         Prism.highlightElement(this.paymentJson.nativeElement);
-                         this.lastPaymentTx = paymentStr;
-                    }
-
-                    if (this.txResultJson?.nativeElement && resultStr !== this.lastTxResult) {
-                         this.txResultJson.nativeElement.textContent = resultStr;
-                         Prism.highlightElement(this.txResultJson.nativeElement);
-                         this.lastTxResult = resultStr;
-                    }
-
-                    this.cdr.detectChanges();
-               },
-               { injector: this.injector }
-          );
+          this.txUiService.setWarning(null);
      }
 }

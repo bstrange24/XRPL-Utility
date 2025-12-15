@@ -6,24 +6,14 @@
      </div>
 </div>
 
-<!-- Main content. Centered with 2 columns -->
+<!-- Main content -->
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
-
           <!-- Right form -->
           <div class="form-panel account-changes-form-panel">
-               <!-- Menu bar -->
-               <!-- <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'balance'" (click)="setTab('balance')">
-                         <ng-icon name="heroChartBar" size="20" class="text-red-600"></ng-icon>
-                         Account Balance Changes
-                    </button>
-               </div> -->
-
                <div class="submenu-info-text" style="padding-top: 2em">
                     <div class="blue-button-submenu">
                          <ng-icon name="heroChartBar" size="27" class="text-red-600"></ng-icon>
@@ -35,23 +25,23 @@
                </div>
 
                <!-- Info Message -->
-               @if (ui.infoMessage) {
+               @if (txUiService.infoMessage) {
                <div class="info-panel">
                     <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="ui.safeInfo"></div>
+                    <div class="info-text" [innerHTML]="txUiService.safeInfo"></div>
                </div>
                }
 
                <!-- Warning Message -->
-               @if (ui.warningMessage) {
+               @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="ui.safeWarning"></div>
+                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
                </div>
                }
 
                <!-- Success message -->
-               @if (ui.isSuccess && !ui.isError) {
+               @if (txUiService.isSuccess && !txUiService.isError) {
                <div class="success-message">
                     <lucide-icon name="check" size="20"></lucide-icon>
                     <div class="success-text">{{ successMessage }}</div>
@@ -59,7 +49,7 @@
                }
 
                <!-- Error message -->
-               @if (ui.isError && result) {
+               @if (txUiService.isError && result) {
                <div class="tx-message error">
                     <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
                     <div class="tx-text">{{ result }}</div>
@@ -101,6 +91,11 @@
                                              </button>
                                         </div>
                                    </div>
+                              </div>
+
+                              <!-- Execution time -->
+                              <div style="display: flex">
+                                   <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                               </div>
 
                               <div class="form-row">
