@@ -1129,8 +1129,9 @@ input:focus+.slider {
      justify-content: center;
      /* Center vertically */
      gap: 0.35rem;
+     min-height: 44px;
      /* Space between icon and text */
-     padding: 0.75rem 0.75rem;
+     padding: 0.5rem 0.75rem;
      /* More vertical padding for better touch */
      min-width: 100px;
      /* Minimum width */
@@ -1163,11 +1164,12 @@ input:focus+.slider {
 .menu-btn:hover {
      background: #e5e7eb;
      color: #1f2937;
+
 }
 
 .menu-btn.active {
      color: #1e40af;
-     font-weight: 600;
+     font-weight: 400;
      background: #eff6ff;
      border-color: #3b82f6;
 }
@@ -1181,6 +1183,35 @@ input:focus+.slider {
      height: 2px;
      background: #3b82f6;
      border-radius: 2px;
+}
+
+/* Dynamic active states */
+.menu-btn.active-blue {
+     color: #1e40af;
+     font-weight: 600;
+     background: #eff6ff;
+     border-color: #3b82f6;
+}
+
+.menu-btn.active-green {
+     color: #166534;
+     font-weight: 600;
+     background: #f0fdf4;
+     border-color: #22c55e;
+}
+
+.menu-btn.active-red {
+     color: #991b1b;
+     font-weight: 600;
+     background: #fef2f2;
+     border-color: #ef4444;
+}
+
+.menu-btn.active-blue,
+.menu-btn.active-green,
+.menu-btn.active-red {
+     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+     /* adjust per color if desired */
 }
 
 /* .menu-btn {

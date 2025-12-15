@@ -176,10 +176,10 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
 
           // === Balance check ===
           const balanceXrp = Number(xrpl.dropsToXrp(String(acc.Balance)));
-          const baseReserve = Number(this.serverInfo()?.result?.info?.reserve_base_xrp ?? 10);
-          const ownerReserve = Number(this.serverInfo()?.result?.info?.reserve_inc_xrp ?? 2);
+          const baseReserve = Number(this.serverInfo()?.result?.info?.validated_ledger?.base_fee_xrp ?? '0.000001');
+          const ownerReserve = Number(this.serverInfo()?.result?.info?.validated_ledger?.reserve_inc_xrp ?? 2);
           const totalReserve = baseReserve + ownerCount * ownerReserve;
-          const minNeeded = totalReserve + 2; // +2 XRP delete fee
+          const minNeeded = totalReserve + 0.2; // +2 XRP delete fee
 
           if (balanceXrp < minNeeded) {
                message += `<br><strong>Warning:</strong> Insufficient balance. Account needs at least <strong>${minNeeded.toFixed(6)} XRP</strong> (${totalReserve.toFixed(6)} reserve + 2 XRP deletion fee).`;
@@ -312,7 +312,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
           await this.withPerf('getAccountDetails', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
+               // this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, serverInfo, blockingObjects] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh), this.xrplCache.getServerInfo(this.xrplService), this.xrplService.checkAccountObjectsForDeletion(client, wallet.classicAddress)]);
@@ -329,7 +329,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                     this.blockingObjects.set(blockingObjects);
 
                     this.refreshUiState(wallet, accountInfo, accountObjects);
-                    this.txUiService.clearAllOptionsAndMessages();
+                    // this.txUiService.clearAllOptionsAndMessages();
                } catch (error: any) {
                     console.error('Error in getAccountDetails:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -341,7 +341,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
 
      async deleteAccount(): Promise<void> {
           await this.withPerf('deleteAccount', async () => {
-               this.txUiService.clearMessages();
+               this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
