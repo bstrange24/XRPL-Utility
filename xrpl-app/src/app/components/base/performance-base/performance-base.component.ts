@@ -10,7 +10,7 @@ import { XrplService } from '../../../services/xrpl-services/xrpl.service';
 export class PerformanceBaseComponent {
      public readonly xrplService = inject(XrplService);
      // Shared signal for execution time — use in any child component
-     protected executionTime = signal<string>('0');
+     protected executionTime = signal<string>('');
 
      /**
       * Wrap any async operation with performance timing

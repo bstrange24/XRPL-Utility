@@ -112,7 +112,8 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      infoData = computed(() => {
           const wallet = this.currentWallet();
           if (!wallet?.address) {
-               return 'No wallet is currently selected.';
+               // return 'No wallet is currently selected.';
+               return null;
           }
 
           const walletName = wallet.name || 'Selected wallet';
@@ -143,6 +144,15 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      }
 
      private async setupWalletSubscriptions() {
+          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
+               if (hasWallets) {
+                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
+               } else {
+                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+                    this.txUiService.setError('');
+               }
+          });
+
           this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
                this.wallets.set(wallets);
                if (this.hasWallets() && !this.currentWallet().address) {

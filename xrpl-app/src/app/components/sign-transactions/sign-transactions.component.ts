@@ -107,6 +107,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      requiredQuorum = signal<number>(0);
      selectedQuorum = signal<number>(0);
      flagResults = signal<any>('');
+     accountInfo = signal<any>(null);
      private highlightTimeout = signal<any>('');
      buttonLoading = signal({
           getJson: false,
@@ -161,6 +162,10 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
           return this.destinations()
                .filter(d => d.address !== this.currentWallet().address)
                .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
+     });
+
+     infoData = computed(() => {
+          return null;
      });
 
      // Transaction Type Dropdown Items
@@ -266,6 +271,15 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      }
 
      private async setupWalletSubscriptions() {
+          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
+               if (hasWallets) {
+                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
+               } else {
+                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+                    this.txUiService.setError('');
+               }
+          });
+
           this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
                this.wallets.set(wallets);
                if (this.hasWallets() && !this.currentWallet().address) {
@@ -385,6 +399,8 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                          return this.txUiService.setError(errors.join('\n• '));
                     }
 
+                    // Just set the signal — infoMessage() recomputes automatically!
+                    this.accountInfo.set(accountInfo);
                     this.refreshUiState(wallet, accountInfo, accountObjects);
                     this.clearFields(false);
                     this.getTransactionJSON();
@@ -417,6 +433,11 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                this.txJson = jsonStr;
                this.scheduleHighlight();
           } catch (err: any) {
+               if (err.message === 'No wallets exist. Create a new wallet before continuing.') {
+                    this.txUiService.setWarning(err.message);
+                    this.txUiService.setError('');
+                    return;
+               }
                this.txUiService.setError(err.message);
           } finally {
                this.buttonLoading.update(l => ({ ...l, getJson: false }));
@@ -854,6 +875,12 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      }
 
      private async getWallet(): Promise<xrpl.Wallet> {
+          const walletEntries = Object.entries(this.currentWallet());
+          console.log('this.currentWallet entries', walletEntries.length > 0);
+          if (walletEntries.length <= 0) {
+               throw new Error('No wallets exist. Create a new wallet before continuing.');
+          }
+
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) throw new Error('Wallet could not be created');
           return wallet;

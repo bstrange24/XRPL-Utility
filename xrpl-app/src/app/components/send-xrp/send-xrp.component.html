@@ -42,8 +42,8 @@
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
                <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
+                    <div class="warning-text">{{ safeWarningMessage }}</div>
                </div>
                }
 

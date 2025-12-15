@@ -29,7 +29,17 @@
                </div>
                }
 
-               <!-- Dynamic warning panel  -->
+               <!-- Dynamic info panel -->
+               @if (infoData()) {
+               <div class="info-panel">
+                    <div class="info-panel-content">
+                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                         <div class="info-text" [innerHTML]="infoData()"></div>
+                    </div>
+               </div>
+               }
+
+               <!-- Warning Message -->
                @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
