@@ -1,37 +1,31 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { OverlayModule } from '@angular/cdk/overlay';
-import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-
+import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
-import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
-
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
-import { DownloadUtilService } from '../../services/download-util/download-util.service';
-import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
-import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 
 @Component({
      selector: 'app-delete-account',
@@ -50,56 +44,56 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
-     private readonly dropdownService = inject(DestinationDropdownService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
-     public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
-     // Domain Dropdown State
-     selectedDomainId = signal<string | null>(null);
-     domainSearchQuery = signal<string>('');
-     // Destination Dropdown
-     typedDestination = signal<string>('');
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
-     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
-     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
-     activeTab = signal<'deleteAccount'>('deleteAccount');
-     wallets = signal<Wallet[]>([]);
-     currentWallet = signal<Wallet>({} as Wallet);
-
-     selectedWalletIndex = signal<number>(0);
-     // Account state signals
+     // Delete account State
      accountInfo = signal<any>(null);
      serverInfo = signal<any>(null);
      accountObjects = signal<any>(null);
      blockingObjects = signal<any>(null);
 
-     selectedDestinationItem = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return null;
-          return this.destinationItems().find(d => d.id === addr) || null;
-     });
+     // Destination Dropdown
+     typedDestination = signal<string>('');
+     customDestinations = signal<{ name?: string; address: string }[]>([]);
+     selectedDestinationAddress = signal<string>('');
+     destinationSearchQuery = signal<string>('');
+
+     // Reactive State (Signals)
+     activeTab = signal<'deleteAccount'>('deleteAccount');
+     wallets = signal<Wallet[]>([]);
+     currentWallet = signal<Wallet>({} as Wallet);
+     selectedWalletIndex = signal<number>(0);
 
      destinationItems = computed(() => {
           const currentAddr = this.currentWallet().address;
 
-          return this.destinations().map(d => ({
+          // Build the list directly from wallets + custom destinations
+          const allDestinations = [
+               ...this.wallets().map(w => ({
+                    address: w.address,
+                    name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
+               })),
+               ...this.customDestinations(),
+          ];
+
+          return allDestinations.map(d => ({
                id: d.address,
                display: d.name || 'Unknown Wallet',
                secondary: d.address,
                isCurrentAccount: d.address === currentAddr,
+               isCurrentCode: false,
+               isCurrentToken: false,
           }));
      });
 
-     destinations = computed(() => [
-          ...this.wallets().map((w: DropdownItem) => ({
-               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
-               address: w.address,
-          })),
-          ...this.customDestinations(),
-     ]);
+     selectedDestinationItem = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return null;
+          return this.destinationItems().find(i => i.id === addr) || null;
+     });
 
      hasWallets = computed(() => this.wallets().length > 0);
 
@@ -124,7 +118,6 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           }
 
           // === Extract data safely ===
-
           const hasRegularKey = !!acc.RegularKey;
           const hasSignerList = !!flags?.enableSignerList;
           const ownerCount = Number(acc.OwnerCount || 0);
@@ -237,7 +230,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      private async setupWalletSubscriptions() {
           this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
                if (hasWallets) {
-                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
+                    this.txUiService.clearWarning?.();
                } else {
                     this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
                     this.txUiService.setError('');
@@ -312,7 +305,6 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
           await this.withPerf('getAccountDetails', async () => {
-               // this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, serverInfo, blockingObjects] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh), this.xrplCache.getServerInfo(this.xrplService), this.xrplService.checkAccountObjectsForDeletion(client, wallet.classicAddress)]);
@@ -322,7 +314,6 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                          return this.txUiService.setError(errors.join('\n• '));
                     }
 
-                    // Just set signals — computed() does the rest!
                     this.accountInfo.set(accountInfo);
                     this.accountObjects.set(accountObjects);
                     this.serverInfo.set(serverInfo);
@@ -344,8 +335,6 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-
-                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const [accountInfo, accountObjects, currentLedger, serverInfo] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplService.checkAccountObjectsForDeletion(client, wallet.classicAddress), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                     const inputs = this.txUiService.getValidationInputs({
@@ -498,18 +487,20 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      }
 
      private addNewDestinationFromUser(destination: string): void {
-          if (destination && xrpl.isValidAddress(destination) && !this.destinations().some(d => d.address === destination)) {
-               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
-               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
-               this.updateDestinations();
-          }
+          if (!destination || !xrpl.isValidAddress(destination)) return;
+
+          // Use destinationItems() instead of destinations()
+          const alreadyExists = this.destinationItems().some((item: { id: string }) => item.id === destination);
+          if (alreadyExists) return;
+
+          this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
+
+          this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
      }
 
      get deleteWalletTooltip(): string {
           if (this.txUiService.spinner()) return 'Transaction in progress…';
-
           const blockers = this.deleteBlockers() || [];
-
           return blockers.length ? blockers.map(b => this.stripHtml(b)).join(' \n ') : '';
      }
 

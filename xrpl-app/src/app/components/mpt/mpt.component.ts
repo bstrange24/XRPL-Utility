@@ -521,7 +521,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                     const accountIssuerToken = mptokens.some((obj: any) => obj.mpt_issuance_id === this.mptIssuanceIdField());
 
                     if (!accountIssuerToken) {
-                         return this.txUiService.setError(`ERROR: MPT issuance ID ${this.mptIssuanceIdField()} was not issued by ${wallet.classicAddress}.`);
+                         return this.txUiService.setError(`MPT issuance ID ${this.mptIssuanceIdField()} was not issued by ${wallet.classicAddress}.`);
                     }
 
                     const mPTokenIssuanceSetTx: xrpl.MPTokenIssuanceSet = {
@@ -588,7 +588,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
 
                     // Check if destination can hold the MPT
                     if (!destObjects?.result?.account_objects) {
-                         return this.txUiService.setError(`ERROR: Unable to fetch account objects for destination ${destinationAddress}`);
+                         return this.txUiService.setError(`Unable to fetch account objects for destination ${destinationAddress}`);
                     }
 
                     const walletMptTokens = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPTokenIssuance');
@@ -602,7 +602,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                     const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === this.mptIssuanceIdField());
 
                     if (!authorized) {
-                         return this.txUiService.setError(`ERROR: Destination ${destinationAddress} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField()}). Please ensure authorization has been completed.`);
+                         return this.txUiService.setError(`Destination ${destinationAddress} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField()}). Please ensure authorization has been completed.`);
                     }
 
                     if (walletMptToken) {

@@ -799,7 +799,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, ammCreateTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign transaction.');
+                         return this.ui.setError('Failed to sign transaction.');
                     }
 
                     response = await client.submitAndWait(signedTx.tx_blob);
@@ -989,7 +989,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, ammDepositTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign transaction.');
+                         return this.ui.setError('Failed to sign transaction.');
                     }
 
                     response = await client.submitAndWait(signedTx.tx_blob);
@@ -1120,7 +1120,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                }
 
                if (!participation?.lpTokens?.[0]) {
-                    return this.ui.setError('ERROR: No LP token found for this AMM pool');
+                    return this.ui.setError('No LP token found for this AMM pool');
                }
 
                const ammIssuer = participation.lpTokens[0].issuer;
@@ -1211,7 +1211,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, ammWithdrawTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign transaction.');
+                         return this.ui.setError('Failed to sign transaction.');
                     }
 
                     response = await client.submitAndWait(signedTx.tx_blob);
@@ -1319,7 +1319,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                this.utilsService.logObjects(`participation:`, participation);
 
                if (!participation?.lpTokens?.[0]) {
-                    return this.ui.setError('ERROR: No LP token found for this AMM pool');
+                    return this.ui.setError('No LP token found for this AMM pool');
                }
 
                const lpTokenInfo = participation.lpTokens[0];
@@ -1370,7 +1370,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, ammClawbackTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign transaction.');
+                         return this.ui.setError('Failed to sign transaction.');
                     }
 
                     response = await client.submitAndWait(signedTx.tx_blob);
@@ -1492,7 +1492,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, swapPaymentTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign Payment transaction.');
+                         return this.ui.setError('Failed to sign Payment transaction.');
                     }
 
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
@@ -1610,7 +1610,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, deleteAmmTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign Payment transaction.');
+                         return this.ui.setError('Failed to sign Payment transaction.');
                     }
 
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
@@ -1953,7 +1953,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
                if (this.selectedSingleTicket) {
                     const ticketExists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(this.selectedSingleTicket));
                     if (!ticketExists) {
-                         return this.ui.setError(`ERROR: Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
+                         return this.ui.setError(`Ticket Sequence ${this.selectedSingleTicket} not found for account ${wallet.classicAddress}`);
                     }
                     this.utilsService.setTicketSequence(ammTx, this.selectedSingleTicket, true);
                } else {
@@ -2156,7 +2156,7 @@ export class CreateAmmComponent implements OnInit, AfterViewInit {
           const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) {
-               throw new Error('ERROR: Wallet could not be created or is undefined');
+               throw new Error('Wallet could not be created or is undefined');
           }
           return wallet;
      }

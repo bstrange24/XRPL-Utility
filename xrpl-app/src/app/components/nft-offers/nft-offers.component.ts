@@ -638,7 +638,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
 
                     const sellOffer = sellOffersResponse.result?.offers || [];
                     if (!Array.isArray(sellOffer) || sellOffer.length === 0) {
-                         this.txUiService.setError(`ERROR: No sell offers found for this NFT ${this.nftIdField}`);
+                         this.txUiService.setError(`No sell offers found for this NFT ${this.nftIdField}`);
                          return;
                     }
 
@@ -653,7 +653,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     });
 
                     if (validOffers.length === 0) {
-                         this.txUiService.setError('ERROR: No matching sell offers found for this wallet.');
+                         this.txUiService.setError('No matching sell offers found for this wallet.');
                          return;
                     }
 
@@ -667,12 +667,12 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     console.log('First sell offer:', validOffers[0]);
 
                     if (selectedOffer && selectedOffer.Destination) {
-                         this.txUiService.setError(`ERROR: This NFT is only purchasable by: ${selectedOffer.Destination}`);
+                         this.txUiService.setError(`This NFT is only purchasable by: ${selectedOffer.Destination}`);
                          return;
                     }
 
                     if (selectedOffer && selectedOffer.owner === wallet.classicAddress) {
-                         this.txUiService.setError('ERROR: You already own this NFT.');
+                         this.txUiService.setError('You already own this NFT.');
                          return;
                     }
 

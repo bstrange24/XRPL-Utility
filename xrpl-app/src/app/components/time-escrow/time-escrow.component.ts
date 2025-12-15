@@ -715,7 +715,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                     //      }
                     // } else if (this.currencyFieldDropDownValue !== 'MPT') {
                     // if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, escrowFinishTx, resolvedDestination)) {
-                    //      return this.txUiService.setError('ERROR: Not enough IOU balance for this transaction');
+                    //      return this.txUiService.setError('Not enough IOU balance for this transaction');
                     // }
 
                     const result = await this.txExecutor.finishEscrow(escrowFinishTx, wallet, client, {

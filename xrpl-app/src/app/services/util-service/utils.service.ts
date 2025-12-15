@@ -1982,7 +1982,7 @@ export class UtilsService {
                return { ownerCount, totalReserveXRP };
           } catch (error: any) {
                console.error('Error in getAccountReserves:', error);
-               this.setError(`ERROR: ${error.message || 'Unknown error'}`, undefined);
+               this.setError(`${error.message || 'Unknown error'}`, undefined);
                return undefined;
           }
      }
@@ -2004,7 +2004,7 @@ export class UtilsService {
      //           return { ownerCount, totalReserveXRP };
      //      } catch (error: any) {
      //           console.error('Error:', error);
-     //           this.setError(`ERROR: ${error.message || 'Unknown error'}`, undefined);
+     //           this.setError(`${error.message || 'Unknown error'}`, undefined);
      //           return undefined;
      //      }
      // }
@@ -2025,7 +2025,7 @@ export class UtilsService {
                return { reserveBaseXRP, reserveIncrementXRP };
           } catch (error: any) {
                console.error('Error:', error);
-               this.setError(`ERROR: ${error.message || 'Unknown error'}`, undefined);
+               this.setError(`${error.message || 'Unknown error'}`, undefined);
                return undefined;
           }
      }

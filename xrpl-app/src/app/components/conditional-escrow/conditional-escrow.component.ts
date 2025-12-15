@@ -675,7 +675,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
 
                // If condition is provided, fulfillment is required
                if (this.escrowConditionField() && !this.utilsService.validateInput(this.escrowFulfillmentField())) {
-                    return this.txUiService.setError('ERROR: Fulfillment is required when a condition is provided');
+                    return this.txUiService.setError('Fulfillment is required when a condition is provided');
                }
 
                try {
@@ -731,7 +731,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                     //      }
                     // } else if (this.currencyFieldDropDownValue !== 'MPT') {
                     // if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, escrowFinishTx, resolvedDestination)) {
-                    //      return this.txUiService.setError('ERROR: Not enough IOU balance for this transaction');
+                    //      return this.txUiService.setError('Not enough IOU balance for this transaction');
                     // }
 
                     const result = await this.txExecutor.finishEscrow(escrowFinishTx, wallet, client, {

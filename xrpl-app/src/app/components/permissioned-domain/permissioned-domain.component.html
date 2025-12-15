@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<!-- Main content. Centered with 2 columns -->
+<!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel ==== -->
@@ -68,7 +68,7 @@
                                    permissioned domain{{ info.permissionedDomainCount === 1 ? '' : 's' }}. }
                               </div>
 
-                              <!-- COLLAPSIBLE PERMISSIONED DOMAIN LIST -->
+                              <!-- Collabpsible Permissioned Domain list -->
                               @if (info.permissionedDomainCount > 0) {
                               <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05)">
                                    <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
@@ -130,7 +130,6 @@
                                    @if (activeTab() === 'set') {
                                    <div class="form-group">
                                         <label for="issuer">Issuer</label>
-
                                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationSelected($event)" placeholder="Enter or select issuer address" emptyMessage="No wallets available"> </app-select-search-dropdown>
                                    </div>
 
@@ -144,15 +143,14 @@
 
                               <!-- Permissioned Domain Dropdown -->
                               @if (activeTab() === 'delete') {
-                              <!-- Permissioned Domain Dropdown -->
+                              <!-- Dropdown -->
                               @if (createdPermissionedDomains().length > 0) {
                               <div class="form-group">
                                    <label for="selectPDtoDelete">Select Permissioned Domain to delete</label>
-
                                    <app-select-search-dropdown [items]="domainItems()" [value]="selectedDomainItem()" (valueChange)="onDomainSelected($event)" placeholder="Search by Domain ID..." emptyMessage="No domains found"> </app-select-search-dropdown>
                               </div>
 
-                              <!-- Domain ID Field (still there, auto-filled) -->
+                              <!-- Domain ID Field -->
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="domainId">Domain ID</label>

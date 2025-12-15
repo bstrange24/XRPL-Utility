@@ -900,7 +900,7 @@ export class AccountChangesComponent implements OnDestroy, AfterViewInit {
           const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) {
-               throw new Error('ERROR: Wallet could not be created or is undefined');
+               throw new Error('Wallet could not be created or is undefined');
           }
           return wallet;
      }

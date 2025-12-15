@@ -479,7 +479,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
                this.txUiService.clearAllOptionsAndMessages();
 
                if (this.flags.asfNoFreeze && this.flags.asfGlobalFreeze) {
-                    return this.txUiService.setError('ERROR: Cannot enable both NoFreeze and GlobalFreeze');
+                    return this.txUiService.setError('Cannot enable both NoFreeze and GlobalFreeze');
                }
 
                const nftFlags = this.getFlagsValue(this.nftFlags);

@@ -456,14 +456,14 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                          const channels = paymentChannelObjects.result.account_objects as PaymentChannelObject[];
                          const channel = channels.find(c => c.index === this.channelIDField());
                          if (!channel) {
-                              return this.txUiService.setError(`ERROR: Payment channel ${this.channelIDField} not found`);
+                              return this.txUiService.setError(`Payment channel ${this.channelIDField} not found`);
                          }
 
                          // Determine if the selected account is the creator or receiver
                          const isReceiver = channel.Destination === wallet.classicAddress;
                          let signature = this.channelClaimSignatureField();
                          if (!signatureVerified.result.signature_verified) {
-                              return this.txUiService.setError('ERROR: Invalid signature');
+                              return this.txUiService.setError('Invalid signature');
                          }
 
                          // if (isChannelAuthorized.result.signature !== signature) {
@@ -505,7 +505,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                          const channels = paymentChannelObjects.result.account_objects as PaymentChannelObject[];
                          const channel = channels.find(c => c.index === this.channelIDField());
                          if (!channel) {
-                              return this.txUiService.setError(`ERROR: Payment channel ${this.channelIDField} not found`);
+                              return this.txUiService.setError(`Payment channel ${this.channelIDField} not found`);
                          }
 
                          let isOwnerCancelling = false;
@@ -515,7 +515,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
 
                          const currentLedgerTime = await this.xrplService.getLedgerCloseTime(client);
                          if (channel.Expiration && channel.Expiration > currentLedgerTime) {
-                              return this.txUiService.setError('ERROR: Cannot close channel before expiration');
+                              return this.txUiService.setError('Cannot close channel before expiration');
                          }
 
                          let hasChannelExpired = this.checkChannelExpired(channel);
@@ -530,7 +530,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                               const balance = BigInt(channel.Balance ?? '0');
                               const remaining = amount - balance;
                               if (remaining > 0n) {
-                                   return this.txUiService.setError(`ERROR: Cannot close channel with non-zero balance. ${xrpl.dropsToXrp(remaining.toString())} XRP still available to claim.`);
+                                   return this.txUiService.setError(`Cannot close channel with non-zero balance. ${xrpl.dropsToXrp(remaining.toString())} XRP still available to claim.`);
                               }
                          }
 
@@ -692,22 +692,22 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
 
      private async getPaymentChannelAuthorizedWallet(authorizedWalletAddress: string) {
           if (!this.wallets() || this.wallets().length === 0) {
-               throw new Error('ERROR: No wallets available');
+               throw new Error('No wallets available');
           }
           if (!authorizedWalletAddress || authorizedWalletAddress === this.currentWallet().address) {
-               throw new Error('ERROR: Invalid authorized wallet address (must be different from selected)');
+               throw new Error('Invalid authorized wallet address (must be different from selected)');
           }
           const authorizedWalletData = this.wallets().find((w: { address: string }) => w.address === authorizedWalletAddress);
           if (!authorizedWalletData) {
-               throw new Error('ERROR: Authorized wallet not found');
+               throw new Error('Authorized wallet not found');
           }
           const authorizedSeed = authorizedWalletData.seed || authorizedWalletData.mnemonic || authorizedWalletData.secretNumbers;
           if (!authorizedSeed) {
-               throw new Error('ERROR: No seed available for authorized wallet');
+               throw new Error('No seed available for authorized wallet');
           }
           const authorizedWallet = await this.utilsService.getWallet(authorizedSeed);
           if (!authorizedWallet) {
-               throw new Error('ERROR: Authorized wallet could not be created or is undefined');
+               throw new Error('Authorized wallet could not be created or is undefined');
           }
           return authorizedWallet;
      }
@@ -830,7 +830,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                console.log(`cancelTime: ${this.utilsService.convertXRPLTime(cancelAfterTime)}`);
                const currentLedgerTime = await this.xrplService.getLedgerCloseTime(client); // Implement this in xrplService
                if (cancelAfterTime <= currentLedgerTime) {
-                    return this.txUiService.setError('ERROR: Cancel After time must be in the future');
+                    return this.txUiService.setError('Cancel After time must be in the future');
                }
                this.utilsService.setCancelAfter(paymentChannelTx, cancelAfterTime);
           }
@@ -839,7 +839,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                const newExpiration = this.utilsService.addTime(this.paymentChannelCancelAfterTimeField(), this.paymentChannelCancelAfterTimeUnit() as 'seconds' | 'minutes' | 'hours' | 'days');
                const currentLedgerTime = await this.xrplService.getLedgerCloseTime(client);
                if (newExpiration <= currentLedgerTime) {
-                    return this.txUiService.setError('ERROR: New expiration time must be in the future');
+                    return this.txUiService.setError('New expiration time must be in the future');
                }
                this.utilsService.setExpiration(paymentChannelTx, newExpiration);
           }

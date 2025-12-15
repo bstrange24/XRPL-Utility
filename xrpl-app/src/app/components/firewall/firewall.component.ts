@@ -743,7 +743,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
 
                     // Check if destination can hold the MPT
                     // if (!destObjects || !destObjects.result || !destObjects.result.account_objects) {
-                    //      return this.txUiService.setError(`ERROR: Unable to fetch account objects for destination ${this.destinationField()}`);
+                    //      return this.txUiService.setError(`Unable to fetch account objects for destination ${this.destinationField()}`);
                     // }
                     // const mptTokens = destObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPToken');
                     // console.debug(`Destination MPT Tokens:`, mptTokens);
@@ -751,7 +751,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     // const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === '');
 
                     // if (!authorized) {
-                    //      return this.txUiService.setError(`ERROR: Destination ${this.destinationField()} is not authorized to receive this MPT (issuance ID ${''}).`);
+                    //      return this.txUiService.setError(`Destination ${this.destinationField()} is not authorized to receive this MPT (issuance ID ${''}).`);
                     // }
 
                     const sendMptPaymentTx: xrpl.Payment = {

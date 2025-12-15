@@ -564,7 +564,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
                     if (this.currencyFieldDropDownValue() !== 'MPT') {
                          if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, checkCreateTx, this.issuerFields())) {
-                              return this.txUiService.setError('ERROR: Not enough IOU balance for this transaction');
+                              return this.txUiService.setError('Not enough IOU balance for this transaction');
                          }
                     }
 
@@ -591,7 +591,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     //      }
                     // } else if (this.currencyFieldDropDownValue() !== 'MPT') {
                     //      if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, checkCreateTx, destinationAddress)) {
-                    //           return this.txUiService.setError('ERROR: Not enough IOU balance for this transaction');
+                    //           return this.txUiService.setError('Not enough IOU balance for this transaction');
                     //      }
                     // }
 

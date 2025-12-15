@@ -1,32 +1,31 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, computed, DestroyRef, signal } from '@angular/core';
-import { trigger, transition, style, animate } from '@angular/animations';
+import { animate, style, transition, trigger } from '@angular/animations';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
-import { PermissionedDomainSet, PermissionedDomainDelete } from 'xrpl';
+import { PermissionedDomainDelete, PermissionedDomainSet } from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
-import { UtilsService } from '../../services/util-service/utils.service';
+import { CopyUtilService } from '../../services/copy-util/copy-util.service';
+import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
-import { DownloadUtilService } from '../../services/download-util/download-util.service';
-import { CopyUtilService } from '../../services/copy-util/copy-util.service';
+import { UtilsService } from '../../services/util-service/utils.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
-import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
+import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../navbar/navbar.component';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
-import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
+import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
+import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
+import { NavbarComponent } from '../navbar/navbar.component';
+import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 
 @Component({
      selector: 'app-permissioned-domain',
@@ -48,22 +47,17 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
-     public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
      // Domain Dropdown State
      selectedDomainId = signal<string | null>(null);
      domainSearchQuery = signal<string>('');
-     // Destination Dropdown
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
-     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
-     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
 
-     // Permissioned Domain Specific
-     credentialType = signal<string>('');
-     domainId = signal<string>('');
-     createdDomains = signal(false);
-     createdPermissionedDomains = signal<any[]>([]);
+     // Destination Dropdown
+     typedDestination = signal<string>('');
+     customDestinations = signal<{ name?: string; address: string }[]>([]);
+     selectedDestinationAddress = signal<string>('');
+     destinationSearchQuery = signal<string>('');
 
      // Reactive State (Signals)
      activeTab = signal<'set' | 'delete'>('set');
@@ -71,6 +65,12 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal(false);
      subject = signal<string>('');
+
+     // Permissioned Domain Specific
+     credentialType = signal<string>('');
+     domainId = signal<string>('');
+     createdDomains = signal(false);
+     createdPermissionedDomains = signal<any[]>([]);
 
      destinationItems = computed(() => {
           const currentAddr = this.currentWallet().address;
@@ -266,7 +266,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-                    const issuerAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const issuerAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
@@ -517,8 +517,9 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      }
 
      clearInputFields() {
-          this.credentialType.set('');
+          this.typedDestination.set('');
           this.selectedDestinationAddress.set('');
+          this.credentialType.set('');
           this.domainId.set('');
           this.selectedDomainId.set(null);
      }

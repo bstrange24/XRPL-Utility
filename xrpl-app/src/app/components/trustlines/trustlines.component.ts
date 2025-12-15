@@ -525,10 +525,10 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                     // }
 
                     if (this.trustlineFlags['tfSetNoRipple'] && this.trustlineFlags['tfClearNoRipple']) {
-                         return this.txUiService.setError('ERROR: Cannot set both tfSetNoRipple and tfClearNoRipple');
+                         return this.txUiService.setError('Cannot set both tfSetNoRipple and tfClearNoRipple');
                     }
                     if (this.trustlineFlags['tfSetFreeze'] && this.trustlineFlags['tfClearFreeze']) {
-                         return this.txUiService.setError('ERROR: Cannot set both tfSetFreeze and tfClearFreeze');
+                         return this.txUiService.setError('Cannot set both tfSetFreeze and tfClearFreeze');
                     }
 
                     let currencyFieldTemp = this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue());
@@ -599,10 +599,10 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                     // }
 
                     if (this.trustlineFlags['tfSetNoRipple'] && this.trustlineFlags['tfClearNoRipple']) {
-                         return this.txUiService.setError('ERROR: Cannot set both tfSetNoRipple and tfClearNoRipple');
+                         return this.txUiService.setError('Cannot set both tfSetNoRipple and tfClearNoRipple');
                     }
                     if (this.trustlineFlags['tfSetFreeze'] && this.trustlineFlags['tfClearFreeze']) {
-                         return this.txUiService.setError('ERROR: Cannot set both tfSetFreeze and tfClearFreeze');
+                         return this.txUiService.setError('Cannot set both tfSetFreeze and tfClearFreeze');
                     }
 
                     const trustLines = await this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', '');
@@ -716,7 +716,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                     //           const signedTx = await this.xrplTransactions.signTransaction(client, wallet, accountSetTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     //           if (!signedTx) {
-                    //                return this.txUiService.setError('ERROR: Failed to sign AccountSet transaction.');
+                    //                return this.txUiService.setError('Failed to sign AccountSet transaction.');
                     //           }
 
                     //           const response = await this.xrplTransactions.submitTransaction(client, signedTx);
@@ -842,7 +842,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                     // }
 
                     // if (this.utilsService.isInsufficientIouTrustlineBalance(trustLines, clawbackTx, resolvedDestination)) {
-                    //      return this.txUiService.setError('ERROR: Not enough IOU balance for this transaction');
+                    //      return this.txUiService.setError('Not enough IOU balance for this transaction');
                     // }
                } catch (error: any) {
                     console.error('Error in clawbackTokens:', error);

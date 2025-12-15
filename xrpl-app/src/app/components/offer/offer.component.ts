@@ -863,7 +863,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                          const signedTx = await this.xrplTransactions.signTransaction(client, wallet, trustSetTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                          if (!signedTx) {
-                              return this.ui.setError('ERROR: Failed to sign Payment transaction.');
+                              return this.ui.setError('Failed to sign Payment transaction.');
                          }
 
                          response = await this.xrplTransactions.submitTransaction(client, signedTx);
@@ -1127,7 +1127,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, offerCreateTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
 
                     if (!signedTx) {
-                         return this.ui.setError('ERROR: Failed to sign Payment transaction.');
+                         return this.ui.setError('Failed to sign Payment transaction.');
                     }
 
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
@@ -2164,7 +2164,7 @@ export class CreateOfferComponent implements OnInit, AfterViewInit {
           const encryptionAlgorithm = this.currentWallet.encryptionAlgorithm || AppConstants.ENCRYPTION.ED25519;
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet.seed, encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) {
-               throw new Error('ERROR: Wallet could not be created or is undefined');
+               throw new Error('Wallet could not be created or is undefined');
           }
           return wallet;
      }
