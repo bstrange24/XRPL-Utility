@@ -82,6 +82,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
 
+     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
@@ -373,7 +374,8 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const [accountInfo, fee, currentLedger, paymentChannelObjects, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'payment_channel'), this.xrplService.getXrplServerInfo(client, 'current', '')]);
 
                     const action = this.channelAction();
@@ -715,7 +717,8 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const accountInfo = await this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', '');
 
                     // const errors = await this.validationService.validate('PaymentChannelGenerateCreatorClaimSignature', { inputs, client, accountInfo });
@@ -962,6 +965,8 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      }
 
      clearFields() {
+          this.typedDestination.set('');
+          this.selectedDestinationAddress.set('');
           this.channelIDField.set('');
           this.channelClaimSignatureField.set('');
           this.amountField.set('');

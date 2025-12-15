@@ -78,6 +78,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
+     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
@@ -321,7 +322,8 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
@@ -514,6 +516,8 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      }
 
      clearFields() {
+          this.typedDestination.set('');
+          this.selectedDestinationAddress.set('');
           this.txUiService.clearAllOptionsAndMessages();
      }
 

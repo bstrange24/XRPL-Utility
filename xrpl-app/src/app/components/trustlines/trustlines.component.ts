@@ -81,6 +81,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
 
      // Destination Dropdown
+     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
@@ -669,7 +670,8 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     let [accountInfo, fee, lastLedgerIndex, trustLines, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplService.getXrplServerInfo(client, 'current', '')]);
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
 
                     // this.utilsService.logAccountInfoObjects(accountInfo, null);
                     // this.utilsService.logLedgerObjects(fee, lastLedgerIndex, serverInfo);
@@ -784,7 +786,8 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const [accountInfo, accountObjects, trustLines, serverInfo, fee, currentLedger] = await Promise.all([
                          this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
                          this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''),
@@ -1146,6 +1149,8 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                this.newIssuer.set('');
                this.clearFlagsValue();
           }
+          this.typedDestination.set('');
+          this.selectedDestinationAddress.set('');
           this.ticketSequence.set('');
      }
 

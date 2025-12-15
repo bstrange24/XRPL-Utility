@@ -23,24 +23,24 @@
 
                     <button class="menu-btn active" [class.active]="activeTab() === 'modify'" (click)="setTab('modify')">
                          <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
-                         Modify
+                         Modify Firewall Settings
                     </button>
 
                     <button class="menu-btn active" [class.active]="activeTab() === 'authorize'" (click)="setTab('authorize')">
                          <!-- <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon> -->
                          <lucide-angular name="shield-ellipsis" size="20" class="text-red-600" style="padding-top: 5px"></lucide-angular>
-                         Authorize
+                         Authorize Accounts
                     </button>
 
                     <button class="menu-btn active" [class.active]="activeTab() === 'unauthorize'" (click)="setTab('unauthorize')">
                          <!-- <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon> -->
                          <lucide-icon name="shield-ellipsis" size="23" style="padding-top: 5px"></lucide-icon>
-                         Unauthorize
+                         Unauthorize Accounts
                     </button>
 
                     <button class="menu-btn active" [class.active]="activeTab() === 'delete'" (click)="setTab('delete')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Delete
+                         Delete Firewall
                     </button>
                </div>
 

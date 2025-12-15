@@ -76,6 +76,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
 
      // Destination Dropdown
+     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
@@ -519,7 +520,8 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, trustLines, checkObjects, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getAccountObjectsWithType(this.currentWallet().address, true, 'check'), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const [destinationAccountInfo] = await Promise.all([this.xrplService.getAccountInfo(client, destinationAddress, 'validated', '')]);
                     // const errors = await this.validationService.validate('CreateCheck', { inputs, client, accountInfo });
                     // if (errors.length > 0) {
@@ -1032,6 +1034,8 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.selectedIssuer.set('');
           this.checkIdField.set('');
           this.checkIdSearchQuery.set('');
+          this.typedDestination.set('');
+          this.selectedDestinationAddress.set('');
           this.txUiService.clearAllOptionsAndMessages();
      }
 

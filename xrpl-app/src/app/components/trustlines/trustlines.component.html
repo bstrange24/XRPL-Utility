@@ -18,11 +18,11 @@
                <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab() === 'setTrustline'" (click)="setTab('setTrustline')">
                          <ng-icon name="heroAdjustmentsVertical" size="20" class="text-red-600"></ng-icon>
-                         Set
+                         Set Trustline
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'removeTrustline'" (click)="setTab('removeTrustline')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Remove
+                         Remove Trustline
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'issueCurrency'" (click)="setTab('issueCurrency')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
@@ -30,7 +30,7 @@
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'clawbackTokens'" (click)="setTab('clawbackTokens')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Clawback
+                         Clawback Currency
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'addNewIssuers'" (click)="setTab('addNewIssuers')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>

@@ -61,6 +61,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      selectedDomainId = signal<string | null>(null);
      domainSearchQuery = signal<string>('');
      // Destination Dropdown
+     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
@@ -344,7 +345,8 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const [accountInfo, accountObjects, currentLedger, serverInfo] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplService.checkAccountObjectsForDeletion(client, wallet.classicAddress), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
@@ -525,6 +527,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      }
 
      clearInputFields() {
+          this.typedDestination.set('');
           this.selectedDestinationAddress.set('');
           this.txUiService.destinationTagField.set('');
      }

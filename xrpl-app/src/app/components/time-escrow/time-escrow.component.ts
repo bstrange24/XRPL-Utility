@@ -114,6 +114,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
 
      // Destination Dropdown
+     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
@@ -588,7 +589,8 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, trustLines, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     // const [accountInfo, trustLines, fee, currentLedger, serverInfo] = await Promise.all([
                     //      this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
                     //      this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''),
@@ -746,7 +748,8 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
 
                     const [accountInfo, escrowObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'escrow'), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                     // const errors = await this.validationService.validate('CancelTimeBasedEscrow', { inputs, client, accountInfo });
@@ -1284,6 +1287,8 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      }
 
      clearFields(all = true) {
+          this.typedDestination.set('');
+          this.selectedDestinationAddress.set('');
           this.escrowFinishTimeField.set('');
           this.escrowCancelTimeField.set('');
           this.escrowSequenceNumberField.set('');

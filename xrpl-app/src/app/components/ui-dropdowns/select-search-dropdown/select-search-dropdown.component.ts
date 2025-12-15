@@ -43,6 +43,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      dropdownTpl!: TemplateRef<any>;
 
      items = input.required<SelectItem[]>();
+     searchQueryChange = output<string>();
 
      value = input<SelectItem | null>(null);
      valueChange = output<SelectItem | null>();
@@ -181,6 +182,9 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           this.overlayRef = null;
           this.highlightedIndex.set(-1);
 
+          // Emit final search query in case user typed and clicked away
+          this.searchQueryChange.emit(this.searchQuery());
+
           if (SelectSearchDropdownComponent.openInstance === this) {
                SelectSearchDropdownComponent.openInstance = null;
           }
@@ -190,6 +194,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      onInput(e: Event) {
           const value = (e.target as HTMLInputElement).value;
           this.searchQuery.set(value);
+          this.searchQueryChange.emit(value); // ← ADD THIS
           this.open(); // force dropdown open on typing
      }
 

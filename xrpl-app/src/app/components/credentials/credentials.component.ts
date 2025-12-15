@@ -87,6 +87,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
      // Destination Dropdown
+     typedDestination = signal<string>('');
      credentialIdSearchQuery = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
 
@@ -389,7 +390,8 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
                     console.debug('expirationDate:', this.credential().subject.expirationDate);
@@ -932,6 +934,8 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      }
 
      clearFields() {
+          this.typedDestination.set('');
+          this.selectedDestinationAddress.set('');
           this.resetCredentialIdDropDown();
           this.txUiService.clearAllOptionsAndMessages();
      }

@@ -96,6 +96,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
 
      // Destination Dropdown
+     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
@@ -1085,7 +1086,8 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
 
                let needsAmount = setExpiration();
 
-               const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+               // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+               const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                if (destinationAddress) {
                     this.utilsService.setDestination(nftTx, destinationAddress);
                     needsAmount = true;
@@ -1244,6 +1246,8 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
                this.isNftFlagModeEnabled.set(false);
           }
 
+          this.typedDestination.set('');
+          this.selectedDestinationAddress.set('');
           this.expirationTimeUnit.set('seconds');
           this.amountField.set('');
           this.minterAddressField.set('');

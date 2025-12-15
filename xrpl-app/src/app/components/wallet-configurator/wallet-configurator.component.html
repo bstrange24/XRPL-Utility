@@ -12,8 +12,6 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
-
           <!-- Right form -->
           <div class="form-panel">
                <!-- Menu bar -->
@@ -24,15 +22,15 @@
                     </button>
                     <button class="menu-btn active" [class.active]="activeTab === 'deriveSeed'" (click)="setTab('deriveSeed')">
                          <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
-                         Derive from Seed
+                         Derive Wallet from Seed
                     </button>
                     <button class="menu-btn active" [class.active]="activeTab === 'deriveMnemonic'" (click)="setTab('deriveMnemonic')">
                          <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
-                         Derive from Mnemonic
+                         Derive Wallet from Mnemonic
                     </button>
                     <button class="menu-btn active" [class.active]="activeTab === 'deriveSecretNumbers'" (click)="setTab('deriveSecretNumbers')">
                          <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
-                         Derive from Secret Numbers
+                         Derive Wallet from Secret Numbers
                     </button>
                </div>
 

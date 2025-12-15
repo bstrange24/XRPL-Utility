@@ -119,6 +119,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
 
      // Destination Dropdown
+     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
@@ -595,7 +596,8 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, trustLines, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     // const [accountInfo, trustLines, fee, currentLedger, serverInfo] = await Promise.all([
                     //      this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
                     //      this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''),
@@ -762,7 +764,8 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
 
                     const [accountInfo, escrowObjects, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'escrow'), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                     // const errors = await this.validationService.validate('CancelTimeBasedEscrow', { inputs, client, accountInfo });
@@ -1308,6 +1311,8 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           this.escrowOwnerField.set('');
           this.amountField.set('');
           this.destinationTagField.set('');
+          this.typedDestination.set('');
+          this.selectedDestinationAddress.set('');
      }
 
      private resetEscrowSelection() {

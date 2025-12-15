@@ -76,6 +76,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
 
      // Destination Dropdown
+     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
@@ -563,7 +564,8 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
 
                     const [accountInfo, accountObjects, destObjects, fee, currentLedger, serverInfo] = await Promise.all([
                          this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
@@ -701,7 +703,8 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                try {
                     const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
 
-                    const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
+                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
 
                     const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
 
@@ -1067,6 +1070,8 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                this.destinationTagField.set('');
           }
 
+          this.typedDestination.set('');
+          this.selectedDestinationAddress.set('');
           this.amountField.set('');
           this.mptIssuanceIdField.set('');
           this.ticketSequence.set('');

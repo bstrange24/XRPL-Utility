@@ -58,7 +58,7 @@
                                    </div>
                                    <div class="form-group">
                                         <label for="destination">Destination</label>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (searchQueryChange)="typedDestination.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                    </div>
                               </div>
 
