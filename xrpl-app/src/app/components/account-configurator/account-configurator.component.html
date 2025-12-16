@@ -12,36 +12,34 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
-
           <!-- Right form -->
           <div class="form-panel">
                <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab === 'modifyAccountFlags'" (click)="setTab('modifyAccountFlags')">
+                    <button class="menu-btn active" [class.active]="activeTab() === 'modifyAccountFlags'" (click)="setTab('modifyAccountFlags')">
                          <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
                          Modify Account Flags
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'modifyMetaData'" (click)="setTab('modifyMetaData')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'modifyMetaData'" (click)="setTab('modifyMetaData')">
                          <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
                          Modify Account Meta Data
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'modifyDepositAuth'" (click)="setTab('modifyDepositAuth')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'modifyDepositAuth'" (click)="setTab('modifyDepositAuth')">
                          <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
                          Modify Deposit Authorization
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'modifyMultiSigners'" (click)="setTab('modifyMultiSigners')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'modifyMultiSigners'" (click)="setTab('modifyMultiSigners')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Add Multi Signer Accounts
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'modifyRegularKey'" (click)="setTab('modifyRegularKey')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'modifyRegularKey'" (click)="setTab('modifyRegularKey')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Add Regular Key Account
                     </button>
                </div>
 
                <!-- Modify Flag Menu -->
-               @if (activeTab === 'modifyAccountFlags') {
+               @if (activeTab() === 'modifyAccountFlags') {
                <div>
                     <div class="submenu-info-text">
                          <div class="white-button-submenu">
@@ -56,7 +54,7 @@
                }
 
                <!-- Modify Meta Data Menu -->
-               @if (activeTab === 'modifyMetaData') {
+               @if (activeTab() === 'modifyMetaData') {
                <div>
                     <div class="submenu-info-text">
                          <div class="white-button-submenu">
@@ -72,7 +70,7 @@
                }
 
                <!-- Modify Deposti Auth Menu -->
-               @if (activeTab === 'modifyDepositAuth') {
+               @if (activeTab() === 'modifyDepositAuth') {
                <div>
                     <div class="submenu-info-text">
                          <div class="white-button-submenu">
@@ -88,7 +86,7 @@
                }
 
                <!-- Add Multi Signer Menu -->
-               @if (activeTab === 'modifyMultiSigners') {
+               @if (activeTab() === 'modifyMultiSigners') {
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
@@ -103,7 +101,7 @@
                }
 
                <!-- Add Regular Key signer Menu -->
-               @if (activeTab === 'modifyRegularKey') {
+               @if (activeTab() === 'modifyRegularKey') {
                <div>
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
@@ -118,28 +116,28 @@
                }
 
                <!-- Dynamic info panel -->
-               @if (ui.infoMessage) {
+               @if (txUiService.infoMessage) {
                <div class="info-panel">
                     <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="ui.safeInfo"></div>
+                    <div class="info-text" [innerHTML]="txUiService.safeInfo"></div>
                </div>
                }
 
                <!-- Warning Message -->
-               @if (ui.warningMessage) {
+               @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="ui.safeWarning"></div>
+                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
                </div>
                }
 
                <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab">
+                    <div [@tabTransition]="activeTab()">
                          <div class="tab-content-columns">
                               <!-- Left Form Fields -->
                               <div class="tab-content-container form-fields-container">
                                    <!-- Right Account Flags-->
-                                   @if (activeTab === 'modifyAccountFlags') {
+                                   @if (activeTab() === 'modifyAccountFlags') {
                                    <div class="flags-wrapper">
                                         <!-- Configuration template -->
                                         <div style="padding-bottom: 0.3em">
@@ -181,7 +179,7 @@
                                                   <!-- Total Flag value -->
                                                   <div class="flags-total">
                                                        <span class="total-label">Total Flags Value:</span>
-                                                       <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
+                                                       <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
                                                   </div>
                                              </div>
                                         </div>
@@ -189,7 +187,7 @@
                                    }
 
                                    <!-- Modify Meta Data -->
-                                   @if (activeTab === 'modifyDepositAuth') {
+                                   @if (activeTab() === 'modifyDepositAuth') {
                                    <!-- Deposit Auth Address -->
                                    <div class="multisign-section">
                                         <div class="section-header">
@@ -231,7 +229,7 @@
                                    }
 
                                    <!-- Modify Meta Data -->
-                                   @if (activeTab === 'modifyMetaData') {
+                                   @if (activeTab() === 'modifyMetaData') {
                                    <div>
                                         <div class="form-row">
                                              <div class="form-group">
@@ -241,8 +239,8 @@
                                         </div>
 
                                         <div class="button-row" style="margin-top: 0">
-                                             <button type="button" (click)="setNftMinterAddress('Y')" class="btn-primary-blue" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Set NFT Minter' }}</button>
-                                             <button type="button" (click)="setNftMinterAddress('Y')" class="btn-primary-red" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Remove NFT Minter' }}</button>
+                                             <button type="button" (click)="setNftMinterAddress('Y')" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Set NFT Minter' }}</button>
+                                             <button type="button" (click)="setNftMinterAddress('Y')" class="btn-primary-red" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove NFT Minter' }}</button>
                                         </div>
                                    </div>
                                    <!-- </fieldset> -->
@@ -273,9 +271,9 @@
                                              </div>
                                         </div>
 
-                                        @if (avatarUrl) {
+                                        @if (avatarUrl()) {
                                         <div class="avatar-preview">
-                                             <img [src]="avatarUrl" alt="Avatar Preview" />
+                                             <img [src]="avatarUrl()" alt="Avatar Preview" />
                                         </div>
                                         }
 
@@ -289,9 +287,9 @@
                                         <div>
                                              <div class="form-row-account-flags" style="margin-top: 0.5em; margin-bottom: 0.5em">
                                                   <!-- isMessageKey -->
-                                                  <div class="flag-item-account-flags" [class.enabled]="isMessageKey" (click)="toggleMessageKey()">
+                                                  <div class="flag-item-account-flags" [class.enabled]="isMessageKey()" (click)="toggleMessageKey()">
                                                        <div class="flag-header-account">
-                                                            <input type="checkbox" id="isMessageKey" name="isMessageKey" [checked]="isMessageKey" class="flag-checkbox" />
+                                                            <input type="checkbox" id="isMessageKey" name="isMessageKey" [checked]="isMessageKey()" class="flag-checkbox" />
                                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                                                             </svg>
@@ -305,7 +303,7 @@
                                    }
 
                                    <!-- Multi Sign -->
-                                   @if (activeTab === 'modifyMultiSigners') {
+                                   @if (activeTab() === 'modifyMultiSigners') {
                                    <div class="multisign-section">
                                         <div class="section-header">
                                              <ng-icon name="heroUserGroup" size="20" class="text-red-600"></ng-icon>
@@ -362,7 +360,7 @@
                                    }
 
                                    <!-- Regular Key -->
-                                   @if(activeTab === 'modifyRegularKey') {
+                                   @if(activeTab() === 'modifyRegularKey') {
                                    <div class="multisign-section">
                                         <div class="section-header">
                                              <ng-icon name="heroKey" size="20" class="text-red-600"></ng-icon>
@@ -385,7 +383,9 @@
                                    </div>
                                    }
 
-                                   <!-- Switches -->
+                                   <!-- <app-transaction-options [showWhenTab]="['modifyMultiSigners', 'modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" /> -->
+
+                                   Switches
                                    <div class="switch-group">
                                         <!-- Memo group -->
                                         <label class="switch">
@@ -395,7 +395,7 @@
                                         </label>
 
                                         <!-- Multi Signing Enabled group -->
-                                        @if (multiSigningEnabled) {
+                                        @if (multiSigningEnabled()) {
                                         <label class="switch">
                                              <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
                                              <span class="slider"></span>
@@ -404,7 +404,7 @@
                                         }
 
                                         <!-- Regular Key Signing Enabled-->
-                                        @if (regularKeySigningEnabled) {
+                                        @if (regularKeySigningEnabled()) {
                                         <label class="switch">
                                              <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
                                              <span class="slider"></span>
@@ -413,7 +413,7 @@
                                         }
 
                                         <!-- Use Ticket for tx -->
-                                        @if (activeTab !== 'delete' && ticketArray.length > 0) {
+                                        @if (activeTab() !== 'delete' && ticketArray.length > 0) {
                                         <label class="switch">
                                              <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
                                              <span class="slider"></span>
@@ -423,19 +423,19 @@
 
                                         <!-- Simulate tx -->
                                         <label class="switch">
-                                             <input type="checkbox" [(ngModel)]="ui.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="ui.toggleSimulate($event)" />
+                                             <input type="checkbox" [(ngModel)]="txUiService.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="txUiService.toggleSimulate($event)" />
                                              <span class="slider"></span>
                                              Simulate
                                         </label>
                                    </div>
 
                                    <!-- Memo Field -->
-                                   @if (isMemoEnabled) {
+                                   @if (isMemoEnabled()) {
                                    <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
                                    }
 
                                    <!-- Sign tx with Mult Sign address -->
-                                   @if (useMultiSign) {
+                                   @if (useMultiSign()) {
                                    <div class="multisign-grid">
                                         <div class="multisign-field">
                                              <label>Signers</label>
@@ -453,7 +453,7 @@
                                    }
 
                                    <!-- Sign tx with Regular key address -->
-                                   @if (isRegularKeyAddress) {
+                                   @if (isRegularKeyAddress()) {
                                    <div class="regular-key-fields">
                                         <div class="form-row">
                                              <div class="form-group">
@@ -471,11 +471,11 @@
                                    }
 
                                    <!-- Get ticket to delete -->
-                                   @if (isTicket) {
+                                   @if (isTicket()) {
                                    <div class="ticket-fields">
                                         <div class="form-group">
                                              <label>Ticket Sequence</label>
-                                             @if (multiSelectMode) {
+                                             @if (multiSelectMode()) {
                                              <div>
                                                   <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
                                                        @for (ticket of ticketArray; track ticket) {
@@ -498,105 +498,105 @@
                                    }
 
                                    <!-- Action buttons -->
-                                   @if(activeTab === 'modifyMultiSigners') {
+                                   @if(activeTab() === 'modifyMultiSigners') {
                                    <div class="button-row" style="margin-top: 0">
-                                        <button type="button" (click)="setMultiSign('Y')" class="btn-primary-blue" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Set Multi-Sign' }}</button>
-                                        <button type="button" (click)="setMultiSign('N')" class="btn-primary-red" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Remove Multi-Sign' }}</button>
+                                        <button type="button" (click)="setMultiSign('Y')" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Set Multi-Sign' }}</button>
+                                        <button type="button" (click)="setMultiSign('N')" class="btn-primary-red" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove Multi-Sign' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
-                                   } @else if(activeTab === 'modifyRegularKey') {
+                                   } @else if(activeTab() === 'modifyRegularKey') {
                                    <div class="button-row">
-                                        <button type="button" (click)="setRegularKey('Y')" class="btn-primary-blue" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Set Regular Key' }}</button>
-                                        <button type="button" (click)="setRegularKey('N')" class="btn-primary-red" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Remove Regular Key' }}</button>
+                                        <button type="button" (click)="setRegularKey('Y')" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Set Regular Key' }}</button>
+                                        <button type="button" (click)="setRegularKey('N')" class="btn-primary-red" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove Regular Key' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
-                                   } @else if(activeTab === 'modifyMetaData') {
+                                   } @else if(activeTab() === 'modifyMetaData') {
                                    <div class="button-row">
-                                        <button type="button" (click)="updateMetaData()" class="btn-primary-blue" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Modify Account Meta Data' }}</button>
+                                        <button type="button" (click)="updateMetaData()" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Modify Account Meta Data' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
-                                   } @else if(activeTab === 'modifyDepositAuth') {
+                                   } @else if(activeTab() === 'modifyDepositAuth') {
                                    <div class="button-row">
-                                        <button type="button" (click)="setDepositAuthAccounts('Y')" class="btn-primary-blue" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Set Deposit Authorization' }}</button>
-                                        <button type="button" (click)="setDepositAuthAccounts('N')" class="btn-primary-red" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Remove Deposit Authorization' }}</button>
+                                        <button type="button" (click)="setDepositAuthAccounts('Y')" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Set Deposit Authorization' }}</button>
+                                        <button type="button" (click)="setDepositAuthAccounts('N')" class="btn-primary-red" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove Deposit Authorization' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
-                                   } @else if(activeTab === 'modifyAccountFlags') {
+                                   } @else if(activeTab() === 'modifyAccountFlags') {
                                    <div class="button-row">
-                                        <button type="button" (click)="updateFlags()" class="btn-primary-blue" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Modify Account Flags' }}</button>
+                                        <button type="button" (click)="updateFlags()" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Modify Account Flags' }}</button>
                                         <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
                                    }
 
                                    <!-- Spinner -->
-                                   @if (ui.spinner()) {
+                                   @if (txUiService.spinner()) {
                                    <div class="spinner-row">
                                         <div class="spinner"></div>
-                                        <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
+                                        <span>{{ txUiService.spinnerMessage || 'Loading...' }}</span>
                                    </div>
                                    }
 
                                    <!-- Success message -->
-                                   @if (ui.isSuccess) {
+                                   @if (txUiService.isSuccess) {
                                    <div class="success-message">
                                         <lucide-icon name="check" size="20"></lucide-icon>
                                         <div class="success-text">
-                                             @if (ui.txHash && !ui.isSimulateEnabled) {
-                                             <span>{{ui.successMessage}}</span><br /><br />
-                                             <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
+                                             @if (txUiService.txHash && !txUiService.isSimulateEnabled) {
+                                             <span>{{txUiService.successMessage}}</span><br /><br />
+                                             <span>Transaction hash: <a [href]="`${txUiService.explorerUrl()}tx/` + txUiService.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHash }} </a></span>
                                              } @else {
-                                             <span>{{ui.successMessage}}</span>
+                                             <span>{{txUiService.successMessage}}</span>
                                              }
 
                                              <!-- Multiple Hashes -->
-                                             @if (ui.txHashes.length > 1 && !ui.isSimulateEnabled) {
+                                             @if (txUiService.txHashes.length > 1 && !txUiService.isSimulateEnabled) {
                                              <div class="tx-hashes">
-                                                  @for (hash of ui.txHashes; track hash; let i = $index) {
+                                                  @for (hash of txUiService.txHashes; track hash; let i = $index) {
                                                   <div class="tx-hash-item">
                                                        Transaction {{ i + 1 }} hash:
-                                                       <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
+                                                       <a [href]="txUiService.explorerUrl() + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
                                                   </div>
                                                   }
                                              </div>
                                              }
 
                                              <!-- Single hash -->
-                                             @if (ui.txHashes.length === 1 && !ui.isSimulateEnabled) {
+                                             @if (txUiService.txHashes.length === 1 && !txUiService.isSimulateEnabled) {
                                              <br />
-                                             <span>Transaction hash: <a [href]="url + 'tx/' + ui.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHashes[0] }} </a></span>
+                                             <span>Transaction hash: <a [href]="txUiService.explorerUrl() + 'tx/' + txUiService.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashes[0] }} </a></span>
                                              }
                                         </div>
                                    </div>
                                    }
 
                                    <!-- Error message -->
-                                   @if (ui.isError) {
+                                   @if (txUiService.isError) {
                                    <div class="tx-message error">
                                         <ng-icon name="heroExclamationCircle" size="20" class="text-red-600" style="margin-top: 1px"></ng-icon>
                                         <div class="tx-text">
                                              <!-- Display Tx Hash if we are not in simulation mode-->
-                                             @if (ui.txHash && !ui.isSimulateEnabled) {
-                                             <span>{{ ui.errorMessage }}</span><br />
-                                             <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
+                                             @if (txUiService.txHash && !txUiService.isSimulateEnabled) {
+                                             <span>{{ txUiService.errorMessage }}</span><br />
+                                             <span>Transaction hash: <a [href]="`${txUiService.explorerUrl()}tx/` + txUiService.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHash }} </a></span>
                                              } @else {
-                                             <span>{{ ui.errorMessage }}</span>
+                                             <span>{{ txUiService.errorMessage }}</span>
                                              }
 
                                              <!-- Multiple Hashes -->
-                                             @if (ui.txErrorHashes.length > 1 && !ui.isSimulateEnabled) {
+                                             @if (txUiService.txErrorHashes.length > 1 && !txUiService.isSimulateEnabled) {
                                              <div class="tx-hashes">
-                                                  @for (hash of ui.txErrorHashes; track hash; let i = $index) {
+                                                  @for (hash of txUiService.txErrorHashes; track hash; let i = $index) {
                                                   <div class="tx-hash-item">
                                                        Transaction {{ i + 1 }} hash:
-                                                       <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
+                                                       <a [href]="txUiService.explorerUrl() + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
                                                   </div>
                                                   }
                                              </div>
                                              }
 
                                              <!-- Single hash -->
-                                             @if (ui.txErrorHashes.length === 1 && !ui.isSimulateEnabled) {
-                                             <span>Transaction hash: <a [href]="url + 'tx/' + ui.txErrorHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txErrorHashes[0] }} </a></span>
+                                             @if (txUiService.txErrorHashes.length === 1 && !txUiService.isSimulateEnabled) {
+                                             <span>Transaction hash: <a [href]="txUiService.explorerUrl() + 'tx/' + txUiService.txErrorHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txErrorHashes[0] }} </a></span>
                                              }
                                         </div>
                                    </div>
@@ -607,7 +607,7 @@
                </form>
 
                <!-- Tx Preview -->
-               @if (ui.paymentTx.length >0) {
+               @if (txUiService.paymentTx.length >0) {
                <div class="tx-preview-container">
                     <div class="tx-header">
                          <h5 class="tx-title">Account Configuration Transaction</h5>
@@ -628,7 +628,7 @@
                }
 
                <!-- Tx Result Preview -->
-               @if (ui.txResult.length >0) {
+               @if (txUiService.txResult.length >0) {
                <div class="tx-preview-container">
                     <div class="tx-header">
                          <h3 class="tx-title">Transaction Result</h3>
