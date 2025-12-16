@@ -427,6 +427,8 @@ input[type='text']:focus {
      font-size: 1.25rem;
      font-weight: 600;
      color: #1a1a1a;
+     padding-top: 0px;
+     padding-bottom: 0px;
 }
 
 .icon-title {
@@ -906,6 +908,7 @@ input:focus+.slider {
 .generate-btn {
      background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
      background-color: rgba(12, 34, 235, 0.7);
+     margin-left: 2.2em;
      color: white;
      border: none;
      border-radius: 10px;
