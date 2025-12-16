@@ -70,6 +70,17 @@
 }
 
 <!-- Check if Ticket slider is enabled -->
+<!-- @if (isTicket() && showTicket && ticketArray().length > 0) {
+<div class="ticket-fields">
+     <div class="form-group">
+          <label>Ticket Sequence</label>
+          <app-select-search-dropdown [items]="ticketItems()" [value]="selectedTicketItem()" (valueChange)="selectedSingleTicket.set($event?.id ?? '')" placeholder="Search or select a ticket..." noResultsText="No tickets available"> </app-select-search-dropdown>
+          @if (selectedSingleTicket()) {
+          <div class="selected-ticket-preview" style="margin-top: 8px; font-size: 0.9em; color: #059669">Selected: <strong>Ticket #{{ selectedSingleTicket() }}</strong></div>
+          }
+     </div>
+</div>
+} -->
 @if (isTicket() && showTicket && ticketArray().length > 0) {
 <div class="ticket-fields">
      <div class="form-group">
@@ -81,13 +92,10 @@
                }
           </select>
           } @else {
-          <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-               <option value="" disabled>Select a ticket</option>
-               @for (ticket of ticketArray(); track ticket) {
-               <option [value]="ticket">{{ ticket }}</option>
-               }
-          </select>
-          }
+          <app-select-search-dropdown [items]="ticketItems()" [value]="selectedTicketItem()" (valueChange)="selectedSingleTicket.set($event?.id ?? '')" placeholder="Search or select a ticket..." noResultsText="No tickets available"> </app-select-search-dropdown>
+          @if (selectedSingleTicket()) {
+          <div class="selected-ticket-preview" style="margin-top: 8px; font-size: 0.9em; color: #059669">Selected: <strong>Ticket #{{ selectedSingleTicket() }}</strong></div>
+          } }
      </div>
 </div>
 } }

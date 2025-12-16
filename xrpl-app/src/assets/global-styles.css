@@ -3033,3 +3033,16 @@ cdk-drop-list {
      color: #3b82f6;
      font-weight: 600;
 } */
+
+
+ticket-fields .form-group {
+     margin-bottom: 1rem;
+}
+
+.selected-ticket-preview {
+     /* background: #ecfdf5; */
+     background: #fff;
+     padding: 8px 12px;
+     border-radius: 6px;
+     /* border-left: 4px solid #10b981; */
+}
