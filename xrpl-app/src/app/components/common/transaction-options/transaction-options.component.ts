@@ -54,13 +54,13 @@ export class TransactionOptionsComponent {
           this.multiSignAddress.set(
                this.txUiService
                     .signers()
-                    .map((e: { Account: any }) => e.Account)
+                    .map((e: any) => e.Account)
                     .join(',\n')
           );
           this.multiSignSeeds.set(
                this.txUiService
                     .signers()
-                    .map((e: { seed: any }) => e.seed)
+                    .map((e: any) => e.seed)
                     .join(',\n')
           );
           this.signerQuorum.set(this.txUiService.signerQuorum());

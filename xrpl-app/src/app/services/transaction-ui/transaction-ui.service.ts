@@ -1,4 +1,4 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, Injectable, signal, WritableSignal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
@@ -9,6 +9,12 @@ interface Toast {
      message: string;
      duration: number;
 }
+
+export type Signer = {
+     Account: string;
+     seed: string;
+     SignerWeight: number;
+};
 
 export interface Wallet {
      name?: string;
@@ -74,7 +80,7 @@ export interface ValidationInputs {
           addresses?: string[];
           seeds?: string[];
           signerQuorum?: number;
-          signers?: { account: string; weight: number }[];
+          signers?: { Account: string; SignerWeight: number }[];
      };
 
      // ---- Regular Key ----
@@ -129,9 +135,7 @@ export class TransactionUiService {
      result: string = '';
      spinnerMessage: string = '';
      private toastId = 0;
-
      errorMessageSignal = signal<string | null>(null);
-
      amountField = signal('');
      destinationTagField = signal('');
      invoiceIdField = signal('');
@@ -141,7 +145,23 @@ export class TransactionUiService {
      isRegularKeyAddress = signal(false);
      isTicket = signal(false);
      isSimulateEnabled = signal(false);
-
+     masterKeyDisabled = signal(false);
+     depositAuthEnabled = signal(false);
+     isdepositAuthAddress = signal(false);
+     isNFTokenMinterEnabled = signal<boolean>(false);
+     nfTokenMinterAddress = signal<string>('');
+     isUpdateMetaData = signal<boolean>(false);
+     isHolderConfiguration = signal<boolean>(false);
+     isExchangerConfiguration = signal<boolean>(false);
+     isIssuerConfiguration = signal<boolean>(false);
+     isAuthorizedNFTokenMinter = signal<boolean>(false);
+     depositAuthAddress = signal<string>('');
+     tickSize = signal<string>('');
+     transferRate = signal<string>('');
+     isMessageKey = signal<boolean>(false);
+     domain = signal<string>('');
+     avatarUrl = signal<string>('');
+     userEmail = signal('');
      memoField = signal('');
      multiSignAddress = signal('');
      multiSignSeeds = signal('');
@@ -154,11 +174,10 @@ export class TransactionUiService {
      ticketArray = signal<string[]>([]);
      regularKeySigningEnabled = signal(false);
      multiSigningEnabled = signal(false);
+     signers: WritableSignal<Signer[]> = signal<Signer[]>([{ Account: '', seed: '', SignerWeight: 1 }]);
+     depositAuthAddresses = signal<{ account: string }[]>([{ account: '' }]);
      spinner = signal(false);
-
-     // Optional: current wallet if needed
      currentWallet = signal<Wallet>({} as Wallet);
-     signers = signal<any[]>([]);
      toasts = signal<Toast[]>([]);
      paymentTxSignal = signal<any[]>([]);
      txSignal = signal<any[]>([]);
@@ -222,6 +241,22 @@ export class TransactionUiService {
 
      clearTxHashSignal() {
           this.txHashSignal.set([]);
+     }
+
+     addSignersSignal(tx: any) {
+          this.signers.update(arr => [...arr, tx]);
+     }
+
+     removeSignerSignal(index: number) {
+          this.signers.update(arr => arr.filter((_, i) => i !== index));
+     }
+
+     addDepositAuthAddressesSignal(tx: any) {
+          this.depositAuthAddresses.update(arr => [...arr, tx]);
+     }
+
+     removeDepositAuthAddressesSignal(index: number) {
+          this.depositAuthAddresses.update(arr => arr.filter((_, i) => i !== index));
      }
 
      setUrl() {
@@ -531,6 +566,25 @@ export class TransactionUiService {
                     credentialId: options.credentials?.credentialId,
                },
           };
+     }
+
+     clearAllFields() {
+          this.amountField.set('');
+          this.destinationTagField.set('');
+          this.invoiceIdField.set('');
+          this.sourceTagField.set('');
+          this.nfTokenMinterAddress.set('');
+          this.depositAuthAddress.set('');
+          this.tickSize.set('');
+          this.transferRate.set('');
+          this.isMessageKey.set(false);
+          this.domain.set('');
+          this.avatarUrl.set('');
+          this.userEmail.set('');
+          this.memoField.set('');
+          this.regularKeyAddress.set('');
+          this.regularKeySeed.set('');
+          this.selectedSingleTicket.set('');
      }
 
      clearAllOptions() {

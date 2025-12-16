@@ -949,4 +949,108 @@ export class XrplTransactionExecutorService {
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
      }
+
+     async setMultiSign(
+          tx: xrpl.SignerListSet,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating setting signer (no changes will be made)...',
+               submitMessage: 'Setting signer list on the XRP Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async setRegularKey(
+          tx: xrpl.SetRegularKey,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating setting regular key (no changes will be made)...',
+               submitMessage: 'Setting regular key on the XRP Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async setDepositAuth(
+          tx: xrpl.DepositPreauth,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+               suppressIndividualFeedback?: boolean;
+               customSpinnerMessage?: string; // ← NEW: Allow custom message
+          } = {}
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating setting deposit authorization (no changes will be made)...',
+               submitMessage: 'Setting deposit authorization on the XRP Ledger...',
+               amount: '0',
+               suppressIndividualFeedback: options.suppressIndividualFeedback,
+               ...options,
+          });
+     }
+
+     async setNftMinterAddress(
+          tx: xrpl.AccountSet,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+               suppressIndividualFeedback?: boolean;
+          } = {}
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating NFT minter address change (no changes will be made)...',
+               submitMessage: 'Modifying NFT minter address on the XRP Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async updateMetaData(
+          tx: xrpl.AccountSet,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating meta data update (no changes will be made)...',
+               submitMessage: 'Updated meta data on the XRP Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
 }
