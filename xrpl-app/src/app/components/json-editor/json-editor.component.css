@@ -1,0 +1,52 @@
+/* Dark Theme
+.codemirror-editor {
+     height: 530px;
+     border: 1px solid #444;
+     border-radius: 6px;
+     overflow: hidden;
+} */
+
+/* Light Theme */
+.codemirror-editor {
+     height: 530px;
+     border: 1px solid #ddd;
+     border-radius: 6px;
+     overflow: hidden;
+}
+
+.text-danger {
+     font-size: 14px;
+     padding-top: 12px;
+     padding-bottom: 12px;
+}
+
+.codemirror-container {
+     height: 530px;
+     border: 1px solid #444;
+     border-radius: 6px;
+     overflow: hidden;
+     display: flex;
+     flex-direction: column;
+}
+
+.json-error-banner {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     border-color: #f87171;
+     background: #fef2f2;
+     color: #991b1b;
+     padding: 10px 14px;
+     font-size: 14px;
+     border-top: 1px solid #5f3b3e;
+     border-radius: 0 0 6px 6px;
+}
+
+.error-icon {
+     flex-shrink: 0;
+     color: #f28b82;
+}
+
+.cm-custom-gutter {
+     background-color: #1e1e1e;
+}

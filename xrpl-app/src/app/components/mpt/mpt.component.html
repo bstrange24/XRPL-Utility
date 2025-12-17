@@ -244,20 +244,13 @@
                                                   <br />
                                                   <span class="label-meta">
                                                        JSON Metadata
-                                                       <a href="https://github.com/XRPLF/XRPL-Standards/discussions/264" target="_blank" rel="noopener noreferrer"> XLS-89 </a>
+                                                       <a href="https://github.com/XRPLF/XRPL-Standards/discussions/264" target="_blank" rel="noopener noreferrer">XLS-89</a>
                                                   </span>
+                                                  <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 12em" (click)="jsonEditor.format()">Format JSON</button>
                                              </label>
-
-                                             <textarea style="width: 100%; height: 530px" placeholder="Token Meta Data" [(ngModel)]="metaDataField" name="metaDataField"> </textarea>
+                                             <app-json-editor class="json-error-banner" [(value)]="metaDataField" #jsonEditor></app-json-editor>
                                         </div>
                                    </div>
-
-                                   <!-- <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Token Meta Data</label>
-                                             <textarea style="width: 100%; height: 530px" placeholder="Token Meta Data" [(ngModel)]="metaDataField" name="metaDataField"></textarea>
-                                        </div>
-                                   </div> -->
                                    }
 
                                    <!-- MPT IssuanceId sections -->

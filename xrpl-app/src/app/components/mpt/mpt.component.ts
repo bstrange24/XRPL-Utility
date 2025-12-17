@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, DestroyRef, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { OnInit, Component, inject, DestroyRef, signal, computed, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -30,6 +30,7 @@ import { TransactionOptionsComponent } from '../common/transaction-options/trans
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { JsonEditorComponent } from '../json-editor/json-editor.component';
 
 interface AccountFlags {
      canLock: boolean;
@@ -53,7 +54,7 @@ interface IssuerItem {
 @Component({
      selector: 'app-mpt',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, JsonEditorComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './mpt.component.html',
      styleUrl: './mpt.component.css',
@@ -75,6 +76,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
 
+     @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
      // Destination Dropdown
      typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
@@ -108,27 +110,16 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      existingMptsCollapsed: boolean = true;
      outstandingIOUCollapsed: boolean = true;
      metaDataField = signal<string>('');
-     metaDataField1 = signal<string>(`{
-  "currency": "FLUSD",
-  "name": "Florent USD",
-  "desc": "A regulated stablecoin issued by Florent.",
-  "icon": "https://unsplash.com/photos/a-toy-rocket-is-flying-over-a-pile-of-pink-blocks-zUweo75uccw",
-  "asset_class": "rwa",
-  "asset_subclass": "stablecoin",
-  "acct_name": "Florent",
-  "weblinks": [
-    {
-      "url": "https://florent.com/",
-      "type": "website",
-      "title": "Official Website"
-    },
-    {
-      "url": "https://flo.org/",
-      "type": "docs",
-      "title": "My Documentation"
-    }
-  ]
-}`);
+     XLS89_TEMPLATE = signal<string>(`{"currency":"FLUSD","name":"Florent USD","desc":"A regulated stablecoin issued by Florent.","icon":"https://unsplash.com/photos/a-toy-rocket-is-flying-over-a-pile-of-pink-blocks-zUweo75uccw","asset_class":"rwa","asset_subclass":"stablecoin","acct_name":"Florent","weblinks":[{"url":"https://florent.com/","type":"website","title":"Official Website"},{"url":"https://flo.org/","type":"docs","title":"My Documentation"}]}`);
+     monacoOptions = {
+          theme: 'vs',
+          language: 'json',
+          minimap: { enabled: false },
+          automaticLayout: true,
+          formatOnPaste: true,
+          formatOnType: true,
+          scrollBeyondLastLine: false,
+     };
      tokenCountField = signal<string>('');
      assetScaleField = signal<string>('');
      isdepositAuthAddress = signal<boolean>(false);
@@ -286,6 +277,14 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      ngOnInit(): void {
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
+          this.metaDataField.set(this.XLS89_TEMPLATE());
+     }
+
+     ngAfterViewInit(): void {
+          // Small delay to ensure the editor is fully initialized
+          setTimeout(() => {
+               this.jsonEditor.format();
+          }, 0);
      }
 
      private loadCustomDestinations(): void {
@@ -1072,6 +1071,10 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
 
      get safeWarningMessage() {
           return this.txUiService.warningMessage?.replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;');
+     }
+
+     loadXls89Template() {
+          this.metaDataField.set(JSON.stringify(this.XLS89_TEMPLATE(), null, 2));
      }
 
      clearFields(clearAllFields: boolean) {

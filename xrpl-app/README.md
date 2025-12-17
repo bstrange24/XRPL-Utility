@@ -73,6 +73,14 @@ npm i @ng-icons/core
 npm i @ng-icons/core @ng-icons/heroicons
 npm install --save-dev @types/blueimp-md5
 
+Maybe
+$ npm install ang-jsoneditor jsoneditor
+
+$ npm install @codemirror/view @codemirror/state @codemirror/commands @codemirror/language @codemirror/lang-json @codemirror/theme-one-dark @uiw/codemirror-theme-vscode
+
+$ npm install @codemirror/lint
+npm install @codemirror/basic-setup
+
 # 1. Update Angular CLI & Core (you likely already did this)
 
 ng update @angular/core @angular/cli
