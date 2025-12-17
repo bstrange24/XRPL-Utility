@@ -130,12 +130,14 @@
                                    @if (activeTab() === 'set') {
                                    <div class="form-group">
                                         <label for="issuer">Issuer</label>
+                                        <p class="form-hint">The credential issuer.</p>
                                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationSelected($event)" placeholder="Enter or select issuer address" emptyMessage="No wallets available"> </app-select-search-dropdown>
                                    </div>
 
                                    <!-- Credential Type-->
                                    <div class="form-group">
                                         <label for="credentialType">Credential Type</label>
+                                        <p class="form-hint">A hex-encoded value to identify the type of credential from the issuer.</p>
                                         <input type="text" [(ngModel)]="credentialType" name="credential_type" />
                                    </div>
                                    }
@@ -147,6 +149,7 @@
                               @if (createdPermissionedDomains().length > 0) {
                               <div class="form-group">
                                    <label for="selectPDtoDelete">Select Permissioned Domain to delete</label>
+                                   <p class="form-hint">Select an existing permissioined domain attached to the current wallet.</p>
                                    <app-select-search-dropdown [items]="domainItems()" [value]="selectedDomainItem()" (valueChange)="onDomainSelected($event)" placeholder="Search by Domain ID..." emptyMessage="No domains found"> </app-select-search-dropdown>
                               </div>
 
@@ -154,6 +157,7 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="domainId">Domain ID</label>
+                                        <p class="form-hint">Ledger hash containing the permissioned domain.</p>
                                         <input type="text" [(ngModel)]="domainId" name="domainId" placeholder="" />
                                    </div>
                               </div>

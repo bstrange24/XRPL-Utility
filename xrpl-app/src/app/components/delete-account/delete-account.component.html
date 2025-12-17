@@ -53,11 +53,13 @@
                                    @if (activeTab() === 'deleteAccount') {
                                    <div class="form-group">
                                         <label for="destination">Destination</label>
+                                        <p class="form-hint">Destination account to send remaining XRP to.</p>
                                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                    </div>
 
                                    <div class="form-group">
                                         <label for="destinationTagField">Destination Tag (opt)</label>
+                                        <p class="form-hint">Destination tag needed if sending to an account on an exchange.</p>
                                         <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
                                    </div>
                                    }

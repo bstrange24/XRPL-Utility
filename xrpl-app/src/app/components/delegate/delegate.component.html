@@ -117,12 +117,23 @@
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab()">
                               <!-- Left Form Fields -->
+                              @if (activeTab() === 'delegate') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label for="destination">Destination</label>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                                        <label for="destination">Authorize Wallet</label>
+                                        <p class="form-hint">The authorized account delegated to perform actions on behalf of the selected account.</p>
+                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select an account." />
                                    </div>
                               </div>
+                              } @if (activeTab() === 'clear') {
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label for="destination">Unauthorize Wallet</label>
+                                        <p class="form-hint">Remove delegated authority on the account.</p>
+                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select an account." />
+                                   </div>
+                              </div>
+                              }
 
                               <div class="flags-wrapper">
                                    <!-- Flags header -->
