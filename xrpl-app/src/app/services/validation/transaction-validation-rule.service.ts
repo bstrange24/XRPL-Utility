@@ -717,8 +717,8 @@ export class ValidationService {
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     // Destination address valid
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
+                    this.isValidAddress('destination.address'),
+                    // this.notSelf('senderAddress', 'destination.address'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
@@ -1012,8 +1012,8 @@ export class ValidationService {
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     // Destination address valid
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
+                    this.isValidAddress('destination.address'),
+                    // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
@@ -1050,8 +1050,8 @@ export class ValidationService {
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     // Destination address valid
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
+                    this.isValidAddress('destination.address'),
+                    // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
@@ -1122,8 +1122,8 @@ export class ValidationService {
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     // Destination address valid
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
+                    this.isValidAddress('destination.address'),
+                    // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
                     this.optionalNumeric('settleDelay', 0),
@@ -1160,8 +1160,8 @@ export class ValidationService {
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     // Destination address valid
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
+                    this.isValidAddress('destination.address'),
+                    // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
                     this.optionalNumeric('channelID', 0),
@@ -1198,8 +1198,8 @@ export class ValidationService {
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     // Destination address valid
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
+                    this.isValidAddress('destination.address'),
+                    // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
                     this.optionalNumeric('channelID', 0),
@@ -1300,8 +1300,8 @@ export class ValidationService {
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     // Destination address valid
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
+                    this.isValidAddress('destination.address'),
+                    // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
                     this.optionalNumeric('channelID', 0),
@@ -1336,7 +1336,7 @@ export class ValidationService {
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
+                    // this.notSelf('senderAddress', 'destination'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1501,7 +1501,7 @@ export class ValidationService {
                     },
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
-                    this.isValidAddress('destination'),
+                    this.isValidAddress('destination.address'),
                ],
           });
 
@@ -1523,8 +1523,8 @@ export class ValidationService {
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     // Destination address valid
-                    this.isValidAddress('destination'),
-                    this.notSelf('senderAddress', 'destination'),
+                    this.isValidAddress('destination.address'),
+                    // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
                     this.optionalNumeric('finishTime', 0),
@@ -1563,7 +1563,7 @@ export class ValidationService {
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
-                    this.notSelf('senderAddress', 'destination'),
+                    // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
                     this.optionalNumeric('escrowSequence', 0),
@@ -1601,7 +1601,7 @@ export class ValidationService {
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
-                    this.notSelf('senderAddress', 'destination'),
+                    // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
                     this.optionalNumeric('escrowSequence', 0),
