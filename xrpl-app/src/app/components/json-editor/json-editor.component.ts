@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ElementRef, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ElementRef, ViewChild, signal } from '@angular/core';
 import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, ViewUpdate } from '@codemirror/view';
 import { defaultKeymap, indentWithTab } from '@codemirror/commands';
@@ -23,7 +23,7 @@ export class JsonEditorComponent {
      private view!: EditorView;
      private languageConf = new Compartment(); // For dynamic language/theme if needed
 
-     jsonError = '';
+     jsonError = signal<string>('');
 
      ngAfterViewInit() {
           setTimeout(() => {
@@ -69,15 +69,15 @@ export class JsonEditorComponent {
 
      private validateJson(content: string) {
           if (!content.trim()) {
-               this.jsonError = '';
+               this.jsonError.set('');
                return;
           }
 
           try {
                JSON.parse(content);
-               this.jsonError = ''; // Valid
+               this.jsonError.set(''); // Valid
           } catch (e: any) {
-               this.jsonError = e.message || 'Invalid JSON';
+               this.jsonError.set(e.message || 'Invalid JSON');
           }
      }
 
@@ -92,9 +92,9 @@ export class JsonEditorComponent {
                this.view.dispatch({
                     changes: { from: 0, to: current.length, insert: formatted },
                });
-               this.jsonError = '';
+               this.jsonError.set('');
           } catch (e) {
-               this.jsonError = 'Invalid JSON – cannot format';
+               this.jsonError.set('Invalid JSON – cannot format');
           }
      }
 

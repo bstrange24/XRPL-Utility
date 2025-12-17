@@ -1,7 +1,7 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -29,6 +29,7 @@ import { DownloadUtilService } from '../../services/download-util/download-util.
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
+import { JsonEditorComponent } from '../json-editor/json-editor.component';
 
 interface DidItem {
      index: string;
@@ -52,7 +53,7 @@ interface DidData {
 @Component({
      selector: 'app-did',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, JsonEditorComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './did.component.html',
      styleUrl: './did.component.css',
@@ -60,6 +61,7 @@ interface DidData {
 })
 export class DidComponent extends PerformanceBaseComponent implements OnInit {
      private readonly destroyRef = inject(DestroyRef);
+     @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
 
      // Services
      public readonly utilsService = inject(UtilsService);
@@ -82,6 +84,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      infoPanelExpanded = signal(false);
      createdDids = signal<boolean>(false);
      existingDid = signal<DidItem[]>([]);
+     validDidSchema = signal<boolean>(false);
 
      // DID  Form Data
      didDetails = signal<DidData>({
@@ -113,6 +116,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 }`,
           destinationAddress: '',
      });
+     didData = signal<string>('');
 
      infoData = computed(() => {
           const wallet = this.currentWallet();
@@ -135,6 +139,52 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      hasWallets = computed(() => this.wallets().length > 0);
 
+     // Computed signal to check if there's a syntax error
+     hasJsonSyntaxError = computed(() => {
+          // Force dependency on the editor instance itself
+          this.jsonEditor; // eslint-disable-line @typescript-eslint/no-unused-expressions
+          return !!this.jsonEditor?.jsonError?.()?.trim();
+     });
+
+     metadataByteLength = computed(() => {
+          const meta = this.didData().trim();
+          if (!meta) return 0;
+
+          try {
+               const hex = xrpl.convertStringToHex(meta);
+               console.log('DID JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
+               return hex.length / 2;
+          } catch (e) {
+               console.error('Failed to convert DID JSON to hex:', e);
+               return 0;
+          }
+     });
+
+     metadataIsValid = computed(() => {
+          return this.metadataByteLength() <= 256;
+     });
+
+     onDidDataChange(newValue: string) {
+          this.didData.set(newValue);
+
+          // Optional: keep didDetails in sync if other code uses it
+          this.didDetails.update(d => ({ ...d, data: newValue }));
+     }
+
+     getCreateButtonTooltip(): string {
+          if (this.txUiService.spinner()) {
+               return 'Processing transaction...';
+          }
+          // if (!(this.walletManagerService.hasWallets$ | async)) {
+          // return 'No wallet selected – connect or create a wallet to continue';
+          // }
+          if (!this.metadataIsValid()) {
+               const bytes = this.metadataByteLength();
+               return `Token Metadata too large: ${bytes} bytes (maximum allowed: 256 bytes)`;
+          }
+          return 'Create MPT Issuance';
+     }
+
      constructor() {
           super();
           this.txUiService.clearAllOptionsAndMessages();
@@ -142,6 +192,8 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      ngOnInit(): void {
           this.setupWalletSubscriptions();
+          // Sync initial value
+          this.didData.set(this.didDetails().data);
      }
 
      private async setupWalletSubscriptions() {
@@ -471,6 +523,18 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      get safeWarningMessage() {
           return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+     }
+
+     validateDidData() {
+          if (this.didDetails().data) {
+               const result = this.utilsService.validateAndConvertDidJson(this.didDetails().data, didSchema);
+               if (!result.success) {
+                    return this.txUiService.setError(`${result.errors}`);
+               } else {
+                    this.txUiService.clearAllOptionsAndMessages();
+                    this.validDidSchema.set(true);
+               }
+          }
      }
 
      clearFields() {

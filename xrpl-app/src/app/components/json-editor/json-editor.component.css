@@ -8,7 +8,7 @@
 
 /* Light Theme */
 .codemirror-editor {
-     height: 530px;
+     height: 450px;
      border: 1px solid #ddd;
      border-radius: 6px;
      overflow: hidden;
@@ -22,7 +22,7 @@
 }
 
 .codemirror-container {
-     height: 530px;
+     height: 450px;
      border: 1px solid #444;
      border-radius: 6px;
      overflow: hidden;

@@ -144,12 +144,81 @@
                               </div>
 
                               <!-- Did Data -->
+                              <!-- <div class="form-row">
+                                   <div class="form-group">
+                                        <label class="label-with-link">
+                                             DID Data
+                                             <br />
+                                             <span class="label-meta">
+                                                  DID Schema
+                                                  <a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer">W3C</a>
+                                             </span>
+
+                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
+                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="validateDidData()">Validate DID Data</button>
+                                             @if (validDidSchema() && jsonError) {
+                                             <div class="json-schema-success">
+                                                  <small class="">
+                                                       <strong>DID JSON is valid</strong>
+                                                  </small>
+                                             </div>
+                                             }
+                                        </label>
+                                        <app-json-editor class="json-error-banner" [(value)]="didDetails().data" #jsonEditor></app-json-editor>
+                                   </div>
+                              </div> -->
                               <div class="form-row">
+                                   <div class="form-group">
+                                        <label class="label-with-link">
+                                             DID Data
+                                             <br />
+                                             <span class="label-meta">
+                                                  DID Schema
+                                                  <a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer">W3C</a>
+                                             </span>
+
+                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
+                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="validateDidData()">Validate DID Data</button>
+
+                                             <!-- Success: Schema valid AND no syntax errors -->
+                                             @if (validDidSchema() && !hasJsonSyntaxError()) {
+                                             <div class="json-schema-success mt-2">
+                                                  <small class="text-success">
+                                                       <strong>✓ DID JSON is valid and well-formed</strong>
+                                                  </small>
+                                             </div>
+                                             }
+
+                                             <!-- Warning: Schema valid BUT has JSON syntax errors -->
+                                             @if (validDidSchema() && hasJsonSyntaxError()) {
+                                             <div class="json-schema-warning mt-2">
+                                                  <small class="text-warning">
+                                                       <strong>⚠ Schema valid, but JSON has syntax errors:</strong><br />
+                                                       <!-- {{ jsonEditor.jsonError() }} -->
+                                                  </small>
+                                             </div>
+                                             }
+
+                                             <div class="metadata-info">
+                                                  <small class="text-muted"> Metadata size: {{ metadataByteLength() }} / 256 bytes </small>
+                                                  @if (metadataByteLength() > 256) {
+                                                  <small class="text-danger d-block">
+                                                       <strong>Exceeded limit – transaction will fail</strong>
+                                                  </small>
+                                                  } @else if (metadataByteLength() > 200) {
+                                                  <small class="text-warning d-block"> Approaching limit ({{ metadataByteLength() }} bytes) </small>
+                                                  }
+                                             </div>
+                                        </label>
+                                        <app-json-editor [value]="didData()" (valueChange)="onDidDataChange($event)" #jsonEditor> </app-json-editor>
+                                   </div>
+                              </div>
+                              <!-- <div class="form-row">
                                    <div class="form-group">
                                         <label for="didData">DID Data</label>
                                         <textarea style="width: 100%; height: 200px; max-width: 100%; font-size: 0.95rem" id="didData" placeholder="DID Data" [(ngModel)]="didDetails().data" name="didData"></textarea>
                                    </div>
-                              </div>
+                              </div> -->
                               }
 
                               <!-- Only show buttons and sliders if there is no DID set or we are on the delete DID tab -->
@@ -158,9 +227,22 @@
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   @if (activeTab() === 'set') {
-                                   <button type="button" class="btn-primary-blue" (click)="setDid()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Set DID' }}</button>
-                                   } @else if (activeTab() === 'delete') {
+                                   <!-- Set DID button if there are json errors -->
+                                   @if (txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || !metadataIsValid() && activeTab() === 'set') {
+                                   <div class="button-row">
+                                        <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
+                                             <button type="button" class="btn-primary-blue" disabled>{{ txUiService.spinner() ? 'Processing...' : 'Set DID' }}</button>
+                                        </app-tooltip-link>
+                                   </div>
+                                   }
+
+                                   <!-- Set DID button if no json errors -->
+                                   @if (txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || metadataIsValid() && activeTab() === 'set') {
+                                   <button type="button" class="btn-primary-blue" (click)="setDid()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || !metadataIsValid()">{{ txUiService.spinner() ? 'Processing...' : 'Set DID' }}</button>
+                                   }
+
+                                   <!-- Delete DID -->
+                                   @if (activeTab() === 'delete') {
                                    <button type="button" class="btn-primary-red" (click)="deleteDid()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delete DID' }}</button>
                                    }
                                    <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>

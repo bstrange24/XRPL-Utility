@@ -3114,6 +3114,14 @@ ticket-fields .form-group {
      text-decoration: underline;
 }
 
+.json-schema-success {
+     background-color: #ecfdf5;
+     border-left: 4px solid #10b981;
+     padding-top: 1em;
+     padding-bottom: 1em;
+     padding-left: 0.5em;
+}
+
 .metadata-info {
      flex: 1;
      /* display: flex; */

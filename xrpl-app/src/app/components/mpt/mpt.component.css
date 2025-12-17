@@ -4,3 +4,19 @@
      display: flex;
      flex-direction: column;
 }
+
+.copy-link:hover {
+     color: #1d4ed8;
+}
+
+.json-schema-success {
+     color: #10b981;
+}
+
+.json-schema-warning {
+     color: #f59e0b;
+}
+
+.json-schema-error {
+     color: #ef4444;
+}
