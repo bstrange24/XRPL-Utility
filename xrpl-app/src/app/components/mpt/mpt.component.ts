@@ -108,6 +108,27 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      existingMptsCollapsed: boolean = true;
      outstandingIOUCollapsed: boolean = true;
      metaDataField = signal<string>('');
+     metaDataField1 = signal<string>(`{
+  "currency": "FLUSD",
+  "name": "Florent USD",
+  "desc": "A regulated stablecoin issued by Florent.",
+  "icon": "https://unsplash.com/photos/a-toy-rocket-is-flying-over-a-pile-of-pink-blocks-zUweo75uccw",
+  "asset_class": "rwa",
+  "asset_subclass": "stablecoin",
+  "acct_name": "Florent",
+  "weblinks": [
+    {
+      "url": "https://florent.com/",
+      "type": "website",
+      "title": "Official Website"
+    },
+    {
+      "url": "https://flo.org/",
+      "type": "docs",
+      "title": "My Documentation"
+    }
+  ]
+}`);
      tokenCountField = signal<string>('');
      assetScaleField = signal<string>('');
      isdepositAuthAddress = signal<boolean>(false);

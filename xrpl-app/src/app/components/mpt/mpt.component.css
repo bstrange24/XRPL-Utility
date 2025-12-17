@@ -1,0 +1,6 @@
+.flags-container {
+     flex: 1;
+     min-width: 420px;
+     display: flex;
+     flex-direction: column;
+}

@@ -3049,3 +3049,26 @@ ticket-fields .form-group {
      border-radius: 6px;
      /* border-left: 4px solid #10b981; */
 }
+
+.label-with-link {
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+     font-weight: 600;
+}
+
+.label-meta {
+     font-size: 0.75rem;
+     font-weight: 400;
+     color: #6b7280;
+}
+
+.label-meta a {
+     color: #2563eb;
+     text-decoration: none;
+     margin-left: 2px;
+}
+
+.label-meta a:hover {
+     text-decoration: underline;
+}
