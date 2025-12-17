@@ -120,6 +120,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           formatOnType: true,
           scrollBeyondLastLine: false,
      };
+     metadataError = signal<string>('');
      tokenCountField = signal<string>('');
      assetScaleField = signal<string>('');
      isdepositAuthAddress = signal<boolean>(false);
@@ -265,6 +266,23 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           return this.mptItems().find(i => i.id === id) || null;
      });
 
+     metadataByteLength = computed(() => {
+          const meta = this.metaDataField().trim();
+          if (!meta) return 0;
+
+          try {
+               // Convert to hex (same as xrpl.convertStringToHex does)
+               const hex = xrpl.convertStringToHex(meta);
+               return hex.length / 2; // hex string: 2 chars = 1 byte
+          } catch {
+               return 0;
+          }
+     });
+
+     metadataIsValid = computed(() => {
+          return this.metadataByteLength() <= 1024;
+     });
+
      onMptSelected(item: SelectItem | null) {
           this.mptIssuanceIdField.set(item?.id || '');
      }
@@ -408,6 +426,21 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           await this.withPerf('createCheck', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
+                    const byteLength = this.metadataByteLength();
+
+                    if (byteLength > 1024) {
+                         this.txUiService.setError(`Token Metadata exceeds maximum size: ${byteLength} bytes (limit: 1024 bytes)`);
+                         this.txUiService.spinner.set(false);
+                         return;
+                    }
+
+                    if (byteLength > 0 && !this.metadataIsValid()) {
+                         // Extra safety
+                         this.txUiService.setError('Invalid metadata encoding');
+                         this.txUiService.spinner.set(false);
+                         return;
+                    }
+
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     const [{ accountInfo, accountObjects }, trustLines, checkObjects, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getAccountObjectsWithType(this.currentWallet().address, true, 'check'), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
@@ -429,7 +462,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                     const mPTokenIssuanceCreateTx: MPTokenIssuanceCreate = {
                          TransactionType: 'MPTokenIssuanceCreate',
                          Account: wallet.classicAddress,
-                         // MaximumAmount: this.tokenCountField,
+                         MaximumAmount: this.tokenCountField(),
                          Fee: fee,
                          Flags: v_flags,
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
@@ -785,7 +818,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           (accountObjects.result.account_objects ?? []).forEach(obj => {
                const o = obj as any;
                if (o.LedgerEntryType === 'MPTokenIssuance') {
-                    issuances.set(o.MPTokenIssuanceID, o);
+                    issuances.set(o.mpt_issuance_id, o);
                } else if (o.LedgerEntryType === 'MPToken' && o.Account === classicAddress) {
                     holdings.push(o);
                }
@@ -942,7 +975,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                this.utilsService.setMemoField(mptTx, this.txUiService.memoField());
           }
 
-          if (this.assetScaleField && this.activeTab() === 'create') {
+          if (this.assetScaleField() && this.activeTab() === 'create') {
                const assetScale = parseInt(this.assetScaleField());
                if (assetScale < 0 || assetScale > 15) {
                     throw new Error('Tick size must be between 3 and 15.');
@@ -955,7 +988,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                if (!this.transferFeeField()?.trim() && this.flags.canTransfer) {
                     throw new Error('Transfer Fee is required when CanTransfer is enabled');
                }
-               if (this.transferFeeField) {
+               if (this.transferFeeField()) {
                     // TransferFee is in 1/1000th of a percent (basis points / 10), so for 1%, input 1000
                     const transferFee = Number.parseInt(this.transferFeeField());
                     if (isNaN(transferFee) || transferFee < 0 || transferFee > 50000) {
@@ -965,11 +998,11 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                }
           }
 
-          if (this.tokenCountField && this.activeTab() === 'create') {
-               mptTx.MaximumAmount = this.tokenCountField;
+          if (this.tokenCountField() && this.activeTab() === 'create') {
+               mptTx.MaximumAmount = this.tokenCountField();
           }
 
-          if (this.metaDataField && this.activeTab() === 'create') {
+          if (this.metaDataField() && this.activeTab() === 'create') {
                mptTx.MPTokenMetadata = xrpl.convertStringToHex(this.metaDataField());
           }
      }
@@ -1073,6 +1106,20 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           return this.txUiService.warningMessage?.replaceAll(/</g, '&lt;').replaceAll(/>/g, '&gt;');
      }
 
+     getCreateButtonTooltip(): string {
+          if (this.txUiService.spinner()) {
+               return 'Processing transaction...';
+          }
+          // if (!(this.walletManagerService.hasWallets$ | async)) {
+          // return 'No wallet selected – connect or create a wallet to continue';
+          // }
+          if (!this.metadataIsValid()) {
+               const bytes = this.metadataByteLength();
+               return `Token Metadata too large: ${bytes} bytes (maximum allowed: 1024 bytes)`;
+          }
+          return 'Create MPT Issuance';
+     }
+
      loadXls89Template() {
           this.metaDataField.set(JSON.stringify(this.XLS89_TEMPLATE(), null, 2));
      }
@@ -1083,7 +1130,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                this.assetScaleField.set('');
                this.transferFeeField.set('');
                this.mptIssuanceIdField.set('');
-               this.metaDataField.set('');
+               // this.metaDataField.set('');
                this.amountField.set('');
                this.flags.canClawback = false;
                this.flags.canLock = false;

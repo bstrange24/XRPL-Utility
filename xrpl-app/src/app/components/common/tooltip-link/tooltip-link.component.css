@@ -13,9 +13,7 @@
      color: white;
      box-shadow: 0 8px 24px rgba(2, 6, 23, 0.45);
      white-space: pre-wrap;
-     /* allow long content to wrap */
      max-width: 340px;
-     /* max width */
      overflow-wrap: break-word;
      opacity: 0;
      transform: translateY(4px) scale(0.95);

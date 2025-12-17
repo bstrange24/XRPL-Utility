@@ -246,9 +246,20 @@
                                                        JSON Metadata
                                                        <a href="https://github.com/XRPLF/XRPL-Standards/discussions/264" target="_blank" rel="noopener noreferrer">XLS-89</a>
                                                   </span>
-                                                  <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 12em" (click)="jsonEditor.format()">Format JSON</button>
+                                                  <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
                                              </label>
                                              <app-json-editor class="json-error-banner" [(value)]="metaDataField" #jsonEditor></app-json-editor>
+
+                                             <div class="metadata-info">
+                                                  <small class="text-muted"> Metadata size: {{ metadataByteLength() }} / 1024 bytes </small>
+                                                  @if (metadataByteLength() > 1024) {
+                                                  <small class="text-danger d-block">
+                                                       <strong>Exceeded limit – transaction will fail</strong>
+                                                  </small>
+                                                  } @else if (metadataByteLength() > 900) {
+                                                  <small class="text-warning d-block"> Approaching limit ({{ metadataByteLength() }} bytes) </small>
+                                                  }
+                                             </div>
                                         </div>
                                    </div>
                                    }
@@ -340,7 +351,7 @@
                               <!-- MPT Flags -->
                               @if (activeTab() === 'create') {
                               <!-- <div class="tab-content-container flags-container" style="min-width: 550px"> -->
-                              <div class="tab-content-container flags-container">
+                              <div class="tab-content-container flags-container" style="min-width: 350px">
                                    <div class="flags-wrapper">
                                         <div class="token-flags-header">
                                              <lucide-icon name="flag" size="20"></lucide-icon>
@@ -453,9 +464,15 @@
 
                          <!-- Action buttons -->
                          <div class="button-row">
-                              @if(activeTab() === 'create') {
-                              <button type="button" class="btn-primary-blue" (click)="createMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create MPT' }}</button>
-                              } @else if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
+                              @if(activeTab() === 'create') { @if (txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || !metadataIsValid()) {
+                              <div class="button-row">
+                                   <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
+                                        <button type="button" class="btn-primary-blue" disabled>{{ txUiService.spinner() ? 'Processing...' : 'Create MPT' }}</button>
+                                   </app-tooltip-link>
+                              </div>
+                              } @if (txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || metadataIsValid()) {
+                              <button type="button" class="btn-primary-blue" (click)="createMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || !metadataIsValid()">{{ txUiService.spinner() ? 'Processing...' : 'Create MPT' }}</button>
+                              } } @else if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
                               <button type="button" class="btn-primary-orange" (click)="authorizeMpt('Y')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Authorize MPT' }}</button>
                               <button type="button" class="btn-primary-orange" (click)="authorizeMpt('N')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Unauthorize MPT' }}</button>
                               } @else if (activeTab() === 'send') {
@@ -471,13 +488,13 @@
                               <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
                          </div>
                     </div>
-
-                    <!-- Execution time -->
-                    <div style="display: flex">
-                         <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
-                    </div>
-                    <app-transaction-preview></app-transaction-preview>
                </form>
+
+               <!-- Execution time -->
+               <div style="display: flex">
+                    <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+               </div>
+               <app-transaction-preview></app-transaction-preview>
           </div>
      </div>
 </div>

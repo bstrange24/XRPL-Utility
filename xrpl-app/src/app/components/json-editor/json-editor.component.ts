@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ElementRef, ViewChild } from '@angular/core';
 import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, ViewUpdate } from '@codemirror/view';
 import { defaultKeymap, indentWithTab } from '@codemirror/commands';
@@ -26,47 +26,45 @@ export class JsonEditorComponent {
      jsonError = '';
 
      ngAfterViewInit() {
-          this.view = new EditorView({
-               state: EditorState.create({
-                    doc: this.value,
-                    extensions: [
-                         // oneDark,
-                         vscodeLight,
-                         json(),
-                         lintGutter(), // Shows markers in the left gutter
-                         linter(jsonParseLinter()), // Basic JSON syntax linting
-                         lineNumbers(),
-                         keymap.of([...defaultKeymap, indentWithTab]),
-                         this.languageConf.of([]),
-                         // This removes extra bottom padding and makes content fill the height
-                         EditorView.theme({
-                              '&': {
-                                   height: '100%',
-                              },
-                              '.cm-scroller': {
-                                   overflow: 'auto',
-                              },
-                              '.cm-content': {
-                                   minHeight: '100%',
-                                   paddingBottom: '50px', // Small buffer so cursor isn't at very bottom
-                              },
-                              // '.cm-gutters': {
-                              //      backgroundColor: '#1e1e1e', // Match your theme
-                              //      borderRight: '1px solid #333',
-                              // },
-                         }),
+          setTimeout(() => {
+               this.view = new EditorView({
+                    state: EditorState.create({
+                         doc: this.value,
+                         extensions: [
+                              // oneDark,
+                              vscodeLight,
+                              json(),
+                              lintGutter(), // Shows markers in the left gutter
+                              linter(jsonParseLinter()), // Basic JSON syntax linting
+                              lineNumbers(),
+                              keymap.of([...defaultKeymap, indentWithTab]),
+                              this.languageConf.of([]),
+                              // This removes extra bottom padding and makes content fill the height
+                              EditorView.theme({
+                                   '&': {
+                                        height: '100%',
+                                   },
+                                   '.cm-scroller': {
+                                        overflow: 'auto',
+                                   },
+                                   '.cm-content': {
+                                        minHeight: '100%',
+                                        paddingBottom: '50px', // Small buffer so cursor isn't at very bottom
+                                   },
+                              }),
 
-                         EditorView.updateListener.of((update: ViewUpdate) => {
-                              if (update.docChanged) {
-                                   const newValue = update.state.doc.toString();
-                                   this.valueChange.emit(newValue);
-                                   this.validateJson(newValue);
-                              }
-                         }),
-                    ],
-               }),
-               parent: this.editorRef.nativeElement,
-          });
+                              EditorView.updateListener.of((update: ViewUpdate) => {
+                                   if (update.docChanged) {
+                                        const newValue = update.state.doc.toString();
+                                        this.valueChange.emit(newValue);
+                                        this.validateJson(newValue);
+                                   }
+                              }),
+                         ],
+                    }),
+                    parent: this.editorRef.nativeElement,
+               });
+          }, 0);
      }
 
      private validateJson(content: string) {
@@ -79,7 +77,6 @@ export class JsonEditorComponent {
                JSON.parse(content);
                this.jsonError = ''; // Valid
           } catch (e: any) {
-               // Extract a friendly message
                this.jsonError = e.message || 'Invalid JSON';
           }
      }
