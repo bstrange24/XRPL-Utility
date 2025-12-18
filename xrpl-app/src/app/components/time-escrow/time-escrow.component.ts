@@ -545,6 +545,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           this.clearFields(true);
           if (this.hasWallets()) {
                await this.getEscrows(true);
+               this.populateDefaultDateTime();
           }
      }
 

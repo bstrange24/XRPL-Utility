@@ -238,10 +238,30 @@
                                         </div>
 
                                         <div class="form-group">
+                                             <label for="credentialExpiration">Cancel After Time</label>
+                                             <p class="form-hint">
+                                                  The time, in seconds since the Ripple Epoch, <br />
+                                                  when this channel expires.
+                                             </p>
+
+                                             <div class="expiration-input-group">
+                                                  <input type="datetime-local" [(ngModel)]="paymentChannelCancelAfterTimeField" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" class="expiration-input" />
+
+                                                  <div class="expiration-buttons">
+                                                       <button type="button" (click)="setCancelAfterExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
+                                                       <button type="button" (click)="addCancelAfterToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
+                                                       <button type="button" (click)="addCancelAfterToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
+                                                       <button type="button" (click)="addCancelAfterToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
+                                                       <button type="button" (click)="addCancelAfterToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
+                                                  </div>
+                                             </div>
+                                        </div>
+
+                                        <!-- <div class="form-group">
                                              <label>Cancel After Time</label>
                                              <input type="text" id="paymentChannelCancelAfterTimeField" placeholder="Enter time" [(ngModel)]="paymentChannelCancelAfterTimeField" name="paymentChannelCancelAfterTimeField" />
                                              <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedCancelAfterTimeUnit()" (valueChange)="paymentChannelCancelAfterTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
-                                        </div>
+                                        </div> -->
                                         }
                                    </div>
                                    }

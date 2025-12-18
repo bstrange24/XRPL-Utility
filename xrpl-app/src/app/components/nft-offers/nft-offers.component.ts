@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, computed, DestroyRef, signal, ChangeDetectionStrategy } from '@angular/core';
+import { OnInit, Component, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, Signal, WritableSignal } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -498,6 +498,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     if (wallet) {
                          this.clearFields(true);
                          this.selectWallet(wallet);
+                         this.populateDefaultDateTime();
                     }
                }
           });
@@ -507,6 +508,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                if (wallet) {
                     this.selectWallet(wallet);
                     this.clearFields(true);
+                    this.populateDefaultDateTime();
                     await this.getNFTOffers(true);
                }
           });
@@ -575,6 +577,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
 
           this.clearFields(true);
           if (this.hasWallets()) {
+               this.populateDefaultDateTime();
                await this.getNFTOffers(true);
           }
      }
@@ -1395,6 +1398,57 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
                this.updateDestinations();
           }
+     }
+
+     private addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
+          let currentValue = fieldSignal();
+
+          // If field is empty, start from now
+          if (!currentValue) {
+               const now = new Date();
+               currentValue = this.formatDateTimeLocal(now);
+          }
+
+          const date = new Date(currentValue);
+          date.setSeconds(date.getSeconds() + seconds);
+
+          const newDateTime = this.formatDateTimeLocal(date);
+
+          writableSignal.set(newDateTime);
+     }
+
+     // Helper to avoid duplicating formatting code
+     private formatDateTimeLocal(date: Date): string {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const secs = String(date.getSeconds()).padStart(2, '0');
+
+          return `${year}-${month}-${day}T${hours}:${minutes}:${secs}`;
+     }
+
+     // Now update your public methods
+     addNftToExpiration(seconds: number): void {
+          this.addToDateTimeField(this.expirationTimeField, this.expirationTimeField, seconds);
+     }
+
+     setNftExpirationToNow() {
+          const now = new Date();
+
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const seconds = String(now.getSeconds()).padStart(2, '0');
+
+          this.expirationTimeField.set(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+     }
+
+     populateDefaultDateTime() {
+          this.setNftExpirationToNow();
      }
 
      copyNFTokenID(NFTokenID: string) {

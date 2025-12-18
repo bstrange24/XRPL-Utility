@@ -548,6 +548,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           this.clearFields(true);
           if (this.hasWallets()) {
                await this.getEscrows(true);
+               this.populateDefaultDateTime();
           }
      }
 

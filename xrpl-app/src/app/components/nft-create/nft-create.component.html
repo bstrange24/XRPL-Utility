@@ -28,18 +28,6 @@
                          <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
                          Modify NFT Meta Data
                     </button>
-                    <!-- <button class="menu-btn" [class.active]="activeTab() === 'lock'" (click)="setTab('lock')">
-                         <ng-icon name="heroLockOpen" size="20" class="text-red-600"></ng-icon>
-                         Lock/Unlock MPT
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'clawback'" (click)="setTab('clawback')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Clawback MPT
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'destroy'" (click)="setTab('destroy')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Destroy MPT
-                    </button> -->
                </div>
 
                <!-- Create Menu -->
@@ -77,8 +65,6 @@
                <div>
                     <div class="submenu-info-text">
                          <div class="white-button-submenu">
-                              <!-- <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon> -->
-                              <!-- <ng-icon name="heroBanknotes" size="27" class="text-red-600"></ng-icon> -->
                               <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
                          </div>
                          <div>
@@ -89,53 +75,7 @@
                </div>
                }
 
-               <!-- Claim Menu -->
-               <!-- @if (activeTab() === 'lock' || activeTab() === 'unlock') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroLockOpen" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Lock/Unlock MPT</h2>
-                              <p class="submenu-info-secondary-text">Lock/Unlock MPT so another XRPL address can't send it</p>
-                         </div>
-                    </div>
-               </div>
-               } -->
-
-               <!-- Close Menu -->
-               <!-- @if (activeTab() === 'clawback') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Clawback MPT</h2>
-                              <p class="submenu-info-secondary-text">Clawback a previously created MPT</p>
-                         </div>
-                    </div>
-               </div>
-               } -->
-
-               <!-- Close Menu -->
-               <!-- @if (activeTab() === 'destroy') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Destroy MPT</h2>
-                              <p class="submenu-info-secondary-text">Destroy a previously created MPT</p>
-                         </div>
-                    </div>
-               </div>
-               } -->
-
                <!-- Dynamic info panel -->
-               <!-- NFT Info Panel - Collapsible & Beautiful -->
                @if (infoData(); as info) {
                <div class="info-message-wrapper">
                     <div class="info-panel">
@@ -216,64 +156,52 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Taxon</label>
+                                             <p class="form-hint">
+                                                  Indicates the taxon associated with this token. The taxon is generally a value chosen by the minter of the token <br />
+                                                  and a given taxon may be used for multiple tokens.
+                                             </p>
                                              <input type="text" [(ngModel)]="taxonField" name="taxonField" placeholder="" />
-                                             <!-- <p style="font-size: small; margin-top: 1px; margin-bottom: 0px; color: lightslategrey">Decimal places for the token (0-15). 2 = 0.01 precision.</p> -->
                                         </div>
                                    </div>
 
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Transfer Fee</label>
-                                             <input type="text" [(ngModel)]="transferFeeField" name="transferFeeField" placeholder="This will be a percentage" />
-                                             <!-- <p style="font-size: small; margin-top: 1px; margin-bottom: 0px; color: lightslategrey">Decimal places for the token (0-15). 2 = 0.01 precision.</p> -->
+                                             <p class="form-hint">
+                                                  Specifies the fee charged by the issuer for secondary sales of the Token, if such sales are allowed. <br />
+                                                  Valid values for this field are between 0 and 50000 inclusive, allowing transfer rates between 0.000% and 50.000% in increments of 0.001%.
+                                             </p>
+                                             <input type="text" [(ngModel)]="transferFeeField" name="transferFeeField" placeholder="" />
                                         </div>
                                    </div>
-
-                                   <!-- <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Offer Expiration</label>
-                                             <input type="text" id="escrowCancelTimeField" placeholder="Enter time" [(ngModel)]="expirationField" name="escrowCancelTimeField" />
-                                             <p style="font-size: small; margin-top: 1px; margin-bottom: 0px; color: lightslategrey">Decimal places for the token (0-15). 2 = 0.01 precision.</p>
-                                        </div>
-                                   </div> -->
-
-                                   <!-- <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Offer Expiration Unit</label>
-                                             <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedTimeUnitItem()" (valueChange)="expirationTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
-                                        </div>
-                                   </div> -->
 
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>URI</label>
+                                             <p class="form-hint">
+                                                  URI that points to the data and/or metadata associated with the NFT. <br />
+                                                  The URI is NOT checked for validity, but the field is limited to a maximum length of 256 bytes.
+                                             </p>
                                              <input type="text" [(ngModel)]="initialURIField" name="initialURIField" placeholder="" />
-                                             <!-- <p style="font-size: small; margin-top: 1px; margin-bottom: 0px; color: lightslategrey">Decimal places for the token (0-15). 2 = 0.01 precision.</p> -->
                                         </div>
                                    </div>
 
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Amount</label>
+                                             <p class="form-hint">Indicates the amount expected for the Token.</p>
                                              <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
-                                             <!-- <p style="font-size: small; margin-top: 1px; margin-bottom: 0px; color: lightslategrey">Decimal places for the token (0-15). 2 = 0.01 precision.</p> -->
                                         </div>
                                    </div>
 
-                                   <!-- Destination (create only) -->
-                                   <!-- <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="destination">Destination</label>
-                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                             <p style="font-size: small; margin-top: 1px; margin-bottom: 0px; color: lightslategrey">Decimal places for the token (0-15). 2 = 0.01 precision.</p>
-                                        </div>
-                                   </div> -->
-
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>Nft Token Minter</label>
+                                             <label>Nft Token Minter (opt)</label>
+                                             <p class="form-hint">
+                                                  Indicates the account that should be the issuer of this token. This value is optional and should only be specified if the account <br />
+                                                  executing the transaction is not the `Issuer` of the `NFToken` object.
+                                             </p>
                                              <input type="text" [(ngModel)]="nfTokenMinterAddress" name="nfTokenMinterAddress" placeholder="" />
-                                             <!-- <p style="font-size: small; margin-top: 1px; margin-bottom: 0px; color: lightslategrey">Decimal places for the token (0-15). 2 = 0.01 precision.</p> -->
                                         </div>
                                    </div>
                                    }
@@ -282,29 +210,14 @@
                                    @if(activeTab() === 'burn' || activeTab() === 'updateNFTMetadata') {
                                    <div class="form-group">
                                         <label>Select NFT</label>
-
+                                        <p class="form-hint">Select an existing NFT to {{activeTab() === 'burn' ? 'burn' : 'update' }}.</p>
                                         <app-select-search-dropdown [items]="nftItems()" [value]="selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found"> </app-select-search-dropdown>
                                    </div>
-                                   <!-- <div class="form-row">
-                                        <div class="form-group">
-                                             @if (existingNfts.length > 0) {
-                                             <label for="nftSelect">Select NFT:</label>
-                                             <div>
-                                                  <select id="nftSelect" name="nftSelect" [(ngModel)]="selectedNft" (ngModelChange)="onSelectNft($event)">
-                                                       <option [ngValue]="null"></option>
-
-                                                       @for (nft of existingNfts; track nft.NFTokenID) {
-                                                       <option [ngValue]="nft.NFTokenID">{{ nft.NFTokenID | slice:0:20 }}... ({{ nft.URI ?? 'No URI' }})</option>
-                                                       }
-                                                  </select>
-                                             </div>
-                                             }
-                                        </div>
-                                   </div> -->
 
                                    <div class="form-row" style="margin-top: 0.8em">
                                         <div class="form-group">
                                              <label>Nft Token Id</label>
+                                             <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
                                              <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
                                         </div>
                                    </div>
@@ -315,12 +228,14 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>URI</label>
+                                             <p class="form-hint">URI that points to the data and/or metadata associated with the NFT. The URI is NOT checked for validity, but the field is limited to a maximum length of 256 bytes.</p>
                                              <input type="text" [(ngModel)]="initialURIField" name="initialURIField" placeholder="" />
                                         </div>
                                    </div>
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Owner</label>
+                                             <p class="form-hint">The NFT owner that created the NFT.</p>
                                              <input type="text" [(ngModel)]="nftOwnerAddress" name="nftOwnerAddress" placeholder="" />
                                         </div>
                                    </div>

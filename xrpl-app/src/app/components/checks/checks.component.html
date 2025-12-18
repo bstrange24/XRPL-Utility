@@ -169,6 +169,7 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="currencyCodeCreate">Currency Code</label>
+                                        <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
                                         <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
                                              <ng-template #itemTemplate let-item>
                                                   <div class="flex items-center gap-2">
@@ -184,6 +185,7 @@
                                    </div>
                                    <div class="form-group">
                                         <label for="amount">Amount</label>
+                                        <p class="form-hint">Amount, in XRP or token, to send to the destination.</p>
                                         <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
                                    </div>
                               </div>
@@ -193,10 +195,12 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="issuer">Issuer</label>
+                                        <p class="form-hint">The XRPL account that issues and controls this currency.</p>
                                         <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                                    </div>
                                    <div class="form-group">
                                         <label for="currencyBalance">Currency Balance</label>
+                                        <p class="form-hint">Total currency balance held by this account.</p>
                                         <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly />
                                    </div>
                               </div>
@@ -206,11 +210,13 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="destination">Destination</label>
+                                        <p class="form-hint">The unique address of the account receiving the payment.</p>
                                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                    </div>
 
                                    <div class="form-group">
                                         <label for="destinationTag">Destination Tag</label>
+                                        <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
                                         <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
                                    </div>
                               </div>
@@ -219,18 +225,20 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="sourceTag">Source Tag (opt)</label>
+                                        <p class="form-hint">Identify which internal user, wallet, or sub-account <br />initiated a payment.</p>
                                         <input type="text" [(ngModel)]="sourceTagField" name="sourceTagField" />
                                    </div>
 
                                    <div class="form-group">
                                         <label for="invoiceId">Invoice ID (opt)</label>
+                                        <p class="form-hint">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
                                         <input type="text" [(ngModel)]="invoiceIdField" name="invoiceIdField" />
                                    </div>
                               </div>
 
                               <!-- Expiration (create only) -->
                               <div class="form-row">
-                                   <div class="form-group" style="padding-bottom: 10px">
+                                   <!-- <div class="form-group" style="padding-bottom: 10px">
                                         <label for="expirationAmount">Expiration Amount</label>
                                         <input type="text" id="expirationTimeField" placeholder="Enter time" [(ngModel)]="expirationTimeField" name="expirationTimeField" />
                                    </div>
@@ -238,6 +246,23 @@
                                    <div class="form-group">
                                         <label>Check Expiration Unit</label>
                                         <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedTimeUnitItem()" (valueChange)="checkExpirationTime.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
+                                   </div> -->
+
+                                   <div class="form-group">
+                                        <label for="credentialExpiration">Check Expiration</label>
+                                        <p class="form-hint">Check expiration when the check will expire.</p>
+
+                                        <div class="expiration-input-group">
+                                             <input type="datetime-local" [(ngModel)]="expirationTimeField" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" class="expiration-input" />
+
+                                             <div class="expiration-buttons">
+                                                  <button type="button" (click)="setCheckExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
+                                                  <button type="button" (click)="addCheckToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
+                                                  <button type="button" (click)="addCheckToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
+                                                  <button type="button" (click)="addCheckToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
+                                                  <button type="button" (click)="addCheckToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
+                                             </div>
+                                        </div>
                                    </div>
 
                                    <!-- <div class="form-group" style="padding-bottom: 10px">
@@ -249,6 +274,7 @@
                                              <option value="days">Days</option>
                                         </select>
                                    </div> -->
+                                   <div class="form-group"></div>
                               </div>
                               }
 
@@ -257,6 +283,7 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="currencyCodeCash">Currency Code</label>
+                                        <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
                                         <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
                                              <ng-template #itemTemplate let-item>
                                                   <div class="flex items-center gap-2">
@@ -273,6 +300,7 @@
 
                                    <div class="form-group">
                                         <label for="amount">Amount</label>
+                                        <p class="form-hint">Amount, in XRP or token, to send to the destination.</p>
                                         <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
                                    </div>
                               </div>
@@ -282,10 +310,12 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="issuer">Issuer</label>
+                                        <p class="form-hint">The XRPL account that issues and controls this currency.</p>
                                         <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                                    </div>
                                    <div class="form-group">
                                         <label for="currencyBalance">Currency Balance</label>
+                                        <p class="form-hint">Total currency balance held by this account.</p>
                                         <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly />
                                    </div>
                               </div>
@@ -296,6 +326,7 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="selectCheck">Select Check:</label>
+                                        <p class="form-hint">Check ID generated when the check was created.</p>
                                         <app-select-search-dropdown [items]="checkItems()" [value]="selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
                                    </div>
                               </div>

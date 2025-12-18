@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, Signal, WritableSignal } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -365,6 +365,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
           this.currencyFieldDropDownValue.set('XRP');
+          this.populateDefaultDateTime();
 
           // Subscribe once
           this.trustlineCurrency.currencies$.subscribe(currencies => {
@@ -476,6 +477,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.clearFields(true);
           if (this.hasWallets()) {
                await this.getChecks(true);
+               this.populateDefaultDateTime();
           }
      }
 
@@ -837,7 +839,8 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      private async setTxOptionalFields(client: xrpl.Client, checkTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (txType === 'create') {
                if (this.expirationTimeField && this.expirationTimeField() != '') {
-                    const checkExpiration = this.utilsService.addTime(Number.parseInt(this.expirationTimeField()), this.checkExpirationTime() as 'seconds' | 'minutes' | 'hours' | 'days').toString();
+                    const checkExpiration = this.utilsService.toRippleTime(this.expirationTimeField());
+                    // const checkExpiration = this.utilsService.addTime(Number.parseInt(this.expirationTimeField()), this.checkExpirationTime() as 'seconds' | 'minutes' | 'hours' | 'days').toString();
                     this.utilsService.setExpiration(checkTx, Number(checkExpiration));
                }
 
@@ -957,6 +960,57 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
                this.updateDestinations();
           }
+     }
+
+     private addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
+          let currentValue = fieldSignal();
+
+          // If field is empty, start from now
+          if (!currentValue) {
+               const now = new Date();
+               currentValue = this.formatDateTimeLocal(now);
+          }
+
+          const date = new Date(currentValue);
+          date.setSeconds(date.getSeconds() + seconds);
+
+          const newDateTime = this.formatDateTimeLocal(date);
+
+          writableSignal.set(newDateTime);
+     }
+
+     // Helper to avoid duplicating formatting code
+     private formatDateTimeLocal(date: Date): string {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const secs = String(date.getSeconds()).padStart(2, '0');
+
+          return `${year}-${month}-${day}T${hours}:${minutes}:${secs}`;
+     }
+
+     // Now update your public methods
+     addCheckToExpiration(seconds: number): void {
+          this.addToDateTimeField(this.expirationTimeField, this.expirationTimeField, seconds);
+     }
+
+     setCheckExpirationToNow() {
+          const now = new Date();
+
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const seconds = String(now.getSeconds()).padStart(2, '0');
+
+          this.expirationTimeField.set(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+     }
+
+     populateDefaultDateTime() {
+          this.setCheckExpirationToNow();
      }
 
      copyCheckId(checkId: string) {

@@ -268,21 +268,24 @@
                                    @if (activeTab() === 'authorize' || activeTab() === 'unauthorize' || activeTab() === 'lock' || activeTab() === 'unlock') {
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>MPT Issuance ID</label>
-                                             <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group">
                                              <label>Select MPT to send</label>
+                                             <p class="form-hint">MPT this account holds that can be sent to another account.</p>
                                              <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
                                         </div>
                                    </div>
 
                                    <div class="form-row">
                                         <div class="form-group">
+                                             <label>MPT Issuance ID</label>
+                                             <p class="form-hint">Identifies the MPTokenIssuance.</p>
+                                             <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
+                                        </div>
+                                   </div>
+
+                                   <div class="form-row">
+                                        <div class="form-group">
                                              <label for="destination">Destination</label>
+                                             <p class="form-hint">Account that will recieve the MPT.</p>
                                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
                                    </div>
@@ -292,60 +295,83 @@
                                    @if (activeTab() === 'send') {
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>MPT Issuance ID</label>
-                                             <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
+                                             <label>Select MPT to send</label>
+                                             <p class="form-hint">MPT this account holds that can be sent to another account.</p>
+                                             <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
                                         </div>
                                    </div>
 
                                    <div class="form-group">
-                                        <label>Select MPT to send</label>
-                                        <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                                        <label>MPT Issuance ID</label>
+                                        <p class="form-hint">Identifies the MPTokenIssuance.</p>
+                                        <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
                                    </div>
 
                                    <!-- Destination (create only) -->
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label for="destination">Destination</label>
+                                             <p class="form-hint">Account that will recieve the MPT.</p>
                                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
                                         <div class="form-group">
                                              <label>MPT Amount</label>
+                                             <p class="form-hint">Amount of MPT to send.</p>
                                              <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
                                         </div>
                                    </div>
                                    }
 
                                    <!-- Clawback/Destroy MPT sections -->
-                                   @if (activeTab() === 'clawback' || activeTab() === 'destroy') {
+                                   @if (activeTab() === 'clawback' || activeTab() === 'destroy') {`
                                    <!-- Clawback MPT sections -->
                                    @if(activeTab() === 'clawback') {
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>Amount to Clawback</label>
-                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
-                                        </div>
-
-                                        <!-- Destination -->
-                                        <div class="form-group">
-                                             <label for="destination">Destination</label>
-                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                                             <label>Select MPT to Clawback</label>
+                                             <p class="form-hint">MPT to clawback.</p>
+                                             <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
                                         </div>
                                    </div>
-                                   }
 
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>MPT Issuance ID</label>
+                                             <p class="form-hint">Identifies the MPTokenIssuance.</p>
                                              <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
                                         </div>
                                    </div>
 
-                                   <!-- @if (existingMpts().length > 0) { -->
-                                   <div class="form-group">
-                                        <label>Select MPT to Clawback</label>
-                                        <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                                   <!-- Destination -->
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label for="destination">MPT Holder</label>
+                                             <p class="form-hint">MPT holder address to clawback tokens from.</p>
+                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                                        </div>
+
+                                        <div class="form-group">
+                                             <label>Amount to Clawback</label>
+                                             <p class="form-hint">MPT amount to clawback form an existing holder.</p>
+                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
+                                        </div>
                                    </div>
                                    }
+                                   <!-- Destroy MPT sections -->
+                                   @if(activeTab() === 'destroy') {
+                                   <div class="form-group">
+                                        <label>Select MPT to Destroy</label>
+                                        <p class="form-hint">MPT to destroy.</p>
+                                        <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                                   </div>
+                                   <div class="form-row">
+                                        <div class="form-group">
+                                             <label>MPT Issuance ID</label>
+                                             <p class="form-hint">Identifies the MPTokenIssuance.</p>
+                                             <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
+                                        </div>
+                                   </div>
+                                   } }
                               </div>
 
                               <!-- MPT Flags -->

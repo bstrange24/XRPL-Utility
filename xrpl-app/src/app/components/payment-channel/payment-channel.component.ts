@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, Signal, WritableSignal } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -269,6 +269,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                     this.xrplCache.invalidateAccountCache(wallet.address);
                     this.txUiService.clearAllOptionsAndMessages();
                     this.clearInputFields();
+                    this.populateDefaultDateTime();
                     await this.getPaymentChannels(false);
                }
           });
@@ -283,6 +284,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
+          this.populateDefaultDateTime();
      }
 
      trackById(index: number, item: UnifiedPaymentChannel): string {
@@ -333,6 +335,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           this.clearFlagsValue();
           this.clearFields();
           if (this.hasWallets()) {
+               this.populateDefaultDateTime();
                await this.getPaymentChannels(true);
           }
      }
@@ -825,9 +828,10 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           if (this.publicKeyField()) this.utilsService.setPublicKey(paymentChannelTx, this.publicKeyField());
 
           if (this.paymentChannelCancelAfterTimeField()) {
-               const cancelAfterTime = this.utilsService.addTime(this.paymentChannelCancelAfterTimeField(), this.paymentChannelCancelAfterTimeUnit() as 'seconds' | 'minutes' | 'hours' | 'days');
-               console.log(`cancelTime: ${this.paymentChannelCancelAfterTimeField()} cancelUnit: ${this.paymentChannelCancelAfterTimeUnit}`);
-               console.log(`cancelTime: ${this.utilsService.convertXRPLTime(cancelAfterTime)}`);
+               // const cancelAfterTime = this.utilsService.addTime(this.paymentChannelCancelAfterTimeField(), this.paymentChannelCancelAfterTimeUnit() as 'seconds' | 'minutes' | 'hours' | 'days');
+               // console.log(`cancelTime: ${this.paymentChannelCancelAfterTimeField()} cancelUnit: ${this.paymentChannelCancelAfterTimeUnit}`);
+               // console.log(`cancelTime: ${this.utilsService.convertXRPLTime(cancelAfterTime)}`);
+               const cancelAfterTime = this.utilsService.toRippleTime(this.paymentChannelCancelAfterTimeField());
                const currentLedgerTime = await this.xrplService.getLedgerCloseTime(client); // Implement this in xrplService
                if (cancelAfterTime <= currentLedgerTime) {
                     return this.txUiService.setError('Cancel After time must be in the future');
@@ -934,6 +938,57 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
                this.updateDestinations();
           }
+     }
+
+     private addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
+          let currentValue = fieldSignal();
+
+          // If field is empty, start from now
+          if (!currentValue) {
+               const now = new Date();
+               currentValue = this.formatDateTimeLocal(now);
+          }
+
+          const date = new Date(currentValue);
+          date.setSeconds(date.getSeconds() + seconds);
+
+          const newDateTime = this.formatDateTimeLocal(date);
+
+          writableSignal.set(newDateTime);
+     }
+
+     // Helper to avoid duplicating formatting code
+     private formatDateTimeLocal(date: Date): string {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const secs = String(date.getSeconds()).padStart(2, '0');
+
+          return `${year}-${month}-${day}T${hours}:${minutes}:${secs}`;
+     }
+
+     // Now update your public methods
+     addCancelAfterToExpiration(seconds: number): void {
+          this.addToDateTimeField(this.paymentChannelCancelAfterTimeField, this.paymentChannelCancelAfterTimeField, seconds);
+     }
+
+     setCancelAfterExpirationToNow() {
+          const now = new Date();
+
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const seconds = String(now.getSeconds()).padStart(2, '0');
+
+          this.paymentChannelCancelAfterTimeField.set(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+     }
+
+     populateDefaultDateTime() {
+          this.setCancelAfterExpirationToNow();
      }
 
      clearFlagsValue() {

@@ -82,6 +82,7 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label>Number of Tickets to create</label>
+                                        <p class="form-hint">Number of Tickets to create for the selected account.</p>
                                         <input type="text" [(ngModel)]="ticketCountField" name="ticketCountField" placeholder="Total max tickets, per account, is 250" />
                                    </div>
                               </div>
@@ -92,7 +93,7 @@
                               <div class="form-row" style="margin-bottom: 1.2em">
                                    <div class="form-group">
                                         <label>Select Tickets to Delete</label>
-
+                                        <p class="form-hint">Select available tickets to delete for the selected account.</p>
                                         <div class="combobox-container" (clickOutside)="closeTicketDropdown()">
                                              <input #ticketDropdownInput type="text" [value]="ticketSearchQuery()" (input)="onTicketSearchInput($event)" (focus)="openTicketDropdown()" (keydown)="onTicketKeyDown($event)" [placeholder]="selectedTicketSequences().length > 0 ? selectedTicketSequences().length + ' ticket(s) selected' : 'Search tickets by sequence...'" [value]="ticketSearchQuery()" class="combobox-input" autocomplete="off" />
                                              <button class="combobox-toggle" (click)="toggleTicketDropdown()" type="button">

@@ -2,7 +2,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, OnInit, TemplateRef, ViewChild, ViewContainerRef, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostListener, OnInit, Signal, TemplateRef, ViewChild, ViewContainerRef, WritableSignal, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -346,6 +346,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.destinationSearchQuery.set('');
           this.resetCredentialIdDropDown();
           this.txUiService.clearAllOptionsAndMessages();
+          this.populateDefaultDateTime();
           await this.getAllCredentialsForAccount();
      }
 
@@ -889,24 +890,47 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.updateDestinations();
      }
 
-     addToExpiration(seconds: number): void {
-          // Always base on REAL current time, not whatever is in the field
-          const now = new Date();
+     private addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
+          let currentValue = fieldSignal();
 
-          // Add the offset
-          now.setSeconds(now.getSeconds() + seconds);
+          // If field is empty, start from now
+          if (!currentValue) {
+               const now = new Date();
+               currentValue = this.formatDateTimeLocal(now);
+          }
 
-          // Format as YYYY-MM-DDTHH:mm:ss (required for datetime-local with step="1")
-          const year = now.getFullYear();
-          const month = String(now.getMonth() + 1).padStart(2, '0');
-          const day = String(now.getDate()).padStart(2, '0');
-          const hours = String(now.getHours()).padStart(2, '0');
-          const minutes = String(now.getMinutes()).padStart(2, '0');
-          const secs = String(now.getSeconds()).padStart(2, '0');
+          const date = new Date(currentValue);
+          date.setSeconds(date.getSeconds() + seconds);
 
-          const newDateTime = `${year}-${month}-${day}T${hours}:${minutes}:${secs}`;
+          const newDateTime = this.formatDateTimeLocal(date);
 
-          // Update the signal
+          writableSignal.set(newDateTime);
+     }
+
+     // Helper to avoid duplicating formatting code
+     private formatDateTimeLocal(date: Date): string {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const secs = String(date.getSeconds()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}:${secs}`;
+     }
+
+     addCredentialToExpiration(seconds: number): void {
+          // Get current value (or use now if empty)
+          let currentDateStr = this.credential().subject.expirationDate;
+          if (!currentDateStr) {
+               currentDateStr = this.formatDateTimeLocal(new Date());
+          }
+
+          const date = new Date(currentDateStr);
+          date.setSeconds(date.getSeconds() + seconds);
+
+          const newDateTime = this.formatDateTimeLocal(date);
+
+          // Update nested signal immutably
           this.credential.update(cred => ({
                ...cred,
                subject: {
@@ -916,21 +940,21 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           }));
      }
 
-     setToNow(): void {
-          this.addToExpiration(0); // Reuse logic
+     setCredentialExpirationToNow(): void {
+          const now = new Date();
+          const formatted = this.formatDateTimeLocal(now);
+
+          this.credential.update(cred => ({
+               ...cred,
+               subject: {
+                    ...cred.subject,
+                    expirationDate: formatted,
+               },
+          }));
      }
 
-     populateDefaultDateTime() {
-          if (!this.credential().subject.expirationDate) {
-               const now = new Date();
-               const year = now.getFullYear();
-               const month = String(now.getMonth() + 1).padStart(2, '0');
-               const day = String(now.getDate()).padStart(2, '0');
-               const hours = String(now.getHours()).padStart(2, '0');
-               const minutes = String(now.getMinutes()).padStart(2, '0');
-               const seconds = String(now.getSeconds()).padStart(2, '0');
-               this.credential.update(cred => ({ ...cred, subject: { ...cred.subject, expirationDate: `${year}-${month}-${day}T${hours}:${minutes}:${seconds}` } }));
-          }
+     populateDefaultDateTime(): void {
+          this.setCredentialExpirationToNow();
      }
 
      copyCredentialId(checkId: string) {
