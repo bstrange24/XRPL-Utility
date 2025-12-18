@@ -1,16 +1,16 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef, ElementRef, ViewChild, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef, ChangeDetectionStrategy, DestroyRef, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, computed, ChangeDetectionStrategy, DestroyRef, signal, Signal, WritableSignal } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
+import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import * as cc from 'five-bells-condition';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
-import { TransactionUiService, ValidationInputs } from '../../services/transaction-ui/transaction-ui.service';
+import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
@@ -30,10 +30,6 @@ import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.compon
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { TemplatePortal } from '@angular/cdk/portal';
-import { Subject, takeUntil, map, distinctUntilChanged, filter, debounceTime } from 'rxjs';
-import { XrplService } from '../../services/xrpl-services/xrpl.service';
-import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 
 interface EscrowObject {
      Account: string;
@@ -437,6 +433,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           });
 
           this.currencyFieldDropDownValue.set('XRP');
+          this.populateDefaultDateTime();
      }
 
      private loadCustomDestinations(): void {
@@ -486,6 +483,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
+          this.populateDefaultDateTime();
      }
 
      trackByAddress(index: number, item: DropdownItem): string {
@@ -616,10 +614,15 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                     //      return this.utilsService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                     // }
 
-                    const finishAfterTime = this.utilsService.addTime(this.escrowFinishTimeField, this.escrowFinishTimeUnit() as 'seconds' | 'minutes' | 'hours' | 'days');
-                    const cancelAfterTime = this.utilsService.addTime(this.escrowCancelTimeField, this.escrowCancelTimeUnit() as 'seconds' | 'minutes' | 'hours' | 'days');
-                    console.log(`finishUnit: ${this.escrowFinishTimeUnit} cancelUnit: ${this.escrowCancelTimeUnit}`);
-                    console.log(`finishTime: ${this.utilsService.convertXRPLTime(finishAfterTime)} cancelTime: ${this.utilsService.convertXRPLTime(cancelAfterTime)}`);
+                    // const finishAfterTime = this.utilsService.addTime(this.escrowFinishTimeField(), this.escrowFinishTimeUnit() as 'seconds' | 'minutes' | 'hours' | 'days');
+                    // const cancelAfterTime = this.utilsService.addTime(this.escrowCancelTimeField(), this.escrowCancelTimeUnit() as 'seconds' | 'minutes' | 'hours' | 'days');
+                    // console.log(`finishUnit: ${this.escrowFinishTimeUnit()} cancelUnit: ${this.escrowCancelTimeUnit()}`);
+                    // console.log(`finishTime: ${this.utilsService.convertXRPLTime(finishAfterTime)} cancelTime: ${this.utilsService.convertXRPLTime(cancelAfterTime)}`);
+
+                    console.log(this.utilsService.toRippleTime(this.escrowFinishTimeField()));
+                    console.log(this.utilsService.toRippleTime(this.escrowCancelTimeField()));
+                    const finishAfterTime = this.utilsService.toRippleTime(this.escrowFinishTimeField());
+                    const cancelAfterTime = this.utilsService.toRippleTime(this.escrowCancelTimeField());
 
                     // Build amount object depending on currency
                     const amountToCash =
@@ -1142,7 +1145,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      //      const startTime = Date.now();
 
      //      try {
-     //           const [client, wallet] = await Promise.all([this.xrplService.getClient(), this.getWallet()]);
+     //           const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
      //           const accountInfo = await this.xrplService.getAccountObjects(client, this.currentWallet().address, 'validated', '');
 
      //           const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
@@ -1409,19 +1412,73 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           return { condition, fulfillment: fulfillment_hex };
      }
 
-     populateDefaultDateTime() {
-          if (!this.escrowCancelDateTimeField()) {
+     private addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
+          let currentValue = fieldSignal();
+
+          // If field is empty, start from now
+          if (!currentValue) {
                const now = new Date();
-
-               const year = now.getFullYear();
-               const month = String(now.getMonth() + 1).padStart(2, '0');
-               const day = String(now.getDate()).padStart(2, '0');
-               const hours = String(now.getHours()).padStart(2, '0');
-               const minutes = String(now.getMinutes()).padStart(2, '0');
-               const seconds = String(now.getSeconds()).padStart(2, '0');
-
-               this.escrowCancelDateTimeField.set(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+               currentValue = this.formatDateTimeLocal(now);
           }
+
+          const date = new Date(currentValue);
+          date.setSeconds(date.getSeconds() + seconds);
+
+          const newDateTime = this.formatDateTimeLocal(date);
+
+          writableSignal.set(newDateTime);
+     }
+
+     // Helper to avoid duplicating formatting code
+     private formatDateTimeLocal(date: Date): string {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const secs = String(date.getSeconds()).padStart(2, '0');
+
+          return `${year}-${month}-${day}T${hours}:${minutes}:${secs}`;
+     }
+
+     // Now update your public methods
+     addEscrowFinishToExpiration(seconds: number): void {
+          this.addToDateTimeField(this.escrowFinishTimeField, this.escrowFinishTimeField, seconds);
+     }
+
+     addEscrowCancelToExpiration(seconds: number): void {
+          this.addToDateTimeField(this.escrowCancelTimeField, this.escrowCancelTimeField, seconds);
+     }
+
+     setEscrowFinishToNow() {
+          const now = new Date();
+
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const seconds = String(now.getSeconds()).padStart(2, '0');
+
+          this.escrowFinishTimeField.set(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+     }
+
+     setEscrowCancelToNow() {
+          const now = new Date();
+
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const seconds = String(now.getSeconds()).padStart(2, '0');
+
+          this.escrowCancelTimeField.set(`${year}-${month}-${day}T${hours}:${minutes}:${seconds}`);
+     }
+
+     populateDefaultDateTime() {
+          this.setEscrowFinishToNow();
+          this.setEscrowCancelToNow();
      }
 
      displayAmount(amount: any): string {

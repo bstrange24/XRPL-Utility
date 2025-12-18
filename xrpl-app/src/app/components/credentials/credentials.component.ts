@@ -889,6 +889,37 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.updateDestinations();
      }
 
+     addToExpiration(seconds: number): void {
+          // Always base on REAL current time, not whatever is in the field
+          const now = new Date();
+
+          // Add the offset
+          now.setSeconds(now.getSeconds() + seconds);
+
+          // Format as YYYY-MM-DDTHH:mm:ss (required for datetime-local with step="1")
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const secs = String(now.getSeconds()).padStart(2, '0');
+
+          const newDateTime = `${year}-${month}-${day}T${hours}:${minutes}:${secs}`;
+
+          // Update the signal
+          this.credential.update(cred => ({
+               ...cred,
+               subject: {
+                    ...cred.subject,
+                    expirationDate: newDateTime,
+               },
+          }));
+     }
+
+     setToNow(): void {
+          this.addToExpiration(0); // Reuse logic
+     }
+
      populateDefaultDateTime() {
           if (!this.credential().subject.expirationDate) {
                const now = new Date();

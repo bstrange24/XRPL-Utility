@@ -170,6 +170,7 @@
                                         @if (activeTab() !== 'close') {
                                         <div class="form-group">
                                              <label>XRP Amount</label>
+                                             <p class="form-hint">Amount of XRP, in drops, to deduct from the sender's balance and set aside in this channel.</p>
                                              <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
                                         </div>
                                         }
@@ -178,6 +179,7 @@
                                         @if (activeTab() === 'create' || activeTab() === 'fund') {
                                         <div class="form-group">
                                              <label for="destination">Destination</label>
+                                             <p class="form-hint">Address to receive XRP claims against this channel. This is also known as the "destination address" for the channel.</p>
                                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
                                         }
@@ -190,11 +192,16 @@
                                         @if (activeTab() === 'create' || activeTab() === 'fund') {
                                         <div class="form-group">
                                              <label>Destination Tag</label>
+                                             <p class="form-hint">Arbitrary tag to further specify the destination for this payment channel, such as a hosted recipient at the destination address.</p>
                                              <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
                                         </div>
                                         } @if (activeTab() === 'claim' || activeTab() === 'fund' || activeTab() === 'close') {
                                         <div class="form-group">
                                              <label>Channel ID</label>
+                                             <p class="form-hint">
+                                                  The unique ID of the channel as a 64-character<br />
+                                                  hexadecimal string.
+                                             </p>
                                              <input type="text" [(ngModel)]="channelIDField" name="channelIDField" />
                                         </div>
                                         }
@@ -207,11 +214,13 @@
                                         @if (activeTab() === 'claim') {
                                         <div class="form-group" hidden>
                                              <label>Sender Public Key</label>
+                                             <p class="form-hint">The public key used for the signature, as hexadecimal</p>
                                              <input type="text" [(ngModel)]="publicKeyField" name="publicKeyField" />
                                         </div>
 
                                         <div class="form-group">
                                              <label>Claim Signature</label>
+                                             <p class="form-hint">The signed message contains the channel ID and the amount of the claim</p>
                                              <input type="text" [(ngModel)]="channelClaimSignatureField" name="channelClaimSignatureField" />
                                         </div>
                                         }
@@ -224,6 +233,7 @@
                                         @if (activeTab() === 'create') {
                                         <div class="form-group">
                                              <label>Settle Delay</label>
+                                             <p class="form-hint">Amount of time the source address must wait before closing the channel if it has unclaimed XRP.</p>
                                              <input type="text" [(ngModel)]="settleDelayField" name="settleDelayField" />
                                         </div>
 
@@ -237,7 +247,7 @@
                                    }
 
                                    <!-- Authorized Wallet (claim only) -->
-                                   @if (activeTab() === 'create' || activeTab() === 'fund' || activeTab() === 'claim' || activeTab() === 'close') {
+                                   <!-- @if (activeTab() === 'create' || activeTab() === 'fund' || activeTab() === 'claim' || activeTab() === 'close') {
                                    <div class="form-row" style="padding-bottom: 10px">
                                         @if (activeTab() === 'claim') {
                                         <div class="form-group">
@@ -246,7 +256,7 @@
                                         </div>
                                         }
                                    </div>
-                                   }
+                                   } -->
                               </div>
 
                               <!-- ==================== RIGHT: PAYMENT CHANNEL FLAGS ==================== -->

@@ -3139,3 +3139,26 @@ ticket-fields .form-group {
      padding-bottom: 12px;
      color: #991b1b;
 }
+
+.expiration-input-group {
+     display: flex;
+     align-items: center;
+     /* gap: 8px; */
+     flex-wrap: wrap;
+}
+
+.expiration-input {
+     flex: 1;
+     min-width: 220px;
+}
+
+.expiration-buttons {
+     display: flex;
+     gap: 6px;
+}
+
+.expiration-buttons .btn-small {
+     padding: 6px 10px;
+     font-size: 0.85rem;
+     min-width: 50px;
+}

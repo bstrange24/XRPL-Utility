@@ -146,6 +146,7 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="currencyCodeCreate">Currency Code</label>
+                                        <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
                                         <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
                                              <ng-template #itemTemplate let-item>
                                                   <div class="flex items-center gap-2">
@@ -161,6 +162,7 @@
                                    </div>
                                    <div class="form-group">
                                         <label for="amount">Amount</label>
+                                        <p class="form-hint">The amount to deduct from the sender's balance and put in escrow.</p>
                                         <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
                                    </div>
                               </div>
@@ -193,24 +195,62 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="destination">Destination</label>
+                                        <p class="form-hint">Address to receive escrowed XRP.</p>
                                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                    </div>
 
                                    <div class="form-group">
                                         <label for="destinationTag">Destination Tag</label>
+                                        <p class="form-hint">Arbitrary tag to further specify the destination for this escrowed.</p>
                                         <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
                                    </div>
                               </div>
 
                               <!-- Finish Time -->
                               <div class="form-row">
-                                   <div class="form-group" style="padding-bottom: 10px">
+                                   <!-- <div class="form-group" style="padding-bottom: 10px">
                                         <label for="finishTime">Finish Time</label>
+                                        <p class="form-hint">The time, in seconds since the Ripple Epoch, when the escrowed XRP can be released to the recipient.</p>
                                         <input type="text" id="escrowFinishTimeField" placeholder="Enter time" [(ngModel)]="escrowFinishTimeField" name="escrowFinishTimeField" />
                                    </div>
                                    <div class="form-group">
                                         <label>Finish Time Unit</label>
                                         <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedEscrowFinishTimeUnit()" (valueChange)="escrowFinishTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
+                                   </div> -->
+                                   <div class="form-group">
+                                        <label for="escrowFinishTime">Finish Time</label>
+                                        <p class="form-hint">The time, in seconds since the Ripple Epoch, when the escrowed XRP can be released to the recipient.</p>
+
+                                        <div class="expiration-input-group">
+                                             <input type="datetime-local" [(ngModel)]="escrowFinishTimeField" name="escrowFinishExpirationDate" step="1" (focus)="setEscrowFinishToNow()" class="expiration-input" />
+
+                                             <div class="expiration-buttons">
+                                                  <button type="button" (click)="setEscrowFinishToNow()" class="btn-small btn-primary-blue">Now</button>
+                                                  <button type="button" (click)="addEscrowFinishToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
+                                                  <button type="button" (click)="addEscrowFinishToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
+                                                  <button type="button" (click)="addEscrowFinishToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
+                                                  <button type="button" (click)="addEscrowFinishToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
+                                             </div>
+                                        </div>
+                                   </div>
+                                   <div class="form-group">
+                                        <label for="escrowCancelTime">Cancel Time</label>
+                                        <p class="form-hint">
+                                             The time, in seconds since the Ripple Epoch, <br />
+                                             this escrow expires.
+                                        </p>
+
+                                        <div class="expiration-input-group">
+                                             <input type="datetime-local" [(ngModel)]="escrowCancelTimeField" name="escrowCancelExpirationDate" step="1" (focus)="setEscrowCancelToNow()" class="expiration-input" />
+
+                                             <div class="expiration-buttons">
+                                                  <button type="button" (click)="setEscrowCancelToNow()" class="btn-small btn-primary-blue">Now</button>
+                                                  <button type="button" (click)="addEscrowCancelToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
+                                                  <button type="button" (click)="addEscrowCancelToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
+                                                  <button type="button" (click)="addEscrowCancelToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
+                                                  <button type="button" (click)="addEscrowCancelToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
+                                             </div>
+                                        </div>
                                    </div>
 
                                    <!-- <div class="form-group" style="padding-bottom: 10px">
@@ -225,16 +265,17 @@
                               </div>
 
                               <!-- Cancel Time -->
-                              <div class="form-row">
-                                   <div class="form-group" style="padding-bottom: 10px">
+                              <!-- <div class="form-row"> -->
+                              <!-- <div class="form-group" style="padding-bottom: 10px">
                                         <label for="cancelTime">Cancel Time</label>
+                                        <p class="form-hint">The time, in seconds since the Ripple Epoch, when this escrow expires.</p>
                                         <input type="text" id="escrowCancelTimeField" placeholder="Enter time" [(ngModel)]="escrowCancelTimeField" name="escrowCancelTimeField" />
                                    </div>
                                    <div class="form-group">
                                         <label>Cancel Time Unit</label>
                                         <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedEscrowCancelTimeUnit()" (valueChange)="escrowCancelTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
-                                   </div>
-                                   <!-- <div class="form-group" style="padding-bottom: 10px">
+                                   </div> -->
+                              <!-- <div class="form-group" style="padding-bottom: 10px">
                                         <label for="cancelTimeUnit">Cancel Time Unit</label>
                                         <select id="escrowCancelTimeUnit" [(ngModel)]="escrowCancelTimeUnit" name="escrowCancelTimeUnit">
                                              <option value="seconds">Seconds</option>
@@ -243,7 +284,7 @@
                                              <option value="days">Days</option>
                                         </select>
                                    </div> -->
-                              </div>
+                              <!-- </div> -->
                               }
 
                               <!-- Finish and Cancel -->
@@ -251,6 +292,7 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="selectEscrow">Select Escrow to {{ activeTab() === 'finish' ? 'Finish' : 'Cancel' }}</label>
+                                        <p class="form-hint">Select an existing escrow to {{activeTab() === 'finish' ? 'Finish' : 'Cancel' }}.</p>
                                         <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available"> </app-select-search-dropdown>
                                    </div>
                               </div>
@@ -258,6 +300,7 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label>Escrow Sequence ID</label>
+                                        <p class="form-hint">Sequence ID generated when the escrow was created.</p>
                                         <input type="text" [(ngModel)]="escrowSequenceNumberField" name="escrowSequenceNumberField" />
                                    </div>
                               </div>
@@ -267,6 +310,7 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="escrowOwner">Escrow Owner</label>
+                                        <p class="form-hint">The account that orginally created the escrow.</p>
                                         <input type="text" id="escrowOwnerField" [(ngModel)]="escrowOwnerField" name="escrowOwnerField" />
                                    </div>
                               </div>

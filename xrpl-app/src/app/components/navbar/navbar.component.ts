@@ -45,7 +45,7 @@ export class NavbarComponent implements OnInit {
      isMptDropdownActive: boolean = false;
      isAccountsDropdownActive: boolean = false;
      currentDateTime: string = ''; // Store formatted date/time
-     private timerSubscription: Subscription | null = null; // For real-time updates
+     // private timerSubscription: Subscription | null = null; // For real-time updates
      private searchSubject = new Subject<void>();
      transactionInput = '';
      spinner = false;
@@ -110,10 +110,10 @@ export class NavbarComponent implements OnInit {
           }
 
           // Initialize date/time and set up timer for real-time updates
-          this.updateDateTime();
-          this.timerSubscription = interval(100).subscribe(() => {
-               this.updateDateTime();
-          });
+          // this.updateDateTime();
+          // this.timerSubscription = interval(100).subscribe(() => {
+          //      this.updateDateTime();
+          // });
 
           this.searchSubject.pipe(debounceTime(300)).subscribe(() => {
                this.getTransaction();
@@ -157,11 +157,11 @@ export class NavbarComponent implements OnInit {
 
      ngOnDestroy() {
           // Clean up timer subscription to prevent memory leaks
-          if (this.timerSubscription) {
-               this.timerSubscription.unsubscribe();
-          }
+          // if (this.timerSubscription) {
+          //      this.timerSubscription.unsubscribe();
+          // }
           this.subs.forEach(s => s.unsubscribe());
-          if (this.timerSubscription) this.timerSubscription.unsubscribe();
+          // if (this.timerSubscription) this.timerSubscription.unsubscribe();
      }
 
      updateDateTime() {
