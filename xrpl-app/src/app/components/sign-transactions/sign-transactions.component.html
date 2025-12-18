@@ -56,6 +56,7 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Transaction Type</label>
+                                             <p class="form-hint">Select a transaction type to sign and submit.</p>
                                              <app-select-search-dropdown [items]="transactionTypeItems()" [value]="selectedTransactionItem()" (valueChange)="onTransactionSelected($event)" [showSecondaryInInput]="false" placeholder="Search transaction type..." emptyMessage="No transaction types available"> </app-select-search-dropdown>
                                         </div>
                                    </div>

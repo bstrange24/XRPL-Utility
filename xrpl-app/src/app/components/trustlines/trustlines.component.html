@@ -218,6 +218,7 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label for="currencyCodeCash">Currency Code</label>
+                                             <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
                                              <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
                                                   <ng-template #itemTemplate let-item>
                                                        <div class="flex items-center gap-2">
@@ -234,6 +235,7 @@
 
                                         <div class="form-group">
                                              <label for="issuer">Issuer</label>
+                                             <p class="form-hint">The XRPL account that issues and controls this currency.</p>
                                              <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                                         </div>
                                    </div>
@@ -242,11 +244,13 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Amount</label>
+                                             <p class="form-hint">Amount of currency to use in the transaction.</p>
                                              <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
                                         </div>
 
                                         <div class="form-group">
                                              <label>Currency Balance</label>
+                                             <p class="form-hint">Total currency balance held by this account.</p>
                                              <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly placeholder="" />
                                         </div>
                                    </div>
@@ -257,12 +261,18 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label for="destination">Destination</label>
+                                             @if (activeTab() === 'issueCurrency') {
+                                             <p class="form-hint">The unique address of the account receiving the payment.</p>
+                                             } @else{
+                                             <p class="form-hint">Tokens will be clawback from this address.</p>
+                                             }
                                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
 
                                         @if (activeTab() === 'issueCurrency') {
                                         <div class="form-group">
                                              <label>Destination Tag</label>
+                                             <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
                                              <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
                                         </div>
                                         }
@@ -275,11 +285,13 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Add Currency Code</label>
+                                             <p class="form-hint">Add a unique currency code to this application.</p>
                                              <input type="text" [(ngModel)]="newCurrency" name="newCurrency" placeholder="e.g. USDC, EUR, BTC" class="input-field" />
                                         </div>
 
                                         <div class="form-group">
                                              <label>Add Issuer Address</label>
+                                             <p class="form-hint">Add a unique issuer address to this application.</p>
                                              <input type="text" [(ngModel)]="newIssuer" name="newIssuer" placeholder="r..." class="input-field" />
                                         </div>
                                    </div>
@@ -294,6 +306,7 @@
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Select Currency</label>
+                                             <p class="form-hint">Remove a unique currency code to this application.</p>
                                              <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No saved currencies">
                                                   <ng-template #itemTemplate let-item>
                                                        <div class="flex items-center gap-2">
@@ -310,6 +323,7 @@
 
                                         <div class="form-group">
                                              <label>Select Issuer</label>
+                                             <p class="form-hint">Remove a unique issuer address from this application.</p>
                                              <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Select issuer to remove..." emptyMessage="No issuers for this currency" />
                                         </div>
                                    </div>

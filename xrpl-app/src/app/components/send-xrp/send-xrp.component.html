@@ -54,10 +54,12 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="amountField">XRP Amount</label>
+                                        <p class="form-hint">Amount, in XRP, to send to the destination.</p>
                                         <input type="text" placeholder="e.g. 10.5" [ngModel]="txUiService.amountField()" (ngModelChange)="txUiService.amountField.set($event)" name="amountField" />
                                    </div>
                                    <div class="form-group">
                                         <label for="destination">Destination</label>
+                                        <p class="form-hint">The unique address of the account receiving the payment.</p>
                                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (searchQueryChange)="typedDestination.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                    </div>
                               </div>
@@ -66,11 +68,13 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="destinationTagField">Destination Tag (opt)</label>
+                                        <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
                                         <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
                                    </div>
 
                                    <div class="form-group">
                                         <label for="sourceTagField">Source Tag (optional)</label>
+                                        <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
                                         <input type="text" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" name="sourceTagField" />
                                    </div>
                               </div>
@@ -79,6 +83,7 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="invoiceIdField">Invoice ID (optional)</label>
+                                        <p class="form-hint">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
                                         <input type="text" placeholder="e.g. INV_123" [ngModel]="txUiService.invoiceIdField()" (ngModelChange)="txUiService.invoiceIdField.set($event)" name="invoiceIdField" />
                                    </div>
                               </div>
