@@ -130,43 +130,58 @@
                               @if (activeTab() === 'set' && existingDid().length <= 0) {
                               <div class="form-row">
                                    <div class="form-group">
+                                        <label class="label-with-link">
+                                             DID Document
+                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="didDocumentEditor.format()">Format DID Document</button>
+                                             <div class="metadata-info">
+                                                  <small class="text-muted"> Metadata size: {{ didDocumentDataByteLength() }} / 256 bytes </small>
+                                                  @if (didDocumentDataByteLength() > 256) {
+                                                  <small class="text-danger d-block">
+                                                       <strong>Exceeded limit – transaction will fail</strong>
+                                                  </small>
+                                                  } @else if (didDocumentDataByteLength() > 200) {
+                                                  <small class="text-warning d-block"> Approaching limit ({{ didDocumentDataByteLength() }} bytes) </small>
+                                                  }
+                                             </div>
+                                        </label>
+                                        <app-json-editor [value]="didDocumentData()" (valueChange)="onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
+                                   </div>
+                              </div>
+                              <!-- <div class="form-row">
+                                   <div class="form-group">
                                         <label for="didDocument">DID Document</label>
                                         <textarea style="width: 100%; height: 200px; max-width: 100%; font-size: 0.95rem" id="didDocument" placeholder="DID Document" [(ngModel)]="didDetails().document" name="didDocument"></textarea>
                                    </div>
-                              </div>
+                              </div> -->
 
                               <!-- URI -->
                               <div class="form-row">
                                    <div class="form-group">
+                                        <label class="label-with-link">
+                                             URI Data
+                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="uriEditor.format()">Format URI Data</button>
+                                             <div class="metadata-info">
+                                                  <small class="text-muted"> Metadata size: {{ uriDataByteLength() }} / 256 bytes </small>
+                                                  @if (uriDataByteLength() > 256) {
+                                                  <small class="text-danger d-block">
+                                                       <strong>Exceeded limit – transaction will fail</strong>
+                                                  </small>
+                                                  } @else if (uriDataByteLength() > 200) {
+                                                  <small class="text-warning d-block"> Approaching limit ({{ uriDataByteLength() }} bytes) </small>
+                                                  }
+                                             </div>
+                                        </label>
+                                        <app-json-editor [value]="uriData()" (valueChange)="onUriDataChange($event)" #uriEditor> </app-json-editor>
+                                   </div>
+                              </div>
+                              <!-- <div class="form-row">
+                                   <div class="form-group">
                                         <label for="uri">URI</label>
                                         <input type="text" [(ngModel)]="didDetails().uri" placeholder="DID URI" name="uri" />
                                    </div>
-                              </div>
+                              </div> -->
 
                               <!-- Did Data -->
-                              <!-- <div class="form-row">
-                                   <div class="form-group">
-                                        <label class="label-with-link">
-                                             DID Data
-                                             <br />
-                                             <span class="label-meta">
-                                                  DID Schema
-                                                  <a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer">W3C</a>
-                                             </span>
-
-                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
-                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="validateDidData()">Validate DID Data</button>
-                                             @if (validDidSchema() && jsonError) {
-                                             <div class="json-schema-success">
-                                                  <small class="">
-                                                       <strong>DID JSON is valid</strong>
-                                                  </small>
-                                             </div>
-                                             }
-                                        </label>
-                                        <app-json-editor class="json-error-banner" [(value)]="didDetails().data" #jsonEditor></app-json-editor>
-                                   </div>
-                              </div> -->
                               <div class="form-row">
                                    <div class="form-group">
                                         <label class="label-with-link">
@@ -177,8 +192,8 @@
                                                   <a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer">W3C</a>
                                              </span>
 
-                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
-                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="validateDidData()">Validate DID Data</button>
+                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="didDataEditor.format()">Format DID Data</button>
+                                             <!-- <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="validateDidData()">Validate DID Data</button> -->
 
                                              <!-- Success: Schema valid AND no syntax errors -->
                                              @if (validDidSchema() && !hasJsonSyntaxError()) {
@@ -200,25 +215,19 @@
                                              }
 
                                              <div class="metadata-info">
-                                                  <small class="text-muted"> Metadata size: {{ metadataByteLength() }} / 256 bytes </small>
-                                                  @if (metadataByteLength() > 256) {
+                                                  <small class="text-muted"> Metadata size: {{ didDataByteLength() }} / 256 bytes </small>
+                                                  @if (didDataByteLength() > 256) {
                                                   <small class="text-danger d-block">
                                                        <strong>Exceeded limit – transaction will fail</strong>
                                                   </small>
-                                                  } @else if (metadataByteLength() > 200) {
-                                                  <small class="text-warning d-block"> Approaching limit ({{ metadataByteLength() }} bytes) </small>
+                                                  } @else if (didDataByteLength() > 200) {
+                                                  <small class="text-warning d-block"> Approaching limit ({{ didDataByteLength() }} bytes) </small>
                                                   }
                                              </div>
                                         </label>
-                                        <app-json-editor [value]="didData()" (valueChange)="onDidDataChange($event)" #jsonEditor> </app-json-editor>
+                                        <app-json-editor [value]="didData()" (valueChange)="onDidDataChange($event)" #didDataEditor> </app-json-editor>
                                    </div>
                               </div>
-                              <!-- <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="didData">DID Data</label>
-                                        <textarea style="width: 100%; height: 200px; max-width: 100%; font-size: 0.95rem" id="didData" placeholder="DID Data" [(ngModel)]="didDetails().data" name="didData"></textarea>
-                                   </div>
-                              </div> -->
                               }
 
                               <!-- Only show buttons and sliders if there is no DID set or we are on the delete DID tab -->
@@ -227,18 +236,19 @@
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   <!-- Set DID button if there are json errors -->
-                                   @if (txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || !metadataIsValid() && activeTab() === 'set') {
-                                   <div class="button-row">
-                                        <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
-                                             <button type="button" class="btn-primary-blue" disabled>{{ txUiService.spinner() ? 'Processing...' : 'Set DID' }}</button>
-                                        </app-tooltip-link>
-                                   </div>
-                                   }
-
-                                   <!-- Set DID button if no json errors -->
-                                   @if (txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || metadataIsValid() && activeTab() === 'set') {
-                                   <button type="button" class="btn-primary-blue" (click)="setDid()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || !metadataIsValid()">{{ txUiService.spinner() ? 'Processing...' : 'Set DID' }}</button>
+                                   @if (activeTab() === 'set') {
+                                   <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
+                                        <button
+                                             type="button"
+                                             class="btn-primary-blue"
+                                             (click)="setDid()"
+                                             [disabled]="txUiService.spinner() || 
+                              !(walletManagerService.hasWallets$ | async) || 
+                              !allFieldsValid()"
+                                        >
+                                             {{ txUiService.spinner() ? 'Processing...' : 'Set DID' }}
+                                        </button>
+                                   </app-tooltip-link>
                                    }
 
                                    <!-- Delete DID -->

@@ -61,7 +61,10 @@ interface DidData {
 })
 export class DidComponent extends PerformanceBaseComponent implements OnInit {
      private readonly destroyRef = inject(DestroyRef);
-     @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
+     // @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
+     @ViewChild('didDocumentEditor') didDocumentEditor!: JsonEditorComponent;
+     @ViewChild('uriEditor') uriEditor!: JsonEditorComponent;
+     @ViewChild('didDataEditor') didDataEditor!: JsonEditorComponent;
 
      // Services
      public readonly utilsService = inject(UtilsService);
@@ -84,7 +87,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      infoPanelExpanded = signal(false);
      createdDids = signal<boolean>(false);
      existingDid = signal<DidItem[]>([]);
-     validDidSchema = signal<boolean>(false);
 
      // DID  Form Data
      didDetails = signal<DidData>({
@@ -104,8 +106,8 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                serviceEndpoint: '',
           },
           hash: '',
-          uri: 'ipfs://bafybeiexamplehash',
-          document: 'did:example:123#public-key-0',
+          uri: JSON.stringify('ipfs://bafybeiexamplehash', null, '/t'),
+          document: JSON.stringify('did:example:123#public-key-0', null, '/t'),
           // data: ``,
           data: `{
   "@context": "https://www.w3.org/ns/did/v1",
@@ -117,6 +119,8 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           destinationAddress: '',
      });
      didData = signal<string>('');
+     uriData = signal<string>('');
+     didDocumentData = signal<string>('');
 
      infoData = computed(() => {
           const wallet = this.currentWallet();
@@ -141,12 +145,13 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      // Computed signal to check if there's a syntax error
      hasJsonSyntaxError = computed(() => {
-          // Force dependency on the editor instance itself
-          this.jsonEditor; // eslint-disable-line @typescript-eslint/no-unused-expressions
-          return !!this.jsonEditor?.jsonError?.()?.trim();
+          this.didData(); // trigger recompute
+
+          const error = this.didDataEditor?.jsonError()?.trim();
+          return !!error;
      });
 
-     metadataByteLength = computed(() => {
+     didDataByteLength = computed(() => {
           const meta = this.didData().trim();
           if (!meta) return 0;
 
@@ -160,30 +165,101 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           }
      });
 
-     metadataIsValid = computed(() => {
-          return this.metadataByteLength() <= 256;
+     uriDataByteLength = computed(() => {
+          const meta = this.uriData().trim();
+          if (!meta) return 0;
+
+          try {
+               const hex = xrpl.convertStringToHex(meta);
+               console.log('URI JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
+               return hex.length / 2;
+          } catch (e) {
+               console.error('Failed to convert URI JSON to hex:', e);
+               return 0;
+          }
+     });
+
+     didDocumentDataByteLength = computed(() => {
+          const meta = this.didDocumentData().trim();
+          if (!meta) return 0;
+
+          try {
+               const hex = xrpl.convertStringToHex(meta);
+               console.log('DID Document JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
+               return hex.length / 2;
+          } catch (e) {
+               console.error('Failed to convert DID Document JSON to hex:', e);
+               return 0;
+          }
+     });
+
+     didDataIsValid = computed(() => {
+          return this.didDataByteLength() <= 256;
+     });
+
+     uriDataIsValid = computed(() => {
+          return this.uriDataByteLength() <= 256;
+     });
+
+     didDocumentDataIsValid = computed(() => {
+          return this.didDocumentDataByteLength() <= 256;
      });
 
      onDidDataChange(newValue: string) {
           this.didData.set(newValue);
-
-          // Optional: keep didDetails in sync if other code uses it
           this.didDetails.update(d => ({ ...d, data: newValue }));
+     }
+
+     onUriDataChange(newValue: string) {
+          this.uriData.set(newValue);
+          this.didDetails.update(d => ({ ...d, uri: newValue }));
+     }
+
+     onDidDocumentDataChange(newValue: string) {
+          this.didDocumentData.set(newValue);
+          this.didDetails.update(d => ({ ...d, document: newValue }));
      }
 
      getCreateButtonTooltip(): string {
           if (this.txUiService.spinner()) {
                return 'Processing transaction...';
           }
-          // if (!(this.walletManagerService.hasWallets$ | async)) {
-          // return 'No wallet selected – connect or create a wallet to continue';
-          // }
-          if (!this.metadataIsValid()) {
-               const bytes = this.metadataByteLength();
-               return `Token Metadata too large: ${bytes} bytes (maximum allowed: 256 bytes)`;
+          if (!this.allFieldsValid()) {
+               const issues: string[] = [];
+
+               if (!this.didDocumentDataIsValid()) {
+                    issues.push(`DID Document too large: ${this.didDocumentDataByteLength()} bytes (>256)`);
+               }
+               if (!this.uriDataIsValid()) {
+                    issues.push(`URI too large: ${this.uriDataByteLength()} bytes (>256)`);
+               }
+               if (!this.didDataIsValid()) {
+                    issues.push(`DID Data too large: ${this.didDataByteLength()} bytes (>256)`);
+               }
+               if (this.hasJsonSyntaxError()) {
+                    const errorMsg = this.didDataEditor?.jsonError()?.trim() || 'Syntax error';
+                    issues.push(`Invalid JSON in DID Data: ${errorMsg}`);
+               }
+
+               return 'Cannot submit:\n• ' + issues.join('\n• ');
           }
-          return 'Create MPT Issuance';
+          return 'Set DID on the XRPL';
      }
+
+     allFieldsValid = computed(() => {
+          return (
+               this.didDocumentDataIsValid() && this.uriDataIsValid() && this.didDataIsValid() && !this.hasJsonSyntaxError() && this.validDidSchema() // optional: keep schema check if you want stricter
+          );
+     });
+
+     validDidSchema = computed(() => {
+          // Assume your utilsService.validateAndConvertDidJson can be called without throwing
+          // Or separate syntax check from schema check if needed
+          if (this.didData().trim() === '' || this.hasJsonSyntaxError()) return false;
+
+          const result = this.utilsService.validateAndConvertDidJson(this.didData(), didSchema);
+          return result.success;
+     });
 
      constructor() {
           super();
@@ -194,6 +270,8 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           this.setupWalletSubscriptions();
           // Sync initial value
           this.didData.set(this.didDetails().data);
+          this.uriData.set(this.didDetails().uri);
+          this.didDocumentData.set(this.didDetails().document);
      }
 
      private async setupWalletSubscriptions() {
@@ -532,7 +610,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                     return this.txUiService.setError(`${result.errors}`);
                } else {
                     this.txUiService.clearAllOptionsAndMessages();
-                    this.validDidSchema.set(true);
                }
           }
      }
