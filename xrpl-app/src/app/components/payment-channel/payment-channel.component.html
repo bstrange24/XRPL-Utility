@@ -195,7 +195,13 @@
                                              <p class="form-hint">Arbitrary tag to further specify the destination for this payment channel, such as a hosted recipient at the destination address.</p>
                                              <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
                                         </div>
-                                        } @if (activeTab() === 'claim' || activeTab() === 'fund' || activeTab() === 'close') {
+                                        @if (activeTab() === 'create'){
+                                        <div class="form-group">
+                                             <label>Settle Delay</label>
+                                             <p class="form-hint">Amount of time the source address must wait before closing the channel if it has unclaimed XRP.</p>
+                                             <input type="text" [(ngModel)]="settleDelayField" name="settleDelayField" />
+                                        </div>
+                                        } } @if (activeTab() === 'claim' || activeTab() === 'fund' || activeTab() === 'close') {
                                         <div class="form-group">
                                              <label>Channel ID</label>
                                              <p class="form-hint">
@@ -231,11 +237,6 @@
                                    @if (activeTab() === 'create' || activeTab() === 'claim' || activeTab() === 'close') {
                                    <div class="form-row">
                                         @if (activeTab() === 'create') {
-                                        <div class="form-group">
-                                             <label>Settle Delay</label>
-                                             <p class="form-hint">Amount of time the source address must wait before closing the channel if it has unclaimed XRP.</p>
-                                             <input type="text" [(ngModel)]="settleDelayField" name="settleDelayField" />
-                                        </div>
 
                                         <div class="form-group">
                                              <label for="credentialExpiration">Cancel After Time</label>
@@ -256,6 +257,7 @@
                                                   </div>
                                              </div>
                                         </div>
+                                        <div class="form-group"></div>
 
                                         <!-- <div class="form-group">
                                              <label>Cancel After Time</label>

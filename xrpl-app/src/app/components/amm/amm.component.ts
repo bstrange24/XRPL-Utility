@@ -147,7 +147,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
 
      // Primary currency/issuer/amount signals (removed duplicate "*Field" versions)
-     weWantCurrency = signal<string>('BOB');
+     weWantCurrency = signal<string>('');
      weSpendCurrency = signal<string>('XRP');
      availableCurrencies: string[] = [];
      weWantIssuer = signal<string>('');
@@ -403,7 +403,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
      private async setupWalletSubscriptions() {
           this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
                if (hasWallets) {
-                    this.txUiService.clearWarning?.();
+                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
                } else {
                     this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
                     this.txUiService.setError('');
@@ -450,6 +450,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           this.txUiService.currentWallet.set({ ...wallet });
           this.xrplCache.invalidateAccountCache(wallet.address);
 
+          // Prevent self as destination
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
@@ -537,36 +538,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                          this.assetPool1Balance.set(toDisplay(amm.amount));
                          this.assetPool2Balance.set(toDisplay(amm.amount2));
                          this.lpTokenBalance.set(this.utilsService.formatTokenBalance(amm.lp_token.value, 18));
-
-                         // Optional: Show vote slots
-                         if (amm.vote_slots && amm.vote_slots.length > 0) {
-                              // data.sections.push({
-                              //      title: 'Vote Slots',
-                              //      openByDefault: false,
-                              //      subItems: amm.vote_slots.map((slot: any, index: number) => ({
-                              //           key: `Vote Slot ${index + 1}`,
-                              //           openByDefault: false,
-                              //           content: [
-                              //                { key: 'Account', value: slot.account },
-                              //                { key: 'Trading Fee', value: `${slot.trading_fee / 1000}%` },
-                              //                { key: 'Voting Weight', value: slot.vote_weight },
-                              //           ],
-                              //      })),
-                              // });
-                         }
-
                          this.tradingFeeField.set(`${amm.trading_fee / 10000}`);
-
-                         // LP Token section
-                         // data.sections.push({
-                         //      title: 'LP Token',
-                         //      openByDefault: true,
-                         //      content: [
-                         //           { key: 'Currency', value: amm.lp_token.currency },
-                         //           { key: 'Issuer', value: amm.lp_token.issuer },
-                         //           { key: 'Balance', value: this.utilsService.formatTokenBalance(amm.lp_token.value, 2) },
-                         //      ],
-                         // });
                     }
 
                     this.refreshUiState(wallet, accountInfo, accountObjects);
