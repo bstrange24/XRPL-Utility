@@ -138,22 +138,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
      destinationField = signal<string>('');
      destinationTagField = signal<string>('');
      currencyFieldDropDownValue = signal<string>('XRP');
-     // checkExpirationTime = signal<string>('seconds');
-     // issuerFields = signal<string>('');
-     // ticketSequence = signal<string>('');
-     // currencyBalanceField = signal<string>('0');
-     // currencies = signal<string[]>([]);
      selectedWalletIndex = signal<number>(0);
-     // issuers = signal<{ name?: string; address: string }[]>([]);
-     // lastCurrency = signal<string>('');
-     // lastIssuer = signal<string>('');
-     // cancellableChecks = signal<any[]>([]);
-     // cashableChecks = signal<any[]>([]);
-     // existingChecks = signal<any[]>([]);
-     // outstandingChecksCollapsed = signal<boolean>(true);
      currencyChangeTrigger = signal(0);
-     // totalFlagsValue = signal<number>(0);
-     // totalFlagsHex = signal<string>('0x0');
      holderField = signal<string>('');
      insufficientLiquidityWarning = signal<boolean>(false);
      lpTokenBalanceField = signal<string>('0'); // LP Token balance field
@@ -215,36 +201,6 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           }));
      });
 
-     // currencyItems = computed(() => {
-     //      const currentCode = this.currencyFieldDropDownValue();
-     //      return this.availableCurrencies.map(curr => ({
-     //           id: curr,
-     //           display: curr === 'XRP' ? 'XRP' : curr,
-     //           secondary:
-     //                curr === 'XRP'
-     //                     ? 'Native currency'
-     //                     : (() => {
-     //                            const count = this.trustlineCurrency.getIssuersForCurrency(curr).length;
-     //                            return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
-     //                       })(),
-     //           isCurrentAccount: false,
-     //           isCurrentCode: curr === currentCode, // This one!
-     //           isCurrentToken: false,
-     //      }));
-     // });
-
-     // selectedCurrencyItem = computed(() => {
-     //      const code = this.currencyFieldDropDownValue();
-     //      if (!code) return null;
-     //      return this.currencyItems().find(item => item.id === code) || null;
-     // });
-
-     // onCurrencySelected(item: SelectItem | null) {
-     //      const currency = item?.id || 'XRP';
-     //      this.currencyFieldDropDownValue.set(currency);
-     //      this.onCurrencyChange(currency); // triggers issuer reload + balance update
-     // }
-
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
                name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
@@ -276,26 +232,6 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
      });
 
-     // issuerItems = computed(() => {
-     //      const currentIssuer = this.trustlineCurrency.getSelectedIssuer();
-     //      return this.issuers().map((iss, i) => ({
-     //           id: iss.address,
-     //           display: iss.name || `Issuer ${i + 1}`,
-     //           secondary: iss.address.slice(0, 7) + '...' + iss.address.slice(-7),
-     //           isCurrentAccount: false,
-     //           isCurrentCode: false,
-     //           isCurrentToken: iss.address === currentIssuer, // This one!
-     //      }));
-     // });
-
-     // selectedIssuerAddress = computed(() => this.trustlineCurrency.getSelectedIssuer());
-
-     // selectedIssuerItem = computed(() => {
-     //      const addr = this.trustlineCurrency.getSelectedIssuer(); // ← read directly from service
-     //      if (!addr) return null;
-     //      return this.issuerItems().find((item: { id: string }) => item.id === addr) || null;
-     // });
-
      storedIssuers = computed(() => {
           const issuersMap = this.knownTrustLinesIssuers();
           const result: { name: string; address: string }[] = [];
@@ -309,6 +245,114 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           }
 
           return result.sort((a, b) => a.name.localeCompare(b.name));
+     });
+
+     weWantCurrencyItems = computed(() => {
+          const currentCode = this.weWantCurrency();
+          return this.offerCurrency.getAvailableCurrencies(true).map(curr => ({
+               id: curr,
+               display: curr === 'XRP' ? 'XRP' : curr,
+               secondary:
+                    curr === 'XRP'
+                         ? 'Native currency'
+                         : (() => {
+                                const count = this.offerCurrency.getIssuersForCurrency(curr).length;
+                                return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
+                           })(),
+               isCurrentCode: curr === currentCode,
+          }));
+     });
+
+     selectedWeWantCurrencyItem = computed(() => {
+          const code = this.weWantCurrency();
+          if (!code) return null;
+          return this.weWantCurrencyItems().find(item => item.id === code) || null;
+     });
+
+     weSpendCurrencyItems = computed(() => {
+          // In AMM context: We Spend is ALWAYS XRP only
+          // Return a fixed array with just XRP
+          return [
+               {
+                    id: 'XRP',
+                    display: 'XRP',
+                    secondary: 'Native currency',
+                    isCurrentCode: true, // Always selected
+               },
+          ];
+     });
+
+     // weSpendCurrencyItems = computed(() => {
+     //      const currentCode = this.weSpendCurrency();
+     //      return this.offerCurrency.getAvailableCurrencies(true).map(curr => ({
+     //           id: curr,
+     //           display: curr === 'XRP' ? 'XRP' : curr,
+     //           secondary:
+     //                curr === 'XRP'
+     //                     ? 'Native currency'
+     //                     : (() => {
+     //                            const count = this.offerCurrency.getIssuersForCurrency(curr).length;
+     //                            return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
+     //                       })(),
+     //           isCurrentCode: curr === currentCode,
+     //      }));
+     // });
+
+     selectedWeSpendCurrencyItem = computed(() => {
+          // Always return the XRP item
+          return {
+               id: 'XRP',
+               display: 'XRP',
+               secondary: '',
+               isCurrentCode: true,
+          };
+     });
+
+     // selectedWeSpendCurrencyItem = computed(() => {
+     //      const code = this.weSpendCurrency();
+     //      if (!code) return null;
+     //      return this.weSpendCurrencyItems().find(item => item.id === code) || null;
+     // });
+
+     weWantIssuerItems = computed(() => {
+          // Reading the trigger forces recompute when issuers change
+          this.weWantIssuersTrigger();
+
+          const currentIssuer = this.weWantIssuer();
+          const issuers = this.offerCurrency.weWant.issuers$.value || [];
+
+          return issuers.map((iss: IssuerItem, i: number) => ({
+               id: iss.address,
+               display: iss.name || `Issuer ${i + 1}`,
+               secondary: `${iss.address.slice(0, 8)}...${iss.address.slice(-6)}`,
+               isCurrentToken: iss.address === currentIssuer,
+          }));
+     });
+
+     selectedWeWantIssuerItem = computed(() => {
+          const addr = this.weWantIssuer();
+          if (!addr) return null;
+          return this.weWantIssuerItems().find((item: { id: string }) => item.id === addr) || null;
+     });
+
+     weSpendIssuerItems = computed(() => {
+          this.weSpendIssuersTrigger();
+
+          const currentIssuer = this.weSpendIssuer();
+          const issuers = this.offerCurrency.weSpend.issuers$.value || [];
+
+          return issuers.map((iss: IssuerItem, i: number) => ({
+               id: iss.address,
+               display: iss.name || `Issuer ${i + 1}`,
+               secondary: `${iss.address.slice(0, 8)}...${iss.address.slice(-6)}`,
+               isCurrentToken: iss.address === currentIssuer,
+          }));
+     });
+
+     selectedWeSpendIssuerItem = computed(() => {
+          const addr = this.weSpendIssuer();
+          if (!addr) return null;
+          return this.weSpendIssuerItems().find((item: { id: string }) => item.id === addr) || null;
      });
 
      infoData = computed(() => {
@@ -338,27 +382,6 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
           this.currencyFieldDropDownValue.set('XRP');
-
-          // // Subscribe once
-          // this.trustlineCurrency.currencies$.subscribe(currencies => {
-          //      this.currencies.set(currencies);
-          //      if (currencies.length > 0 && !this.currencyFieldDropDownValue()) {
-          //           this.currencyFieldDropDownValue.set(currencies[0]);
-          //           this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
-          //      }
-          // });
-
-          // this.trustlineCurrency.issuers$.subscribe(issuers => {
-          //      this.issuers.set(issuers);
-          // });
-
-          // this.trustlineCurrency.selectedIssuer$.subscribe(issuer => {
-          //      this.issuerFields.set(issuer);
-          // });
-
-          // this.trustlineCurrency.balance$.subscribe(balance => {
-          //      this.currencyBalanceField.set(balance); // ← This is your live balance!
-          // });
 
           // Add these subscriptions (after your existing ones)
           this.offerCurrency.weWant.issuers$.subscribe(issuers => {
@@ -568,10 +591,10 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     const asset2 = this.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.weSpendCurrencyField()), this.weSpendIssuerField());
                     this.utilsService.logAssets(asset, asset2);
 
-                    const [accountInfo, accountObjects, ammResponse, participation] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAMMInfo(client, asset, asset2, wallet.classicAddress, 'validated'), this.checkAmmParticipation(client, wallet.classicAddress, asset, asset2, true)]);
+                    const [{ accountInfo, accountObjects }, ammResponse, participation] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh), this.xrplService.getAMMInfo(client, asset, asset2, wallet.classicAddress, 'validated'), this.checkAmmParticipation(client, wallet.classicAddress, asset, asset2, true)]);
                     this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
-                    // this.utilsService.logObjects('ammResponse', ammResponse);
-                    // this.utilsService.logObjects('participation', participation);
+                    this.utilsService.logObjects('ammResponse', ammResponse);
+                    this.utilsService.logObjects('participation', participation);
 
                     const amm = ammResponse?.result?.amm;
 
@@ -645,7 +668,12 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     // Build currency objects correctly
                     const we_want_currency = this.utilsService.encodeIfNeeded(this.weWantCurrencyField());
                     const we_spend_currency = this.utilsService.encodeIfNeeded(this.weSpendCurrencyField());
-                    this.utilsService.logAssets(we_want_currency, we_spend_currency);
+                    const asset = this.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.weWantCurrencyField()), this.weWantIssuerField());
+                    const asset2 = this.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.weSpendCurrencyField()), this.weSpendIssuerField());
+                    this.utilsService.logObjects('we_want_currency', we_want_currency);
+                    this.utilsService.logObjects('we_spend_currency', we_spend_currency);
+                    this.utilsService.logAssets('asset', asset);
+                    this.utilsService.logAssets('asset2', asset2);
 
                     // Build properly typed currency objects
                     const we_want: CurrencyAmount =
@@ -666,6 +694,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                                      value: this.weSpendAmountField(),
                                 };
 
+                    this.utilsService.logAssets(we_want, we_spend);
                     const insufficientBalance = this.utilsService.validateAmmCreateBalances(accountInfo.result.account_data.Balance, accountObjects.result.account_objects, we_want, we_spend);
                     if (insufficientBalance) {
                          return this.txUiService.setError(insufficientBalance);
@@ -674,13 +703,20 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     const initialXrpBalance = xrpl.dropsToXrp(accountInfo.result.account_data.Balance);
                     console.log('initialXrpBalance: ', initialXrpBalance);
 
+                    const isSpendXrp = this.weSpendCurrencyField() === 'XRP';
+
+                    const tradingFeeBps = Math.round(Number(this.tradingFeeField()) * 1000);
+                    if (tradingFeeBps < 0 || tradingFeeBps > 1000) {
+                         return this.txUiService.setError('Trading fee must be between 0% and 1%.');
+                    }
+
                     // Build AMM Create transaction
                     const ammCreateTx: xrpl.AMMCreate = {
                          TransactionType: 'AMMCreate',
                          Account: wallet.classicAddress,
-                         Amount: we_spend as string, // XRP amount in drops (string)
-                         Amount2: we_want as xrpl.IssuedCurrencyAmount, // Token amount object
-                         TradingFee: Math.round(parseFloat(this.tradingFeeField()) * 1000), // Convert % to basis points (e.g., 0.5% = 500)
+                         Amount: isSpendXrp ? we_spend : we_want,
+                         Amount2: isSpendXrp ? we_want : we_spend,
+                         TradingFee: tradingFeeBps, // Convert % to basis points (e.g., 0.5% = 500)
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
                     };
 
@@ -697,8 +733,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Create successfully!' : 'AMM created successfully!';
                     if (!this.txUiService.isSimulateEnabled()) {
-                         await Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange(), this.checkAmmParticipation(client, wallet.classicAddress, we_spend, we_want, true)]);
-                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, we_spend, we_want, true), this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const currencyChangePromise = Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, asset, asset2, true), currencyChangePromise]);
                          this.updatePoolBalances(participation?.ammInfo);
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
@@ -801,8 +837,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Deposit set successfully!' : 'AMM Deposit successfully!';
                     if (!this.txUiService.isSimulateEnabled()) {
-                         await Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange(), this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true)]);
-                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true), this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const currencyChangePromise = Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true), currencyChangePromise]);
                          this.updatePoolBalances(participation?.ammInfo);
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
@@ -946,8 +982,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Withdrawl set successfully!' : 'AMM Withdrawl successfully!';
                     if (!this.txUiService.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
-                         await Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange(), this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true)]);
-                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true), this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const currencyChangePromise = Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true), currencyChangePromise]);
                          this.updatePoolBalances(participation?.ammInfo);
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
@@ -1031,8 +1067,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Clawback successfully!' : 'AMM Clawback successful!';
                     if (!this.txUiService.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
-                         await Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange(), this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true)]);
-                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true), this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const currencyChangePromise = Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, assetDef, asset2Def, true), currencyChangePromise]);
                          this.updatePoolBalances(participation?.ammInfo);
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
@@ -1084,8 +1120,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Swap via AMM successfully!' : 'Swap via AMM successful!';
                     if (!this.txUiService.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
-                         await Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange(), this.checkAmmParticipation(client, wallet.classicAddress, asset, asset2, true)]);
-                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, asset, asset2, true), this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const currencyChangePromise = Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, asset, asset2, true), currencyChangePromise]);
                          this.updatePoolBalances(participation?.ammInfo);
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
@@ -1133,8 +1169,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM delete successfully!' : 'Deleted AMM successfully!';
                     if (!this.txUiService.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
-                         await Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange(), this.checkAmmParticipation(client, wallet.classicAddress, asset, asset2, true)]);
-                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, asset, asset2, true), this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const currencyChangePromise = Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
+                         const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, asset, asset2, true), currencyChangePromise]);
                          this.updatePoolBalances(participation?.ammInfo);
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
@@ -1680,114 +1716,6 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           this.txUiService.setInfoMessage(message);
      }
 
-     weWantCurrencyItems = computed(() => {
-          const currentCode = this.weWantCurrency();
-          return this.offerCurrency.getAvailableCurrencies(true).map(curr => ({
-               id: curr,
-               display: curr === 'XRP' ? 'XRP' : curr,
-               secondary:
-                    curr === 'XRP'
-                         ? 'Native currency'
-                         : (() => {
-                                const count = this.offerCurrency.getIssuersForCurrency(curr).length;
-                                return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
-                           })(),
-               isCurrentCode: curr === currentCode,
-          }));
-     });
-
-     selectedWeWantCurrencyItem = computed(() => {
-          const code = this.weWantCurrency();
-          if (!code) return null;
-          return this.weWantCurrencyItems().find(item => item.id === code) || null;
-     });
-
-     weSpendCurrencyItems = computed(() => {
-          // In AMM context: We Spend is ALWAYS XRP only
-          // Return a fixed array with just XRP
-          return [
-               {
-                    id: 'XRP',
-                    display: 'XRP',
-                    secondary: 'Native currency',
-                    isCurrentCode: true, // Always selected
-               },
-          ];
-     });
-
-     // weSpendCurrencyItems = computed(() => {
-     //      const currentCode = this.weSpendCurrency();
-     //      return this.offerCurrency.getAvailableCurrencies(true).map(curr => ({
-     //           id: curr,
-     //           display: curr === 'XRP' ? 'XRP' : curr,
-     //           secondary:
-     //                curr === 'XRP'
-     //                     ? 'Native currency'
-     //                     : (() => {
-     //                            const count = this.offerCurrency.getIssuersForCurrency(curr).length;
-     //                            return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
-     //                       })(),
-     //           isCurrentCode: curr === currentCode,
-     //      }));
-     // });
-
-     selectedWeSpendCurrencyItem = computed(() => {
-          // Always return the XRP item
-          return {
-               id: 'XRP',
-               display: 'XRP',
-               secondary: '',
-               isCurrentCode: true,
-          };
-     });
-
-     // selectedWeSpendCurrencyItem = computed(() => {
-     //      const code = this.weSpendCurrency();
-     //      if (!code) return null;
-     //      return this.weSpendCurrencyItems().find(item => item.id === code) || null;
-     // });
-
-     weWantIssuerItems = computed(() => {
-          // Reading the trigger forces recompute when issuers change
-          this.weWantIssuersTrigger();
-
-          const currentIssuer = this.weWantIssuer();
-          const issuers = this.offerCurrency.weWant.issuers$.value || [];
-
-          return issuers.map((iss: IssuerItem, i: number) => ({
-               id: iss.address,
-               display: iss.name || `Issuer ${i + 1}`,
-               secondary: `${iss.address.slice(0, 8)}...${iss.address.slice(-6)}`,
-               isCurrentToken: iss.address === currentIssuer,
-          }));
-     });
-
-     selectedWeWantIssuerItem = computed(() => {
-          const addr = this.weWantIssuer();
-          if (!addr) return null;
-          return this.weWantIssuerItems().find((item: { id: string }) => item.id === addr) || null;
-     });
-
-     weSpendIssuerItems = computed(() => {
-          this.weSpendIssuersTrigger();
-
-          const currentIssuer = this.weSpendIssuer();
-          const issuers = this.offerCurrency.weSpend.issuers$.value || [];
-
-          return issuers.map((iss: IssuerItem, i: number) => ({
-               id: iss.address,
-               display: iss.name || `Issuer ${i + 1}`,
-               secondary: `${iss.address.slice(0, 8)}...${iss.address.slice(-6)}`,
-               isCurrentToken: iss.address === currentIssuer,
-          }));
-     });
-
-     selectedWeSpendIssuerItem = computed(() => {
-          const addr = this.weSpendIssuer();
-          if (!addr) return null;
-          return this.weSpendIssuerItems().find((item: { id: string }) => item.id === addr) || null;
-     });
-
      onWeWantIssuerSelected(item: SelectItem | null) {
           const address = item?.id || '';
           this.weWantIssuer.set(address);
@@ -1855,45 +1783,4 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
      onIssuerChange(issuer: string) {
           this.trustlineCurrency.selectIssuer(issuer);
      }
-
-     // private loadKnownIssuers(): void {
-     //      const data = this.storageService.getKnownIssuers('knownIssuers');
-
-     //      if (data) {
-     //           this.knownTrustLinesIssuers.set(data);
-     //           this.updateCurrencies();
-     //      }
-     // }
-
-     // private updateCurrencies() {
-     //      // Get all currencies except XRP
-     //      const allCurrencies = Object.keys(this.knownTrustLinesIssuers);
-     //      const filtered = allCurrencies.filter(c => c !== 'XRP');
-     //      // allCurrencies.push('MPT');
-
-     //      // Sort alphabetically
-     //      const sorted = filtered.sort((a, b) => a.localeCompare(b));
-     //      this.currencies.set(sorted);
-
-     //      // AUTO-SELECT FIRST CURRENCY — SAFE WAY
-     //      if (sorted.length > 0) {
-     //           // Only set if nothing is selected OR current selection is invalid/removed
-     //           const shouldSelectFirst = !this.currencyFieldDropDownValue() || !sorted.includes(this.currencyFieldDropDownValue());
-
-     //           if (shouldSelectFirst) {
-     //                this.currencyFieldDropDownValue.set(sorted[0]);
-     //                // Trigger issuer load — but do it in next tick so binding is ready
-     //                Promise.resolve().then(() => {
-     //                     if (this.currencyFieldDropDownValue()) {
-     //                          this.onCurrencyChange(this.currencyFieldDropDownValue());
-     //                     }
-     //                });
-     //           }
-     //      } else {
-     //           // No currencies left
-     //           this.currencyFieldDropDownValue.set('');
-     //           this.issuerFields.set('');
-     //           this.issuers.set([]);
-     //      }
-     // }
 }
