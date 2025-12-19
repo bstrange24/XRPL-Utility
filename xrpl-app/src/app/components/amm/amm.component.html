@@ -158,8 +158,8 @@
                          </h3>
                     </div>
 
-                    <div class="checks-list-container" [style.max-height]="existingSellOffersCollapsed ? '0': (existingOffers.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
-                         @if (!existingSellOffersCollapsed) {
+                    <div class="checks-list-container" [style.max-height]="existingSellOffersCollapsed() ? '0': (existingOffers.length * 80 + 20) + 'px'" [style.overflow]="'hidden'" [style.transition]="'max-height 0.3s ease'">
+                         @if (!existingSellOffersCollapsed()) {
                          <div class="checks-list">
                               @for (offer of existingOffers; track offer.OfferIndex) {
                               <div class="check-card">
@@ -332,12 +332,12 @@
                                         <div class="form-group">
                                              <label>Amount</label>
                                              <!-- <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" (ngModelChange)="onWeWantAmountChange()" placeholder="e.g. 10.5" /> -->
-                                             <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" placeholder="e.g. 10.5" />
+                                             <input type="text" [(ngModel)]="weWantAmount" name="weWantAmountField" placeholder="e.g. 10.5" />
                                         </div>
                                         <div class="form-group">
                                              <label>Amount</label>
                                              <!-- <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" (ngModelChange)="onWeSpendAmountChange()" placeholder="e.g. 10.5" /> -->
-                                             <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" placeholder="e.g. 10.5" />
+                                             <input type="text" [(ngModel)]="weSpendAmount" name="weSpendAmount" placeholder="e.g. 10.5" />
                                         </div>
                                    </div>
 
@@ -357,11 +357,11 @@
                                         <!-- Asset Pool Balance -->
                                         <div class="form-group">
                                              <label>Total Assets in Pool 1</label>
-                                             <input type="text" [value]="(assetPool1Balance$ | async) ?? '0'" readonly name="assetPool1Balance" />
+                                             <input type="text" [value]="(assetPool1Balance()) ?? '0'" readonly name="assetPool1Balance" />
                                         </div>
                                         <div class="form-group">
                                              <label>Total Assets in Pool 2</label>
-                                             <input type="text" [value]="(assetPool2Balance$ | async) ?? '0'" readonly name="assetPool2Balance" />
+                                             <input type="text" [value]="(assetPool2Balance()) ?? '0'" readonly name="assetPool2Balance" />
                                         </div>
                                    </div>
 
@@ -378,8 +378,7 @@
 
                                         <div class="form-group">
                                              <label>LP Token Balance</label>
-                                             <input type="text" [value]="(lpTokenBalance$ | async) ?? '0'" readonly name="lpTokenBalanceField" />
-                                             <!-- <input type="text" [(ngModel)]="lpTokenBalanceField" name="lpTokenBalanceField" placeholder="" /> -->
+                                             <input type="text" [value]="(lpTokenBalance()) ?? '0'" readonly name="lpTokenBalanceField" />
                                         </div>
 
                                         <!-- Clawback holder -->
@@ -399,7 +398,7 @@
                                         @if(activeTab() === 'depositToAMM' || activeTab() === 'withdrawlTokenFromAMM') {
                                         <div class="form-group">
                                              <label>LP Token Balance</label>
-                                             <input type="text" [value]="(lpTokenBalance$ | async) ?? '0'" readonly name="lpTokenBalanceField" />
+                                             <input type="text" [value]="(lpTokenBalance()) ?? '0'" readonly name="lpTokenBalanceField" />
                                              <!-- <input type="text" [(ngModel)]="lpTokenBalanceField" name="lpTokenBalanceField" placeholder="" /> -->
                                         </div>
                                         }
