@@ -484,7 +484,8 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                let txToSign: any;
 
                try {
-                    const wallet = await this.getWallet();
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
+                    // const wallet = await this.getWallet();
 
                     if (!this.txJson.trim()) {
                          return this.txUiService.setError('Transaction cannot be empty');
@@ -495,7 +496,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                     txToSign = this.cleanTx(editedJson);
                     console.log('Pre txToSign', txToSign);
 
-                    const client = await this.xrplService.getClient();
+                    // const client = await this.xrplService.getClient();
                     const currentLedger = await client.getLedgerIndex();
                     console.log('currentLedger: ', currentLedger);
                     txToSign.LastLedgerSequence = currentLedger + 1000; // adjust to new ledger
@@ -593,132 +594,131 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      }
 
      async submitMultiSignedTransaction() {
-          console.log('Entering submitMultiSignedTransaction');
-          const startTime = Date.now();
-          this.clearMessages();
-          this.txUiService.updateSpinnerMessage(``);
+          await this.withPerf('submitMultiSignedTransaction', async () => {
+               this.clearMessages();
+               this.txUiService.updateSpinnerMessage(``);
+               this.buttonLoading.update(l => ({ ...l, submit: true }));
 
-          try {
-               if (!this.outputField().trim()) {
-                    return this.txUiService.setError('Signed tx blob can not be empty');
+               try {
+                    if (!this.outputField().trim()) {
+                         return this.txUiService.setError('Signed tx blob can not be empty');
+                    }
+
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
+                    // const client = await this.xrplService.getClient();
+                    // const wallet = await this.getWallet();
+
+                    const multiSignedTxBlob = this.outputField().trim();
+                    console.log('multiSignedTxBlob', multiSignedTxBlob);
+
+                    const txType = this.getTransactionLabel(this.selectedTransaction() ?? '');
+                    this.txUiService.showSpinnerWithDelay(this.txUiService.isSimulateEnabled() ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
+
+                    let response: any;
+
+                    if (this.txUiService.isSimulateEnabled()) {
+                         const txToSign = this.cleanTx(JSON.parse(this.txJson.trim()));
+                         console.log('Pre txToSign', txToSign);
+                         const currentLedger = await client.getLedgerIndex();
+                         console.log('currentLedger: ', currentLedger);
+                         txToSign.LastLedgerSequence = currentLedger + 5;
+                         response = await this.xrplTransactions.simulateTransaction(client, txToSign);
+                    } else {
+                         response = await client.submitAndWait(multiSignedTxBlob);
+                    }
+
+                    // this.txUiService.addTxResultSignal(response.result);
+                    this.txUiService.setTxResult(response.result);
+                    this.updateTxResult();
+
+                    const isSuccess = this.utilsService.isTxSuccessful(response);
+                    if (!isSuccess) {
+                         const resultMsg = this.utilsService.getTransactionResultMessage(response);
+                         const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
+
+                         console.error(`Transaction ${this.txUiService.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                         (response.result as any).errorMessage = userMessage;
+                         this.txUiService.setError(userMessage);
+                    } else {
+                         this.txUiService.setSuccess(this.txUiService.result);
+                    }
+
+                    this.txUiService.addTxHashSignal(response.result.hash ? response.result.hash : response.result.tx_json.hash);
+
+                    if (!this.txUiService.isSimulateEnabled()) {
+                         this.txUiService.successMessage = 'Transaction completed successfully!';
+
+                         await this.refreshAfterTx(client, wallet, '', true);
+                         this.resetSigners();
+                         this.clearFields(false);
+                         this.cdr.detectChanges();
+                    } else {
+                         this.txUiService.successMessage = 'Simulated transaction successfully!';
+                    }
+               } catch (error: any) {
+                    console.error('Error in submitMultiSignedTransaction:', error);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+               } finally {
+                    this.buttonLoading.update(l => ({ ...l, multiSign: false }));
+                    this.txUiService.spinner.set(false);
                }
-
-               const client = await this.xrplService.getClient();
-               const wallet = await this.getWallet();
-
-               const multiSignedTxBlob = this.outputField().trim();
-               console.log('multiSignedTxBlob', multiSignedTxBlob);
-
-               const txType = this.getTransactionLabel(this.selectedTransaction() ?? '');
-               this.txUiService.showSpinnerWithDelay(this.txUiService.isSimulateEnabled() ? `Simulating ${txType} (no funds will be moved)...` : `Submitting ${txType} to Ledger...`, 200);
-
-               let response: any;
-
-               if (this.txUiService.isSimulateEnabled()) {
-                    const txToSign = this.cleanTx(JSON.parse(this.txJson.trim()));
-                    console.log('Pre txToSign', txToSign);
-                    const currentLedger = await client.getLedgerIndex();
-                    console.log('currentLedger: ', currentLedger);
-                    txToSign.LastLedgerSequence = currentLedger + 5;
-                    response = await this.xrplTransactions.simulateTransaction(client, txToSign);
-               } else {
-                    response = await client.submitAndWait(multiSignedTxBlob);
-               }
-
-               // this.txUiService.addTxResultSignal(response.result);
-               this.txUiService.setTxResult(response.result);
-               this.updateTxResult();
-
-               const isSuccess = this.utilsService.isTxSuccessful(response);
-               if (!isSuccess) {
-                    const resultMsg = this.utilsService.getTransactionResultMessage(response);
-                    const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-
-                    console.error(`Transaction ${this.txUiService.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-                    (response.result as any).errorMessage = userMessage;
-                    this.txUiService.setError(userMessage);
-               } else {
-                    this.txUiService.setSuccess(this.txUiService.result);
-               }
-
-               this.txUiService.addTxHashSignal(response.result.hash ? response.result.hash : response.result.tx_json.hash);
-
-               if (!this.txUiService.isSimulateEnabled()) {
-                    this.txUiService.successMessage = 'Transaction completed successfully!';
-
-                    await this.refreshAfterTx(client, wallet, '', true);
-                    this.resetSigners();
-                    this.clearFields(false);
-                    this.cdr.detectChanges();
-               } else {
-                    this.txUiService.successMessage = 'Simulated transaction successfully!';
-               }
-          } catch (error: any) {
-               console.error('Error in submitMultiSignedTransaction:', error);
-               this.txUiService.setError(`${error.message || 'Unknown error'}`);
-          } finally {
-               this.txUiService.spinner.set(false);
-               // this.executionTime = (Date.now() - startTime).toString();
-               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
-               console.log(`Leaving submitMultiSignedTransaction in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
-          }
+          });
      }
 
      async signForMultiSign() {
-          console.log('Entering signForMultiSign');
-          const startTime = Date.now();
-          this.clearMessages();
-          this.txUiService.updateSpinnerMessage(``);
-          this.buttonLoading.update(l => ({ ...l, multiSign: true }));
+          await this.withPerf('signForMultiSign', async () => {
+               this.clearMessages();
+               this.txUiService.updateSpinnerMessage(``);
+               this.buttonLoading.update(l => ({ ...l, submit: true }));
 
-          let txToSign: any;
+               let txToSign: any;
 
-          try {
-               if (!this.txJson.trim()) {
-                    return this.txUiService.setError('Transaction cannot be empty');
+               try {
+                    if (!this.txJson.trim()) {
+                         return this.txUiService.setError('Transaction cannot be empty');
+                    }
+
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
+
+                    const editedString = this.txJson.trim();
+                    let editedJson = JSON.parse(editedString);
+                    txToSign = this.cleanTx(editedJson);
+                    console.log('Pre txToSign', txToSign);
+
+                    // const client = await this.xrplService.getClient();
+                    const currentLedger = await client.getLedgerIndex();
+                    console.log('currentLedger: ', currentLedger);
+                    txToSign.LastLedgerSequence = currentLedger + 1000; // adjust to new ledger
+
+                    console.log('Post txToSign', txToSign);
+
+                    // Get selected signer wallets
+                    const selectedSigners = this.availableSigners().filter((w: { isSelectedSigner: any }) => w.isSelectedSigner);
+
+                    if (!selectedSigners.length) {
+                         return this.txUiService.setError('Select at least one signer.');
+                    }
+
+                    const addresses = selectedSigners.map((acc: { address: any }) => acc.address).join(',');
+                    const seeds = selectedSigners.map((acc: { seed: any }) => acc.seed).join(',');
+                    console.log('Addresses:', addresses);
+                    console.log('Seeds:', seeds);
+
+                    const fee = await this.xrplService.calculateTransactionFee(client);
+                    // const wallet = await this.getWallet();
+                    const signerAddresses = this.utilsService.getMultiSignAddress(addresses);
+                    const signerSeeds = this.utilsService.getMultiSignSeeds(seeds);
+                    const result = await this.utilsService.handleMultiSignTransaction({ client, wallet, tx: txToSign, signerAddresses, signerSeeds, fee });
+                    console.info(`result`, result);
+                    this.outputField.set(result.signedTx?.tx_blob ? result.signedTx?.tx_blob : 'Error');
+               } catch (error: any) {
+                    console.error('Error in signForMultiSign:', error);
+                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+               } finally {
+                    this.buttonLoading.update(l => ({ ...l, multiSign: false }));
+                    this.txUiService.spinner.set(false);
                }
-
-               const editedString = this.txJson.trim();
-               let editedJson = JSON.parse(editedString);
-               txToSign = this.cleanTx(editedJson);
-               console.log('Pre txToSign', txToSign);
-
-               const client = await this.xrplService.getClient();
-               const currentLedger = await client.getLedgerIndex();
-               console.log('currentLedger: ', currentLedger);
-               txToSign.LastLedgerSequence = currentLedger + 1000; // adjust to new ledger
-
-               console.log('Post txToSign', txToSign);
-
-               // Get selected signer wallets
-               const selectedSigners = this.availableSigners().filter((w: { isSelectedSigner: any }) => w.isSelectedSigner);
-
-               if (!selectedSigners.length) {
-                    return this.txUiService.setError('Select at least one signer.');
-               }
-
-               const addresses = selectedSigners.map((acc: { address: any }) => acc.address).join(',');
-               const seeds = selectedSigners.map((acc: { seed: any }) => acc.seed).join(',');
-               console.log('Addresses:', addresses);
-               console.log('Seeds:', seeds);
-
-               const fee = await this.xrplService.calculateTransactionFee(client);
-               const wallet = await this.getWallet();
-               const signerAddresses = this.utilsService.getMultiSignAddress(addresses);
-               const signerSeeds = this.utilsService.getMultiSignSeeds(seeds);
-               const result = await this.utilsService.handleMultiSignTransaction({ client, wallet, tx: txToSign, signerAddresses, signerSeeds, fee });
-               console.info(`result`, result);
-               this.outputField.set(result.signedTx?.tx_blob ? result.signedTx?.tx_blob : 'Error');
-          } catch (error: any) {
-               console.error('Error in signForMultiSign:', error);
-               this.txUiService.setError(`Error: ${error.message || error}`);
-          } finally {
-               this.txUiService.spinner.set(false);
-               this.buttonLoading.update(l => ({ ...l, multiSign: false }));
-               // this.executionTime = (Date.now() - startTime).toString();
-               const executionTimeSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
-               console.log(`Leaving signForMultiSign in ${this.executionTime} ms ${executionTimeSeconds} seconds`);
-          }
+          });
      }
 
      cleanTx(editedJson: any) {
