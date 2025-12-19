@@ -12,40 +12,38 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
-
           <!-- Right form -->
           <div class="form-panel">
                <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn" [class.active]="activeTab === 'createAMM'" (click)="setTab('createAMM')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'createAMM'" (click)="setTab('createAMM')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Create AMM
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'depositToAMM'" (click)="setTab('depositToAMM')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'depositToAMM'" (click)="setTab('depositToAMM')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
                          Deposit to AMM
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'withdrawlTokenFromAMM'" (click)="setTab('withdrawlTokenFromAMM')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'withdrawlTokenFromAMM'" (click)="setTab('withdrawlTokenFromAMM')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
                          Withdrawl from AMM
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'clawbackFromAMM'" (click)="setTab('clawbackFromAMM')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'clawbackFromAMM'" (click)="setTab('clawbackFromAMM')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
                          Clawback from AMM
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'swapViaAMM'" (click)="setTab('swapViaAMM')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'swapViaAMM'" (click)="setTab('swapViaAMM')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
                          Swap via AMM
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'deleteAMM'" (click)="setTab('deleteAMM')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'deleteAMM'" (click)="setTab('deleteAMM')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
                          Delete AMM
                     </button>
                </div>
 
                <!-- Create AMM Menu -->
-               @if (activeTab === 'createAMM') {
+               @if (activeTab() === 'createAMM') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -60,7 +58,7 @@
                }
 
                <!-- Deposit to AMM Menu -->
-               @if (activeTab === 'depositToAMM') {
+               @if (activeTab() === 'depositToAMM') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -75,7 +73,7 @@
                }
 
                <!-- Withdrawl Token From AMM Menu -->
-               @if (activeTab === 'withdrawlTokenFromAMM') {
+               @if (activeTab() === 'withdrawlTokenFromAMM') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -90,7 +88,7 @@
                }
 
                <!-- Clawback From AMM Menu -->
-               @if (activeTab === 'clawbackFromAMM') {
+               @if (activeTab() === 'clawbackFromAMM') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -105,7 +103,7 @@
                }
 
                <!-- Swap Via AMM Menu -->
-               @if (activeTab === 'swapViaAMM') {
+               @if (activeTab() === 'swapViaAMM') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -120,7 +118,7 @@
                }
 
                <!-- Delete AMM Menu -->
-               @if (activeTab === 'deleteAMM') {
+               @if (activeTab() === 'deleteAMM') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -135,18 +133,18 @@
                }
 
                <!-- Info Message -->
-               @if (ui.infoMessage) {
+               @if (txUiService.infoMessage) {
                <div class="info-panel">
                     <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="ui.safeInfo"></div>
+                    <div class="info-text" [innerHTML]="txUiService.safeInfo"></div>
                </div>
                }
 
                <!-- Warning Message -->
-               @if (ui.warningMessage) {
+               @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="ui.safeWarning"></div>
+                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
                </div>
                }
 
@@ -223,12 +221,12 @@
                }
 
                <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab">
+                    <div [@tabTransition]="activeTab()">
                          <div class="tab-content-columns">
                               <!-- ==================== LEFT: FORM FIELDS ==================== -->
                               <div class="tab-content-container form-fields-container">
                                    <!-- Get Offers -->
-                                   @if(activeTab === 'createAMM' || activeTab === 'depositToAMM' || activeTab === 'withdrawlTokenFromAMM' || activeTab === 'clawbackFromAMM' || activeTab === 'swapViaAMM' || activeTab === 'deleteAMM') {
+                                   @if(activeTab() === 'createAMM' || activeTab() === 'depositToAMM' || activeTab() === 'withdrawlTokenFromAMM' || activeTab() === 'clawbackFromAMM' || activeTab() === 'swapViaAMM' || activeTab() === 'deleteAMM') {
                                    <div class="form-row">
                                         <!-- Info -->
                                         <div class="form-group">
@@ -245,23 +243,73 @@
 
                                    <div class="form-row">
                                         <!-- Currency Code -->
+                                        <!-- We Want Currency -->
                                         <div class="form-group">
-                                             <label>Currency Code</label>
-                                             <select [(ngModel)]="weWantCurrencyField" (ngModelChange)="onWeWantCurrencyChange()" name="weWantCurrencyField">
-                                                  <option *ngFor="let c of availableCurrencies" [value]="c">{{ c }}</option>
-                                             </select>
+                                             <label for="weWantCurrency">Currency Code</label>
+                                             <p class="form-hint">The token you want to receive or deposit/withdraw.</p>
+                                             <app-select-search-dropdown [items]="weWantCurrencyItems()" [value]="selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="onWeWantCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                                  <ng-template #itemTemplate let-item>
+                                                       <div class="flex items-center gap-2">
+                                                            @if (item.id === 'XRP') {
+                                                            <span class="text-yellow-500 font-bold">XRP</span>
+                                                            } @else {
+                                                            <span>{{ item.display }}</span>
+                                                            }
+                                                            <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                       </div>
+                                                  </ng-template>
+                                             </app-select-search-dropdown>
                                         </div>
+
+                                        <!-- We Spend Currency -->
                                         <div class="form-group">
-                                             <label>Currency Code</label>
-                                             <select [(ngModel)]="weSpendCurrencyField" (ngModelChange)="onWeSpendCurrencyChange()" name="weSpendCurrencyField">
-                                                  <option *ngFor="let c of availableCurrencies" [value]="c">{{ c }}</option>
-                                             </select>
+                                             <label for="weSpendCurrency">Currency Code</label>
+                                             <p class="form-hint">The token you want to spend or deposit/withdraw.</p>
+                                             <app-select-search-dropdown [items]="weSpendCurrencyItems()" [value]="selectedWeSpendCurrencyItem()" [showShortAddress]="false" (valueChange)="onWeSpendCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                                  <ng-template #itemTemplate let-item>
+                                                       <div class="flex items-center gap-2">
+                                                            @if (item.id === 'XRP') {
+                                                            <span class="text-yellow-500 font-bold">XRP</span>
+                                                            } @else {
+                                                            <span>{{ item.display }}</span>
+                                                            }
+                                                            <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                       </div>
+                                                  </ng-template>
+                                             </app-select-search-dropdown>
                                         </div>
                                    </div>
 
                                    <div class="form-row">
                                         <!-- Issuer -->
+                                        <!-- We Want Issuer -->
                                         <div class="form-group">
+                                             <label for="weWantIssuer">Issuer</label>
+                                             <p class="form-hint">The XRPL account that issues the token you want to receive.</p>
+                                             <app-select-search-dropdown [items]="weWantIssuerItems()" [value]="selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="onWeWantIssuerSelected($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency">
+                                                  <ng-template #itemTemplate let-item>
+                                                       <div class="flex flex-col">
+                                                            <span class="font-medium">{{ item.display }}</span>
+                                                            <span class="text-xs text-gray-500">{{ item.secondary }}</span>
+                                                       </div>
+                                                  </ng-template>
+                                             </app-select-search-dropdown>
+                                        </div>
+
+                                        <!-- We Spend Issuer -->
+                                        <div class="form-group">
+                                             <!-- <label for="weSpendIssuer">We Spend Issuer</label>
+                                             <p class="form-hint">The XRPL account that issues the token you want to spend.</p>
+                                             <app-select-search-dropdown [items]="weSpendIssuerItems()" [value]="selectedWeSpendIssuerItem()" [showShortAddress]="true" (valueChange)="onWeSpendIssuerSelected($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency">
+                                                  <ng-template #itemTemplate let-item>
+                                                       <div class="flex flex-col">
+                                                            <span class="font-medium">{{ item.display }}</span>
+                                                            <span class="text-xs text-gray-500">{{ item.secondary }}</span>
+                                                       </div>
+                                                  </ng-template>
+                                             </app-select-search-dropdown> -->
+                                        </div>
+                                        <!-- <div class="form-group">
                                              <label>Issuer</label>
                                              <select [(ngModel)]="weWantIssuerField" (ngModelChange)="onWeWantIssuerChange()" name="weWantIssuerField">
                                                   @for (iss of (weWantIssuers$ | async); track iss.address; let i = $index) {
@@ -276,7 +324,7 @@
                                                   <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
                                                   }
                                              </select>
-                                        </div>
+                                        </div> -->
                                    </div>
 
                                    <div class="form-row">
@@ -318,10 +366,10 @@
                                    </div>
 
                                    <!-- LP Token Balance for create and clawback -->
-                                   @if(activeTab === 'createAMM' || activeTab === 'clawbackFromAMM') {
+                                   @if(activeTab() === 'createAMM' || activeTab() === 'clawbackFromAMM') {
                                    <div class="form-row">
                                         <!-- Trading Fee -->
-                                        @if(activeTab === 'createAMM') {
+                                        @if(activeTab() === 'createAMM') {
                                         <div class="form-group">
                                              <label>Trading Fee</label>
                                              <input type="text" [(ngModel)]="tradingFeeField" name="tradingFeeField" placeholder="e.g. 500 is 0.05%" />
@@ -335,7 +383,7 @@
                                         </div>
 
                                         <!-- Clawback holder -->
-                                        @if(activeTab === 'clawbackFromAMM') {
+                                        @if(activeTab() === 'clawbackFromAMM') {
                                         <div class="form-group">
                                              <label>Holder</label>
                                              <input type="text" [(ngModel)]="holderField" name="holderField" placeholder="" />
@@ -345,10 +393,10 @@
                                    }
 
                                    <!-- LP Token Balance -->
-                                   @if(activeTab === 'depositToAMM' || activeTab === 'withdrawlTokenFromAMM') {
+                                   @if(activeTab() === 'depositToAMM' || activeTab() === 'withdrawlTokenFromAMM') {
                                    <div class="form-row">
                                         <!-- Deposit Token -->
-                                        @if(activeTab === 'depositToAMM' || activeTab === 'withdrawlTokenFromAMM') {
+                                        @if(activeTab() === 'depositToAMM' || activeTab() === 'withdrawlTokenFromAMM') {
                                         <div class="form-group">
                                              <label>LP Token Balance</label>
                                              <input type="text" [value]="(lpTokenBalance$ | async) ?? '0'" readonly name="lpTokenBalanceField" />
@@ -356,7 +404,7 @@
                                         </div>
                                         }
                                         <!-- withdrawl Token -->
-                                        @if(activeTab === 'withdrawlTokenFromAMM') {
+                                        @if(activeTab() === 'withdrawlTokenFromAMM') {
                                         <div class="form-group">
                                              <label>Withdrawl LP Token</label>
                                              <input type="text" [(ngModel)]="withdrawlLpTokenFromPoolField" name="withdrawlLpTokenFromPoolField" placeholder="" />
@@ -367,38 +415,14 @@
                                    }}
 
                                    <!-- Swap -->
-                                   @if(activeTab === 'swapViaAMM') {
+                                   @if(activeTab() === 'swapViaAMM') {
                                    <!-- Destination + Tag -->
                                    <div class="form-row">
                                         <div class="form-group">
-                                             <label>Destination</label>
-
-                                             <div class="combobox-container" (clickOutside)="closeDropdown()">
-                                                  <input #dropdownOrigin type="text" [(ngModel)]="destinationField" name="destinationField" placeholder="Enter or select destination address" (input)="destinationSearch$.next($event.target.value)" (focus)="openDropdown()" (keyup.arrowdown)="onArrowDown()" (keyup.enter)="selectHighlighted()" class="combobox-input" />
-
-                                                  <button class="combobox-toggle" (click)="toggleDropdown()" type="button">
-                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                                  </button>
-                                             </div>
+                                             <label for="destination">Destination</label>
+                                             <p class="form-hint">The unique address of the account receiving the payment.</p>
+                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
-
-                                        <!-- Dropdown template -->
-                                        <ng-template #dropdownTemplate>
-                                             <div class="combobox-dropdown-overlay">
-                                                  @for (dest of filteredDestinations; track trackByAddress($index, dest)) {
-                                                  <div class="combobox-item" [class.disabled]="dest.address === currentWallet.address" [class.highlighted]="highlightedIndex === $index" (click)="selectDestination(dest.address)">
-                                                       <div class="item-name">
-                                                            {{ dest.name || 'Wallet' }} @if (dest.address === currentWallet.address) {
-                                                            <span class="self-badge">Current Account</span>
-                                                            }
-                                                       </div>
-                                                       <div class="item-address">{{ dest.address | slice:0:6 }}...{{ dest.address | slice:-6 }}</div>
-                                                  </div>
-                                                  } @empty {
-                                                  <div class="combobox-empty">No matching addresses</div>
-                                                  }
-                                             </div>
-                                        </ng-template>
                                         <div class="form-group">
                                              <label>Destination Tag</label>
                                              <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
@@ -408,9 +432,9 @@
                                    }
 
                                    <!-- AMM Options -->
-                                   @if(activeTab === 'depositToAMM' || activeTab === 'withdrawlTokenFromAMM') {
+                                   @if(activeTab() === 'depositToAMM' || activeTab() === 'withdrawlTokenFromAMM') {
                                    <!-- Deposit to AMM Options -->
-                                   @if(activeTab === 'depositToAMM') {
+                                   @if(activeTab() === 'depositToAMM') {
                                    <div style="margin-top: 0.8em; padding: 0px">
                                         <tr>
                                              <td style="padding: 0px">
@@ -420,17 +444,17 @@
                                              </td>
                                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
                                                   <span class="tooltip" tooltip-data="Deposit currency into both pools.">
-                                                       <input type="checkbox" id="isDepositIntoBothPools" [checked]="depositOptions.bothPools" (change)="selectDepositOption('bothPools')" />
+                                                       <input type="checkbox" id="isDepositIntoBothPools" [checked]="depositOptions().bothPools" (change)="selectDepositOption('bothPools')" />
                                                        <label for="isDepositIntoBothPools">Both Pools</label>
                                                   </span>
 
                                                   <span class="tooltip" tooltip-data="Deposit currency into the first pool only.">
-                                                       <input type="checkbox" id="isDepositIntoFirstPoolOnly" [checked]="depositOptions.firstPoolOnly" (change)="selectDepositOption('firstPoolOnly')" />
+                                                       <input type="checkbox" id="isDepositIntoFirstPoolOnly" [checked]="depositOptions().firstPoolOnly" (change)="selectDepositOption('firstPoolOnly')" />
                                                        <label for="isDepositIntoFirstPoolOnly">First Pool Only</label>
                                                   </span>
 
                                                   <span class="tooltip" tooltip-data="Deposit currency into the second pool only.">
-                                                       <input type="checkbox" id="isDepositIntoSecondPoolOnly" [checked]="depositOptions.secondPoolOnly" (change)="selectDepositOption('secondPoolOnly')" />
+                                                       <input type="checkbox" id="isDepositIntoSecondPoolOnly" [checked]="depositOptions().secondPoolOnly" (change)="selectDepositOption('secondPoolOnly')" />
                                                        <label for="isDepositIntoSecondPoolOnly">Second Pool Only</label>
                                                   </span>
                                              </td>
@@ -438,7 +462,7 @@
                                    </div>
                                    }
                                    <!-- Withdrawl from AMM Options -->
-                                   @else if (activeTab === 'withdrawlTokenFromAMM') {
+                                   @else if (activeTab() === 'withdrawlTokenFromAMM') {
                                    <div style="margin-top: 0.8em">
                                         <tr>
                                              <td style="padding: 0px">
@@ -448,17 +472,17 @@
                                              </td>
                                              <td style="display: flex; gap: 10px; flex-wrap: wrap">
                                                   <span class="tooltip" tooltip-data="Withdraw currency from both pools.">
-                                                       <input type="checkbox" id="isWithdrawFromBothPools" [checked]="withdrawOptions.bothPools" (change)="selectWithdrawOption('bothPools')" />
+                                                       <input type="checkbox" id="isWithdrawFromBothPools" [checked]="withdrawOptions().bothPools" (change)="selectWithdrawOption('bothPools')" />
                                                        <label for="isWithdrawFromBothPools">Both Pools</label>
                                                   </span>
 
                                                   <span class="tooltip" tooltip-data="Withdraw currency from the first pool only.">
-                                                       <input type="checkbox" id="isWithdrawFromFirstPoolOnly" [checked]="withdrawOptions.firstPoolOnly" (change)="selectWithdrawOption('firstPoolOnly')" />
+                                                       <input type="checkbox" id="isWithdrawFromFirstPoolOnly" [checked]="withdrawOptions().firstPoolOnly" (change)="selectWithdrawOption('firstPoolOnly')" />
                                                        <label for="isWithdrawFromFirstPoolOnly">First Pool Only</label>
                                                   </span>
 
                                                   <span class="tooltip" tooltip-data="Withdraw currency from the second pool only.">
-                                                       <input type="checkbox" id="isWithdrawFromSecondPoolOnly" [checked]="withdrawOptions.secondPoolOnly" (change)="selectWithdrawOption('secondPoolOnly')" />
+                                                       <input type="checkbox" id="isWithdrawFromSecondPoolOnly" [checked]="withdrawOptions().secondPoolOnly" (change)="selectWithdrawOption('secondPoolOnly')" />
                                                        <label for="isWithdrawFromSecondPoolOnly">Second Pool Only</label>
                                                   </span>
                                              </td>
@@ -468,236 +492,34 @@
                               </div>
                          </div>
 
-                         <!-- Switches -->
-                         <div class="switch-group">
-                              <!-- Memo group -->
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                   <span class="slider"></span>
-                                   Add Memo
-                              </label>
-
-                              <!-- Multi Signing Enabled group -->
-                              @if (multiSigningEnabled) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                   <span class="slider"></span>
-                                   Use Multi-Sign
-                              </label>
-                              }
-
-                              <!-- Regular Key Signing Enabled-->
-                              @if (regularKeySigningEnabled) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                                   <span class="slider"></span>
-                                   Use Regular Key
-                              </label>
-                              }
-
-                              <!-- Use Ticket for tx -->
-                              @if (ticketArray.length > 0) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                                   <span class="slider"></span>
-                                   Use Ticket
-                              </label>
-                              }
-
-                              <!-- Simulate tx -->
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="ui.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="ui.toggleSimulate($event)" />
-                                   <span class="slider"></span>
-                                   Simulate
-                              </label>
-                         </div>
-
-                         <!-- Memo Field -->
-                         @if (isMemoEnabled) {
-                         <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-                         }
-
-                         <!-- Sign tx with Mult Sign address -->
-                         @if (useMultiSign) {
-                         <div class="multisign-grid">
-                              <div class="multisign-field">
-                                   <label>Signers</label>
-                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                              </div>
-                              <div class="multisign-field">
-                                   <label>Seeds</label>
-                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                              </div>
-                              <div class="multisign-field quorum-field">
-                                   <label>Quorum</label>
-                                   <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Sign tx with Regular key address -->
-                         @if (isRegularKeyAddress) {
-                         <div class="regular-key-fields">
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Address</label>
-                                        <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                                   </div>
-                              </div>
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Seed</label>
-                                        <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                   </div>
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Get ticket -->
-                         @if (isTicket) {
-                         <div class="ticket-fields">
-                              <div class="form-group">
-                                   <label>Ticket Sequence</label>
-                                   @if (multiSelectMode) {
-                                   <div>
-                                        <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                             @for (ticket of ticketArray; track ticket) {
-                                             <option [value]="ticket">{{ ticket }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                                   } @else {
-                                   <div>
-                                        <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                             <option value="" disabled>Select a ticket</option>
-                                             @for (ticket of ticketArray; track ticket) {
-                                             <option [value]="ticket">{{ ticket }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                                   }
-                              </div>
-                         </div>
-                         }
+                         <app-transaction-options [showWhenTab]="['createAMM', 'depositToAMM','withdrawlTokenFromAMM','clawbackFromAMM','swapViaAMM','deleteAMM']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                          <!-- Action buttons -->
                          <div class="button-row">
-                              @if (activeTab === 'createAMM') {
-                              <!-- <button type="button" class="btn-primary-blue" (click)="getAMMPoolInfo()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Get AMM Pool' }}</button> -->
-                              <button type="button" class="btn-primary-blue" (click)="createAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create AMM' }}</button>
-                              } @else if(activeTab === 'depositToAMM') {
-                              <button type="button" class="btn-primary-green" (click)="depositToAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Deposit Tokens to AMM' }}</button>
-                              } @else if(activeTab === 'withdrawlTokenFromAMM') {
-                              <button type="button" class="btn-primary-green" (click)="withdrawlTokenFromAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Withdreawl Token from AMM' }}</button>
-                              } @else if(activeTab === 'clawbackFromAMM') {
-                              <button type="button" class="btn-primary-red" (click)="clawbackFromAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Clawaback Token from AMM' }}</button>
-                              } @else if(activeTab === 'swapViaAMM') {
-                              <button type="button" class="btn-primary-green" (click)="swapViaAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Swap Token via AMM' }}</button>
-                              }@else if(activeTab === 'deleteAMM') {
-                              <button type="button" class="btn-primary-red" (click)="deleteAMM()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Delete AMM' }}</button>
+                              @if (activeTab() === 'createAMM') {
+                              <!-- <button type="button" class="btn-primary-blue" (click)="getAMMPoolInfo()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Get AMM Pool' }}</button> -->
+                              <button type="button" class="btn-primary-blue" (click)="createAMM()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create AMM' }}</button>
+                              } @else if(activeTab() === 'depositToAMM') {
+                              <button type="button" class="btn-primary-green" (click)="depositToAMM()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Deposit Tokens to AMM' }}</button>
+                              } @else if(activeTab() === 'withdrawlTokenFromAMM') {
+                              <button type="button" class="btn-primary-green" (click)="withdrawlTokenFromAMM()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Withdreawl Token from AMM' }}</button>
+                              } @else if(activeTab() === 'clawbackFromAMM') {
+                              <button type="button" class="btn-primary-red" (click)="clawbackFromAMM()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Clawaback Token from AMM' }}</button>
+                              } @else if(activeTab() === 'swapViaAMM') {
+                              <button type="button" class="btn-primary-green" (click)="swapViaAMM()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Swap Token via AMM' }}</button>
+                              }@else if(activeTab() === 'deleteAMM') {
+                              <button type="button" class="btn-primary-red" (click)="deleteAMM()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Delete AMM' }}</button>
                               }
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
+                              <button type="button" (click)="clearFields()" class="btn-secondary-clear-fields">Clear Fields</button>
                          </div>
 
-                         <!-- Spinner -->
-                         @if (ui.spinner()) {
-                         <div class="spinner-row">
-                              <div class="spinner"></div>
-                              <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
+                         <!-- Execution time -->
+                         <div style="display: flex">
+                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                          </div>
-                         }
-
-                         <!-- Success message -->
-                         @if (ui.isSuccess && !ui.isError) {
-                         <div class="success-message">
-                              <lucide-icon name="check" size="20"></lucide-icon>
-                              <div class="success-text">
-                                   @if (ui.txHash && !ui.isSimulateEnabled) {
-                                   <span>{{ui.successMessage}}</span><br /><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                   } @else {
-                                   <span>{{ui.successMessage}}</span>
-                                   }
-
-                                   <!-- Multiple Hashes -->
-                                   @if (ui.txHashes.length > 1 && !ui.isSimulateEnabled) {
-                                   <div class="tx-hashes">
-                                        @for (hash of ui.txHashes; track hash; let i = $index) {
-                                        <div class="tx-hash-item">
-                                             Transaction {{ i + 1 }} hash:
-                                             <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
-                                        </div>
-                                        }
-                                   </div>
-                                   }
-
-                                   <!-- Single hash -->
-                                   @if (ui.txHashes.length === 1 && !ui.isSimulateEnabled) {
-                                   <span>Transaction hash: <a [href]="url + 'tx/' + ui.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHashes[0] }} </a></span>
-                                   }
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Error message -->
-                         @if (ui.isError && ui.result) {
-                         <div class="tx-message error">
-                              <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
-                              <div class="tx-text">
-                                   <!-- Display Tx Hash if we are not in simulation mode-->
-                                   @if (ui.txHash && !ui.isSimulateEnabled) {
-                                   <span>{{ ui.result }}</span><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                   } @else {
-                                   <span>{{ ui.result }}</span>
-                                   }
-                              </div>
-                         </div>
-                         }
+                         <app-transaction-preview></app-transaction-preview>
                     </div>
                </form>
-
-               <!-- Tx Preview -->
-               @if (ui.paymentTx.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h5 class="tx-title">Payment Transaction</h5>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTx()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTx()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
-               </div>
-               }
-
-               <!-- Tx Result Preview -->
-               @if (ui.txResult.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h3 class="tx-title">Transaction Result</h3>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
-               </div>
-               }
           </div>
      </div>
 </div>

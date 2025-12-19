@@ -25,20 +25,15 @@ export interface CurrencySideState {
 })
 export class OfferCurrencyService {
      private knownTrustLinesIssuers: Record<string, string[]> = { XRP: [] };
-
-     // Two completely independent sides
      public readonly weWant: CurrencySideState;
      public readonly weSpend: CurrencySideState;
-
      private walletAddress = '';
-
      // Cache per wallet+currency (shared across both sides)
      private balanceCache = new Map<string, { data: any; timestamp: number }>();
 
      constructor(private storage: StorageService, private xrplService: XrplService, private utils: UtilsService, private walletManagerService: WalletManagerService) {
           this.weWant = this.createSideState();
           this.weSpend = this.createSideState();
-
           this.loadKnownIssuersFromStorage();
      }
 
@@ -84,7 +79,6 @@ export class OfferCurrencyService {
           this.updateBalanceForSide(this.weWant, currentWallet);
      }
 
-     // === WE SPEND SIDE ===
      selectWeSpendCurrency(currency: string, currentWallet: any) {
           this.weSpend.currency$.next(currency);
           this.loadIssuersForSide(currency, this.weSpend);
@@ -96,7 +90,6 @@ export class OfferCurrencyService {
           this.updateBalanceForSide(this.weSpend, currentWallet);
      }
 
-     // === PRIVATE HELPERS ===
      private async loadIssuersForSide(currency: string, side: CurrencySideState) {
           if (!currency || currency === 'XRP') {
                side.issuers$.next([]);
@@ -105,7 +98,7 @@ export class OfferCurrencyService {
           }
 
           const known = this.knownTrustLinesIssuers[currency] || [];
-          console.log(`known: ${known}`);
+          // console.log(`known: ${known}`);
           const issuers: IssuerItem[] = known
                .map(addr => ({
                     name: this.getNiceName(addr, currency),
@@ -113,7 +106,7 @@ export class OfferCurrencyService {
                }))
                .sort((a, b) => a.name.localeCompare(b.name));
 
-          console.log(`issuers: ${JSON.stringify(issuers, null, '\t')}`);
+          // console.log(`issuers: ${JSON.stringify(issuers, null, '\t')}`);
           side.issuers$.next(issuers);
 
           // Auto-select first issuer if none selected
@@ -163,7 +156,7 @@ export class OfferCurrencyService {
                this.balanceCache.set(cacheKey, { data: gatewayBalances, timestamp: Date.now() });
 
                const balance = this.extractBalance(gatewayBalances, currency, issuer);
-               console.log(`updateBalanceForSide side: ${side} balance: ${balance}`);
+               // console.log(`updateBalanceForSide side: ${side} balance: ${balance}`);
                side.balance$.next(balance);
           } catch (e) {
                console.warn('Failed to load balance', e);
@@ -195,12 +188,15 @@ export class OfferCurrencyService {
           return '0';
      }
 
-     // Optional: Helper to refresh both balances
      async refreshBothBalances(currentWallet: any) {
           await Promise.all([this.updateBalanceForSide(this.weWant, currentWallet), this.updateBalanceForSide(this.weSpend, currentWallet)]);
      }
 
-     // Optional: Reset everything
+     getIssuersForCurrency(currency: string): string[] {
+          if (!currency || currency === 'XRP') return [];
+          return this.knownTrustLinesIssuers[currency] || [];
+     }
+
      reset() {
           this.weWant.currency$.next('');
           this.weWant.issuer$.next('');
