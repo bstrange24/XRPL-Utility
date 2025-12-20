@@ -12,32 +12,32 @@
           <!-- Left Wallet panel ==== -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- <div class="toast" [class.show]="ui.showToast">{{ ui.toastMessage }}</div> -->
+          <!-- <div class="toast" [class.show]="txUiService.showToast">{{ txUiService.toastMessage }}</div> -->
 
           <!-- Right form -->
           <div class="form-panel">
                <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn" [class.active]="activeTab === 'getOffers'" (click)="setTab('getOffers')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'getOffers'" (click)="setTab('getOffers')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                          Offers
                     </button>
-                    <!-- <button class="menu-btn" [class.active]="activeTab === 'getOrderBook'" (click)="setTab('getOrderBook')">
+                    <!-- <button class="menu-btn" [class.active]="activeTab() === 'getOrderBook'" (click)="setTab('getOrderBook')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
                          Get Order Book
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab === 'createOffer'" (click)="setTab('createOffer')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'createOffer'" (click)="setTab('createOffer')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
                          Create Offer
                     </button> -->
-                    <button class="menu-btn" [class.active]="activeTab === 'cancelOffer'" (click)="setTab('cancelOffer')">
+                    <button class="menu-btn" [class.active]="activeTab() === 'cancelOffer'" (click)="setTab('cancelOffer')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
                          Cancel Offer
                     </button>
                </div>
 
                <!-- Get Offer Menu -->
-               @if (activeTab === 'getOffers') {
+               @if (activeTab() === 'getOffers') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -52,7 +52,7 @@
                }
 
                <!-- Get OrderBook Menu -->
-               <!-- @if (activeTab === 'getOrderBook') {
+               <!-- @if (activeTab() === 'getOrderBook') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -67,7 +67,7 @@
                } -->
 
                <!-- Create Offer Menu -->
-               <!-- @if (activeTab === 'createOffer') {
+               <!-- @if (activeTab() === 'createOffer') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -82,7 +82,7 @@
                } -->
 
                <!-- Cancel Offer Menu -->
-               @if (activeTab === 'cancelOffer') {
+               @if (activeTab() === 'cancelOffer') {
                <div>
                     <div class="submenu-info-text">
                          <div class="red-button-submenu">
@@ -97,35 +97,35 @@
                }
 
                <!-- Info Message -->
-               @if (ui.infoMessage) {
+               @if (txUiService.infoMessage) {
                <div class="info-panel">
                     <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="ui.safeInfo"></div>
+                    <div class="info-text" [innerHTML]="txUiService.safeInfo"></div>
                </div>
                }
 
                <!-- Warning Message -->
-               @if (ui.warningMessage) {
+               @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="ui.safeWarning"></div>
+                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
                </div>
                }
 
                <!-- Existing offers on selected account -->
-               @if (existingOffers.length > 0) {
+               @if (existingOffers().length > 0) {
                <div class="outstanding-checks-panel">
                     <div class="panel-header" (click)="toggleExistingOffers()" style="cursor: pointer; user-select: none">
                          <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
                               <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing Offers ({{ existingOffers.length }})
+                              Existing Offers ({{ existingOffers().length }})
                          </h3>
                     </div>
 
-                    <div class="credential-list-container" [class.collapsed]="displayExistingOffers">
-                         @if (!displayExistingOffers) {
+                    <div class="credential-list-container" [class.collapsed]="displayExistingOffers()">
+                         @if (!displayExistingOffers()) {
                          <div class="checks-list">
-                              @for (offer of existingOffers; track offer.Sequence){
+                              @for (offer of existingOffers(); track offer.Sequence){
                               <div class="check-card">
                                    <div class="check-extras">
                                         @if (offer.LedgerEntryType) {
@@ -167,7 +167,7 @@
                                    <div class="button-group">
                                         <button class="icon-btn copy-check-id" (click)="copyOfferHash(offer.TxHash); $event.stopPropagation(); $event.preventDefault()" title="Copy NFT Token ID" type="button">
                                              <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${url}entry/` + offer.TxHash" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
+                                             <a [href]="`${this.txUiService.explorerUrl()}entry/` + offer.TxHash" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
                                                   <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
                                              </a>
                                         </button>
@@ -181,12 +181,12 @@
                }
 
                <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab">
+                    <div [@tabTransition]="activeTab()">
                          <div class="tab-content-columns">
                               <!-- ==================== LEFT: FORM FIELDS ==================== -->
                               <div class="tab-content-container form-fields-container">
                                    <!-- Get Offers -->
-                                   @if(activeTab === 'getOffers') {
+                                   @if(activeTab() === 'getOffers') {
                                    <div class="form-row">
                                         <!-- Info -->
                                         <div class="form-group">
@@ -203,38 +203,78 @@
 
                                    <div class="form-row">
                                         <!-- Currency Code -->
+                                        <!-- We Want Currency -->
                                         <div class="form-group">
-                                             <label>Currency Code</label>
-                                             <select [(ngModel)]="weWantCurrencyField" (ngModelChange)="onWeWantCurrencyChange()" name="weWantCurrencyField">
-                                                  <option *ngFor="let c of availableCurrencies" [value]="c">{{ c }}</option>
-                                             </select>
+                                             <label for="weWantCurrency">Currency Code</label>
+                                             <p class="form-hint">The token you want to receive or deposit/withdraw.</p>
+                                             <app-select-search-dropdown [items]="weWantCurrencyItems()" [value]="selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="onWeWantCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                                  <ng-template #itemTemplate let-item>
+                                                       <div class="flex items-center gap-2">
+                                                            @if (item.id === 'XRP') {
+                                                            <span class="text-yellow-500 font-bold">XRP</span>
+                                                            } @else {
+                                                            <span>{{ item.display }}</span>
+                                                            }
+                                                            <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                       </div>
+                                                  </ng-template>
+                                             </app-select-search-dropdown>
                                         </div>
+
+                                        <!-- We Spend Currency -->
                                         <div class="form-group">
-                                             <label>Currency Code</label>
-                                             <select [(ngModel)]="weSpendCurrencyField" (ngModelChange)="onWeSpendCurrencyChange()" name="weSpendCurrencyField">
-                                                  <option *ngFor="let c of availableCurrencies" [value]="c">{{ c }}</option>
-                                             </select>
+                                             <label for="weSpendCurrency">Currency Code</label>
+                                             <p class="form-hint">The token you want to spend or deposit/withdraw.</p>
+                                             <app-select-search-dropdown [items]="weSpendCurrencyItems()" [value]="selectedWeSpendCurrencyItem()" [showShortAddress]="false" (valueChange)="onWeSpendCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                                  <ng-template #itemTemplate let-item>
+                                                       <div class="flex items-center gap-2">
+                                                            @if (item.id === 'XRP') {
+                                                            <span class="text-yellow-500 font-bold">XRP</span>
+                                                            } @else {
+                                                            <span>{{ item.display }}</span>
+                                                            }
+                                                            <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                       </div>
+                                                  </ng-template>
+                                             </app-select-search-dropdown>
                                         </div>
                                    </div>
 
                                    <div class="form-row">
                                         <!-- Issuer -->
+                                        <!-- We Want Issuer -->
                                         <div class="form-group">
-                                             <label>Issuer</label>
-                                             <select [(ngModel)]="weWantIssuerField" (ngModelChange)="onWeWantIssuerChange()" name="weWantIssuerField">
-                                                  @for (iss of (weWantIssuers$ | async); track iss.address; let i = $index) {
-                                                  <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
-                                                  }
-                                             </select>
+                                             <label for="weWantIssuer">Issuer</label>
+                                             <p class="form-hint">The XRPL account that issues the token you want to receive.</p>
+                                             <app-select-search-dropdown [items]="weWantIssuerItems()" [value]="selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="onWeWantIssuerSelected($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency">
+                                                  <ng-template #itemTemplate let-item>
+                                                       <div class="flex flex-col">
+                                                            <span class="font-medium">{{ item.display }}</span>
+                                                            <span class="text-xs text-gray-500">{{ item.secondary }}</span>
+                                                       </div>
+                                                  </ng-template>
+                                             </app-select-search-dropdown>
                                         </div>
                                         <div class="form-group">
+                                             <label for="weWantIssuer">Issuer</label>
+                                             <p class="form-hint">The XRPL account that issues the token you want to receive.</p>
+                                             <app-select-search-dropdown [items]="weSpendIssuerItems()" [value]="selectedWeSpendIssuerItem()" [showShortAddress]="true" (valueChange)="onWeSpendIssuerSelected($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency">
+                                                  <ng-template #itemTemplate let-item>
+                                                       <div class="flex flex-col">
+                                                            <span class="font-medium">{{ item.display }}</span>
+                                                            <span class="text-xs text-gray-500">{{ item.secondary }}</span>
+                                                       </div>
+                                                  </ng-template>
+                                             </app-select-search-dropdown>
+                                        </div>
+                                        <!-- <div class="form-group">
                                              <label>Issuer</label>
                                              <select [(ngModel)]="weSpendIssuerField" (ngModelChange)="onWeSpendIssuerChange()" name="weSpendIssuerField">
                                                   @for (iss of (weSpendIssuers$ | async); track iss.address; let i = $index) {
                                                   <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
                                                   }
                                              </select>
-                                        </div>
+                                        </div> -->
                                    </div>
 
                                    <div class="form-row">
@@ -242,12 +282,12 @@
                                         <div class="form-group">
                                              <label>Amount</label>
                                              <!-- <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" (ngModelChange)="onWeWantAmountChange()" placeholder="e.g. 10.5" /> -->
-                                             <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" placeholder="e.g. 10.5" />
+                                             <input type="text" [(ngModel)]="weWantAmount" name="weWantAmountField" placeholder="e.g. 10.5" />
                                         </div>
                                         <div class="form-group">
                                              <label>Amount</label>
                                              <!-- <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" (ngModelChange)="onWeSpendAmountChange()" placeholder="e.g. 10.5" /> -->
-                                             <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" placeholder="e.g. 10.5" />
+                                             <input type="text" [(ngModel)]="weSpendAmount" name="weSpendAmount" placeholder="e.g. 10.5" />
                                         </div>
                                    </div>
 
@@ -288,14 +328,14 @@
                                              <!-- Total Flag value -->
                                              <div class="flags-total">
                                                   <span class="total-label">Total Flags Value:</span>
-                                                  <span class="total-value">{{ totalFlagsValue }} ({{ totalFlagsHex }})</span>
+                                                  <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
                                              </div>
                                         </div>
                                    </div>
                                    }
 
                                    <!-- Cancel offer -->
-                                   @if (activeTab === 'cancelOffer') {
+                                   @if (activeTab() === 'cancelOffer') {
                                    <!-- <div class="form-row">
                                         <div class="form-group" style="margin-bottom: 1em">
                                              <label>Offer Sequence</label>
@@ -304,11 +344,11 @@
                                    </div> -->
 
                                    <!-- Cancellable checks dropdown -->
-                                   @if (existingOffers.length > 0) {
+                                   @if (existingOffers().length > 0) {
                                    <div class="form-row">
                                         <div class="form-group">
                                              <label>Offer Sequence</label>
-                                             <input type="text" [(ngModel)]="offerSequenceField" name="offerSequenceField" (input)="ui.clearWarning()" />
+                                             <input type="text" [(ngModel)]="offerSequenceField" name="offerSequenceField" (input)="txUiService.clearWarning()" />
                                         </div>
                                    </div>
 
@@ -324,16 +364,16 @@
                                                   </div>
 
                                                   <div class="ticket-dropdown">
-                                                       @if (multiSelectMode) {
+                                                       @if (multiSelectMode()) {
                                                        <select [(ngModel)]="selectedTickets" size="10" multiple (ngModelChange)="updateDeleteTicketSequence()" [ngModelOptions]="{standalone: true}">
-                                                            @for (ticket of offersArray; track ticket) {
+                                                            @for (ticket of offersArray(); track ticket) {
                                                             <option [value]="ticket">{{ ticket }}</option>
                                                             }
                                                        </select>
                                                        } @else {
                                                        <select [(ngModel)]="selectedSingleTicket" (ngModelChange)="updateDeleteTicketSequence()" [ngModelOptions]="{standalone: true}">
                                                             <option value="" disabled>Select an offer</option>
-                                                            @for (ticket of offersArray; track ticket) {
+                                                            @for (ticket of offersArray(); track ticket) {
                                                             <option [value]="ticket">{{ ticket }}</option>
                                                             }
                                                        </select>
@@ -346,231 +386,29 @@
                               </div>
                          </div>
 
-                         <!-- Switches -->
-                         <div class="switch-group" style="margin-top: 0.9em">
-                              <!-- Memo group -->
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
-                                   <span class="slider"></span>
-                                   Add Memo
-                              </label>
-
-                              <!-- Multi Signing Enabled group -->
-                              @if (multiSigningEnabled) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
-                                   <span class="slider"></span>
-                                   Use Multi-Sign
-                              </label>
-                              }
-
-                              <!-- Regular Key Signing Enabled-->
-                              @if (regularKeySigningEnabled) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="toggleMultiSign()" name="isRegularKeyAddress" />
-                                   <span class="slider"></span>
-                                   Use Regular Key
-                              </label>
-                              }
-
-                              <!-- Use Ticket for tx -->
-                              @if (ticketArray.length > 0) {
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="isTicket" name="isTicket" />
-                                   <span class="slider"></span>
-                                   Use Ticket
-                              </label>
-                              }
-
-                              <!-- Simulate tx -->
-                              <label class="switch">
-                                   <input type="checkbox" [(ngModel)]="ui.isSimulateEnabled" name="isSimulateEnabled" (ngModelChange)="ui.toggleSimulate($event)" />
-                                   <span class="slider"></span>
-                                   Simulate
-                              </label>
-                         </div>
-
-                         <!-- Memo Field -->
-                         @if (isMemoEnabled) {
-                         <textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
-                         }
-
-                         <!-- Sign tx with Mult Sign address -->
-                         @if (useMultiSign) {
-                         <div class="multisign-grid">
-                              <div class="multisign-field">
-                                   <label>Signers</label>
-                                   <textarea #signers [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
-                              </div>
-                              <div class="multisign-field">
-                                   <label>Seeds</label>
-                                   <textarea #seeds [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
-                              </div>
-                              <div class="multisign-field quorum-field">
-                                   <label>Quorum</label>
-                                   <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Sign tx with Regular key address -->
-                         @if (isRegularKeyAddress) {
-                         <div class="regular-key-fields">
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Address</label>
-                                        <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
-                                   </div>
-                              </div>
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Regular Key Seed</label>
-                                        <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-                                   </div>
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Get ticket -->
-                         @if (isTicket) {
-                         <div class="ticket-fields">
-                              <div class="form-group">
-                                   <label>Ticket Sequence</label>
-                                   @if (multiSelectMode) {
-                                   <div>
-                                        <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
-                                             @for (ticket of ticketArray; track ticket) {
-                                             <option [value]="ticket">{{ ticket }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                                   } @else {
-                                   <div>
-                                        <select [(ngModel)]="selectedSingleTicket" [ngModelOptions]="{standalone: true}">
-                                             <option value="" disabled>Select a ticket</option>
-                                             @for (ticket of ticketArray; track ticket) {
-                                             <option [value]="ticket">{{ ticket }}</option>
-                                             }
-                                        </select>
-                                   </div>
-                                   }
-                              </div>
-                         </div>
-                         }
+                         <app-transaction-options [showWhenTab]="['getOffers', 'cancelOffer']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                          <!-- Action buttons -->
                          <div class="button-row">
-                              @if (activeTab === 'getOffers') {
-                              <button type="button" class="btn-primary-blue" (click)="getOffers()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Get Offers' }}</button>
-                              <button type="button" class="btn-primary-blue" (click)="getOrderBook()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Get Orderbook' }}</button>
-                              <button type="button" class="btn-primary-green" (click)="createOffer()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Create Offer' }}</button>
-                              <!-- <button type="button" class="btn-primary-green" (click)="getTokenBalance()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Get Token Balance' }}</button> -->
-                              <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Invert Order' }}</button>
-                              } @else if(activeTab === 'cancelOffer') {
-                              <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="ui.spinner()">{{ ui.spinner() ? 'Processing...' : 'Cancel Offer' }}</button>
-                              <button type="button" (click)="clearFields(true)" class="btn-secondary-clear-fields">Clear Fields</button>
+                              @if (activeTab() === 'getOffers') {
+                              <button type="button" class="btn-primary-blue" (click)="getOffers()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Get Offers' }}</button>
+                              <!-- <button type="button" class="btn-primary-blue" (click)="getOrderBook()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Get Orderbook' }}</button> -->
+                              <button type="button" class="btn-primary-green" (click)="createOffer()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create Offer' }}</button>
+                              <!-- <button type="button" class="btn-primary-green" (click)="getTokenBalance()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Get Token Balance' }}</button> -->
+                              <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Invert Order' }}</button>
+                              } @else if(activeTab() === 'cancelOffer') {
+                              <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Offer' }}</button>
+                              <button type="button" (click)="clearFields()" class="btn-secondary-clear-fields">Clear Fields</button>
                               }
                          </div>
 
-                         <!-- Spinner -->
-                         @if (ui.spinner()) {
-                         <div class="spinner-row">
-                              <div class="spinner"></div>
-                              <span>{{ ui.spinnerMessage || 'Loading...' }}</span>
+                         <!-- Execution time -->
+                         <div style="display: flex">
+                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                          </div>
-                         }
-
-                         <!-- Success message -->
-                         @if (ui.isSuccess && !ui.isError) {
-                         <div class="success-message">
-                              <lucide-icon name="check" size="20"></lucide-icon>
-                              <div class="success-text">
-                                   @if (ui.txHash && !ui.isSimulateEnabled) {
-                                   <span>{{ui.successMessage}}</span><br /><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                   } @else {
-                                   <span>{{ui.successMessage}}</span><br /><br />
-                                   }
-
-                                   <!-- Multiple Hashes -->
-                                   @if (ui.txHashes.length > 1 && !ui.isSimulateEnabled) {
-                                   <div class="tx-hashes">
-                                        @for (hash of ui.txHashes; track hash; let i = $index) {
-                                        <div class="tx-hash-item">
-                                             Transaction {{ i + 1 }} hash:
-                                             <a [href]="url + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
-                                        </div>
-                                        }
-                                   </div>
-                                   }
-
-                                   <!-- Single hash -->
-                                   @if (ui.txHashes.length === 1 && !ui.isSimulateEnabled) {
-                                   <span>Transaction hash: <a [href]="url + 'tx/' + ui.txHashes[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHashes[0] }} </a></span>
-                                   }
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Error message -->
-                         @if (ui.isError && ui.result) {
-                         <div class="tx-message error">
-                              <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
-                              <div class="tx-text">
-                                   <!-- Display Tx Hash if we are not in simulation mode-->
-                                   @if (ui.txHash && !ui.isSimulateEnabled) {
-                                   <span>{{ ui.result }}</span><br />
-                                   <span>Transaction hash: <a [href]="`${url}tx/` + ui.txHash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ ui.txHash }} </a></span>
-                                   } @else {
-                                   <span>{{ ui.result }}</span>
-                                   }
-                              </div>
-                         </div>
-                         }
+                         <app-transaction-preview></app-transaction-preview>
                     </div>
                </form>
-
-               <!-- Tx Preview -->
-               @if (ui.paymentTx.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h5 class="tx-title">Payment Transaction</h5>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTx()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTx()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
-               </div>
-               }
-
-               <!-- Tx Result Preview -->
-               @if (ui.txResult.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h3 class="tx-title">Transaction Result</h3>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
-                         </div>
-                    </div>
-
-                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
-               </div>
-               }
           </div>
      </div>
 </div>
