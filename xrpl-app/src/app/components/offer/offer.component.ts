@@ -19,7 +19,7 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { BehaviorSubject, Observable, Subject, takeUntil } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { OfferCurrencyService } from '../../services/offer-currency/offer-currency.service';
 import BigNumber from 'bignumber.js';
@@ -183,7 +183,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      existingBuyOffers = signal<any[]>([]);
      existingSellOffersCollapsed = signal<boolean>(true);
 
-     amountTimeout = signal<ReturnType<typeof setTimeout> | null>(null);
+     amountTimeout = signal<ReturnType<any> | null>(null);
      weWantIssuersTrigger = signal(0);
      weSpendIssuersTrigger = signal(0);
 
@@ -224,14 +224,14 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                desc: 'The offer does not consume offers that exactly match it, and instead becomes an Offer object in the ledger. It still consumes offers that cross it.',
           },
           {
-               key: 'tfImmediateOrCancel',
-               title: 'Immediate Or Cancel',
-               desc: 'The offer never becomes a ledger object: it only tries to match existing offers in the ledger. If the offer cannot match any offers immediately, it executes "successfully" without trading any currency.',
-          },
-          {
                key: 'tfFillOrKill',
                title: 'Fill Or Kill',
                desc: 'Only try to match existing offers in the ledger, and only do so if the entire TakerPays quantity can be obtained.',
+          },
+          {
+               key: 'tfImmediateOrCancel',
+               title: 'Immediate Or Cancel',
+               desc: 'The offer never becomes a ledger object: it only tries to match existing offers in the ledger.',
           },
      ] as const;
 
@@ -568,12 +568,9 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
                     this.getExistingOffers(accountObjects, wallet.classicAddress);
 
-                    // this.refreshUIData(wallet, accountInfo, accountObjects);
-                    // this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                    // this.updateTickets(accountObjects);
+                    this.refreshUiState(wallet, accountInfo, accountObjects);
                     // this.clearFields(false);
                     this.updateInfoMessage();
-                    //  this.cdr.detectChanges();
                } catch (error: any) {
                     console.error('Error in getOffers:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -585,6 +582,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
      async getOrderBook() {
           await this.withPerf('getOrderBook', async () => {
+               this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
@@ -1058,6 +1056,18 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                     };
 
                     await this.setTxOptionalFields(client, offerCreateTx, wallet, accountInfo, 'createOffer');
+
+                    const result = await this.txExecutor.createOffer(offerCreateTx, wallet, client, {
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    });
+                    if (!result.success) return this.txUiService.setError(`${result.error}`);
+
+                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Offer creation successfully!' : 'Offer created successfully!';
+                    await this.refreshAfterTx(client, wallet, null, false);
 
                     // if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, offerCreateTx, fee)) {
                     //      return this.txUiService.setError('Insufficient XRP to complete transaction');
@@ -1884,19 +1894,23 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           }
      }
 
-     // onWeSpendAmountChange() {
-     //      clearTimeout(this.amountTimeout);
-     //      this.amountTimeout = setTimeout(() => {
-     //           this.updateTokenBalanceAndExchange();
-     //      }, 400);
-     // }
+     onWeSpendAmountChange() {
+          clearTimeout(this.amountTimeout());
+          this.amountTimeout.set(
+               setTimeout(() => {
+                    this.updateTokenBalanceAndExchange();
+               }, 400)
+          );
+     }
 
-     // onWeWantAmountChange() {
-     //      clearTimeout(this.amountTimeout);
-     //      this.amountTimeout = setTimeout(() => {
-     //           this.updateTokenBalanceAndExchangeReverse();
-     //      }, 400);
-     // }
+     onWeWantAmountChange() {
+          clearTimeout(this.amountTimeout());
+          this.amountTimeout.set(
+               setTimeout(() => {
+                    this.updateTokenBalanceAndExchangeReverse();
+               }, 400)
+          );
+     }
 
      toggleFlag(key: 'tfPassive' | 'tfImmediateOrCancel' | 'tfFillOrKill') {
           this.flags[key] = !this.flags[key];
@@ -1996,6 +2010,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
           if (addDest) this.addNewDestinationFromUser(destination || '');
           await this.offerCurrency.refreshBothBalances(this.currentWallet());
+          await this.getExistingOffers(accountObjects, wallet.classicAddress);
           await this.getOffers(true, false);
           this.refreshUiState(wallet, accountInfo, accountObjects);
      }

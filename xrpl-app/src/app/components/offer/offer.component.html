@@ -202,7 +202,6 @@
                                    </div>
 
                                    <div class="form-row">
-                                        <!-- Currency Code -->
                                         <!-- We Want Currency -->
                                         <div class="form-group">
                                              <label for="weWantCurrency">Currency Code</label>
@@ -242,7 +241,6 @@
 
                                    <div class="form-row">
                                         <!-- Issuer -->
-                                        <!-- We Want Issuer -->
                                         <div class="form-group">
                                              <label for="weWantIssuer">Issuer</label>
                                              <p class="form-hint">The XRPL account that issues the token you want to receive.</p>
@@ -267,27 +265,17 @@
                                                   </ng-template>
                                              </app-select-search-dropdown>
                                         </div>
-                                        <!-- <div class="form-group">
-                                             <label>Issuer</label>
-                                             <select [(ngModel)]="weSpendIssuerField" (ngModelChange)="onWeSpendIssuerChange()" name="weSpendIssuerField">
-                                                  @for (iss of (weSpendIssuers$ | async); track iss.address; let i = $index) {
-                                                  <option [value]="iss.address">{{ iss.name || 'Wallet ' + (i + 1) }} ({{ iss.address | slice:0:6 }}...{{ iss.address | slice:-4 }})</option>
-                                                  }
-                                             </select>
-                                        </div> -->
                                    </div>
 
                                    <div class="form-row">
                                         <!-- Amount -->
                                         <div class="form-group">
                                              <label>Amount</label>
-                                             <!-- <input type="text" [(ngModel)]="weWantAmountField" name="weWantAmountField" (ngModelChange)="onWeWantAmountChange()" placeholder="e.g. 10.5" /> -->
-                                             <input type="text" [(ngModel)]="weWantAmount" name="weWantAmountField" placeholder="e.g. 10.5" />
+                                             <input type="text" [(ngModel)]="weWantAmount" name="weWantAmountField" (ngModelChange)="onWeWantAmountChange()" placeholder="e.g. 10.5" />
                                         </div>
                                         <div class="form-group">
                                              <label>Amount</label>
-                                             <!-- <input type="text" [(ngModel)]="weSpendAmountField" name="weSpendAmountField" (ngModelChange)="onWeSpendAmountChange()" placeholder="e.g. 10.5" /> -->
-                                             <input type="text" [(ngModel)]="weSpendAmount" name="weSpendAmount" placeholder="e.g. 10.5" />
+                                             <input type="text" [(ngModel)]="weSpendAmount" name="weSpendAmount" (ngModelChange)="onWeSpendAmountChange()" placeholder="e.g. 10.5" />
                                         </div>
                                    </div>
 
@@ -325,7 +313,6 @@
                                         </div>
                                         }
                                         <div class="flag-item-account-flags">
-                                             <!-- Total Flag value -->
                                              <div class="flags-total">
                                                   <span class="total-label">Total Flags Value:</span>
                                                   <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
@@ -336,13 +323,6 @@
 
                                    <!-- Cancel offer -->
                                    @if (activeTab() === 'cancelOffer') {
-                                   <!-- <div class="form-row">
-                                        <div class="form-group" style="margin-bottom: 1em">
-                                             <label>Offer Sequence</label>
-                                             <input type="text" [(ngModel)]="offerSequenceField" name="offerSequenceField" />
-                                        </div>
-                                   </div> -->
-
                                    <!-- Cancellable checks dropdown -->
                                    @if (existingOffers().length > 0) {
                                    <div class="form-row">
