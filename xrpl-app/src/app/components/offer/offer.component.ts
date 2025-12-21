@@ -1,10 +1,10 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, computed, DestroyRef, signal } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, computed, DestroyRef, signal, ViewContainerRef, ElementRef, TemplateRef, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { OverlayModule } from '@angular/cdk/overlay';
+import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { UtilsService } from '../../services/util-service/utils.service';
@@ -33,6 +33,7 @@ import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/selec
 import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
+import { TemplatePortal } from '@angular/cdk/portal';
 
 interface XRPLCurrency {
      currency: string;
@@ -129,6 +130,22 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly offerCurrency = inject(OfferCurrencyService);
 
+     private offerOverlayRef: OverlayRef | null = null;
+     private readonly overlay = inject(Overlay);
+     private readonly viewContainerRef = inject(ViewContainerRef);
+     @ViewChild('offerDropdownInput', { read: ElementRef, static: false })
+     offerDropdownInput!: ElementRef<HTMLInputElement>;
+
+     @ViewChild('offerDropdownTemplate', { static: false })
+     offerDropdownTemplate!: TemplateRef<any>;
+     private cdr: ChangeDetectorRef;
+
+     // With these (for offers, using Sequence as the identifier)
+     highlightedOfferIndex = signal<number>(-1);
+     offerSearchQuery = signal<string>('');
+     selectedOfferSequences = signal<number[]>([]); // Note: number[] because Offer.Sequence is number
+     isOfferDropdownOpen = signal(false);
+
      public weWantIssuers$!: Observable<IssuerItem[]>;
      public weSpendIssuers$!: Observable<IssuerItem[]>;
      public weWantBalance$!: Observable<string>;
@@ -144,7 +161,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      checkIdSearchQuery = signal<string>('');
 
      // Reactive State (Signals)
-     activeTab = signal<'getOffers' | 'cancelOffer'>('getOffers');
+     activeTab = signal<'getOffers' | 'getOrderBook' | 'cancelOffer'>('getOffers');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal(false);
@@ -276,6 +293,21 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
      });
 
+     filteredOffers = computed(() => {
+          const query = this.offerSearchQuery().trim().toLowerCase();
+          const allOffers = this.existingOffers(); // your existing offers array
+
+          if (!query) return allOffers;
+
+          return allOffers.filter(
+               offer => offer.Sequence.toString().includes(query) || this.formatOfferDisplay(offer).toLowerCase().includes(query) // optional: search by display text too
+          );
+     });
+
+     formatOfferDisplay(offer: any): string {
+          return `${offer.Sequence}: Taker Gets: ${offer.TakerGets} → Taker Pays: ${offer.TakerPays}`;
+     }
+
      storedIssuers = computed(() => {
           const issuersMap = this.knownTrustLinesIssuers();
           const result: { name: string; address: string }[] = [];
@@ -382,6 +414,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
      constructor() {
           super();
+          this.cdr = inject(ChangeDetectorRef);
           this.txUiService.clearAllOptionsAndMessages();
           this.weWantIssuers$ = this.offerCurrency.weWant.issuers$;
           this.weSpendIssuers$ = this.offerCurrency.weSpend.issuers$;
@@ -537,7 +570,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           this.displayExistingOffers.set(!this.displayExistingOffers);
      }
 
-     async setTab(tab: 'getOffers' | 'cancelOffer'): Promise<void> {
+     async setTab(tab: 'getOffers' | 'getOrderBook' | 'cancelOffer'): Promise<void> {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
           this.clearFields();
@@ -1068,131 +1101,6 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Offer creation successfully!' : 'Offer created successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
-
-                    // if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, offerCreateTx, fee)) {
-                    //      return this.txUiService.setError('Insufficient XRP to complete transaction');
-                    // }
-
-                    // this.txUiService.showSpinnerWithDelay(this.txUiService.isSimulateEnabled() ? 'Simulating Create Offer (no changes will be made)...' : 'Submitting Create Offer to Ledger...', 200);
-
-                    // this.txUiService.setPaymentTx(offerCreateTx);
-                    // this.updatePaymentTx();
-
-                    // let response: any;
-
-                    // if (this.txUiService.isSimulateEnabled()) {
-                    //      response = await this.xrplTransactions.simulateTransaction(client, offerCreateTx);
-                    // } else {
-                    //      const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
-
-                    //      const signedTx = await this.xrplTransactions.signTransaction(client, wallet, offerCreateTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
-
-                    //      if (!signedTx) {
-                    //           return this.txUiService.setError('Failed to sign Payment transaction.');
-                    //      }
-
-                    //      response = await this.xrplTransactions.submitTransaction(client, signedTx);
-                    // }
-
-                    // // this.utilsService.logObjects('response', response);
-                    // // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
-
-                    // this.txUiService.setTxResult(response.result);
-                    // this.updateTxResult();
-
-                    // const isSuccess = this.utilsService.isTxSuccessful(response);
-                    // if (!isSuccess) {
-                    //      const resultMsg = this.utilsService.getTransactionResultMessage(response);
-                    //      const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-
-                    //      console.error(`Transaction ${this.txUiService.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-                    //      (response.result as any).errorMessage = userMessage;
-                    //      return this.txUiService.setError(userMessage);
-                    // } else {
-                    //      this.txUiService.setSuccess(this.txUiService.result);
-                    // }
-
-                    // // Balance changes
-                    // let balanceChanges: { account: string; balances: any[] }[] = [];
-                    // if (response.result.meta && typeof response.result.meta !== 'string') {
-                    //      balanceChanges = xrpl.getBalanceChanges(response.result.meta);
-                    // }
-                    // data.sections.push({
-                    //      title: 'Balance Changes',
-                    //      openByDefault: true,
-                    //      content: balanceChanges.length
-                    //           ? balanceChanges.flatMap((change, index) =>
-                    //                  change.balances.map((bal, balIdx) => ({
-                    //                       key: `Change ${index + 1}${change.balances.length > 1 ? `.${balIdx + 1}` : ''}`,
-                    //                       value: `${bal.value} ${bal.currency}${bal.issuer ? ` (Issuer: <code>${bal.issuer}</code>)` : ''} for <code>${change.account}</code>`,
-                    //                  }))
-                    //             )
-                    //           : [{ key: 'Status', value: 'No balance changes recorded' }],
-                    // });
-
-                    // const [finalXrpBalance, acctOffers] = await Promise.all([client.getXrpBalance(wallet.classicAddress), this.xrplService.getAccountOffers(client, wallet.classicAddress, 'validated', '')]);
-
-                    // data.sections.push({
-                    //      title: 'Updated Balances',
-                    //      openByDefault: true,
-                    //      content: [
-                    //           { key: 'XRP', value: finalXrpBalance.toString() },
-                    //           // { key: tokenBalance, value: updatedTokenBalance },
-                    //      ],
-                    // });
-
-                    // // Outstanding offers
-                    // function amt_str(amt: any): string {
-                    //      if (typeof amt === 'string') {
-                    //           // Assume XRP in drops
-                    //           return `${xrpl.dropsToXrp(amt)} XRP`;
-                    //      } else if (amt && typeof amt === 'object') {
-                    //           // Assume token object
-                    //           return `${amt.value} ${amt.currency}${amt.issuer ? ` (Issuer: ${amt.issuer})` : ''}`;
-                    //      }
-                    //      return String(amt);
-                    // }
-                    // if (acctOffers.result.offers && acctOffers.result.offers.length > 0) {
-                    //      data.sections.push({
-                    //           title: `Outstanding Offers (${acctOffers.result.offers.length})`,
-                    //           openByDefault: false,
-                    //           subItems: acctOffers.result.offers.map((offer: any, index: number) => ({
-                    //                key: `Offer ${index + 1}`,
-                    //                openByDefault: false,
-                    //                content: [{ key: 'Sequence', value: offer.seq }, { key: 'TakerGets', value: amt_str(offer.taker_gets) }, { key: 'TakerPays', value: amt_str(offer.taker_pays) }, ...(offer.expiration ? [{ key: 'Expiration', value: new Date(offer.expiration * 1000).toISOString() }] : [])],
-                    //           })),
-                    //      });
-                    // }
-
-                    // // Account Details
-                    // data.sections.push({
-                    //      title: 'Account Details',
-                    //      openByDefault: true,
-                    //      content: [
-                    //           { key: 'Name', value: this.currentWallet().balance },
-                    //           { key: 'Address', value: `<code>${wallet.address}</code>` },
-                    //           { key: 'Final XRP Balance', value: finalXrpBalance.toString() },
-                    //      ],
-                    // });
-
-                    // Render result
-                    // this.txUiService.setSuccess(this.result);
-
-                    // this.txUiService.txHash = response.result.hash ? response.result.hash : response.result.tx_json.hash;
-
-                    // if (!this.txUiService.isSimulateEnabled()) {
-                    //      this.txUiService.successMessage = 'Offer created successfully!';
-                    //      const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-                    //      this.getExistingOffers(updatedAccountObjects, wallet.classicAddress);
-                    //      // this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                    //      // this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                    //      // this.updateTickets(updatedAccountObjects);
-                    //      this.clearFields();
-                    //      this.updateInfoMessage();
-                    //      // this.cdr.detectChanges();
-                    // } else {
-                    //      this.txUiService.successMessage = 'Simulated Offer create successfully!';
-                    // }
                } catch (error: any) {
                     console.error('Error in createPffer:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -1225,83 +1133,74 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                     // }
 
                     let offersSuccessfullyDeleted = 0;
+                    // === SHOW ONE SPINNER FOR THE ENTIRE BATCH ===
+                    const total = this.offerSequenceField().length;
+                    const isSimulate = this.txUiService.isSimulateEnabled();
+                    this.txUiService.showSpinnerWithDelay(isSimulate ? `Simulating deletion of ${total} offers(s)...` : `Deleting ${total} offers(s)...`, 200);
 
-                    for (const offerSeq of offerSequenceArray) {
-                         const offerSequence = parseInt(offerSeq);
+                    const invalidTickets: string[] = [];
+                    const deletedHashes: string[] = [];
+
+                    for (let i = 0; i < offerSequenceArray.length; i++) {
+                         const offerSequence = offerSequenceArray[i];
+                         // const offerSequence = parseInt(offerSeq);
+
+                         // Update spinner with progress BEFORE calling executor
+                         const progressMsg = isSimulate ? `Simulating offer ${i + 1}/${total}...` : `Cancel offer ${i + 1}/${total}...`;
+                         this.txUiService.updateSpinnerMessage(progressMsg);
 
                          // let signedTx: { tx_blob: string; hash: string } | null = null;
                          let currentLedger = await this.xrplService.getLastLedgerIndex(client);
 
-                         const offerCancelTx = await client.autofill({
+                         const offerCancelTx: xrpl.OfferCancel = {
                               TransactionType: 'OfferCancel',
                               Account: wallet.classicAddress,
-                              OfferSequence: offerSequence,
+                              OfferSequence: Number(offerSequence),
                               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                         };
+
+                         await this.setTxOptionalFields(client, offerCancelTx, wallet, accountInfo, 'cancelOffer');
+
+                         const result = await this.txExecutor.offerCancel(offerCancelTx, wallet, client, {
+                              useMultiSign: this.txUiService.useMultiSign(),
+                              isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                              regularKeySeed: this.txUiService.regularKeySeed(),
+                              multiSignAddress: this.txUiService.multiSignAddress(),
+                              multiSignSeeds: this.txUiService.multiSignSeeds(),
+                              suppressIndividualFeedback: true,
+                              customSpinnerMessage: progressMsg, // ← This preserves your message
                          });
 
-                         // await this.setTxOptionalFields(client, offerCancelTx, wallet, accountInfo, 'cancelOffer');
-
-                         // if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, '0', wallet.classicAddress, offerCancelTx, fee)) {
-                         //      return this.txUiService.setError('Insufficient XRP to complete transaction');
-                         // }
-
-                         // this.txUiService.showSpinnerWithDelay(this.txUiService.isSimulateEnabled() ? `Simulating Cancel Offer ${offerSeq}...` : `Submitting Cancel Offer for offer sequence ${offerSeq}...`, 200);
-
-                         // this.txUiService.setPaymentTx(offerCancelTx);
-                         // this.updatePaymentTx();
-
-                         // let response: any;
-                         // if (this.txUiService.isSimulateEnabled()) {
-                         //      response = await this.xrplTransactions.simulateTransaction(client, offerCancelTx);
-                         // } else {
-                         //      const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(this.useMultiSign, this.isRegularKeyAddress, this.regularKeySeed);
-
-                         //      const signedTx = await this.xrplTransactions.signTransaction(client, wallet, offerCancelTx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, this.useMultiSign, this.multiSignAddress, this.multiSignSeeds);
-
-                         //      if (!signedTx) {
-                         //           console.error(`Failed to sign transaction for ticket ${offerSeq}`);
-                         //           continue;
-                         //      }
-
-                         //      response = await this.xrplTransactions.submitTransaction(client, signedTx);
-                         // }
-
-                         // // this.utilsService.logObjects('response', response);
-                         // // this.utilsService.logObjects('response.result.hash', response.result.hash ? response.result.hash : response.result.tx_json.hash);
-
-                         // this.txUiService.setTxResult(response.result);
-                         // this.updateTxResult();
-
-                         // this.utilsService.logObjects('response', response);
-                         // const isSuccess = this.utilsService.isTxSuccessful(response);
-                         // if (!isSuccess) {
-                         //      console.warn(`Cancel offer ${offerSeq} failed:`, response);
-                         // } else {
-                         //      offersSuccessfullyDeleted += 1;
-                         //      const hash = response.result.hash ?? response.result.tx_json.hash;
-                         //      this.txUiService.txHashes.push(hash); // ← push to array
-                         //      console.log(`Offer ${offerSeq} cancelled successfully. TxHash:`, response.result.hash ? response.result.hash : response.result.tx_json.hash);
-                         // }
+                         if (result.success) {
+                              offersSuccessfullyDeleted++;
+                              deletedHashes.push(result.hash!);
+                         } else {
+                              this.txUiService.setError(`${result.error}`);
+                              return;
+                         }
                     }
 
-                    // this.txUiService.setSuccess(this.txUiService.result);
+                    // === FINAL SUCCESS - ONLY ONCE ===
+                    if (offersSuccessfullyDeleted > 0) {
+                         // Push all collected hashes ONCE
+                         deletedHashes.forEach(hash => this.txUiService.addTxHashSignal(hash));
+                         this.utilsService.setSuccess(this.utilsService.result);
+                         this.txUiService.successMessage = isSimulate ? `Simulated cancel of ${offersSuccessfullyDeleted} offer(s) successfully!` : `${offersSuccessfullyDeleted} offer(s) cancelled successfully!`;
+                    }
 
-                    // if (!this.txUiService.isSimulateEnabled()) {
-                    //      this.txUiService.successMessage = 'Cancelled offer successfully!';
+                    // Show one warning that contains *all* missing tickets
+                    if (invalidTickets.length) {
+                         const listHtml = invalidTickets.map(n => `<code>${n}</code>`).join(', ');
+                         const plural = invalidTickets.length > 1 ? 's' : '';
+                         this.txUiService.setWarning(`Offer${plural} ${listHtml} do${plural ? '' : 'es'} not exist on this account.`);
+                    } else {
+                         this.txUiService.clearWarning(); // nothing missing → hide the panel
+                    }
 
-                    //      const [updatedAccountInfo, updatedAccountObjects] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', '')]);
-                    //      this.getExistingOffers(updatedAccountObjects, wallet.classicAddress);
-                    //      await this.refreshWallets(client, [wallet.classicAddress]).catch(console.error);
-
-                    //      // this.refreshUIData(wallet, updatedAccountInfo, updatedAccountObjects);
-                    //      // this.utilsService.loadSignerList(wallet.classicAddress, this.signers);
-                    //      // this.updateTickets(updatedAccountObjects);
-                    //      this.clearFields();
-                    //      this.updateInfoMessage();
-                    //      // this.cdr.detectChanges();
-                    // } else {
-                    //      this.txUiService.successMessage = 'Simulated Cancel offer successfully!';
-                    // }
+                    if (!this.txUiService.isSimulateEnabled()) {
+                         await this.refreshAfterTx(client, wallet, null, true);
+                    }
+                    // this.clearAllSelections();
                } catch (error: any) {
                     console.error('Error in cancelOFfer:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -2010,7 +1909,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
           if (addDest) this.addNewDestinationFromUser(destination || '');
           await this.offerCurrency.refreshBothBalances(this.currentWallet());
-          await this.getExistingOffers(accountObjects, wallet.classicAddress);
+          this.getExistingOffers(accountObjects, wallet.classicAddress);
           await this.getOffers(true, false);
           this.refreshUiState(wallet, accountInfo, accountObjects);
      }
@@ -2200,5 +2099,133 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
      get safeWarningMessage() {
           return this.txUiService.warningMessage?.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+     }
+
+     openOfferDropdown(): void {
+          if (this.offerOverlayRef?.hasAttached()) return;
+
+          // Ensure input exists
+          if (!this.offerDropdownInput?.nativeElement) {
+               console.warn('offerDropdownInput not ready');
+               this.cdr.detectChanges();
+          }
+
+          const inputEl = this.offerDropdownInput?.nativeElement;
+          if (!inputEl) return;
+
+          // Ensure template exists
+          if (!this.offerDropdownTemplate) {
+               console.warn('offerDropdownTemplate not available yet');
+               return;
+          }
+
+          const positionStrategy = this.overlay
+               .position()
+               .flexibleConnectedTo(inputEl)
+               .withPositions([
+                    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+                    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+               ]);
+
+          this.offerOverlayRef = this.overlay.create({
+               hasBackdrop: true,
+               backdropClass: 'cdk-overlay-transparent-backdrop',
+               positionStrategy,
+               scrollStrategy: this.overlay.scrollStrategies.reposition(),
+               width: inputEl.getBoundingClientRect().width,
+          });
+
+          this.offerOverlayRef.attach(new TemplatePortal(this.offerDropdownTemplate, this.viewContainerRef));
+          this.offerOverlayRef.backdropClick().subscribe(() => this.closeOfferDropdown());
+
+          this.highlightedOfferIndex.set(-1);
+     }
+
+     closeOfferDropdown(): void {
+          this.offerOverlayRef?.dispose();
+          this.offerOverlayRef = null;
+          this.isOfferDropdownOpen.set(false);
+     }
+
+     toggleOfferDropdown(): void {
+          this.offerOverlayRef?.hasAttached() ? this.closeOfferDropdown() : this.openOfferDropdown();
+     }
+
+     convertToString(offer: any) {
+          return offer.toString();
+     }
+
+     toggleOfferSelection(offer: any): void {
+          const seq = offer.Sequence;
+          this.selectedOfferSequences.update(list => (list.includes(seq) ? list.filter(s => s !== seq) : [...list, seq]));
+     }
+
+     toggleSelectAllOffers(): void {
+          if (this.allOffersSelected()) {
+               this.selectedOfferSequences.set([]);
+          } else {
+               this.selectedOfferSequences.set(this.existingOffers().map(o => o.Sequence));
+          }
+     }
+
+     allOffersSelected = computed(() => {
+          const selected = this.selectedOfferSequences();
+          const total = this.existingOffers().length;
+          return selected.length === total && total > 0;
+     });
+
+     selectedOffers = computed(() => {
+          const selectedSeqs = this.selectedOfferSequences();
+          return this.existingOffers().filter(offer => selectedSeqs.includes(offer.Sequence));
+     });
+
+     clearAllOfferSelections(): void {
+          this.selectedOfferSequences.set([]);
+     }
+
+     onOfferSearchInput(event: Event): void {
+          const value = (event.target as HTMLInputElement).value;
+          this.offerSearchQuery.set(value);
+     }
+
+     clearAllSelections(): void {
+          this.selectedOfferSequences.set([]);
+     }
+
+     onOffersSearchInput(event: Event): void {
+          const value = (event.target as HTMLInputElement).value;
+          this.offerSearchQuery.set(value);
+     }
+
+     onOfferKeyDown(event: KeyboardEvent): void {
+          const items = this.filteredOffers();
+          if (items.length === 0) return;
+
+          let index = this.highlightedOfferIndex();
+
+          if (event.key === 'ArrowDown') {
+               event.preventDefault();
+               index = index < items.length - 1 ? index + 1 : index;
+          } else if (event.key === 'ArrowUp') {
+               event.preventDefault();
+               index = index >= 0 ? index - 1 : items.length - 1;
+          } else if (event.key === 'Enter' && index >= 0) {
+               event.preventDefault();
+               this.toggleOfferSelection(items[index]);
+               return;
+          } else if (event.key === 'Escape') {
+               this.closeOfferDropdown();
+               return;
+          } else {
+               return; // Allow typing in search
+          }
+
+          this.highlightedOfferIndex.set(index);
+
+          // CRITICAL: Scroll the highlighted item into view
+          setTimeout(() => {
+               const highlightedEl = document.querySelector('.offer-item.highlighted') as HTMLElement;
+               highlightedEl?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          });
      }
 }

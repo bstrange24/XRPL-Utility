@@ -1188,9 +1188,32 @@ export class XrplTransactionExecutorService {
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Offer create (no changes will be made)...',
-               submitMessage: 'Creting offer on the XRP Ledger...',
+               submitMessage: 'Creating offer on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async offerCancel(
+          tx: xrpl.OfferCancel,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeySeed?: string;
+               suppressIndividualFeedback?: boolean;
+               customSpinnerMessage?: string; // ← NEW: Allow custom message
+          } = {}
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating Offer cancel (no changes will be made)...',
+               submitMessage: 'Cancelling offer on the XRP Ledger...',
+               amount: '0',
+               suppressIndividualFeedback: options.suppressIndividualFeedback,
+               ...options,
           });
      }
 }
