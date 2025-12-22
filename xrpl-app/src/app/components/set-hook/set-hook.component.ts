@@ -31,7 +31,7 @@ import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dro
 @Component({
      selector: 'app-set-hook',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './set-hook.component.html',
      styleUrl: './set-hook.component.css',
@@ -249,54 +249,54 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
 
      async setHook() {
           await this.withPerf('sendXrp', async () => {
-          this.txUiService.clearAllOptionsAndMessages();
-          try {
-               const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-               const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
+               this.txUiService.clearAllOptionsAndMessages();
+               try {
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
+                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-               // Validate (extend ValidationService for 'SetHook' if needed)
-               const errors = await this.validationService.validate('SetHook', { inputs: { wallet: this.currentWallet(), hookWasmHex: this.hookWasmHex() /* etc. */ }, client, accountInfo });
-               if (errors.length > 0) {
-                    return this.txUiService.setError(errors.join('\n• '));
+                    // Validate (extend ValidationService for 'SetHook' if needed)
+                    const errors = await this.validationService.validate('SetHook', { inputs: { wallet: this.currentWallet(), hookWasmHex: this.hookWasmHex() /* etc. */ }, client, accountInfo });
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.join('\n• '));
+                    }
+
+                    // Construct tx (for create operation; adjust for update/delete)
+                    //  const setHookTx: xrpl.setHook = {
+                    //       TransactionType: 'SetHook',
+                    //       Account: wallet.classicAddress,
+                    //       Fee: fee,
+                    //       LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                    //       Hooks: [
+                    //            {
+                    //                 Hook: {
+                    //                      CreateCode: this.hookWasmHex().toUpperCase(),
+                    //                      HookOn: this.hookOn(),
+                    //                      HookNamespace: this.hookNamespace().toUpperCase(),
+                    //                      HookApiVersion: this.hookApiVersion(),
+                    //                      Flags: this.flags(),
+                    //                      // Add HookParameters/HookGrants if user inputs them (e.g., as array signals)
+                    //                 },
+                    //            },
+                    //       ],
+                    //  };
+
+                    // Add optional fields like in sendXrp (memos, tags, tickets, multi-sign)
+                    // e.g., if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) { /* set */ }
+
+                    // Submit (extend txExecutor if needed for SetHook-specific handling)
+                    //  const result = await this.txExecutor.submitTransaction(setHookTx, wallet, client, {
+                    // useMultiSign: this.txUiService.useMultiSign(),
+                    // ... other options like in sendXrp
+                    //  });
+                    //  if (!result.success) return this.txUiService.setError(`${result.error}`);
+
+                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated hook set successfully!' : 'Hook set successfully!';
+                    //  await this.refreshAfterTx(client, wallet);
+               } catch (error: any) {
+                    this.txUiService.setError(`${error.message || 'Failed to set hook'}`);
+               } finally {
+                    this.txUiService.spinner.set(false);
                }
-
-               // Construct tx (for create operation; adjust for update/delete)
-               //  const setHookTx: xrpl.setHook = {
-               //       TransactionType: 'SetHook',
-               //       Account: wallet.classicAddress,
-               //       Fee: fee,
-               //       LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-               //       Hooks: [
-               //            {
-               //                 Hook: {
-               //                      CreateCode: this.hookWasmHex().toUpperCase(),
-               //                      HookOn: this.hookOn(),
-               //                      HookNamespace: this.hookNamespace().toUpperCase(),
-               //                      HookApiVersion: this.hookApiVersion(),
-               //                      Flags: this.flags(),
-               //                      // Add HookParameters/HookGrants if user inputs them (e.g., as array signals)
-               //                 },
-               //            },
-               //       ],
-               //  };
-
-               // Add optional fields like in sendXrp (memos, tags, tickets, multi-sign)
-               // e.g., if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) { /* set */ }
-
-               // Submit (extend txExecutor if needed for SetHook-specific handling)
-               //  const result = await this.txExecutor.submitTransaction(setHookTx, wallet, client, {
-               // useMultiSign: this.txUiService.useMultiSign(),
-               // ... other options like in sendXrp
-               //  });
-               //  if (!result.success) return this.txUiService.setError(`${result.error}`);
-
-               this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated hook set successfully!' : 'Hook set successfully!';
-               //  await this.refreshAfterTx(client, wallet);
-          } catch (error: any) {
-               this.txUiService.setError(`${error.message || 'Failed to set hook'}`);
-          } finally {
-               this.txUiService.spinner.set(false);
-          }
           });
      }
 

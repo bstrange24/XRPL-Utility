@@ -76,4 +76,8 @@ export class DestinationDropdownService {
      formatDomainId(id: string): string {
           return `${id.slice(0, 12)}...${id.slice(-10)}`;
      }
+
+     formatOfferDisplay(offer: any): string {
+          return `${offer.Sequence}: Taker Gets: ${offer.TakerGets} → Taker Pays: ${offer.TakerPays}`;
+     }
 }

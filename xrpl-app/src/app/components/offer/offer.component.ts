@@ -104,6 +104,36 @@ interface IssuerItem {
      address: string;
 }
 
+interface BaseInfoData {
+     walletName: string;
+     offerCount: number;
+     offersToShow: {
+          index: any;
+          takerGets: string;
+          takerPays: string;
+          flags: string[];
+     }[];
+     isOrderBookTab: boolean;
+}
+
+interface OrderBookInfoData extends BaseInfoData {
+     isOrderBookTab: true;
+     pair: string;
+     stats: {
+          vwap: string;
+          simpleAvg: string;
+          bestRate: string;
+          spread: string;
+          spreadPercent: string;
+          liquidityRatio: string;
+          depth: string;
+          execution: string;
+          volatility: string;
+     };
+}
+
+type InfoData = BaseInfoData | OrderBookInfoData;
+
 @Component({
      selector: 'app-offer',
      standalone: true,
@@ -161,7 +191,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      checkIdSearchQuery = signal<string>('');
 
      // Reactive State (Signals)
-     activeTab = signal<'getOffers' | 'getOrderBook' | 'cancelOffer'>('getOffers');
+     activeTab = signal<'createOffer' | 'getOffers' | 'getOrderBook' | 'cancelOffer'>('createOffer');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal(false);
@@ -176,10 +206,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      lpTokenBalanceField = signal<string>('0');
      tradingFeeField = signal<string>('0.1');
      withdrawlLpTokenFromPoolField = signal<string>('');
-
      signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
-
-     // Primary currency/issuer/amount signals (removed duplicate "*Field" versions)
      weWantCurrency = signal<string>('');
      weSpendCurrency = signal<string>('XRP');
      availableCurrencies: string[] = [];
@@ -187,42 +214,42 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      weSpendIssuer = signal<string>('');
      weWantAmount = signal<string>('');
      weSpendAmount = signal<string>('');
-
      isMarketOrder = signal<boolean>(false);
      isFillOrKill = signal<boolean>(false);
      isPassive = signal<boolean>(true);
-
      knownIssuers = signal<Record<string, string[]>>({ XRP: [] });
      knownTrustLinesIssuers = signal<Record<string, string[]>>({ XRP: [] });
-
      existingOffers = signal<any[]>([]);
      existingSellOffers = signal<any[]>([]);
      existingBuyOffers = signal<any[]>([]);
      existingSellOffersCollapsed = signal<boolean>(true);
-
      amountTimeout = signal<ReturnType<any> | null>(null);
      weWantIssuersTrigger = signal(0);
      weSpendIssuersTrigger = signal(0);
-
      public destinationSearch$ = new Subject<string>();
      offerSequenceField = signal<string>(''); //: string = '';
      offersArray = signal<any[]>([]); //: string[] = [];
      selectedTickets: string[] = [];
      selectedSingleTicket = signal<string>('');
      multiSelectMode = signal<boolean>(false); //: boolean = false;
-     // tokenBalance: string = '';
-     // phnixExchangeXrp: string = '0'; // To store the calculated XRP amount
-     // xrpPrice: string = '0'; // New property to store XRP price in RLUSD
-     // averageExchangeRate: string = '';
      slippage = signal<number>(0.2357); //: number = 0.2357; // Default to 23.57%
-     // private memeTokensSubject = new BehaviorSubject<{ transactionType: string; action: string; amountXrp: string; amountToken: string; currency: string; issuer: string; transactionHash: string; timestamp: Date; createdDate: Date; creationAge: string }[]>([]);
-     // memeTokens$ = this.memeTokensSubject.asObservable(); // Use Observable for UI binding
-     // currencies: string[] = [];
-     // deleteTicketSequence: string = '';
-     // issuers: { name?: string; address: string }[] = [];
      totalFlagsValue = signal<number>(0);
      totalFlagsHex = signal<string>('0x0');
      displayExistingOffers = signal<boolean>(true);
+     // Add these signals near your other signals
+     orderBookStats = signal<{
+          vwap?: string;
+          simpleAvg?: string;
+          bestRate?: string;
+          spread?: string;
+          spreadPercent?: string;
+          liquidityRatio?: string;
+          depth?: string;
+          execution?: string;
+          volatility?: string;
+     } | null>(null);
+
+     orderBookPair = signal<string>(''); // e.g. "SOL/XRP"
      private flagValues = {
           tfPassive: 0x00010000,
           tfImmediateOrCancel: 0x00020000,
@@ -400,14 +427,40 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           return this.weSpendIssuerItems().find((item: { id: string }) => item.id === addr) || null;
      });
 
-     infoData = computed(() => {
+     infoData = computed<InfoData | null>(() => {
           const wallet = this.currentWallet();
           if (!wallet?.address) return null;
 
           const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
-          const baseUrl = this.txUiService.explorerUrl();
-          const address = wallet.address;
-          return '';
+          const offerCount = this.existingOffers().length;
+
+          const base: BaseInfoData = {
+               walletName,
+               offerCount,
+               isOrderBookTab: false,
+               offersToShow: this.existingOffers().map(offer => ({
+                    index: offer.TxHash,
+                    takerGets: offer.TakerGets,
+                    takerPays: offer.TakerPays,
+                    flags: this.decodeOfferFlags(offer.Flags),
+               })),
+          };
+
+          if (this.activeTab() === 'getOrderBook') {
+               const stats = this.orderBookStats();
+               const pair = this.orderBookPair();
+
+               if (stats && pair) {
+                    return {
+                         ...base,
+                         isOrderBookTab: true,
+                         pair,
+                         stats,
+                    };
+               }
+          }
+
+          return base;
      });
 
      hasWallets = computed(() => this.wallets().length > 0);
@@ -570,12 +623,17 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           this.displayExistingOffers.set(!this.displayExistingOffers);
      }
 
-     async setTab(tab: 'getOffers' | 'getOrderBook' | 'cancelOffer'): Promise<void> {
+     async setTab(tab: 'createOffer' | 'getOffers' | 'getOrderBook' | 'cancelOffer'): Promise<void> {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
+
           this.clearFields();
           if (this.hasWallets()) {
-               await this.getOffers(true, true);
+               if (this.activeTab() === 'getOrderBook') {
+                    await this.getOrderBook();
+               } else {
+                    await this.getOffers(true, true);
+               }
           }
      }
 
@@ -603,7 +661,6 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
                     this.refreshUiState(wallet, accountInfo, accountObjects);
                     // this.clearFields(false);
-                    this.updateInfoMessage();
                } catch (error: any) {
                     console.error('Error in getOffers:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -752,6 +809,24 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                               },
                          ];
                     }
+
+                    // const displayWeWantCurrency = this.utilsService.decodeIfNeeded(we_want.currency);
+                    // const displayWeSpendCurrency = this.utilsService.decodeIfNeeded(we_spend.currency);
+                    // const pair = `${displayWeWantCurrency}/${displayWeSpendCurrency}`;
+
+                    this.orderBookPair.set(pair);
+
+                    this.orderBookStats.set({
+                         vwap: stats.forward.vwap.toFixed(8),
+                         simpleAvg: stats.forward.simpleAvg.toFixed(8),
+                         bestRate: stats.forward.bestRate.toFixed(8),
+                         spread: spread.spread.toFixed(8),
+                         spreadPercent: spread.spreadPercent.toFixed(2),
+                         liquidityRatio: liquidity.ratio.toFixed(2),
+                         depth: `${stats.forward.depthDOG.toFixed(2)} ${displayWeWantCurrency} for ${stats.forward.depthXRP.toFixed(2)} ${displayWeSpendCurrency}`,
+                         execution: stats.forward.insufficientLiquidity ? `Insufficient liquidity: ${stats.forward.executionDOG.toFixed(2)} ${displayWeWantCurrency} for ${stats.forward.executionXRP.toFixed(2)} ${displayWeSpendCurrency}` : `Receive ${stats.forward.executionDOG.toFixed(2)} ${displayWeWantCurrency} for 15 ${displayWeSpendCurrency}`,
+                         volatility: `${stats.forward.volatility.toFixed(8)} (${stats.forward.volatilityPercent.toFixed(2)}%)`,
+                    });
 
                     // this.currentWallet().balance = await this.updateXrpBalance(client, accountInfo, wallet);
                     // this.refreshUIData(wallet, accountInfo, accountObjects);
@@ -1678,6 +1753,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                console.log(`Leaving updateTokenBalanceAndExchangeReverse in ${executionTime}ms`);
           }
      }
+
      async updateTokenBalanceAndExchange() {
           console.log('Entering updateTokenBalanceAndExchange');
           const startTime = Date.now();
@@ -2021,42 +2097,6 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           navigator.clipboard.writeText(offerHash).then(() => {
                this.txUiService.showToastMessage('Offer Hash copied!');
           });
-     }
-
-     private updateInfoMessage() {
-          const walletName = this.currentWallet().name || 'selected';
-
-          const offerCount = this.existingOffers.length;
-
-          let message: string;
-
-          // if (nftCount === 0 && sellOfferCount === 0 && buyOfferCount === 0) {
-          if (offerCount === 0) {
-               message = `<code>${walletName}</code> wallet has no offers on the DEX.`;
-          } else {
-               const parts: string[] = [];
-
-               if (offerCount > 0) {
-                    const offerWord = offerCount === 1 ? 'Offer' : 'Offers';
-                    parts.push(`${offerCount} ${offerWord}`);
-               }
-
-               let summaryText: string;
-               if (parts.length === 1) {
-                    summaryText = parts[0];
-               } else {
-                    const lastPart = parts.pop()!;
-                    summaryText = `${parts.join(', ')} and ${lastPart}`;
-               }
-
-               message = `<code>${walletName}</code> wallet has <strong>${summaryText}</strong>.`;
-
-               // Add link to view NFTs when any NFTs or offers are present
-               const link = `${this.txUiService.explorerUrl()}account/${this.currentWallet().address}/objects`;
-               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Offers on XRPL Win</a>`;
-          }
-
-          this.txUiService.setInfoMessage(message);
      }
 
      onWeWantIssuerSelected(item: SelectItem | null) {

@@ -16,56 +16,26 @@
           <div class="form-panel">
                <!-- Menu bar -->
                <div class="menu-bar">
-                    <button class="menu-btn" [class.active]="activeTab() === 'getOffers'" (click)="setTab('getOffers')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Create Offers
+                    <button class="menu-btn" [class.active]="activeTab() === 'createOffer'" (click)="setTab('createOffer')">
+                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
+                         Create Offer
                     </button>
+                    <!-- <button class="menu-btn" [class.active]="activeTab() === 'getOffers'" (click)="setTab('getOffers')">
+                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
+                         Get Offers
+                    </button> -->
                     <button class="menu-btn" [class.active]="activeTab() === 'getOrderBook'" (click)="setTab('getOrderBook')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
                          Get Order Book
                     </button>
-                    <!--<button class="menu-btn" [class.active]="activeTab() === 'createOffer'" (click)="setTab('createOffer')">
-                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Create Offer
-                    </button> -->
                     <button class="menu-btn" [class.active]="activeTab() === 'cancelOffer'" (click)="setTab('cancelOffer')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
                          Cancel Offer
                     </button>
                </div>
 
-               <!-- Get Offer Menu -->
-               @if (activeTab() === 'getOffers') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Offers</h2>
-                              <p class="submenu-info-secondary-text">Get existing offers, orderbooks and create offers on the XRPL DEX.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Get OrderBook Menu -->
-               <!-- @if (activeTab() === 'getOrderBook') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Get Order Book</h2>
-                              <p class="submenu-info-secondary-text">Get order book on the XRPL Dex for the currency pair.</p>
-                         </div>
-                    </div>
-               </div>
-               } -->
-
                <!-- Create Offer Menu -->
-               <!-- @if (activeTab() === 'createOffer') {
+               @if (activeTab() === 'createOffer') {
                <div>
                     <div class="submenu-info-text">
                          <div class="blue-button-submenu">
@@ -77,7 +47,37 @@
                          </div>
                     </div>
                </div>
+               }
+
+               <!-- Get Offer Menu -->
+               <!-- @if (activeTab() === 'getOffers') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="blue-button-submenu">
+                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Offers</h2>
+                              <p class="submenu-info-secondary-text">Get existing offers, orderbooks and create offers on the XRPL DEX.</p>
+                         </div>
+                    </div>
+               </div>
                } -->
+
+               <!-- Get OrderBook Menu -->
+               @if (activeTab() === 'getOrderBook') {
+               <div>
+                    <div class="submenu-info-text">
+                         <div class="blue-button-submenu">
+                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Get Order Book</h2>
+                              <p class="submenu-info-secondary-text">Get order book on the XRPL Dex for the currency pair.</p>
+                         </div>
+                    </div>
+               </div>
+               }
 
                <!-- Cancel Offer Menu -->
                @if (activeTab() === 'cancelOffer') {
@@ -95,10 +95,77 @@
                }
 
                <!-- Info Message -->
-               @if (txUiService.infoMessage) {
-               <div class="info-panel">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="txUiService.safeInfo"></div>
+               <!-- Replace the problematic sections in your template -->
+
+               <!-- Info Message -->
+               @if (infoData(); as info) {
+               <div class="info-message-wrapper">
+                    <div class="info-panel">
+                         <div class="info-text">
+                              <span> @if (info.isOrderBookTab) { Order Book Stats: {{ $any(info).pair }} } @else { @switch (activeTab()) { @case ('createOffer') { Outstanding Offers } @case ('getOffers') { Existing Offers } @case ('getOrderBook') { Existing Offers } @case ('cancelOffer') { Cancellable Offers } } ({{ info.offerCount }}) } </span>
+
+                              <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
+                                   <code>{{ info.walletName }}</code>
+                                   @if (info.offerCount === 0) { has no outstanding offers. } @else { has <strong>{{ info.offerCount }}</strong> outstanding offer{{ info.offerCount === 1 ? '' : 's' }} @switch (activeTab()) { @case ('createOffer') { created. } @case ('getOffers') { on the DEX. } @case ('getOrderBook') { on the DEX. } @case ('cancelOffer') { that can be cancelled. } } }
+                              </div>
+
+                              @if (info.offerCount > 0 || info.isOrderBookTab) {
+                              <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
+                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
+                                        <span> @if (info.isOrderBookTab) { Order Book Stats: {{ $any(info).pair }} } @else { @switch (activeTab()) { @case ('createOffer') { Outstanding Offers } @case ('getOffers') { Existing Offers } @case ('getOrderBook') { Existing Offers } @case ('cancelOffer') { Cancellable Offers } } ({{ info.offerCount }}) } </span>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
+                                             <path d="M6 9l6 6 6-6" />
+                                        </svg>
+                                   </div>
+
+                                   <!-- Inside the expanded panel -->
+                                   @if (infoPanelExpanded()) {
+                                   <div style="margin-top: 12px; font-size: 0.9em; line-height: 1.7">
+                                        @if (info.isOrderBookTab) {
+                                        <ul style="padding-left: 22px; margin: 0">
+                                             <li><strong>Pair:</strong> {{ $any(info).pair }}</li>
+                                             <li><strong>VWAP:</strong> {{ $any(info).stats.vwap }} {{ $any(info).pair }}</li>
+                                             <li><strong>Simple Avg:</strong> {{ $any(info).stats.simpleAvg }} {{ $any(info).pair }}</li>
+                                             <li><strong>Best Rate:</strong> {{ $any(info).stats.bestRate }} {{ $any(info).pair }}</li>
+                                             <li><strong>Spread:</strong> {{ $any(info).stats.spread }} ({{ $any(info).stats.spreadPercent }}%)</li>
+                                             <li><strong>Depth (30% slippage):</strong> {{ $any(info).stats.depth }}</li>
+                                             <li><strong>Execution (15 input):</strong> {{ $any(info).stats.execution }}</li>
+                                             <li><strong>Volatility:</strong> {{ $any(info).stats.volatility }}</li>
+                                             <li><strong>Liquidity Ratio:</strong> {{ $any(info).stats.liquidityRatio }}</li>
+                                        </ul>
+                                        } @else {
+                                        <!-- Existing offers list -->
+                                        <ul style="padding-left: 22px; margin: 0">
+                                             @for (offer of info.offersToShow; track offer.index) {
+                                             <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
+                                                  <app-tooltip-link [href]="txUiService.explorerUrl() + 'offer/' + offer.index" tooltipText="View Offer on XRPL Explorer">
+                                                       <div style="font-weight: 500; margin-bottom: 4px">{{ offer.takerGets }} → {{ offer.takerPays }}</div>
+                                                       <div style="color: #555; font-size: 0.88em">
+                                                            <span>Offer Index:</span>
+                                                            <code style="font-size: 0.95em">{{ offer.index }}</code>
+                                                       </div>
+                                                       @if (offer.flags.length) {
+                                                       <div style="color: #555; font-size: 0.88em"><span>Flags:</span> {{ offer.flags.join(', ') }}</div>
+                                                       }
+                                                  </app-tooltip-link>
+
+                                                  <button (click)="copyAndToast(offer.index, 'Offer Index'); $event.stopPropagation()" class="copy-btn" title="Copy Offer Index">
+                                                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                       </svg>
+                                                  </button>
+                                             </li>
+                                             }
+                                        </ul>
+                                        }
+                                   </div>
+                                   }
+                              </div>
+                              }
+                         </div>
+                    </div>
                </div>
                }
 
@@ -184,17 +251,17 @@
                               <!-- ==================== LEFT: FORM FIELDS ==================== -->
                               <div class="tab-content-container form-fields-container">
                                    <!-- Get Offers -->
-                                   @if(activeTab() === 'getOffers') {
+                                   @if(activeTab() !== 'cancelOffer') {
                                    <div class="form-row">
                                         <!-- Info -->
                                         <div class="form-group">
                                              <span class="tooltip" tooltip-data="Taker Gets.">
-                                                  <label for="weWantCurrencyField">Taker Gets - I'm buying (weWant)</label>
+                                                  <label for="weWantCurrencyField">Taker Gets - Buy Side</label>
                                              </span>
                                         </div>
                                         <div class="form-group">
                                              <span class="tooltip" tooltip-data="Taker Pays.">
-                                                  <label for="weSpendCurrencyField">Taker Pays - I'm selling (weSpend)</label>
+                                                  <label for="weSpendCurrencyField">Taker Pays - Sell Side</label>
                                              </span>
                                         </div>
                                    </div>
@@ -265,6 +332,7 @@
                                         </div>
                                    </div>
 
+                                   @if(activeTab() === 'createOffer') {
                                    <div class="form-row">
                                         <!-- Amount -->
                                         <div class="form-group">
@@ -288,8 +356,10 @@
                                              <input type="text" [value]="(weSpendBalance$ | async) ?? '0'" readonly name="weSpendTokenBalanceField" />
                                         </div>
                                    </div>
+                                   }
 
                                    <!-- Flags header -->
+                                   @if(activeTab() === 'createOffer') {
                                    <div class="token-flags-header" style="margin-top: 0.8em; margin-bottom: 0.5em">
                                         <lucide-icon name="flag" size="20"></lucide-icon>
                                         <span class="token-flags-title">Offer Flags</span>
@@ -317,7 +387,7 @@
                                              </div>
                                         </div>
                                    </div>
-                                   }
+                                   } }
 
                                    <!-- Cancel offer -->
                                    @if (activeTab() === 'cancelOffer' && existingOffers().length > 0) {
@@ -384,15 +454,19 @@
                               </div>
                          </div>
 
-                         <app-transaction-options [showWhenTab]="['getOffers', 'cancelOffer']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+                         <app-transaction-options [showWhenTab]="['createOffer', 'cancelOffer']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                          <!-- Action buttons -->
                          <div class="button-row">
-                              @if (activeTab() === 'getOffers') {
+                              <!-- @if (activeTab() === 'getOffers') {
                               <button type="button" class="btn-primary-blue" (click)="getOffers()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Get Offers' }}</button>
-                              <!-- <button type="button" class="btn-primary-blue" (click)="getOrderBook()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Get Orderbook' }}</button> -->
+                              <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Invert Order' }}</button>
+                              } @else  -->
+                              @if(activeTab() === 'createOffer') {
                               <button type="button" class="btn-primary-green" (click)="createOffer()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create Offer' }}</button>
-                              <!-- <button type="button" class="btn-primary-green" (click)="getTokenBalance()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Get Token Balance' }}</button> -->
+                              <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Invert Order' }}</button>
+                              } @else if(activeTab() === 'getOrderBook') {
+                              <button type="button" class="btn-primary-blue" (click)="getOrderBook()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Get Orderbook' }}</button>
                               <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Invert Order' }}</button>
                               } @else if(activeTab() === 'cancelOffer') {
                               <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Offer' }}</button>
