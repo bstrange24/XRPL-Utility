@@ -26,6 +26,11 @@ export const AppConstants = {
                URL: 'wss://s.devnet.rippletest.net:51233',
                // URL: 'ws://192.168.1.226:6007/',
           },
+          XAHAUTESTNET: {
+               NAME: 'XahauTest',
+               URL: 'wss://xahau-test.net/',
+               // URL: 'ws://192.168.1.226:6007/',
+          },
      },
 
      XRPL_WIN_URL: {

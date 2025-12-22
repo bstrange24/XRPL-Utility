@@ -21,10 +21,12 @@ import { NftOffersComponent } from './components/nft-offers/nft-offers.component
 import { SignTransactionsComponent } from './components/sign-transactions/sign-transactions.component';
 import { SendXrpModernComponent } from './components/send-xrp/send-xrp.component';
 import { WalletConfiguratorComponent } from './components/wallet-configurator/wallet-configurator.component';
+import { SetHookComponent } from './components/set-hook/set-hook.component';
 
 export const routes: Routes = [
      { path: '', redirectTo: '/account-configurator', pathMatch: 'full' },
      { path: 'account-balance-changes', component: AccountChangesComponent, data: { title: 'Account Changes' } },
+     { path: 'set-hook', component: SetHookComponent, data: { title: 'Set Hook' } },
      { path: 'delete-account', component: DeleteAccountComponent, data: { title: 'Account Delete' } },
      { path: 'account-configurator', component: AccountConfiguratorComponent, data: { title: 'Account Configurator' } },
      { path: 'wallet-configurator', component: WalletConfiguratorComponent, data: { title: 'Wallet Configurator' } },

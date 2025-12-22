@@ -21,8 +21,9 @@
     "@angular/platform-browser": "^20.3.10",
     "@angular/platform-browser-dynamic": "^20.3.10",
     "@angular/router": "^20.3.10",
+    "@babel/runtime": "^7.28.4",
     "@codemirror/basic-setup": "^0.20.0",
-    "@codemirror/commands": "^6.10.0",
+    "@codemirror/commands": "^6.10.1",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/language": "^6.11.3",
     "@codemirror/lint": "^6.9.2",
@@ -64,8 +65,9 @@
     "stream-browserify": "^3.0.0",
     "tslib": "^2.3.0",
     "util": "^0.12.5",
-    "xrpl": "^4.4.1",
+    "xrpl": "^4.5.0",
     "xrpl-accountlib": "^8.4.0",
+    "xrpl-hooks": "^2.2.1",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {

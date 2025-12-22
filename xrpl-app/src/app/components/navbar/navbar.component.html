@@ -15,7 +15,7 @@
                     <a routerLink="/permissioned-domain" routerLinkActive="active" (click)="setActiveAccountsLink('/permissioned-domain')">Permissioned Domain</a>
                </div>
           </div>
-
+          <a routerLink="/set-hook" routerLinkActive="active" (click)="setActiveLink('/set-hook')">Set Hook</a>
           <a routerLink="/send-xrp" routerLinkActive="active" (click)="setActiveLink('/send-xrp')">Send XRP</a>
           <a routerLink="/sign-transactions" routerLinkActive="active" (click)="setActiveLink('/sign-transactions')">Sign Transactions</a>
           <a routerLink="/trustlines" routerLinkActive="active" (click)="setActiveLink('/trustlines')">Trustlines</a>
@@ -58,6 +58,7 @@
                <a class="dropdown-item devnet" href="#" (click)="selectNetwork('devnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Devnet' }"> Devnet </a>
                <a class="dropdown-item testnet" href="#" (click)="selectNetwork('testnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Testnet' }"> Testnet </a>
                <a class="dropdown-item mainnet" href="#" (click)="selectNetwork('mainnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Mainnet' }"> Mainnet </a>
+               <a class="dropdown-item testnet" href="#" (click)="selectNetwork('XahauTest'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'XahauTest' }"> Xahau Testnet </a>
           </div>
 
           <!-- Connection Status Indicator (outside and to the right) -->

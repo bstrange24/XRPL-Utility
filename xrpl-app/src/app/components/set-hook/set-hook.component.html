@@ -1,0 +1,49 @@
+<!-- Banner, Navbar, WalletPanel like in send-xrp -->
+
+<div class="form-panel">
+     <div class="submenu-info-text">
+          <h2>Set Hook</h2>
+          <p>Install custom logic (hook) on your account. Only available on Xahau.</p>
+     </div>
+
+     <!-- Info/warning panels like in send-xrp -->
+
+     <form>
+          <div class="form-row">
+               <div class="form-group">
+                    <label for="hookWasmHex">Hook WASM Hex</label>
+                    <p class="form-hint">Paste the compiled WASM hex from Hooks Builder.</p>
+                    <textarea [ngModel]="hookWasmHex()" (ngModelChange)="hookWasmHex.set($event)"></textarea>
+               </div>
+               <div class="form-group">
+                    <label for="hookNamespace">Hook Namespace (hex)</label>
+                    <p class="form-hint">SHA-256 hash of a unique string for state storage.</p>
+                    <input type="text" [ngModel]="hookNamespace()" (ngModelChange)="hookNamespace.set($event)" />
+               </div>
+          </div>
+
+          <div class="form-row">
+               <div class="form-group">
+                    <label for="hookOn">HookOn Trigger (hex)</label>
+                    <p class="form-hint">e.g., '0000000000000000' for all transactions.</p>
+                    <input type="text" [ngModel]="hookOn()" (ngModelChange)="hookOn.set($event)" />
+               </div>
+               <div class="form-group">
+                    <label for="flags">Flags</label>
+                    <p class="form-hint">e.g., 1 for override.</p>
+                    <input type="number" [ngModel]="flags()" (ngModelChange)="flags.set($event)" />
+               </div>
+          </div>
+
+          <!-- Add sections for HookParameters (key-value table), HookGrants (array inputs) -->
+
+          <app-transaction-options [showWhenTab]="['set-hook']" />
+
+          <div class="button-row">
+               <button (click)="setHook()" [disabled]="txUiService.spinner() || !isXahauNetwork()">Set Hook</button>
+               <button (click)="clearFields()">Clear Fields</button>
+          </div>
+
+          <app-transaction-preview></app-transaction-preview>
+     </form>
+</div>
