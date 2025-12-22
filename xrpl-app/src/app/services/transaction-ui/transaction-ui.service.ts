@@ -231,6 +231,10 @@ export class TransactionUiService {
           this.txSignal.update(arr => [...arr, tx]);
      }
 
+     addPaymentTxSignal(tx: any) {
+          this.paymentTxSignal.update(arr => [...arr, tx]);
+     }
+
      clearTxSignal() {
           this.txSignal.set([]);
      }

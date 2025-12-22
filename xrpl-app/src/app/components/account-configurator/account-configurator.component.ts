@@ -461,13 +461,15 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     for (const flag of setFlags) {
                          const result = await this.handleFlagTx(client, wallet, accountInfo, fee, currentLedger, serverInfo, 'SetFlag', flag, this.txUiService.memoField());
                          allFlagResults.push(result);
-                         this.txUiService.setTxResult(result.result);
+                         this.txUiService.addTxHashSignal(result.hash);
+                         this.txUiService.addTxResultSignal(result.result);
                     }
 
                     for (const flag of clearFlags) {
                          const result = await this.handleFlagTx(client, wallet, accountInfo, fee, currentLedger, serverInfo, 'ClearFlag', flag, this.txUiService.memoField());
                          allFlagResults.push(result);
-                         this.txUiService.setTxResult(result.result);
+                         this.txUiService.addTxHashSignal(result.hash);
+                         this.txUiService.addTxResultSignal(result.result);
                     }
 
                     const succeeded = allFlagResults.filter(r => r.success);
@@ -923,10 +925,8 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
 
                await this.setTxOptionalFields(client, tx, wallet, accountInfo);
 
-               this.txUiService.setPaymentTx(tx);
-               // this.updatePaymentTx();
-
                let response: any;
+               let finalTxToSubmit: any = tx; // This will hold the final version
 
                if (this.txUiService.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, tx);
@@ -983,6 +983,10 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                          return { success: false, message: 'Failed to sign transaction.' };
                     }
 
+                    finalTxToSubmit = xrpl.decode(signedTx.tx_blob);
+
+                    // ← SEND THE FINAL SIGNED TX TO UI
+                    this.txUiService.addTxSignal(finalTxToSubmit);
                     response = await client.submitAndWait(signedTx.tx_blob);
                }
 
