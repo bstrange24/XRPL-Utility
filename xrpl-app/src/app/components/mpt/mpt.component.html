@@ -217,7 +217,7 @@
                                         <div class="form-group">
                                              <label>Asset Scale</label>
                                              <p class="form-hint">Decimal places for the token (0-15). 2 = 0.01 precision.</p>
-                                             <input type="text" [(ngModel)]="assetScaleField" name="assetScaleField" placeholder="Value between 1 and 15" />
+                                             <input type="number" [(ngModel)]="assetScaleField" name="assetScaleField" placeholder="Value between 1 and 15" />
                                         </div>
                                    </div>
 
@@ -233,7 +233,7 @@
                                         <div class="form-group">
                                              <label>Transfer Fee</label>
                                              <p class="form-hint">Fee for secondary sales (0-50,000 = 0%-50%). Only available if Can Transfer is enabled.</p>
-                                             <input type="text" [(ngModel)]="transferFeeField" name="transferFeeField" placeholder="This will be a percentage" />
+                                             <input type="number" [(ngModel)]="transferFeeField" name="transferFeeField" placeholder="This will be a percentage" />
                                         </div>
                                    </div>
 

@@ -1,49 +1,100 @@
-<!-- Banner, Navbar, WalletPanel like in send-xrp -->
-
-<div class="form-panel">
-     <div class="submenu-info-text">
-          <h2>Set Hook</h2>
-          <p>Install custom logic (hook) on your account. Only available on Xahau.</p>
+<div class="banner">
+     <div class="banner-content">
+          <div id="navbar-container">
+               <app-navbar></app-navbar>
+          </div>
      </div>
+</div>
 
-     <!-- Info/warning panels like in send-xrp -->
+<!-- Main content. Centered with 2 columns -->
+<div class="main-container">
+     <div class="content-wrapper">
+          <!-- Left Wallet panel ==== -->
+          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-     <form>
-          <div class="form-row">
-               <div class="form-group">
-                    <label for="hookWasmHex">Hook WASM Hex</label>
-                    <p class="form-hint">Paste the compiled WASM hex from Hooks Builder.</p>
-                    <textarea [ngModel]="hookWasmHex()" (ngModelChange)="hookWasmHex.set($event)"></textarea>
+          <!-- Right form -->
+          <div class="form-panel">
+               <!-- Send XRP Menu -->
+               @if (activeTab() === 'send') {
+               <div style="padding-top: 2em">
+                    <div class="submenu-info-text">
+                         <div class="green-button-submenu">
+                              <ng-icon name="heroPaperAirplane" size="27" class="text-red-600"></ng-icon>
+                         </div>
+                         <div>
+                              <h2 class="submenu-info-main-text">Set Hook</h2>
+                              <p class="submenu-info-secondary-text">Install custom logic (hook) on your account. Only available on Xahau.</p>
+                         </div>
+                    </div>
                </div>
-               <div class="form-group">
-                    <label for="hookNamespace">Hook Namespace (hex)</label>
-                    <p class="form-hint">SHA-256 hash of a unique string for state storage.</p>
-                    <input type="text" [ngModel]="hookNamespace()" (ngModelChange)="hookNamespace.set($event)" />
+               }
+
+               <!-- Dynamic info panel -->
+               @if (infoData()) {
+               <div class="info-panel">
+                    <div class="info-panel-content">
+                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                         <div class="info-text" [innerHTML]="infoData()"></div>
+                    </div>
                </div>
+               }
+
+               <!-- Warning Message -->
+               @if (txUiService.warningMessage) {
+               <div class="warning-panel">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
+                    <div class="warning-text">{{ safeWarningMessage }}</div>
+               </div>
+               }
+
+               <form #theForm="ngForm" class="send-form">
+                    <div class="tab-content-container">
+                         <div [@tabTransition]="activeTab()">
+                              <!-- Amount and Destination -->
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label for="hookWasmHex">Hook WASM Hex</label>
+                                        <p class="form-hint">Paste the compiled WASM hex from Hooks Builder.</p>
+                                        <textarea [ngModel]="hookWasmHex()" (ngModelChange)="hookWasmHex.set($event)" name="hookWasmHex"></textarea>
+                                   </div>
+                                   <div class="form-group">
+                                        <label for="hookNamespace">Hook Namespace (hex)</label>
+                                        <p class="form-hint">SHA-256 hash of a unique string for state storage.</p>
+                                        <input type="text" [ngModel]="hookNamespace()" (ngModelChange)="hookNamespace.set($event)" name="hookNamespace" />
+                                   </div>
+                              </div>
+
+                              <!-- Destination Tag and Source Tag -->
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label for="hookOn">HookOn Trigger (hex)</label>
+                                        <p class="form-hint">e.g., '0000000000000000' for all transactions.</p>
+                                        <input type="text" [ngModel]="hookOn()" (ngModelChange)="hookOn.set($event)" name="hookOn"/>
+                                   </div>
+
+                                   <div class="form-group">
+                                        <label for="flags">Flags</label>
+                                        <p class="form-hint">e.g., 1 for override.</p>
+                                        <input type="number" [ngModel]="flags()" (ngModelChange)="flags.set($event)" name="flagsStuff" />
+                                   </div>
+                              </div>
+
+                              <app-transaction-options [showWhenTab]="['send']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                              <!-- Action buttons -->
+                              <div class="button-row">
+                                   <button (click)="setHook()" [disabled]="txUiService.spinner() || !isXahauNetwork()">Set Hook</button>
+                                   <button (click)="clearFields()">Clear Fields</button>
+                              </div>
+
+                              <!-- Execution time -->
+                              <div style="display: flex">
+                                   <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                              </div>
+                              <app-transaction-preview></app-transaction-preview>
+                         </div>
+                    </div>
+               </form>
           </div>
-
-          <div class="form-row">
-               <div class="form-group">
-                    <label for="hookOn">HookOn Trigger (hex)</label>
-                    <p class="form-hint">e.g., '0000000000000000' for all transactions.</p>
-                    <input type="text" [ngModel]="hookOn()" (ngModelChange)="hookOn.set($event)" />
-               </div>
-               <div class="form-group">
-                    <label for="flags">Flags</label>
-                    <p class="form-hint">e.g., 1 for override.</p>
-                    <input type="number" [ngModel]="flags()" (ngModelChange)="flags.set($event)" />
-               </div>
-          </div>
-
-          <!-- Add sections for HookParameters (key-value table), HookGrants (array inputs) -->
-
-          <app-transaction-options [showWhenTab]="['set-hook']" />
-
-          <div class="button-row">
-               <button (click)="setHook()" [disabled]="txUiService.spinner() || !isXahauNetwork()">Set Hook</button>
-               <button (click)="clearFields()">Clear Fields</button>
-          </div>
-
-          <app-transaction-preview></app-transaction-preview>
-     </form>
+     </div>
 </div>

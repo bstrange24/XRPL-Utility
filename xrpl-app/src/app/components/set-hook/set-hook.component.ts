@@ -248,6 +248,7 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
      }
 
      async setHook() {
+          await this.withPerf('sendXrp', async () => {
           this.txUiService.clearAllOptionsAndMessages();
           try {
                const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
@@ -296,6 +297,7 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
           } finally {
                this.txUiService.spinner.set(false);
           }
+          });
      }
 
      private async getWallet(): Promise<xrpl.Wallet> {
@@ -429,5 +431,4 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
           this.txUiService.invoiceIdField.set('');
           this.txUiService.sourceTagField.set('');
      }
-     // Add other methods like clearFields(), onWalletSelected(), etc., mirroring send-xrp
 }

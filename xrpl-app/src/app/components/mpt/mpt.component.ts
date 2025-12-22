@@ -122,10 +122,10 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      };
      metadataError = signal<string>('');
      tokenCountField = signal<string>('');
-     assetScaleField = signal<string>('');
+     assetScaleField = signal<number>(0);
      isdepositAuthAddress = signal<boolean>(false);
      isMptFlagModeEnabled = signal<boolean>(false);
-     transferFeeField = signal<string>('');
+     transferFeeField = signal<number>(0);
      totalFlagsValue = signal<number>(0);
      totalFlagsHex = signal<string>('0x0');
      private flagValues = {
@@ -976,7 +976,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           }
 
           if (this.assetScaleField() && this.activeTab() === 'create') {
-               const assetScale = parseInt(this.assetScaleField());
+               const assetScale = this.assetScaleField();
                if (assetScale < 0 || assetScale > 15) {
                     throw new Error('Tick size must be between 3 and 15.');
                }
@@ -985,12 +985,12 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
 
           if (this.flags.canTransfer) {
                // In setTxOptionalFields
-               if (!this.transferFeeField()?.trim() && this.flags.canTransfer) {
+               if (!this.transferFeeField() && this.flags.canTransfer) {
                     throw new Error('Transfer Fee is required when CanTransfer is enabled');
                }
                if (this.transferFeeField()) {
                     // TransferFee is in 1/1000th of a percent (basis points / 10), so for 1%, input 1000
-                    const transferFee = Number.parseInt(this.transferFeeField());
+                    const transferFee = this.transferFeeField();
                     if (isNaN(transferFee) || transferFee < 0 || transferFee > 50000) {
                          throw new Error('Transfer Fee must be a number between 0 and 50,000 (for 0% to 50%).');
                     }
@@ -1127,8 +1127,8 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
                this.tokenCountField.set('');
-               this.assetScaleField.set('');
-               this.transferFeeField.set('');
+               this.assetScaleField.set(0);
+               this.transferFeeField.set(0);
                this.mptIssuanceIdField.set('');
                // this.metaDataField.set('');
                this.amountField.set('');
