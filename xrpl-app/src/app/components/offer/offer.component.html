@@ -320,9 +320,7 @@
                                    }
 
                                    <!-- Cancel offer -->
-                                   @if (activeTab() === 'cancelOffer') {
-                                   <!-- Cancellable checks dropdown -->
-                                   @if (existingOffers().length > 0) {
+                                   @if (activeTab() === 'cancelOffer' && existingOffers().length > 0) {
                                    <div class="form-row" style="margin-bottom: 1.2em">
                                         <div class="form-group">
                                              <label>Select Offers to cancel</label>
@@ -336,6 +334,7 @@
                                         </div>
                                    </div>
 
+                                   @if (selectedOffers().length > 0) {
                                    <div class="offer-container">
                                         <!-- List of selected offers -->
                                         <div class="offer-list">
@@ -347,9 +346,6 @@
                                                   </button>
                                              </div>
                                              }
-                                             <!-- @empty { -->
-                                             <!-- <div style="padding: 8px 16px; color: #6b7280; font-style: italic">No offers selected</div> -->
-                                             <!-- } -->
                                         </div>
 
                                         <!-- Footer row -->
