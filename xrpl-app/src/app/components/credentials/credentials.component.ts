@@ -201,6 +201,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           const cred = [...this.existingCredentials(), ...this.subjectCredentials()].find(c => c.index === item.id);
 
           if (cred) {
+               this.selectedCredentials.set(cred);
                this.credentialID.set(cred.index);
                this.credentialType.set(cred.CredentialType || '');
           }
@@ -310,16 +311,16 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           }
      }
 
-     onSelectCredentials(credential: CredentialItem | null) {
-          if (!credential) {
-               this.resetCredentialIdDropDown();
-               return;
-          }
-          // Keep the search term that led to this selection!
-          this.selectedCredentials.set(credential); // store the whole object
-          this.credentialID.set(credential.index);
-          this.credentialType.set(credential.CredentialType || '');
-     }
+     // onSelectCredentials(credential: CredentialItem | null) {
+     //      if (!credential) {
+     //           this.resetCredentialIdDropDown();
+     //           return;
+     //      }
+     //      // Keep the search term that led to this selection!
+     //      this.selectedCredentials.set(credential); // store the whole object
+     //      this.credentialID.set(credential.index);
+     //      this.credentialType.set(credential.CredentialType || '');
+     // }
 
      trackByCredentialIndex(index: number, cred: CredentialItem) {
           return cred.index;
