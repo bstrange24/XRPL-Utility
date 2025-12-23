@@ -1,4 +1,4 @@
-import { Component, OnInit, EventEmitter, Output, Injectable } from '@angular/core';
+import { Component, OnInit, EventEmitter, Output, Injectable, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { StorageService } from '../../services/local-storage/storage.service';
@@ -11,17 +11,9 @@ import { UtilsService } from '../../services/util-service/utils.service';
 import { debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import * as xrpl from 'xrpl';
+import { NetworkService } from '../../services/network-service/network.service';
 
 @Injectable({ providedIn: 'root' })
-export class NetworkService {
-     private networkChangedSource = new Subject<string>();
-     networkChanged$ = this.networkChangedSource.asObservable();
-
-     announceNetworkChange(network: string) {
-          this.networkChangedSource.next(network);
-     }
-}
-
 @Component({
      selector: 'app-navbar',
      standalone: true,
@@ -171,11 +163,13 @@ export class NavbarComponent implements OnInit {
 
      toggleNetworkDropdown() {
           this.isNetworkDropdownOpen = !this.isNetworkDropdownOpen;
-          this.isEscrowsDropdownOpen = false;
-          this.isUtilsDropdownOpen = false;
-          this.isAccountDropdownOpen = false;
-          this.isNftDropdownOpen = false;
-          this.isMptDropdownOpen = false;
+
+          // Close other dropdowns when opening network
+          if (this.isNetworkDropdownOpen) {
+               this.isAccountsDropdownActive = false;
+               this.isEscrowsDropdownActive = false;
+               this.isNftDropdownActive = false;
+          }
      }
 
      toggleAccountsDropdown(event: Event) {
@@ -194,23 +188,52 @@ export class NavbarComponent implements OnInit {
 
      toggleEscrowsDropdown(event: Event) {
           event.preventDefault();
-          this.isEscrowsDropdownOpen = !this.isEscrowsDropdownOpen;
+          event.stopPropagation();
+
+          // Use the same state for open AND active
+          this.isEscrowsDropdownActive = !this.isEscrowsDropdownActive;
+          this.isEscrowsDropdownOpen = this.isEscrowsDropdownActive; // Keep them in sync if needed
+
+          // Close others
+          this.isAccountsDropdownActive = false;
+          this.isNftDropdownActive = false;
           this.isNetworkDropdownOpen = false;
-          this.isUtilsDropdownOpen = false;
-          this.isAccountDropdownOpen = false;
-          this.isNftDropdownOpen = false;
-          this.isMptDropdownOpen = false;
-          this.storageService.removeValue('activeAccountLink'); // Clear escrow link from storage
      }
 
      toggleNftDropdown(event: Event) {
           event.preventDefault();
-          this.isNftDropdownOpen = !this.isNftDropdownOpen;
-          this.isMptDropdownOpen = false;
+          event.stopPropagation();
+
+          this.isNftDropdownActive = !this.isNftDropdownActive;
+          this.isNftDropdownOpen = this.isNftDropdownActive;
+
+          // Close others
+          this.isAccountsDropdownActive = false;
+          this.isEscrowsDropdownActive = false;
           this.isNetworkDropdownOpen = false;
-          this.isUtilsDropdownOpen = false;
-          this.isAccountDropdownOpen = false;
-          this.storageService.removeValue('activeAccountLink'); // Clear escrow link from storage
+     }
+
+     // Optional: Add a generic closeAllDropdowns helper
+     private closeAllDropdowns(exclude?: string) {
+          if (exclude !== 'accounts') {
+               this.isAccountsDropdownActive = false;
+          }
+          if (exclude !== 'escrows') {
+               this.isEscrowsDropdownActive = false;
+          }
+          if (exclude !== 'nft') {
+               this.isNftDropdownActive = false;
+          }
+          this.isNetworkDropdownOpen = false;
+     }
+
+     @HostListener('document:click', ['$event'])
+     onDocumentClick(event: Event) {
+          if (!event.target || !(event.target as HTMLElement).closest('.dropdown')) {
+               this.isAccountsDropdownActive = false;
+               this.isEscrowsDropdownActive = false;
+               this.isNftDropdownActive = false;
+          }
      }
 
      toggleMptDropdown(event: Event) {
@@ -235,6 +258,7 @@ export class NavbarComponent implements OnInit {
           const normalized = network.toLowerCase();
           this.selectedNetwork = network.charAt(0).toUpperCase() + network.slice(1);
           this.networkColor = this.storageService.getNetworkColor(normalized);
+          this.networkService.announceNetworkChange(normalized);
 
           // Show connecting state
           // this.connectionStatus = 'connecting';
