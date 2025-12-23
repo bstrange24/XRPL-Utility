@@ -1,275 +1,270 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
+<div class="app-layout">
+     <app-navbar></app-navbar>
 
-<!-- Main content. Centered with 2 columns -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+     <main class="main-content">
+          <div class="main-container">
+               <div class="content-wrapper">
+                    <!-- Left Wallet panel ==== -->
+                    <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
-          <div class="form-panel">
-               <!-- Menu bar -->
-               <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Create Payment Channel
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'fund'" (click)="setTab('fund')">
-                         <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon>
-                         Fund Payment Channel
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'claim'" (click)="setTab('claim')">
-                         <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon>
-                         Claim/Renew Payment Channel
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'close'" (click)="setTab('close')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Close Payment Channel
-                    </button>
-               </div>
-
-               <!-- Create Menu -->
-               @if (activeTab() === 'create') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                    <!-- Right form -->
+                    <div class="form-panel">
+                         <!-- Menu bar -->
+                         <div class="menu-bar">
+                              <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
+                                   <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
+                                   Create Payment Channel
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'fund'" (click)="setTab('fund')">
+                                   <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon>
+                                   Fund Payment Channel
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'claim'" (click)="setTab('claim')">
+                                   <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon>
+                                   Claim/Renew Payment Channel
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'close'" (click)="setTab('close')">
+                                   <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
+                                   Close Payment Channel
+                              </button>
                          </div>
+
+                         <!-- Create Menu -->
+                         @if (activeTab() === 'create') {
                          <div>
-                              <h2 class="submenu-info-main-text">Create Payment Channel</h2>
-                              <p class="submenu-info-secondary-text">Create a payment channel to another XRPL address</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Fund Menu -->
-               @if (activeTab() === 'fund') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Fund Payment Channel</h2>
-                              <p class="submenu-info-secondary-text">Fund existing payment channel created by the selected account</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Claim Menu -->
-               @if (activeTab() === 'claim') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Claim Payment Channel</h2>
-                              <p class="submenu-info-secondary-text">Claim funds from payment channel</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Close Menu -->
-               @if (activeTab() === 'close') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Close Payment Channel</h2>
-                              <p class="submenu-info-secondary-text">Close existing payment channel created by the selected account</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Info Message -->
-               <!-- Info Message + Collapsible Panel -->
-               @if (infoData(); as info) {
-               <div class="info-message-wrapper">
-                    <div class="info-panel">
-                         <div class="info-text">
-                              <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
-                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
-                                   <code>{{ info.walletName }}</code>
-
-                                   @if (info.channelCount === 0) { has no payment channels. } @else { has <strong>{{ info.channelCount }}</strong> payment channel{{ info.channelCount === 1 ? '' : 's' }} @switch (info.activeTab) { @case ('create') { created. } @case ('fund') { available for funding. } @case ('claim') { with claimable funds. } @case ('close') { that can be closed. } } } @if (info.links) {
-                                   <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
-                                   }
-                              </div>
-
-                              @if (info.channelCount > 0) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
-                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
-                                        <span> @switch (info.activeTab) { @case ('create') { Created Payment Channels } @case ('fund') { Fundable Payment Channels } @case ('claim') { Claimable Payment Channels } @case ('close') { Closable Payment Channels } } ({{ info.channelCount }}) </span>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
-                                             <path d="M6 9l6 6 6-6" />
-                                        </svg>
+                              <div class="submenu-info-text">
+                                   <div class="blue-button-submenu">
+                                        <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                                    </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Create Payment Channel</h2>
+                                        <p class="submenu-info-secondary-text">Create a payment channel to another XRPL address</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
 
-                                   @if (infoPanelExpanded()) {
-                                   <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
-                                        @for (channel of info.channelsToShow; track channel.id) {
-                                        <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
-                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + channel.id" tooltipText="View Channel on XRPL Explorer">
-                                                  <div style="font-weight: 500; margin-bottom: 4px">{{ channel.totalAmount }} @if (info.activeTab === 'create' || info.activeTab === 'close') { → {{ channel.destination.slice(0,7) + '...' + channel.destination.slice(-7) }} } @else { ← {{ channel.sender?.slice(0,7) + '...' + channel.sender?.slice(-7) }} }</div>
-                                                  <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
-                                                       <div>Channel ID: <code>{{ channel.id.slice(0,10) }}...{{ channel.id.slice(-8) }}</code></div>
-                                                       <div>Remaining: <strong>{{ channel.remaining }}</strong> ({{ channel.balance }} claimed)</div>
-                                                       @if (channel.expiration) {
-                                                       <div>Expires: <code>{{ channel.expiration }}</code></div>
-                                                       }
-                                                       <div>Settle Delay: {{ channel.settleDelay }}s</div>
-                                                  </div>
-                                             </app-tooltip-link>
+                         <!-- Fund Menu -->
+                         @if (activeTab() === 'fund') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="green-button-submenu">
+                                        <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Fund Payment Channel</h2>
+                                        <p class="submenu-info-secondary-text">Fund existing payment channel created by the selected account</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
 
-                                             <button (click)="copyAndToast(channel.id, 'Channel ID'); $event.stopPropagation()" class="copy-btn" title="Copy Channel ID">
-                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                         <!-- Claim Menu -->
+                         @if (activeTab() === 'claim') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="green-button-submenu">
+                                        <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Claim Payment Channel</h2>
+                                        <p class="submenu-info-secondary-text">Claim funds from payment channel</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Close Menu -->
+                         @if (activeTab() === 'close') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="red-button-submenu">
+                                        <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Close Payment Channel</h2>
+                                        <p class="submenu-info-secondary-text">Close existing payment channel created by the selected account</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Info Message -->
+                         <!-- Info Message + Collapsible Panel -->
+                         @if (infoData(); as info) {
+                         <div class="info-message-wrapper">
+                              <div class="info-panel">
+                                   <div class="info-text">
+                                        <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                                             <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
+                                             <code>{{ info.walletName }}</code>
+
+                                             @if (info.channelCount === 0) { has no payment channels. } @else { has <strong>{{ info.channelCount }}</strong> payment channel{{ info.channelCount === 1 ? '' : 's' }} @switch (info.activeTab) { @case ('create') { created. } @case ('fund') { available for funding. } @case ('claim') { with claimable funds. } @case ('close') { that can be closed. } } } @if (info.links) {
+                                             <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
+                                             }
+                                        </div>
+
+                                        @if (info.channelCount > 0) {
+                                        <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
+                                             <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
+                                                  <span> @switch (info.activeTab) { @case ('create') { Created Payment Channels } @case ('fund') { Fundable Payment Channels } @case ('claim') { Claimable Payment Channels } @case ('close') { Closable Payment Channels } } ({{ info.channelCount }}) </span>
+                                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
+                                                       <path d="M6 9l6 6 6-6" />
                                                   </svg>
-                                             </button>
-                                        </li>
-                                        }
-                                   </ul>
-                                   }
-                              </div>
-                              }
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
-               </div>
-               }
-
-               <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab()">
-                         <div class="tab-content-columns">
-                              <!-- ==================== LEFT: FORM FIELDS ==================== -->
-                              <div class="tab-content-container form-fields-container">
-                                   <!-- XRP Amount + Destination -->
-                                   @if (activeTab() === 'create' || activeTab() === 'fund' || activeTab() === 'claim' || activeTab() === 'close') {
-                                   <div class="form-row">
-                                        @if (activeTab() !== 'close') {
-                                        <div class="form-group">
-                                             <label>XRP Amount</label>
-                                             <p class="form-hint">Amount of XRP, in drops, to deduct from the sender's balance and set aside in this channel.</p>
-                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
-                                        </div>
-                                        }
-
-                                        <!-- Create and fund -->
-                                        @if (activeTab() === 'create' || activeTab() === 'fund') {
-                                        <div class="form-group">
-                                             <label for="destination">Destination</label>
-                                             <p class="form-hint">Address to receive XRP claims against this channel. This is also known as the "destination address" for the channel.</p>
-                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                        </div>
-                                        }
-                                   </div>
-                                   }
-
-                                   <!-- Destination Tag + Channel ID -->
-                                   @if (activeTab() === 'create' || activeTab() === 'fund' || activeTab() === 'claim' || activeTab() === 'close') {
-                                   <div class="form-row">
-                                        @if (activeTab() === 'create' || activeTab() === 'fund') {
-                                        <div class="form-group">
-                                             <label>Destination Tag</label>
-                                             <p class="form-hint">Arbitrary tag to further specify the destination for this payment channel, such as a hosted recipient at the destination address.</p>
-                                             <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
-                                        </div>
-                                        @if (activeTab() === 'create'){
-                                        <div class="form-group">
-                                             <label>Settle Delay</label>
-                                             <p class="form-hint">Amount of time the source address must wait before closing the channel if it has unclaimed XRP.</p>
-                                             <input type="text" [(ngModel)]="settleDelayField" name="settleDelayField" />
-                                        </div>
-                                        } } @if (activeTab() === 'claim' || activeTab() === 'fund' || activeTab() === 'close') {
-                                        <div class="form-group">
-                                             <label>Channel ID</label>
-                                             <p class="form-hint">
-                                                  The unique ID of the channel as a 64-character<br />
-                                                  hexadecimal string.
-                                             </p>
-                                             <input type="text" [(ngModel)]="channelIDField" name="channelIDField" />
-                                        </div>
-                                        }
-                                   </div>
-                                   }
-
-                                   <!-- Claim-specific fields -->
-                                   @if (activeTab() === 'create' || activeTab() === 'claim' || activeTab() === 'close') {
-                                   <div class="form-row">
-                                        @if (activeTab() === 'claim') {
-                                        <div class="form-group" hidden>
-                                             <label>Sender Public Key</label>
-                                             <p class="form-hint">The public key used for the signature, as hexadecimal</p>
-                                             <input type="text" [(ngModel)]="publicKeyField" name="publicKeyField" />
-                                        </div>
-
-                                        <div class="form-group">
-                                             <label>Claim Signature</label>
-                                             <p class="form-hint">The signed message contains the channel ID and the amount of the claim</p>
-                                             <input type="text" [(ngModel)]="channelClaimSignatureField" name="channelClaimSignatureField" />
-                                        </div>
-                                        }
-                                   </div>
-                                   }
-
-                                   <!-- Settle Delay + Cancel After -->
-                                   @if (activeTab() === 'create' || activeTab() === 'claim' || activeTab() === 'close') {
-                                   <div class="form-row">
-                                        @if (activeTab() === 'create') {
-
-                                        <div class="form-group">
-                                             <label for="credentialExpiration">Cancel After Time</label>
-                                             <p class="form-hint">
-                                                  The time, in seconds since the Ripple Epoch, <br />
-                                                  when this channel expires.
-                                             </p>
-
-                                             <div class="expiration-input-group">
-                                                  <input type="datetime-local" [(ngModel)]="paymentChannelCancelAfterTimeField" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" class="expiration-input" />
-
-                                                  <div class="expiration-buttons">
-                                                       <button type="button" (click)="setCancelAfterExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
-                                                       <button type="button" (click)="addCancelAfterToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
-                                                       <button type="button" (click)="addCancelAfterToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
-                                                       <button type="button" (click)="addCancelAfterToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
-                                                       <button type="button" (click)="addCancelAfterToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
-                                                  </div>
                                              </div>
-                                        </div>
-                                        <div class="form-group"></div>
 
-                                        <!-- <div class="form-group">
+                                             @if (infoPanelExpanded()) {
+                                             <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
+                                                  @for (channel of info.channelsToShow; track channel.id) {
+                                                  <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
+                                                       <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + channel.id" tooltipText="View Channel on XRPL Explorer">
+                                                            <div style="font-weight: 500; margin-bottom: 4px">{{ channel.totalAmount }} @if (info.activeTab === 'create' || info.activeTab === 'close') { → {{ channel.destination.slice(0,7) + '...' + channel.destination.slice(-7) }} } @else { ← {{ channel.sender?.slice(0,7) + '...' + channel.sender?.slice(-7) }} }</div>
+                                                            <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
+                                                                 <div>Channel ID: <code>{{ channel.id.slice(0,10) }}...{{ channel.id.slice(-8) }}</code></div>
+                                                                 <div>Remaining: <strong>{{ channel.remaining }}</strong> ({{ channel.balance }} claimed)</div>
+                                                                 @if (channel.expiration) {
+                                                                 <div>Expires: <code>{{ channel.expiration }}</code></div>
+                                                                 }
+                                                                 <div>Settle Delay: {{ channel.settleDelay }}s</div>
+                                                            </div>
+                                                       </app-tooltip-link>
+
+                                                       <button (click)="copyAndToast(channel.id, 'Channel ID'); $event.stopPropagation()" class="copy-btn" title="Copy Channel ID">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                            </svg>
+                                                       </button>
+                                                  </li>
+                                                  }
+                                             </ul>
+                                             }
+                                        </div>
+                                        }
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Warning Message -->
+                         @if (txUiService.warningMessage) {
+                         <div class="warning-panel">
+                              <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                              <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                         </div>
+                         }
+
+                         <form #theForm="ngForm" class="send-form">
+                              <div [@tabTransition]="activeTab()">
+                                   <div class="tab-content-columns">
+                                        <!-- ==================== LEFT: FORM FIELDS ==================== -->
+                                        <div class="tab-content-container form-fields-container">
+                                             <!-- XRP Amount + Destination -->
+                                             @if (activeTab() === 'create' || activeTab() === 'fund' || activeTab() === 'claim' || activeTab() === 'close') {
+                                             <div class="form-row">
+                                                  @if (activeTab() !== 'close') {
+                                                  <div class="form-group">
+                                                       <label>XRP Amount</label>
+                                                       <p class="form-hint">Amount of XRP, in drops, to deduct from the sender's balance and set aside in this channel.</p>
+                                                       <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
+                                                  </div>
+                                                  }
+
+                                                  <!-- Create and fund -->
+                                                  @if (activeTab() === 'create' || activeTab() === 'fund') {
+                                                  <div class="form-group">
+                                                       <label for="destination">Destination</label>
+                                                       <p class="form-hint">Address to receive XRP claims against this channel. This is also known as the "destination address" for the channel.</p>
+                                                       <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                                                  </div>
+                                                  }
+                                             </div>
+                                             }
+
+                                             <!-- Destination Tag + Channel ID -->
+                                             @if (activeTab() === 'create' || activeTab() === 'fund' || activeTab() === 'claim' || activeTab() === 'close') {
+                                             <div class="form-row">
+                                                  @if (activeTab() === 'create' || activeTab() === 'fund') {
+                                                  <div class="form-group">
+                                                       <label>Destination Tag</label>
+                                                       <p class="form-hint">Arbitrary tag to further specify the destination for this payment channel, such as a hosted recipient at the destination address.</p>
+                                                       <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
+                                                  </div>
+                                                  @if (activeTab() === 'create'){
+                                                  <div class="form-group">
+                                                       <label>Settle Delay</label>
+                                                       <p class="form-hint">Amount of time the source address must wait before closing the channel if it has unclaimed XRP.</p>
+                                                       <input type="text" [(ngModel)]="settleDelayField" name="settleDelayField" />
+                                                  </div>
+                                                  } } @if (activeTab() === 'claim' || activeTab() === 'fund' || activeTab() === 'close') {
+                                                  <div class="form-group">
+                                                       <label>Channel ID</label>
+                                                       <p class="form-hint">
+                                                            The unique ID of the channel as a 64-character<br />
+                                                            hexadecimal string.
+                                                       </p>
+                                                       <input type="text" [(ngModel)]="channelIDField" name="channelIDField" />
+                                                  </div>
+                                                  }
+                                             </div>
+                                             }
+
+                                             <!-- Claim-specific fields -->
+                                             @if (activeTab() === 'create' || activeTab() === 'claim' || activeTab() === 'close') {
+                                             <div class="form-row">
+                                                  @if (activeTab() === 'claim') {
+                                                  <div class="form-group" hidden>
+                                                       <label>Sender Public Key</label>
+                                                       <p class="form-hint">The public key used for the signature, as hexadecimal</p>
+                                                       <input type="text" [(ngModel)]="publicKeyField" name="publicKeyField" />
+                                                  </div>
+
+                                                  <div class="form-group">
+                                                       <label>Claim Signature</label>
+                                                       <p class="form-hint">The signed message contains the channel ID and the amount of the claim</p>
+                                                       <input type="text" [(ngModel)]="channelClaimSignatureField" name="channelClaimSignatureField" />
+                                                  </div>
+                                                  }
+                                             </div>
+                                             }
+
+                                             <!-- Settle Delay + Cancel After -->
+                                             @if (activeTab() === 'create' || activeTab() === 'claim' || activeTab() === 'close') {
+                                             <div class="form-row">
+                                                  @if (activeTab() === 'create') {
+
+                                                  <div class="form-group">
+                                                       <label for="credentialExpiration">Cancel After Time</label>
+                                                       <p class="form-hint">
+                                                            The time, in seconds since the Ripple Epoch, <br />
+                                                            when this channel expires.
+                                                       </p>
+
+                                                       <div class="expiration-input-group">
+                                                            <input type="datetime-local" [(ngModel)]="paymentChannelCancelAfterTimeField" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" class="expiration-input" />
+
+                                                            <div class="expiration-buttons">
+                                                                 <button type="button" (click)="setCancelAfterExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
+                                                                 <button type="button" (click)="addCancelAfterToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
+                                                                 <button type="button" (click)="addCancelAfterToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
+                                                                 <button type="button" (click)="addCancelAfterToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
+                                                                 <button type="button" (click)="addCancelAfterToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
+                                                            </div>
+                                                       </div>
+                                                  </div>
+                                                  <div class="form-group"></div>
+
+                                                  <!-- <div class="form-group">
                                              <label>Cancel After Time</label>
                                              <input type="text" id="paymentChannelCancelAfterTimeField" placeholder="Enter time" [(ngModel)]="paymentChannelCancelAfterTimeField" name="paymentChannelCancelAfterTimeField" />
                                              <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedCancelAfterTimeUnit()" (valueChange)="paymentChannelCancelAfterTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
                                         </div> -->
-                                        }
-                                   </div>
-                                   }
+                                                  }
+                                             </div>
+                                             }
 
-                                   <!-- Authorized Wallet (claim only) -->
-                                   <!-- @if (activeTab() === 'create' || activeTab() === 'fund' || activeTab() === 'claim' || activeTab() === 'close') {
+                                             <!-- Authorized Wallet (claim only) -->
+                                             <!-- @if (activeTab() === 'create' || activeTab() === 'fund' || activeTab() === 'claim' || activeTab() === 'close') {
                                    <div class="form-row" style="padding-bottom: 10px">
                                         @if (activeTab() === 'claim') {
                                         <div class="form-group">
@@ -279,96 +274,98 @@
                                         }
                                    </div>
                                    } -->
-                              </div>
-
-                              <!-- ==================== RIGHT: PAYMENT CHANNEL FLAGS ==================== -->
-                              @if (activeTab() === 'claim' || activeTab() === 'close') {
-                              <div class="tab-content-container flags-container">
-                                   <div class="flags-wrapper">
-                                        <div class="token-flags-header">
-                                             <lucide-icon name="flag" size="20"></lucide-icon>
-                                             <span class="token-flags-title">Payment Channel Flags</span>
                                         </div>
 
-                                        <!-- tfRenew -->
-                                        @if (activeTab() === 'claim') {
-                                        <div class="flag-item" [class.enabled]="flags.renew" (click)="toggleFlag('renew')">
-                                             <div class="flag-header">
-                                                  <input type="checkbox" [checked]="flags.renew" class="flag-checkbox" />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">Renew</span>
-                                             </div>
-                                             <div class="flag-value">0x00010000</div>
-                                             <div class="flag-desc">
-                                                  When set, the channel will be renewed on a
-                                                  <code>PaymentChannelFund</code> transaction.
-                                             </div>
-                                        </div>
-                                        }
+                                        <!-- ==================== RIGHT: PAYMENT CHANNEL FLAGS ==================== -->
+                                        @if (activeTab() === 'claim' || activeTab() === 'close') {
+                                        <div class="tab-content-container flags-container">
+                                             <div class="flags-wrapper">
+                                                  <div class="token-flags-header">
+                                                       <lucide-icon name="flag" size="20"></lucide-icon>
+                                                       <span class="token-flags-title">Payment Channel Flags</span>
+                                                  </div>
 
-                                        <!-- tfClose -->
-                                        @if (activeTab() === 'close') {
-                                        <div class="flag-item enabled" [class.disabled]="true" (click)="toggleFlag('close')">
-                                             <div class="flag-header">
-                                                  <input type="checkbox" [checked]="true" class="flag-checkbox" disabled />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
-                                                       <path d="M12 2v10"></path>
-                                                  </svg>
-                                                  <span class="flag-title">Close</span>
-                                                  <span class="lock-icon">Locked</span>
-                                             </div>
-                                             <div class="flag-value">0x00020000</div>
-                                             <div class="flag-desc">When set on a <code>PaymentChannelClaim</code> transaction, the channel will be closed after the claim.</div>
-                                        </div>
-                                        }
+                                                  <!-- tfRenew -->
+                                                  @if (activeTab() === 'claim') {
+                                                  <div class="flag-item" [class.enabled]="flags.renew" (click)="toggleFlag('renew')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.renew" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">Renew</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00010000</div>
+                                                       <div class="flag-desc">
+                                                            When set, the channel will be renewed on a
+                                                            <code>PaymentChannelFund</code> transaction.
+                                                       </div>
+                                                  </div>
+                                                  }
 
-                                        <!-- TOTAL FLAGS VALUE -->
-                                        @if (activeTab() !== 'close') {
-                                        <div class="flags-total">
-                                             <span class="total-label">Total Flags Value:</span>
-                                             <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
+                                                  <!-- tfClose -->
+                                                  @if (activeTab() === 'close') {
+                                                  <div class="flag-item enabled" [class.disabled]="true" (click)="toggleFlag('close')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="true" class="flag-checkbox" disabled />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                                                                 <path d="M12 2v10"></path>
+                                                            </svg>
+                                                            <span class="flag-title">Close</span>
+                                                            <span class="lock-icon">Locked</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00020000</div>
+                                                       <div class="flag-desc">When set on a <code>PaymentChannelClaim</code> transaction, the channel will be closed after the claim.</div>
+                                                  </div>
+                                                  }
+
+                                                  <!-- TOTAL FLAGS VALUE -->
+                                                  @if (activeTab() !== 'close') {
+                                                  <div class="flags-total">
+                                                       <span class="total-label">Total Flags Value:</span>
+                                                       <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
+                                                  </div>
+                                                  }
+                                             </div>
                                         </div>
                                         }
                                    </div>
+
+                                   <app-transaction-options [showWhenTab]="['create', 'close','claim','fund']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                                   <!-- Action buttons -->
+                                   <div class="button-row">
+                                        @switch (activeTab()) {
+                                        <!-- create buttons -->
+                                        @case ('create') {
+                                        <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Channel' }}</button>
+                                        }
+                                        <!-- close buttons -->
+                                        @case ('close') {
+                                        <button type="button" class="btn-primary-red" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Close Channel' }}</button>
+                                        }
+                                        <!-- claim buttons -->
+                                        @case ('claim') {
+                                        <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Claim/Renew Channel' }}</button>
+                                        <button type="button" class="btn-primary-blue" (click)="generateCreatorClaimSignature()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Generate Claim Signature' }}</button>
+                                        }
+                                        <!-- fund buttons -->
+                                        @case ('fund') {
+                                        <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Fund Channel' }}</button>
+                                        } }
+                                        <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
+                                   </div>
+
+                                   <!-- Execution time -->
+                                   <div style="display: flex">
+                                        <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                                   </div>
+                                   <app-transaction-preview></app-transaction-preview>
                               </div>
-                              }
-                         </div>
-
-                         <app-transaction-options [showWhenTab]="['create', 'close','claim','fund']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                         <!-- Action buttons -->
-                         <div class="button-row">
-                              @switch (activeTab()) {
-                              <!-- create buttons -->
-                              @case ('create') {
-                              <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Channel' }}</button>
-                              }
-                              <!-- close buttons -->
-                              @case ('close') {
-                              <button type="button" class="btn-primary-red" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Close Channel' }}</button>
-                              }
-                              <!-- claim buttons -->
-                              @case ('claim') {
-                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Claim/Renew Channel' }}</button>
-                              <button type="button" class="btn-primary-blue" (click)="generateCreatorClaimSignature()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Generate Claim Signature' }}</button>
-                              }
-                              <!-- fund buttons -->
-                              @case ('fund') {
-                              <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Fund Channel' }}</button>
-                              } }
-                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
-                         </div>
-
-                         <!-- Execution time -->
-                         <div style="display: flex">
-                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
-                         </div>
-                         <app-transaction-preview></app-transaction-preview>
+                         </form>
                     </div>
-               </form>
+               </div>
           </div>
-     </div>
+     </main>
 </div>

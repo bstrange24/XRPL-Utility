@@ -1,428 +1,425 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
+<div class="app-layout">
+     <app-navbar></app-navbar>
 
-<!-- Main content. Centered with 2 columns -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+     <main class="main-content">
+          <div class="main-container">
+               <div class="content-wrapper">
+                    <!-- Left Wallet panel ==== -->
+                    <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
-          <div class="form-panel">
-               <!-- Menu bar -->
-               <div class="menu-bar">
-                    <button class="menu-btn" [class.active]="activeTab() === 'sell'" (click)="setTab('sell')">
-                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Sell NFT
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'buy'" (click)="setTab('buy')">
-                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Buy NFT
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'sellOffer'" (click)="setTab('sellOffer')">
-                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Sell NFT Offer
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'buyOffer'" (click)="setTab('buyOffer')">
-                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Buy NFT Offer
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'cancelOffer'" (click)="setTab('cancelOffer')">
-                         <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
-                         Cancel Offer
-                    </button>
-               </div>
-
-               <!-- Sell NFT Menu -->
-               @if (activeTab() === 'sell') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <!-- <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon> -->
-                              <!-- <ng-icon name="heroBanknotes" size="27" class="text-red-600"></ng-icon> -->
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                    <!-- Right form -->
+                    <div class="form-panel">
+                         <!-- Menu bar -->
+                         <div class="menu-bar">
+                              <button class="menu-btn" [class.active]="activeTab() === 'sell'" (click)="setTab('sell')">
+                                   <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
+                                   Sell NFT
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'buy'" (click)="setTab('buy')">
+                                   <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
+                                   Buy NFT
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'sellOffer'" (click)="setTab('sellOffer')">
+                                   <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
+                                   Sell NFT Offer
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'buyOffer'" (click)="setTab('buyOffer')">
+                                   <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
+                                   Buy NFT Offer
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'cancelOffer'" (click)="setTab('cancelOffer')">
+                                   <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
+                                   Cancel Offer
+                              </button>
                          </div>
+
+                         <!-- Sell NFT Menu -->
+                         @if (activeTab() === 'sell') {
                          <div>
-                              <h2 class="submenu-info-main-text">Sell NFT</h2>
-                              <p class="submenu-info-secondary-text">Sell an NFT on the market.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Buy NFT Menu -->
-               @if (activeTab() === 'buy') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Buy NFT</h2>
-                              <p class="submenu-info-secondary-text">Buy an NFT from the market.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Sell Offer Menu -->
-               @if (activeTab() === 'sellOffer') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Sell NFT Offer</h2>
-                              <p class="submenu-info-secondary-text">Create an offer to sell an NFT.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Buy Offer Menu -->
-               @if (activeTab() === 'buyOffer') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Buy NFT Offer</h2>
-                              <p class="submenu-info-secondary-text">Create an offer to buy an NFT.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Cancel Offer Menu -->
-               @if (activeTab() === 'cancelOffer') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Cancel NFT Offer</h2>
-                              <p class="submenu-info-secondary-text">Cancel and existing NFT offer.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Dynamic info panel -->
-               <!-- NFT Offers Info Panel - Collapsible & Beautiful -->
-               @if (infoData(); as info) {
-               <div class="info-message-wrapper">
-                    <div class="info-panel">
-                         <div class="info-text">
-                              <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
-                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
-                                   <code>{{ info.walletName }}</code>
-
-                                   @if (info.offerCount === 0) { has no active NFT offers. } @else { has <strong>{{ info.offerCount }}</strong> active NFT offer{{ info.offerCount === 1 ? '' : 's' }}. } @if (info.links) {
-                                   <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
-                                   }
-                              </div>
-
-                              @if (info.offerCount > 0) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
-                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
-                                        <span> @switch (info.activeTab) { @case ('buy') { Buy Offers } @case ('sell') { Sell Offers } @case ('buyOffer') { Your Buy Offers } @case ('sellOffer') { Your Sell Offers } @case ('cancelOffer') { Cancellable Offers } } ({{ info.offerCount }}) </span>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
-                                             <path d="M6 9l6 6 6-6" />
-                                        </svg>
+                              <div class="submenu-info-text">
+                                   <div class="blue-button-submenu">
+                                        <!-- <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon> -->
+                                        <!-- <ng-icon name="heroBanknotes" size="27" class="text-red-600"></ng-icon> -->
+                                        <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                                    </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Sell NFT</h2>
+                                        <p class="submenu-info-secondary-text">Sell an NFT on the market.</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
 
-                                   @if (infoPanelExpanded()) {
-                                   <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
-                                        @for (offer of info.offersToShow; track offer.index) {
-                                        <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
-                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'nft/' + offer.nftId" tooltipText="View NFT on XRPL Explorer">
-                                                  <div style="font-weight: 500; margin-bottom: 4px">
-                                                       <strong>{{ offer.amount }}</strong>
-                                                       @if (offer.isSell) { → } @else { ← } {{ offer.counterparty.slice(0,7) + '...' + offer.counterparty.slice(-7) }}
+                         <!-- Buy NFT Menu -->
+                         @if (activeTab() === 'buy') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="green-button-submenu">
+                                        <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Buy NFT</h2>
+                                        <p class="submenu-info-secondary-text">Buy an NFT from the market.</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Sell Offer Menu -->
+                         @if (activeTab() === 'sellOffer') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="blue-button-submenu">
+                                        <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Sell NFT Offer</h2>
+                                        <p class="submenu-info-secondary-text">Create an offer to sell an NFT.</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Buy Offer Menu -->
+                         @if (activeTab() === 'buyOffer') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="green-button-submenu">
+                                        <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Buy NFT Offer</h2>
+                                        <p class="submenu-info-secondary-text">Create an offer to buy an NFT.</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Cancel Offer Menu -->
+                         @if (activeTab() === 'cancelOffer') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="red-button-submenu">
+                                        <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Cancel NFT Offer</h2>
+                                        <p class="submenu-info-secondary-text">Cancel and existing NFT offer.</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Dynamic info panel -->
+                         <!-- NFT Offers Info Panel - Collapsible & Beautiful -->
+                         @if (infoData(); as info) {
+                         <div class="info-message-wrapper">
+                              <div class="info-panel">
+                                   <div class="info-text">
+                                        <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                                             <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
+                                             <code>{{ info.walletName }}</code>
+
+                                             @if (info.offerCount === 0) { has no active NFT offers. } @else { has <strong>{{ info.offerCount }}</strong> active NFT offer{{ info.offerCount === 1 ? '' : 's' }}. } @if (info.links) {
+                                             <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
+                                             }
+                                        </div>
+
+                                        @if (info.offerCount > 0) {
+                                        <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
+                                             <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
+                                                  <span> @switch (info.activeTab) { @case ('buy') { Buy Offers } @case ('sell') { Sell Offers } @case ('buyOffer') { Your Buy Offers } @case ('sellOffer') { Your Sell Offers } @case ('cancelOffer') { Cancellable Offers } } ({{ info.offerCount }}) </span>
+                                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
+                                                       <path d="M6 9l6 6 6-6" />
+                                                  </svg>
+                                             </div>
+
+                                             @if (infoPanelExpanded()) {
+                                             <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
+                                                  @for (offer of info.offersToShow; track offer.index) {
+                                                  <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
+                                                       <app-tooltip-link [href]="txUiService.explorerUrl() + 'nft/' + offer.nftId" tooltipText="View NFT on XRPL Explorer">
+                                                            <div style="font-weight: 500; margin-bottom: 4px">
+                                                                 <strong>{{ offer.amount }}</strong>
+                                                                 @if (offer.isSell) { → } @else { ← } {{ offer.counterparty.slice(0,7) + '...' + offer.counterparty.slice(-7) }}
+                                                            </div>
+                                                            <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
+                                                                 <div>Offer ID: <code>{{ offer.index.slice(0,12) }}...{{ offer.index.slice(-10) }}</code></div>
+                                                                 <div>NFT ID: <code>{{ offer.nftId.slice(0,12) }}...{{ offer.nftId.slice(-10) }}</code></div>
+                                                                 @if (offer.expiration) {
+                                                                 <div>Expires: <code>{{ formatXrplTimestamp(offer.expiration) }}</code></div>
+                                                                 }
+                                                            </div>
+                                                       </app-tooltip-link>
+
+                                                       <button (click)="copyAndToast(offer.index, 'Offer ID'); $event.stopPropagation()" class="copy-btn" title="Copy Offer ID">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                            </svg>
+                                                       </button>
+                                                  </li>
+                                                  }
+                                             </ul>
+                                             }
+                                        </div>
+                                        }
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Warning Message -->
+                         @if (txUiService.warningMessage) {
+                         <div class="warning-panel">
+                              <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                              <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                         </div>
+                         }
+
+                         <form #theForm="ngForm" class="send-form">
+                              <div [@tabTransition]="activeTab()">
+                                   <div class="tab-content-columns">
+                                        <!-- ==================== LEFT: FORM FIELDS ==================== -->
+                                        <div class="tab-content-container form-fields-container">
+                                             <!-- Sell -->
+                                             @if(activeTab() === 'sell') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label for="currencyCodeCash">Currency Code</label>
+                                                       <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
+                                                       <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                                            <ng-template #itemTemplate let-item>
+                                                                 <div class="flex items-center gap-2">
+                                                                      @if (item.id === 'XRP') {
+                                                                      <span class="text-yellow-500 font-bold">XRP</span>
+                                                                      } @else {
+                                                                      <span>{{ item.display }}</span>
+                                                                      }
+                                                                      <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                                 </div>
+                                                            </ng-template>
+                                                       </app-select-search-dropdown>
                                                   </div>
-                                                  <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
-                                                       <div>Offer ID: <code>{{ offer.index.slice(0,12) }}...{{ offer.index.slice(-10) }}</code></div>
-                                                       <div>NFT ID: <code>{{ offer.nftId.slice(0,12) }}...{{ offer.nftId.slice(-10) }}</code></div>
-                                                       @if (offer.expiration) {
-                                                       <div>Expires: <code>{{ formatXrplTimestamp(offer.expiration) }}</code></div>
+
+                                                  <div class="form-group">
+                                                       <label>Amount</label>
+                                                       <p class="form-hint">Amount of currency to use in the transaction.</p>
+                                                       <input type="text" id="amountField" [(ngModel)]="amountField" name="amountField" [placeholder]="currencyFieldDropDownValue() === 'XRP' ? 'Amount in XRP' : 'Currency amount'" />
+                                                  </div>
+                                             </div>
+
+                                             @if(currencyFieldDropDownValue() !== 'XRP') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label for="issuer">Issuer</label>
+                                                       <p class="form-hint">The XRPL account that issues and controls this currency.</p>
+                                                       <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+                                                  </div>
+
+                                                  <div class="form-group">
+                                                       <label for="currencyBalanceField">Currency Balance</label>
+                                                       <p class="form-hint">Total currency balance held by this account.</p>
+                                                       <input type="text" id="currencyBalanceField" [(ngModel)]="currencyBalanceField" readonly name="currencyBalanceField" />
+                                                  </div>
+                                             </div>
+                                             }
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label for="credentialExpiration">NFT Offer Expiration</label>
+                                                       <p class="form-hint">NFT offer expiration when the offer will expire.</p>
+                                                       <div class="expiration-input-group">
+                                                            <input type="datetime-local" [(ngModel)]="expirationTimeField" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" class="expiration-input" />
+                                                            <div class="expiration-buttons">
+                                                                 <button type="button" (click)="setNftExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
+                                                                 <button type="button" (click)="addNftToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
+                                                                 <button type="button" (click)="addNftToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
+                                                                 <button type="button" (click)="addNftToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
+                                                                 <button type="button" (click)="addNftToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
+                                                            </div>
+                                                       </div>
+                                                  </div>
+                                                  <div class="form-group"></div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       @if (existingNfts().length > 0) {
+                                                       <label>Select NFT</label>
+                                                       <p class="form-hint">Select an existing NFT to cancel.</p>
+                                                       <app-select-search-dropdown [items]="nftItems()" [value]="selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found"> </app-select-search-dropdown>
                                                        }
                                                   </div>
-                                             </app-tooltip-link>
+                                             </div>
 
-                                             <button (click)="copyAndToast(offer.index, 'Offer ID'); $event.stopPropagation()" class="copy-btn" title="Copy Offer ID">
-                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                                  </svg>
-                                             </button>
-                                        </li>
-                                        }
-                                   </ul>
-                                   }
-                              </div>
-                              }
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
-               </div>
-               }
-
-               <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab()">
-                         <div class="tab-content-columns">
-                              <!-- ==================== LEFT: FORM FIELDS ==================== -->
-                              <div class="tab-content-container form-fields-container">
-                                   <!-- Sell -->
-                                   @if(activeTab() === 'sell') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="currencyCodeCash">Currency Code</label>
-                                             <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
-                                             <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
-                                                  <ng-template #itemTemplate let-item>
-                                                       <div class="flex items-center gap-2">
-                                                            @if (item.id === 'XRP') {
-                                                            <span class="text-yellow-500 font-bold">XRP</span>
-                                                            } @else {
-                                                            <span>{{ item.display }}</span>
-                                                            }
-                                                            <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                                                       </div>
-                                                  </ng-template>
-                                             </app-select-search-dropdown>
-                                        </div>
-
-                                        <div class="form-group">
-                                             <label>Amount</label>
-                                             <p class="form-hint">Amount of currency to use in the transaction.</p>
-                                             <input type="text" id="amountField" [(ngModel)]="amountField" name="amountField" [placeholder]="currencyFieldDropDownValue() === 'XRP' ? 'Amount in XRP' : 'Currency amount'" />
-                                        </div>
-                                   </div>
-
-                                   @if(currencyFieldDropDownValue() !== 'XRP') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="issuer">Issuer</label>
-                                             <p class="form-hint">The XRPL account that issues and controls this currency.</p>
-                                             <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
-                                        </div>
-
-                                        <div class="form-group">
-                                             <label for="currencyBalanceField">Currency Balance</label>
-                                             <p class="form-hint">Total currency balance held by this account.</p>
-                                             <input type="text" id="currencyBalanceField" [(ngModel)]="currencyBalanceField" readonly name="currencyBalanceField" />
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="credentialExpiration">NFT Offer Expiration</label>
-                                             <p class="form-hint">NFT offer expiration when the offer will expire.</p>
-                                             <div class="expiration-input-group">
-                                                  <input type="datetime-local" [(ngModel)]="expirationTimeField" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" class="expiration-input" />
-                                                  <div class="expiration-buttons">
-                                                       <button type="button" (click)="setNftExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
-                                                       <button type="button" (click)="addNftToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
-                                                       <button type="button" (click)="addNftToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
-                                                       <button type="button" (click)="addNftToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
-                                                       <button type="button" (click)="addNftToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
+                                             <div class="form-row">
+                                                  <div class="form-group" style="padding-top: 0.8em">
+                                                       <label>NFT Token Id</label>
+                                                       <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
+                                                       <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
                                                   </div>
                                              </div>
-                                        </div>
-                                        <div class="form-group"></div>
-                                   </div>
+                                             }
 
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             @if (existingNfts().length > 0) {
-                                             <label>Select NFT</label>
-                                             <p class="form-hint">Select an existing NFT to cancel.</p>
-                                             <app-select-search-dropdown [items]="nftItems()" [value]="selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found"> </app-select-search-dropdown>
+                                             <!-- Buy -->
+                                             @if(activeTab() === 'buy') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>NFT Offer Index</label>
+                                                       <p class="form-hint">NFT Offer Index generated when the offer was created.</p>
+                                                       <input type="text" id="nftIndexField" [(ngModel)]="nftIndexField" name="nftIndexField" [placeholder]="" />
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group" style="padding-top: 0.4em">
+                                                       <label>NFT Token Id</label>
+                                                       <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
+                                                       <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
+                                                  </div>
+                                             </div>
+                                             }
+
+                                             <!-- Buy/Sell offer -->
+                                             @if (activeTab() === 'buyOffer' || activeTab() === 'sellOffer') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label for="currencyCodeCash">Currency Code</label>
+                                                       <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
+                                                       <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                                            <ng-template #itemTemplate let-item>
+                                                                 <div class="flex items-center gap-2">
+                                                                      @if (item.id === 'XRP') {
+                                                                      <span class="text-yellow-500 font-bold">XRP</span>
+                                                                      } @else {
+                                                                      <span>{{ item.display }}</span>
+                                                                      }
+                                                                      <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                                                 </div>
+                                                            </ng-template>
+                                                       </app-select-search-dropdown>
+                                                  </div>
+
+                                                  <div class="form-group">
+                                                       <label>Amount</label>
+                                                       <p class="form-hint">Amount of currency to use in the transaction.</p>
+                                                       <input type="text" id="amountField" [(ngModel)]="amountField" name="amountField" [placeholder]="currencyFieldDropDownValue() === 'XRP' ? 'Amount in XRP' : 'Currency amount'" />
+                                                  </div>
+                                             </div>
+
+                                             @if(currencyFieldDropDownValue() !== 'XRP') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label for="issuer">Issuer</label>
+                                                       <p class="form-hint">The XRPL account that issues and controls this currency.</p>
+                                                       <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+                                                  </div>
+
+                                                  <div class="form-group">
+                                                       <label for="currencyBalanceField">Currency Balance</label>
+                                                       <p class="form-hint">Total currency balance held by this account.</p>
+                                                       <input type="text" id="currencyBalanceField" [(ngModel)]="currencyBalanceField" readonly name="currencyBalanceField" />
+                                                  </div>
+                                             </div>
+                                             }
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label for="credentialExpiration">NFT Offer Expiration</label>
+                                                       <p class="form-hint">NFT offer expiration when the offer will expire.</p>
+                                                       <div class="expiration-input-group">
+                                                            <input type="datetime-local" [(ngModel)]="expirationTimeField" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" class="expiration-input" />
+                                                            <div class="expiration-buttons">
+                                                                 <button type="button" (click)="setNftExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
+                                                                 <button type="button" (click)="addNftToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
+                                                                 <button type="button" (click)="addNftToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
+                                                                 <button type="button" (click)="addNftToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
+                                                                 <button type="button" (click)="addNftToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
+                                                            </div>
+                                                       </div>
+                                                  </div>
+                                                  @if ( activeTab() === 'buyOffer') {
+                                                  <div class="form-group">
+                                                       <label>Owner</label>
+                                                       <p class="form-hint">Owner of the NFT.</p>
+                                                       <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
+                                                  </div>
+                                                  } @else {
+                                                  <div class="form-group"></div>
+                                                  }
+                                             </div>
+
+                                             <!-- Sell Offer settings -->
+                                             @if ( activeTab() === 'sellOffer') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       @if (existingNfts().length > 0) {
+                                                       <label>Select NFT</label>
+                                                       <p class="form-hint">Select an existing NFT to sell.</p>
+                                                       <app-select-search-dropdown [items]="nftItems()" [value]="selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found"> </app-select-search-dropdown>
+                                                       }
+                                                  </div>
+                                             </div>
+                                             }
+
+                                             <div class="form-row">
+                                                  <div class="form-group" style="padding-top: 0.8em">
+                                                       <label>NFT Token Id</label>
+                                                       <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
+                                                       <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
+                                                  </div>
+                                             </div>
+                                             }
+
+                                             <!-- Cancel offer -->
+                                             @if (activeTab() === 'cancelOffer') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Select Offer to Cancel</label>
+                                                       <p class="form-hint">Select an existing NFT to cancel.</p>
+                                                       <app-select-search-dropdown [items]="offerItems()" [value]="selectedOfferItem()" (valueChange)="onOfferSelected($event)" placeholder="Search by amount, NFT ID, or offer ID..." emptyMessage="No cancellable offers"> </app-select-search-dropdown>
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group" style="padding-top: 0.8em">
+                                                       <label>NFT Offer Index</label>
+                                                       <p class="form-hint">NFT Offer Index generated when the offer was created.</p>
+                                                       <input type="text" [(ngModel)]="nftIndexField" name="nftIndexField" placeholder="" />
+                                                  </div>
+                                             </div>
                                              }
                                         </div>
                                    </div>
 
-                                   <div class="form-row">
-                                        <div class="form-group" style="padding-top: 0.8em">
-                                             <label>NFT Token Id</label>
-                                             <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
-                                             <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
-                                        </div>
-                                   </div>
-                                   }
+                                   <app-transaction-options [showWhenTab]="['buy', 'sell','buyOffer','sellOffer','cancelOffer']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
-                                   <!-- Buy -->
-                                   @if(activeTab() === 'buy') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>NFT Offer Index</label>
-                                             <p class="form-hint">NFT Offer Index generated when the offer was created.</p>
-                                             <input type="text" id="nftIndexField" [(ngModel)]="nftIndexField" name="nftIndexField" [placeholder]="" />
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group" style="padding-top: 0.4em">
-                                             <label>NFT Token Id</label>
-                                             <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
-                                             <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Buy/Sell offer -->
-                                   @if (activeTab() === 'buyOffer' || activeTab() === 'sellOffer') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="currencyCodeCash">Currency Code</label>
-                                             <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
-                                             <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
-                                                  <ng-template #itemTemplate let-item>
-                                                       <div class="flex items-center gap-2">
-                                                            @if (item.id === 'XRP') {
-                                                            <span class="text-yellow-500 font-bold">XRP</span>
-                                                            } @else {
-                                                            <span>{{ item.display }}</span>
-                                                            }
-                                                            <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                                                       </div>
-                                                  </ng-template>
-                                             </app-select-search-dropdown>
-                                        </div>
-
-                                        <div class="form-group">
-                                             <label>Amount</label>
-                                             <p class="form-hint">Amount of currency to use in the transaction.</p>
-                                             <input type="text" id="amountField" [(ngModel)]="amountField" name="amountField" [placeholder]="currencyFieldDropDownValue() === 'XRP' ? 'Amount in XRP' : 'Currency amount'" />
-                                        </div>
-                                   </div>
-
-                                   @if(currencyFieldDropDownValue() !== 'XRP') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="issuer">Issuer</label>
-                                             <p class="form-hint">The XRPL account that issues and controls this currency.</p>
-                                             <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
-                                        </div>
-
-                                        <div class="form-group">
-                                             <label for="currencyBalanceField">Currency Balance</label>
-                                             <p class="form-hint">Total currency balance held by this account.</p>
-                                             <input type="text" id="currencyBalanceField" [(ngModel)]="currencyBalanceField" readonly name="currencyBalanceField" />
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="credentialExpiration">NFT Offer Expiration</label>
-                                             <p class="form-hint">NFT offer expiration when the offer will expire.</p>
-                                             <div class="expiration-input-group">
-                                                  <input type="datetime-local" [(ngModel)]="expirationTimeField" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" class="expiration-input" />
-                                                  <div class="expiration-buttons">
-                                                       <button type="button" (click)="setNftExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
-                                                       <button type="button" (click)="addNftToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
-                                                       <button type="button" (click)="addNftToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
-                                                       <button type="button" (click)="addNftToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
-                                                       <button type="button" (click)="addNftToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
-                                                  </div>
-                                             </div>
-                                        </div>
-                                        @if ( activeTab() === 'buyOffer') {
-                                        <div class="form-group">
-                                             <label>Owner</label>
-                                             <p class="form-hint">Owner of the NFT.</p>
-                                             <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
-                                        </div>
-                                        } @else {
-                                        <div class="form-group"></div>
+                                   <!-- Action buttons -->
+                                   <div class="button-row">
+                                        @if(activeTab() === 'buy') {
+                                        <button type="button" class="btn-primary-green" (click)="buyNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Buy NFT' }}</button>
+                                        } @else if (activeTab() === 'sell') {
+                                        <button type="button" class="btn-primary-blue" (click)="sellNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Sell NFT' }}</button>
+                                        } @else if (activeTab() === 'buyOffer') {
+                                        <button type="button" class="btn-primary-green" (click)="createOffer('Buy')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Buy NFT Offer' }}</button>
+                                        }@else if (activeTab() === 'sellOffer') {
+                                        <button type="button" class="btn-primary-blue" (click)="createOffer('Sell')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Sell NFT Offer' }}</button>
+                                        }@else if (activeTab() === 'cancelOffer') {
+                                        <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cancel NFT Offer' }}</button>
                                         }
+                                        <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
-
-                                   <!-- Sell Offer settings -->
-                                   @if ( activeTab() === 'sellOffer') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             @if (existingNfts().length > 0) {
-                                             <label>Select NFT</label>
-                                             <p class="form-hint">Select an existing NFT to sell.</p>
-                                             <app-select-search-dropdown [items]="nftItems()" [value]="selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found"> </app-select-search-dropdown>
-                                             }
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <div class="form-row">
-                                        <div class="form-group" style="padding-top: 0.8em">
-                                             <label>NFT Token Id</label>
-                                             <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
-                                             <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Cancel offer -->
-                                   @if (activeTab() === 'cancelOffer') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Select Offer to Cancel</label>
-                                             <p class="form-hint">Select an existing NFT to cancel.</p>
-                                             <app-select-search-dropdown [items]="offerItems()" [value]="selectedOfferItem()" (valueChange)="onOfferSelected($event)" placeholder="Search by amount, NFT ID, or offer ID..." emptyMessage="No cancellable offers"> </app-select-search-dropdown>
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group" style="padding-top: 0.8em">
-                                             <label>NFT Offer Index</label>
-                                             <p class="form-hint">NFT Offer Index generated when the offer was created.</p>
-                                             <input type="text" [(ngModel)]="nftIndexField" name="nftIndexField" placeholder="" />
-                                        </div>
-                                   </div>
-                                   }
                               </div>
-                         </div>
+                         </form>
 
-                         <app-transaction-options [showWhenTab]="['buy', 'sell','buyOffer','sellOffer','cancelOffer']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                         <!-- Action buttons -->
-                         <div class="button-row">
-                              @if(activeTab() === 'buy') {
-                              <button type="button" class="btn-primary-green" (click)="buyNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Buy NFT' }}</button>
-                              } @else if (activeTab() === 'sell') {
-                              <button type="button" class="btn-primary-blue" (click)="sellNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Sell NFT' }}</button>
-                              } @else if (activeTab() === 'buyOffer') {
-                              <button type="button" class="btn-primary-green" (click)="createOffer('Buy')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Buy NFT Offer' }}</button>
-                              }@else if (activeTab() === 'sellOffer') {
-                              <button type="button" class="btn-primary-blue" (click)="createOffer('Sell')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Sell NFT Offer' }}</button>
-                              }@else if (activeTab() === 'cancelOffer') {
-                              <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cancel NFT Offer' }}</button>
-                              }
-                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
+                         <!-- Execution time -->
+                         <div style="display: flex">
+                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                          </div>
+                         <app-transaction-preview></app-transaction-preview>
                     </div>
-               </form>
-
-               <!-- Execution time -->
-               <div style="display: flex">
-                    <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                </div>
-               <app-transaction-preview></app-transaction-preview>
           </div>
-     </div>
+     </main>
 </div>

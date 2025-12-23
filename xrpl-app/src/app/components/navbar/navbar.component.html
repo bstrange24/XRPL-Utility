@@ -1,10 +1,40 @@
-<div class="navbar-container">
-     <div class="navbar-links">
+<div class="sidebar-container">
+     <div class="sidebar-links">
+          <div class="sidebar-header">
+               <!-- Optional: Add a logo or app name here -->
+               <h2 class="sidebar-title">XRPL Tool</h2>
+          </div>
+
+          <div class="network-section">
+               <div class="network-dropdown network network-{{ selectedNetwork | lowercase }}">
+                    <button class="btn dropdown-toggle network-button" type="button" (click)="toggleNetworkDropdown()" [style.backgroundColor]="networkColor">
+                         <div class="network-main">
+                              <span class="network-name">{{ selectedNetwork }} Environment</span>
+
+                              <span class="connection-status" [class.connected]="connectionStatus === 'connected'" [class.disconnected]="connectionStatus === 'disconnected'" [class.connecting]="connectionStatus === 'connecting'" [title]="connectionStatusMessage">
+                                   <span class="status-dot">●</span>
+                                   <span class="status-text"> {{ connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected' }} </span>
+                              </span>
+                         </div>
+
+                         <svg class="arrow" [ngClass]="{ open: isNetworkDropdownOpen }" viewBox="0 0 12 12" width="12" height="12">
+                              <path fill="currentColor" d="M2 4l4 4 4-4H2z" />
+                         </svg>
+                         <div class="dropdown-menu" [ngStyle]="{ display: isNetworkDropdownOpen ? 'block' : 'none' }">
+                              <a href="#" (click)="selectNetwork('devnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Devnet' }">Devnet</a>
+                              <a href="#" (click)="selectNetwork('testnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Testnet' }">Testnet</a>
+                              <a href="#" (click)="selectNetwork('mainnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Mainnet' }">Mainnet</a>
+                         </div>
+                    </button>
+               </div>
+          </div>
+
           <a routerLink="/wallet-configurator" routerLinkActive="active" (click)="setActiveLink('/wallet-configurator')">Wallets</a>
 
-          <div class="dropdown accounts-dropdown" [ngClass]="{ active: isAccountsDropdownActive }">
-               <a href="#" class="dropdown-toggle" aria-label="Toggle Accounts dropdown" (click)="toggleAccountsDropdown($event)">Accounts ▾</a>
-               <div class="dropdown-menu">
+          <!-- Accounts Group (expandable) -->
+          <div class="sidebar-group" [ngClass]="{ expanded: expandedGroup === 'accounts' }">
+               <a href="#" class="group-toggle" (click)="toggleAccountsDropdown($event)">Accounts ▾</a>
+               <div class="group-items">
                     <a routerLink="/account-balance-changes" routerLinkActive="active" (click)="setActiveAccountsLink('/account-balance-changes')">Balance Changes</a>
                     <a routerLink="/account-configurator" routerLinkActive="active" (click)="setActiveAccountsLink('/account-configurator')">Configurator</a>
                     <a routerLink="/create-credentials" routerLinkActive="active" (click)="setActiveAccountsLink('/create-credentials')">Create Credentials</a>
@@ -15,15 +45,16 @@
                     <a routerLink="/permissioned-domain" routerLinkActive="active" (click)="setActiveAccountsLink('/permissioned-domain')">Permissioned Domain</a>
                </div>
           </div>
-          <!-- <a routerLink="/set-hook" routerLinkActive="active" (click)="setActiveLink('/set-hook')">Set Hook</a> -->
+
           <a routerLink="/send-xrp" routerLinkActive="active" (click)="setActiveLink('/send-xrp')">Send XRP</a>
           <a routerLink="/sign-transactions" routerLinkActive="active" (click)="setActiveLink('/sign-transactions')">Sign Transactions</a>
           <a routerLink="/trustlines" routerLinkActive="active" (click)="setActiveLink('/trustlines')">Trustlines</a>
-          <a routerLink="/payment-channel" routerLinkActive="active" (click)="setActiveLink('/payment-channel')"> Payment Channel </a>
+          <a routerLink="/payment-channel" routerLinkActive="active" (click)="setActiveLink('/payment-channel')">Payment Channel</a>
 
-          <div class="dropdown escrows-dropdown" [ngClass]="{ active: isEscrowsDropdownActive }">
-               <a href="#" class="dropdown-toggle" aria-label="Toggle Escrows dropdown" (click)="toggleEscrowsDropdown($event)">Escrows ▾</a>
-               <div class="dropdown-menu">
+          <!-- Escrows Group -->
+          <div class="sidebar-group" [ngClass]="{ expanded: expandedGroup === 'escrows' }">
+               <a href="#" class="group-toggle" (click)="ttoggleEscrowsDropdown($event)">Escrows ▾</a>
+               <div class="group-items">
                     <a routerLink="/time-escrow" routerLinkActive="active" (click)="setActiveEscrowLink('/time-escrow')">Time Escrow</a>
                     <a routerLink="/conditional-escrow" routerLinkActive="active" (click)="setActiveEscrowLink('/conditional-escrow')">Conditional Escrow</a>
                </div>
@@ -34,37 +65,29 @@
           <a routerLink="/create-offer" routerLinkActive="active" (click)="setActiveLink('/create-offer')">Offers</a>
           <a routerLink="/create-amm" routerLinkActive="active" (click)="setActiveLink('/create-amm')">AMM</a>
 
-          <div class="dropdown escrows-dropdown" [ngClass]="{ active: isNftDropdownActive }">
-               <a href="#" class="dropdown-toggle" aria-label="Toggle NFT dropdown" (click)="toggleNftDropdown($event)">NFTs ▾</a>
-               <div class="dropdown-menu">
+          <!-- NFTs Group -->
+          <div class="sidebar-group" [ngClass]="{ expanded: expandedGroup === 'nfts' }">
+               <a href="#" class="group-toggle" (click)="toggleNftDropdown($event)">NFTs ▾</a>
+               <div class="group-items">
                     <a routerLink="/create-nft" routerLinkActive="active" (click)="setActiveLink('/create-nft')">NFT Create</a>
                     <a routerLink="/nft-offers" routerLinkActive="active" (click)="setActiveLink('/nft-offers')">NFT Offers</a>
                </div>
           </div>
 
           <a routerLink="/mpt" routerLinkActive="active" (click)="setActiveLink('/mpt')">MPT</a>
-          <!-- <a routerLink="/fiat-on-off-ramp" routerLinkActive="active" (click)="setActiveLink('/fiat-on-off-ramp')"> Fiat On/Off Ramp </a> -->
-     </div>
 
-     <div class="network-dropdown network network-{{ selectedNetwork | lowercase }}" style="padding-left: 2.5em">
-          <button class="btn dropdown-toggle" type="button" id="networkDropdownButton" (click)="toggleNetworkDropdown()" [style.backgroundColor]="networkColor">
-               <div class="dropdown-toggle-text">{{ selectedNetwork }}</div>
-               <!-- Connection Status Indicator -->
-               <svg class="arrow" [ngClass]="{ open: isNetworkDropdownOpen }" viewBox="0 0 12 12" width="12" height="12">
-                    <path fill="black" d="M2 4l4 4 4-4H2z" />
+          <div class="dark-mode-toggle" (click)="toggleDarkMode()">
+               @if (!isDarkMode) {
+               <svg class="icon-sun" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="5" fill="currentColor" />
+                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" fill="none" />
                </svg>
-          </button>
-          <div class="dropdown-menu" [ngStyle]="{ display: isNetworkDropdownOpen ? 'block' : 'none' }">
-               <a class="dropdown-item devnet" href="#" (click)="selectNetwork('devnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Devnet' }"> Devnet </a>
-               <a class="dropdown-item testnet" href="#" (click)="selectNetwork('testnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Testnet' }"> Testnet </a>
-               <a class="dropdown-item mainnet" href="#" (click)="selectNetwork('mainnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Mainnet' }"> Mainnet </a>
-               <!-- <a class="dropdown-item testnet" href="#" (click)="selectNetwork('XahauTest'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'XahauTest' }"> Xahau Testnet </a> -->
-          </div>
-
-          <!-- Connection Status Indicator (outside and to the right) -->
-          <div class="connection-status" [class.connected]="connectionStatus === 'connected'" [class.disconnected]="connectionStatus === 'disconnected'" [class.connecting]="connectionStatus === 'connecting'" [title]="connectionStatusMessage">
-               <span class="status-dot">●</span>
-               <span class="status-text"> {{ connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected' }} </span>
+               } @if (isDarkMode) {
+               <svg class="icon-moon" viewBox="0 0 24 24">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="currentColor" />
+               </svg>
+               }
+               <span class="toggle-text">{{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}</span>
           </div>
      </div>
 </div>

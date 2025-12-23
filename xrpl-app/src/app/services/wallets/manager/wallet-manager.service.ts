@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { StorageService } from '../../local-storage/storage.service';
 import { distinctUntilChanged, map, shareReplay } from 'rxjs';
-import { NetworkService } from '../../../components/navbar/navbar.component';
+import { NetworkService } from '../../network-service/network.service';
 
 export interface Wallet {
      name?: string;

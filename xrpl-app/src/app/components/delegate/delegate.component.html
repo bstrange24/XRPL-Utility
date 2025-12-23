@@ -1,204 +1,201 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
+<div class="app-layout">
+     <app-navbar></app-navbar>
 
-<!-- Main content. Centered with 2 columns -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+     <main class="main-content">
+          <div class="main-container">
+               <div class="content-wrapper">
+                    <!-- Left Wallet panel ==== -->
+                    <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
-          <div class="form-panel">
-               <!-- Menu bar -->
-               <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'delegate'" (click)="setTab('delegate')">
-                         <ng-icon name="heroArrowUturnLeft" size="20" class="text-red-600"></ng-icon>
-                         Delegate Actions
-                    </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'clear'" (click)="setTab('clear')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Clear Delegate Actions
-                    </button>
-               </div>
-
-               <!-- Delegate Actions Menu -->
-               @if (activeTab() === 'delegate') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroArrowUturnLeft" size="27" class="text-red-600" color="green"></ng-icon>
+                    <!-- Right form -->
+                    <div class="form-panel">
+                         <!-- Menu bar -->
+                         <div class="menu-bar">
+                              <button class="menu-btn active" [class.active]="activeTab() === 'delegate'" (click)="setTab('delegate')">
+                                   <ng-icon name="heroArrowUturnLeft" size="20" class="text-red-600"></ng-icon>
+                                   Delegate Actions
+                              </button>
+                              <button class="menu-btn active" [class.active]="activeTab() === 'clear'" (click)="setTab('clear')">
+                                   <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
+                                   Clear Delegate Actions
+                              </button>
                          </div>
+
+                         <!-- Delegate Actions Menu -->
+                         @if (activeTab() === 'delegate') {
                          <div>
-                              <h2 class="submenu-info-main-text">Delegate Actions</h2>
-                              <p class="submenu-info-secondary-text">Delegate Actions to another XRPL address</p>
-                         </div>
-                    </div>
-               </div>
-               } @if (activeTab() === 'clear') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Clear Delegate Actions</h2>
-                              <p class="submenu-info-secondary-text">Clear Delegated Actions to another XRPL address</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Info Message -->
-               @if (infoData(); as info) {
-               <div class="info-panel">
-                    <div class="info-panel-content">
-                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                         <div class="info-text" [innerHTML]="info.message"></div>
-                    </div>
-               </div>
-               }
-
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
-               </div>
-               }
-
-               <!-- Created Delegations -->
-               @if ((activeTab !== undefined) && existingDelegations.length > 0) {
-               <div class="outstanding-checks-panel">
-                    <!-- Header – clickable to expand/collapse -->
-                    <div class="panel-header" (click)="toggleCreatedDelegations()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Created Credentials ({{ existingDelegations().length }})
-                         </h3>
-                    </div>
-
-                    <!-- Collapsible content with smooth height animation -->
-                    <div class="credential-list-container" [class.collapsed]="createdDelegations()">
-                         @if (!createdDelegations()) {
-                         <div class="checks-list">
-                              @for (chk of existingDelegations(); track chk.index) {
-                              <div class="check-card">
-                                   <div class="check-extras">
-                                        <!-- URI  -->
-                                        @if (chk.index) {
-                                        <span class="badge badge-credential-index">Credential Index: {{ chk.index }} </span>
-                                        } @else {
-                                        <span class="badge badge-credential-index-not-set">Credential Index: Not set </span>
-                                        }
+                              <div class="submenu-info-text">
+                                   <div class="green-button-submenu">
+                                        <ng-icon name="heroArrowUturnLeft" size="27" class="text-red-600" color="green"></ng-icon>
                                    </div>
-
-                                   <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyDelegateId(chk.index); $event.stopPropagation(); $event.preventDefault()" title="Copy Credential ID" type="button">
-                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="txUiService.explorerUrl() + 'entry/' + chk.index" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
-                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
-                                             </a>
-                                        </button>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Delegate Actions</h2>
+                                        <p class="submenu-info-secondary-text">Delegate Actions to another XRPL address</p>
                                    </div>
                               </div>
-                              }
+                         </div>
+                         } @if (activeTab() === 'clear') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="red-button-submenu">
+                                        <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Clear Delegate Actions</h2>
+                                        <p class="submenu-info-secondary-text">Clear Delegated Actions to another XRPL address</p>
+                                   </div>
+                              </div>
                          </div>
                          }
-                    </div>
-               </div>
-               }
 
-               <form #theForm="ngForm" class="send-form">
-                    <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab()">
-                              <!-- Left Form Fields -->
-                              @if (activeTab() === 'delegate') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="destination">Authorize Wallet</label>
-                                        <p class="form-hint">The authorized account delegated to perform actions on behalf of the selected account.</p>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select an account." />
-                                   </div>
+                         <!-- Info Message -->
+                         @if (infoData(); as info) {
+                         <div class="info-panel">
+                              <div class="info-panel-content">
+                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
+                                   <div class="info-text" [innerHTML]="info.message"></div>
                               </div>
-                              } @if (activeTab() === 'clear') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="destination">Unauthorize Wallet</label>
-                                        <p class="form-hint">Remove delegated authority on the account.</p>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select an account." />
-                                   </div>
+                         </div>
+                         }
+
+                         <!-- Warning Message -->
+                         @if (txUiService.warningMessage) {
+                         <div class="warning-panel">
+                              <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                              <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                         </div>
+                         }
+
+                         <!-- Created Delegations -->
+                         @if ((activeTab !== undefined) && existingDelegations.length > 0) {
+                         <div class="outstanding-checks-panel">
+                              <!-- Header – clickable to expand/collapse -->
+                              <div class="panel-header" (click)="toggleCreatedDelegations()" style="cursor: pointer; user-select: none">
+                                   <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
+                                        <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
+                                        Created Credentials ({{ existingDelegations().length }})
+                                   </h3>
                               </div>
-                              }
 
-                              <div class="flags-wrapper">
-                                   <!-- Flags header -->
-                                   <div class="token-flags-header" style="margin-top: 0.8em">
-                                        <lucide-icon name="flag" size="20"></lucide-icon>
-                                        <span class="token-flags-title">Delegate Action Flags</span>
-                                   </div>
-
-                                   <div>
-                                        <div class="form-row-account-flags" style="display: flex; gap: 20px; flex-wrap: wrap">
-                                             <div style="flex: 1; min-width: 300px">
-                                                  @for (action of leftActions; track action.id) {
-                                                  <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="selected.has(action.id)" (click)="toggleSelection(action.id, $event)">
-                                                       <div class="flag-header-account">
-                                                            <input type="checkbox" [id]="action.key + '-left'" [checked]="selected.has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
-                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                            </svg>
-                                                            <span class="flag-title-account-flags">{{ action.key }}</span>
-                                                       </div>
-                                                       <div class="flag-value">{{ action.id }} {{action.txType}}</div>
-                                                       <div class="flag-desc">{{ action.description }}</div>
-                                                  </div>
+                              <!-- Collapsible content with smooth height animation -->
+                              <div class="credential-list-container" [class.collapsed]="createdDelegations()">
+                                   @if (!createdDelegations()) {
+                                   <div class="checks-list">
+                                        @for (chk of existingDelegations(); track chk.index) {
+                                        <div class="check-card">
+                                             <div class="check-extras">
+                                                  <!-- URI  -->
+                                                  @if (chk.index) {
+                                                  <span class="badge badge-credential-index">Credential Index: {{ chk.index }} </span>
+                                                  } @else {
+                                                  <span class="badge badge-credential-index-not-set">Credential Index: Not set </span>
                                                   }
                                              </div>
 
-                                             <div style="flex: 1; min-width: 300px">
-                                                  @for (action of rightActions; track action.id) {
-                                                  <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="selected.has(action.id)" (click)="toggleSelection(action.id, $event)">
-                                                       <div class="flag-header-account">
-                                                            <input type="checkbox" [id]="action.key + '-right'" [checked]="selected.has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
-                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                            </svg>
-                                                            <span class="flag-title-account-flags">{{ action.key }}</span>
+                                             <div class="button-group">
+                                                  <button class="icon-btn copy-check-id" (click)="copyDelegateId(chk.index); $event.stopPropagation(); $event.preventDefault()" title="Copy Credential ID" type="button">
+                                                       <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                                       <a [href]="txUiService.explorerUrl() + 'entry/' + chk.index" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
+                                                            <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
+                                                       </a>
+                                                  </button>
+                                             </div>
+                                        </div>
+                                        }
+                                   </div>
+                                   }
+                              </div>
+                         </div>
+                         }
+
+                         <form #theForm="ngForm" class="send-form">
+                              <div class="tab-content-container">
+                                   <div [@tabTransition]="activeTab()">
+                                        <!-- Left Form Fields -->
+                                        @if (activeTab() === 'delegate') {
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label for="destination">Authorize Wallet</label>
+                                                  <p class="form-hint">The authorized account delegated to perform actions on behalf of the selected account.</p>
+                                                  <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select an account." />
+                                             </div>
+                                        </div>
+                                        } @if (activeTab() === 'clear') {
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label for="destination">Unauthorize Wallet</label>
+                                                  <p class="form-hint">Remove delegated authority on the account.</p>
+                                                  <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select an account." />
+                                             </div>
+                                        </div>
+                                        }
+
+                                        <div class="flags-wrapper">
+                                             <!-- Flags header -->
+                                             <div class="token-flags-header" style="margin-top: 0.8em">
+                                                  <lucide-icon name="flag" size="20"></lucide-icon>
+                                                  <span class="token-flags-title">Delegate Action Flags</span>
+                                             </div>
+
+                                             <div>
+                                                  <div class="form-row-account-flags" style="display: flex; gap: 20px; flex-wrap: wrap">
+                                                       <div style="flex: 1; min-width: 300px">
+                                                            @for (action of leftActions; track action.id) {
+                                                            <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="selected.has(action.id)" (click)="toggleSelection(action.id, $event)">
+                                                                 <div class="flag-header-account">
+                                                                      <input type="checkbox" [id]="action.key + '-left'" [checked]="selected.has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
+                                                                      <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                           <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                                      </svg>
+                                                                      <span class="flag-title-account-flags">{{ action.key }}</span>
+                                                                 </div>
+                                                                 <div class="flag-value">{{ action.id }} {{action.txType}}</div>
+                                                                 <div class="flag-desc">{{ action.description }}</div>
+                                                            </div>
+                                                            }
                                                        </div>
-                                                       <div class="flag-value">{{ action.id }} {{action.txType}}</div>
-                                                       <div class="flag-desc">{{ action.description }}</div>
+
+                                                       <div style="flex: 1; min-width: 300px">
+                                                            @for (action of rightActions; track action.id) {
+                                                            <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="selected.has(action.id)" (click)="toggleSelection(action.id, $event)">
+                                                                 <div class="flag-header-account">
+                                                                      <input type="checkbox" [id]="action.key + '-right'" [checked]="selected.has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
+                                                                      <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                           <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                                      </svg>
+                                                                      <span class="flag-title-account-flags">{{ action.key }}</span>
+                                                                 </div>
+                                                                 <div class="flag-value">{{ action.id }} {{action.txType}}</div>
+                                                                 <div class="flag-desc">{{ action.description }}</div>
+                                                            </div>
+                                                            }
+                                                       </div>
                                                   </div>
-                                                  }
                                              </div>
                                         </div>
                                    </div>
+
+                                   <app-transaction-options [showWhenTab]="['clear','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                                   <!-- Action buttons -->
+                                   <div class="button-row">
+                                        @if (activeTab() === 'delegate') {
+                                        <button type="button" class="btn-primary-blue" (click)="delegateActions('delegate')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delegate Actions' }}</button>
+                                        } @else if (activeTab() === 'clear') {
+                                        <button type="button" class="btn-primary-red" (click)="delegateActions('clear')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Clear Delegated Actions' }}</button>
+                                        }
+                                        <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
+                                   </div>
+
+                                   <!-- Execution time -->
+                                   <div style="display: flex">
+                                        <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                                   </div>
+                                   <app-transaction-preview></app-transaction-preview>
                               </div>
-                         </div>
-
-                         <app-transaction-options [showWhenTab]="['clear','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                         <!-- Action buttons -->
-                         <div class="button-row">
-                              @if (activeTab() === 'delegate') {
-                              <button type="button" class="btn-primary-blue" (click)="delegateActions('delegate')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delegate Actions' }}</button>
-                              } @else if (activeTab() === 'clear') {
-                              <button type="button" class="btn-primary-red" (click)="delegateActions('clear')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Clear Delegated Actions' }}</button>
-                              }
-                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
-                         </div>
-
-                         <!-- Execution time -->
-                         <div style="display: flex">
-                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
-                         </div>
-                         <app-transaction-preview></app-transaction-preview>
+                         </form>
                     </div>
-               </form>
+               </div>
           </div>
-     </div>
+     </main>
 </div>

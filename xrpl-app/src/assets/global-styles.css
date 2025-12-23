@@ -1,20 +1,21 @@
-.app-scale {
+/* .app-scale {
      transform-origin: top left;
      width: 111.111%;
      box-sizing: border-box;
      margin: 0 auto;
      padding-left: 5px;
      padding-right: 5px;
-}
+} */
 
 .main-container {
-     max-width: 1280px;
+     /* max-width: 1280px; */
      margin: 0 auto;
-     background-color: aliceblue;
+     /* background-color: aliceblue; */
 }
 
 html {
-     font-size: 105%;
+     /* font-size: 105%; */
+     font-size: 93.75%;
 }
 
 html,
@@ -187,10 +188,10 @@ input[type='text']:focus {
      margin-bottom: 0.5px;
 }
 
-.network-dropdown {
+/* .network-dropdown {
      display: flex;
      align-items: center;
-}
+} */
 
 .network .btn.open .arrow {
      transform: rotate(180deg);
@@ -206,9 +207,9 @@ input[type='text']:focus {
      font-weight: 700;
 }
 
-.network .dropdown-toggle-text {
+/* .network .dropdown-toggle-text {
      margin-right: 5px;
-}
+} */
 
 .network .dropdown-menu {
      position: absolute;
@@ -234,11 +235,9 @@ input[type='text']:focus {
 }
 
 .navbar {
-     background-color: aliceblue !important;
      border-radius: 16px;
      padding: 14px 24px !important;
      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-     border: 1px solid aliceblue;
      min-height: 48px;
 }
 
@@ -378,23 +377,23 @@ input[type='text']:focus {
      color: #64c1f3;
 }
 
-.content-wrapper {
-     background-color: aliceblue;
-     color: black;
+/* .content-wrapper { */
+/* background-color: aliceblue; */
+/* color: black;
      border-radius: 6px;
      font-size: 0.9rem;
      display: flex;
      gap: 1.75rem;
      padding-top: 20px;
-}
+} */
 
-@media (min-width: 992px) {
+/* @media (min-width: 992px) {
      .content-wrapper {
           grid-template-columns: 310px 1fr;
           gap: 1.75rem;
           align-items: stretch;
      }
-}
+} */
 
 .form-panel {
      background: #fff;
@@ -404,7 +403,7 @@ input[type='text']:focus {
      padding-right: 1.5rem;
      padding-bottom: 1.5rem;
      margin-bottom: 5em;
-     min-width: 925px;
+     min-width: 1025px;
 }
 
 .no-wallet-found {
@@ -1075,7 +1074,7 @@ input:focus+.slider {
 .wallet-actions {
      display: flex;
      align-items: center;
-     gap: 0.4rem;
+     /* gap: 0.4rem; */
      margin-left: auto;
      flex-shrink: 0;
 }
@@ -1705,7 +1704,7 @@ app-root {
      display: block;
      margin: 0;
      padding: 0;
-     background-color: aliceblue;
+     /* background-color: aliceblue; */
 }
 
 .token-flags-header {
@@ -2264,7 +2263,7 @@ app-root {
      margin: 0;
      padding: 0;
      line-height: 1;
-     background-color: aliceblue;
+     /* background-color: aliceblue; */
 }
 
 .issuer-checkbox input[type='checkbox'] {
@@ -2588,19 +2587,20 @@ cdk-drop-list {
 }
 
 .wallet-item.selected {
-     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
-     border-color: #6366f1;
-     color: white;
-     box-shadow: 0 0 0 3px aliceblue;
+     /* background: linear-gradient(135deg,
+               rgba(46, 123, 255, 0.25),
+               rgba(4, 90, 251, 0.15)); */
+     border-color: #2e7bff;
+     /* color: #0f172a; */
 }
 
-.wallet-item.selected .wallet-balance,
+/* .wallet-item.selected .wallet-balance,
 .wallet-item.selected .wallet-address,
 .wallet-item.selected .secret-label,
 .wallet-item.selected .show-toggle,
 .wallet-item.selected .clickable-name {
      color: white !important;
-}
+} */
 
 .cdk-drag-preview {
      box-sizing: border-box;
@@ -2665,17 +2665,17 @@ cdk-drop-list {
 }
 
 .wallet-item.selected .show-toggle {
-     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
+     /* background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%); */
      border: 1px solid rgba(99, 102, 241, 0.7);
-     color: white !important;
-     font-weight: 600;
-     box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+     /* color: white !important; */
+     font-weight: 400;
+     /* box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35); */
 }
 
 .wallet-item.selected .show-toggle:hover {
-     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
+     /* background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%); */
      transform: translateY(-2px);
-     box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45);
+     /* box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45); */
 }
 
 .wallet-item .icon-btn svg {
@@ -2684,7 +2684,8 @@ cdk-drop-list {
 }
 
 .wallet-item.selected .icon-btn svg {
-     stroke: white !important;
+     stroke: #94a3b8;
+     stroke: grey !important;
 }
 
 .wallet-item.selected .icon-btn:hover svg {
@@ -2911,6 +2912,7 @@ cdk-drop-list {
      white-space: nowrap;
      user-select: none;
      transition: all 0.3s ease;
+     margin-top: 1em;
 }
 
 .status-dot {
@@ -3161,4 +3163,813 @@ ticket-fields .form-group {
      padding: 6px 10px;
      font-size: 0.85rem;
      min-width: 50px;
+}
+
+.app-layout {
+     display: flex;
+     min-height: 100vh;
+}
+
+.main-content {
+     margin-left: 280px;
+     padding-left: 20px;
+}
+
+app-sidebar {
+     width: 280px;
+     flex-shrink: 0;
+     background: #1a1c21;
+     color: white;
+     overflow-y: auto;
+}
+
+.sidebar-container {
+     display: flex;
+     flex-direction: column;
+     height: 100vh;
+     justify-content: space-between;
+     padding: 20px;
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
+     border-color: #6366f1;
+     color: white;
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 290px;
+     overflow-y: auto;
+     transition: transform 0.3s ease;
+     z-index: 1000;
+}
+
+.sidebar-links {
+     display: flex;
+     flex-direction: column;
+     gap: 8px;
+}
+
+.sidebar-links>a,
+.sidebar-group .group-toggle {
+     padding: 12px 16px;
+     border-radius: 10px;
+     text-decoration: none;
+     color: #fff;
+     font-weight: 500;
+     transition: all 0.2s;
+}
+
+.sidebar-links>a:hover,
+.group-toggle:hover {
+     background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-links>a.active {
+     background: #4caf50;
+     font-weight: 700;
+}
+
+.sidebar-group {
+     margin-bottom: 4px;
+}
+
+.sidebar-group .group-items {
+     max-height: 0;
+     overflow: hidden;
+     transition: max-height 0.3s ease;
+}
+
+.sidebar-group.expanded .group-items {
+     max-height: 1000px;
+     padding-left: 20px;
+}
+
+.sidebar-group .group-items a {
+     display: block;
+     padding: 8px 12px;
+     color: #fff;
+     border-left: 3px solid transparent;
+     text-decoration: none;
+}
+
+.sidebar-footer {
+     border-top: 1px solid rgba(255, 255, 255, 0.1);
+     padding-top: 20px;
+}
+
+.content-wrapper {
+     display: grid;
+     grid-template-columns: 320px 1fr;
+     gap: 1.75rem;
+     /* padding: 20px; */
+     padding-left: 20px;
+     padding-top: 30px;
+     /* padding: 20px; */
+     max-width: 1400px;
+     margin: 0 auto;
+}
+
+@media (max-width: 1100px) {
+     .content-wrapper {
+          grid-template-columns: 270px 1fr;
+     }
+}
+
+@media (max-width: 992px) {
+     .content-wrapper {
+          grid-template-columns: 1fr;
+     }
+}
+
+.sidebar-container.collapsed {
+     transform: translateX(-100%);
+}
+
+.main-content.expanded {
+     margin-left: 0;
+}
+
+.app-layout.sidebar-collapsed .sidebar-container {
+     transform: translateX(-100%);
+}
+
+.app-layout.sidebar-collapsed .main-content {
+     margin-left: 0;
+}
+
+.dark-mode-toggle {
+     cursor: pointer;
+     padding: 12px 16px;
+     border-radius: 50px;
+     background: rgba(255, 255, 255, 0.1);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 10px;
+     transition: all 0.3s ease;
+     margin-bottom: 1px;
+     min-width: 160px;
+     margin-top: 1em;
+     font-size: 0.9rem;
+     font-weight: 500;
+}
+
+.dark-mode-toggle:hover {
+     background: rgba(255, 255, 255, 0.2);
+     transform: scale(1.05);
+}
+
+.dark-mode-toggle svg {
+     width: 20px;
+     height: 20px;
+     flex-shrink: 0;
+}
+
+.toggle-text {
+     white-space: nowrap;
+}
+
+/* Dark mode: show moon, hide sun */
+body.dark-mode .toggle-icon .sun,
+body.dark-mode .toggle-icon .sun-rays {
+     opacity: 0;
+}
+
+body.dark-mode .toggle-icon .moon {
+     opacity: 1;
+}
+
+/* Light mode (default) */
+body {
+     --bg-primary: #ffffff;
+     --bg-content: #ffffff;
+     --bg-sidebar: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
+     --text-primary: #1a1a1a;
+     --text-secondary: #4b5563;
+     --border: #e0e7ff;
+     --card-bg: #ffffff;
+     --input-bg: #ffffff;
+     --btn-primary: #4caf50;
+     --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+     transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode */
+body.dark-mode {
+     --bg-primary: #0f172a;
+     --bg-content: #1e293b;
+     --bg-sidebar: #0a0e17;
+     --text-primary: #e2e8f0;
+     --text-secondary: #94a3b8;
+     --border: #334155;
+     --card-bg: #1e293b;
+     --input-bg: #334155;
+     --btn-primary: #22c55e;
+     --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Apply variables */
+body {
+     background-color: var(--bg-primary);
+     color: var(--text-primary);
+}
+
+.main-content,
+.content-wrapper,
+.main-container {
+     background-color: var(--bg-primary);
+}
+
+.form-panel,
+.wallet-card,
+.selected-account-card {
+     background: var(--card-bg);
+     border-color: var(--border);
+     box-shadow: var(--shadow);
+     color: var(--text-primary);
+}
+
+input[type="text"],
+input[type="datetime-local"],
+select,
+textarea {
+     background: var(--input-bg) !important;
+     color: var(--text-primary) !important;
+     border-color: var(--border) !important;
+}
+
+input::placeholder {
+     color: #64748b;
+}
+
+label,
+.panel-title,
+.summary-title {
+     color: var(--text-primary);
+}
+
+.btn-primary-green {
+     background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+}
+
+/* .wallet-balance,
+.highlight {
+     color: #86efac;
+} */
+
+.connection-status .status-text {
+     color: #e2e8f0;
+}
+
+/* Sidebar stays dark */
+.sidebar-container {
+     background: var(--bg-sidebar);
+}
+
+body.dark-mode label,
+body.dark-mode .panel-title,
+body.dark-mode .summary-title,
+body.dark-mode .submenu-info-main-text,
+body.dark-mode .submenu-info-secondary-text,
+body.dark-mode .form-hint,
+body.dark-mode .wallet-name,
+body.dark-mode .wallet-address,
+body.dark-mode .wallet-balance,
+body.dark-mode .status-text,
+body.dark-mode .info-text,
+body.dark-mode .warning-text,
+body.dark-mode p,
+body.dark-mode h2,
+body.dark-mode div {
+     /* Broad fallback for any missed text */
+     color: var(--text-primary) !important;
+}
+
+/* Ensure labels inside forms are bright */
+body.dark-mode .form-group label,
+body.dark-mode .form-group .form-hint {
+     color: #e2e8f0 !important;
+}
+
+/* Fix any white backgrounds that should be dark */
+body.dark-mode .submenu-info-text {
+     background-color: rgba(30, 40, 60, 0.8) !important;
+     backdrop-filter: blur(8px);
+}
+
+body.dark-mode .info-panel {
+     background: #1e40af30;
+     border-color: #3b82f6;
+     color: #bfdbfe;
+}
+
+body.dark-mode .warning-panel {
+     background: #f59e0b30;
+     border-color: #f59e0b;
+     color: #fde68a;
+}
+
+/* Inputs already handled, but reinforce */
+body.dark-mode input::placeholder {
+     color: #94a3b8 !important;
+}
+
+
+/* === DARK MODE TEXT FIXES === */
+body.dark-mode,
+body.dark-mode * {
+     color: #e2e8f0 !important;
+     /* Light gray text - base override */
+}
+
+/* More specific overrides for stubborn elements */
+body.dark-mode label,
+body.dark-mode .form-hint,
+body.dark-mode .panel-title,
+body.dark-mode .summary-title,
+body.dark-mode .submenu-info-main-text,
+body.dark-mode .submenu-info-secondary-text,
+body.dark-mode .info-text,
+body.dark-mode .warning-text,
+body.dark-mode .flag-title,
+body.dark-mode .flag-desc,
+body.dark-mode .total-label,
+body.dark-mode p,
+body.dark-mode h2,
+body.dark-mode span:not(.status-dot):not(.badge),
+body.dark-mode div {
+     color: #f1f5f9 !important;
+     /* Slightly brighter for readability */
+}
+
+/* Fix submenu info box (was staying light) */
+body.dark-mode .submenu-info-text {
+     background-color: rgba(30, 40, 60, 0.9) !important;
+     backdrop-filter: blur(8px);
+     /* border: 1px solid #334155; */
+}
+
+body.dark-mode .submenu-info-main-text {
+     color: #60a5fa !important;
+     /* Blue accent for title */
+}
+
+body.dark-mode .submenu-info-secondary-text {
+     color: #94a3b8 !important;
+}
+
+/* Fix info panel */
+body.dark-mode .info-panel {
+     background: #172554 !important;
+     border-color: #1e40af !important;
+     color: #bfdbfe !important;
+}
+
+/* Fix warning panel */
+body.dark-mode .warning-panel {
+     background: #451a03 !important;
+     border-color: #f97316 !important;
+     color: #fed7aa !important;
+}
+
+/* Fix flag items */
+body.dark-mode .flag-item-account-flags {
+     background: #1e293b !important;
+     border-color: #334155 !important;
+}
+
+body.dark-mode .flag-item-account-flags.enabled {
+     background: #16653430 !important;
+     border-color: #22c55e !important;
+}
+
+body.dark-mode .flag-desc {
+     color: #94a3b8 !important;
+}
+
+body.dark-mode .flag-value {
+     color: #60a5fa !important;
+}
+
+/* Fix total flags box */
+body.dark-mode .flags-total {
+     background: #0f172a !important;
+     border-color: #334155 !important;
+}
+
+body.dark-mode .total-value {
+     color: #60a5fa !important;
+}
+
+/* Fix menu bar buttons */
+body.dark-mode .menu-btn {
+     color: #e2e8f0 !important;
+     background: #1e293b !important;
+     border-color: #334155 !important;
+}
+
+body.dark-mode .menu-btn:hover {
+     background: #334155 !important;
+}
+
+body.dark-mode .menu-btn.active {
+     background: #2563eb !important;
+     color: white !important;
+}
+
+/* Ensure inputs have light placeholder text */
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+     color: #94a3b8 !important;
+     opacity: 1;
+}
+
+
+/* === FINAL DARK MODE TEXT FIXES === */
+
+/* Force ALL labels and hints to bright text */
+body.dark-mode label,
+body.dark-mode .form-hint,
+body.dark-mode .form-group label,
+body.dark-mode .form-group .form-hint {
+     color: #f1f5f9 !important;
+     /* Bright white-gray */
+}
+
+/* Fix the main info panel (the big one with wallet name and trustline count) */
+body.dark-mode .info-panel,
+body.dark-mode .info-panel .info-text,
+body.dark-mode .info-panel div,
+body.dark-mode .info-panel p,
+body.dark-mode .info-panel span,
+body.dark-mode .info-panel code {
+     color: #bfdbfe !important;
+     /* Light blue-gray, readable */
+     background-color: transparent !important;
+}
+
+body.dark-mode .info-panel {
+     background: #172554 !important;
+     /* Dark indigo */
+     border-color: #3b82f6 !important;
+}
+
+/* Fix the collapsible trustlines list inside info panel */
+body.dark-mode .credential-info-panel {
+     background: #1e293b !important;
+     border-color: #334155 !important;
+     color: #e2e8f0 !important;
+}
+
+body.dark-mode .credential-info-panel .info-header span,
+body.dark-mode .credential-info-panel li,
+body.dark-mode .credential-info-panel code {
+     color: #e2e8f0 !important;
+}
+
+/* Make sure any inline-styled text falls back */
+body.dark-mode .info-text>div {
+     color: #bfdbfe !important;
+}
+
+/* Extra safety: any remaining dark text in form area */
+body.dark-mode .form-panel,
+body.dark-mode .form-panel * {
+     color: #e2e8f0 !important;
+}
+
+/* But override inputs and readonly fields to keep their intended color */
+body.dark-mode input,
+body.dark-mode input[readonly],
+body.dark-mode select {
+     color: #f1f5f9 !important;
+}
+
+/* === FINAL DARK MODE FIXES - Labels, Sliders, Dropdowns === */
+
+/* Force ALL labels and hints to be bright */
+body.dark-mode label,
+body.dark-mode .form-hint,
+body.dark-mode .form-group label,
+body.dark-mode .form-group .form-hint,
+body.dark-mode .flag-title,
+body.dark-mode .flag-desc,
+body.dark-mode .total-label,
+body.dark-mode code {
+     color: #f1f5f9 !important;
+     opacity: 1 !important;
+     background-color: #1e293b !important;
+}
+
+/* Fix slider switch labels (Add Memo, Use Ticket, Simulate) */
+body.dark-mode .switch {
+     color: #e2e8f0 !important;
+     background-color: #1e293b !important;
+}
+
+body.dark-mode .toggle-label,
+body.dark-mode .switch-group label {
+     color: #e2e8f0 !important;
+}
+
+/* Fix the "Separate multiple memos..." hint below sliders */
+body.dark-mode .memo-input+.form-hint,
+body.dark-mode .send-form p,
+body.dark-mode .send-form div {
+     color: #94a3b8 !important;
+}
+
+/* Fix Ticket Sequence dropdown and its labels */
+body.dark-mode .ticket-dropdown label,
+body.dark-mode .ticket-dropdown .form-hint,
+body.dark-mode .ticket-dropdown select,
+body.dark-mode .ticket-fields label,
+body.dark-mode .ticket-fields .form-hint {
+     color: #f1f5f9 !important;
+}
+
+body.dark-mode .ticket-dropdown select {
+     background-color: #334155 !important;
+     border-color: #475569 !important;
+     color: #f1f5f9 !important;
+}
+
+body.dark-mode .ticket-dropdown option {
+     background-color: #1e293b !important;
+     color: #e2e8f0 !important;
+}
+
+/* Fix "Selected: Ticket #..." text */
+body.dark-mode .selected-ticket-preview {
+     background: #1e293b !important;
+     color: #e2e8f0 !important;
+     border-color: #334155 !important;
+}
+
+/* Extra safety for any remaining dark text in form */
+body.dark-mode .form-panel label,
+body.dark-mode .form-panel .form-hint,
+body.dark-mode .form-panel p,
+body.dark-mode .form-panel span:not(.status-dot) {
+     color: #f1f5f9 !important;
+}
+
+/* Ensure readonly inputs show white text */
+body.dark-mode input[readonly] {
+     color: #f1f5f9 !important;
+     background-color: #334155 !important;
+}
+
+/* === DARK MODE FOR CUSTOM COMBOBOX DROPDOWN === */
+body.dark-mode .combobox-input {
+     background: #334155 !important;
+     /* Dark input bg */
+     border-color: #475569 !important;
+     color: #f1f5f9 !important;
+     /* Bright text */
+}
+
+body.dark-mode .combobox-input::placeholder {
+     color: #94a3b8 !important;
+}
+
+body.dark-mode .combobox-toggle {
+     color: #cbd5e1 !important;
+     /* Light chevron */
+}
+
+body.dark-mode .combobox-toggle:hover {
+     color: #f1f5f9 !important;
+}
+
+/* Dropdown panel background */
+body.dark-mode .combobox-wrapper,
+body.dark-mode .combobox-dropdown,
+body.dark-mode .combobox-dropdown-overlay,
+body.dark-mode .combobox-dropdown-portal,
+body.dark-mode .combobox-wrapper-stop {
+     background: #1e293b !important;
+     /* Dark slate */
+     border-color: #334155 !important;
+     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Scrollbar in dark mode */
+body.dark-mode .combobox-dropdown::-webkit-scrollbar-track {
+     background: #0f172a !important;
+}
+
+body.dark-mode .combobox-dropdown::-webkit-scrollbar-thumb {
+     background: #475569 !important;
+     border-color: #0f172a !important;
+}
+
+body.dark-mode .combobox-dropdown::-webkit-scrollbar-thumb:hover {
+     background: #64748b !important;
+}
+
+/* Items */
+body.dark-mode .combobox-item {
+     color: #e2e8f0 !important;
+}
+
+body.dark-mode .combobox-item:hover,
+body.dark-mode .combobox-item.highlighted {
+     background: #334155 !important;
+     /* Highlight on hover/focus */
+}
+
+/* Text inside items */
+body.dark-mode .item-name {
+     color: #f1f5f9 !important;
+     font-weight: 600;
+}
+
+body.dark-mode .item-address {
+     color: #94a3b8 !important;
+}
+
+/* Empty state */
+body.dark-mode .combobox-empty {
+     color: #94a3b8 !important;
+}
+
+/* Group headers */
+body.dark-mode .combobox-group-header {
+     color: #60a5fa !important;
+     /* Accent color for groups */
+     background: #172554 !important;
+     font-weight: 600;
+}
+
+/* Current account / selected item styling */
+body.dark-mode .combobox-item.current-account {
+     background: #16653430 !important;
+     /* Subtle green tint */
+     border-left-color: #22c55e !important;
+     color: #e2e8f0 !important;
+}
+
+body.dark-mode .current-account-badge,
+body.dark-mode .current-code-badge,
+body.dark-mode .current-token-badge {
+     color: #86efac !important;
+     /* Bright green */
+}
+
+/* .network-section {
+     display: flex;
+     flex-direction: column;
+     gap: 12px;
+} */
+
+.network-dropdown {
+     position: relative;
+     display: inline-block;
+     width: 100%;
+     margin-left: 0;
+}
+
+.network-dropdown .btn.dropdown-toggle {
+     width: 100%;
+     justify-content: space-between;
+     padding: 12px 16px;
+     border-radius: 10px;
+     background: rgba(255, 255, 255, 0.1);
+     color: white;
+     font-weight: 600;
+     margin-left: 0;
+}
+
+.network-dropdown .dropdown-menu {
+     position: absolute;
+     top: 100%;
+     left: 0;
+     right: 0;
+     /* margin-top: 8px; */
+     padding: 0;
+     margin-left: 0;
+     background: #1a1c21;
+     border: 1px solid rgba(255, 255, 255, 0.1);
+     border-radius: 10px;
+     padding: 8px 0;
+     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+     z-index: 1000;
+     display: none;
+}
+
+.network-dropdown .dropdown-menu a {
+     display: block;
+     padding: 10px 20px;
+     color: #e2e8f0;
+     text-decoration: none;
+     transition: background 0.2s;
+}
+
+.network-dropdown .dropdown-menu a:hover,
+.network-dropdown .dropdown-menu a.active {
+     background: rgba(255, 255, 255, 0.1);
+     color: #91ed80;
+}
+
+/* Show when open */
+.network-dropdown .dropdown-menu[style*="block"] {
+     display: block !important;
+}
+
+.arrow {
+     transition: transform 0.3s ease;
+     margin-left: 8px;
+}
+
+.arrow.open {
+     transform: rotate(180deg);
+}
+
+/* Main sidebar links - active state (already good) */
+.sidebar-links>a.active {
+     background: #4caf50;
+     color: white !important;
+     font-weight: 700;
+     border-radius: 10px;
+}
+
+/* Make sub-items (inside groups) match main links when active */
+.sidebar-group .group-items a.active {
+     background: #4caf50 !important;
+     /* Green background like main links */
+     color: white !important;
+     font-weight: 700 !important;
+     border-left: none !important;
+     /* Remove the old left border/underline */
+     border-radius: 8px !important;
+     /* Slight rounding to match main style */
+     padding: 10px 16px !important;
+     /* Match main link padding */
+     margin: 4px 8px !important;
+     /* Small margin for visual separation */
+}
+
+/* Optional: Improve hover for sub-items */
+.sidebar-group .group-items a:hover {
+     background: rgba(76, 175, 80, 0.2);
+     border-radius: 8px;
+}
+
+/* Keep expanded group header highlighted when any sub-item is active */
+.sidebar-group.expanded .group-toggle {
+     color: #91ed80;
+     font-weight: 700;
+}
+
+/* Optional: Add subtle background to expanded group for better grouping */
+.sidebar-group.expanded {
+     /* background: rgba(255, 255, 255, 0.05); */
+     border-radius: 12px;
+     padding-bottom: 2px;
+}
+
+/* Keep group header (Accounts, Escrows, NFTs) highlighted even when collapsed */
+.sidebar-group.expanded .group-toggle,
+.sidebar-group:has(.group-items a.active) .group-toggle {
+     color: #91ed80 !important;
+     font-weight: 700 !important;
+     /* background: rgba(76, 175, 80, 0.15) !important; */
+     border-radius: 10px;
+}
+
+/* Optional: subtle hover for group header */
+.group-toggle:hover {
+     background: rgba(255, 255, 255, 0.1);
+}
+
+/* Group toggle (Accounts, Escrows, NFTs) - default state */
+.sidebar-group .group-toggle {
+     padding: 12px 16px;
+     border-radius: 10px;
+     color: #fff;
+     font-weight: 500;
+     background: transparent;
+     transition: all 0.2s ease;
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+}
+
+/* Active state: full green background + white bold text when group has active sub-item */
+.sidebar-group:has(.group-items a.active) .group-toggle,
+.sidebar-group.expanded .group-toggle {
+     background: #4caf50 !important;
+     color: white !important;
+     font-weight: 700 !important;
+}
+
+/* Hover for group toggle */
+.sidebar-group .group-toggle:hover {
+     background: rgba(255, 255, 255, 0.15);
+}
+
+/* When group is active, keep hover effect subtle */
+.sidebar-group:has(.group-items a.active) .group-toggle:hover,
+.sidebar-group.expanded .group-toggle:hover {
+     background: #45a049 !important;
+     /* Slightly darker green on hover */
 }

@@ -1,26 +1,16 @@
-import { Component, OnInit, EventEmitter, Output, Injectable } from '@angular/core';
+import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
-import { AppConstants } from '../../core/app.constants';
 import { DatePipe } from '@angular/common';
-import { interval, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { formatInTimeZone } from 'date-fns-tz';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import * as xrpl from 'xrpl';
-
-@Injectable({ providedIn: 'root' })
-export class NetworkService {
-     private networkChangedSource = new Subject<string>();
-     networkChanged$ = this.networkChangedSource.asObservable();
-
-     announceNetworkChange(network: string) {
-          this.networkChangedSource.next(network);
-     }
-}
+import { NetworkService } from '../../services/network-service/network.service';
 
 @Component({
      selector: 'app-navbar',
@@ -35,16 +25,8 @@ export class NavbarComponent implements OnInit {
      networkColor: string = '#1a1c21';
      navbarColor: string = '#1a1c21';
      isNetworkDropdownOpen: boolean = false;
-     isEscrowsDropdownOpen: boolean = false;
-     isAccountDropdownOpen: boolean = false;
-     isNftDropdownOpen: boolean = false;
-     isMptDropdownOpen: boolean = false;
-     isUtilsDropdownOpen: boolean = false;
-     isEscrowsDropdownActive: boolean = false;
-     isNftDropdownActive: boolean = false;
-     isMptDropdownActive: boolean = false;
-     isAccountsDropdownActive: boolean = false;
      currentDateTime: string = ''; // Store formatted date/time
+     isDarkMode = false;
      // private timerSubscription: Subscription | null = null; // For real-time updates
      private searchSubject = new Subject<void>();
      transactionInput = '';
@@ -52,6 +34,7 @@ export class NavbarComponent implements OnInit {
      connectionStatus: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
      connectionStatusMessage = 'Disconnected';
      private subs: Subscription[] = [];
+     expandedGroup: 'accounts' | 'escrows' | 'nfts' | 'mpt' | null = null;
 
      constructor(private readonly storageService: StorageService, private readonly utilsService: UtilsService, private readonly xrplService: XrplService, private readonly router: Router, private readonly datePipe: DatePipe, private networkService: NetworkService) {}
 
@@ -70,45 +53,6 @@ export class NavbarComponent implements OnInit {
           // Kick off connection if not already started
           this.xrplService.getClient().catch(() => {});
 
-          // Initialize active link
-          const activeNavLink = this.storageService.getActiveNavLink();
-          const activeEscrowLink = this.storageService.getActiveEscrowLink();
-          const activeNftLink = this.storageService.getActiveNftLink();
-          const activeMptLink = this.storageService.getActiveMptLink();
-          this.isEscrowsDropdownActive = !!activeEscrowLink;
-          const activeAccountLink = this.storageService.getActiveAccountsLink();
-          this.isAccountDropdownOpen = !!activeAccountLink;
-          this.isNftDropdownActive = !!activeNftLink;
-          this.isMptDropdownActive = !!activeMptLink;
-
-          if (activeAccountLink) {
-               this.isAccountsDropdownActive = true;
-               this.isAccountDropdownOpen = true;
-               this.isEscrowsDropdownActive = false;
-               this.isNftDropdownActive = false;
-               this.isMptDropdownActive = false;
-          } else if (activeEscrowLink) {
-               this.isEscrowsDropdownActive = true;
-               this.isAccountsDropdownActive = false;
-               this.isNftDropdownActive = false;
-               this.isMptDropdownActive = false;
-          } else if (activeNftLink) {
-               this.isNftDropdownActive = true;
-               this.isAccountsDropdownActive = false;
-               this.isEscrowsDropdownActive = false;
-               this.isMptDropdownActive = false;
-          } else if (activeMptLink) {
-               this.isMptDropdownActive = true;
-               this.isNftDropdownActive = false;
-               this.isAccountsDropdownActive = false;
-               this.isEscrowsDropdownActive = false;
-          } else {
-               this.isEscrowsDropdownActive = !!activeNavLink && activeNavLink.includes('escrow');
-               this.isAccountsDropdownActive = !!activeNavLink && activeNavLink.includes('account');
-               this.isNftDropdownActive = !!activeNavLink && activeNavLink.includes('nft');
-               this.isMptDropdownActive = !!activeNavLink && activeNavLink.includes('mpt');
-          }
-
           // Initialize date/time and set up timer for real-time updates
           // this.updateDateTime();
           // this.timerSubscription = interval(100).subscribe(() => {
@@ -118,6 +62,14 @@ export class NavbarComponent implements OnInit {
           this.searchSubject.pipe(debounceTime(300)).subscribe(() => {
                this.getTransaction();
           });
+
+          const saved = localStorage.getItem('darkMode');
+          if (saved) {
+               this.isDarkMode = saved === 'true';
+          } else {
+               this.isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          }
+          this.applyDarkMode();
      }
 
      // private monitorConnectionStatus() {
@@ -129,6 +81,20 @@ export class NavbarComponent implements OnInit {
      //           this.checkConnection();
      //      }, 10000);
      // }
+
+     toggleDarkMode() {
+          this.isDarkMode = !this.isDarkMode;
+          localStorage.setItem('darkMode', this.isDarkMode.toString());
+          this.applyDarkMode();
+     }
+
+     private applyDarkMode() {
+          if (this.isDarkMode) {
+               document.body.classList.add('dark-mode');
+          } else {
+               document.body.classList.remove('dark-mode');
+          }
+     }
 
      async checkConnection() {
           try {
@@ -171,64 +137,39 @@ export class NavbarComponent implements OnInit {
 
      toggleNetworkDropdown() {
           this.isNetworkDropdownOpen = !this.isNetworkDropdownOpen;
-          this.isEscrowsDropdownOpen = false;
-          this.isUtilsDropdownOpen = false;
-          this.isAccountDropdownOpen = false;
-          this.isNftDropdownOpen = false;
-          this.isMptDropdownOpen = false;
      }
 
      toggleAccountsDropdown(event: Event) {
           event.preventDefault();
-          event.stopPropagation(); // Prevent event bubbling that might interfere
-          this.isAccountDropdownOpen = !this.isAccountDropdownOpen;
-          this.isAccountsDropdownActive = this.isAccountDropdownOpen; // Sync active state with open state
+          event.stopPropagation();
+          this.expandedGroup = this.expandedGroup === 'accounts' ? null : 'accounts';
           this.isNetworkDropdownOpen = false;
-          this.isEscrowsDropdownOpen = false;
-          this.isNftDropdownOpen = false;
-          this.isMptDropdownOpen = false;
-          this.isEscrowsDropdownActive = false; // Explicitly reset Escrows active state
-          this.isUtilsDropdownOpen = false;
-          this.storageService.removeValue('activeEscrowLink'); // Clear escrow link from storage
      }
 
-     toggleEscrowsDropdown(event: Event) {
+     ttoggleEscrowsDropdown(event: Event) {
           event.preventDefault();
-          this.isEscrowsDropdownOpen = !this.isEscrowsDropdownOpen;
+          event.stopPropagation();
+          this.expandedGroup = this.expandedGroup === 'escrows' ? null : 'escrows';
           this.isNetworkDropdownOpen = false;
-          this.isUtilsDropdownOpen = false;
-          this.isAccountDropdownOpen = false;
-          this.isNftDropdownOpen = false;
-          this.isMptDropdownOpen = false;
-          this.storageService.removeValue('activeAccountLink'); // Clear escrow link from storage
      }
 
      toggleNftDropdown(event: Event) {
           event.preventDefault();
-          this.isNftDropdownOpen = !this.isNftDropdownOpen;
-          this.isMptDropdownOpen = false;
+          event.stopPropagation();
+          this.expandedGroup = this.expandedGroup === 'nfts' ? null : 'nfts';
           this.isNetworkDropdownOpen = false;
-          this.isUtilsDropdownOpen = false;
-          this.isAccountDropdownOpen = false;
-          this.storageService.removeValue('activeAccountLink'); // Clear escrow link from storage
      }
 
      toggleMptDropdown(event: Event) {
           event.preventDefault();
-          this.isMptDropdownOpen = !this.isMptDropdownOpen;
-          this.isNftDropdownOpen = false;
+          event.stopPropagation();
+          this.expandedGroup = this.expandedGroup === 'mpt' ? null : 'mpt';
           this.isNetworkDropdownOpen = false;
-          this.isUtilsDropdownOpen = false;
-          this.isAccountDropdownOpen = false;
-          this.storageService.removeValue('activeAccountLink'); // Clear escrow link from storage
      }
 
      toggleUtilsDropdown(event: Event) {
           event.preventDefault();
-          this.isUtilsDropdownOpen = !this.isUtilsDropdownOpen;
           this.isNetworkDropdownOpen = false;
-          this.isEscrowsDropdownOpen = false;
-          this.isAccountDropdownOpen = false;
      }
 
      async selectNetwork(network: string) {
@@ -256,52 +197,25 @@ export class NavbarComponent implements OnInit {
 
      setActiveLink(link: string) {
           this.storageService.setActiveNavLink(link);
-          this.isEscrowsDropdownActive = false;
-          this.isEscrowsDropdownOpen = false;
-          this.isUtilsDropdownOpen = false;
-          this.isAccountDropdownOpen = false;
      }
 
      setActiveEscrowLink(link: string) {
           this.storageService.setActiveEscrowLink(link);
-          this.isEscrowsDropdownActive = true;
-          this.isEscrowsDropdownOpen = false;
-          this.isUtilsDropdownOpen = false;
-          this.isAccountDropdownOpen = false;
      }
 
      setActiveAccountsLink(link: string) {
           this.storageService.setActiveAccountsLink(link);
-          this.storageService.removeValue('activeEscrowLink'); // Clear escrow link from storage
-          this.isAccountDropdownOpen = true;
-          this.isAccountsDropdownActive = true; // Mark Accounts dropdown as active
-          this.isEscrowsDropdownActive = false; // Reset Escrows active state
-          this.isEscrowsDropdownOpen = false;
-          this.isUtilsDropdownOpen = false;
-          this.isNetworkDropdownOpen = false;
-     }
 
-     private resetDropdownStates(exclude: string = '') {
-          if (exclude !== 'network') {
-               this.isNetworkDropdownOpen = false;
-          }
-          if (exclude !== 'accounts') {
-               this.isAccountDropdownOpen = false;
-               this.isAccountsDropdownActive = false;
-          }
-          if (exclude !== 'escrows') {
-               this.isEscrowsDropdownOpen = false;
-               this.isEscrowsDropdownActive = false;
-          }
-          if (exclude !== 'utils') {
-               this.isUtilsDropdownOpen = false;
-          }
+          // CLOSE AFTER CLICK
+          this.expandedGroup = null;
+
+          // leave everything else untouched
+          this.isNetworkDropdownOpen = false;
      }
 
      async disconnectClient(event: Event) {
           event.preventDefault();
           await this.xrplService.disconnect();
-          this.isUtilsDropdownOpen = false;
      }
 
      async getTransaction() {

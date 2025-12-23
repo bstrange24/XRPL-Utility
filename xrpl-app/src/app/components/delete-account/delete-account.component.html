@@ -1,92 +1,89 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
+<div class="app-layout">
+     <app-navbar></app-navbar>
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+     <main class="main-content">
+          <div class="main-container">
+               <div class="content-wrapper">
+                    <!-- Left Wallet panel ==== -->
+                    <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
-          <div class="form-panel" style="padding-top: 2em">
-               <!-- Delete Menu -->
-               @if (activeTab() === 'deleteAccount') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
+                    <!-- Right form -->
+                    <div class="form-panel" style="padding-top: 2em">
+                         <!-- Delete Menu -->
+                         @if (activeTab() === 'deleteAccount') {
                          <div>
-                              <h2 class="submenu-info-main-text">Delete Wallet</h2>
-                              <p class="submenu-info-secondary-text">Delete currenlty selected wallet</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Info Message -->
-               @if (infoData(); as info) {
-               <div class="info-panel">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -7.7px"></ng-icon>
-                    <div class="info-text" [innerHTML]="info.message"></div>
-               </div>
-               }
-
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
-               </div>
-               }
-
-               <form #theForm="ngForm" class="send-form">
-                    <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab()">
-                              <div class="form-row">
-                                   <!-- Destination and Destination Tag -->
-                                   @if (activeTab() === 'deleteAccount') {
-                                   <div class="form-group">
-                                        <label for="destination">Destination</label>
-                                        <p class="form-hint">Destination account to send remaining XRP to.</p>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                              <div class="submenu-info-text">
+                                   <div class="red-button-submenu">
+                                        <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
                                    </div>
-
-                                   <div class="form-group">
-                                        <label for="destinationTagField">Destination Tag (opt)</label>
-                                        <p class="form-hint">Destination tag needed if sending to an account on an exchange.</p>
-                                        <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Delete Wallet</h2>
+                                        <p class="submenu-info-secondary-text">Delete currenlty selected wallet</p>
                                    </div>
-                                   }
-                              </div>
-
-                              <app-transaction-options [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                              <!-- Action buttons -->
-                              <div class="button-row">
-                                   @if (!canDelete() || txUiService.spinner()) {
-                                   <app-tooltip-link [tooltipText]="deleteWalletTooltip">
-                                        <button style="width: 425px" class="btn-primary-red" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || deleteBlockers().length > 0" (click)="deleteAccount()">{{ txUiService.spinner() ? 'Processing...' : 'Cannot Delete Wallet' }}</button>
-                                   </app-tooltip-link>
-                                   } @else {
-                                   <button type="button" class="btn-primary-red" (click)="deleteAccount()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delete Wallet' }}</button>
-                                   }
-                                   <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
                               </div>
                          </div>
+                         }
 
-                         <!-- Execution time -->
-                         <div style="display: flex">
-                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                         <!-- Info Message -->
+                         @if (infoData(); as info) {
+                         <div class="info-panel">
+                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -7.7px"></ng-icon>
+                              <div class="info-text" [innerHTML]="info.message"></div>
                          </div>
-                         <app-transaction-preview></app-transaction-preview>
+                         }
+
+                         <!-- Warning Message -->
+                         @if (txUiService.warningMessage) {
+                         <div class="warning-panel">
+                              <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                              <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                         </div>
+                         }
+
+                         <form #theForm="ngForm" class="send-form">
+                              <div class="tab-content-container">
+                                   <div [@tabTransition]="activeTab()">
+                                        <div class="form-row">
+                                             <!-- Destination and Destination Tag -->
+                                             @if (activeTab() === 'deleteAccount') {
+                                             <div class="form-group">
+                                                  <label for="destination">Destination</label>
+                                                  <p class="form-hint">Destination account to send remaining XRP to.</p>
+                                                  <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                                             </div>
+
+                                             <div class="form-group">
+                                                  <label for="destinationTagField">Destination Tag (opt)</label>
+                                                  <p class="form-hint">Destination tag needed if sending to an account on an exchange.</p>
+                                                  <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
+                                             </div>
+                                             }
+                                        </div>
+
+                                        <app-transaction-options [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                                        <!-- Action buttons -->
+                                        <div class="button-row">
+                                             @if (!canDelete() || txUiService.spinner()) {
+                                             <app-tooltip-link [tooltipText]="deleteWalletTooltip">
+                                                  <button style="width: 425px" class="btn-primary-red" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || deleteBlockers().length > 0" (click)="deleteAccount()">{{ txUiService.spinner() ? 'Processing...' : 'Cannot Delete Wallet' }}</button>
+                                             </app-tooltip-link>
+                                             } @else {
+                                             <button type="button" class="btn-primary-red" (click)="deleteAccount()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delete Wallet' }}</button>
+                                             }
+                                             <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
+                                        </div>
+                                   </div>
+
+                                   <!-- Execution time -->
+                                   <div style="display: flex">
+                                        <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                                   </div>
+                                   <app-transaction-preview></app-transaction-preview>
+                              </div>
+                         </form>
                     </div>
-               </form>
+               </div>
           </div>
-     </div>
+     </main>
 </div>
