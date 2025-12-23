@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
 import { StorageService } from '../../local-storage/storage.service';
 import { distinctUntilChanged, map, shareReplay } from 'rxjs';
-import { NetworkService } from '../../network-service/network.service';
+import { NetworkService } from '../../../components/navbar/navbar.component';
 
 export interface Wallet {
      name?: string;
@@ -55,13 +55,12 @@ export class WalletManagerService {
           this.currentNetwork = net?.environment || 'devnet';
 
           this.loadFromStorage();
-          this.networkService.announceNetworkChange(this.currentNetwork);
 
           // Listen for network switches
-          // this.networkService.networkChanged$.subscribe(network => {
-          //      this.currentNetwork = network;
-          //      this.loadFromStorage(); // This clears old network wallets instantly
-          // });
+          this.networkService.networkChanged$.subscribe(network => {
+               this.currentNetwork = network;
+               this.loadFromStorage(); // This clears old network wallets instantly
+          });
      }
 
      /** Load wallets from localStorage */
