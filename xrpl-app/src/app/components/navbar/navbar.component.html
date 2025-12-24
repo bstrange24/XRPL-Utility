@@ -1,11 +1,20 @@
-<div class="sidebar-container">
+<div class="sidebar-container" [class.collapsed]="isCollapsed">
      <div class="sidebar-links">
           <div class="sidebar-header">
-               <!-- Optional: Add a logo or app name here -->
-               <h2 class="sidebar-title">XRPL Tool</h2>
+               <button class="hamburger-btn" (click)="toggleSidebar()" [title]="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                         <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                              <line x1="3" y1="6" x2="21" y2="6" [attr.transform]="isCollapsed ? null : 'rotate(45 12 12)'" />
+                              <line x1="3" y1="12" x2="21" y2="12" [attr.opacity]="isCollapsed ? '1' : '0'" />
+                              <line x1="3" y1="18" x2="21" y2="18" [attr.transform]="isCollapsed ? null : 'rotate(-45 12 12)'" />
+                         </g>
+                    </svg>
+               </button>
+
+               <h2 class="sidebar-title" *ngIf="!isCollapsed">XRPL Tool</h2>
           </div>
 
-          <div class="network-section">
+          <div class="network-section" *ngIf="!isCollapsed">
                <div class="network-dropdown network network-{{ selectedNetwork | lowercase }}">
                     <button class="btn dropdown-toggle network-button" type="button" (click)="toggleNetworkDropdown()" [style.backgroundColor]="networkColor">
                          <div class="network-main">
@@ -29,12 +38,43 @@
                </div>
           </div>
 
-          <a routerLink="/wallet-configurator" routerLinkActive="active" (click)="setActiveLink('/wallet-configurator')">Wallets</a>
+          <!-- <a routerLink="/wallet-configurator" routerLinkActive="active" (click)="setActiveLink('/wallet-configurator')">Wallets</a> -->
+          <a routerLink="/wallet-configurator" routerLinkActive="active" class="nav-link" [title]="isCollapsed ? 'Wallets' : ''">
+               <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 12.5v4.5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h8" />
+                    <rect x="14" y="6" width="8" height="10" rx="2" />
+               </svg>
+               <span class="label" *ngIf="!isCollapsed">Wallets</span>
+          </a>
 
           <!-- Accounts Group (expandable) -->
           <div class="sidebar-group" [ngClass]="{ expanded: expandedGroup === 'accounts' }">
+               <a href="#" class="group-toggle" (click)="onAccountsClick($event)" [title]="isCollapsed ? 'Accounts' : ''">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                         <!-- Head -->
+                         <circle cx="12" cy="8" r="4" fill="currentColor" />
+
+                         <!-- Shoulders -->
+                         <path d="M4 20c0-4 4-6 8-6s8 2 8 6" fill="currentColor" />
+                    </svg>
+
+                    <span class="label" style="padding-left: 10px" *ngIf="!isCollapsed"> Accounts ▾ </span>
+               </a>
+
+               <div class="group-items" *ngIf="!isCollapsed">
+                    <a routerLink="/account-balance-changes" routerLinkActive="active" (click)="setActiveAccountsLink('/account-balance-changes')"> Balance Changes </a>
+                    <a routerLink="/account-configurator" routerLinkActive="active" (click)="setActiveAccountsLink('/account-configurator')"> Configurator </a>
+                    <a routerLink="/create-credentials" routerLinkActive="active" (click)="setActiveAccountsLink('/create-credentials')">Create Credentials</a>
+                    <a routerLink="/create-did" routerLinkActive="active" (click)="setActiveAccountsLink('/create-did')">Create DID</a>
+                    <a routerLink="/account-delegate" routerLinkActive="active" (click)="setActiveAccountsLink('/account-delegate')">Delegate</a>
+                    <a routerLink="/delete-account" routerLinkActive="active" (click)="setActiveAccountsLink('/delete-account')">Delete Account</a>
+                    <a routerLink="/firewall" routerLinkActive="active" (click)="setActiveAccountsLink('/firewall')">Firewall</a>
+                    <a routerLink="/permissioned-domain" routerLinkActive="active" (click)="setActiveAccountsLink('/permissioned-domain')">Permissioned Domain</a>
+               </div>
+          </div>
+          <!-- <div class="sidebar-group" [ngClass]="{ expanded: expandedGroup === 'accounts' }">
                <a href="#" class="group-toggle" (click)="toggleAccountsDropdown($event)">Accounts ▾</a>
-               <div class="group-items">
+               <div class="group-items" [title]="isCollapsed ? 'Accounts' : null">
                     <a routerLink="/account-balance-changes" routerLinkActive="active" (click)="setActiveAccountsLink('/account-balance-changes')">Balance Changes</a>
                     <a routerLink="/account-configurator" routerLinkActive="active" (click)="setActiveAccountsLink('/account-configurator')">Configurator</a>
                     <a routerLink="/create-credentials" routerLinkActive="active" (click)="setActiveAccountsLink('/create-credentials')">Create Credentials</a>
@@ -44,28 +84,80 @@
                     <a routerLink="/firewall" routerLinkActive="active" (click)="setActiveAccountsLink('/firewall')">Firewall</a>
                     <a routerLink="/permissioned-domain" routerLinkActive="active" (click)="setActiveAccountsLink('/permissioned-domain')">Permissioned Domain</a>
                </div>
-          </div>
+          </div> -->
 
-          <a routerLink="/send-xrp" routerLinkActive="active" (click)="setActiveLink('/send-xrp')">Send XRP</a>
-          <a routerLink="/sign-transactions" routerLinkActive="active" (click)="setActiveLink('/sign-transactions')">Sign Transactions</a>
+          <!-- <a routerLink="/send-xrp" routerLinkActive="active" (click)="setActiveLink('/send-xrp')">Send XRP</a> -->
+          <a routerLink="/send-xrp" routerLinkActive="active" class="nav-link" [title]="isCollapsed ? 'Send XRP' : null">
+               <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="22" y1="2" x2="11" y2="13" />
+                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
+               </svg>
+               <span class="label" *ngIf="!isCollapsed">Send XRP</span>
+          </a>
+          <!-- <a routerLink="/sign-transactions" routerLinkActive="active" (click)="setActiveLink('/sign-transactions')">Sign Transactions</a>
           <a routerLink="/trustlines" routerLinkActive="active" (click)="setActiveLink('/trustlines')">Trustlines</a>
-          <a routerLink="/payment-channel" routerLinkActive="active" (click)="setActiveLink('/payment-channel')">Payment Channel</a>
+          <a routerLink="/payment-channel" routerLinkActive="active" (click)="setActiveLink('/payment-channel')">Payment Channel</a> -->
+          <a routerLink="/sign-transactions" routerLinkActive="active" class="nav-link" (click)="setActiveLink('/sign-transactions')" [title]="isCollapsed ? 'Sign Transactions' : null">
+               <!-- Sign / Pen icon -->
+               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 21l3.5-.5L19 8a2.1 2.1 0 0 0-3-3L3.5 17.5 3 21z" fill="currentColor" />
+                    <path d="M14 6l4 4" stroke="currentColor" stroke-width="2" fill="none" />
+               </svg>
+
+               <span class="label" *ngIf="!isCollapsed">Sign Transactions</span>
+          </a>
+
+          <a routerLink="/trustlines" routerLinkActive="active" class="nav-link" (click)="setActiveLink('/trustlines')" [title]="isCollapsed ? 'Trustlines' : null">
+               <!-- Link / Chain icon -->
+               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M10 14a4 4 0 0 1 0-6l2-2a4 4 0 1 1 6 6l-1 1" stroke="currentColor" stroke-width="2" fill="none" />
+                    <path d="M14 10a4 4 0 0 1 0 6l-2 2a4 4 0 1 1-6-6l1-1" stroke="currentColor" stroke-width="2" fill="none" />
+               </svg>
+
+               <span class="label" *ngIf="!isCollapsed">Trustlines</span>
+          </a>
+
+          <a routerLink="/payment-channel" routerLinkActive="active" class="nav-link" (click)="setActiveLink('/payment-channel')" [title]="isCollapsed ? 'Payment Channel' : null">
+               <!-- Channel / Flow icon -->
+               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 6h10M4 12h16M4 18h10" stroke="currentColor" stroke-width="2" fill="none" />
+                    <path d="M18 5l2 2-2 2M18 11l2 2-2 2M18 17l2 2-2 2" stroke="currentColor" stroke-width="2" fill="none" />
+               </svg>
+
+               <span class="label" *ngIf="!isCollapsed">Payment Channel</span>
+          </a>
 
           <!-- Escrows Group -->
-          <div class="sidebar-group" [ngClass]="{ expanded: expandedGroup === 'escrows' }">
+          <!-- <div class="sidebar-group" [ngClass]="{ expanded: expandedGroup === 'escrows' }">
                <a href="#" class="group-toggle" (click)="ttoggleEscrowsDropdown($event)">Escrows ▾</a>
                <div class="group-items">
                     <a routerLink="/time-escrow" routerLinkActive="active" (click)="setActiveEscrowLink('/time-escrow')">Time Escrow</a>
                     <a routerLink="/conditional-escrow" routerLinkActive="active" (click)="setActiveEscrowLink('/conditional-escrow')">Conditional Escrow</a>
                </div>
+          </div> -->
+          <div class="sidebar-group" [ngClass]="{ expanded: expandedGroup === 'escrows' }">
+               <a href="#" class="group-toggle" (click)="onEscrowsClick($event)" [title]="isCollapsed ? 'Escrows' : null">
+                    <!-- Escrow / Lock icon -->
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                         <rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2" fill="none" />
+                         <path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" fill="none" />
+                    </svg>
+
+                    <span class="label" style="padding-left: 10px" *ngIf="!isCollapsed">Escrows ▾</span>
+               </a>
+
+               <div class="group-items" *ngIf="!isCollapsed">
+                    <a routerLink="/time-escrow" routerLinkActive="active" (click)="setActiveEscrowLink('/time-escrow')"> Time Escrow </a>
+
+                    <a routerLink="/conditional-escrow" routerLinkActive="active" (click)="setActiveEscrowLink('/conditional-escrow')"> Conditional Escrow </a>
+               </div>
           </div>
 
-          <a routerLink="/checks" routerLinkActive="active" (click)="setActiveLink('/checks')">Checks</a>
+          <!-- <a routerLink="/checks" routerLinkActive="active" (click)="setActiveLink('/checks')">Checks</a>
           <a routerLink="/tickets" routerLinkActive="active" (click)="setActiveLink('/tickets')">Tickets</a>
           <a routerLink="/create-offer" routerLinkActive="active" (click)="setActiveLink('/create-offer')">Offers</a>
           <a routerLink="/create-amm" routerLinkActive="active" (click)="setActiveLink('/create-amm')">AMM</a>
 
-          <!-- NFTs Group -->
           <div class="sidebar-group" [ngClass]="{ expanded: expandedGroup === 'nfts' }">
                <a href="#" class="group-toggle" (click)="toggleNftDropdown($event)">NFTs ▾</a>
                <div class="group-items">
@@ -74,9 +166,101 @@
                </div>
           </div>
 
-          <a routerLink="/mpt" routerLinkActive="active" (click)="setActiveLink('/mpt')">MPT</a>
+          <a routerLink="/mpt" routerLinkActive="active" (click)="setActiveLink('/mpt')">MPT</a> -->
 
-          <div class="dark-mode-toggle" (click)="toggleDarkMode()">
+          <a routerLink="/checks" routerLinkActive="active" class="nav-link" (click)="setActiveLink('/checks')" [title]="isCollapsed ? 'Checks' : null">
+               <!-- Check / Verify icon -->
+               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" fill="none" />
+               </svg>
+
+               <span class="label" *ngIf="!isCollapsed">Checks</span>
+          </a>
+
+          <a routerLink="/tickets" routerLinkActive="active" class="nav-link" (click)="setActiveLink('/tickets')" [title]="isCollapsed ? 'Tickets' : null">
+               <!-- Ticket icon -->
+               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 7h16v4a2 2 0 0 1 0 4v4H4v-4a2 2 0 0 1 0-4V7z" stroke="currentColor" stroke-width="2" fill="none" />
+               </svg>
+
+               <span class="label" *ngIf="!isCollapsed">Tickets</span>
+          </a>
+
+          <a routerLink="/create-offer" routerLinkActive="active" class="nav-link" (click)="setActiveLink('/create-offer')" [title]="isCollapsed ? 'Offers' : null">
+               <!-- Offer / Tag icon -->
+               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20 10l-8 8-8-8V4h6l10 6z" stroke="currentColor" stroke-width="2" fill="none" />
+               </svg>
+
+               <span class="label" *ngIf="!isCollapsed">Offers</span>
+          </a>
+
+          <a routerLink="/create-amm" routerLinkActive="active" class="nav-link" (click)="setActiveLink('/create-amm')" [title]="isCollapsed ? 'AMM' : null">
+               <!-- AMM / Pool icon -->
+               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="8" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none" />
+                    <circle cx="16" cy="12" r="3" stroke="currentColor" stroke-width="2" fill="none" />
+                    <path d="M11 12h2" stroke="currentColor" stroke-width="2" />
+               </svg>
+
+               <span class="label" *ngIf="!isCollapsed">AMM</span>
+          </a>
+
+          <div class="sidebar-group" [ngClass]="{ expanded: expandedGroup === 'nfts' }">
+               <a href="#" class="group-toggle" (click)="onNftsClick($event)" [title]="isCollapsed ? 'NFTs' : null">
+                    <!-- NFT / Image icon -->
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                         <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2" fill="none" />
+                         <circle cx="9" cy="9" r="2" stroke="currentColor" stroke-width="2" fill="none" />
+                         <path d="M21 16l-5-5-7 7" stroke="currentColor" stroke-width="2" fill="none" />
+                    </svg>
+
+                    <span class="label" style="padding-left: 10px" *ngIf="!isCollapsed">NFTs ▾</span>
+               </a>
+
+               <div class="group-items" *ngIf="!isCollapsed">
+                    <a routerLink="/create-nft" routerLinkActive="active" (click)="setActiveLink('/create-nft')"> NFT Create </a>
+
+                    <a routerLink="/nft-offers" routerLinkActive="active" (click)="setActiveLink('/nft-offers')"> NFT Offers </a>
+               </div>
+          </div>
+
+          <a routerLink="/mpt" routerLinkActive="active" class="nav-link" (click)="setActiveLink('/mpt')" [title]="isCollapsed ? 'MPT' : null">
+               <!-- Token / Coin icon -->
+               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none" />
+                    <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" />
+               </svg>
+
+               <span class="label" *ngIf="!isCollapsed">MPT</span>
+          </a>
+
+          <div class="dark-mode-toggle" [class.collapsed]="isCollapsed" (click)="toggleDarkMode()">
+               @if (!isDarkMode) {
+               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="5" fill="currentColor" />
+                    <path
+                         d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42
+           M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         fill="none"
+                    />
+               </svg>
+               } @if (isDarkMode) {
+               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                         d="M21 12.79A9 9 0 1 1 11.21 3
+           7 7 0 0 0 21 12.79z"
+                         fill="currentColor"
+                    />
+               </svg>
+               }
+
+               <span class="toggle-text" *ngIf="!isCollapsed"> {{ isDarkMode ? 'Light Mode' : 'Dark Mode' }} </span>
+          </div>
+
+          <!-- <div class="dark-mode-toggle" (click)="toggleDarkMode()">
                @if (!isDarkMode) {
                <svg class="icon-sun" viewBox="0 0 24 24">
                     <circle cx="12" cy="12" r="5" fill="currentColor" />
@@ -88,6 +272,6 @@
                </svg>
                }
                <span class="toggle-text">{{ isDarkMode ? 'Light Mode' : 'Dark Mode' }}</span>
-          </div>
+          </div> -->
      </div>
 </div>

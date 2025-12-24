@@ -11,11 +11,17 @@ import { debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import * as xrpl from 'xrpl';
 import { NetworkService } from '../../services/network-service/network.service';
+import { NgIcon } from '@ng-icons/core';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
 @Component({
      selector: 'app-navbar',
      standalone: true,
-     imports: [CommonModule, RouterModule],
+     imports: [CommonModule, RouterModule, NgIcon],
      providers: [DatePipe],
      templateUrl: './navbar.component.html',
 })
@@ -35,6 +41,7 @@ export class NavbarComponent implements OnInit {
      connectionStatusMessage = 'Disconnected';
      private subs: Subscription[] = [];
      expandedGroup: 'accounts' | 'escrows' | 'nfts' | 'mpt' | null = null;
+     isCollapsed = false;
 
      constructor(private readonly storageService: StorageService, private readonly utilsService: UtilsService, private readonly xrplService: XrplService, private readonly router: Router, private readonly datePipe: DatePipe, private networkService: NetworkService) {}
 
@@ -59,10 +66,6 @@ export class NavbarComponent implements OnInit {
           //      this.updateDateTime();
           // });
 
-          this.searchSubject.pipe(debounceTime(300)).subscribe(() => {
-               this.getTransaction();
-          });
-
           const saved = localStorage.getItem('darkMode');
           if (saved) {
                this.isDarkMode = saved === 'true';
@@ -81,6 +84,56 @@ export class NavbarComponent implements OnInit {
      //           this.checkConnection();
      //      }, 10000);
      // }
+
+     toggleSidebar() {
+          this.isCollapsed = !this.isCollapsed;
+
+          // Close all groups when collapsing
+          if (this.isCollapsed) {
+               this.expandedGroup = null;
+               this.isNetworkDropdownOpen = false;
+          }
+     }
+
+     onAccountsClick(event: Event) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (this.isCollapsed) {
+               // Default landing page for Accounts
+               this.router.navigate(['/account-configurator']);
+               return;
+          }
+
+          this.expandedGroup = this.expandedGroup === 'accounts' ? null : 'accounts';
+
+          this.isNetworkDropdownOpen = false;
+     }
+
+     onNftsClick(event: Event) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (this.isCollapsed) {
+               this.router.navigate(['/create-nft']);
+               return;
+          }
+
+          this.expandedGroup = this.expandedGroup === 'nfts' ? null : 'nfts';
+     }
+
+     onEscrowsClick(event: Event) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (this.isCollapsed) {
+               // Default Escrow landing page
+               this.router.navigate(['/time-escrow']);
+               return;
+          }
+
+          this.expandedGroup = this.expandedGroup === 'escrows' ? null : 'escrows';
+     }
 
      toggleDarkMode() {
           this.isDarkMode = !this.isDarkMode;
@@ -216,84 +269,5 @@ export class NavbarComponent implements OnInit {
      async disconnectClient(event: Event) {
           event.preventDefault();
           await this.xrplService.disconnect();
-     }
-
-     async getTransaction() {
-          console.log('Entering getTransaction');
-          const startTime = Date.now();
-          this.spinner = true;
-
-          const input = this.transactionInput.trim();
-          if (!input) {
-               this.transactionResult.emit({
-                    result: `<p>ERROR: Transaction field cannot be empty</p>`,
-                    isError: true,
-                    isSuccess: false,
-               });
-               this.spinner = false;
-               return;
-          }
-          if (!this.utilsService.isValidTransactionHash(input) && !this.utilsService.isValidCTID(input) && !xrpl.isValidAddress(input)) {
-               this.transactionResult.emit({
-                    result: `<p>ERROR: Invalid input. Must be a valid Transaction Hash, CTID, or Address</p>`,
-                    isError: true,
-                    isSuccess: false,
-               });
-               this.spinner = false;
-               return;
-          }
-
-          try {
-               const client = await this.xrplService.getClient();
-
-               const tempDiv = document.createElement('div');
-
-               let txResponse;
-               if (this.utilsService.isValidTransactionHash(input)) {
-                    txResponse = await client.request({
-                         command: 'tx',
-                         transaction: input,
-                    });
-               } else if (this.utilsService.isValidCTID(input)) {
-                    txResponse = await client.request({
-                         command: 'tx',
-                         ctid: input,
-                    });
-               } else if (xrpl.isValidAddress(input)) {
-                    txResponse = await client.request({
-                         command: 'account_tx',
-                         account: input,
-                         ledger_index_min: -1,
-                         ledger_index_max: -1,
-                         limit: 10,
-                    });
-               }
-
-               tempDiv.innerHTML += `\nTransaction data retrieved successfully.\n`;
-
-               if (txResponse) {
-                    this.transactionResult.emit({
-                         result: tempDiv.innerHTML,
-                         isError: false,
-                         isSuccess: true,
-                    });
-               } else {
-                    this.transactionResult.emit({
-                         result: `<p>ERROR: No transaction data found.</p>`,
-                         isError: true,
-                         isSuccess: false,
-                    });
-               }
-          } catch (error: any) {
-               console.error('Error:', error);
-               this.transactionResult.emit({
-                    result: `ERROR: ${error.message || 'Unknown error'}`,
-                    isError: true,
-                    isSuccess: false,
-               });
-          } finally {
-               this.spinner = false;
-               console.log(`Leaving getTransaction in ${Date.now() - startTime}ms`);
-          }
      }
 }
