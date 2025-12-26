@@ -606,6 +606,16 @@ export class TransactionUiService {
 
      clearAllOptionsAndMessages() {
           // this.clearAllOptions();
+          this.clearTxAndHash();
+          this.isTicket.set(false);
+          this.selectedSingleTicket.set('');
+          this.selectedTickets.set([]);
+          this.isMemoEnabled.set(false);
+          // this.clearWarning();
+          this.successMessage = '';
+     }
+
+     clearTxAndHash() {
           this.errorMessage = '';
           this.errorMessageSignal.set(null);
           this.updateSpinnerMessageSignal('');
@@ -613,11 +623,5 @@ export class TransactionUiService {
           this.clearTxHashSignal();
           this.clearTxSignal();
           this.clearMessages();
-          this.isTicket.set(false);
-          this.selectedSingleTicket.set('');
-          this.selectedTickets.set([]);
-          this.isMemoEnabled.set(false);
-          // this.clearWarning();
-          this.successMessage = '';
      }
 }

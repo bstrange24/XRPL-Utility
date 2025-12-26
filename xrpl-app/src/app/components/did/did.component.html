@@ -1,272 +1,269 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
+<div class="app-layout">
+     <app-navbar></app-navbar>
 
-<!-- Main content. Centered with 2 columns -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+     <main class="main-content">
+          <div class="main-container">
+               <div class="content-wrapper">
+                    <!-- Left Wallet panel ==== -->
+                    <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
-          <div class="form-panel">
-               <!-- Menu bar -->
-               <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'set'" (click)="setTab('set')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Set DID
-                    </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'delete'" (click)="setTab('delete')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Delete DID
-                    </button>
-               </div>
-
-               <!-- Create Menu -->
-               @if (activeTab() === 'set') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                    <!-- Right form -->
+                    <div class="form-panel">
+                         <!-- Menu bar -->
+                         <div class="menu-bar">
+                              <button class="menu-btn active" [class.active]="activeTab() === 'set'" (click)="setTab('set')">
+                                   <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
+                                   Set DID
+                              </button>
+                              <button class="menu-btn active" [class.active]="activeTab() === 'delete'" (click)="setTab('delete')">
+                                   <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
+                                   Delete DID
+                              </button>
                          </div>
+
+                         <!-- Create Menu -->
+                         @if (activeTab() === 'set') {
                          <div>
-                              <h2 class="submenu-info-main-text">Set DID</h2>
-                              <p class="submenu-info-secondary-text">Set DID for the selected account.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Delete Menu -->
-               @if (activeTab() === 'delete') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Delete DID</h2>
-                              <p class="submenu-info-secondary-text">Delete DID for the selected account.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Info Message -->
-               @if (infoData(); as info) {
-               <div class="info-panel">
-                    <div class="info-text">
-                         <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
-                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
-                              <code>{{ info.walletName }}</code>
-
-                              @switch (info.mode) { @case ('set') { @if (info.didCount === 0) { has not created a DID yet. } @else { has a DID set. Only <strong>1</strong> DID can exist per account. } } @case ('delete') { @if (info.didCount === 0) { has no DID to delete. } @else { has <strong>1</strong> DID that can be deleted. } } }
-                         </div>
-
-                         <!-- Collapsable DID panel only shown when a DID actually exists -->
-                         @if (info.existingDid.length === 1) {
-                         <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05)">
-                              <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
-                                   <span>
-                                        DID Entry @if (info.mode === 'delete') { — <strong>ready for deletion</strong>
-                                        } @else { — active. }
-                                   </span>
-                                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" style="transition: transform 0.25s ease">
-                                        <path d="M6 9l6 6 6-6" />
-                                   </svg>
-                              </div>
-
-                              @if (infoPanelExpanded()) {
-                              <div style="margin-top: 14px; font-size: 0.92em; line-height: 1">
-                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + info.existingDid[0].index" tooltipText="View DID entry on XRPL Explorer">
-                                        <div style="font-weight: 500; color: #0c4a6e; cursor: pointer">DID Ledger Entry</div>
-                                        <div style="color: #555; margin-top: 10px; word-break: break-all"><strong>Index:</strong> {{ info.existingDid[0].index }}</div>
-
-                                        @if (info.existingDid[0].URI && info.existingDid[0].URI !== 'N/A') {
-                                        <div style="color: #555; margin-top: 10px; margin-bottom: 6px">
-                                             <strong>URI:</strong>
-                                             <span style="font-family: monospace; background: #e0f2fe; padding: 2px 6px; border-radius: 4px; font-size: 0.88em"> {{ info.existingDid[0].URI }} </span>
-                                        </div>
-                                        }
-                                   </app-tooltip-link>
-
-                                   <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed #bae6fd" (mouseenter)="$event.stopPropagation()" (mouseleave)="$event.stopPropagation()" (mousemove)="$event.stopPropagation()">
-                                        @if (info.existingDid[0].DIDDocument && info.existingDid[0].DIDDocument !== 'N/A') {
-                                        <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].DIDDocument, 'DID Document')">Copy full DID Document (JSON)</div>
-                                        } @if (info.existingDid[0].Data && info.existingDid[0].Data !== 'N/A') {
-                                        <br /><br />
-                                        <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].Data, 'DID Data')">Copy Data field (JSON)</div>
-                                        } @if (info.existingDid[0].Data && info.existingDid[0].Data !== 'N/A') {
-                                        <br /><br />
-                                        <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].URI, 'URI Data')">Copy URI Field</div>
-                                        }@if (info.existingDid[0].Data && info.existingDid[0].index !== 'N/A') {
-                                        <br /><br />
-                                        <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].index, 'Index')">Copy Index</div>
-                                        }
+                              <div class="submenu-info-text">
+                                   <div class="blue-button-submenu">
+                                        <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Set DID</h2>
+                                        <p class="submenu-info-secondary-text">Set DID for the selected account.</p>
                                    </div>
                               </div>
-                              }
                          </div>
                          }
-                    </div>
-               </div>
-               }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
-               </div>
-               }
-
-               <form #theForm="ngForm" class="send-form">
-                    <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab()">
-                              @if (activeTab() === 'set' && existingDid().length <= 0) {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label class="label-with-link">
-                                             DID Document
-                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="didDocumentEditor.format()">Format DID Document</button>
-                                             <div class="metadata-info">
-                                                  <small class="text-muted"> Metadata size: {{ didDocumentDataByteLength() }} / 256 bytes </small>
-                                                  @if (didDocumentDataByteLength() > 256) {
-                                                  <small class="text-danger d-block">
-                                                       <strong>Exceeded limit – transaction will fail</strong>
-                                                  </small>
-                                                  } @else if (didDocumentDataByteLength() > 200) {
-                                                  <small class="text-warning d-block"> Approaching limit ({{ didDocumentDataByteLength() }} bytes) </small>
-                                                  }
-                                             </div>
-                                        </label>
-                                        <app-json-editor [value]="didDocumentData()" (valueChange)="onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
+                         <!-- Delete Menu -->
+                         @if (activeTab() === 'delete') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="red-button-submenu">
+                                        <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Delete DID</h2>
+                                        <p class="submenu-info-secondary-text">Delete DID for the selected account.</p>
                                    </div>
                               </div>
-                              <!-- <div class="form-row">
+                         </div>
+                         }
+
+                         <!-- Info Message -->
+                         @if (infoData(); as info) {
+                         <div class="info-panel">
+                              <div class="info-text">
+                                   <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                                        <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
+                                        <code>{{ info.walletName }}</code>
+
+                                        @switch (info.mode) { @case ('set') { @if (info.didCount === 0) { has not created a DID yet. } @else { has a DID set. Only <strong>1</strong> DID can exist per account. } } @case ('delete') { @if (info.didCount === 0) { has no DID to delete. } @else { has <strong>1</strong> DID that can be deleted. } } }
+                                   </div>
+
+                                   <!-- Collapsable DID panel only shown when a DID actually exists -->
+                                   @if (info.existingDid.length === 1) {
+                                   <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05)">
+                                        <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
+                                             <span>
+                                                  DID Entry @if (info.mode === 'delete') { — <strong>ready for deletion</strong>
+                                                  } @else { — active. }
+                                             </span>
+                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" style="transition: transform 0.25s ease">
+                                                  <path d="M6 9l6 6 6-6" />
+                                             </svg>
+                                        </div>
+
+                                        @if (infoPanelExpanded()) {
+                                        <div style="margin-top: 14px; font-size: 0.92em; line-height: 1">
+                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + info.existingDid[0].index" tooltipText="View DID entry on XRPL Explorer">
+                                                  <div style="font-weight: 500; color: #0c4a6e; cursor: pointer">DID Ledger Entry</div>
+                                                  <div style="color: #555; margin-top: 10px; word-break: break-all"><strong>Index:</strong> {{ info.existingDid[0].index }}</div>
+
+                                                  @if (info.existingDid[0].URI && info.existingDid[0].URI !== 'N/A') {
+                                                  <div style="color: #555; margin-top: 10px; margin-bottom: 6px">
+                                                       <strong>URI:</strong>
+                                                       <span style="font-family: monospace; background: #e0f2fe; padding: 2px 6px; border-radius: 4px; font-size: 0.88em"> {{ info.existingDid[0].URI }} </span>
+                                                  </div>
+                                                  }
+                                             </app-tooltip-link>
+
+                                             <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed #bae6fd" (mouseenter)="$event.stopPropagation()" (mouseleave)="$event.stopPropagation()" (mousemove)="$event.stopPropagation()">
+                                                  @if (info.existingDid[0].DIDDocument && info.existingDid[0].DIDDocument !== 'N/A') {
+                                                  <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].DIDDocument, 'DID Document')">Copy full DID Document (JSON)</div>
+                                                  } @if (info.existingDid[0].Data && info.existingDid[0].Data !== 'N/A') {
+                                                  <br /><br />
+                                                  <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].Data, 'DID Data')">Copy Data field (JSON)</div>
+                                                  } @if (info.existingDid[0].Data && info.existingDid[0].Data !== 'N/A') {
+                                                  <br /><br />
+                                                  <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].URI, 'URI Data')">Copy URI Field</div>
+                                                  }@if (info.existingDid[0].Data && info.existingDid[0].index !== 'N/A') {
+                                                  <br /><br />
+                                                  <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].index, 'Index')">Copy Index</div>
+                                                  }
+                                             </div>
+                                        </div>
+                                        }
+                                   </div>
+                                   }
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Warning Message -->
+                         @if (txUiService.warningMessage) {
+                         <div class="warning-panel">
+                              <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                              <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                         </div>
+                         }
+
+                         <form #theForm="ngForm" class="send-form">
+                              <div class="tab-content-container">
+                                   <div [@tabTransition]="activeTab()">
+                                        @if (activeTab() === 'set' && existingDid().length <= 0) {
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label class="label-with-link">
+                                                       DID Document
+                                                       <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="didDocumentEditor.format()">Format DID Document</button>
+                                                       <div class="metadata-info">
+                                                            <small class="text-muted"> Metadata size: {{ didDocumentDataByteLength() }} / 256 bytes </small>
+                                                            @if (didDocumentDataByteLength() > 256) {
+                                                            <small class="text-danger d-block">
+                                                                 <strong>Exceeded limit – transaction will fail</strong>
+                                                            </small>
+                                                            } @else if (didDocumentDataByteLength() > 200) {
+                                                            <small class="text-warning d-block"> Approaching limit ({{ didDocumentDataByteLength() }} bytes) </small>
+                                                            }
+                                                       </div>
+                                                  </label>
+                                                  <app-json-editor [value]="didDocumentData()" (valueChange)="onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
+                                             </div>
+                                        </div>
+                                        <!-- <div class="form-row">
                                    <div class="form-group">
                                         <label for="didDocument">DID Document</label>
                                         <textarea style="width: 100%; height: 200px; max-width: 100%; font-size: 0.95rem" id="didDocument" placeholder="DID Document" [(ngModel)]="didDetails().document" name="didDocument"></textarea>
                                    </div>
                               </div> -->
 
-                              <!-- URI -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label class="label-with-link">
-                                             URI Data
-                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="uriEditor.format()">Format URI Data</button>
-                                             <div class="metadata-info">
-                                                  <small class="text-muted"> Metadata size: {{ uriDataByteLength() }} / 256 bytes </small>
-                                                  @if (uriDataByteLength() > 256) {
-                                                  <small class="text-danger d-block">
-                                                       <strong>Exceeded limit – transaction will fail</strong>
-                                                  </small>
-                                                  } @else if (uriDataByteLength() > 200) {
-                                                  <small class="text-warning d-block"> Approaching limit ({{ uriDataByteLength() }} bytes) </small>
-                                                  }
+                                        <!-- URI -->
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label class="label-with-link">
+                                                       URI Data
+                                                       <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="uriEditor.format()">Format URI Data</button>
+                                                       <div class="metadata-info">
+                                                            <small class="text-muted"> Metadata size: {{ uriDataByteLength() }} / 256 bytes </small>
+                                                            @if (uriDataByteLength() > 256) {
+                                                            <small class="text-danger d-block">
+                                                                 <strong>Exceeded limit – transaction will fail</strong>
+                                                            </small>
+                                                            } @else if (uriDataByteLength() > 200) {
+                                                            <small class="text-warning d-block"> Approaching limit ({{ uriDataByteLength() }} bytes) </small>
+                                                            }
+                                                       </div>
+                                                  </label>
+                                                  <app-json-editor [value]="uriData()" (valueChange)="onUriDataChange($event)" #uriEditor> </app-json-editor>
                                              </div>
-                                        </label>
-                                        <app-json-editor [value]="uriData()" (valueChange)="onUriDataChange($event)" #uriEditor> </app-json-editor>
-                                   </div>
-                              </div>
-                              <!-- <div class="form-row">
+                                        </div>
+                                        <!-- <div class="form-row">
                                    <div class="form-group">
                                         <label for="uri">URI</label>
                                         <input type="text" [(ngModel)]="didDetails().uri" placeholder="DID URI" name="uri" />
                                    </div>
                               </div> -->
 
-                              <!-- Did Data -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label class="label-with-link">
-                                             DID Data
-                                             <br />
-                                             <span class="label-meta">
-                                                  DID Schema
-                                                  <a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer">W3C</a>
-                                             </span>
+                                        <!-- Did Data -->
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label class="label-with-link">
+                                                       DID Data
+                                                       <br />
+                                                       <span class="label-meta">
+                                                            DID Schema
+                                                            <a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer">W3C</a>
+                                                       </span>
 
-                                             <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="didDataEditor.format()">Format DID Data</button>
-                                             <!-- <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="validateDidData()">Validate DID Data</button> -->
+                                                       <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="didDataEditor.format()">Format DID Data</button>
+                                                       <!-- <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="validateDidData()">Validate DID Data</button> -->
 
-                                             <!-- Success: Schema valid AND no syntax errors -->
-                                             @if (validDidSchema() && !hasJsonSyntaxError()) {
-                                             <div class="json-schema-success mt-2">
-                                                  <small class="text-success">
-                                                       <strong>✓ DID JSON is valid and well-formed</strong>
-                                                  </small>
+                                                       <!-- Success: Schema valid AND no syntax errors -->
+                                                       @if (validDidSchema() && !hasJsonSyntaxError()) {
+                                                       <div class="json-schema-success mt-2">
+                                                            <small class="text-success">
+                                                                 <strong>✓ DID JSON is valid and well-formed</strong>
+                                                            </small>
+                                                       </div>
+                                                       }
+
+                                                       <!-- Warning: Schema valid BUT has JSON syntax errors -->
+                                                       @if (validDidSchema() && hasJsonSyntaxError()) {
+                                                       <div class="json-schema-warning mt-2">
+                                                            <small class="text-warning">
+                                                                 <strong>⚠ Schema valid, but JSON has syntax errors:</strong><br />
+                                                                 <!-- {{ jsonEditor.jsonError() }} -->
+                                                            </small>
+                                                       </div>
+                                                       }
+
+                                                       <div class="metadata-info">
+                                                            <small class="text-muted"> Metadata size: {{ didDataByteLength() }} / 256 bytes </small>
+                                                            @if (didDataByteLength() > 256) {
+                                                            <small class="text-danger d-block">
+                                                                 <strong>Exceeded limit – transaction will fail</strong>
+                                                            </small>
+                                                            } @else if (didDataByteLength() > 200) {
+                                                            <small class="text-warning d-block"> Approaching limit ({{ didDataByteLength() }} bytes) </small>
+                                                            }
+                                                       </div>
+                                                  </label>
+                                                  <app-json-editor [value]="didData()" (valueChange)="onDidDataChange($event)" #didDataEditor> </app-json-editor>
                                              </div>
-                                             }
+                                        </div>
+                                        }
 
-                                             <!-- Warning: Schema valid BUT has JSON syntax errors -->
-                                             @if (validDidSchema() && hasJsonSyntaxError()) {
-                                             <div class="json-schema-warning mt-2">
-                                                  <small class="text-warning">
-                                                       <strong>⚠ Schema valid, but JSON has syntax errors:</strong><br />
-                                                       <!-- {{ jsonEditor.jsonError() }} -->
-                                                  </small>
-                                             </div>
-                                             }
+                                        <!-- Only show buttons and sliders if there is no DID set or we are on the delete DID tab -->
+                                        @if ((activeTab() === 'set' && existingDid().length <= 0) || activeTab() === 'delete') {
+                                        <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
-                                             <div class="metadata-info">
-                                                  <small class="text-muted"> Metadata size: {{ didDataByteLength() }} / 256 bytes </small>
-                                                  @if (didDataByteLength() > 256) {
-                                                  <small class="text-danger d-block">
-                                                       <strong>Exceeded limit – transaction will fail</strong>
-                                                  </small>
-                                                  } @else if (didDataByteLength() > 200) {
-                                                  <small class="text-warning d-block"> Approaching limit ({{ didDataByteLength() }} bytes) </small>
-                                                  }
-                                             </div>
-                                        </label>
-                                        <app-json-editor [value]="didData()" (valueChange)="onDidDataChange($event)" #didDataEditor> </app-json-editor>
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Only show buttons and sliders if there is no DID set or we are on the delete DID tab -->
-                              @if ((activeTab() === 'set' && existingDid().length <= 0) || activeTab() === 'delete') {
-                              <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                              <!-- Action buttons -->
-                              <div class="button-row">
-                                   @if (activeTab() === 'set') {
-                                   <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
-                                        <button
-                                             type="button"
-                                             class="btn-primary-blue"
-                                             (click)="setDid()"
-                                             [disabled]="txUiService.spinner() || 
+                                        <!-- Action buttons -->
+                                        <div class="button-row">
+                                             @if (activeTab() === 'set') {
+                                             <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
+                                                  <button
+                                                       type="button"
+                                                       class="btn-primary-blue"
+                                                       (click)="setDid()"
+                                                       [disabled]="txUiService.spinner() || 
                               !(walletManagerService.hasWallets$ | async) || 
                               !allFieldsValid()"
-                                        >
-                                             {{ txUiService.spinner() ? 'Processing...' : 'Set DID' }}
-                                        </button>
-                                   </app-tooltip-link>
-                                   }
+                                                  >
+                                                       {{ txUiService.spinner() ? 'Processing...' : 'Set DID' }}
+                                                  </button>
+                                             </app-tooltip-link>
+                                             }
 
-                                   <!-- Delete DID -->
-                                   @if (activeTab() === 'delete') {
-                                   <button type="button" class="btn-primary-red" (click)="deleteDid()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delete DID' }}</button>
-                                   }
-                                   <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
+                                             <!-- Delete DID -->
+                                             @if (activeTab() === 'delete') {
+                                             <button type="button" class="btn-primary-red" (click)="deleteDid()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delete DID' }}</button>
+                                             }
+                                             <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
+                                        </div>
+                                        }
+                                   </div>
+
+                                   <!-- Execution time -->
+                                   <div style="display: flex">
+                                        <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                                   </div>
+                                   <app-transaction-preview></app-transaction-preview>
                               </div>
-                              }
-                         </div>
-
-                         <!-- Execution time -->
-                         <div style="display: flex">
-                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
-                         </div>
-                         <app-transaction-preview></app-transaction-preview>
+                         </form>
                     </div>
-               </form>
+               </div>
           </div>
-     </div>
+     </main>
 </div>

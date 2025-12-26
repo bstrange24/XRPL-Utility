@@ -6,11 +6,13 @@ import { filter, map, mergeMap } from 'rxjs/operators';
 import { ToastService } from './services/toast/toast.service';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
+import { HeaderComponent } from './components/common/shared/header/header.component';
+import { NavbarComponent } from './components/navbar/navbar.component';
 
 @Component({
      selector: 'app-root',
      standalone: true,
-     imports: [RouterOutlet, CommonModule],
+     imports: [RouterOutlet, CommonModule, HeaderComponent, NavbarComponent],
      animations: [trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(100%)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateY(50%)' }))])])],
      templateUrl: './app.component.html',
      styleUrls: ['./app.component.css'],

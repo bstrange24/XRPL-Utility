@@ -1,177 +1,175 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
+<div class="app-layout">
+     <app-navbar></app-navbar>
 
-<!-- Main content -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+     <!-- Main content -->
+     <main class="main-content">
+          <div class="main-container">
+               <div class="content-wrapper">
+                    <!-- Left Wallet panel ==== -->
+                    <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
-          <div class="form-panel account-changes-form-panel">
-               <div class="submenu-info-text">
-                    <div class="blue-button-submenu">
-                         <ng-icon name="heroChartBar" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Account Balance Changes</h2>
-                         <p class="submenu-info-secondary-text">View historical account balance changes for the selected account</p>
-                    </div>
-               </div>
+                    <!-- Right form -->
+                    <div class="form-panel account-changes-form-panel">
+                         <div class="submenu-info-text">
+                              <div class="blue-button-submenu">
+                                   <ng-icon name="heroChartBar" size="27" class="text-red-600"></ng-icon>
+                              </div>
+                              <div>
+                                   <h2 class="submenu-info-main-text">Account Balance Changes</h2>
+                                   <p class="submenu-info-secondary-text">View historical account balance changes for the selected account</p>
+                              </div>
+                         </div>
 
-               <!-- Info Message -->
-               @if (txUiService.infoMessage) {
-               <div class="info-panel">
-                    <div class="info-panel-content">
-                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                         <div class="info-text" [innerHTML]="txUiService.safeInfo"></div>
-                    </div>
-               </div>
-               }
+                         <!-- Info Message -->
+                         @if (txUiService.infoMessage) {
+                         <div class="info-panel">
+                              <div class="info-panel-content">
+                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+                                   <div class="info-text" [innerHTML]="txUiService.safeInfo"></div>
+                              </div>
+                         </div>
+                         }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
-               </div>
-               }
+                         <!-- Warning Message -->
+                         @if (txUiService.warningMessage) {
+                         <div class="warning-panel">
+                              <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                              <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                         </div>
+                         }
 
-               <!-- Success message -->
-               @if (txUiService.isSuccess && !txUiService.isError) {
-               <div class="success-message">
-                    <lucide-icon name="check" size="20"></lucide-icon>
-                    <div class="success-text">{{ successMessage }}</div>
-               </div>
-               }
+                         <!-- Success message -->
+                         @if (txUiService.isSuccess && !txUiService.isError) {
+                         <div class="success-message">
+                              <lucide-icon name="check" size="20"></lucide-icon>
+                              <div class="success-text">{{ successMessage }}</div>
+                         </div>
+                         }
 
-               <!-- Error message -->
-               @if (txUiService.isError && result) {
-               <div class="tx-message error">
-                    <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
-                    <div class="tx-text">{{ result }}</div>
-               </div>
-               }
+                         <!-- Error message -->
+                         @if (txUiService.isError && result) {
+                         <div class="tx-message error">
+                              <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
+                              <div class="tx-text">{{ result }}</div>
+                         </div>
+                         }
 
-               <!-- Balance changes -->
-               <div class="balance-panel">
-                    @if (selectedWalletIndex !== null) {
-                    <div class="panel-body">
-                         <!-- SEARCH & DATE FILTERS -->
-                         <div class="controls-container">
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Search date, hash, type, amount, fees...</label>
-                                        <div class="search-bar">
-                                             <mat-icon class="search-icon">search</mat-icon>
-                                             <input type="text" [(ngModel)]="filterValue" (input)="onSearchInput($event.target.value)" placeholder="Search transactions..." />
-                                             @if (filterValue) {
-                                             <mat-icon class="clear-icon" (click)="clearFilter()">close</mat-icon>
+                         <!-- Balance changes -->
+                         <div class="balance-panel">
+                              @if (selectedWalletIndex !== null) {
+                              <div class="panel-body">
+                                   <!-- SEARCH & DATE FILTERS -->
+                                   <div class="controls-container">
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Search date, hash, type, amount, fees...</label>
+                                                  <div class="search-bar">
+                                                       <mat-icon class="search-icon">search</mat-icon>
+                                                       <input type="text" [(ngModel)]="filterValue" (input)="onSearchInput($event.target.value)" placeholder="Search transactions..." />
+                                                       @if (filterValue) {
+                                                       <mat-icon class="clear-icon" (click)="clearFilter()">close</mat-icon>
+                                                       }
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-group date-filter-group">
+                                                  <div class="date-filter-container">
+                                                       <div class="date-input-wrapper">
+                                                            <label>Start Date</label>
+                                                            <input type="date" [(ngModel)]="dateRange.start" (change)="applyDateFilter()" class="date-input" />
+                                                       </div>
+
+                                                       <div class="date-input-wrapper">
+                                                            <label>End Date</label>
+                                                            <input type="date" [(ngModel)]="dateRange.end" (change)="applyDateFilter()" class="date-input" />
+                                                       </div>
+
+                                                       <button mat-icon-button (click)="clearDateFilter()" matTooltip="Clear date filter" class="clear-date-btn">
+                                                            <lucide-icon name="eraser" size="22"></lucide-icon>
+                                                       </button>
+                                                  </div>
+                                             </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <div class="button-row-account-changes" style="padding-left: 0px; padding-right: 0px">
+                                                       <button type="button" class="btn-primary-blue" style="margin-left: 0px; margin-right: 0px" (click)="loadBalanceChanges(true)" [disabled]="loadingInitial">{{ loadingInitial ? 'Loading...' : 'Refresh Balance Changes' }}</button>
+                                                       <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()">Clear Fields</button>
+                                                  </div>
+                                             </div>
+                                        </div>
+                                   </div>
+
+                                   <!-- Sticky Header -->
+                                   <div class="table-header row">
+                                        <div class="col date">Date</div>
+                                        <div class="col hash">Transaction</div>
+                                        <div class="col type">Type</div>
+                                        <div class="col change">Change</div>
+                                        <div class="col fees">Fee</div>
+                                        <div class="col counterparty">Counterparty</div>
+                                   </div>
+
+                                   <!-- VIRTUAL SCROLL TABLE -->
+                                   <div class="virtual-table-container">
+                                        <cdk-virtual-scroll-viewport itemSize="68" class="viewport" (scroll)="onScroll($event)">
+                                             <!-- Rows -->
+                                             <div *cdkVirtualFor="let change of balanceChanges; trackBy: trackByHash" class="data-row row">
+                                                  <div class="col date" matTooltip="{{ change.date | date:'medium' }}">{{ change.date | date:'MMM d, y HH:mm' }}</div>
+
+                                                  <div class="col hash">
+                                                       <a [href]="txUiService.explorerUrl() + 'tx/' + change.hash" target="_blank" class="tx-link"> {{ change.hash.slice(0, 6) }}...{{ change.hash.slice(-6) }} </a>
+                                                       <button mat-icon-button class="copy-btn" (click)="copyToClipboard(change.hash)" matTooltip="Copy hash">
+                                                            <lucide-icon name="copy" size="16"></lucide-icon>
+                                                       </button>
+                                                  </div>
+
+                                                  <div class="col type" [style.color]="getTypeColor(change.type)">{{ change.type }}</div>
+
+                                                  <div class="col change" [class.positive]="change.change > 0" [class.negative]="change.change < 0">
+                                                       <strong> {{ change.change > 0 ? '+' : '' }}{{ change.change | number:'1.2-8' }} </strong>
+                                                       <span class="currency">{{ change.currency }}</span>
+                                                  </div>
+
+                                                  <div class="col fees">-{{ change.fees | number:'1.6-6' }} XRP</div>
+
+                                                  <div class="col counterparty" style="padding-left: 0.5em" matTooltip="{{ change.counterparty }}">{{ change.counterparty }}</div>
+                                             </div>
+
+                                             <!-- Loading More -->
+                                             @if (loadingMore) {
+                                             <div class="loading-row row">
+                                                  <mat-spinner diameter="28"></mat-spinner>
+                                                  <span>Loading more transactions...</span>
+                                             </div>
                                              }
-                                        </div>
-                                   </div>
 
-                                   <div class="form-group date-filter-group">
-                                        <div class="date-filter-container">
-                                             <div class="date-input-wrapper">
-                                                  <label>Start Date</label>
-                                                  <input type="date" [(ngModel)]="dateRange.start" (change)="applyDateFilter()" class="date-input" />
+                                             <!-- No Data -->
+                                             @if (!loadingInitial && balanceChanges.length === 0) {
+                                             <div class="empty-row row">
+                                                  <p>No balance changes found for this account.</p>
                                              </div>
+                                             }
 
-                                             <div class="date-input-wrapper">
-                                                  <label>End Date</label>
-                                                  <input type="date" [(ngModel)]="dateRange.end" (change)="applyDateFilter()" class="date-input" />
+                                             <!-- End of History -->
+                                             @if (!hasMoreData && balanceChanges.length > 0 && !loadingMore) {
+                                             <div class="end-row row">
+                                                  <p>You've reached the end of transaction history.</p>
                                              </div>
-
-                                             <button mat-icon-button (click)="clearDateFilter()" matTooltip="Clear date filter" class="clear-date-btn">
-                                                  <lucide-icon name="eraser" size="22"></lucide-icon>
-                                             </button>
-                                        </div>
+                                             }
+                                        </cdk-virtual-scroll-viewport>
                                    </div>
                               </div>
-
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <div class="button-row-account-changes" style="padding-left: 0px; padding-right: 0px">
-                                             <button type="button" class="btn-primary-blue" style="margin-left: 0px; margin-right: 0px" (click)="loadBalanceChanges(true)" [disabled]="loadingInitial">{{ loadingInitial ? 'Loading...' : 'Refresh Balance Changes' }}</button>
-                                             <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()">Clear Fields</button>
-                                        </div>
-                                   </div>
+                              } @else {
+                              <div class="empty-state">
+                                   <lucide-icon name="wallet" size="48"></lucide-icon>
+                                   <p>Select an account from the left panel to view balance changes.</p>
                               </div>
-                         </div>
-
-                         <!-- Sticky Header -->
-                         <div class="table-header row">
-                              <div class="col date">Date</div>
-                              <div class="col hash">Transaction</div>
-                              <div class="col type">Type</div>
-                              <div class="col change">Change</div>
-                              <div class="col fees">Fee</div>
-                              <div class="col counterparty">Counterparty</div>
-                         </div>
-
-                         <!-- VIRTUAL SCROLL TABLE -->
-                         <div class="virtual-table-container">
-                              <cdk-virtual-scroll-viewport itemSize="68" class="viewport" (scroll)="onScroll($event)">
-                                   <!-- Rows -->
-                                   <div *cdkVirtualFor="let change of balanceChanges; trackBy: trackByHash" class="data-row row">
-                                        <div class="col date" matTooltip="{{ change.date | date:'medium' }}">{{ change.date | date:'MMM d, y HH:mm' }}</div>
-
-                                        <div class="col hash">
-                                             <a [href]="txUiService.explorerUrl() + 'tx/' + change.hash" target="_blank" class="tx-link"> {{ change.hash.slice(0, 6) }}...{{ change.hash.slice(-6) }} </a>
-                                             <button mat-icon-button class="copy-btn" (click)="copyToClipboard(change.hash)" matTooltip="Copy hash">
-                                                  <lucide-icon name="copy" size="16"></lucide-icon>
-                                             </button>
-                                        </div>
-
-                                        <div class="col type" [style.color]="getTypeColor(change.type)">{{ change.type }}</div>
-
-                                        <div class="col change" [class.positive]="change.change > 0" [class.negative]="change.change < 0">
-                                             <strong> {{ change.change > 0 ? '+' : '' }}{{ change.change | number:'1.2-8' }} </strong>
-                                             <span class="currency">{{ change.currency }}</span>
-                                        </div>
-
-                                        <div class="col fees">-{{ change.fees | number:'1.6-6' }} XRP</div>
-
-                                        <div class="col counterparty" style="padding-left: 0.5em" matTooltip="{{ change.counterparty }}">{{ change.counterparty }}</div>
-                                   </div>
-
-                                   <!-- Loading More -->
-                                   @if (loadingMore) {
-                                   <div class="loading-row row">
-                                        <mat-spinner diameter="28"></mat-spinner>
-                                        <span>Loading more transactions...</span>
-                                   </div>
-                                   }
-
-                                   <!-- No Data -->
-                                   @if (!loadingInitial && balanceChanges.length === 0) {
-                                   <div class="empty-row row">
-                                        <p>No balance changes found for this account.</p>
-                                   </div>
-                                   }
-
-                                   <!-- End of History -->
-                                   @if (!hasMoreData && balanceChanges.length > 0 && !loadingMore) {
-                                   <div class="end-row row">
-                                        <p>You've reached the end of transaction history.</p>
-                                   </div>
-                                   }
-                              </cdk-virtual-scroll-viewport>
+                              }
                          </div>
                     </div>
-                    } @else {
-                    <div class="empty-state">
-                         <lucide-icon name="wallet" size="48"></lucide-icon>
-                         <p>Select an account from the left panel to view balance changes.</p>
-                    </div>
-                    }
                </div>
           </div>
-     </div>
+     </main>
 </div>

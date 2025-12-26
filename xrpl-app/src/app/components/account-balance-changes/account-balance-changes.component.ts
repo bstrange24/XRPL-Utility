@@ -137,7 +137,7 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
      dateRange: { start: Date | null; end: Date | null } = { start: null, end: null };
      private searchSubject = new Subject<string>();
      // Replace any old paginator-dependent page size use with this constant
-     private readonly PAGE_SIZE = 25;
+     private readonly PAGE_SIZE = 50;
      // Track seen tx hashes to avoid duplicates when appending
      private readonly seenHashes = new Set<string>();
      private originalBalanceChanges: BalanceChange[] = []; // Cache full data

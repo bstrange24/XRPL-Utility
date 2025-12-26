@@ -1,364 +1,361 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
+<div class="app-layout">
+     <app-navbar></app-navbar>
 
-<!-- Main content. Centered with 2 columns -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+     <main class="main-content">
+          <div class="main-container">
+               <div class="content-wrapper">
+                    <!-- Left Wallet panel ==== -->
+                    <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
-          <div class="form-panel">
-               <!-- Menu bar -->
-               <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Create NFT
-                    </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'burn'" (click)="setTab('burn')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Burn NFT
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'updateNFTMetadata'" (click)="setTab('updateNFTMetadata')">
-                         <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
-                         Modify NFT Meta Data
-                    </button>
-               </div>
-
-               <!-- Create Menu -->
-               @if (activeTab() === 'create') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                    <!-- Right form -->
+                    <div class="form-panel">
+                         <!-- Menu bar -->
+                         <div class="menu-bar">
+                              <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
+                                   <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
+                                   Create NFT
+                              </button>
+                              <button class="menu-btn active" [class.active]="activeTab() === 'burn'" (click)="setTab('burn')">
+                                   <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
+                                   Burn NFT
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'updateNFTMetadata'" (click)="setTab('updateNFTMetadata')">
+                                   <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
+                                   Modify NFT Meta Data
+                              </button>
                          </div>
+
+                         <!-- Create Menu -->
+                         @if (activeTab() === 'create') {
                          <div>
-                              <h2 class="submenu-info-main-text">Create NFT</h2>
-                              <p class="submenu-info-secondary-text">Create NFT for the selected account.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Authorize/Unauthorize Menu -->
-               @if (activeTab() === 'burn') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Burn NFT</h2>
-                              <p class="submenu-info-secondary-text">Burn NFT for the selected account.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Fund Menu -->
-               @if (activeTab() === 'updateNFTMetadata') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="white-button-submenu">
-                              <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Modify NFT Meta Data</h2>
-                              <p class="submenu-info-secondary-text">Modify NFT Meta Data for the selected NFT</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Dynamic info panel -->
-               @if (infoData(); as info) {
-               <div class="info-message-wrapper">
-                    <div class="info-panel">
-                         <div class="info-text">
-                              <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
-                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
-                                   <code>{{ info.walletName }}</code>
-
-                                   @if (info.nftCount === 0) { has no NFTs. } @else { has <strong>{{ info.nftCount }}</strong> NFT{{ info.nftCount === 1 ? '' : 's' }}. } @if (info.links) {
-                                   <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
-                                   }
-                              </div>
-
-                              @if (info.nftCount > 0) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
-                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
-                                        <span> @switch (info.activeTab) { @case ('create') { Available NFTs } @case ('burn') { Burnable NFTs } @case ('updateNFTMetadata') { NFTs with Modifiable Metadata } } ({{ info.nftCount }}) </span>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
-                                             <path d="M6 9l6 6 6-6" />
-                                        </svg>
+                              <div class="submenu-info-text">
+                                   <div class="blue-button-submenu">
+                                        <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                                    </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Create NFT</h2>
+                                        <p class="submenu-info-secondary-text">Create NFT for the selected account.</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
 
-                                   @if (infoPanelExpanded()) {
-                                   <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
-                                        @for (nft of info.nftsToShow; track nft.id) {
-                                        <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
-                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'nft/' + nft.id" tooltipText="View NFT on XRPL Explorer">
-                                                  <div style="font-weight: 500; margin-bottom: 4px">
-                                                       <!-- <strong>NFT</strong> -->
-                                                       @if (nft.uri) {
-                                                       <span class="ml-2 text-xs text-gray-600">URI: {{ nft.uri.slice(0,12) }}...{{ nft.uri.slice(-10) }}</span>
-                                                       } @else {
-                                                       <span class="ml-2 text-xs text-gray-600">URI: N/A</span>
-                                                       }
+                         <!-- Authorize/Unauthorize Menu -->
+                         @if (activeTab() === 'burn') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="red-button-submenu">
+                                        <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Burn NFT</h2>
+                                        <p class="submenu-info-secondary-text">Burn NFT for the selected account.</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Fund Menu -->
+                         @if (activeTab() === 'updateNFTMetadata') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="white-button-submenu">
+                                        <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Modify NFT Meta Data</h2>
+                                        <p class="submenu-info-secondary-text">Modify NFT Meta Data for the selected NFT</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Dynamic info panel -->
+                         @if (infoData(); as info) {
+                         <div class="info-message-wrapper">
+                              <div class="info-panel">
+                                   <div class="info-text">
+                                        <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                                             <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
+                                             <code>{{ info.walletName }}</code>
+
+                                             @if (info.nftCount === 0) { has no NFTs. } @else { has <strong>{{ info.nftCount }}</strong> NFT{{ info.nftCount === 1 ? '' : 's' }}. } @if (info.links) {
+                                             <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
+                                             }
+                                        </div>
+
+                                        @if (info.nftCount > 0) {
+                                        <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
+                                             <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
+                                                  <span> @switch (info.activeTab) { @case ('create') { Available NFTs } @case ('burn') { Burnable NFTs } @case ('updateNFTMetadata') { NFTs with Modifiable Metadata } } ({{ info.nftCount }}) </span>
+                                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
+                                                       <path d="M6 9l6 6 6-6" />
+                                                  </svg>
+                                             </div>
+
+                                             @if (infoPanelExpanded()) {
+                                             <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
+                                                  @for (nft of info.nftsToShow; track nft.id) {
+                                                  <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
+                                                       <app-tooltip-link [href]="txUiService.explorerUrl() + 'nft/' + nft.id" tooltipText="View NFT on XRPL Explorer">
+                                                            <div style="font-weight: 500; margin-bottom: 4px">
+                                                                 <!-- <strong>NFT</strong> -->
+                                                                 @if (nft.uri) {
+                                                                 <span class="ml-2 text-xs text-gray-600">URI: {{ nft.uri.slice(0,12) }}...{{ nft.uri.slice(-10) }}</span>
+                                                                 } @else {
+                                                                 <span class="ml-2 text-xs text-gray-600">URI: N/A</span>
+                                                                 }
+                                                            </div>
+                                                            <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
+                                                                 <!-- <div>ID: <code>{{ nft.id.slice(0,12) }}...{{ nft.id.slice(-10) }}</code></div> -->
+                                                                 <!-- <div>Taxon: {{ nft.taxon }} • Sequence: {{ nft.sequence }}</div> -->
+                                                                 <!-- @if (nft.transferFee) { -->
+                                                                 <!-- <div>Transfer Fee: {{ nft.transferFee / 1000 }}%</div> -->
+                                                                 <!-- } -->
+                                                                 <div>Flags: {{ nft.flags.length ? nft.flags : 'None' }}</div>
+                                                            </div>
+                                                       </app-tooltip-link>
+
+                                                       <button (click)="copyAndToast(nft.id, 'NFT ID'); $event.stopPropagation()" class="copy-btn" title="Copy NFT ID">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                            </svg>
+                                                       </button>
+                                                  </li>
+                                                  }
+                                             </ul>
+                                             }
+                                        </div>
+                                        }
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Warning Message -->
+                         @if (txUiService.warningMessage) {
+                         <div class="warning-panel">
+                              <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                              <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                         </div>
+                         }
+
+                         <form #theForm="ngForm" class="send-form">
+                              <div [@tabTransition]="activeTab()">
+                                   <div class="tab-content-columns">
+                                        <!-- ==================== LEFT: FORM FIELDS ==================== -->
+                                        <div class="tab-content-container form-fields-container">
+                                             <!-- Create sections -->
+                                             @if(activeTab() === 'create') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Taxon</label>
+                                                       <p class="form-hint">
+                                                            Indicates the taxon associated with this token. The taxon is generally a value chosen by the minter of the token <br />
+                                                            and a given taxon may be used for multiple tokens.
+                                                       </p>
+                                                       <input type="text" [(ngModel)]="taxonField" name="taxonField" placeholder="" />
                                                   </div>
-                                                  <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
-                                                       <!-- <div>ID: <code>{{ nft.id.slice(0,12) }}...{{ nft.id.slice(-10) }}</code></div> -->
-                                                       <!-- <div>Taxon: {{ nft.taxon }} • Sequence: {{ nft.sequence }}</div> -->
-                                                       <!-- @if (nft.transferFee) { -->
-                                                       <!-- <div>Transfer Fee: {{ nft.transferFee / 1000 }}%</div> -->
-                                                       <!-- } -->
-                                                       <div>Flags: {{ nft.flags.length ? nft.flags : 'None' }}</div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Transfer Fee</label>
+                                                       <p class="form-hint">
+                                                            Specifies the fee charged by the issuer for secondary sales of the Token, if such sales are allowed. <br />
+                                                            Valid values for this field are between 0 and 50000 inclusive, allowing transfer rates between 0.000% and 50.000% in increments of 0.001%.
+                                                       </p>
+                                                       <input type="text" [(ngModel)]="transferFeeField" name="transferFeeField" placeholder="" />
                                                   </div>
-                                             </app-tooltip-link>
+                                             </div>
 
-                                             <button (click)="copyAndToast(nft.id, 'NFT ID'); $event.stopPropagation()" class="copy-btn" title="Copy NFT ID">
-                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                                  </svg>
-                                             </button>
-                                        </li>
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>URI</label>
+                                                       <p class="form-hint">
+                                                            URI that points to the data and/or metadata associated with the NFT. <br />
+                                                            The URI is NOT checked for validity, but the field is limited to a maximum length of 256 bytes.
+                                                       </p>
+                                                       <input type="text" [(ngModel)]="initialURIField" name="initialURIField" placeholder="" />
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Amount</label>
+                                                       <p class="form-hint">Indicates the amount expected for the Token.</p>
+                                                       <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Nft Token Minter (opt)</label>
+                                                       <p class="form-hint">
+                                                            Indicates the account that should be the issuer of this token. This value is optional and should only be specified if the account <br />
+                                                            executing the transaction is not the `Issuer` of the `NFToken` object.
+                                                       </p>
+                                                       <input type="text" [(ngModel)]="nfTokenMinterAddress" name="nfTokenMinterAddress" placeholder="" />
+                                                  </div>
+                                             </div>
+                                             }
+
+                                             <!-- Burn sections -->
+                                             @if(activeTab() === 'burn' || activeTab() === 'updateNFTMetadata') {
+                                             <div class="form-group">
+                                                  <label>Select NFT</label>
+                                                  <p class="form-hint">Select an existing NFT to {{activeTab() === 'burn' ? 'burn' : 'update' }}.</p>
+                                                  <app-select-search-dropdown [items]="nftItems()" [value]="selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found"> </app-select-search-dropdown>
+                                             </div>
+
+                                             <div class="form-row" style="margin-top: 0.8em">
+                                                  <div class="form-group">
+                                                       <label>Nft Token Id</label>
+                                                       <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
+                                                       <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
+                                                  </div>
+                                             </div>
+                                             }
+
+                                             <!-- Burn sections -->
+                                             @if(activeTab() === 'updateNFTMetadata') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>URI</label>
+                                                       <p class="form-hint">URI that points to the data and/or metadata associated with the NFT. The URI is NOT checked for validity, but the field is limited to a maximum length of 256 bytes.</p>
+                                                       <input type="text" [(ngModel)]="initialURIField" name="initialURIField" placeholder="" />
+                                                  </div>
+                                             </div>
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Owner</label>
+                                                       <p class="form-hint">The NFT owner that created the NFT.</p>
+                                                       <input type="text" [(ngModel)]="nftOwnerAddress" name="nftOwnerAddress" placeholder="" />
+                                                  </div>
+                                             </div>
+                                             }
+                                        </div>
+
+                                        <!-- MPT Flags -->
+                                        @if (activeTab() === 'create') {
+                                        <div class="tab-content-container flags-container" style="min-width: 450px">
+                                             <div class="flags-wrapper">
+                                                  <div class="token-flags-header">
+                                                       <lucide-icon name="flag" size="20"></lucide-icon>
+                                                       <span class="token-flags-title">NFT Flags</span>
+                                                  </div>
+
+                                                  <!-- burnableNft -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flag-item-account-flags" [class.enabled]="nftFlags.burnableNft" (click)="toggleFlag('burnableNft')">
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="canLock" name="canLock" [checked]="nftFlags.burnableNft" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">Burnable</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00000001 tfBurnable</div>
+                                                       <div class="flag-desc">The minted token may be burned by the issuer even if the issuer does not currently hold the token. The current holder of the token may always burn it.</div>
+                                                  </div>
+                                                  }
+
+                                                  <!-- onlyXrpNft -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flag-item-account-flags" [class.enabled]="nftFlags.onlyXrpNft" (click)="toggleFlag('onlyXrpNft')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="nftFlags.onlyXrpNft" class="flag-checkbox" disabled />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">OnlyXRP</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00000002 tfOnlyXRP</div>
+                                                       <div class="flag-desc">Indicates that the token may only be offered or sold for XRP.</div>
+                                                  </div>
+                                                  }
+
+                                                  <!-- trustLine -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flag-item" [class.enabled]="nftFlags.trustLine" (click)="toggleFlag('trustLine')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="nftFlags.trustLine" class="flag-checkbox" disabled />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">TrustLine</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00000004 tfTrustLine</div>
+                                                       <div class="flag-desc">indicates that the issuer wants a trustline to be automatically created</div>
+                                                  </div>
+                                                  }
+
+                                                  <!-- transferableNft -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flag-item" [class.enabled]="nftFlags.transferableNft" (click)="toggleFlag('transferableNft')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="nftFlags.transferableNft" class="flag-checkbox" disabled />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">Transferable</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00000008 tfTransferable</div>
+                                                       <div class="flag-desc">Indicates that this NFT can be transferred. This flag has no effect if the token is being transferred from the issuer or to the issuer.</div>
+                                                  </div>
+                                                  }
+
+                                                  <!-- mutableNft -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flag-item" [class.enabled]="nftFlags.mutableNft" (click)="toggleFlag('mutableNft')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="nftFlags.mutableNft" class="flag-checkbox" disabled />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">Mutable</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00000010 tfMutable</div>
+                                                       <div class="flag-desc">Indicates that this NFT's URI can be modified.</div>
+                                                  </div>
+                                                  }
+
+                                                  <!-- TOTAL FLAGS VALUE -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flags-total">
+                                                       <span class="total-label">Total Flags Value:</span>
+                                                       <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
+                                                  </div>
+                                                  }
+                                             </div>
+                                        </div>
                                         }
-                                   </ul>
-                                   }
+                                   </div>
+
+                                   <app-transaction-options [showWhenTab]="['create', 'burn','updateNFTMetadata']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                                   <!-- Action buttons -->
+                                   <div class="button-row">
+                                        @if(activeTab() === 'create') {
+                                        <button type="button" class="btn-primary-blue" (click)="mintNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create NFT' }}</button>
+                                        } @else if (activeTab() === 'burn') {
+                                        <button type="button" class="btn-primary-red" (click)="burnNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Burn NFT' }}</button>
+                                        } @else if (activeTab() === 'updateNFTMetadata') {
+                                        <button type="button" class="btn-primary-green" (click)="updateNFTMetadata()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Modify NFT Meta Data' }}</button>
+                                        }
+                                        <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
+                                   </div>
                               </div>
-                              }
+                         </form>
+
+                         <!-- Execution time -->
+                         <div style="display: flex">
+                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                          </div>
+                         <app-transaction-preview></app-transaction-preview>
                     </div>
                </div>
-               }
-
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
-               </div>
-               }
-
-               <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab()">
-                         <div class="tab-content-columns">
-                              <!-- ==================== LEFT: FORM FIELDS ==================== -->
-                              <div class="tab-content-container form-fields-container">
-                                   <!-- Create sections -->
-                                   @if(activeTab() === 'create') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Taxon</label>
-                                             <p class="form-hint">
-                                                  Indicates the taxon associated with this token. The taxon is generally a value chosen by the minter of the token <br />
-                                                  and a given taxon may be used for multiple tokens.
-                                             </p>
-                                             <input type="text" [(ngModel)]="taxonField" name="taxonField" placeholder="" />
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Transfer Fee</label>
-                                             <p class="form-hint">
-                                                  Specifies the fee charged by the issuer for secondary sales of the Token, if such sales are allowed. <br />
-                                                  Valid values for this field are between 0 and 50000 inclusive, allowing transfer rates between 0.000% and 50.000% in increments of 0.001%.
-                                             </p>
-                                             <input type="text" [(ngModel)]="transferFeeField" name="transferFeeField" placeholder="" />
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>URI</label>
-                                             <p class="form-hint">
-                                                  URI that points to the data and/or metadata associated with the NFT. <br />
-                                                  The URI is NOT checked for validity, but the field is limited to a maximum length of 256 bytes.
-                                             </p>
-                                             <input type="text" [(ngModel)]="initialURIField" name="initialURIField" placeholder="" />
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Amount</label>
-                                             <p class="form-hint">Indicates the amount expected for the Token.</p>
-                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Nft Token Minter (opt)</label>
-                                             <p class="form-hint">
-                                                  Indicates the account that should be the issuer of this token. This value is optional and should only be specified if the account <br />
-                                                  executing the transaction is not the `Issuer` of the `NFToken` object.
-                                             </p>
-                                             <input type="text" [(ngModel)]="nfTokenMinterAddress" name="nfTokenMinterAddress" placeholder="" />
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Burn sections -->
-                                   @if(activeTab() === 'burn' || activeTab() === 'updateNFTMetadata') {
-                                   <div class="form-group">
-                                        <label>Select NFT</label>
-                                        <p class="form-hint">Select an existing NFT to {{activeTab() === 'burn' ? 'burn' : 'update' }}.</p>
-                                        <app-select-search-dropdown [items]="nftItems()" [value]="selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found"> </app-select-search-dropdown>
-                                   </div>
-
-                                   <div class="form-row" style="margin-top: 0.8em">
-                                        <div class="form-group">
-                                             <label>Nft Token Id</label>
-                                             <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
-                                             <input type="text" [(ngModel)]="nftIdField" name="nftIdField" placeholder="" />
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Burn sections -->
-                                   @if(activeTab() === 'updateNFTMetadata') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>URI</label>
-                                             <p class="form-hint">URI that points to the data and/or metadata associated with the NFT. The URI is NOT checked for validity, but the field is limited to a maximum length of 256 bytes.</p>
-                                             <input type="text" [(ngModel)]="initialURIField" name="initialURIField" placeholder="" />
-                                        </div>
-                                   </div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Owner</label>
-                                             <p class="form-hint">The NFT owner that created the NFT.</p>
-                                             <input type="text" [(ngModel)]="nftOwnerAddress" name="nftOwnerAddress" placeholder="" />
-                                        </div>
-                                   </div>
-                                   }
-                              </div>
-
-                              <!-- MPT Flags -->
-                              @if (activeTab() === 'create') {
-                              <div class="tab-content-container flags-container" style="min-width: 450px">
-                                   <div class="flags-wrapper">
-                                        <div class="token-flags-header">
-                                             <lucide-icon name="flag" size="20"></lucide-icon>
-                                             <span class="token-flags-title">NFT Flags</span>
-                                        </div>
-
-                                        <!-- burnableNft -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flag-item-account-flags" [class.enabled]="nftFlags.burnableNft" (click)="toggleFlag('burnableNft')">
-                                             <div class="flag-header-account">
-                                                  <input type="checkbox" id="canLock" name="canLock" [checked]="nftFlags.burnableNft" class="flag-checkbox" />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">Burnable</span>
-                                             </div>
-                                             <div class="flag-value">0x00000001 tfBurnable</div>
-                                             <div class="flag-desc">The minted token may be burned by the issuer even if the issuer does not currently hold the token. The current holder of the token may always burn it.</div>
-                                        </div>
-                                        }
-
-                                        <!-- onlyXrpNft -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flag-item-account-flags" [class.enabled]="nftFlags.onlyXrpNft" (click)="toggleFlag('onlyXrpNft')">
-                                             <div class="flag-header">
-                                                  <input type="checkbox" [checked]="nftFlags.onlyXrpNft" class="flag-checkbox" disabled />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">OnlyXRP</span>
-                                             </div>
-                                             <div class="flag-value">0x00000002 tfOnlyXRP</div>
-                                             <div class="flag-desc">Indicates that the token may only be offered or sold for XRP.</div>
-                                        </div>
-                                        }
-
-                                        <!-- trustLine -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flag-item" [class.enabled]="nftFlags.trustLine" (click)="toggleFlag('trustLine')">
-                                             <div class="flag-header">
-                                                  <input type="checkbox" [checked]="nftFlags.trustLine" class="flag-checkbox" disabled />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">TrustLine</span>
-                                             </div>
-                                             <div class="flag-value">0x00000004 tfTrustLine</div>
-                                             <div class="flag-desc">indicates that the issuer wants a trustline to be automatically created</div>
-                                        </div>
-                                        }
-
-                                        <!-- transferableNft -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flag-item" [class.enabled]="nftFlags.transferableNft" (click)="toggleFlag('transferableNft')">
-                                             <div class="flag-header">
-                                                  <input type="checkbox" [checked]="nftFlags.transferableNft" class="flag-checkbox" disabled />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">Transferable</span>
-                                             </div>
-                                             <div class="flag-value">0x00000008 tfTransferable</div>
-                                             <div class="flag-desc">Indicates that this NFT can be transferred. This flag has no effect if the token is being transferred from the issuer or to the issuer.</div>
-                                        </div>
-                                        }
-
-                                        <!-- mutableNft -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flag-item" [class.enabled]="nftFlags.mutableNft" (click)="toggleFlag('mutableNft')">
-                                             <div class="flag-header">
-                                                  <input type="checkbox" [checked]="nftFlags.mutableNft" class="flag-checkbox" disabled />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">Mutable</span>
-                                             </div>
-                                             <div class="flag-value">0x00000010 tfMutable</div>
-                                             <div class="flag-desc">Indicates that this NFT's URI can be modified.</div>
-                                        </div>
-                                        }
-
-                                        <!-- TOTAL FLAGS VALUE -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flags-total">
-                                             <span class="total-label">Total Flags Value:</span>
-                                             <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
-                                        </div>
-                                        }
-                                   </div>
-                              </div>
-                              }
-                         </div>
-
-                         <app-transaction-options [showWhenTab]="['create', 'burn','updateNFTMetadata']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                         <!-- Action buttons -->
-                         <div class="button-row">
-                              @if(activeTab() === 'create') {
-                              <button type="button" class="btn-primary-blue" (click)="mintNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create NFT' }}</button>
-                              } @else if (activeTab() === 'burn') {
-                              <button type="button" class="btn-primary-red" (click)="burnNFT()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Burn NFT' }}</button>
-                              } @else if (activeTab() === 'updateNFTMetadata') {
-                              <button type="button" class="btn-primary-green" (click)="updateNFTMetadata()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Modify NFT Meta Data' }}</button>
-                              }
-                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
-                         </div>
-                    </div>
-               </form>
-
-               <!-- Execution time -->
-               <div style="display: flex">
-                    <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
-               </div>
-               <app-transaction-preview></app-transaction-preview>
           </div>
-     </div>
+     </main>
 </div>

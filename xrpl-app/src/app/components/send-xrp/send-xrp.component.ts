@@ -235,7 +235,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
 
      async sendXrp() {
           await this.withPerf('sendXrp', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
+               this.txUiService.clearTxAndHash();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 

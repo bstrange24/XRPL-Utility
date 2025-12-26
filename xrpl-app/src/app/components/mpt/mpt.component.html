@@ -1,526 +1,524 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
+<div class="app-layout">
+     <app-navbar></app-navbar>
 
-<!-- Main content. Centered with 2 columns -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+     <!-- Main content. Centered with 2 columns -->
+     <main class="main-content">
+          <div class="main-container">
+               <div class="content-wrapper">
+                    <!-- Left Wallet panel ==== -->
+                    <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
-          <div class="form-panel">
-               <!-- Menu bar -->
-               <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Create MPT
-                    </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'unauthorize'" (click)="setTab('unauthorize')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Auth/Unauth MPT
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'send'" (click)="setTab('send')">
-                         <ng-icon name="heroBanknotes" size="20" class="text-red-600"></ng-icon>
-                         Send Payment
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'lock'" (click)="setTab('lock')">
-                         <!-- <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon> -->
-                         <ng-icon name="heroLockOpen" size="20" class="text-red-600"></ng-icon>
-                         Lock/Unlock MPT
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'clawback'" (click)="setTab('clawback')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Clawback MPT
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'destroy'" (click)="setTab('destroy')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Destroy MPT
-                    </button>
-               </div>
-
-               <!-- Create Menu -->
-               @if (activeTab() === 'create') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                    <!-- Right form -->
+                    <div class="form-panel">
+                         <!-- Menu bar -->
+                         <div class="menu-bar">
+                              <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
+                                   <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
+                                   Create MPT
+                              </button>
+                              <button class="menu-btn active" [class.active]="activeTab() === 'unauthorize'" (click)="setTab('unauthorize')">
+                                   <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
+                                   Auth/Unauth MPT
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'send'" (click)="setTab('send')">
+                                   <ng-icon name="heroBanknotes" size="20" class="text-red-600"></ng-icon>
+                                   Send Payment
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'lock'" (click)="setTab('lock')">
+                                   <!-- <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon> -->
+                                   <ng-icon name="heroLockOpen" size="20" class="text-red-600"></ng-icon>
+                                   Lock/Unlock MPT
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'clawback'" (click)="setTab('clawback')">
+                                   <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
+                                   Clawback MPT
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'destroy'" (click)="setTab('destroy')">
+                                   <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
+                                   Destroy MPT
+                              </button>
                          </div>
+
+                         <!-- Create Menu -->
+                         @if (activeTab() === 'create') {
                          <div>
-                              <h2 class="submenu-info-main-text">Create MPT Token</h2>
-                              <p class="submenu-info-secondary-text">Create MPT Tokens for the selected account.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Authorize/Unauthorize Menu -->
-               @if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Authorize/Unauthorize MPT Token</h2>
-                              <p class="submenu-info-secondary-text">Authorize/Unauthorize MPT Tokens for the selected account.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Fund Menu -->
-               @if (activeTab() === 'send') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <!-- <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon> -->
-                              <ng-icon name="heroBanknotes" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Send MPT</h2>
-                              <p class="submenu-info-secondary-text">Send created MPT to another XRPL address</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Claim Menu -->
-               @if (activeTab() === 'lock' || activeTab() === 'unlock') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroLockOpen" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Lock/Unlock MPT</h2>
-                              <p class="submenu-info-secondary-text">Lock/Unlock MPT so another XRPL address can't send it</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Close Menu -->
-               @if (activeTab() === 'clawback') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Clawback MPT</h2>
-                              <p class="submenu-info-secondary-text">Clawback a previously created MPT</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Close Menu -->
-               @if (activeTab() === 'destroy') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Destroy MPT</h2>
-                              <p class="submenu-info-secondary-text">Destroy a previously created MPT</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Dynamic info panel -->
-               <!-- MPT Info Panel - Collapsible & Premium -->
-               @if (infoData(); as info) {
-               <div class="info-message-wrapper">
-                    <div class="info-panel">
-                         <div class="info-text">
-                              <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
-                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
-                                   <code>{{ info.walletName }}</code>
-
-                                   @if (info.mptCount === 0) { has no Multi-Purpose Tokens. } @else { has <strong>{{ info.mptCount }}</strong> Multi-Purpose Token{{ info.mptCount === 1 ? '' : 's' }}. } @if (info.links) {
-                                   <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
-                                   }
-                              </div>
-
-                              @if (info.mptCount > 0) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
-                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
-                                        <span>Multi-Purpose Tokens ({{ info.mptCount }})</span>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
-                                             <path d="M6 9l6 6 6-6" />
-                                        </svg>
+                              <div class="submenu-info-text">
+                                   <div class="blue-button-submenu">
+                                        <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                                    </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Create MPT Token</h2>
+                                        <p class="submenu-info-secondary-text">Create MPT Tokens for the selected account.</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
 
-                                   @if (infoPanelExpanded()) {
-                                   <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
-                                        @for (mpt of info.mptsToShow; track mpt.id) {
-                                        <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
-                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + mpt.id" tooltipText="View MPT on XRPL Explorer">
-                                                  <div style="font-weight: 500; margin-bottom: 4px">
-                                                       <strong>MPT</strong>
-                                                       @if (mpt.amount) {
-                                                       <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800"> {{ mpt.amount }} {{ mpt.isHolder ? 'held' : 'issued' }} </span>
-                                                       }
-                                                  </div>
-                                                  <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
-                                                       <div>MPT Issuance ID: <code>{{ mpt.mpt_issuance_id.slice(0,12) }}...{{ mpt.mpt_issuance_id.slice(-10) }}</code></div>
-                                                       <!-- <div>ID: <code>{{ mpt.id.slice(0,12) }}...{{ mpt.id.slice(-10) }}</code></div> -->
-                                                       @if (mpt.amount && mpt.amount !== '0') {
-                                                       <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800"> {{ mpt.amount }} {{ mpt.isHolder ? 'held' : 'issued' }} </span>
-                                                       } @if (mpt.transferFee) {
-                                                       <div>Transfer Fee: {{ mpt.transferFee / 1000 }}%</div>
-                                                       }
-                                                       <div>Flags: {{ mpt.flags.length ? mpt.flags: 'None' }}</div>
-                                                  </div>
-                                             </app-tooltip-link>
+                         <!-- Authorize/Unauthorize Menu -->
+                         @if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="blue-button-submenu">
+                                        <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Authorize/Unauthorize MPT Token</h2>
+                                        <p class="submenu-info-secondary-text">Authorize/Unauthorize MPT Tokens for the selected account.</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
 
-                                             <button (click)="copyAndToast(mpt.id, 'MPT ID'); $event.stopPropagation()" class="copy-btn" title="Copy MPT ID">
-                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                         <!-- Fund Menu -->
+                         @if (activeTab() === 'send') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="green-button-submenu">
+                                        <!-- <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon> -->
+                                        <ng-icon name="heroBanknotes" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Send MPT</h2>
+                                        <p class="submenu-info-secondary-text">Send created MPT to another XRPL address</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Claim Menu -->
+                         @if (activeTab() === 'lock' || activeTab() === 'unlock') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="blue-button-submenu">
+                                        <ng-icon name="heroLockOpen" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Lock/Unlock MPT</h2>
+                                        <p class="submenu-info-secondary-text">Lock/Unlock MPT so another XRPL address can't send it</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Close Menu -->
+                         @if (activeTab() === 'clawback') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="red-button-submenu">
+                                        <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Clawback MPT</h2>
+                                        <p class="submenu-info-secondary-text">Clawback a previously created MPT</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Close Menu -->
+                         @if (activeTab() === 'destroy') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="red-button-submenu">
+                                        <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Destroy MPT</h2>
+                                        <p class="submenu-info-secondary-text">Destroy a previously created MPT</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Dynamic info panel -->
+                         <!-- MPT Info Panel - Collapsible & Premium -->
+                         @if (infoData(); as info) {
+                         <div class="info-message-wrapper">
+                              <div class="info-panel">
+                                   <div class="info-text">
+                                        <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                                             <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
+                                             <code>{{ info.walletName }}</code>
+
+                                             @if (info.mptCount === 0) { has no Multi-Purpose Tokens. } @else { has <strong>{{ info.mptCount }}</strong> Multi-Purpose Token{{ info.mptCount === 1 ? '' : 's' }}. } @if (info.links) {
+                                             <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
+                                             }
+                                        </div>
+
+                                        @if (info.mptCount > 0) {
+                                        <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
+                                             <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
+                                                  <span>Multi-Purpose Tokens ({{ info.mptCount }})</span>
+                                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
+                                                       <path d="M6 9l6 6 6-6" />
                                                   </svg>
-                                             </button>
-                                        </li>
+                                             </div>
+
+                                             @if (infoPanelExpanded()) {
+                                             <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
+                                                  @for (mpt of info.mptsToShow; track mpt.id) {
+                                                  <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
+                                                       <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + mpt.id" tooltipText="View MPT on XRPL Explorer">
+                                                            <div style="font-weight: 500; margin-bottom: 4px">
+                                                                 <strong>MPT</strong>
+                                                                 @if (mpt.amount) {
+                                                                 <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800"> {{ mpt.amount }} {{ mpt.isHolder ? 'held' : 'issued' }} </span>
+                                                                 }
+                                                            </div>
+                                                            <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
+                                                                 <div>MPT Issuance ID: <code>{{ mpt.mpt_issuance_id.slice(0,12) }}...{{ mpt.mpt_issuance_id.slice(-10) }}</code></div>
+                                                                 <!-- <div>ID: <code>{{ mpt.id.slice(0,12) }}...{{ mpt.id.slice(-10) }}</code></div> -->
+                                                                 @if (mpt.amount && mpt.amount !== '0') {
+                                                                 <span class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800"> {{ mpt.amount }} {{ mpt.isHolder ? 'held' : 'issued' }} </span>
+                                                                 } @if (mpt.transferFee) {
+                                                                 <div>Transfer Fee: {{ mpt.transferFee / 1000 }}%</div>
+                                                                 }
+                                                                 <div>Flags: {{ mpt.flags.length ? mpt.flags: 'None' }}</div>
+                                                            </div>
+                                                       </app-tooltip-link>
+
+                                                       <button (click)="copyAndToast(mpt.id, 'MPT ID'); $event.stopPropagation()" class="copy-btn" title="Copy MPT ID">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                            </svg>
+                                                       </button>
+                                                  </li>
+                                                  }
+                                             </ul>
+                                             }
+                                        </div>
                                         }
-                                   </ul>
-                                   }
+                                   </div>
                               </div>
-                              }
                          </div>
-                    </div>
-               </div>
-               }
+                         }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
-               </div>
-               }
+                         <!-- Warning Message -->
+                         @if (txUiService.warningMessage) {
+                         <div class="warning-panel">
+                              <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                              <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                         </div>
+                         }
 
-               <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab()">
-                         <div class="tab-content-columns">
-                              <!-- ==================== LEFT: FORM FIELDS ==================== -->
-                              <div class="tab-content-container form-fields-container">
-                                   <!-- Create sections -->
-                                   @if(activeTab() === 'create') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Asset Scale</label>
-                                             <p class="form-hint">Decimal places for the token (0-15). 2 = 0.01 precision.</p>
-                                             <input type="number" [(ngModel)]="assetScaleField" name="assetScaleField" placeholder="Value between 1 and 15" />
+                         <form #theForm="ngForm" class="send-form">
+                              <div [@tabTransition]="activeTab()">
+                                   <div class="tab-content-columns">
+                                        <!-- ==================== LEFT: FORM FIELDS ==================== -->
+                                        <div class="tab-content-container form-fields-container">
+                                             <!-- Create sections -->
+                                             @if(activeTab() === 'create') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Asset Scale</label>
+                                                       <p class="form-hint">Decimal places for the token (0-15). 2 = 0.01 precision.</p>
+                                                       <input type="number" [(ngModel)]="assetScaleField" name="assetScaleField" placeholder="Value between 1 and 15" />
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Maximum Tokens</label>
+                                                       <p class="form-hint">Maximum tokens that can ever be issued.</p>
+                                                       <input type="text" [(ngModel)]="tokenCountField" name="tokenCountField" />
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Transfer Fee</label>
+                                                       <p class="form-hint">Fee for secondary sales (0-50,000 = 0%-50%). Only available if Can Transfer is enabled.</p>
+                                                       <input type="number" [(ngModel)]="transferFeeField" name="transferFeeField" placeholder="This will be a percentage" />
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label class="label-with-link">
+                                                            Token Meta Data
+                                                            <br />
+                                                            <span class="label-meta">
+                                                                 JSON Metadata
+                                                                 <a href="https://github.com/XRPLF/XRPL-Standards/discussions/264" target="_blank" rel="noopener noreferrer">XLS-89</a>
+                                                            </span>
+                                                            <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
+                                                       </label>
+                                                       <app-json-editor class="json-error-banner" [(value)]="metaDataField" #jsonEditor></app-json-editor>
+
+                                                       <div class="metadata-info">
+                                                            <small class="text-muted"> Metadata size: {{ metadataByteLength() }} / 1024 bytes </small>
+                                                            @if (metadataByteLength() > 1024) {
+                                                            <small class="text-danger d-block">
+                                                                 <strong>Exceeded limit – transaction will fail</strong>
+                                                            </small>
+                                                            } @else if (metadataByteLength() > 900) {
+                                                            <small class="text-warning d-block"> Approaching limit ({{ metadataByteLength() }} bytes) </small>
+                                                            }
+                                                       </div>
+                                                  </div>
+                                             </div>
+                                             }
+
+                                             <!-- MPT IssuanceId sections -->
+                                             @if (activeTab() === 'authorize' || activeTab() === 'unauthorize' || activeTab() === 'lock' || activeTab() === 'unlock') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Select MPT to send</label>
+                                                       <p class="form-hint">MPT this account holds that can be sent to another account.</p>
+                                                       <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>MPT Issuance ID</label>
+                                                       <p class="form-hint">Identifies the MPTokenIssuance.</p>
+                                                       <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label for="destination">Destination</label>
+                                                       <p class="form-hint">Account that will recieve the MPT.</p>
+                                                       <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                                                  </div>
+                                             </div>
+                                             }
+
+                                             <!-- Send MPT sections -->
+                                             @if (activeTab() === 'send') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Select MPT to send</label>
+                                                       <p class="form-hint">MPT this account holds that can be sent to another account.</p>
+                                                       <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-group">
+                                                  <label>MPT Issuance ID</label>
+                                                  <p class="form-hint">Identifies the MPTokenIssuance.</p>
+                                                  <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
+                                             </div>
+
+                                             <!-- Destination (create only) -->
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label for="destination">Destination</label>
+                                                       <p class="form-hint">Account that will recieve the MPT.</p>
+                                                       <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                                                  </div>
+                                                  <div class="form-group">
+                                                       <label>MPT Amount</label>
+                                                       <p class="form-hint">Amount of MPT to send.</p>
+                                                       <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
+                                                  </div>
+                                             </div>
+                                             }
+
+                                             <!-- Clawback/Destroy MPT sections -->
+                                             @if (activeTab() === 'clawback' || activeTab() === 'destroy') {`
+                                             <!-- Clawback MPT sections -->
+                                             @if(activeTab() === 'clawback') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Select MPT to Clawback</label>
+                                                       <p class="form-hint">MPT to clawback.</p>
+                                                       <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                                                  </div>
+                                             </div>
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>MPT Issuance ID</label>
+                                                       <p class="form-hint">Identifies the MPTokenIssuance.</p>
+                                                       <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
+                                                  </div>
+                                             </div>
+
+                                             <!-- Destination -->
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label for="destination">MPT Holder</label>
+                                                       <p class="form-hint">MPT holder address to clawback tokens from.</p>
+                                                       <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                                                  </div>
+
+                                                  <div class="form-group">
+                                                       <label>Amount to Clawback</label>
+                                                       <p class="form-hint">MPT amount to clawback form an existing holder.</p>
+                                                       <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
+                                                  </div>
+                                             </div>
+                                             }
+                                             <!-- Destroy MPT sections -->
+                                             @if(activeTab() === 'destroy') {
+                                             <div class="form-group">
+                                                  <label>Select MPT to Destroy</label>
+                                                  <p class="form-hint">MPT to destroy.</p>
+                                                  <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                                             </div>
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>MPT Issuance ID</label>
+                                                       <p class="form-hint">Identifies the MPTokenIssuance.</p>
+                                                       <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
+                                                  </div>
+                                             </div>
+                                             } }
                                         </div>
-                                   </div>
 
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Maximum Tokens</label>
-                                             <p class="form-hint">Maximum tokens that can ever be issued.</p>
-                                             <input type="text" [(ngModel)]="tokenCountField" name="tokenCountField" />
-                                        </div>
-                                   </div>
+                                        <!-- MPT Flags -->
+                                        @if (activeTab() === 'create') {
+                                        <!-- <div class="tab-content-container flags-container" style="min-width: 550px"> -->
+                                        <div class="tab-content-container flags-container">
+                                             <div class="flags-wrapper">
+                                                  <div class="token-flags-header">
+                                                       <lucide-icon name="flag" size="20"></lucide-icon>
+                                                       <span class="token-flags-title">MPT Flags</span>
+                                                  </div>
 
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Transfer Fee</label>
-                                             <p class="form-hint">Fee for secondary sales (0-50,000 = 0%-50%). Only available if Can Transfer is enabled.</p>
-                                             <input type="number" [(ngModel)]="transferFeeField" name="transferFeeField" placeholder="This will be a percentage" />
-                                        </div>
-                                   </div>
+                                                  <!-- tfRenew -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.canLock" (click)="toggleFlag('canLock')">
+                                                       <div class="flag-header-account">
+                                                            <input type="checkbox" id="canLock" name="canLock" [checked]="flags.canLock" class="flag-checkbox" />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">MPTCanLock</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00000002 tfMPTCanLock</div>
+                                                       <div class="flag-desc">The MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way.</div>
+                                                  </div>
+                                                  }
 
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label class="label-with-link">
-                                                  Token Meta Data
-                                                  <br />
-                                                  <span class="label-meta">
-                                                       JSON Metadata
-                                                       <a href="https://github.com/XRPLF/XRPL-Standards/discussions/264" target="_blank" rel="noopener noreferrer">XLS-89</a>
-                                                  </span>
-                                                  <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
-                                             </label>
-                                             <app-json-editor class="json-error-banner" [(value)]="metaDataField" #jsonEditor></app-json-editor>
+                                                  <!-- tfClose -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flag-item-account-flags" [class.enabled]="flags.isRequireAuth" (click)="toggleFlag('isRequireAuth')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.isRequireAuth" class="flag-checkbox" disabled />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">MPTRequireAuth</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00000004 tfMPTRequireAuth</div>
+                                                       <div class="flag-desc">Individual holders must be authorized. This enables issuers to limit who can hold their assets.</div>
+                                                  </div>
+                                                  }
 
-                                             <div class="metadata-info">
-                                                  <small class="text-muted"> Metadata size: {{ metadataByteLength() }} / 1024 bytes </small>
-                                                  @if (metadataByteLength() > 1024) {
-                                                  <small class="text-danger d-block">
-                                                       <strong>Exceeded limit – transaction will fail</strong>
-                                                  </small>
-                                                  } @else if (metadataByteLength() > 900) {
-                                                  <small class="text-warning d-block"> Approaching limit ({{ metadataByteLength() }} bytes) </small>
+                                                  <!-- tfClose -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flag-item" [class.enabled]="flags.canEscrow" (click)="toggleFlag('canEscrow')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.canEscrow" class="flag-checkbox" disabled />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">MPTCanEscrow</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00000008 tfMPTCanEscrow</div>
+                                                       <div class="flag-desc">Individual holders can place their balances into an escrow.</div>
+                                                  </div>
+                                                  }
+
+                                                  <!-- tfClose -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flag-item" [class.enabled]="flags.canTrade" (click)="toggleFlag('canTrade')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.canTrade" class="flag-checkbox" disabled />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">MPTCanTrade</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00000010 tfMPTCanTrade</div>
+                                                       <div class="flag-desc">Individual holders can trade their balances using the XRP Ledger DEX or AMM.</div>
+                                                  </div>
+                                                  }
+
+                                                  <!-- tfClose -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flag-item" [class.enabled]="flags.canTransfer" (click)="toggleFlag('canTransfer')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.canTransfer" class="flag-checkbox" disabled />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">MPTCanTransfer</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00000020 tfMPTCanTransfer</div>
+                                                       <div class="flag-desc">Tokens may be transferred to other accounts that are not the issuer.</div>
+                                                  </div>
+                                                  }
+
+                                                  <!-- tfClose -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flag-item" [class.enabled]="flags.canClawback" (click)="toggleFlag('canClawback')">
+                                                       <div class="flag-header">
+                                                            <input type="checkbox" [checked]="flags.canClawback" class="flag-checkbox" disabled />
+                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                            </svg>
+                                                            <span class="flag-title">MPTCanClawback</span>
+                                                       </div>
+                                                       <div class="flag-value">0x00000040 tfMPTCanClawback</div>
+                                                       <div class="flag-desc">The issuer may use the Clawback transaction to clawback value from individual holders.</div>
+                                                  </div>
+                                                  }
+
+                                                  <!-- TOTAL FLAGS VALUE -->
+                                                  @if (activeTab() === 'create') {
+                                                  <div class="flags-total">
+                                                       <span class="total-label">Total Flags Value:</span>
+                                                       <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
+                                                  </div>
                                                   }
                                              </div>
                                         </div>
-                                   </div>
-                                   }
-
-                                   <!-- MPT IssuanceId sections -->
-                                   @if (activeTab() === 'authorize' || activeTab() === 'unauthorize' || activeTab() === 'lock' || activeTab() === 'unlock') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Select MPT to send</label>
-                                             <p class="form-hint">MPT this account holds that can be sent to another account.</p>
-                                             <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>MPT Issuance ID</label>
-                                             <p class="form-hint">Identifies the MPTokenIssuance.</p>
-                                             <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="destination">Destination</label>
-                                             <p class="form-hint">Account that will recieve the MPT.</p>
-                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Send MPT sections -->
-                                   @if (activeTab() === 'send') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Select MPT to send</label>
-                                             <p class="form-hint">MPT this account holds that can be sent to another account.</p>
-                                             <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
-                                        </div>
-                                   </div>
-
-                                   <div class="form-group">
-                                        <label>MPT Issuance ID</label>
-                                        <p class="form-hint">Identifies the MPTokenIssuance.</p>
-                                        <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
-                                   </div>
-
-                                   <!-- Destination (create only) -->
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="destination">Destination</label>
-                                             <p class="form-hint">Account that will recieve the MPT.</p>
-                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                        </div>
-                                        <div class="form-group">
-                                             <label>MPT Amount</label>
-                                             <p class="form-hint">Amount of MPT to send.</p>
-                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Clawback/Destroy MPT sections -->
-                                   @if (activeTab() === 'clawback' || activeTab() === 'destroy') {`
-                                   <!-- Clawback MPT sections -->
-                                   @if(activeTab() === 'clawback') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Select MPT to Clawback</label>
-                                             <p class="form-hint">MPT to clawback.</p>
-                                             <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>MPT Issuance ID</label>
-                                             <p class="form-hint">Identifies the MPTokenIssuance.</p>
-                                             <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
-                                        </div>
-                                   </div>
-
-                                   <!-- Destination -->
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label for="destination">MPT Holder</label>
-                                             <p class="form-hint">MPT holder address to clawback tokens from.</p>
-                                             <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                        </div>
-
-                                        <div class="form-group">
-                                             <label>Amount to Clawback</label>
-                                             <p class="form-hint">MPT amount to clawback form an existing holder.</p>
-                                             <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="" />
-                                        </div>
-                                   </div>
-                                   }
-                                   <!-- Destroy MPT sections -->
-                                   @if(activeTab() === 'destroy') {
-                                   <div class="form-group">
-                                        <label>Select MPT to Destroy</label>
-                                        <p class="form-hint">MPT to destroy.</p>
-                                        <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
-                                   </div>
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>MPT Issuance ID</label>
-                                             <p class="form-hint">Identifies the MPTokenIssuance.</p>
-                                             <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
-                                        </div>
-                                   </div>
-                                   } }
-                              </div>
-
-                              <!-- MPT Flags -->
-                              @if (activeTab() === 'create') {
-                              <!-- <div class="tab-content-container flags-container" style="min-width: 550px"> -->
-                              <div class="tab-content-container flags-container" style="min-width: 350px">
-                                   <div class="flags-wrapper">
-                                        <div class="token-flags-header">
-                                             <lucide-icon name="flag" size="20"></lucide-icon>
-                                             <span class="token-flags-title">MPT Flags</span>
-                                        </div>
-
-                                        <!-- tfRenew -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flag-item-account-flags" [class.enabled]="flags.canLock" (click)="toggleFlag('canLock')">
-                                             <div class="flag-header-account">
-                                                  <input type="checkbox" id="canLock" name="canLock" [checked]="flags.canLock" class="flag-checkbox" />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">MPTCanLock</span>
-                                             </div>
-                                             <div class="flag-value">0x00000002 tfMPTCanLock</div>
-                                             <div class="flag-desc">The MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way.</div>
-                                        </div>
                                         }
+                                   </div>
 
-                                        <!-- tfClose -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flag-item-account-flags" [class.enabled]="flags.isRequireAuth" (click)="toggleFlag('isRequireAuth')">
-                                             <div class="flag-header">
-                                                  <input type="checkbox" [checked]="flags.isRequireAuth" class="flag-checkbox" disabled />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">MPTRequireAuth</span>
-                                             </div>
-                                             <div class="flag-value">0x00000004 tfMPTRequireAuth</div>
-                                             <div class="flag-desc">Individual holders must be authorized. This enables issuers to limit who can hold their assets.</div>
-                                        </div>
-                                        }
+                                   <app-transaction-options [showWhenTab]="['create', 'authorize','unauthorize','send','lock','unlock','clawback', 'destroy']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
-                                        <!-- tfClose -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flag-item" [class.enabled]="flags.canEscrow" (click)="toggleFlag('canEscrow')">
-                                             <div class="flag-header">
-                                                  <input type="checkbox" [checked]="flags.canEscrow" class="flag-checkbox" disabled />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">MPTCanEscrow</span>
-                                             </div>
-                                             <div class="flag-value">0x00000008 tfMPTCanEscrow</div>
-                                             <div class="flag-desc">Individual holders can place their balances into an escrow.</div>
+                                   <!-- Action buttons -->
+                                   <div class="button-row">
+                                        @if(activeTab() === 'create') { @if (txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || !metadataIsValid()) {
+                                        <div class="button-row">
+                                             <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
+                                                  <button type="button" class="btn-primary-blue" disabled>{{ txUiService.spinner() ? 'Processing...' : 'Create MPT' }}</button>
+                                             </app-tooltip-link>
                                         </div>
+                                        } @if (txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || metadataIsValid()) {
+                                        <button type="button" class="btn-primary-blue" (click)="createMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || !metadataIsValid()">{{ txUiService.spinner() ? 'Processing...' : 'Create MPT' }}</button>
+                                        } } @else if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
+                                        <button type="button" class="btn-primary-orange" (click)="authorizeMpt('Y')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Authorize MPT' }}</button>
+                                        <button type="button" class="btn-primary-orange" (click)="authorizeMpt('N')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Unauthorize MPT' }}</button>
+                                        } @else if (activeTab() === 'send') {
+                                        <button type="button" class="btn-primary-green" (click)="sendMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Send MPT' }}</button>
+                                        } @else if (activeTab() === 'lock' || activeTab() === 'unlock') {
+                                        <button type="button" class="btn-primary-orange" (click)="setMptLockUnlock('Y')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Lock MPT' }}</button>
+                                        <button type="button" class="btn-primary-blue" (click)="setMptLockUnlock('N')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Unlock MPT' }}</button>
+                                        } @else if (activeTab() === 'clawback') {
+                                        <button type="button" class="btn-primary-red" (click)="clawbackMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Clawback MPT' }}</button>
+                                        } @else {
+                                        <button type="button" class="btn-primary-red" (click)="destroyMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Destroy MPT' }}</button>
                                         }
-
-                                        <!-- tfClose -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flag-item" [class.enabled]="flags.canTrade" (click)="toggleFlag('canTrade')">
-                                             <div class="flag-header">
-                                                  <input type="checkbox" [checked]="flags.canTrade" class="flag-checkbox" disabled />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">MPTCanTrade</span>
-                                             </div>
-                                             <div class="flag-value">0x00000010 tfMPTCanTrade</div>
-                                             <div class="flag-desc">Individual holders can trade their balances using the XRP Ledger DEX or AMM.</div>
-                                        </div>
-                                        }
-
-                                        <!-- tfClose -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flag-item" [class.enabled]="flags.canTransfer" (click)="toggleFlag('canTransfer')">
-                                             <div class="flag-header">
-                                                  <input type="checkbox" [checked]="flags.canTransfer" class="flag-checkbox" disabled />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">MPTCanTransfer</span>
-                                             </div>
-                                             <div class="flag-value">0x00000020 tfMPTCanTransfer</div>
-                                             <div class="flag-desc">Tokens may be transferred to other accounts that are not the issuer.</div>
-                                        </div>
-                                        }
-
-                                        <!-- tfClose -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flag-item" [class.enabled]="flags.canClawback" (click)="toggleFlag('canClawback')">
-                                             <div class="flag-header">
-                                                  <input type="checkbox" [checked]="flags.canClawback" class="flag-checkbox" disabled />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title">MPTCanClawback</span>
-                                             </div>
-                                             <div class="flag-value">0x00000040 tfMPTCanClawback</div>
-                                             <div class="flag-desc">The issuer may use the Clawback transaction to clawback value from individual holders.</div>
-                                        </div>
-                                        }
-
-                                        <!-- TOTAL FLAGS VALUE -->
-                                        @if (activeTab() === 'create') {
-                                        <div class="flags-total">
-                                             <span class="total-label">Total Flags Value:</span>
-                                             <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
-                                        </div>
-                                        }
+                                        <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
                                    </div>
                               </div>
-                              }
+                         </form>
+
+                         <!-- Execution time -->
+                         <div style="display: flex">
+                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                          </div>
-
-                         <app-transaction-options [showWhenTab]="['create', 'authorize','unauthorize','send','lock','unlock','clawback', 'destroy']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                         <!-- Action buttons -->
-                         <div class="button-row">
-                              @if(activeTab() === 'create') { @if (txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || !metadataIsValid()) {
-                              <div class="button-row">
-                                   <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
-                                        <button type="button" class="btn-primary-blue" disabled>{{ txUiService.spinner() ? 'Processing...' : 'Create MPT' }}</button>
-                                   </app-tooltip-link>
-                              </div>
-                              } @if (txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || metadataIsValid()) {
-                              <button type="button" class="btn-primary-blue" (click)="createMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async) || !metadataIsValid()">{{ txUiService.spinner() ? 'Processing...' : 'Create MPT' }}</button>
-                              } } @else if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
-                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('Y')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Authorize MPT' }}</button>
-                              <button type="button" class="btn-primary-orange" (click)="authorizeMpt('N')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Unauthorize MPT' }}</button>
-                              } @else if (activeTab() === 'send') {
-                              <button type="button" class="btn-primary-green" (click)="sendMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Send MPT' }}</button>
-                              } @else if (activeTab() === 'lock' || activeTab() === 'unlock') {
-                              <button type="button" class="btn-primary-orange" (click)="setMptLockUnlock('Y')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Lock MPT' }}</button>
-                              <button type="button" class="btn-primary-blue" (click)="setMptLockUnlock('N')" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Unlock MPT' }}</button>
-                              } @else if (activeTab() === 'clawback') {
-                              <button type="button" class="btn-primary-red" (click)="clawbackMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Clawback MPT' }}</button>
-                              } @else {
-                              <button type="button" class="btn-primary-red" (click)="destroyMpt()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Destroy MPT' }}</button>
-                              }
-                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
-                         </div>
+                         <app-transaction-preview></app-transaction-preview>
                     </div>
-               </form>
-
-               <!-- Execution time -->
-               <div style="display: flex">
-                    <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
                </div>
-               <app-transaction-preview></app-transaction-preview>
           </div>
-     </div>
+     </main>
 </div>

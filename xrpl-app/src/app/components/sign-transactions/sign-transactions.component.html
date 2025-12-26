@@ -1,137 +1,134 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
+<div class="app-layout">
+     <app-navbar></app-navbar>
 
-<!-- Main content. Centered with 2 columns -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+     <main class="main-content">
+          <div class="main-container">
+               <div class="content-wrapper">
+                    <!-- Left Wallet panel ==== -->
+                    <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
-          <div class="form-panel">
-               <!-- Modify Flag Menu -->
-               @if (activeTab() === 'getAccountDetails') {
-               <div style="padding-top: 2em">
-                    <div class="submenu-info-text">
-                         <div class="white-button-submenu">
-                              <lucide-icon name="signature" size="30" style="padding-top: 15px; color: #1e40af"></lucide-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Sign Transactions</h2>
-                              <p class="submenu-info-secondary-text">Sign and submit transactions.</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Dynamic info panel -->
-               @if (infoData()) {
-               <div class="info-panel">
-                    <div class="info-panel-content">
-                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
-                         <div class="info-text" [innerHTML]="infoData()"></div>
-                    </div>
-               </div>
-               }
-
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage }}</div>
-               </div>
-               }
-
-               <form #theForm="ngForm" class="send-form">
-                    <div [@tabTransition]="activeTab()">
-                         <div class="tab-content-columns">
-                              <!-- Left Form Fields -->
-                              <div class="tab-content-container form-fields-container">
-                                   @if (activeTab() === 'getAccountDetails') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Transaction Type</label>
-                                             <p class="form-hint">Select a transaction type to sign and submit.</p>
-                                             <app-select-search-dropdown [items]="transactionTypeItems()" [value]="selectedTransactionItem()" (valueChange)="onTransactionSelected($event)" [showSecondaryInInput]="false" placeholder="Search transaction type..." emptyMessage="No transaction types available"> </app-select-search-dropdown>
-                                        </div>
+                    <!-- Right form -->
+                    <div class="form-panel">
+                         <!-- Modify Flag Menu -->
+                         @if (activeTab() === 'getAccountDetails') {
+                         <div style="padding-top: 2em">
+                              <div class="submenu-info-text">
+                                   <div class="white-button-submenu">
+                                        <lucide-icon name="signature" size="30" style="padding-top: 15px; color: #1e40af"></lucide-icon>
                                    </div>
-                                   }
-
-                                   <app-transaction-options [showWhenTab]="['getAccountDetails']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                                   <!-- Action buttons -->
-                                   @if(activeTab() === 'getAccountDetails') {
-                                   <div class="button-row" style="margin-top: 0.8em">
-                                        <button type="button" class="btn-primary-blue" (click)="getTransactionJSON()" [disabled]="buttonLoading().getJson || isAnyButtonLoading">{{ buttonLoading().getJson ? 'Processing...' : 'Get Transaction JSON' }}</button>
-                                        <!-- <button type="button" (click)="unsignedTransaction()" class="btn-primary">Unsigned Transaction</button> -->
-                                        <button type="button" class="btn-primary-blue" (click)="signedTransaction()" [disabled]="buttonLoading().signed || isAnyButtonLoading">{{ buttonLoading().signed ? 'Processing...' : 'Signed Transaction' }}</button>
-                                        <button type="button" class="btn-primary-blue" (click)="submitTransaction()" [disabled]="buttonLoading().submit || isAnyButtonLoading">{{ buttonLoading().submit ? 'Processing...' : 'Submit Transaction' }}</button>
-                                        <button type="button" class="btn-primary-blue" (click)="signForMultiSign()" [disabled]="buttonLoading().multiSign || isAnyButtonLoading">{{ buttonLoading().multiSign ? 'Processing...' : 'Sign for Multi-Sign' }}</button>
-                                        <!-- <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button> -->
-                                   </div>
-                                   }
-
-                                   <!-- Execution time -->
-                                   <div style="display: flex">
-                                        <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
-                                   </div>
-                                   <app-transaction-preview></app-transaction-preview>
-
-                                   <!-- ==== TRANSACTION JSON (EDITABLE) ==== -->
-                                   <div class="tx-preview-container" style="margin-top: 1.5rem">
-                                        <div class="tx-header">
-                                             <h5 class="tx-title">Transaction JSON</h5>
-                                             <div class="tx-actions">
-                                                  <button type="button" class="copy-btn" (click)="copyUtilService.copySignTx(txJson)" title="Copy JSON"><ng-icon name="heroClipboardDocumentList" size="20"></ng-icon> Copy</button>
-                                                  <button type="button" class="download-btn" (click)="downloadUtilService.downloadSignTxJson(txJson)" title="Download TX JSON"><ng-icon name="heroArrowDownOnSquareStack" size="20"></ng-icon> Download</button>
-                                             </div>
-                                        </div>
-
-                                        <pre #txJsonPre class="tx-json language-json editable" [ngClass]="{ 'success': txUiService.isSuccess }" spellcheck="false" contenteditable="true" (blur)="onTxJsonBlur()" (input)="onTxJsonInput()"><code #txJsonCode class="language-json"></code></pre>
-                                   </div>
-
-                                   <!-- ==== SIGNED TRANSACTION (EDITABLE) ==== -->
-                                   <div class="tx-preview-container" style="margin-top: 1rem">
-                                        <div class="tx-header">
-                                             <h5 class="tx-title">Signed Transaction</h5>
-                                             <div class="tx-actions">
-                                                  <button type="button" class="copy-btn" (click)="copyUtilService.copySignedTx(outputField())" title="Copy Signed TX"><ng-icon name="heroClipboardDocumentList" size="20"></ng-icon> Copy</button>
-                                                  <button type="button" class="download-btn" (click)="downloadUtilService.downloadSignTxJson(outputField())" title="Download Signed TX"><ng-icon name="heroArrowDownOnSquareStack" size="20"></ng-icon> Download</button>
-                                             </div>
-                                        </div>
-
-                                        <div #signedEditable id="hashField" spellcheck="false" style="color: #669900" class="tx-json language-json editable" contenteditable="true" [ngClass]="{ 'success': txUiService.isSuccess }" [textContent]="outputField()"></div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Sign Transactions</h2>
+                                        <p class="submenu-info-secondary-text">Sign and submit transactions.</p>
                                    </div>
                               </div>
                          </div>
-                    </div>
-               </form>
+                         }
 
-               <!-- Tx Result Preview -->
-               @if (txUiService.txResult.length >0) {
-               <div class="tx-preview-container">
-                    <div class="tx-header">
-                         <h3 class="tx-title">Transaction Result</h3>
-                         <div class="tx-actions">
-                              <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
-                                   <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                   Copy
-                              </button>
-                              <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
-                                   <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
-                                   Download
-                              </button>
+                         <!-- Dynamic info panel -->
+                         @if (infoData()) {
+                         <div class="info-panel">
+                              <div class="info-panel-content">
+                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                                   <div class="info-text" [innerHTML]="infoData()"></div>
+                              </div>
                          </div>
-                    </div>
+                         }
 
-                    <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
+                         <!-- Warning Message -->
+                         @if (txUiService.warningMessage) {
+                         <div class="warning-panel">
+                              <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
+                              <div class="warning-text">{{ safeWarningMessage }}</div>
+                         </div>
+                         }
+
+                         <form #theForm="ngForm" class="send-form">
+                              <div [@tabTransition]="activeTab()">
+                                   <div class="tab-content-columns">
+                                        <!-- Left Form Fields -->
+                                        <div class="tab-content-container form-fields-container">
+                                             @if (activeTab() === 'getAccountDetails') {
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label>Transaction Type</label>
+                                                       <p class="form-hint">Select a transaction type to sign and submit.</p>
+                                                       <app-select-search-dropdown [items]="transactionTypeItems()" [value]="selectedTransactionItem()" (valueChange)="onTransactionSelected($event)" [showSecondaryInInput]="false" placeholder="Search transaction type..." emptyMessage="No transaction types available"> </app-select-search-dropdown>
+                                                  </div>
+                                             </div>
+                                             }
+
+                                             <app-transaction-options [showWhenTab]="['getAccountDetails']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                                             <!-- Action buttons -->
+                                             @if(activeTab() === 'getAccountDetails') {
+                                             <div class="button-row" style="margin-top: 0.8em">
+                                                  <button type="button" class="btn-primary-blue" (click)="getTransactionJSON()" [disabled]="buttonLoading().getJson || isAnyButtonLoading">{{ buttonLoading().getJson ? 'Processing...' : 'Get Transaction JSON' }}</button>
+                                                  <!-- <button type="button" (click)="unsignedTransaction()" class="btn-primary">Unsigned Transaction</button> -->
+                                                  <button type="button" class="btn-primary-blue" (click)="signedTransaction()" [disabled]="buttonLoading().signed || isAnyButtonLoading">{{ buttonLoading().signed ? 'Processing...' : 'Signed Transaction' }}</button>
+                                                  <button type="button" class="btn-primary-blue" (click)="submitTransaction()" [disabled]="buttonLoading().submit || isAnyButtonLoading">{{ buttonLoading().submit ? 'Processing...' : 'Submit Transaction' }}</button>
+                                                  <button type="button" class="btn-primary-blue" (click)="signForMultiSign()" [disabled]="buttonLoading().multiSign || isAnyButtonLoading">{{ buttonLoading().multiSign ? 'Processing...' : 'Sign for Multi-Sign' }}</button>
+                                                  <!-- <button type="button" (click)="clearFields(true)" class="btn-secondary">Clear Fields</button> -->
+                                             </div>
+                                             }
+
+                                             <!-- Execution time -->
+                                             <div style="display: flex">
+                                                  <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                                             </div>
+                                             <app-transaction-preview></app-transaction-preview>
+
+                                             <!-- ==== TRANSACTION JSON (EDITABLE) ==== -->
+                                             <div class="tx-preview-container" style="margin-top: 1.5rem">
+                                                  <div class="tx-header">
+                                                       <h5 class="tx-title">Transaction JSON</h5>
+                                                       <div class="tx-actions">
+                                                            <button type="button" class="copy-btn" (click)="copyUtilService.copySignTx(txJson)" title="Copy JSON"><ng-icon name="heroClipboardDocumentList" size="20"></ng-icon> Copy</button>
+                                                            <button type="button" class="download-btn" (click)="downloadUtilService.downloadSignTxJson(txJson)" title="Download TX JSON"><ng-icon name="heroArrowDownOnSquareStack" size="20"></ng-icon> Download</button>
+                                                       </div>
+                                                  </div>
+
+                                                  <pre #txJsonPre class="tx-json language-json editable" [ngClass]="{ 'success': txUiService.isSuccess }" spellcheck="false" contenteditable="true" (blur)="onTxJsonBlur()" (input)="onTxJsonInput()"><code #txJsonCode class="language-json"></code></pre>
+                                             </div>
+
+                                             <!-- ==== SIGNED TRANSACTION (EDITABLE) ==== -->
+                                             <div class="tx-preview-container" style="margin-top: 1rem">
+                                                  <div class="tx-header">
+                                                       <h5 class="tx-title">Signed Transaction</h5>
+                                                       <div class="tx-actions">
+                                                            <button type="button" class="copy-btn" (click)="copyUtilService.copySignedTx(outputField())" title="Copy Signed TX"><ng-icon name="heroClipboardDocumentList" size="20"></ng-icon> Copy</button>
+                                                            <button type="button" class="download-btn" (click)="downloadUtilService.downloadSignTxJson(outputField())" title="Download Signed TX"><ng-icon name="heroArrowDownOnSquareStack" size="20"></ng-icon> Download</button>
+                                                       </div>
+                                                  </div>
+
+                                                  <div #signedEditable id="hashField" spellcheck="false" style="color: #669900" class="tx-json language-json editable" contenteditable="true" [ngClass]="{ 'success': txUiService.isSuccess }" [textContent]="outputField()"></div>
+                                             </div>
+                                        </div>
+                                   </div>
+                              </div>
+                         </form>
+
+                         <!-- Tx Result Preview -->
+                         @if (txUiService.txResult.length >0) {
+                         <div class="tx-preview-container">
+                              <div class="tx-header">
+                                   <h3 class="tx-title">Transaction Result</h3>
+                                   <div class="tx-actions">
+                                        <button class="copy-btn" (click)="copyUtilService.copyTxResult()" title="Copy JSON">
+                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+                                             Copy
+                                        </button>
+                                        <button class="download-btn" (click)="downloadUtilService.downloadTxResult()" title="Download JSON">
+                                             <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+                                             Download
+                                        </button>
+                                   </div>
+                              </div>
+
+                              <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
+                         </div>
+                         }
+                    </div>
                </div>
-               }
           </div>
-     </div>
+     </main>
 </div>

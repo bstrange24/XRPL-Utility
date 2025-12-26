@@ -1,179 +1,176 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
+<div class="app-layout">
+     <app-navbar></app-navbar>
 
-<!-- Main content. Centered with 2 columns -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+     <main class="main-content">
+          <div class="main-container">
+               <div class="content-wrapper">
+                    <!-- Left Wallet panel ==== -->
+                    <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
-          <div class="form-panel">
-               <!-- Menu bar -->
-               <div class="menu-bar">
-                    <button class="menu-btn" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
-                         <ng-icon name="heroTicket" size="20" class="text-red-600"></ng-icon>
-                         Create Ticket
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'delete'" (click)="setTab('delete')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Delete Tickets
-                    </button>
-               </div>
-
-               <!-- Create Menu -->
-               @if (activeTab() === 'create') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroTicket" size="27" class="text-red-600"></ng-icon>
+                    <!-- Right form -->
+                    <div class="form-panel">
+                         <!-- Menu bar -->
+                         <div class="menu-bar">
+                              <button class="menu-btn" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
+                                   <ng-icon name="heroTicket" size="20" class="text-red-600"></ng-icon>
+                                   Create Ticket
+                              </button>
+                              <button class="menu-btn" [class.active]="activeTab() === 'delete'" (click)="setTab('delete')">
+                                   <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
+                                   Delete Tickets
+                              </button>
                          </div>
+
+                         <!-- Create Menu -->
+                         @if (activeTab() === 'create') {
                          <div>
-                              <h2 class="submenu-info-main-text">Create Ticket</h2>
-                              <p class="submenu-info-secondary-text">Create a ticket for the selected account</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Delete Menu -->
-               @if (activeTab() === 'delete') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Delete Ticket</h2>
-                              <p class="submenu-info-secondary-text">Delete a ticket for the selected account</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Dynamic info panel -->
-               @if (infoData()) {
-               <div class="info-panel">
-                    <div class="info-panel-content">
-                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
-                         <div class="info-text" [innerHTML]="infoData()"></div>
-                    </div>
-               </div>
-               }
-
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
-               </div>
-               }
-
-               <form #theForm="ngForm" class="send-form">
-                    <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab()">
-                              <!-- Create tickets -->
-                              @if (activeTab() === 'create') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Number of Tickets to create</label>
-                                        <p class="form-hint">Number of Tickets to create for the selected account.</p>
-                                        <input type="text" [(ngModel)]="ticketCountField" name="ticketCountField" placeholder="Total max tickets, per account, is 250" />
+                              <div class="submenu-info-text">
+                                   <div class="blue-button-submenu">
+                                        <ng-icon name="heroTicket" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Create Ticket</h2>
+                                        <p class="submenu-info-secondary-text">Create a ticket for the selected account</p>
                                    </div>
                               </div>
-                              }
+                         </div>
+                         }
 
-                              <!-- Unified Ticket Dropdown (only shown on delete tab and if tickets exist) -->
-                              @if (activeTab() === 'delete' && walletTicketCount() > 0) {
-                              <div class="form-row" style="margin-bottom: 1.2em">
-                                   <div class="form-group">
-                                        <label>Select Tickets to Delete</label>
-                                        <p class="form-hint">Select available tickets to delete for the selected account.</p>
-                                        <div class="combobox-container" (clickOutside)="closeTicketDropdown()">
-                                             <input #ticketDropdownInput type="text" [value]="ticketSearchQuery()" (input)="onTicketSearchInput($event)" (focus)="openTicketDropdown()" (keydown)="onTicketKeyDown($event)" [placeholder]="selectedTicketSequences().length > 0 ? selectedTicketSequences().length + ' ticket(s) selected' : 'Search tickets by sequence...'" [value]="ticketSearchQuery()" class="combobox-input" autocomplete="off" />
-                                             <button class="combobox-toggle" (click)="toggleTicketDropdown()" type="button">
-                                                  <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                             </button>
-                                        </div>
+                         <!-- Delete Menu -->
+                         @if (activeTab() === 'delete') {
+                         <div>
+                              <div class="submenu-info-text">
+                                   <div class="red-button-submenu">
+                                        <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Delete Ticket</h2>
+                                        <p class="submenu-info-secondary-text">Delete a ticket for the selected account</p>
                                    </div>
                               </div>
+                         </div>
+                         }
 
-                              <!-- NEW: Selected Tickets Chips -->
-                              @if (selectedTicketSequences().length > 0) {
-                              <div class="ticket-container">
-                                   <!-- List of selected tickets -->
-                                   <div class="ticket-list">
-                                        @for (ticketSeq of selectedTicketSequences(); track ticketSeq) {
-                                        <div class="ticket-item">
-                                             <span class="ticket-number">{{ ticketSeq }}</span>
+                         <!-- Dynamic info panel -->
+                         @if (infoData()) {
+                         <div class="info-panel">
+                              <div class="info-panel-content">
+                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                                   <div class="info-text" [innerHTML]="infoData()"></div>
+                              </div>
+                         </div>
+                         }
 
-                                             <button type="button" class="ticket-remove" (click)="toggleTicketSelection(ticketSeq)" aria-label="Remove ticket">
-                                                  <ng-icon name="heroXCircle" size="16" color="red"></ng-icon>
-                                             </button>
+                         <!-- Warning Message -->
+                         @if (txUiService.warningMessage) {
+                         <div class="warning-panel">
+                              <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                              <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                         </div>
+                         }
+
+                         <form #theForm="ngForm" class="send-form">
+                              <div class="tab-content-container">
+                                   <div [@tabTransition]="activeTab()">
+                                        <!-- Create tickets -->
+                                        @if (activeTab() === 'create') {
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label>Number of Tickets to create</label>
+                                                  <p class="form-hint">Number of Tickets to create for the selected account.</p>
+                                                  <input type="text" [(ngModel)]="ticketCountField" name="ticketCountField" placeholder="Total max tickets, per account, is 250" />
+                                             </div>
                                         </div>
                                         }
-                                   </div>
 
-                                   <!-- Footer row -->
-                                   <div class="ticket-footer">
-                                        <button type="button" class="clear-btn" (click)="clearAllSelections()">Clear all</button>
-                                   </div>
-                              </div>
-                              }
+                                        <!-- Unified Ticket Dropdown (only shown on delete tab and if tickets exist) -->
+                                        @if (activeTab() === 'delete' && walletTicketCount() > 0) {
+                                        <div class="form-row" style="margin-bottom: 1.2em">
+                                             <div class="form-group">
+                                                  <label>Select Tickets to Delete</label>
+                                                  <p class="form-hint">Select available tickets to delete for the selected account.</p>
+                                                  <div class="combobox-container" (clickOutside)="closeTicketDropdown()">
+                                                       <input #ticketDropdownInput type="text" [value]="ticketSearchQuery()" (input)="onTicketSearchInput($event)" (focus)="openTicketDropdown()" (keydown)="onTicketKeyDown($event)" [placeholder]="selectedTicketSequences().length > 0 ? selectedTicketSequences().length + ' ticket(s) selected' : 'Search tickets by sequence...'" [value]="ticketSearchQuery()" class="combobox-input" autocomplete="off" />
+                                                       <button class="combobox-toggle" (click)="toggleTicketDropdown()" type="button">
+                                                            <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                                                       </button>
+                                                  </div>
+                                             </div>
+                                        </div>
 
-                              <!-- Dropdown Template -->
-                              <ng-template #ticketDropdownTemplate>
-                                   <div class="combobox-wrapper" (click)="$event.stopPropagation()">
-                                        <div class="combobox-dropdown-overlay ticket-dropdown" style="max-height: 340px; overflow-y: auto; padding: 8px 0">
-                                             <!-- Header: Select All + Clear -->
-                                             <div class="dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid #e5e7eb; background: #f9fafb">
-                                                  <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #374151; cursor: pointer">
-                                                       <input type="checkbox" [checked]="allTicketsSelected()" (change)="toggleSelectAll()" style="width: 16px; height: 16px" />
-                                                       <span>Select All</span>
-                                                  </label>
-                                                  <button class="clear-btn" (click)="clearAllSelections()" [disabled]="selectedTicketSequences().length === 0" style="color: #dc2626; font-size: 0.875rem; font-weight: 500; background: none; border: none; cursor: pointer; opacity: 0.8" [style.opacity]="selectedTicketSequences().length === 0 ? 0.5 : 1">Clear</button>
+                                        <!-- NEW: Selected Tickets Chips -->
+                                        @if (selectedTicketSequences().length > 0) {
+                                        <div class="ticket-container">
+                                             <!-- List of selected tickets -->
+                                             <div class="ticket-list">
+                                                  @for (ticketSeq of selectedTicketSequences(); track ticketSeq) {
+                                                  <div class="ticket-item">
+                                                       <span class="ticket-number">{{ ticketSeq }}</span>
+
+                                                       <button type="button" class="ticket-remove" (click)="toggleTicketSelection(ticketSeq)" aria-label="Remove ticket">
+                                                            <ng-icon name="heroXCircle" size="16" color="red"></ng-icon>
+                                                       </button>
+                                                  </div>
+                                                  }
                                              </div>
 
-                                             <!-- Ticket Items -->
-                                             @for (ticket of filteredTickets(); track ticket) {
-                                             <label class="combobox-item ticket-item" [class.highlighted]="highlightedTicketIndex() === $index" (mouseenter)="highlightedTicketIndex.set($index)" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; user-select: none">
-                                                  <input type="checkbox" [checked]="selectedTicketSequences().includes(convertToString(ticket))" (change)="toggleTicketSelection(ticket)" style="width: 16px; height: 16px; cursor: pointer" />
-
-                                                  <span class="ticket-sequence" style="font-family: monospace; font-size: 0.95em; color: #1f2937"> {{ ticket }} </span>
-                                             </label>
-                                             } @empty {
-                                             <div class="combobox-empty" style="padding: 16px; text-align: center; color: #6b7280">No tickets match your search</div>
-                                             }
+                                             <!-- Footer row -->
+                                             <div class="ticket-footer">
+                                                  <button type="button" class="clear-btn" (click)="clearAllSelections()">Clear all</button>
+                                             </div>
                                         </div>
+                                        }
+
+                                        <!-- Dropdown Template -->
+                                        <ng-template #ticketDropdownTemplate>
+                                             <div class="combobox-wrapper" (click)="$event.stopPropagation()">
+                                                  <div class="combobox-dropdown-overlay ticket-dropdown" style="max-height: 340px; overflow-y: auto; padding: 8px 0">
+                                                       <!-- Header: Select All + Clear -->
+                                                       <div class="dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid #e5e7eb; background: #f9fafb">
+                                                            <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #374151; cursor: pointer">
+                                                                 <input type="checkbox" [checked]="allTicketsSelected()" (change)="toggleSelectAll()" style="width: 16px; height: 16px" />
+                                                                 <span>Select All</span>
+                                                            </label>
+                                                            <button class="clear-btn" (click)="clearAllSelections()" [disabled]="selectedTicketSequences().length === 0" style="color: #dc2626; font-size: 0.875rem; font-weight: 500; background: none; border: none; cursor: pointer; opacity: 0.8" [style.opacity]="selectedTicketSequences().length === 0 ? 0.5 : 1">Clear</button>
+                                                       </div>
+
+                                                       <!-- Ticket Items -->
+                                                       @for (ticket of filteredTickets(); track ticket) {
+                                                       <label class="combobox-item ticket-item" [class.highlighted]="highlightedTicketIndex() === $index" (mouseenter)="highlightedTicketIndex.set($index)" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; user-select: none">
+                                                            <input type="checkbox" [checked]="selectedTicketSequences().includes(convertToString(ticket))" (change)="toggleTicketSelection(ticket)" style="width: 16px; height: 16px; cursor: pointer" />
+
+                                                            <span class="ticket-sequence" style="font-family: monospace; font-size: 0.95em; color: #1f2937"> {{ ticket }} </span>
+                                                       </label>
+                                                       } @empty {
+                                                       <div class="combobox-empty" style="padding: 16px; text-align: center; color: #6b7280">No tickets match your search</div>
+                                                       }
+                                                  </div>
+                                             </div>
+                                        </ng-template>
+                                        }
+
+                                        <app-transaction-options [showWhenTab]="['create','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                                        <!-- Action buttons -->
+                                        <div class="button-row">
+                                             @if (activeTab() === 'create') {
+                                             <button type="button" class="btn-primary-blue" (click)="createTicket()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Ticket' }}</button>
+                                             } @if (activeTab() === 'delete') {
+                                             <button type="button" class="btn-primary-red" (click)="deleteTicket()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delete Ticket' }}</button>
+                                             }
+                                             <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
+                                        </div>
+
+                                        <!-- Execution time -->
+                                        <div style="display: flex">
+                                             <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                                        </div>
+                                        <app-transaction-preview></app-transaction-preview>
                                    </div>
-                              </ng-template>
-                              }
-
-                              <app-transaction-options [showWhenTab]="['create','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                              <!-- Action buttons -->
-                              <div class="button-row">
-                                   @if (activeTab() === 'create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createTicket()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Ticket' }}</button>
-                                   } @if (activeTab() === 'delete') {
-                                   <button type="button" class="btn-primary-red" (click)="deleteTicket()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delete Ticket' }}</button>
-                                   }
-                                   <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
                               </div>
-
-                              <!-- Execution time -->
-                              <div style="display: flex">
-                                   <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
-                              </div>
-                              <app-transaction-preview></app-transaction-preview>
-                         </div>
+                         </form>
                     </div>
-               </form>
+               </div>
           </div>
-     </div>
+     </main>
 </div>

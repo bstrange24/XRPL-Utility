@@ -1,24 +1,22 @@
-import { Component, OnInit, EventEmitter, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Subject, Subscription } from 'rxjs';
+import { StorageService } from '../../../../services/local-storage/storage.service';
+import { NetworkService } from '../../../../services/network-service/network.service';
+import { XrplService } from '../../../../services/xrpl-services/xrpl.service';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { StorageService } from '../../services/local-storage/storage.service';
-import { XrplService } from '../../services/xrpl-services/xrpl.service';
-import { DatePipe } from '@angular/common';
-import { Subscription } from 'rxjs';
 import { formatInTimeZone } from 'date-fns-tz';
-import { UtilsService } from '../../services/util-service/utils.service';
-import { Subject } from 'rxjs';
-import { NetworkService } from '../../services/network-service/network.service';
+import { UtilsService } from '../../../../services/util-service/utils.service';
 import { NgIcon } from '@ng-icons/core';
 
 @Component({
-     selector: 'app-navbar',
-     standalone: true,
+     selector: 'app-header',
      imports: [CommonModule, RouterModule, NgIcon],
      providers: [DatePipe],
-     templateUrl: './navbar.component.html',
+     templateUrl: './header.component.html',
+     styleUrl: './header.component.css',
 })
-export class NavbarComponent implements OnInit {
+export class HeaderComponent implements OnInit {
      @Output() transactionResult = new EventEmitter<{ result: string; isError: boolean; isSuccess: boolean }>();
      selectedNetwork: string = 'Devnet';
      networkColor: string = '#1a1c21';
@@ -35,6 +33,11 @@ export class NavbarComponent implements OnInit {
      private subs: Subscription[] = [];
      expandedGroup: 'accounts' | 'escrows' | 'nfts' | 'mpt' | null = null;
      isCollapsed = false;
+     networks = [
+          { name: 'Devnet', value: 'devnet', tag: 'Development' },
+          { name: 'Testnet', value: 'testnet', tag: 'Testing' },
+          { name: 'Mainnet', value: 'mainnet', tag: 'Production' },
+     ];
 
      constructor(private readonly storageService: StorageService, private readonly utilsService: UtilsService, private readonly xrplService: XrplService, private readonly router: Router, private readonly datePipe: DatePipe, private networkService: NetworkService) {}
 
@@ -67,6 +70,16 @@ export class NavbarComponent implements OnInit {
           }
           this.applyDarkMode();
      }
+
+     // private monitorConnectionStatus() {
+     //      // Initial check
+     //      this.checkConnection();
+
+     //      // Check every 10 seconds (XRPL nodes can drop silently)
+     //      this.connectionCheckInterval = setInterval(() => {
+     //           this.checkConnection();
+     //      }, 10000);
+     // }
 
      toggleSidebar() {
           this.isCollapsed = !this.isCollapsed;

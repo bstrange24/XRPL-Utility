@@ -1,109 +1,106 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
+<div class="app-layout">
+     <app-navbar></app-navbar>
+
+     <main class="main-content">
+          <div class="main-container">
+               <div class="content-wrapper">
+                    <!-- Left Wallet panel ==== -->
+                    <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+
+                    <!-- Right form -->
+                    <div class="form-panel">
+                         <!-- Send XRP Menu -->
+                         @if (activeTab() === 'send') {
+                         <div style="padding-top: 2em">
+                              <div class="submenu-info-text">
+                                   <div class="green-button-submenu">
+                                        <ng-icon name="heroPaperAirplane" size="27" class="text-red-600"></ng-icon>
+                                   </div>
+                                   <div>
+                                        <h2 class="submenu-info-main-text">Send XRP</h2>
+                                        <p class="submenu-info-secondary-text">Send XRP to another XRPL address</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Dynamic info panel -->
+                         @if (infoData()) {
+                         <div class="info-panel">
+                              <div class="info-panel-content">
+                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                                   <div class="info-text" [innerHTML]="infoData()"></div>
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Warning Message -->
+                         @if (txUiService.warningMessage) {
+                         <div class="warning-panel">
+                              <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
+                              <div class="warning-text">{{ safeWarningMessage }}</div>
+                         </div>
+                         }
+
+                         <form #theForm="ngForm" class="send-form">
+                              <div class="tab-content-container">
+                                   <div [@tabTransition]="activeTab()">
+                                        <!-- Amount and Destination -->
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label for="amountField">XRP Amount</label>
+                                                  <p class="form-hint">Amount, in XRP, to send to the destination.</p>
+                                                  <input type="text" placeholder="e.g. 10.5" [ngModel]="txUiService.amountField()" (ngModelChange)="txUiService.amountField.set($event)" name="amountField" />
+                                             </div>
+                                             <div class="form-group">
+                                                  <label for="destination">Destination</label>
+                                                  <p class="form-hint">The unique address of the account receiving the payment.</p>
+                                                  <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (searchQueryChange)="typedDestination.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                                             </div>
+                                        </div>
+
+                                        <!-- Destination Tag and Source Tag -->
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label for="destinationTagField">Destination Tag (opt)</label>
+                                                  <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
+                                                  <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
+                                             </div>
+
+                                             <div class="form-group">
+                                                  <label for="sourceTagField">Source Tag (optional)</label>
+                                                  <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
+                                                  <input type="text" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" name="sourceTagField" />
+                                             </div>
+                                        </div>
+
+                                        <!-- Invoice ID -->
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label for="invoiceIdField">Invoice ID (optional)</label>
+                                                  <p class="form-hint">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
+                                                  <input type="text" placeholder="e.g. INV_123" [ngModel]="txUiService.invoiceIdField()" (ngModelChange)="txUiService.invoiceIdField.set($event)" name="invoiceIdField" />
+                                             </div>
+                                        </div>
+
+                                        <app-transaction-options [showWhenTab]="['send']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                                        <!-- Action buttons -->
+                                        <div class="button-row">
+                                             <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Send XRP' }}</button>
+                                             <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="!(walletManagerService.hasWallets$ | async)">Clear Fields</button>
+                                        </div>
+
+                                        <!-- Execution time -->
+                                        <div style="display: flex">
+                                             <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                                        </div>
+                                        <app-transaction-preview></app-transaction-preview>
+                                   </div>
+                              </div>
+                         </form>
+                    </div>
+               </div>
           </div>
-     </div>
-</div>
-
-<!-- Main content. Centered with 2 columns -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
-
-          <!-- Right form -->
-          <div class="form-panel">
-               <!-- Send XRP Menu -->
-               @if (activeTab() === 'send') {
-               <div style="padding-top: 2em">
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroPaperAirplane" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Send XRP</h2>
-                              <p class="submenu-info-secondary-text">Send XRP to another XRPL address</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Dynamic info panel -->
-               @if (infoData()) {
-               <div class="info-panel">
-                    <div class="info-panel-content">
-                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
-                         <div class="info-text" [innerHTML]="infoData()"></div>
-                    </div>
-               </div>
-               }
-
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage }}</div>
-               </div>
-               }
-
-               <form #theForm="ngForm" class="send-form">
-                    <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab()">
-                              <!-- Amount and Destination -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="amountField">XRP Amount</label>
-                                        <p class="form-hint">Amount, in XRP, to send to the destination.</p>
-                                        <input type="text" placeholder="e.g. 10.5" [ngModel]="txUiService.amountField()" (ngModelChange)="txUiService.amountField.set($event)" name="amountField" />
-                                   </div>
-                                   <div class="form-group">
-                                        <label for="destination">Destination</label>
-                                        <p class="form-hint">The unique address of the account receiving the payment.</p>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (searchQueryChange)="typedDestination.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                   </div>
-                              </div>
-
-                              <!-- Destination Tag and Source Tag -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="destinationTagField">Destination Tag (opt)</label>
-                                        <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
-                                        <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
-                                   </div>
-
-                                   <div class="form-group">
-                                        <label for="sourceTagField">Source Tag (optional)</label>
-                                        <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
-                                        <input type="text" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" name="sourceTagField" />
-                                   </div>
-                              </div>
-
-                              <!-- Invoice ID -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="invoiceIdField">Invoice ID (optional)</label>
-                                        <p class="form-hint">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
-                                        <input type="text" placeholder="e.g. INV_123" [ngModel]="txUiService.invoiceIdField()" (ngModelChange)="txUiService.invoiceIdField.set($event)" name="invoiceIdField" />
-                                   </div>
-                              </div>
-
-                              <app-transaction-options [showWhenTab]="['send']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                              <!-- Action buttons -->
-                              <div class="button-row">
-                                   <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Send XRP' }}</button>
-                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="!(walletManagerService.hasWallets$ | async)">Clear Fields</button>
-                              </div>
-
-                              <!-- Execution time -->
-                              <div style="display: flex">
-                                   <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
-                              </div>
-                              <app-transaction-preview></app-transaction-preview>
-                         </div>
-                    </div>
-               </form>
-          </div>
-     </div>
+     </main>
 </div>

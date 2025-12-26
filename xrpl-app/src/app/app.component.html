@@ -1,6 +1,11 @@
 <div class="main-container">
-     <!-- <div class="app-scale"> -->
-     <router-outlet></router-outlet>
+     <app-header></app-header>
+
+     <div class="app-body">
+          <div class="content-area">
+               <router-outlet></router-outlet>
+          </div>
+     </div>
 </div>
 
 <!-- TOAST CONTAINER – put this as the VERY LAST thing in app.component.html -->
