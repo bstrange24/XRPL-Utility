@@ -422,7 +422,9 @@ export class WalletGeneratorService {
           console.log('Entering generateWalletFromFamilySeed');
           const startTime = Date.now();
           try {
-               const url = `${this.proxyServer}/api/create-wallet/family-seed/`;
+               // const url = `${this.proxyServer}/api/create-wallet/family-seed/`;
+               // const wallet = await firstValueFrom(this.http.post<any>(url, { environment, algorithm }));
+               const url = `/api/create-wallet/family-seed/`;
                const wallet = await firstValueFrom(this.http.post<any>(url, { environment, algorithm }));
                return wallet;
           } catch (error: any) {
