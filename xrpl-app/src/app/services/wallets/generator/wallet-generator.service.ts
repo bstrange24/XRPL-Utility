@@ -424,6 +424,7 @@ export class WalletGeneratorService {
           try {
                // const url = `${this.proxyServer}/api/create-wallet/family-seed/`;
                // const wallet = await firstValueFrom(this.http.post<any>(url, { environment, algorithm }));
+               // Try to move generate to api
                const url = `/api/create-wallet/family-seed/`;
                const wallet = await firstValueFrom(this.http.post<any>(url, { environment, algorithm }));
                return wallet;
