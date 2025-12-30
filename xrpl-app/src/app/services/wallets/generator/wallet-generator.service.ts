@@ -442,7 +442,8 @@ export class WalletGeneratorService {
           console.log('Entering deriveFromFamilySeed');
           const startTime = Date.now();
           try {
-               const url = `${this.proxyServer}/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
+               const url = `/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
+               // const url = `${this.proxyServer}/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
                console.log(`deriveFromFamilySeed ${url}`);
                console.log(`deriveFromFamilySeed with ${familySeed} familySeed`);
                const wallet = await firstValueFrom(this.http.get<any>(url));
@@ -461,7 +462,8 @@ export class WalletGeneratorService {
           console.log('Entering generateWalletFromMnemonic');
           const startTime = Date.now();
           try {
-               const url = `${this.proxyServer}/api/create-wallet/mnemonic/`;
+               // const url = `${this.proxyServer}/api/create-wallet/mnemonic/`;
+               const url = `/api/create-wallet/mnemonic/`;
                const body = { environment, algorithm };
                const wallet = await firstValueFrom(this.http.post<any>(url, body));
                return wallet;
@@ -479,7 +481,8 @@ export class WalletGeneratorService {
           console.log('Entering deriveFromMnemonic');
           const startTime = Date.now();
           try {
-               const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
+               // const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
+               const url = `/api/derive/mnemonic/`;
                console.log(`deriveFromMnemonic ${url}`);
                console.log(`deriveFromMnemonic with ${mnemonic} mnemonic`);
                const wallet = await firstValueFrom(this.http.get<any>(url));
@@ -498,7 +501,8 @@ export class WalletGeneratorService {
           console.log('Entering generateWalletFromSecretNumbers');
           const startTime = Date.now();
           try {
-               const url = `${this.proxyServer}/api/create-wallet/secret-numbers/`;
+               // const url = `${this.proxyServer}/api/create-wallet/secret-numbers/`;
+               const url = `/api/create-wallet/secretNumbers/`;
                const body = { environment, algorithm };
                const wallet = await firstValueFrom(this.http.post<any>(url, body));
                return wallet;
@@ -516,7 +520,8 @@ export class WalletGeneratorService {
           console.log('Entering deriveFromSecretNumbers');
           const startTime = Date.now();
           try {
-               const url = `${this.proxyServer}/api/derive/secretNumbers`;
+               // const url = `${this.proxyServer}/api/derive/secretNumbers`;
+               const url = `/api/derive/secretNumbers/`;
                console.log(`deriveFromSecretNumbers ${url}`);
                console.log(`deriveFromSecretNumbers with ${secretNumbers} ${secretNumbers.length} numbers`);
                const body = { secretNumbers: secretNumbers, algorithm: algorithm };
