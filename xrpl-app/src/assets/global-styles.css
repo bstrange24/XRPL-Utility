@@ -10,7 +10,8 @@
 .main-container {
      max-width: 1280px;
      margin: 0 auto;
-     background-color: aliceblue;
+     background-color: #fff
+          /* background-color: aliceblue; */
 }
 
 html {
@@ -234,7 +235,8 @@ input[type='text']:focus {
 }
 
 .navbar {
-     background-color: aliceblue !important;
+     background-color: #fff;
+     /* background-color: aliceblue !important; */
      border-radius: 16px;
      padding: 14px 24px !important;
      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -379,7 +381,8 @@ input[type='text']:focus {
 }
 
 .content-wrapper {
-     background-color: aliceblue;
+     background-color: #fff;
+     /* background-color: aliceblue; */
      color: black;
      border-radius: 6px;
      font-size: 0.9rem;
@@ -1705,7 +1708,8 @@ app-root {
      display: block;
      margin: 0;
      padding: 0;
-     background-color: aliceblue;
+     background-color: #fff;
+     /* background-color: aliceblue; */
 }
 
 .token-flags-header {
@@ -2264,7 +2268,8 @@ app-root {
      margin: 0;
      padding: 0;
      line-height: 1;
-     background-color: aliceblue;
+     background-color: #fff;
+     /* background-color: aliceblue; */
 }
 
 .issuer-checkbox input[type='checkbox'] {
@@ -3158,7 +3163,11 @@ ticket-fields .form-group {
 }
 
 .expiration-buttons .btn-small {
-     padding: 6px 10px;
+     /* padding: 6px 10px; */
+     padding-top: 6px;
+     padding-bottom: 6px;
+     padding-left: 6px;
+     padding-right: 15px;
      font-size: 0.85rem;
      min-width: 50px;
 }
