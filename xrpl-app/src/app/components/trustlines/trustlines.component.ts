@@ -494,6 +494,8 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
 
                     if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT' && this.issuerFields() !== '') {
                          this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
+                    } else {
+                         this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
                     }
 
                     this.refreshUiState(wallet, accountInfo, accountObjects);
