@@ -965,8 +965,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getXrplServerInfo(client, 'current', '')]);
 
-                    const asset = this.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.weWantCurrency()), 'r9DZiCr2eejjRUqqTnTahL5UpLfku9Fe9D');
-                    const asset2 = this.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.weSpendCurrency()), 'r9DZiCr2eejjRUqqTnTahL5UpLfku9Fe9D');
+                    const asset = this.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.weWantCurrency()), 'rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De');
+                    const asset2 = this.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.weSpendCurrency()), 'rMxCKbEDwqr76QuheSUMdEGf4B9xJ8m5De');
 
                     const amount: xrpl.Amount = this.weWantCurrency() === 'XRP' ? xrpl.xrpToDrops(this.weWantAmount().toString()) : { currency: asset.currency, issuer: asset.issuer!, value: this.weWantAmount().toString() };
 
