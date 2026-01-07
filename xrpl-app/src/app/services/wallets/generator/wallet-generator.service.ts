@@ -441,16 +441,16 @@ export class WalletGeneratorService {
      async deriveFromFamilySeed(familySeed: string, algorithm: string = 'ed25519') {
           console.log('Entering deriveFromFamilySeed');
           const startTime = Date.now();
+
           try {
-               const url = `/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
-               // const url = `${this.proxyServer}/api/derive/family-seed/${encodeURIComponent(familySeed)}?algorithm=${encodeURIComponent(algorithm)}`;
+               const url = `/api/derive/family-seed?familySeed=${encodeURIComponent(familySeed)}&algorithm=${encodeURIComponent(algorithm)}`;
                console.log(`deriveFromFamilySeed ${url}`);
-               console.log(`deriveFromFamilySeed with ${familySeed} familySeed`);
+
                const wallet = await firstValueFrom(this.http.get<any>(url));
                return wallet;
           } catch (error: any) {
                console.error('Error in deriveFromFamilySeed:', error);
-               throw new Error(`${error.message}`);
+               throw new Error(error.message || 'Failed to derive from family seed');
           } finally {
                const executionTime = (Date.now() - startTime).toString();
                console.log(`Leaving deriveFromFamilySeed in ${executionTime}ms`);
@@ -541,29 +541,6 @@ export class WalletGeneratorService {
 
           return await firstValueFrom(this.http.post<any>('/api/derive/secretNumbers', body));
      }
-
-     // async deriveFromSecretNumbers(secretNumbers: string[], algorithm: string = 'ed25519') {
-     //      console.log('Entering deriveFromSecretNumbers');
-     //      const startTime = Date.now();
-     //      try {
-     //           // const url = `${this.proxyServer}/api/derive/secretNumbers`;
-     //           // const url = `/api/derive/secretNumbers/`;
-     //           // console.log(`deriveFromSecretNumbers ${url}`);
-     //           // console.log(`deriveFromSecretNumbers with ${secretNumbers} ${secretNumbers.length} numbers`);
-     //           // const body = { secretNumbers: secretNumbers, algorithm: algorithm };
-     //           // const wallet = await firstValueFrom(this.http.post<any>(url, body));
-     //           const url = `/api/derive/secretNumbers?secretNumbers=${secretNumbers}&algorithm=${encodeURIComponent(algorithm)}`;
-     //           console.log(`secretNumbers ${url}`);
-     //           const wallet = await firstValueFrom(this.http.get<any>(url));
-     //           return wallet;
-     //      } catch (error: any) {
-     //           console.error('Error in deriveFromSecretNumbers:', error);
-     //           throw new Error(`${error.message}`);
-     //      } finally {
-     //           const executionTime = (Date.now() - startTime).toString();
-     //           console.log(`Leaving deriveFromSecretNumbers in ${executionTime}ms`);
-     //      }
-     // }
 
      async fundWalletFromFaucet(wallet: xrpl.Wallet | { secret?: { familySeed?: string } }, environment: string) {
           console.log('Entering fundWalletFromFaucet');

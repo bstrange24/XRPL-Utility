@@ -7,14 +7,17 @@ export default async function handler(req: any, res: any) {
 
      try {
           const familySeed = req.query.familySeed as string;
-          const algorithm = req.query.algorithm as string | undefined;
+          const algorithm = (req.query.algorithm as string) || 'ed25519';
 
-          const account = accountlib.derive.familySeed(familySeed, {
-               algorithm,
-          });
+          if (!familySeed) {
+               return res.status(400).json({ error: 'familySeed is required' });
+          }
+
+          const account = accountlib.derive.familySeed(familySeed, { algorithm });
 
           return res.status(200).json(account);
      } catch (err: any) {
-          return res.status(500).json({ error: err.message });
+          console.error('Family seed derivation error:', err);
+          return res.status(500).json({ error: err.message || 'Derivation failed' });
      }
 }
