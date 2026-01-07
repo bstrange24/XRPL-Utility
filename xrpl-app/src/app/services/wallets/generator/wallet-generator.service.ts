@@ -496,25 +496,6 @@ export class WalletGeneratorService {
           }
      }
 
-     // async deriveFromMnemonic(mnemonic: string, algorithm: string = 'ed25519') {
-     //      console.log('Entering deriveFromMnemonic');
-     //      const startTime = Date.now();
-     //      try {
-     //           // const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
-     //           const url = `/api/derive/mnemonic/`;
-     //           console.log(`deriveFromMnemonic ${url}`);
-     //           console.log(`deriveFromMnemonic with ${mnemonic} mnemonic`);
-     //           const wallet = await firstValueFrom(this.http.get<any>(url));
-     //           return wallet;
-     //      } catch (error: any) {
-     //           console.error('Error in deriveFromMnemonic:', error);
-     //           throw new Error(`${error.message}`);
-     //      } finally {
-     //           const executionTime = (Date.now() - startTime).toString();
-     //           console.log(`Leaving deriveFromMnemonic in ${executionTime}ms`);
-     //      }
-     // }
-
      // Generate account from Secret Numbers
      async generateWalletFromSecretNumbers(environment: string, algorithm: string = 'ed25519') {
           console.log('Entering generateWalletFromSecretNumbers');
@@ -540,11 +521,14 @@ export class WalletGeneratorService {
           const startTime = Date.now();
           try {
                // const url = `${this.proxyServer}/api/derive/secretNumbers`;
-               const url = `/api/derive/secretNumbers/`;
-               console.log(`deriveFromSecretNumbers ${url}`);
-               console.log(`deriveFromSecretNumbers with ${secretNumbers} ${secretNumbers.length} numbers`);
-               const body = { secretNumbers: secretNumbers, algorithm: algorithm };
-               const wallet = await firstValueFrom(this.http.post<any>(url, body));
+               // const url = `/api/derive/secretNumbers/`;
+               // console.log(`deriveFromSecretNumbers ${url}`);
+               // console.log(`deriveFromSecretNumbers with ${secretNumbers} ${secretNumbers.length} numbers`);
+               // const body = { secretNumbers: secretNumbers, algorithm: algorithm };
+               // const wallet = await firstValueFrom(this.http.post<any>(url, body));
+               const url = `/api/derive/secretNumbers?secretNumbers=${secretNumbers}&algorithm=${encodeURIComponent(algorithm)}`;
+               console.log(`secretNumbers ${url}`);
+               const wallet = await firstValueFrom(this.http.get<any>(url));
                return wallet;
           } catch (error: any) {
                console.error('Error in deriveFromSecretNumbers:', error);
