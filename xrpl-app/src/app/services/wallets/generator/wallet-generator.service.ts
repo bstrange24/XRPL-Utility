@@ -517,11 +517,29 @@ export class WalletGeneratorService {
 
      // Derive account from Secret Numbers
      async deriveFromSecretNumbers(secretNumbers: string[], algorithm: string = 'ed25519') {
-          const url = `/api/derive/secretNumbers`;
-          const body = { secretNumbers, algorithm }; // algorithm optional
+          console.log('Entering deriveFromSecretNumbers');
+          const startTime = Date.now();
 
-          const wallet = await firstValueFrom(this.http.post<any>(url, body));
-          return wallet;
+          try {
+               const url = `/api/derive/secretNumbers`; // No query params
+
+               const body = {
+                    secretNumbers: secretNumbers, // Send as array in JSON
+                    algorithm: algorithm,
+               };
+
+               console.log('Posting to', url, 'with body:', body);
+
+               const wallet = await firstValueFrom(this.http.post<any>(url, body));
+
+               return wallet;
+          } catch (error: any) {
+               console.error('Error in deriveFromSecretNumbers:', error);
+               throw new Error(error.message || 'Failed to derive wallet');
+          } finally {
+               const executionTime = (Date.now() - startTime).toString();
+               console.log(`Leaving deriveFromSecretNumbers in ${executionTime}ms`);
+          }
      }
 
      // async deriveFromSecretNumbers(secretNumbers: string[], algorithm: string = 'ed25519') {
