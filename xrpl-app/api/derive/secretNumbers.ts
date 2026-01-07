@@ -6,7 +6,12 @@ export default async function handler(req: any, res: any) {
      }
 
      try {
-          const { secretNumbers } = req.body;
+          const { secretNumbers, algorithm } = req.body;
+
+          if (!Array.isArray(secretNumbers)) {
+               return res.status(400).json({ error: 'secretNumbers must be an array' });
+          }
+
           const account = accountlib.derive.secretNumbers(secretNumbers);
 
           return res.status(200).json(account);
