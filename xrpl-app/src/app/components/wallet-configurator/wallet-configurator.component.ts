@@ -275,9 +275,8 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
                     const stored = this.storageService.get('destinations');
                     const dest = stored ? stored : [];
                     const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromFamilySeed(client, this.seed(), dest, dest);
-                    this.destinations = destinations;
+                    // this.destinations = destinations;
                     this.customDestinations.set(customDestinations);
-                    // this.customDestinations = customDestinations;
                     this.updateDestinations();
 
                     await this.refreshWallets(client, [faucetWallet.address]);
@@ -343,8 +342,8 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
                     const stored = this.storageService.get('destinations');
                     const dest = stored ? stored : [];
                     const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromMnemonic(client, this.mnemonic(), dest, dest);
-                    this.destinations = destinations;
-                    this.customDestinations = customDestinations;
+                    // this.destinations = destinations;
+                    this.customDestinations.set(customDestinations);
                     this.updateDestinations();
 
                     await this.refreshWallets(client, [faucetWallet.address]);
@@ -411,8 +410,8 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
                     const stored = this.storageService.get('destinations');
                     const dest = stored ? stored : [];
                     const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromSecretNumbers(client, this.secretNumbers(), dest, dest);
-                    this.destinations = destinations;
-                    this.customDestinations = customDestinations;
+                    // this.destinations = destinations;
+                    this.customDestinations.set(customDestinations);
                     this.updateDestinations();
 
                     await this.refreshWallets(client, [faucetWallet.address]);
@@ -424,7 +423,6 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
                     if (error.message === 'Failed to fetch account info: Account not found.') {
                          this.txUiService.setError(`${error.message} Are you using the correct encryption?`);
                     } else {
-                         this.txUiService.setError(`${error.message}`);
                          this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                     }
                } finally {
