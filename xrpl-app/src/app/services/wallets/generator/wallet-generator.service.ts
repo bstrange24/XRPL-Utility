@@ -480,11 +480,11 @@ export class WalletGeneratorService {
      async deriveFromMnemonic(mnemonic: string, algorithm: string = 'ed25519') {
           console.log('Entering deriveFromMnemonic');
           const startTime = Date.now();
+
           try {
-               // const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
-               const url = `/api/derive/mnemonic/`;
+               const url = `/api/derive/mnemonic?mnemonic=${encodeURIComponent(mnemonic)}&algorithm=${encodeURIComponent(algorithm)}`;
                console.log(`deriveFromMnemonic ${url}`);
-               console.log(`deriveFromMnemonic with ${mnemonic} mnemonic`);
+
                const wallet = await firstValueFrom(this.http.get<any>(url));
                return wallet;
           } catch (error: any) {
@@ -495,6 +495,25 @@ export class WalletGeneratorService {
                console.log(`Leaving deriveFromMnemonic in ${executionTime}ms`);
           }
      }
+
+     // async deriveFromMnemonic(mnemonic: string, algorithm: string = 'ed25519') {
+     //      console.log('Entering deriveFromMnemonic');
+     //      const startTime = Date.now();
+     //      try {
+     //           // const url = `${this.proxyServer}/api/derive/mnemonic/${encodeURIComponent(mnemonic)}?algorithm=${encodeURIComponent(algorithm)}`;
+     //           const url = `/api/derive/mnemonic/`;
+     //           console.log(`deriveFromMnemonic ${url}`);
+     //           console.log(`deriveFromMnemonic with ${mnemonic} mnemonic`);
+     //           const wallet = await firstValueFrom(this.http.get<any>(url));
+     //           return wallet;
+     //      } catch (error: any) {
+     //           console.error('Error in deriveFromMnemonic:', error);
+     //           throw new Error(`${error.message}`);
+     //      } finally {
+     //           const executionTime = (Date.now() - startTime).toString();
+     //           console.log(`Leaving deriveFromMnemonic in ${executionTime}ms`);
+     //      }
+     // }
 
      // Generate account from Secret Numbers
      async generateWalletFromSecretNumbers(environment: string, algorithm: string = 'ed25519') {
