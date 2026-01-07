@@ -5,23 +5,29 @@ export default async function handler(req: any, res: any) {
           return res.status(405).json({ error: 'Method not allowed, use POST' });
      }
 
+     console.log('Received body:', req.body); // Add this for Vercel logs
+
      try {
-          const { secretNumbers, algorithm = 'ed25519' } = req.body;
+          const { secretNumbers, algorithm = 'ed25519' } = req.body || {};
 
-          if (!secretNumbers || !Array.isArray(secretNumbers)) {
-               return res.status(400).json({ error: 'secretNumbers must be a non-empty array' });
+          if (!secretNumbers) {
+               return res.status(400).json({ error: 'Missing secretNumbers in body' });
           }
 
-          // Optional: validate length (usually 8 numbers for XRPL secret numbers)
-          if (secretNumbers.length !== 8) {
-               return res.status(400).json({ error: 'secretNumbers must contain exactly 8 numbers' });
+          if (!Array.isArray(secretNumbers) || secretNumbers.length !== 8) {
+               return res.status(400).json({
+                    error: 'secretNumbers must be an array of exactly 8 strings (6 digits each)',
+               });
           }
 
-          const account = accountlib.derive.secretNumbers(secretNumbers, algorithm);
+          // Ensure they are strings
+          const secretNumsStr = secretNumbers.map(String);
+
+          const account = accountlib.derive.secretNumbers(secretNumsStr, algorithm);
 
           return res.status(200).json(account);
      } catch (err: any) {
-          console.error('Derivation error:', err);
-          return res.status(500).json({ error: err.message || 'Internal server error' });
+          console.error('Error:', err);
+          return res.status(500).json({ error: err.message || 'Derivation failed' });
      }
 }
