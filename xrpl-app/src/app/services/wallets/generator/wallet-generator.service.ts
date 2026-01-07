@@ -516,36 +516,30 @@ export class WalletGeneratorService {
      }
 
      // Derive account from Secret Numbers
-     async deriveFromSecretNumbers(secretNumbers: string[], algorithm: string = 'ed25519') {
-          console.log('Entering deriveFromSecretNumbers');
-          const startTime = Date.now();
+     async deriveFromSecretNumbers(secretNumbersInput: string | string[], algorithm = 'secp256k1') {
+          let secretNumbers: string[];
 
-          try {
-               const url = `/api/derive/secretNumbers`; // Relative path, no query strings
-
-               const body = {
-                    secretNumbers: secretNumbers, // Array of strings, e.g. ["039740", ...]
-                    algorithm: algorithm,
-               };
-
-               console.log('POSTing to', url, 'with body:', body);
-
-               const wallet = await firstValueFrom(
-                    this.http.post<any>(url, body, {
-                         headers: { 'Content-Type': 'application/json' },
-                    })
-               );
-
-               return wallet;
-          } catch (error: any) {
-               console.error('Error in deriveFromSecretNumbers:', error);
-               // Log the full error for debugging
-               console.error('Full error:', error.error, error.status);
-               throw new Error(error.message || 'Failed to derive wallet');
-          } finally {
-               const executionTime = (Date.now() - startTime).toString();
-               console.log(`Leaving deriveFromSecretNumbers in ${executionTime}ms`);
+          if (typeof secretNumbersInput === 'string') {
+               secretNumbers = secretNumbersInput
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(s => s.length === 6); // optional: enforce 6 digits
+          } else {
+               secretNumbers = secretNumbersInput;
           }
+
+          if (secretNumbers.length !== 8) {
+               throw new Error('Exactly 8 secret numbers required');
+          }
+
+          const body = {
+               secretNumbers, // ← array of strings
+               algorithm,
+          };
+
+          console.log('POSTing with correct body:', body);
+
+          return await firstValueFrom(this.http.post<any>('/api/derive/secretNumbers', body));
      }
 
      // async deriveFromSecretNumbers(secretNumbers: string[], algorithm: string = 'ed25519') {
