@@ -1,10 +1,12 @@
 // src/app/services/validation/validation.service.ts
 
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { UtilsService } from '../util-service/utils.service';
 import * as xrpl from 'xrpl';
 import didSchema from '../../components/did/did-schema.json';
+import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
+import { percentToTransferRate, transferRateToDecimal } from 'xrpl';
 
 export interface ValidationContext {
      inputs: Record<string, any>;
@@ -17,6 +19,10 @@ export interface ValidationContext {
      invoiceId?: string;
      multiSignAddresses?: any;
      multiSignSeeds?: any;
+     isRegularKeyAddress?: any;
+     regularKeyAddress?: any;
+     regularKeySeed?: any;
+     useMultiSign?: any;
 }
 
 export type ValidatorFn = (ctx: ValidationContext) => Promise<string | null> | string | null;
@@ -30,6 +36,7 @@ export interface TransactionValidationRule {
 @Injectable({ providedIn: 'root' })
 export class ValidationService {
      private rules = new Map<string, TransactionValidationRule>();
+     public readonly txUiService = inject(TransactionUiService);
 
      constructor(private xrplService: XrplService, private utilsService: UtilsService) {
           this.registerBuiltInRules();
@@ -145,26 +152,6 @@ export class ValidationService {
                return null;
           };
      }
-
-     // private numeric1(field: string, options: { min?: number; allowEmpty?: boolean; message?: string } = {}): ValidatorFn {
-     //      return ctx => {
-     //           const value = ctx.inputs[field];
-     //           const { min, allowEmpty = false, message } = options;
-
-     //           if (this.shouldSkipNumericValidation(value) || (allowEmpty && value === '')) {
-     //                return null;
-     //           }
-
-     //           const num = parseFloat(value as string);
-     //           if (isNaN(num) || !isFinite(num)) {
-     //                return message || `${this.capitalize(field)} must be a valid number`;
-     //           }
-     //           if (min !== undefined && num <= min) {
-     //                return message || `${this.capitalize(field)} must be greater than ${min}`;
-     //           }
-     //           return null;
-     //      };
-     // }
 
      private optionalNumeric(field: string, min?: number): ValidatorFn {
           return this.numeric(field, { min, allowEmpty: true });
@@ -331,6 +318,22 @@ export class ValidationService {
           return ctx => {
                const flags = ctx.accountInfo?.result?.account_flags;
                const disableMaster = flags?.disableMasterKey === true;
+
+               // CORRECT paths based on your getValidationInputs()
+               const usingRegularKey = !!ctx.inputs['regularKey']?.isRegularKey;
+               const usingMultiSign = !!ctx.inputs['multiSign']?.enabled;
+
+               if (disableMaster && !usingRegularKey && !usingMultiSign) {
+                    return 'Master key is disabled. Must sign with Regular Key or Multi-sign.';
+               }
+               return null;
+          };
+     }
+
+     private masterKeyDisabledRequiresAltSigning1(): ValidatorFn {
+          return ctx => {
+               const flags = ctx.accountInfo?.result?.account_flags;
+               const disableMaster = flags?.disableMasterKey === true;
                const usingRegularKey = !!ctx.inputs['isRegularKeyAddress'];
                const usingMultiSign = !!ctx.inputs['useMultiSign'];
 
@@ -356,8 +359,12 @@ export class ValidationService {
      }
 
      private regularKeySigningValidation(): ValidatorFn[] {
-          const whenRegularKey = (ctx: ValidationContext) => !!ctx.inputs['isRegularKeyAddress'] && !ctx.inputs['useMultiSign'];
-          return [this.requireIf(whenRegularKey, 'regularKeyAddress', 'Regular Key Address is required'), this.requireIf(whenRegularKey, 'regularKeySeed', 'Regular Key Seed is required'), this.validAddressIf(whenRegularKey, 'regularKeyAddress'), this.validSecretIf(whenRegularKey, 'regularKeySeed')];
+          const whenRegularKey = (ctx: ValidationContext) => !!ctx.inputs['isRegularKey']?.isRegularKey && !ctx.inputs['multiSign']?.enabled;
+
+          // And use these paths:
+          return [this.requireIf(whenRegularKey, 'isRegularKey.address', 'Regular Key Address is required'), this.requireIf(whenRegularKey, 'isRegularKey.seed', 'Regular Key Seed is required'), this.validAddressIf(whenRegularKey, 'isRegularKey.address'), this.validSecretIf(whenRegularKey, 'isRegularKey.seed')];
+          // const whenRegularKey = (ctx: ValidationContext) => !!ctx.inputs['isRegularKeyAddress'] && !ctx.inputs['useMultiSign'];
+          // return [this.requireIf(whenRegularKey, 'regularKeyAddress', 'Regular Key Address is required'), this.requireIf(whenRegularKey, 'regularKeySeed', 'Regular Key Seed is required'), this.validAddressIf(whenRegularKey, 'regularKeyAddress'), this.validSecretIf(whenRegularKey, 'regularKeySeed')];
      }
 
      private positiveAmount(): ValidatorFn {
@@ -1333,10 +1340,7 @@ export class ValidationService {
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
-
-                    this.isValidAddress('destination'),
-                    // this.notSelf('senderAddress', 'destination'),
+                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1350,14 +1354,14 @@ export class ValidationService {
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
 
-                    // ctx => {
-                    //      if (ctx.inputs['flags']) {
-                    //           if (ctx.inputs['flags']['noFreeze'] && ctx.inputs['flags']['globalFreeze']) {
-                    //                return 'Can not enable both NoFreeze and GlobalFreeze.';
-                    //           }
-                    //      }
-                    //      return null;
-                    // },
+                    ctx => {
+                         if (ctx.inputs['setFlags']) {
+                              if (ctx.inputs['setFlags'].includes(6) && ctx.inputs['setFlags'].includes(7)) {
+                                   return 'NoFreeze and GlobalFreeze cannot be enabled at the same time.';
+                              }
+                         }
+                         return null;
+                    },
 
                     ctx => {
                          if (ctx.inputs['setFlags'].length === 0 && ctx.inputs['clearFlags'].length === 0) {
@@ -1365,6 +1369,215 @@ export class ValidationService {
                          }
                          return null;
                     },
+               ],
+          });
+
+          // UpdateMetaData Actions
+          this.registerRule({
+               transactionType: 'UpdateMetaData',
+               requiredFields: ['seed'], // adjust as needed
+               validators: [
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
+
+                    ctx => {
+                         if (this.txUiService.tickSize()) {
+                              const tickSize = parseInt(this.txUiService.tickSize());
+                              if (tickSize == 0) {
+                                   return null;
+                              }
+
+                              if (tickSize < 3 || tickSize > 15) {
+                                   return 'Invalid tick size. The tick size valid values are 3 to 15 inclusive, or 0 to disable';
+                              }
+                         }
+                         return null;
+                    },
+
+                    ctx => {
+                         if (this.txUiService.transferRate()) {
+                              try {
+                                   const transferRate = percentToTransferRate(this.txUiService.transferRate() + '%');
+
+                                   if (transferRate === 0) {
+                                        return null;
+                                   }
+
+                                   if (transferRate < 1000000000 || transferRate > 2000000000) {
+                                        return `Invalid transfer rate. Must be between 0% (no fee) and 100% inclusive.`;
+                                   }
+                              } catch (error) {
+                                   return `Invalid transfer rate. Must be between 0% (no fee) and 100% inclusive.`;
+                              }
+                         }
+                         return null;
+                    },
+
+                    ctx => {
+                         if (this.txUiService.userEmail()) {
+                              if (!this.utilsService.isValidEmail(this.txUiService.userEmail())) {
+                                   return 'Invalid email address.';
+                              }
+                         }
+                         return null;
+                    },
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // SetDepositAuthAccounts Actions
+          this.registerRule({
+               transactionType: 'SetDepositAuthAccounts',
+               requiredFields: ['seed'], // adjust as needed
+               validators: [
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
+
+                    ctx => {
+                         // Validate each address
+                         for (const authorizedAddress of ctx.inputs['formattedDepsositAuthEntries']) {
+                              // Check for existing preauthorization
+                              const alreadyAuthorized = ctx.inputs['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.SignerEntry.Account);
+                              if (ctx.inputs['authorizeFlag'] === 'Y' && alreadyAuthorized) {
+                                   return `Preauthorization already exists for ${authorizedAddress.SignerEntry.Account} (tecDUPLICATE). Use Unauthorize to remove.`;
+                              }
+                              if (ctx.inputs['authorizeFlag'] === 'N' && !alreadyAuthorized) {
+                                   return `No preauthorization exists for ${authorizedAddress.SignerEntry.Account}`;
+                              }
+                         }
+                         return null;
+                    },
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // SetMultiSign Actions
+          this.registerRule({
+               transactionType: 'SetMultiSign',
+               requiredFields: ['seed'], // adjust as needed
+               validators: [
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // SetRegularKey Actions
+          this.registerRule({
+               transactionType: 'SetRegularKey',
+               requiredFields: ['seed'], // adjust as needed
+               validators: [
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
+
+                    ctx => {
+                         if (this.txUiService.regularKeyAddress() === '' || this.txUiService.regularKeyAddress() === 'No RegularKey configured for account' || this.txUiService.regularKeySeed() === '') {
+                              return `Regular Key address and seed must be present`;
+                         }
+                         return null;
+                    },
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // SetNftMinterAddress Actions
+          this.registerRule({
+               transactionType: 'SetNftMinterAddress',
+               requiredFields: ['seed'], // adjust as needed
+               validators: [
+                    ctx => {
+                         if (ctx.inputs['seed']) {
+                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+                         return null;
+                    },
+
+                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
                ],
           });
 

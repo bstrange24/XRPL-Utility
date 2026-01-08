@@ -60,12 +60,12 @@
                               },
                               "development": {
                                    "buildTarget": "xrpl-app:build:development"
-                              },
-                              "options": {
-                                   "proxyConfig": "proxy.conf.json"
                               }
                          },
-                         "defaultConfiguration": "development"
+                         "defaultConfiguration": "development",
+                         "options": {
+                              "proxyConfig": "proxy.conf.json"
+                         }
                     },
                     "extract-i18n": {
                          "builder": "@angular/build:extract-i18n"

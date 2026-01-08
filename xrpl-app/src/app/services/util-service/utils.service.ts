@@ -592,6 +592,7 @@ export class UtilsService {
           if (isRegularKeyAddress && !isMultiSign) {
                console.log('Using Regular Key Seed for transaction signing');
                regularKeyWalletSignTx = await this.getWallet(regularKeySeed);
+               console.log('Wallet:', regularKeyWalletSignTx);
                useRegularKeyWalletSignTx = true;
           }
           return { useRegularKeyWalletSignTx, regularKeyWalletSignTx };
@@ -976,11 +977,11 @@ export class UtilsService {
           return rippleEpoch;
      }
 
-     getTransferRate(percentage: number): number {
-          // Placeholder: Implement your getTransferRate from utils.js
-          // Example: Convert percentage to XRPL TransferRate
-          return Math.round((1 + percentage / 100) * 1_000_000_000);
-     }
+     // getTransferRate(percentage: number): number {
+     //      // Placeholder: Implement your getTransferRate from utils.js
+     //      // Example: Convert percentage to XRPL TransferRate
+     //      return Math.round((1 + percentage / 100) * 1_000_000_000);
+     // }
 
      stripHTMLForSearch(html: string): string {
           const div = document.createElement('div');
@@ -1027,7 +1028,7 @@ export class UtilsService {
           const savedEncryptionType = this.storageService.getInputValue('encryptionType');
           const result = this.detectXrpInputType(seed);
           try {
-               if (savedEncryptionType === 'true') {
+               if (savedEncryptionType === 'ed25519') {
                     if (result.type === 'seed') {
                          return xrpl.Wallet.fromSeed(result.value, { algorithm: AppConstants.ENCRYPTION.ED25519 });
                     } else if (result.type === 'mnemonic') {
@@ -1060,7 +1061,7 @@ export class UtilsService {
                if (result.type === 'unknown') {
                     return false;
                }
-               if (savedEncryptionType === 'true') {
+               if (savedEncryptionType === 'ed25519') {
                     if (result.type === 'seed') {
                          xrpl.Wallet.fromSeed(result.value, { algorithm: AppConstants.ENCRYPTION.ED25519 });
                     } else if (result.type === 'mnemonic') {
@@ -1787,6 +1788,40 @@ export class UtilsService {
           };
      }
 
+     isValidEmail(email: string): boolean {
+          // Trim whitespace
+          const trimmedEmail = email.trim();
+
+          // Basic length and empty check
+          if (trimmedEmail.length === 0 || trimmedEmail.length > 254) {
+               return false;
+          }
+
+          // Regular expression for email validation
+          // This follows RFC 5322 closely but avoids overly permissive edge cases
+          const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/i;
+
+          if (!emailRegex.test(trimmedEmail)) {
+               return false;
+          }
+
+          // Additional checks to prevent common invalid patterns
+          const [localPart, domainPart] = trimmedEmail.split('@');
+
+          // Local part should not exceed 64 characters
+          if (localPart.length > 64) {
+               return false;
+          }
+
+          // Domain part should have at least one dot and valid TLD
+          const domainLabels = domainPart.split('.');
+          if (domainLabels.some(label => label.length === 0 || label.length > 63)) {
+               return false;
+          }
+
+          return true;
+     }
+
      validateAmmDepositBalances(xrpBalance: string, accountObjects: any[], we_want: CurrencyAmount, we_spend: CurrencyAmount): string | null {
           // Check XRP balance for we_spend
           if (typeof we_spend === 'string') {
@@ -2325,7 +2360,8 @@ export class UtilsService {
      }
 
      setTransferRate(tx: any, transferRate: number) {
-          tx.TransferRate = this.getTransferRate(transferRate);
+          // tx.TransferRate = this.getTransferRate(transferRate);
+          tx.TransferRate = transferRate;
      }
 
      setTransferFee(tx: any, transferFee: string) {

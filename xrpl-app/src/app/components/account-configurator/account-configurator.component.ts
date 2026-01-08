@@ -1,4 +1,4 @@
-import { OnInit, Component, ChangeDetectorRef, inject, computed, DestroyRef, signal, ChangeDetectionStrategy } from '@angular/core';
+import { OnInit, Component, inject, computed, DestroyRef, signal, ChangeDetectionStrategy } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -18,6 +18,7 @@ import { ValidationService } from '../../services/validation/transaction-validat
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
+import { percentToTransferRate } from 'xrpl';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
@@ -65,7 +66,6 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
-     private readonly dropdownService = inject(DestinationDropdownService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
@@ -76,8 +76,8 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
 
      // Destination Dropdown
      customDestinations = signal<{ name?: string; address: string }[]>([]);
-     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
-     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
+     selectedDestinationAddress = signal<string>('');
+     destinationSearchQuery = signal<string>('');
 
      // Reactive State (Signals)
      activeTab = signal<'modifyAccountFlags' | 'modifyMetaData' | 'modifyDepositAuth' | 'modifyMultiSigners' | 'modifyRegularKey' | 'delete'>('modifyAccountFlags');
@@ -278,7 +278,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
      private async setupWalletSubscriptions() {
           this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
                if (hasWallets) {
-                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
+                    this.txUiService.clearWarning?.();
                } else {
                     this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
                     this.txUiService.setError('');
@@ -441,18 +441,14 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const [{ accountInfo, accountObjects }, fee, currentLedger, serverInfo] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client), this.xrplCache.getServerInfo(this.xrplService)]);
+                    const [accountInfo, fee, currentLedger, serverInfo] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client), this.xrplCache.getServerInfo(this.xrplService)]);
                     const { setFlags, clearFlags } = this.utilsService.getFlagUpdates(accountInfo.result.account_flags);
 
-                    // inputs.accountInfo = accountInfo;
-                    // inputs.flags = accountInfo.result.account_flags;
-                    // inputs.setFlags = setFlags;
-                    // inputs.clearFlags = clearFlags;
-
-                    // const errors = await this.validationService.validate('UpdateAccountFlags', { inputs, client, accountInfo });
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                    // }
+                    this.accountInfo = accountInfo;
+                    const errors = await this.validationService.validate('UpdateAccountFlags', { inputs: { seed: this.currentWallet().seed, accountInfo, flags: accountInfo.result.account_flags, setFlags: setFlags, clearFlags: clearFlags }, client });
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    }
 
                     this.txUiService.showSpinnerWithDelay(this.txUiService.isSimulateEnabled() ? 'Simulating Flag Modifications (no changes will be made)...' : 'Submitting Flag Modifications to Ledger...', 200);
 
@@ -504,19 +500,16 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
      async updateMetaData() {
           await this.withPerf('updateMetaData', async () => {
                this.txUiService.clearAllOptionsAndMessages();
+               this.txUiService.clearWarning?.();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
-                    // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
-
-                    // inputs.accountInfo = accountInfo;
-
-                    // const errors = await this.validateInputs(inputs, 'updateMetaData');
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                    // }
+                    const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
+                    this.accountInfo = accountInfo;
+                    const errors = await this.validationService.validate('UpdateMetaData', { inputs: { seed: this.currentWallet().seed, accountInfo }, client });
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    }
 
                     const accountSetTx: AccountSet = {
                          TransactionType: 'AccountSet',
@@ -534,7 +527,8 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     }
 
                     if (this.txUiService.transferRate()) {
-                         updates.push(() => this.utilsService.setTransferRate(accountSetTx, parseFloat(this.txUiService.transferRate())));
+                         const transferRate = percentToTransferRate(this.txUiService.transferRate() + '%');
+                         updates.push(() => this.utilsService.setTransferRate(accountSetTx, transferRate));
                     }
 
                     if (this.txUiService.isMessageKey() && wallet.publicKey) {
@@ -545,7 +539,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                          updates.push(() => this.utilsService.setEmailHash(accountSetTx, this.txUiService.userEmail()));
                     }
 
-                    if (this.txUiService.domain && this.txUiService.domain().trim() !== '') {
+                    if (this.txUiService.domain() && this.txUiService.domain().trim() !== '') {
                          updates.push(() => this.utilsService.setDomain(accountSetTx, this.txUiService.domain()));
                     }
 
@@ -592,28 +586,11 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    // this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
-                    // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
-
-                    // inputs.accountInfo = accountInfo;
-                    // inputs.depositAuthAddresses = formattedDepsositAuthEntries;
-
-                    // const errors = await this.validateInputs(inputs, 'setDepositAuthAccounts');
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                    // }
-
-                    // Validate each address
-                    for (const authorizedAddress of formattedDepsositAuthEntries) {
-                         // Check for existing preauthorization
-                         const alreadyAuthorized = accountObjects.result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.SignerEntry.Account);
-                         if (authorizeFlag === 'Y' && alreadyAuthorized) {
-                              return this.txUiService.setError(`Preauthorization already exists for ${authorizedAddress.SignerEntry.Account} (tecDUPLICATE). Use Unauthorize to remove`);
-                         }
-                         if (authorizeFlag === 'N' && !alreadyAuthorized) {
-                              return this.txUiService.setError(`No preauthorization exists for ${authorizedAddress.SignerEntry.Account} to unauthorize`);
-                         }
+                    const [{ accountInfo, accountObjects }, fee] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false)]);
+                    this.accountInfo = accountInfo;
+                    const errors = await this.validationService.validate('SetDepositAuthAccounts', { inputs: { seed: this.currentWallet().seed, accountInfo, accountObjects, formattedDepsositAuthEntries, authorizeFlag }, client });
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                     }
 
                     // === SHOW ONE SPINNER FOR THE ENTIRE BATCH ===
@@ -684,12 +661,12 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    // inputs.accountInfo = accountInfo;
-                    // const errors = await this.validateInputs(inputs, 'setMultiSign');
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                    // }
+                    const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
+                    this.accountInfo = accountInfo;
+                    const errors = await this.validationService.validate('SetMultiSign', { inputs: { seed: this.currentWallet().seed, accountInfo }, client });
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    }
 
                     // Create array of signer accounts and their weights
                     let signerEntries = this.createSignerEntries();
@@ -754,16 +731,11 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-
-                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    // inputs.accountInfo = accountInfo;
-                    // const errors = await this.validateInputs(inputs, 'setRegularKey');
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                    // }
-
-                    if (this.txUiService.regularKeyAddress() === '' || this.txUiService.regularKeyAddress() === 'No RegularKey configured for account' || this.txUiService.regularKeySeed() === '') {
-                         return this.txUiService.setError(`Regular Key address and seed must be present`);
+                    const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
+                    this.accountInfo = accountInfo;
+                    const errors = await this.validationService.validate('SetRegularKey', { inputs: { seed: this.currentWallet().seed, accountInfo }, client });
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
                     }
 
                     let setRegularKeyTx: xrpl.SetRegularKey = {
@@ -817,16 +789,12 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    // this.utilsService.logAccountInfoObjects(accountInfo, null);
-                    // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
-
-                    // inputs.accountInfo = accountInfo;
-
-                    // const errors = await this.validateInputs(inputs, 'setNftMinterAddress');
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                    // }
+                    const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
+                    this.accountInfo = accountInfo;
+                    const errors = await this.validationService.validate('SetNftMinterAddress', { inputs: { seed: this.currentWallet().seed, accountInfo }, client });
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    }
 
                     const accountSetTx: xrpl.AccountSet = {
                          TransactionType: 'AccountSet',

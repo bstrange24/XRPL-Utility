@@ -246,6 +246,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                          wallet: this.currentWallet(),
                          network: { accountInfo, accountObjects, fee, currentLedger },
                          paymentXrp: { amount: this.txUiService.amountField(), destination: destinationAddress },
+                         regularKey: { isRegularKey: this.txUiService.isRegularKeyAddress(), address: this.txUiService.regularKeyAddress(), seed: this.txUiService.regularKeySeed() },
                     });
 
                     const errors = await this.validationService.validate('PaymentXrp', { inputs, client, accountInfo });

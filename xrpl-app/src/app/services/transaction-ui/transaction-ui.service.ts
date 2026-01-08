@@ -481,6 +481,11 @@ export class TransactionUiService {
                sourceTag?: string;
                invoiceId?: any;
           };
+          regularKey?: {
+               isRegularKey: boolean;
+               address: string;
+               seed: string;
+          };
           subject?: {
                subject?: string;
           };
