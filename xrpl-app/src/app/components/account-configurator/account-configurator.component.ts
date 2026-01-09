@@ -92,6 +92,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
      isExchangerConfiguration = signal<boolean>(false);
      isIssuerConfiguration = signal<boolean>(false);
      hasSignerList = signal<boolean>(false);
+     private readonly accountDataVersion = signal(0);
      readonly FLAG_VALUES = xrpl.AccountSetAsfFlags;
      flags: AccountFlags = {
           asfRequireDest: false,
@@ -209,9 +210,11 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
      });
 
      infoData = computed(() => {
-          if (!this.currentWallet().address) {
-               return null;
-          }
+          // This line forces infoData to wait until data is "fresh"
+          this.accountDataVersion();
+
+          if (!this.currentWallet().address) return null;
+          if (!this.accountInfo) return null;
 
           const walletName = this.currentWallet().name || 'selected';
           const accountFlags = this.accountInfo?.result?.account_flags;
@@ -427,6 +430,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     });
 
                     this.refreshUiState(wallet, accountInfo, accountObjects);
+                    this.accountDataVersion.update(v => v + 1);
                } catch (error: any) {
                     console.error('Error in getAccountDetails:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);

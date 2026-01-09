@@ -618,10 +618,10 @@ export class TransactionUiService {
           this.clearTxHashSignal();
           this.clearTxSignal();
           this.clearMessages();
-          this.isTicket.set(false);
-          this.selectedSingleTicket.set('');
-          this.selectedTickets.set([]);
-          this.isMemoEnabled.set(false);
+          // this.isTicket.set(false);
+          // this.selectedSingleTicket.set('');
+          // this.selectedTickets.set([]);
+          // this.isMemoEnabled.set(false);
           // this.clearWarning();
           this.successMessage = '';
      }
