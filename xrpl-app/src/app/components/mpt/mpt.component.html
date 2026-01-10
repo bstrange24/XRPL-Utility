@@ -177,7 +177,9 @@
                                                        } @if (mpt.transferFee) {
                                                        <div>Transfer Fee: {{ mpt.transferFee / 1000 }}%</div>
                                                        }
-                                                       <div>Flags: {{ mpt.flags.length ? mpt.flags: 'None' }}</div>
+                                                       <div>Flags: {{ mpt.flags.length ? mpt.flags: 'N/A' }}</div>
+                                                       <div>Ticker: {{ mpt.ticker ? mpt.ticker: 'N/A' }}</div>
+                                                       <!-- <div>URIs: {{ mpt.usefulLinks.length ? mpt.usefulLinks: 'None' }}</div> -->
                                                   </div>
                                              </app-tooltip-link>
 
@@ -244,7 +246,7 @@
                                                   <br />
                                                   <span class="label-meta">
                                                        JSON Metadata
-                                                       <a href="https://github.com/XRPLF/XRPL-Standards/discussions/264" target="_blank" rel="noopener noreferrer">XLS-89</a>
+                                                       <a href="https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0089-multi-purpose-token-metadata-schema" target="_blank" rel="noopener noreferrer">XLS-89</a>
                                                   </span>
                                                   <button type="button" class="btn-secondary btn-xs ml-2" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
                                              </label>

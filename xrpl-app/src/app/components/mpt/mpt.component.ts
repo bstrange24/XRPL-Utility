@@ -110,7 +110,34 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      existingMptsCollapsed: boolean = true;
      outstandingIOUCollapsed: boolean = true;
      metaDataField = signal<string>('');
-     XLS89_TEMPLATE = signal<string>(`{"currency":"FLUSD","name":"Florent USD","desc":"A regulated stablecoin issued by Florent.","icon":"https://unsplash.com/photos/a-toy-rocket-is-flying-over-a-pile-of-pink-blocks-zUweo75uccw","asset_class":"rwa","asset_subclass":"stablecoin","acct_name":"Florent","weblinks":[{"url":"https://florent.com/","type":"website","title":"Official Website"},{"url":"https://flo.org/","type":"docs","title":"My Documentation"}]}`);
+     XLS89_TEMPLATE = signal<string>(`{
+  "t": "TBILL",
+  "n": "T-Bill Yield Token",
+  "d": "A yield-bearing stablecoin backed by short-term U.S. Treasuries and money market instruments.",
+  "i": "example.org/tbill-icon.png",
+  "ac": "rwa",
+  "as": "treasury",
+  "in": "Example Yield Co.",
+  "us": [
+    {
+      "u": "exampleyield.co/tbill",
+      "c": "website",
+      "t": "Product Page"
+    },
+    {
+      "u": "exampleyield.co/docs",
+      "c": "docs",
+      "t": "Yield Token Docs"
+    }
+  ],
+  "ai": {
+    "interest_rate": "5.00%",
+    "interest_type": "variable",
+    "yield_source": "U.S. Treasury Bills",
+    "maturity_date": "2045-06-30",
+    "cusip": "912796RX0"
+  }
+}`);
      monacoOptions = {
           theme: 'vs',
           language: 'json',
@@ -214,6 +241,72 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           const links = count > 0 ? `<a href="${baseUrl}account/${address}/mpts/owned" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View MPTs</a>` : '';
 
           const mptsToShow = this.infoPanelExpanded()
+               ? this.existingMpts().map(m => {
+                      // Safely decode the metadata (handle cases where it's missing/invalid)
+                      let decodedMetadata;
+
+                      try {
+                           decodedMetadata = xrpl.decodeMPTokenMetadata(m.MPTokenMetadata) as any; // ← quick & dirty
+                      } catch (error) {
+                           console.warn('Failed to decode MPTokenMetadata:', error);
+                      }
+
+                      return {
+                           mpt_issuance_id: m.mpt_issuance_id || 'We have issues',
+                           id: m.id || 'We have big issues',
+                           amount: m.amount,
+                           isHolder: m.isHolder,
+                           maxAmount: m.MaximumAmount,
+                           outstanding: m.OutstandingAmount,
+                           transferFee: m.TransferFee,
+                           flags: this.decodeMptFlagsForUi(m.Flags || 0),
+
+                           // New clean fields - easy to use in template
+                           ticker: decodedMetadata?.ticker ? decodedMetadata?.ticker : 'N/A',
+                           usefulLinks: decodedMetadata?.uris ? decodedMetadata?.uris : [],
+
+                           // Optional: pre-formatted HTML string for displaying links nicely
+                           linkHtml:
+                                (decodedMetadata?.uris || []).length > 0
+                                     ? (decodedMetadata?.uris || [])
+                                            .map(
+                                                 (link: { u: any; t: any; c: any }) => `
+                <a href="${link.u}" target="_blank" rel="noopener noreferrer" class="mpt-link">
+                  ${link.t || link.c || 'Link'}
+                </a>
+              `
+                                            )
+                                            .join(' • ')
+                                     : 'No links provided',
+
+                           // If you still want the full original JSON string (for debugging)
+                           MPTokenMetadataFull: JSON.stringify(decodedMetadata, null, '\t'),
+                      };
+                 })
+               : [];
+
+          return {
+               walletName,
+               mptCount: count,
+               mptsToShow,
+               links,
+          };
+     });
+
+     infoData1 = computed(() => {
+          const wallet = this.currentWallet();
+          if (!wallet.address) return null;
+
+          const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
+          const baseUrl = this.txUiService.explorerUrl();
+          const address = wallet.address;
+
+          const mpts = this.existingMpts();
+          const count = mpts.length;
+
+          const links = count > 0 ? `<a href="${baseUrl}account/${address}/mpts/owned" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View MPTs</a>` : '';
+
+          const mptsToShow = this.infoPanelExpanded()
                ? this.existingMpts().map(m => ({
                       mpt_issuance_id: m.mpt_issuance_id || 'We have issues',
                       id: m.id || 'We have big issues',
@@ -223,6 +316,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                       outstanding: m.OutstandingAmount,
                       transferFee: m.TransferFee,
                       flags: this.decodeMptFlagsForUi(m.Flags || 0),
+                      MPTokenMetadata: JSON.stringify(xrpl.decodeMPTokenMetadata(m.MPTokenMetadata), null, '\t'),
                  }))
                : [];
           return {
@@ -940,7 +1034,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                { value: 4, name: 'isRequireAuth' },
                { value: 8, name: 'canEscrow' },
                { value: 10, name: 'canTrade' },
-               { value: 20, name: 'canTransfer' },
+               { value: 16, name: 'canTransfer' },
                { value: 40, name: 'canClawback' },
           ];
 
