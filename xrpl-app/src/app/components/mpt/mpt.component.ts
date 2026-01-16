@@ -105,10 +105,12 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      isMptEnabled = signal(false);
      selectedWalletIndex = signal<number>(0);
      isTicketEnabled = signal<boolean>(false);
+     authAction = signal<string>('authorize');
+     lockAction = signal<string>('unlock');
      existingMpts = signal<any[]>([]);
      existingIOUs = signal<any[]>([]);
-     existingMptsCollapsed: boolean = true;
-     outstandingIOUCollapsed: boolean = true;
+     existingMptsCollapsed = signal<boolean>(false); //: boolean = true;
+     outstandingIOUCollapsed = signal<boolean>(false); //: boolean = true;
      metaDataField = signal<string>('');
      XLS89_TEMPLATE = signal<string>(`{
   "t": "TBILL",
@@ -345,7 +347,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                          id: m.mpt_issuance_id ? m.mpt_issuance_id : m.id,
                          // display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'} • ${isHolder ? `${m.MaximumAmount} outstanding` : 'issued'}`,
                          display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'}`,
-                         secondary: m.mpt_issuance_id ? m.mpt_issuance_id.slice(0, 12) + '...' + m.mpt_issuance_id.slice(-10) : m.id.slice(0, 12) + '...' + m.id.slice(-10),
+                         secondary: m.mpt_issuance_id ? m.mpt_issuance_id.slice(0, 15) + '...' + m.mpt_issuance_id.slice(-10) : m.id.slice(0, 12) + '...' + m.id.slice(-10),
                          isCurrentAccount: false,
                          isCurrentCode: false,
                          isCurrentToken: false,
@@ -463,7 +465,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      }
 
      toggleExistingMpts() {
-          this.existingMptsCollapsed = !this.existingMptsCollapsed;
+          this.existingMptsCollapsed.set(!this.existingMptsCollapsed);
      }
 
      toggleInfoPanel() {
@@ -1099,6 +1101,13 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           if (this.metaDataField() && this.activeTab() === 'create') {
                mptTx.MPTokenMetadata = xrpl.convertStringToHex(this.metaDataField());
           }
+
+          // if (this.metaDataField() && this.activeTab() === 'create') {
+          //      mptTx.SendMax = {
+          //           mpt_issuance_id: '',
+          //           value: '0',
+          //      };
+          // }
      }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
@@ -1216,6 +1225,21 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
 
      loadXls89Template() {
           this.metaDataField.set(JSON.stringify(this.XLS89_TEMPLATE(), null, 2));
+     }
+
+     // Indicates if a transaction is currently in progress
+     isBusy(): boolean {
+          return this.txUiService.spinner();
+     }
+
+     // Determines if the Create action is allowed
+     canCreate(): boolean {
+          return !this.isBusy() && this.hasWallets() && this.metadataIsValid();
+     }
+
+     // Standardizes button labels while processing
+     actionLabel(label: string): string {
+          return this.isBusy() ? 'Processing...' : label;
      }
 
      clearFields(clearAllFields: boolean) {
