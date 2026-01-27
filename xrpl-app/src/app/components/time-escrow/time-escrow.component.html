@@ -185,6 +185,11 @@
 
                               <!-- MPT Issuance ID -->
                               @if (currencyFieldDropDownValue() === 'MPT') {
+                              <div class="form-group">
+                                   <label>Select MPT</label>
+                                   <p class="form-hint">MPT this account holds that can be sent to another account.</p>
+                                   <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                              </div>
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="mptIssuanceId">MPT Issuance ID</label>
