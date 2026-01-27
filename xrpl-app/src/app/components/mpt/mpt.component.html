@@ -322,7 +322,7 @@
                                    </div>
                                    }
 
-                                   <div class="form-row">
+                                   <!-- <div class="form-row">
                                         <div class="form-group">
                                              <label>Select MPT</label>
                                              <p class="form-hint">MPT this account holds that can be sent to another account.</p>
@@ -333,23 +333,23 @@
                                              <p class="form-hint">Account that will recieve the MPT.</p>
                                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
-                                   </div>
+                                   </div> -->
 
-                                   <!-- <div class="form-row">
+                                   <div class="form-row">
                                         <div class="form-group">
                                              <label>MPT Issuance ID</label>
                                              <p class="form-hint">Identifies the MPTokenIssuance.</p>
                                              <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" placeholder="" />
                                         </div>
-                                   </div> -->
+                                   </div>
 
-                                   <!-- <div class="form-row">
+                                   <div class="form-row">
                                         <div class="form-group">
-                                             <label for="destination">Destination</label>
-                                             <p class="form-hint">Account that will recieve the MPT.</p>
+                                             <label for="destination">MPT Issuer</label>
+                                             <p class="form-hint">Account that issued the MPT.</p>
                                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                                         </div>
-                                   </div> -->
+                                   </div>
                                    }
 
                                    <!-- Send MPT sections -->
