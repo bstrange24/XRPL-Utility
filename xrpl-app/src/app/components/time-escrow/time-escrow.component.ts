@@ -879,7 +879,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      // This runs once when account data loads
      private loadAllEscrows(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const rawEscrows = (accountObjects.result.account_objects ?? [])
-               .filter(obj => obj.LedgerEntryType === 'Escrow' && (obj.FinishAfter || obj.CancelAfter) && !obj.Condition)
+               .filter(obj => obj.LedgerEntryType === 'Escrow' && (obj.FinishAfter || obj.CancelAfter)) // && !obj.Condition)
                .map(async (obj: any) => {
                     let EscrowSequence: number | null = null;
                     if (obj.PreviousTxnID) {

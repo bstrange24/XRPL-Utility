@@ -369,9 +369,10 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                if (hasEscrows) links.push(`<a href="${explorerBase}account/${address}/escrows" target="_blank" rel="noopener" class="xrpl-win-link">View Escrows</a>`);
                if (hasIOUs) links.push(`<a href="${explorerBase}account/${address}/tokens" target="_blank" rel="noopener" class="xrpl-win-link">View IOUs</a>`);
                if (hasMPTs) links.push(`<a href="${explorerBase}account/${address}/mpts/owned" target="_blank" rel="noopener" class="xrpl-win-link">View MPTs</a>`);
-          } else {
-               // links.push(`<a href="${explorerBase}account/${address}/escrows" target="_blank" rel="noopener" class="xrpl-win-link">View All Escrows</a>`);
           }
+          //  else {
+          // links.push(`<a href="${explorerBase}account/${address}/escrows" target="_blank" rel="noopener" class="xrpl-win-link">View All Escrows</a>`);
+          // }
 
           return {
                walletName,
@@ -891,7 +892,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      // This runs once when account data loads
      private loadAllEscrows(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const rawEscrows = (accountObjects.result.account_objects ?? [])
-               .filter(obj => obj.LedgerEntryType === 'Escrow' && (obj.FinishAfter || obj.CancelAfter) && !obj.Condition)
+               .filter(obj => obj.LedgerEntryType === 'Escrow' && (obj.FinishAfter || obj.CancelAfter)) // && !obj.Condition)
                .map(async (obj: any) => {
                     let EscrowSequence: number | null = null;
                     if (obj.PreviousTxnID) {
