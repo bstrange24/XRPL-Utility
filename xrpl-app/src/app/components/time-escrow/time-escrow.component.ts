@@ -1045,7 +1045,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           );
 
           this.expiredOrFulfilledEscrows.set(processedEscrows.sort((a, b) => a.Sender.localeCompare(b.Sender)));
-          this.utilsService.logObjects('expiredOrFulfilledEscrows', this.expiredOrFulfilledEscrows);
+          this.utilsService.logObjects('expiredOrFulfilledEscrows', this.expiredOrFulfilledEscrows());
      }
 
      // private getExistingMpts(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
@@ -1146,15 +1146,15 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
 
           if (txType === 'create') {
                if (this.currencyFieldDropDownValue() === 'MPT') {
-                    const accountObjects = await this.xrplService.getAccountObjects(client, this.selectedDestinationAddress(), 'validated', '');
-                    const mptTokens = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPToken');
-                    console.debug(`Destination MPT Tokens:`, mptTokens);
-                    console.debug('MPT Issuance ID:', this.mptIssuanceIdField);
-                    const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === this.mptIssuanceIdField);
+                    // const accountObjects = await this.xrplService.getAccountObjects(client, this.selectedDestinationAddress(), 'validated', '');
+                    // const mptTokens = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPToken');
+                    // console.debug(`Destination MPT Tokens:`, mptTokens);
+                    // console.debug('MPT Issuance ID:', this.mptIssuanceIdField());
+                    // const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === this.mptIssuanceIdField);
 
-                    if (!authorized) {
-                         throw new Error(`Destination ${this.selectedDestinationAddress()} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField}). Please ensure authorization has been completed.`);
-                    }
+                    // if (!authorized) {
+                    //      throw new Error(`Destination ${this.selectedDestinationAddress()} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField}). Please ensure authorization has been completed.`);
+                    // }
 
                     const curr: xrpl.MPTAmount = {
                          mpt_issuance_id: this.mptIssuanceIdField(),

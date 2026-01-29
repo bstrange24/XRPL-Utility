@@ -131,6 +131,7 @@ export class TransactionUiService {
           private sanitizer: DomSanitizer,
           private xrplService: XrplService
      ) {}
+
      txHash: string | null = null;
      txHashes: string[] = [];
      isError = signal(false);
@@ -602,9 +603,9 @@ export class TransactionUiService {
      clearAllOptions() {
           this.isMemoEnabled.set(false);
           this.useMultiSign.set(false);
+          this.multiSigningEnabled.set(false);
           this.isRegularKeyAddress.set(false);
           this.regularKeySigningEnabled.set(false);
-          this.multiSigningEnabled.set(false);
           this.isTicket.set(false);
           this.isSimulateEnabled.set(false);
           this.memoField.set('');

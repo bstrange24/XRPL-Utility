@@ -753,9 +753,9 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
                     console.debug('MPT Issuance ID:', this.mptIssuanceIdField());
                     const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === this.mptIssuanceIdField());
 
-                    if (!authorized) {
-                         return this.txUiService.setError(`Destination ${destinationAddress} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField()}). Please ensure authorization has been completed.`);
-                    }
+                    // if (!authorized) {
+                    //      return this.txUiService.setError(`Destination ${destinationAddress} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField()}). Please ensure authorization has been completed.`);
+                    // }
 
                     if (walletMptToken) {
                          const decodedFlags = this.decodeMPTFlags((walletMptToken as any).Flags);

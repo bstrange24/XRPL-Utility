@@ -156,6 +156,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      existingEscrow = signal<any[]>([]);
      exsitingMpt = signal<any[]>([]);
      existingIOUs = signal<any[]>([]);
+     existingMpts = signal<any[]>([]);
      outstandingEscrowCollapsed = signal<boolean>(true);
      outstandingMptCollapsed = signal<boolean>(true);
      outstandingIOUCollapsed = signal<boolean>(true);
@@ -380,6 +381,43 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                activeTab: this.activeTab(),
           };
      });
+
+     // MPT Dropdown Items
+     mptItems = computed(() => {
+          const t = this.existingMpts()
+               // .filter(m => m.mpt_issuance_id) // Only show entries with a valid issuance ID
+               .map(m => {
+                    const type = m.LedgerEntryType === 'MPToken' ? 'MPToken' : 'MPTokenIssuance';
+                    let isHolder = false;
+                    if (type === 'MPToken') {
+                         isHolder = true;
+                    }
+                    const amount = isHolder ? m.MPTAmount || '0' : m.OutstandingAmount || '0';
+
+                    const displayAmount = amount !== '0' ? amount : '0';
+
+                    return {
+                         id: m.mpt_issuance_id ? m.mpt_issuance_id : m.id,
+                         // display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'} • ${isHolder ? `${m.MaximumAmount} outstanding` : 'issued'}`,
+                         display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'}`,
+                         secondary: m.mpt_issuance_id ? m.mpt_issuance_id.slice(0, 15) + '...' + m.mpt_issuance_id.slice(-10) : m.id.slice(0, 12) + '...' + m.id.slice(-10),
+                         isCurrentAccount: false,
+                         isCurrentCode: false,
+                         isCurrentToken: false,
+                    };
+               });
+          return t;
+     });
+
+     selectedMptItem = computed(() => {
+          const id = this.mptIssuanceIdField();
+          if (!id) return null;
+          return this.mptItems().find(i => i.id === id) || null;
+     });
+
+     onMptSelected(item: SelectItem | null) {
+          this.mptIssuanceIdField.set(item?.id || '');
+     }
 
      timeUnitItems = computed(() => [
           { id: 'seconds', display: 'Seconds' },
@@ -944,6 +982,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                });
 
           this.exsitingMpt.set(mapped);
+          this.existingMpts.set(mapped);
           this.utilsService.logObjects('exsitingMpt', mapped);
           // return this.exsitingMpt;
      }
@@ -1018,8 +1057,70 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           );
 
           this.expiredOrFulfilledEscrows.set(processedEscrows.sort((a, b) => a.Sender.localeCompare(b.Sender)));
-          this.utilsService.logObjects('expiredOrFulfilledEscrows', this.expiredOrFulfilledEscrows);
+          this.utilsService.logObjects('expiredOrFulfilledEscrows', this.expiredOrFulfilledEscrows());
      }
+
+     // private getExistingMpts(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+     //      const issuances = new Map<string, any>();
+     //      const holdings: any[] = [];
+
+     //      // 1. Collect all issuances and holdings
+     //      (accountObjects.result.account_objects ?? []).forEach(obj => {
+     //           const o = obj as any;
+     //           if (o.LedgerEntryType === 'MPTokenIssuance') {
+     //                issuances.set(o.mpt_issuance_id, o);
+     //           } else if (o.LedgerEntryType === 'MPToken' && o.Account === classicAddress) {
+     //                holdings.push(o);
+     //           }
+     //      });
+
+     //      const result: any[] = [];
+
+     //      // 2. Add holdings (you hold tokens)
+     //      for (const holding of holdings) {
+     //           const issuance = issuances.get(holding.MPTokenIssuanceID) || {};
+     //           result.push({
+     //                LedgerEntryType: 'MPToken',
+     //                id: holding.index,
+     //                mpt_issuance_id: holding.MPTokenIssuanceID,
+     //                MPTAmount: holding.MPTAmount || '0',
+     //                OutstandingAmount: issuance.OutstandingAmount || '0',
+     //                MaximumAmount: issuance.MaximumAmount || 'Unlimited',
+     //                TransferFee: issuance.TransferFee || '0',
+     //                MPTokenMetadata: issuance.MPTokenMetadata || 'N/A',
+     //                Flags: holding.Flags || 0,
+     //                AssetScale: issuance.AssetScale || 'N/A',
+     //                Issuer: issuance.Account || 'Unknown',
+     //                isHolder: true,
+     //                amount: holding.MPTAmount || '0',
+     //           });
+     //      }
+
+     //      // 3. Add issuances that you own (even if you hold 0)
+     //      for (const [id, issuance] of issuances.entries()) {
+     //           const alreadyAddedAsHolder = result.some(r => r.mpt_issuance_id === id);
+     //           if (!alreadyAddedAsHolder) {
+     //                result.push({
+     //                     LedgerEntryType: 'MPTokenIssuance',
+     //                     id: issuance.index,
+     //                     mpt_issuance_id: issuance.mpt_issuance_id,
+     //                     MPTAmount: '0',
+     //                     OutstandingAmount: issuance.OutstandingAmount || '0',
+     //                     MaximumAmount: issuance.MaximumAmount || 'Unlimited',
+     //                     TransferFee: issuance.TransferFee || '0',
+     //                     MPTokenMetadata: issuance.MPTokenMetadata || 'N/A',
+     //                     Flags: issuance.Flags || 0,
+     //                     AssetScale: issuance.AssetScale || 'N/A',
+     //                     Issuer: issuance.Account || 'Unknown',
+     //                     isHolder: false,
+     //                     amount: issuance.OutstandingAmount || '0',
+     //                });
+     //           }
+     //      }
+
+     //      this.existingMpts.set(result);
+     //      this.utilsService.logObjects('existingMpts (holders + issuers)', result);
+     // }
 
      get availableCurrencies(): string[] {
           return [
@@ -1057,15 +1158,15 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
 
           if (txType === 'create') {
                if (this.currencyFieldDropDownValue() === 'MPT') {
-                    const accountObjects = await this.xrplService.getAccountObjects(client, this.selectedDestinationAddress(), 'validated', '');
-                    const mptTokens = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPToken');
-                    console.debug(`Destination MPT Tokens:`, mptTokens);
-                    console.debug('MPT Issuance ID:', this.mptIssuanceIdField);
-                    const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === this.mptIssuanceIdField);
+                    // const accountObjects = await this.xrplService.getAccountObjects(client, this.selectedDestinationAddress(), 'validated', '');
+                    // const mptTokens = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPToken');
+                    // console.debug(`Destination MPT Tokens:`, mptTokens);
+                    // console.debug('MPT Issuance ID:', this.mptIssuanceIdField());
+                    // const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === this.mptIssuanceIdField);
 
-                    if (!authorized) {
-                         throw new Error(`Destination ${this.selectedDestinationAddress()} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField}). Please ensure authorization has been completed.`);
-                    }
+                    // if (!authorized) {
+                    //      throw new Error(`Destination ${this.selectedDestinationAddress()} is not authorized to receive this MPT (issuance ID ${this.mptIssuanceIdField}). Please ensure authorization has been completed.`);
+                    // }
 
                     const curr: xrpl.MPTAmount = {
                          mpt_issuance_id: this.mptIssuanceIdField(),
