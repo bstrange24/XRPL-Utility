@@ -478,14 +478,14 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     if (succeeded.length > 0) {
                          this.txUiService.successMessage = `${succeeded.length} Flag Transaction(s) Succeeded.`;
                          this.txUiService.successMessage += ` [ ` + this.getFlagNames(succeeded) + ` ]`;
-                         this.txUiService.isSuccess = true;
+                         this.txUiService.isSuccess.set(true);
                          succeeded.forEach(h => h.hash && this.txUiService.txHashes.push(h.hash));
                     }
 
                     if (failed.length > 0) {
                          this.txUiService.errorMessage = `${failed.length} Flag Transaction(s) Failed.`;
                          this.txUiService.errorMessage += ` [ ` + this.getFlagNames(failed) + ` ]`;
-                         this.txUiService.isError = true;
+                         this.txUiService.isError.set(true);
                          failed.forEach(h => h.hash && this.txUiService.txErrorHashes.push(h.hash));
                     }
 
@@ -557,6 +557,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     const result = await this.txExecutor.updateMetaData(accountSetTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -628,6 +629,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                          const result = await this.txExecutor.setDepositAuth(depositPreauthTx, wallet, client, {
                               useMultiSign: this.txUiService.useMultiSign(),
                               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                              regularKeyAddress: this.txUiService.regularKeyAddress(),
                               regularKeySeed: this.txUiService.regularKeySeed(),
                               multiSignAddress: this.txUiService.multiSignAddress(),
                               multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -704,6 +706,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     const result = await this.txExecutor.setMultiSign(signerListTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -758,6 +761,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     const result = await this.txExecutor.setRegularKey(setRegularKeyTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -819,6 +823,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     const result = await this.txExecutor.setNftMinterAddress(accountSetTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),

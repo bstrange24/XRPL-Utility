@@ -362,6 +362,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                     const result = await this.txExecutor.accountDelete(tx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),

@@ -330,7 +330,7 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
 
                // Show spinner immediately - use the main spinner, not loadingMore
                this.txUiService.spinner.set(true);
-               this.txUiService.spinnerMessage = 'Loading balance changes...';
+               this.txUiService.spinnerMessage.set('Loading balance changes...');
                const spinnerStartTime = Date.now();
                const minSpinnerTime = 400;
 
@@ -539,7 +539,8 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
                          switch (tx.TransactionType) {
                               // 🔹 Payments
                               case 'Payment':
-                                   if (tx.Account === address && tx.Destination) cp = tx.Destination; // Sent to someone
+                                   if (tx.Account === address && tx.Destination)
+                                        cp = tx.Destination; // Sent to someone
                                    else if (tx.Destination === address && tx.Account) cp = tx.Account; // Received from someone
                                    break;
 

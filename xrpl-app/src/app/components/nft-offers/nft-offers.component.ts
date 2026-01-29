@@ -692,6 +692,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.createBuyNft(nFTokenAcceptOfferTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -754,6 +755,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.createSellNft(nFTokenCreateOfferTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -826,6 +828,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.createNftOffer(nFTokenCreateOfferTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -874,6 +877,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.cancelNftOffer(nFTokenCancelOfferTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),

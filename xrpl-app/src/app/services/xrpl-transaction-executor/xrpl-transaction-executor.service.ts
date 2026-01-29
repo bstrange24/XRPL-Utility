@@ -16,10 +16,16 @@ export interface TxExecutionOptions {
 
 @Injectable({ providedIn: 'root' })
 export class XrplTransactionExecutorService {
-     constructor(private xrplTransactions: XrplTransactionService, private utilsService: UtilsService, private txUiService: TransactionUiService, private xrplCache: XrplCacheService, private xrplService: XrplService) {}
+     constructor(
+          private xrplTransactions: XrplTransactionService,
+          private utilsService: UtilsService,
+          private txUiService: TransactionUiService,
+          private xrplCache: XrplCacheService,
+          private xrplService: XrplService
+     ) {}
 
-     async execute<T extends xrpl.Transaction>(client: xrpl.Client, wallet: xrpl.Wallet, tx: T, options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean }): Promise<{ success: true; hash: string } | { success: false; error: string }> {
-          const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', amount = '0', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false } = options;
+     async execute<T extends xrpl.Transaction>(client: xrpl.Client, wallet: xrpl.Wallet, tx: T, options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; regularKeyAddress?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean }): Promise<{ success: true; hash: string } | { success: false; error: string }> {
+          const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', amount = '0', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', regularKeyAddress = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false } = options;
 
           // 1. Get fresh data in parallel
           const [{ accountInfo, accountObjects }, { fee, serverInfo }] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFeeAndServerInfo(this.xrplService, { forceRefresh: false })]);
@@ -41,7 +47,7 @@ export class XrplTransactionExecutorService {
                if (this.txUiService.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, tx);
                } else {
-                    const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(useMultiSign, isRegularKeyAddress, regularKeySeed);
+                    const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(useMultiSign, regularKeyAddress, isRegularKeyAddress, regularKeySeed);
 
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, tx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, useMultiSign, multiSignAddress, multiSignSeeds);
 
@@ -80,14 +86,14 @@ export class XrplTransactionExecutorService {
                }
 
                // Success!
-               this.txUiService.setSuccess(this.txUiService.result);
+               this.txUiService.setSuccess(this.txUiService.result());
                const hash = response.result.hash ?? response.result.tx_json?.hash ?? 'unknown';
 
                // === ONLY show success UI if not suppressed ===
                // Add hash only if not suppressed
                if (!suppressIndividualFeedback) {
                     this.txUiService.addTxHashSignal(hash);
-                    this.txUiService.setSuccess(this.txUiService.result); // ← Only for single tx
+                    this.txUiService.setSuccess(this.txUiService.result()); // ← Only for single tx
                }
 
                // this.txUiService.addTxHashSignal(hash);
@@ -115,6 +121,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -135,6 +142,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
                suppressIndividualFeedback?: boolean;
                customSpinnerMessage?: string; // ← NEW: Allow custom message
@@ -158,6 +166,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -178,6 +187,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -198,6 +208,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -218,6 +229,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -238,6 +250,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -258,6 +271,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -278,6 +292,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -298,6 +313,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -318,6 +334,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -338,6 +355,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -358,6 +376,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -378,6 +397,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -398,6 +418,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -418,6 +439,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -438,6 +460,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -458,6 +481,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -478,6 +502,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -498,6 +523,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -518,6 +544,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -538,6 +565,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -558,6 +586,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -578,6 +607,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -598,6 +628,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -618,6 +649,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -638,6 +670,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -658,6 +691,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -678,6 +712,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -698,6 +733,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -718,6 +754,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -738,6 +775,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -758,6 +796,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -778,6 +817,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -798,6 +838,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -818,6 +859,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -838,6 +880,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -858,6 +901,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -879,6 +923,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -899,6 +944,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -919,6 +965,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -939,6 +986,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -959,6 +1007,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -979,6 +1028,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -999,6 +1049,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
                suppressIndividualFeedback?: boolean;
                customSpinnerMessage?: string; // ← NEW: Allow custom message
@@ -1022,6 +1073,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
                suppressIndividualFeedback?: boolean;
           } = {}
@@ -1043,6 +1095,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -1063,6 +1116,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -1083,6 +1137,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -1103,6 +1158,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -1123,6 +1179,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -1143,6 +1200,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -1163,6 +1221,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -1183,6 +1242,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -1203,6 +1263,7 @@ export class XrplTransactionExecutorService {
                multiSignAddress?: string;
                multiSignSeeds?: string;
                isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
                regularKeySeed?: string;
                suppressIndividualFeedback?: boolean;
                customSpinnerMessage?: string; // ← NEW: Allow custom message

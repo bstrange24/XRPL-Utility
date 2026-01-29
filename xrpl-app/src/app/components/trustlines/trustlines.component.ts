@@ -565,6 +565,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                     const result = await this.txExecutor.setTrustline(trustSetTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -647,6 +648,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                     const result = await this.txExecutor.removeTrustline(trustSetTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -764,6 +766,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                     const result = await this.txExecutor.issueCurrency(paymentTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -829,6 +832,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                     const result = await this.txExecutor.clawbackTokens(clawbackTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),

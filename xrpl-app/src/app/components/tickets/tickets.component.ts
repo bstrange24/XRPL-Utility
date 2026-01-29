@@ -265,6 +265,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                     const result = await this.txExecutor.ticketCreate(ticketCreateTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -345,6 +346,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                          const result = await this.txExecutor.ticketDelete(accountSetTx, wallet, client, {
                               useMultiSign: this.txUiService.useMultiSign(),
                               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                              regularKeyAddress: this.txUiService.regularKeyAddress(),
                               regularKeySeed: this.txUiService.regularKeySeed(),
                               multiSignAddress: this.txUiService.multiSignAddress(),
                               multiSignSeeds: this.txUiService.multiSignSeeds(),

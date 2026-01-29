@@ -620,6 +620,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.createAMM(ammCreateTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -672,7 +673,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     const assetDef: xrpl.Currency = { currency: 'XRP' };
                     const asset2Def: xrpl.Currency = {
                          currency: we_want_currency,
-                         issuer: typeof we_want === 'string' ? '' : we_want.issuer ?? '',
+                         issuer: typeof we_want === 'string' ? '' : (we_want.issuer ?? ''),
                     };
 
                     let ammDepositTx: xrpl.AMMDeposit;
@@ -718,6 +719,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.depositToAMM(ammDepositTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -795,7 +797,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     const assetDef: xrpl.Currency = { currency: 'XRP' };
                     const asset2Def: xrpl.Currency = {
                          currency: we_want_currency,
-                         issuer: typeof we_want === 'string' ? '' : we_want.issuer ?? '',
+                         issuer: typeof we_want === 'string' ? '' : (we_want.issuer ?? ''),
                     };
 
                     const cleanLpAmount = this.utilsService.removeCommaFromAmount(this.withdrawlLpTokenFromPoolField());
@@ -821,7 +823,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     } else if (this.withdrawOptions().firstPoolOnly) {
                          const asset2Amount: xrpl.IssuedCurrencyAmount = {
                               currency: we_want_currency,
-                              issuer: typeof we_want === 'string' ? '' : we_want.issuer ?? '',
+                              issuer: typeof we_want === 'string' ? '' : (we_want.issuer ?? ''),
                               value: this.weWantAmount(),
                          };
 
@@ -853,6 +855,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.withdrawlFromAMM(ammWithdrawTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -936,6 +939,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.clawbackFromAMM(ammClawbackTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -986,6 +990,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.swapViaAMM(swapPaymentTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -1032,6 +1037,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.deleteAMM(deleteAmmTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),

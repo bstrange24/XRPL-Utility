@@ -512,6 +512,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.mintNft(nFTokenMintTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -681,6 +682,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.burnNft(nFTokenBurnTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -840,6 +842,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
                     const result = await this.txExecutor.updateNftMetaData(nFTokenModifyTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -861,7 +864,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
           // Accept either:
           // - whole response object with .result.account_nfts
           // - OR an array of NFT objects directly
-          const raw = Array.isArray(checkObjects) ? checkObjects : checkObjects?.result?.account_nfts ?? [];
+          const raw = Array.isArray(checkObjects) ? checkObjects : (checkObjects?.result?.account_nfts ?? []);
 
           const allNfts = (raw as any[]).flatMap((pageOrNft: any) => {
                // Case A: page object that contains .NFTokens (each entry may be { NFToken: { ... } })

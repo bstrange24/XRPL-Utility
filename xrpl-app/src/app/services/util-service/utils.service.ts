@@ -68,7 +68,11 @@ export class UtilsService {
      isSuccess: boolean = false;
      spinner: boolean = false;
 
-     constructor(private readonly xrplService: XrplService, private readonly storageService: StorageService, private walletManagerService: WalletManagerService) {}
+     constructor(
+          private readonly xrplService: XrplService,
+          private readonly storageService: StorageService,
+          private walletManagerService: WalletManagerService
+     ) {}
 
      MPT_FLAGS: Record<number, string> = {
           0x00000001: 'MptLocked',
@@ -586,12 +590,15 @@ export class UtilsService {
           return '#333';
      }
 
-     async getRegularKeyWallet(isMultiSign: boolean, isRegularKeyAddress: boolean, regularKeySeed: string) {
+     async getRegularKeyWallet(isMultiSign: boolean, regularKeyAddress: string, isRegularKeyAddress: boolean, regularKeySeed: string) {
           let regularKeyWalletSignTx: any = '';
           let useRegularKeyWalletSignTx = false;
           if (isRegularKeyAddress && !isMultiSign) {
                console.log('Using Regular Key Seed for transaction signing');
-               regularKeyWalletSignTx = await this.getWallet(regularKeySeed);
+               regularKeyWalletSignTx = await this.getWalletWithEncryptionAlgorithm(regularKeySeed, 'ed25519');
+               if (regularKeyAddress !== regularKeyWalletSignTx.classicAddress) {
+                    regularKeyWalletSignTx = await this.getWalletWithEncryptionAlgorithm(regularKeySeed, 'secp256k1');
+               }
                console.log('Wallet:', regularKeyWalletSignTx);
                useRegularKeyWalletSignTx = true;
           }
@@ -1004,6 +1011,8 @@ export class UtilsService {
           const options: { algorithm?: xrpl.ECDSA } = {};
           if (algorithm === 'secp256k1') {
                options.algorithm = xrpl.ECDSA.secp256k1;
+          } else {
+               options.algorithm = xrpl.ECDSA.ed25519;
           }
 
           // For 'ed25519', leave algorithm undefined (xrpl defaults to Ed25519)
@@ -1534,10 +1543,15 @@ export class UtilsService {
           const signerBlobs: string[] = [];
 
           for (let i = 0; i < signerAddresses.length; i++) {
-               const signerWallet = await this.getWallet(signerSeeds[i]);
+               // const signerWallet = await this.getWallet(signerSeeds[i]);
+               let signerWallet = await this.getWalletWithEncryptionAlgorithm(signerSeeds[i], 'secp256k1');
 
                if (signerWallet.classicAddress !== signerAddresses[i]) {
-                    throw new Error(`Seed mismatch for signer ${signerAddresses[i]}`);
+                    console.log('Seed mismatch with secp256k1. Trying ed25519');
+                    signerWallet = await this.getWalletWithEncryptionAlgorithm(signerSeeds[i], 'ed25519');
+                    if (signerWallet.classicAddress !== signerAddresses[i]) {
+                         throw new Error(`Seed mismatch for signer ${signerAddresses[i]}`);
+                    }
                }
 
                const signed = signerWallet.sign(preparedTx, true); // true = multisign

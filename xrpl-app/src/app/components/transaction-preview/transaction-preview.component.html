@@ -2,12 +2,12 @@
 @if (txUiService.spinner()) {
 <div class="spinner-row">
      <div class="spinner"></div>
-     <span>{{ txUiService.spinnerMessage || 'Loading...' }}</span>
+     <span>{{ txUiService.spinnerMessage() || 'Loading...' }}</span>
 </div>
 }
 
 <!-- Success message -->
-@if (txUiService.isSuccess && !txUiService.isError) {
+@if (txUiService.isSuccess() && !txUiService.isError()) {
 <div class="success-message">
      <lucide-icon name="check" size="20"></lucide-icon>
      <div class="success-text">
@@ -42,17 +42,17 @@
 }
 
 <!-- Error message -->
-@if (txUiService.isError && txUiService.result) {
+@if (txUiService.isError() && txUiService.result()) {
 <div class="tx-message error">
      <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
      <div class="tx-text">
           <!-- Display Tx Hash if we are not in simulation mode-->
           @if (txUiService.txHashSignal() && !txUiService.isSimulateEnabled()) {
-          <span>{{ txUiService.result }}</span><br />
+          <span>{{ txUiService.result() }}</span><br />
           @if (txUiService.txHashSignal().length > 0) {
           <span>Transaction hash: <a [href]="`${url()}tx/` + txUiService.txHashSignal()" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashSignal() }} </a></span>
           } } @else {
-          <span>{{ txUiService.result }}</span>
+          <span>{{ txUiService.result() }}</span>
           }
      </div>
 </div>

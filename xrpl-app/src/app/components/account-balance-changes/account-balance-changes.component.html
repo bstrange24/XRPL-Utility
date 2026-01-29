@@ -43,7 +43,7 @@
                }
 
                <!-- Success message -->
-               @if (txUiService.isSuccess && !txUiService.isError) {
+               @if (txUiService.isSuccess() && !txUiService.isError) {
                <div class="success-message">
                     <lucide-icon name="check" size="20"></lucide-icon>
                     <div class="success-text">{{ successMessage }}</div>
@@ -51,7 +51,7 @@
                }
 
                <!-- Error message -->
-               @if (txUiService.isError && result) {
+               @if (txUiService.isError() && result) {
                <div class="tx-message error">
                     <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
                     <div class="tx-text">{{ result }}</div>

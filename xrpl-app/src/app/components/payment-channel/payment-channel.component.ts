@@ -405,6 +405,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                          const result = await this.txExecutor.paymentChannelCreate(paymentChannelCreateTx, wallet, client, {
                               useMultiSign: this.txUiService.useMultiSign(),
                               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                              regularKeyAddress: this.txUiService.regularKeyAddress(),
                               regularKeySeed: this.txUiService.regularKeySeed(),
                               multiSignAddress: this.txUiService.multiSignAddress(),
                               multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -431,6 +432,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                          const result = await this.txExecutor.paymentChannelFundTx(paymentChannelFundTx, wallet, client, {
                               useMultiSign: this.txUiService.useMultiSign(),
                               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                              regularKeyAddress: this.txUiService.regularKeyAddress(),
                               regularKeySeed: this.txUiService.regularKeySeed(),
                               multiSignAddress: this.txUiService.multiSignAddress(),
                               multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -493,6 +495,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                          const result = await this.txExecutor.paymentChannelClaimTx(paymentChannelClaimTx, wallet, client, {
                               useMultiSign: this.txUiService.useMultiSign(),
                               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                              regularKeyAddress: this.txUiService.regularKeyAddress(),
                               regularKeySeed: this.txUiService.regularKeySeed(),
                               multiSignAddress: this.txUiService.multiSignAddress(),
                               multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -551,6 +554,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                          const result = await this.txExecutor.paymentChannelClaimTx(paymentChannelClaimTx, wallet, client, {
                               useMultiSign: this.txUiService.useMultiSign(),
                               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                              regularKeyAddress: this.txUiService.regularKeyAddress(),
                               regularKeySeed: this.txUiService.regularKeySeed(),
                               multiSignAddress: this.txUiService.multiSignAddress(),
                               multiSignSeeds: this.txUiService.multiSignSeeds(),

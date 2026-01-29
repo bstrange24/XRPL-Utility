@@ -127,14 +127,17 @@ export interface ValidationInputs {
 
 @Injectable({ providedIn: 'root' })
 export class TransactionUiService {
-     constructor(private sanitizer: DomSanitizer, private xrplService: XrplService) {}
+     constructor(
+          private sanitizer: DomSanitizer,
+          private xrplService: XrplService
+     ) {}
      txHash: string | null = null;
      txHashes: string[] = [];
-     isError: boolean = false;
-     isSuccess: boolean = false;
-     result: string = '';
-     spinnerMessage: string = '';
-     private toastId = 0;
+     isError = signal(false);
+     isSuccess = signal(false);
+     result = signal('');
+     spinnerMessage = signal('');
+     toastId = 0;
      errorMessageSignal = signal<string | null>(null);
      amountField = signal('');
      destinationTagField = signal('');
@@ -309,9 +312,9 @@ export class TransactionUiService {
      }
 
      clearMessages() {
-          this.result = '';
-          this.isError = false;
-          this.isSuccess = false;
+          this.result.set('');
+          this.isError.set(false);
+          this.isSuccess.set(false);
           this.txHash = '';
           this.txHashes = [];
           this.txResult = [];
@@ -378,7 +381,7 @@ export class TransactionUiService {
      }
 
      updateSpinnerMessage(message: string) {
-          this.spinnerMessage = message;
+          this.spinnerMessage.set(message);
      }
 
      updateSpinnerMessageSignal(message: string) {
@@ -407,8 +410,8 @@ export class TransactionUiService {
           this.setSuccessProperties();
           this.handleTransactionResult({
                result: `${message}`,
-               isError: this.isError,
-               isSuccess: this.isSuccess,
+               isError: this.isError(),
+               isSuccess: this.isSuccess(),
           });
 
           this.successMessage = message;
@@ -420,8 +423,8 @@ export class TransactionUiService {
      }
 
      setSuccessProperties() {
-          this.isSuccess = true;
-          this.isError = false;
+          this.isSuccess.set(true);
+          this.isError.set(false);
           this.spinner.set(false);
           // this.result = '';
      }
@@ -431,8 +434,8 @@ export class TransactionUiService {
           this.setErrorProperties();
           this.handleTransactionResult({
                result: `${message}`,
-               isError: this.isError,
-               isSuccess: this.isSuccess,
+               isError: this.isError(),
+               isSuccess: this.isSuccess(),
           });
           this.errorMessage = message;
           this.errorMessageSignal.set(message);
@@ -443,15 +446,15 @@ export class TransactionUiService {
      }
 
      private setErrorProperties() {
-          this.isSuccess = false;
-          this.isError = true;
+          this.isSuccess.set(false);
+          this.isError.set(true);
           this.spinner.set(false);
      }
 
      handleTransactionResult(event: { result: string; isError: boolean; isSuccess: boolean }) {
-          this.result = event.result;
-          this.isError = event.isError;
-          this.isSuccess = event.isSuccess;
+          this.result.set(event.result);
+          this.isError.set(event.isError);
+          this.isSuccess.set(event.isSuccess);
      }
 
      /**

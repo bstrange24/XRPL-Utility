@@ -647,6 +647,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     const result = await this.txExecutor.createFirewall(mPTokenIssuanceCreateTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -705,6 +706,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     const result = await this.txExecutor.modifyFirewall(mPTokenAuthorizeTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -789,6 +791,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     const result = await this.txExecutor.authorizeFlag(sendMptPaymentTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -845,6 +848,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     const result = await this.txExecutor.deleteFirewall(mPTokenIssuanceDestroyTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -1078,10 +1082,13 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
      private comineWhiteListDestiationAddresses(storedDestinations: { [key: string]: string }, knownWhitelistAddress: { [key: string]: string }) {
           const convertedDestinations = Object.entries(storedDestinations)
                .filter(([_, value]) => value && value.trim() !== '') // Remove "XRP": ""
-               .reduce((acc, [_, value]) => {
-                    acc[value] = value;
-                    return acc;
-               }, {} as { [key: string]: string });
+               .reduce(
+                    (acc, [_, value]) => {
+                         acc[value] = value;
+                         return acc;
+                    },
+                    {} as { [key: string]: string }
+               );
 
           // Merge both objects
           const combined = {

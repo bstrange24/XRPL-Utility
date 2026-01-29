@@ -735,8 +735,8 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                                      value: typeof amm.amount2 === 'string' ? String(xrpl.dropsToXrp(amm.amount2)) : amm.amount2.value,
                                 }
                               : typeof amm.amount2 === 'string'
-                              ? amm.amount2
-                              : amm.amount2.value;
+                                ? amm.amount2
+                                : amm.amount2.value;
 
                          const takerPays: string | IssuedCurrencyAmount = this.isTokenAmount(we_spend)
                               ? {
@@ -745,8 +745,8 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                                      value: typeof amm.amount === 'string' ? String(xrpl.dropsToXrp(amm.amount)) : amm.amount.value,
                                 }
                               : typeof amm.amount === 'string'
-                              ? amm.amount
-                              : amm.amount.value;
+                                ? amm.amount
+                                : amm.amount.value;
 
                          const ammOffer: CustomBookOffer = {
                               Account: amm.account || 'AMM_POOL',
@@ -1168,6 +1168,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                     const result = await this.txExecutor.createOffer(offerCreateTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
                          isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
                          multiSignSeeds: this.txUiService.multiSignSeeds(),
@@ -1239,6 +1240,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                          const result = await this.txExecutor.offerCancel(offerCancelTx, wallet, client, {
                               useMultiSign: this.txUiService.useMultiSign(),
                               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                              regularKeyAddress: this.txUiService.regularKeyAddress(),
                               regularKeySeed: this.txUiService.regularKeySeed(),
                               multiSignAddress: this.txUiService.multiSignAddress(),
                               multiSignSeeds: this.txUiService.multiSignSeeds(),

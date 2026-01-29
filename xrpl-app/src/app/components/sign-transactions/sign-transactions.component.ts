@@ -345,7 +345,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      onTransactionChange(): void {
           this.txJson = '';
           this.outputField.set('');
-          this.txUiService.isError = false;
+          this.txUiService.isError.set(false);
           this.txUiService.errorMessage = null;
           this.clearMessages();
           this.generateTransactionJson();
@@ -464,7 +464,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                     console.log('Unsigned Transaction hash (hex):', unsignedHash);
 
                     this.outputField.set(unsignedHash); // Set property
-                    this.txUiService.isError = false;
+                    this.txUiService.isError.set(false);
                } catch (error: any) {
                     console.error('Error in unsignedTransaction:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -568,7 +568,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                          (response.result as any).errorMessage = userMessage;
                          return this.txUiService.setError(userMessage);
                     } else {
-                         this.txUiService.setSuccess(this.txUiService.result);
+                         this.txUiService.setSuccess(this.txUiService.result());
                     }
 
                     this.txUiService.addTxHashSignal(response.result.hash ? response.result.hash : response.result.tx_json.hash);
@@ -640,7 +640,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                          (response.result as any).errorMessage = userMessage;
                          this.txUiService.setError(userMessage);
                     } else {
-                         this.txUiService.setSuccess(this.txUiService.result);
+                         this.txUiService.setSuccess(this.txUiService.result());
                     }
 
                     this.txUiService.addTxHashSignal(response.result.hash ? response.result.hash : response.result.tx_json.hash);
@@ -949,9 +949,9 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      }
 
      private clearMessages() {
-          this.txUiService.result = '';
-          this.txUiService.isError = false;
-          this.txUiService.isSuccess = false;
+          this.txUiService.result.set('');
+          this.txUiService.isError.set(false);
+          this.txUiService.isSuccess.set(false);
           this.txUiService.successMessage = '';
           this.txUiService.errorMessage = '';
           this.cdr.detectChanges();
@@ -1009,7 +1009,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                     }
 
                     /* ---- Error message (plain text) ---- */
-                    if (this.txUiService.isError && this.txUiService.errorMessage && this.txJsonCode?.nativeElement) {
+                    if (this.txUiService.isError() && this.txUiService.errorMessage && this.txJsonCode?.nativeElement) {
                          this.txJsonCode.nativeElement.textContent = `ERROR: ${this.txUiService.errorMessage}`;
                          // optional: give it a red background
                          this.txJsonPre.nativeElement.classList.add('error');

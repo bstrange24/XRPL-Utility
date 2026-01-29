@@ -585,7 +585,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
                     const errors = await this.validationService.validate('CredentialVerify', { inputs, client, accountInfo });
                     if (errors.length > 0) {
-                         this.txUiService.isSuccess = false;
+                         this.txUiService.isSuccess.set(false);
                          return this.txUiService.setError(errors.join('\n• '));
                     }
 
@@ -683,7 +683,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
                     // Credential has passed all checks
                     console.info('Credential is verified.');
-                    this.txUiService.setSuccess(this.txUiService.result);
+                    this.txUiService.setSuccess(this.txUiService.result());
                     this.txUiService.successMessage = 'Credential is verified.';
                     return true;
                } catch (error: any) {
