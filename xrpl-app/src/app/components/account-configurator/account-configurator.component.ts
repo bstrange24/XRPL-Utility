@@ -1013,6 +1013,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
           this.refreshUiState(wallet, accountInfo, accountObjects);
+          this.txUiService.clearAllOptions();
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {

@@ -1285,6 +1285,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
           if (addDest) this.addNewDestinationFromUser(destination || '');
           this.refreshUiState(wallet, accountInfo, accountObjects);
+          this.txUiService.clearAllOptions();
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {

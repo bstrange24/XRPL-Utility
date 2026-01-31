@@ -437,13 +437,11 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-
           this.getCreatedPermissionedDomains(accountObjects, wallet.classicAddress);
-
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-
           if (addDest) this.addNewDestinationFromUser(destination ?? '');
           this.refreshUiState(wallet, accountInfo, accountObjects);
+          this.txUiService.clearAllOptions();
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {

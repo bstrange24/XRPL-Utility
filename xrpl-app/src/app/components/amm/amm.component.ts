@@ -1364,6 +1364,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           await this.offerCurrency.refreshBothBalances(this.currentWallet());
           await this.getAMMPoolInfo(true, false);
           this.refreshUiState(wallet, accountInfo, accountObjects);
+          this.txUiService.clearAllOptions();
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {

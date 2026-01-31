@@ -1991,6 +1991,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           this.getExistingOffers(accountObjects, wallet.classicAddress);
           await this.getOffers(true, false);
           this.refreshUiState(wallet, accountInfo, accountObjects);
+          this.txUiService.clearAllOptions();
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {

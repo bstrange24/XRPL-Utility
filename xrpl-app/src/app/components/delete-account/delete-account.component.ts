@@ -424,6 +424,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           await this.refreshWallets(client, [destination]);
           this.addNewDestinationFromUser(destination ?? '');
           this.getAccountDetails(true);
+          this.txUiService.clearAllOptions();
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {

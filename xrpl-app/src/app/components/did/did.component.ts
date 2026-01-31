@@ -550,6 +550,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           this.getExistingDid(accountObjects, wallet.classicAddress);
           await this.refreshWallets(client, [wallet.classicAddress]);
           this.refreshUiState(wallet, accountInfo, accountObjects);
+          this.txUiService.clearAllOptions();
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
