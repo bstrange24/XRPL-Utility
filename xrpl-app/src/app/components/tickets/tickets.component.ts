@@ -135,6 +135,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      ngOnInit(): void {
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {

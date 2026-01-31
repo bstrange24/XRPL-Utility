@@ -392,6 +392,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
           this.metaDataField.set(this.XLS89_TEMPLATE());
+          this.txUiService.clearAllOptions();
      }
 
      ngAfterViewInit(): void {

@@ -473,6 +473,8 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
           this.trustlineCurrency.balance$.subscribe(balance => {
                this.currencyBalanceField.set(balance); // ← This is your live balance!
           });
+
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {

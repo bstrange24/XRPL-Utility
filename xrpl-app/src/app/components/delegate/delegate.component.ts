@@ -185,6 +185,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
           this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
           this.setupWalletSubscriptions();
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {

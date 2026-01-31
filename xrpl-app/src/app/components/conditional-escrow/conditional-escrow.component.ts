@@ -473,6 +473,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
 
           this.currencyFieldDropDownValue.set('XRP');
           this.populateDefaultDateTime();
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {

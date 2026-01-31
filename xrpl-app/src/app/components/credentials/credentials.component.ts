@@ -263,6 +263,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
           this.populateDefaultDateTime();
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {

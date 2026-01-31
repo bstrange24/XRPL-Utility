@@ -236,6 +236,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      ngOnInit(): void {
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {
@@ -331,6 +332,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
 
      async setTab(tab: 'create' | 'close' | 'claim' | 'renew' | 'fund'): Promise<void> {
           this.activeTab.set(tab);
+          this.channelAction.set(tab);
           this.destinationSearchQuery.set('');
           this.clearFlagsValue();
           this.clearFields();
@@ -831,7 +833,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
 
           if (this.publicKeyField()) this.utilsService.setPublicKey(paymentChannelTx, this.publicKeyField());
 
-          if (this.paymentChannelCancelAfterTimeField()) {
+          if (this.paymentChannelCancelAfterTimeField() && this.channelAction() !== 'close') {
                // const cancelAfterTime = this.utilsService.addTime(this.paymentChannelCancelAfterTimeField(), this.paymentChannelCancelAfterTimeUnit() as 'seconds' | 'minutes' | 'hours' | 'days');
                // console.log(`cancelTime: ${this.paymentChannelCancelAfterTimeField()} cancelUnit: ${this.paymentChannelCancelAfterTimeUnit}`);
                // console.log(`cancelTime: ${this.utilsService.convertXRPLTime(cancelAfterTime)}`);

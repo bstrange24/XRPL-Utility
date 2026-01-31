@@ -366,6 +366,8 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
           });
 
           this.currencyFieldDropDownValue.set('XRP');
+
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {

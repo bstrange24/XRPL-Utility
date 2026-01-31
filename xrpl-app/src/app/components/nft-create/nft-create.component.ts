@@ -354,6 +354,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      ngOnInit(): void {
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {

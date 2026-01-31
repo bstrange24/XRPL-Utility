@@ -301,7 +301,7 @@ input[type='text']:focus {
      display: flex;
      gap: 15px;
      align-items: center;
-     margin-left: 5em;
+     margin-left: 2em;
 }
 
 .navbar-links>.dropdown {

@@ -151,6 +151,7 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
      ngOnInit(): void {
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {

@@ -348,6 +348,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           this.trustlineCurrency.balance$.subscribe(balance => {
                this.currencyBalanceField.set(balance); // ← This is your live balance!
           });
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {

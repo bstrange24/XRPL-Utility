@@ -469,6 +469,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
 
           this.currencyFieldDropDownValue.set('XRP');
           this.populateDefaultDateTime();
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {

@@ -272,6 +272,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           this.didData.set(this.didDetails().data);
           this.uriData.set(this.didDetails().uri);
           this.didDocumentData.set(this.didDetails().document);
+          this.txUiService.clearAllOptions();
      }
 
      private async setupWalletSubscriptions() {

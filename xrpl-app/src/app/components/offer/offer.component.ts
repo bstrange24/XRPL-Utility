@@ -515,6 +515,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           this.weSpendCurrency.set('XRP');
           this.offerCurrency.selectWeSpendCurrency('XRP', this.currentWallet());
           this.offerCurrency.selectWeSpendIssuer('', this.currentWallet());
+          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {
