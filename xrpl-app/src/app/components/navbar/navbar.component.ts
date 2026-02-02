@@ -1,4 +1,4 @@
-import { Component, OnInit, EventEmitter, Output, Injectable } from '@angular/core';
+import { Component, OnInit, EventEmitter, Output, Injectable, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { StorageService } from '../../services/local-storage/storage.service';
@@ -11,6 +11,8 @@ import { UtilsService } from '../../services/util-service/utils.service';
 import { debounceTime } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import * as xrpl from 'xrpl';
+import { ThemeService } from '../../services/theme/theme.service';
+import { NgIcon } from '@ng-icons/core';
 
 @Injectable({ providedIn: 'root' })
 export class NetworkService {
@@ -25,11 +27,13 @@ export class NetworkService {
 @Component({
      selector: 'app-navbar',
      standalone: true,
-     imports: [CommonModule, RouterModule],
+     imports: [CommonModule, RouterModule, NgIcon],
      providers: [DatePipe],
      templateUrl: './navbar.component.html',
 })
 export class NavbarComponent implements OnInit {
+     themeService = inject(ThemeService);
+     isDark$ = this.themeService.darkMode$;
      @Output() transactionResult = new EventEmitter<{ result: string; isError: boolean; isSuccess: boolean }>();
      selectedNetwork: string = 'Devnet';
      networkColor: string = '#1a1c21';
@@ -53,7 +57,14 @@ export class NavbarComponent implements OnInit {
      connectionStatusMessage = 'Disconnected';
      private subs: Subscription[] = [];
 
-     constructor(private readonly storageService: StorageService, private readonly utilsService: UtilsService, private readonly xrplService: XrplService, private readonly router: Router, private readonly datePipe: DatePipe, private networkService: NetworkService) {}
+     constructor(
+          private readonly storageService: StorageService,
+          private readonly utilsService: UtilsService,
+          private readonly xrplService: XrplService,
+          private readonly router: Router,
+          private readonly datePipe: DatePipe,
+          private networkService: NetworkService
+     ) {}
 
      ngOnInit() {
           // Initialize network
@@ -128,6 +139,12 @@ export class NavbarComponent implements OnInit {
      //      this.connectionCheckInterval = setInterval(() => {
      //           this.checkConnection();
      //      }, 10000);
+     // }
+
+     // toggleDarkMode() {
+     //      this.themeService.toggle();
+     //      // Re-read after toggle (reactive way would be better with | async)
+     //      this.isDark = this.themeService.isDark;
      // }
 
      async checkConnection() {

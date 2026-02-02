@@ -18,15 +18,15 @@
                <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Create Check
+                         Create
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'cash'" (click)="setTab('cash')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Cash Check
+                         Cash
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'cancel'" (click)="setTab('cancel')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Cancel Check
+                         Cancel
                     </button>
                </div>
 
@@ -238,16 +238,35 @@
 
                               <!-- Expiration (create only) -->
                               <div class="form-row">
-                                   <!-- <div class="form-group" style="padding-bottom: 10px">
-                                        <label for="expirationAmount">Expiration Amount</label>
-                                        <input type="text" id="expirationTimeField" placeholder="Enter time" [(ngModel)]="expirationTimeField" name="expirationTimeField" />
-                                   </div>
-
                                    <div class="form-group">
-                                        <label>Check Expiration Unit</label>
-                                        <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedTimeUnitItem()" (valueChange)="checkExpirationTime.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
-                                   </div> -->
+                                        <label>Check Expiration</label>
+                                        <p class="form-hint" style="padding-left: 0.08rem">Check expiration when the check will expire. Leave unchecked for no expiration (check never expires automatically).</p>
 
+                                        <!-- Checkbox + label row -->
+                                        <div class="expiration-checkbox-row">
+                                             <input type="checkbox" id="setExpiration" [checked]="wantsExpiration()" (change)="toggleExpiration($event.target.checked)" class="expiration-checkbox" />
+                                             <label for="setExpiration" class="expiration-checkbox-label"> Set an expiration date </label>
+                                        </div>
+
+                                        <!-- Date picker + buttons appear only when checked -->
+                                        @if (wantsExpiration()) {
+                                        <div class="expiration-input-group">
+                                             <input type="datetime-local" [(ngModel)]="expirationTimeField" name="expirationDate" step="1" class="expiration-input" />
+
+                                             <div class="expiration-buttons">
+                                                  <button type="button" (click)="setCheckExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
+                                                  <button type="button" (click)="addCheckToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
+                                                  <button type="button" (click)="addCheckToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
+                                                  <button type="button" (click)="addCheckToExpiration(60)" class="btn-small btn-primary-blue">+1 min</button>
+                                                  <button type="button" (click)="addCheckToExpiration(300)" class="btn-small btn-primary-blue">+5 min</button>
+                                                  <button type="button" (click)="clearExpiration()" class="btn-small btn-primary-red">Clear</button>
+                                             </div>
+                                        </div>
+                                        }
+                                   </div>
+                                   <div class="form-group"></div>
+                              </div>
+                              <!-- <div class="form-row">
                                    <div class="form-group">
                                         <label for="credentialExpiration">Check Expiration</label>
                                         <p class="form-hint">Check expiration when the check will expire.</p>
@@ -264,18 +283,8 @@
                                              </div>
                                         </div>
                                    </div>
-
-                                   <!-- <div class="form-group" style="padding-bottom: 10px">
-                                        <label for="expirationTime">Expiration Time</label>
-                                        <select id="checkExpirationTime" [(ngModel)]="checkExpirationTime" name="checkExpirationTime">
-                                             <option value="seconds">Seconds</option>
-                                             <option value="minutes">Minutes</option>
-                                             <option value="hours">Hours</option>
-                                             <option value="days">Days</option>
-                                        </select>
-                                   </div> -->
                                    <div class="form-group"></div>
-                              </div>
+                              </div> -->
                               }
 
                               <!-- Currency + Amount (shared with create) -->

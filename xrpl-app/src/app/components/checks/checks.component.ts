@@ -123,6 +123,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      existingChecks = signal<any[]>([]);
      outstandingChecksCollapsed = signal(true);
      currencyChangeTrigger = signal(0);
+     wantsExpiration = signal<boolean>(false);
 
      selectedCheckItem = computed(() => {
           const id = this.checkIdField();
@@ -524,7 +525,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, trustLines, checkObjects, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getAccountObjectsWithType(this.currentWallet().address, true, 'check'), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const [destinationAccountInfo] = await Promise.all([this.xrplService.getAccountInfo(client, destinationAddress, 'validated', '')]);
                     // const errors = await this.validationService.validate('CreateCheck', { inputs, client, accountInfo });
@@ -685,7 +685,8 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Create cash successfully!' : 'Check cashed successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
-                    // this.resetCheckIdDropDown();
+                    this.checkIdField.set('');
+                    this.amountField.set('');
                } catch (error: any) {
                     console.error('Error in createCheck:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -843,10 +844,13 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      private async setTxOptionalFields(client: xrpl.Client, checkTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (txType === 'create') {
-               if (this.expirationTimeField && this.expirationTimeField() != '') {
-                    const checkExpiration = this.utilsService.toRippleTime(this.expirationTimeField());
-                    // const checkExpiration = this.utilsService.addTime(Number.parseInt(this.expirationTimeField()), this.checkExpirationTime() as 'seconds' | 'minutes' | 'hours' | 'days').toString();
-                    this.utilsService.setExpiration(checkTx, Number(checkExpiration));
+               const expValue = this.expirationTimeField();
+               if (expValue && expValue != '') {
+                    if (expValue?.trim()) {
+                         const checkExpiration = this.utilsService.toRippleTime(expValue);
+                         // const checkExpiration = this.utilsService.addTime(Number.parseInt(this.expirationTimeField()), this.checkExpirationTime() as 'seconds' | 'minutes' | 'hours' | 'days').toString();
+                         this.utilsService.setExpiration(checkTx, Number(checkExpiration));
+                    }
                }
 
                if (this.txUiService.invoiceIdField()) {
@@ -1019,6 +1023,31 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.setCheckExpirationToNow();
      }
 
+     toggleExpiration(enabled: boolean): void {
+          this.wantsExpiration.set(enabled);
+
+          if (!enabled) {
+               // Clear when user disables the option
+               this.expirationTimeField.set('');
+          } else if (!this.expirationTimeField()) {
+               // Optional: auto-fill with "now" when enabling
+               // Comment out the next line if you prefer the field stays empty until they click a button
+               this.setCheckExpirationToNow();
+          }
+     }
+
+     clearExpiration(): void {
+          this.expirationTimeField.set('');
+          // Optional: uncheck the box too when cleared
+          this.wantsExpiration.set(false);
+     }
+
+     isValidExpiration(): boolean {
+          if (!this.expirationTimeField()) return true;
+          const selected = new Date(this.expirationTimeField());
+          return selected > new Date();
+     }
+
      copyCheckId(checkId: string) {
           navigator.clipboard.writeText(checkId).then(() => {
                this.txUiService.showToastMessage('Check ID copied!');
@@ -1097,11 +1126,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.typedDestination.set('');
           this.selectedDestinationAddress.set('');
           this.txUiService.clearAllOptionsAndMessages();
-     }
-
-     resetCheckIdDropDown() {
-          this.checkIdField.set('');
-          this.checkIdSearchQuery.set(''); // Clear search
      }
 
      onCurrencyChange(currency: string) {

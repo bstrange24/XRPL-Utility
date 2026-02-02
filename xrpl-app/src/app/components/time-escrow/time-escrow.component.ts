@@ -252,26 +252,17 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
 
      escrowItems = computed(() => {
           const escrows = this.allEscrowsRaw();
-          const walletAddr = this.currentWallet().address;
-          const isCancelTab = this.activeTab() === 'cancel';
+          const addr = this.currentWallet().address;
+          const isCancel = this.activeTab() === 'cancel';
 
           return escrows
-               .filter(
-                    e =>
-                         isCancelTab
-                              ? e.Sender === walletAddr // You created → can cancel
-                              : e.Destination === walletAddr // Sent to you → can finish
-               )
+               .filter(e => (isCancel ? e.Sender === addr : e.Destination === addr))
                .map(e => {
-                    const amountStr = typeof e.Amount === 'string' ? `${xrpl.dropsToXrp(e.Amount)} XRP` : `${e.Amount.value} ${this.utilsService.normalizeCurrencyCode(e.Amount.currency)}`;
-                    const sequenceStr = e.EscrowSequence?.toString() || 'unknown';
+                    const amt = typeof e.Amount === 'string' ? `${xrpl.dropsToXrp(e.Amount)} XRP` : `${(e.Amount as any).value} ${this.utilsService.normalizeCurrencyCode((e.Amount as any).currency)}`;
                     return {
-                         id: sequenceStr,
-                         display: `${amountStr} → ${isCancelTab ? e.Destination : e.Sender}`,
-                         secondary: `Seq: ${e.EscrowSequence} • ${isCancelTab ? 'You created' : 'Sent to you'}`,
-                         isCurrentAccount: false,
-                         isCurrentCode: false,
-                         isCurrentToken: false,
+                         id: e.EscrowSequence?.toString() ?? 'unknown',
+                         display: `${amt} ${isCancel ? '→' : '←'} ${isCancel ? e.Destination : e.Sender}`,
+                         secondary: `Seq: ${e.EscrowSequence ?? '?'} • ${isCancel ? 'You created' : 'Sent to you'}`,
                     };
                });
      });
@@ -381,29 +372,15 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
 
      // MPT Dropdown Items
      mptItems = computed(() => {
-          const t = this.existingMpts()
-               // .filter(m => m.mpt_issuance_id) // Only show entries with a valid issuance ID
-               .map(m => {
-                    const type = m.LedgerEntryType === 'MPToken' ? 'MPToken' : 'MPTokenIssuance';
-                    let isHolder = false;
-                    if (type === 'MPToken') {
-                         isHolder = true;
-                    }
-                    const amount = isHolder ? m.MPTAmount || '0' : m.OutstandingAmount || '0';
-
-                    const displayAmount = amount !== '0' ? amount : '0';
-
-                    return {
-                         id: m.mpt_issuance_id ? m.mpt_issuance_id : m.id,
-                         // display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'} • ${isHolder ? `${m.MaximumAmount} outstanding` : 'issued'}`,
-                         display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'}`,
-                         secondary: m.mpt_issuance_id ? m.mpt_issuance_id.slice(0, 15) + '...' + m.mpt_issuance_id.slice(-10) : m.id.slice(0, 12) + '...' + m.id.slice(-10),
-                         isCurrentAccount: false,
-                         isCurrentCode: false,
-                         isCurrentToken: false,
-                    };
-               });
-          return t;
+          return this.existingMpts().map(m => {
+               const isHolder = m.LedgerEntryType === 'MPToken';
+               const amount = isHolder ? (m.MPTAmount ?? '0') : (m.OutstandingAmount ?? '0');
+               return {
+                    id: m.mpt_issuance_id ?? m.id ?? '',
+                    display: `MPT • ${amount} ${isHolder ? 'held' : 'issued'}`,
+                    secondary: (m.mpt_issuance_id ?? m.id ?? '').slice(0, 15) + '...' + (m.mpt_issuance_id ?? m.id ?? '').slice(-10),
+               };
+          });
      });
 
      selectedMptItem = computed(() => {
@@ -867,6 +844,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                     }
 
                     this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow cancel successfully!' : 'Cancelled escrow successfully!';
+                    if (!this.txUiService.isSimulateEnabled()) this.resetEscrowSelection();
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in cancelEscrow:', error);

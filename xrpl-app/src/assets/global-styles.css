@@ -1,3 +1,60 @@
+.dark body,
+.dark .main-container,
+.dark .navbar,
+.dark .form-panel,
+.dark .wallet-card,
+.dark .check-card,
+.dark .account-card,
+.dark .content-wrapper,
+.dark .result-box,
+.dark app-root,
+.dark .card-header,
+.dark .wallet-item,
+.dark .combobox-wrapper,
+.dark .combobox-dropdown,
+.dark .toast,
+.dark .tx-json,
+.dark .dropdown-menu,
+.dark .accounts-dropdown .dropdown-menu,
+.dark .escrows-dropdown .dropdown-menu,
+.dark .utils-dropdow .dropdown-menu,
+
+.dark .slider,
+.dark .form-group label,
+.dark .executionTimeDisplay,
+.dark .label {
+     background-color: #0f172a !important;
+     color: #f1f5f9 !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea,
+.dark .form-control,
+.dark .switch .slider,
+.dark .submenu-info-text,
+.dark .switch-group {
+     background-color: #1e293b !important;
+     border-color: #475569 !important;
+     color: #e2e8f0 !important;
+}
+
+.dark button:not(.btn-primary-blue):not(.btn-danger) {
+     background: #334155 !important;
+     color: #f1f5f9 !important;
+     border-color: #475569 !important;
+}
+
+.dark .form-hint,
+.dark .text-muted,
+.dark .no-data {
+     color: #94a3b8 !important;
+}
+
+.dark a {
+     color: #60a5fa !important;
+}
+
 .app-scale {
      transform-origin: top left;
      width: 111.111%;
@@ -3205,4 +3262,102 @@ ticket-fields .form-group {
 .btn-primary-green:hover,
 .btn-primary-orange:hover {
      cursor: pointer !important;
+}
+
+.executionTimeDisplay {
+     display: flex;
+     align-items: center;
+}
+
+/* ==============================================
+   Dark Mode – add at the bottom of styles.css
+   ============================================== */
+
+:root {
+     --bg-primary: #ffffff;
+     --bg-secondary: #f8f9fa;
+     --text-primary: #1a1a1a;
+     --text-secondary: #4b5563;
+     --border: #e5e7eb;
+     --input-bg: #ffffff;
+     --input-border: #cbd5e1;
+     --btn-primary: #3b82f6;
+     --btn-primary-hover: #2563eb;
+     --card-bg: #ffffff;
+     --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+     --bg-primary: #0f172a;
+     --bg-secondary: #1e293b;
+     --text-primary: #f1f5f9;
+     --text-secondary: #94a3b8;
+     --border: #334155;
+     --input-bg: #1e293b;
+     --input-border: #475569;
+     --btn-primary: #60a5fa;
+     --btn-primary-hover: #3b82f6;
+     --card-bg: #1e293b;
+     --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Apply variables */
+body {
+     background-color: var(--bg-primary);
+     color: var(--text-primary);
+     transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.form-group input,
+.form-group select,
+input[type="text"],
+input[type="datetime-local"] {
+     background-color: var(--input-bg);
+     border-color: var(--input-border);
+     color: var(--text-primary);
+}
+
+.form-group input:focus {
+     border-color: var(--btn-primary);
+     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+button.btn-primary-blue {
+     background: linear-gradient(135deg, var(--btn-primary) 50%, var(--btn-primary-hover) 100%);
+}
+
+button:hover {
+     background: var(--btn-primary-hover) !important;
+}
+
+/* Cards, panels, navbar, etc. */
+.navbar,
+.form-panel,
+.wallet-card,
+.check-card,
+.result-box {
+     background-color: var(--card-bg);
+     border-color: var(--border);
+     color: var(--text-primary);
+     box-shadow: var(--shadow);
+}
+
+/* Text colors */
+.text-muted,
+.form-hint {
+     color: var(--text-secondary) !important;
+}
+
+/* Make sure links look good in both modes */
+a {
+     color: var(--btn-primary);
+}
+
+a:hover {
+     color: var(--btn-primary-hover);
+}
+
+/* Optional: smoother transitions */
+* {
+     transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }

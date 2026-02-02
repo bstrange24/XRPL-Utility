@@ -18,15 +18,15 @@
                <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Create Escrow
+                         Create
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'finish'" (click)="setTab('finish')">
                          <lucide-icon name="split-icon" size="20"></lucide-icon>
-                         Finish Escrow
+                         Finish
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'cancel'" (click)="setTab('cancel')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Cancel Escrow
+                         Cancel
                     </button>
                </div>
 
@@ -101,7 +101,7 @@
                                    <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
                                         @for (escrow of info.escrowsToShow; track escrow.index) {
                                         <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
-                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + escrow.index" tooltipText="View Escrow on XRPL Explorer">
+                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'ledger/' + escrow.index" tooltipText="View Escrow Ledger on XRPL Explorer">
                                                   <div style="font-weight: 500; margin-bottom: 4px">{{ escrow.amount }} @if (info.activeTab === 'create' || info.activeTab === 'cancel') { → {{ escrow.destination.slice(0,7) + '...' + escrow.destination.slice(-7) }} } @if (info.activeTab === 'finish') { ← {{ escrow.sender.slice(0,7) + '...' + escrow.sender.slice(-7) }} }</div>
                                                   <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
                                                        <div>Sequence: <code>{{ escrow.index }}</code></div>

@@ -67,4 +67,11 @@
                <span class="status-text"> {{ connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected' }} </span>
           </div>
      </div>
+
+     <div class="ml-auto flex items-center">
+          <button (click)="themeService.toggle()" ...>
+               <ng-icon *ngIf="!(isDark$ | async)" name="lucide-sun"></ng-icon>
+               <ng-icon *ngIf="isDark$ | async" name="lucide-moon"></ng-icon>
+          </button>
+     </div>
 </div>

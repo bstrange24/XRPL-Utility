@@ -1211,7 +1211,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
 
                // Add link to view tokens
                const link = `${this.txUiService.explorerUrl}account/${this.currentWallet().address}/tokens`;
-               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View tokens on XRPL Win</a>`;
+               message += `<br><a href="${link}" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View IOUs on XRPL Win</a>`;
           }
 
           this.txUiService.setInfoMessage(message);
