@@ -69,7 +69,7 @@
                                    <div class="form-group">
                                         <label for="hookOn">HookOn Trigger (hex)</label>
                                         <p class="form-hint">e.g., '0000000000000000' for all transactions.</p>
-                                        <input type="text" [ngModel]="hookOn()" (ngModelChange)="hookOn.set($event)" name="hookOn"/>
+                                        <input type="text" [ngModel]="hookOn()" (ngModelChange)="hookOn.set($event)" name="hookOn" />
                                    </div>
 
                                    <div class="form-group">
@@ -88,8 +88,8 @@
                               </div>
 
                               <!-- Execution time -->
-                              <div style="display: flex">
-                                   <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                              <div class="executionTimeDisplay">
+                                   <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
                               </div>
                               <app-transaction-preview></app-transaction-preview>
                          </div>

@@ -13,37 +13,58 @@
 .dark .combobox-wrapper,
 .dark .combobox-dropdown,
 .dark .toast,
-.dark .tx-json,
 .dark .dropdown-menu,
 .dark .accounts-dropdown .dropdown-menu,
 .dark .escrows-dropdown .dropdown-menu,
 .dark .utils-dropdow .dropdown-menu,
-
-.dark .slider,
-.dark .form-group label,
-.dark .executionTimeDisplay,
-.dark .label {
+.dark .selected-account-card,
+.dark label,
+.dark .navbar-container,
+.dark .banner,
+.dark .banner-content,
+.dark .banner-title,
+.dark .flags-container,
+.dark .flag-desc,
+.dark .flag-item-account-flags:not(.enabled),
+.dark .flag-item:not(.enabled),
+.dark .token-flags-title,
+.dark .executionTimeDisplay {
      background-color: #0f172a !important;
-     color: #f1f5f9 !important;
+     color: #f5cf68 !important;
+}
+
+.dark .panel-title {
+     background-color: #0f172a !important;
+     color: #6b7280 !important;
+}
+
+.dark .banner {
+     background: #0f172a !important;
+}
+
+.dark .input:checked+.slider {
+     background: #f5cf68 !important;
 }
 
 .dark input,
 .dark select,
 .dark textarea,
 .dark .form-control,
-.dark .switch .slider,
+.dark .info-panel,
 .dark .submenu-info-text,
-.dark .switch-group {
+.dark .submenu-info-secondary-text,
+.dark .flags-total,
+.dark .flag-item-account-flags.enabled {
      background-color: #1e293b !important;
      border-color: #475569 !important;
      color: #e2e8f0 !important;
 }
 
-.dark button:not(.btn-primary-blue):not(.btn-danger) {
+/* .dark button:not(.btn-primary-blue):not(.btn-danger):not(.my-other-button-class) {
      background: #334155 !important;
      color: #f1f5f9 !important;
      border-color: #475569 !important;
-}
+} */
 
 .dark .form-hint,
 .dark .text-muted,
@@ -51,8 +72,39 @@
      color: #94a3b8 !important;
 }
 
-.dark a {
+.dark a,
+.dark .submenu-info-main-text {
      color: #60a5fa !important;
+}
+
+/* Selected wallet in dark mode – accent style */
+.dark .wallet-card.selected,
+.dark .wallet-item.selected {
+     background: linear-gradient(to bottom right, #1e293b, #1e40af22) !important;
+     border: 2px solid #243e5e !important;
+     box-shadow: 0 0 16px rgba(37, 65, 99, 0.4) !important;
+     color: white !important;
+}
+
+.dark .wallet-card.selected:hover,
+.dark .wallet-item.selected:hover {
+     box-shadow: 0 0 14px rgba(51, 88, 134, 0.55) !important;
+     transform: translateY(-1px);
+}
+
+.dark .wallet-card.selected .wallet-balance,
+.dark .wallet-item.selected .wallet-balance {
+     color: #10b981 !important;
+     /* emerald-500 - same as your light mode green */
+     /* or if you prefer the slightly brighter variant you had before: */
+     /* color: #34d399 !important; */
+     /* emerald-400 */
+}
+
+.dark .wallet-item.selected .show-toggle {
+     background: rgba(96, 165, 250, 0.25) !important;
+     border-color: #60a5fa80 !important;
+     color: white !important;
 }
 
 .app-scale {
@@ -358,7 +410,7 @@ input[type='text']:focus {
      display: flex;
      gap: 15px;
      align-items: center;
-     margin-left: 2em;
+     /* margin-left: 2em; */
 }
 
 .navbar-links>.dropdown {
@@ -1576,6 +1628,20 @@ pre[class*='language-'] {
      background: #fff;
 }
 
+.dark .tx-json {
+     white-space: pre-wrap !important;
+     word-break: break-word !important;
+     overflow-wrap: anywhere;
+     max-width: 100%;
+     background-color: #0f172a !important;
+     color: #f1f5f9 !important;
+     padding: 1em;
+     border-radius: 6px;
+     box-sizing: border-box;
+     text-shadow: none !important;
+     font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+}
+
 .tx-json {
      white-space: pre-wrap !important;
      word-break: break-word !important;
@@ -1589,6 +1655,15 @@ pre[class*='language-'] {
      font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
 }
 
+.dark .tx-json code {
+     white-space: pre-wrap !important;
+     word-break: break-word !important;
+     overflow-wrap: anywhere;
+     display: block;
+     text-shadow: none !important;
+     font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+}
+
 .tx-json code {
      white-space: pre-wrap !important;
      word-break: break-word !important;
@@ -1597,14 +1672,13 @@ pre[class*='language-'] {
      font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-
+/* @media (prefers-color-scheme: dark) {
      .tx-json,
      .tx-json code {
           background: #fff;
           color: #fff;
      }
-}
+} */
 
 .success-message {
      display: flex;
@@ -3288,7 +3362,7 @@ ticket-fields .form-group {
 }
 
 .dark {
-     --bg-primary: #0f172a;
+     --bg-primary: #3b82f6;
      --bg-secondary: #1e293b;
      --text-primary: #f1f5f9;
      --text-secondary: #94a3b8;
@@ -3326,11 +3400,6 @@ button.btn-primary-blue {
      background: linear-gradient(135deg, var(--btn-primary) 50%, var(--btn-primary-hover) 100%);
 }
 
-button:hover {
-     background: var(--btn-primary-hover) !important;
-}
-
-/* Cards, panels, navbar, etc. */
 .navbar,
 .form-panel,
 .wallet-card,
@@ -3342,13 +3411,11 @@ button:hover {
      box-shadow: var(--shadow);
 }
 
-/* Text colors */
 .text-muted,
 .form-hint {
      color: var(--text-secondary) !important;
 }
 
-/* Make sure links look good in both modes */
 a {
      color: var(--btn-primary);
 }
@@ -3357,7 +3424,6 @@ a:hover {
      color: var(--btn-primary-hover);
 }
 
-/* Optional: smoother transitions */
 * {
      transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }

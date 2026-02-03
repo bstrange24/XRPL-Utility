@@ -18,19 +18,19 @@
                <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Create Payment Channel
+                         Create
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'fund'" (click)="setTab('fund')">
                          <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon>
-                         Fund Payment Channel
+                         Fund
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'claim'" (click)="setTab('claim')">
                          <lucide-icon name="banknote-arrow-up" size="25"></lucide-icon>
-                         Claim/Renew Payment Channel
+                         Claim/Renew
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'close'" (click)="setTab('close')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Close Payment Channel
+                         Close
                     </button>
                </div>
 

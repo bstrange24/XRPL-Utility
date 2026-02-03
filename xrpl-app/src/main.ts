@@ -40,6 +40,8 @@ import {
      heroXMark,
      heroXCircle,
      heroCheckCircle,
+     heroMoon,
+     heroSun,
 } from '@ng-icons/heroicons/outline';
 
 // Make Buffer and process available globally
@@ -117,6 +119,8 @@ bootstrapApplication(AppComponent, {
                heroXMark,
                heroXCircle,
                heroCheckCircle,
+               heroMoon,
+               heroSun,
           }),
      ],
 }).catch(err => console.error(err));

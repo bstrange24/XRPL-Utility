@@ -599,8 +599,8 @@
                </form>
 
                <!-- Execution time -->
-               <div style="display: flex">
-                    <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+               <div class="executionTimeDisplay">
+                    <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
                </div>
                <app-transaction-preview></app-transaction-preview>
           </div>

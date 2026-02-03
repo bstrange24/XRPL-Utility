@@ -68,10 +68,10 @@
           </div>
      </div>
 
-     <div class="ml-auto flex items-center">
+     <div class="ml-auto flex items-center" style="margin-left: 20px">
           <button (click)="themeService.toggle()" ...>
-               <ng-icon *ngIf="!(isDark$ | async)" name="lucide-sun"></ng-icon>
-               <ng-icon *ngIf="isDark$ | async" name="lucide-moon"></ng-icon>
+               <ng-icon *ngIf="!(isDark$ | async)" name="heroSun" size="22"></ng-icon>
+               <ng-icon *ngIf="isDark$ | async" name="heroMoon" size="22"></ng-icon>
           </button>
      </div>
 </div>
