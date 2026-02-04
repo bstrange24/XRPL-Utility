@@ -2373,6 +2373,10 @@ export class UtilsService {
           }
      }
 
+     setCredentialIDsField(tx: any, credentials: string[]) {
+          tx.CredentialIDs = credentials;
+     }
+
      setTransferRate(tx: any, transferRate: number) {
           // tx.TransferRate = this.getTransferRate(transferRate);
           tx.TransferRate = transferRate;

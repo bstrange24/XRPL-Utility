@@ -124,6 +124,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      outstandingChecksCollapsed = signal(true);
      currencyChangeTrigger = signal(0);
      wantsExpiration = signal<boolean>(false);
+     wantsOptions = signal<boolean>(false);
 
      selectedCheckItem = computed(() => {
           const id = this.checkIdField();
@@ -547,7 +548,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          // if (this.isMptEnabled) {
                          // sendMax = curr;
                          // } else {
-                         sendMax = xrpl.xrpToDrops(this.amountField());
+                         sendMax = xrpl.xrpToDrops(this.txUiService.amountField());
                          // }
                     } else {
                          sendMax = {
@@ -651,7 +652,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     // Build amount object depending on currency
                     const amountToCash =
                          this.currencyFieldDropDownValue() === AppConstants.XRP_CURRENCY
-                              ? xrpl.xrpToDrops(this.amountField())
+                              ? xrpl.xrpToDrops(this.txUiService.amountField())
                               : {
                                      value: this.amountField(),
                                      currency: this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue()),
@@ -845,7 +846,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      private async setTxOptionalFields(client: xrpl.Client, checkTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (txType === 'create') {
                const expValue = this.expirationTimeField();
-               if (expValue && expValue != '') {
+               if (expValue && expValue != '' && this.wantsExpiration()) {
                     if (expValue?.trim()) {
                          const checkExpiration = this.utilsService.toRippleTime(expValue);
                          // const checkExpiration = this.utilsService.addTime(Number.parseInt(this.expirationTimeField()), this.checkExpirationTime() as 'seconds' | 'minutes' | 'hours' | 'days').toString();
@@ -1023,6 +1024,13 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.setCheckExpirationToNow();
      }
 
+     toggleOptions(enabled: boolean): void {
+          this.wantsOptions.set(enabled);
+          // if (!enabled) {
+          // this.clearOptionalFields();
+          // }
+     }
+
      toggleExpiration(enabled: boolean): void {
           this.wantsExpiration.set(enabled);
 
@@ -1110,6 +1118,31 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           }
      }
 
+     // Optional: help keep exactly 6 decimals when typing manually
+     updateAmount(value: string | number) {
+          let num = typeof value === 'string' ? parseFloat(value) : value;
+
+          if (isNaN(num) || num < 0) {
+               this.txUiService.amountField.set('');
+               return;
+          }
+
+          // Round to 6 decimal places (XRP precision)
+          const rounded = Number(num.toFixed(6));
+          this.txUiService.amountField.set(rounded.toString());
+     }
+
+     // Optional: when user focuses, make sure we show decimals if any exist
+     onFocus(event: FocusEvent) {
+          const input = event.target as HTMLInputElement;
+          if (input.value) {
+               const num = parseFloat(input.value);
+               if (!isNaN(num)) {
+                    input.value = num.toFixed(6); // show full precision on focus
+               }
+          }
+     }
+
      clearFields(excludeCheckId = false) {
           this.amountField.set('');
           this.selectedDestinationAddress.set('');
@@ -1125,7 +1158,17 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.checkIdSearchQuery.set('');
           this.typedDestination.set('');
           this.selectedDestinationAddress.set('');
+          this.clearOptionalFields();
           this.txUiService.clearAllOptionsAndMessages();
+     }
+
+     clearOptionalFields() {
+          this.wantsOptions.set(false);
+          this.wantsExpiration.set(false);
+          this.txUiService.amountField.set('');
+          this.txUiService.destinationTagField.set('');
+          this.txUiService.invoiceIdField.set('');
+          this.txUiService.sourceTagField.set('');
      }
 
      onCurrencyChange(currency: string) {

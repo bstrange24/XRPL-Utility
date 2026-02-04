@@ -72,6 +72,7 @@ export interface ValidationInputs {
           destinationTag?: string;
           sourceTag?: string;
           invoiceId?: any;
+          credentials?: string[];
      };
 
      // ---- Multi-Sign ----
@@ -144,6 +145,8 @@ export class TransactionUiService {
      destinationTagField = signal('');
      invoiceIdField = signal('');
      sourceTagField = signal('');
+     domainId = signal('');
+     credentialIDs = signal<string[]>([]);
      isMemoEnabled = signal(false);
      useMultiSign = signal(false);
      isRegularKeyAddress = signal(false);
@@ -191,7 +194,6 @@ export class TransactionUiService {
      spinnerMessageSignal = signal<string>('');
      executionTime = signal<string>('');
      url = signal<string>('');
-     domainId = signal<string>('');
 
      explorerUrl = computed(() => {
           const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
@@ -530,6 +532,7 @@ export class TransactionUiService {
                     destinationTag: this.destinationTagField(),
                     sourceTag: this.sourceTagField(),
                     invoiceId: this.invoiceIdField(),
+                    credentials: this.credentialIDs(),
                },
 
                multiSign: {

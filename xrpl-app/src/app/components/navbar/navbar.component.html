@@ -69,9 +69,9 @@
      </div>
 
      <div class="toggleLightDark">
-          <button (click)="themeService.toggle()" ...>
-               <ng-icon *ngIf="!(isDark$ | async)" name="heroMoon" size="20"></ng-icon>
-               <ng-icon *ngIf="isDark$ | async" name="heroSun" size="20"></ng-icon>
+          <button class="toggleLightDarkButton" (click)="themeService.toggle()" ...>
+               <ng-icon *ngIf="!(isDark$ | async)" name="heroMoon" size="28"></ng-icon>
+               <ng-icon *ngIf="isDark$ | async" name="heroSun" size="28"></ng-icon>
           </button>
      </div>
 </div>

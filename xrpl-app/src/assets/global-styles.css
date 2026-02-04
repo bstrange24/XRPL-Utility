@@ -30,10 +30,13 @@
 .dark .token-flags-title,
 .dark .executionTimeDisplay {
      background-color: #0f172a !important;
-     color: #f5cf68 !important;
+     color: #caba8f !important;
 }
 
-.dark .panel-title {
+.dark .panel-title,
+.dark .tx-title,
+.dark .copy-btn,
+.dark .download-btn {
      background-color: #0f172a !important;
      color: #6b7280 !important;
 }
@@ -43,7 +46,7 @@
 }
 
 .dark .input:checked+.slider {
-     background: #f5cf68 !important;
+     background: #caba8f !important;
 }
 
 .dark input,
@@ -136,7 +139,7 @@
 }
 
 .dark .combobox-toggle:hover {
-     color: #f5cf68 !important;
+     color: #caba8f !important;
      /* yellow accent on hover */
 }
 
@@ -692,7 +695,7 @@ input[type='text']:focus {
      border: none;
      cursor: pointer;
      padding: 4px;
-     color: #ccc;
+     /* color: #ccc; */
      transition: color 0.2s;
 }
 
@@ -833,6 +836,15 @@ input[type='text']:focus {
      resize: vertical;
      min-height: 80px;
      margin-top: 1em;
+}
+
+.credential-input {
+     width: 100%;
+     padding: 0.75rem;
+     border: 1px solid #cbd5e1;
+     border-radius: 6px;
+     resize: vertical;
+     min-height: 80px;
 }
 
 .ticket-fields-to-delete {
@@ -1685,7 +1697,7 @@ input:focus+.slider {
      gap: 0.25rem;
      background: white;
      color: rgba(12, 34, 235, 0.7);
-     border: 1px solid #c7d2fe;
+     /* border: 1px solid #c7d2fe; */
      padding: 0.25rem 0.5rem;
      border-radius: 6px;
      font-size: 0.75rem;
@@ -2950,11 +2962,12 @@ cdk-drop-list {
      background: white;
 }
 
+/* 
 .combobox-toggle svg {
      width: 18px !important;
      height: 18px !important;
      stroke-width: 2.5 !important;
-}
+} */
 
 .combobox-toggle {
      width: 28px !important;
@@ -3481,7 +3494,7 @@ ticket-fields .form-group {
      --btn-primary-hover: #3b82f6;
      --card-bg: #1e293b;
      --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-     --toggle-on: #f5cf68;
+     --toggle-on: #caba8f;
      /* dark mode yellow */
      --toggle-off: #475569;
 }
@@ -3541,8 +3554,21 @@ a:hover {
 
 .toggleLightDark {
      margin-left: 20px;
-     /* background-color: var(--toggle-off); */
 }
+
+.toggleLightDarkButton {
+     background-color: var(--toggle-on);
+     margin-top: 0em;
+     margin-bottom: 0em;
+     margin-left: 0em;
+     margin-right: 0em;
+     padding-left: 0.2em;
+     padding-right: 0.2em;
+     padding-top: 0.2em;
+     padding-bottom: 0.2em;
+     border-radius: 10px;
+}
+
 
 /* ───────────────────────────────────────────────
    Better default (neutral) buttons in dark mode
@@ -3643,7 +3669,7 @@ a:hover {
 .dark .combobox-item.highlighted {
      background: #243e5e !important;
      /* slightly brighter blue-gray */
-     color: #f5cf68 !important;
+     color: #caba8f !important;
      /* yellow text instead */
 }
 
@@ -3654,7 +3680,7 @@ a:hover {
 
 .dark .combobox-input:focus,
 .dark .combobox-wrapper:focus-within {
-     border-color: #f5cf68 !important;
+     border-color: #caba8f !important;
      box-shadow: 0 0 0 3px rgba(245, 207, 104, 0.25) !important;
 }
 
@@ -3676,7 +3702,7 @@ a:hover {
 }
 
 .dark .destination-combobox-wrapper .combobox-toggle:hover {
-     color: #f5cf68 !important;
+     color: #caba8f !important;
 }
 
 /* The opened dropdown list itself */
@@ -3704,7 +3730,7 @@ a:hover {
 /* Optional: stronger focus ring using your yellow accent */
 .dark .destination-combobox-wrapper .combobox-input:focus,
 .dark .destination-combobox-wrapper .combobox-wrapper:focus-within {
-     border-color: #f5cf68 !important;
+     border-color: #caba8f !important;
      box-shadow: 0 0 0 3px rgba(245, 207, 104, 0.25) !important;
 }
 
@@ -3715,7 +3741,7 @@ a:hover {
 }
 
 .dark .combobox-toggle:hover {
-     color: #f5cf68 !important;
+     color: #caba8f !important;
      /* your yellow accent on hover */
 }
 
@@ -3729,7 +3755,7 @@ a:hover {
 /* If your component adds .open or similar class to the wrapper when expanded */
 .dark .combobox-wrapper.open .combobox-toggle,
 .dark .combobox-wrapper[aria-expanded="true"] .combobox-toggle {
-     color: #f5cf68 !important;
+     color: #caba8f !important;
      /* yellow when open - signals active state */
 }
 
@@ -3750,7 +3776,7 @@ a:hover {
 .dark .utils-dropdow .dropdown-menu a:hover {
      background: #1e293b !important;
      background-color: #1e293b !important;
-     color: #f5cf68 !important;
+     color: #caba8f !important;
 }
 
 /* Target any possible pseudo-element or child that might add highlight */
@@ -3762,4 +3788,102 @@ a:hover {
 .dark .utils-dropdow .dropdown-menu a:hover::after {
      background: transparent !important;
      display: none !important;
+}
+
+.checkbox-row {
+     display: -webkit-box;
+     align-items: flex-start;
+     gap: 12px;
+     padding: 4px 0;
+}
+
+.custom-checkbox {
+     width: 20px;
+     height: 20px;
+     margin-top: 3px;
+     accent-color: #10b981;
+     /* or your primary color */
+}
+
+.checkbox-label {
+     cursor: pointer;
+     line-height: 1.45;
+     color: #374151;
+}
+
+.custom-checkbox:focus-visible+.checkbox-label {
+     outline: 2px solid #6366f1;
+     outline-offset: 2px;
+}
+
+.amount-input {
+     width: 100%;
+     padding: 0.5rem 0.75rem;
+     border: 1px solid #cbd5e1;
+     border-radius: 6px;
+     font-size: 1rem;
+     font-family: monospace;
+     /* helps with decimal alignment */
+}
+
+.amount-input::-webkit-inner-spin-button,
+.amount-input::-webkit-outer-spin-button {
+     opacity: 1;
+     /* make arrows always visible (optional) */
+     background: #f1f5f9;
+     /* light bg for arrows */
+}
+
+/* Optional: make arrows bigger/more tappable on mobile */
+@media (pointer: coarse) {
+     .amount-input {
+          padding-right: 2.5rem;
+          /* give space for arrows */
+          font-size: 1.1rem;
+     }
+}
+
+/* Light mode - keep default / subtle look */
+.amount-input::-webkit-inner-spin-button,
+.amount-input::-webkit-outer-spin-button {
+     opacity: 1;
+     background: #f1f5f9;
+     /* very light gray – matches your --bg-secondary */
+     color: #64748b;
+     /* slate-500 – neutral gray arrows */
+}
+
+/* Make arrows slightly more visible on hover/focus in light mode */
+.amount-input:hover::-webkit-inner-spin-button,
+.amount-input:hover::-webkit-outer-spin-button,
+.amount-input:focus::-webkit-inner-spin-button,
+.amount-input:focus::-webkit-outer-spin-button {
+     background: #e2e8f0;
+     /* slate-200 */
+}
+
+/* ───────────────────────────────────────────────
+   Dark mode – dark background + visible arrows
+   ─────────────────────────────────────────────── */
+.dark .amount-input::-webkit-inner-spin-button,
+.dark .amount-input::-webkit-outer-spin-button {
+     background: #334155 !important;
+     /* slate-700 – dark but not black */
+     color: #cbd5e1 !important;
+     /* slate-300 – light gray arrows */
+}
+
+/* Hover/focus in dark mode – slightly brighter */
+.dark .amount-input:hover::-webkit-inner-spin-button,
+.dark .amount-input:hover::-webkit-outer-spin-button,
+.dark .amount-input:focus::-webkit-inner-spin-button,
+.dark .amount-input:focus::-webkit-outer-spin-button {
+     background: #475569 !important;
+     /* slate-600 – noticeable lift */
+}
+
+/* Optional: make the arrows themselves a bit more prominent */
+.amount-input::-webkit-inner-spin-button:hover,
+.amount-input::-webkit-outer-spin-button:hover {
+     filter: brightness(1.15);
 }

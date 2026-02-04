@@ -61,6 +61,8 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal(false);
      accountInfo = signal<any>(null);
+     credentialIDs = signal<string>('');
+     wantsOptions = signal<boolean>(false);
 
      selectedDestinationItem = computed(() => {
           const addr = this.selectedDestinationAddress();
@@ -128,6 +130,13 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      });
 
      hasWallets = computed(() => this.wallets().length > 0);
+
+     toggleOptions(enabled: boolean): void {
+          this.wantsOptions.set(enabled);
+          if (!enabled) {
+               this.clearOptionalFields();
+          }
+     }
 
      constructor() {
           super();
@@ -239,9 +248,8 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-
-                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
+
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
@@ -317,6 +325,19 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
 
           if (this.txUiService.sourceTagField()) {
                this.utilsService.setSourceTagField(tx, this.txUiService.sourceTagField());
+          }
+
+          // if (this.txUiService.domainId()) {
+          //      this.utilsService.setDomain(tx, this.txUiService.domainId());
+          // }
+
+          if (this.credentialIDs().length > 0) {
+               const jsonArray: string[] = this.credentialIDs()
+                    .split(',')
+                    .map(id => id.trim())
+                    .filter(id => id.length > 0);
+               this.txUiService.credentialIDs.set(jsonArray);
+               this.utilsService.setCredentialIDsField(tx, this.txUiService.credentialIDs());
           }
      }
 
@@ -406,6 +427,31 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
      }
 
+     // Optional: help keep exactly 6 decimals when typing manually
+     updateAmount(value: string | number) {
+          let num = typeof value === 'string' ? parseFloat(value) : value;
+
+          if (isNaN(num) || num < 0) {
+               this.txUiService.amountField.set('');
+               return;
+          }
+
+          // Round to 6 decimal places (XRP precision)
+          const rounded = Number(num.toFixed(6));
+          this.txUiService.amountField.set(rounded.toString());
+     }
+
+     // Optional: when user focuses, make sure we show decimals if any exist
+     onFocus(event: FocusEvent) {
+          const input = event.target as HTMLInputElement;
+          if (input.value) {
+               const num = parseFloat(input.value);
+               if (!isNaN(num)) {
+                    input.value = num.toFixed(6); // show full precision on focus
+               }
+          }
+     }
+
      clearFields() {
           this.clearInputFields();
           this.txUiService.clearAllOptionsAndMessages();
@@ -415,8 +461,13 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.typedDestination.set('');
           this.selectedDestinationAddress.set('');
           this.txUiService.amountField.set('');
+          this.clearOptionalFields();
+     }
+
+     clearOptionalFields() {
           this.txUiService.destinationTagField.set('');
           this.txUiService.invoiceIdField.set('');
           this.txUiService.sourceTagField.set('');
+          this.credentialIDs.set('');
      }
 }
