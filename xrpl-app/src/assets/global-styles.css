@@ -107,6 +107,91 @@
      color: white !important;
 }
 
+/* ───────────────────────────────────────────────
+   Dark mode - Combobox / Dropdown (Currency Code)
+   ─────────────────────────────────────────────── */
+
+/* The wrapper / input field when closed */
+.dark .combobox-wrapper,
+.dark .combobox-input {
+     background-color: #1e293b !important;
+     /* slate-800 - matches your inputs */
+     border: 1px solid #475569 !important;
+     /* slate-600 border */
+     color: #e2e8f0 !important;
+     /* light text */
+}
+
+/* Placeholder or selected value text */
+.dark .combobox-input::placeholder {
+     color: #94a3b8 !important;
+     /* muted gray */
+}
+
+/* Dropdown arrow / toggle icon (if you have one) */
+.dark .combobox-toggle,
+.dark .combobox-toggle svg {
+     color: #94a3b8 !important;
+     /* subtle gray */
+}
+
+.dark .combobox-toggle:hover {
+     color: #f5cf68 !important;
+     /* yellow accent on hover */
+}
+
+/* The open dropdown panel */
+.dark .combobox-dropdown,
+.dark .combobox-dropdown-portal,
+.dark .combobox-dropdown-overlay {
+     background-color: #0f172a !important;
+     /* very dark like your body */
+     border: 1px solid #334155 !important;
+     /* subtle border */
+     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+     color: #e2e8f0 !important;
+}
+
+/* Individual items/options in the list */
+.dark .combobox-item {
+     background: transparent;
+     color: #e2e8f0 !important;
+     padding: 12px 16px;
+}
+
+/* Hover + keyboard focus/highlight state */
+.dark .combobox-item:hover,
+.dark .combobox-item.highlighted,
+.dark .combobox-item[aria-selected="true"] {
+     background: #1e40af22 !important;
+     color: #60a5fa !important;
+}
+
+/* Optional: Highlight the current/selected token more */
+.dark .combobox-item .item-name {
+     color: #60a5fa !important;
+     /* blue for token names like XRP, BOB */
+}
+
+.dark .combobox-item:hover .item-name {
+     color: #93c5fd !important;
+     /* lighter blue on hover */
+}
+
+/* Self-badge or extra tags if present */
+.dark .self-badge {
+     background: #334155 !important;
+     color: #cbd5e1 !important;
+}
+
+/* .dark .navbar-links a:hover,
+.navbar-links .dropdown-toggle:hover {
+     color: #740101 !important;
+     text-decoration: none;
+} */
+
+
+
 .app-scale {
      transform-origin: top left;
      width: 111.111%;
@@ -480,7 +565,7 @@ input[type='text']:focus {
 .accounts-dropdown .dropdown-menu a:hover,
 .escrows-dropdown .dropdown-menu a:hover,
 .utils-dropdow .dropdown-menu a:hover {
-     background-color: #2a2c31;
+     background-color: #312a2a;
      color: #4caf50;
 }
 
@@ -807,9 +892,10 @@ input[type='text']:focus {
      position: relative;
      width: 34px;
      height: 20px;
-     background: #888;
+     /* background: #888; */
      border-radius: 10px;
      transition: background 0.25s ease;
+     background: var(--toggle-off);
 }
 
 .slider:before {
@@ -825,7 +911,8 @@ input[type='text']:focus {
 }
 
 input:checked+.slider {
-     background: #4caf50;
+     /* background: #4caf50; */
+     background: var(--toggle-on) !important;
 }
 
 input:checked+.slider:before {
@@ -2863,7 +2950,25 @@ cdk-drop-list {
      background: white;
 }
 
+.combobox-toggle svg {
+     width: 18px !important;
+     height: 18px !important;
+     stroke-width: 2.5 !important;
+}
+
 .combobox-toggle {
+     width: 28px !important;
+     /* give it more space to breathe */
+     height: 28px !important;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     color: #64748b !important;
+     /* slate-500 - neutral gray */
+     transition: color 0.15s ease, transform 0.2s ease;
+}
+
+/* .combobox-toggle {
      position: absolute;
      right: 8px;
      top: 25%;
@@ -2873,7 +2978,7 @@ cdk-drop-list {
      cursor: pointer;
      padding: 4px;
      color: #666;
-}
+} */
 
 .combobox-toggle:hover {
      color: #333;
@@ -3359,6 +3464,9 @@ ticket-fields .form-group {
      --btn-primary-hover: #2563eb;
      --card-bg: #ffffff;
      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+     --toggle-on: #4caf50;
+     /* light mode default */
+     --toggle-off: #888;
 }
 
 .dark {
@@ -3373,6 +3481,9 @@ ticket-fields .form-group {
      --btn-primary-hover: #3b82f6;
      --card-bg: #1e293b;
      --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+     --toggle-on: #f5cf68;
+     /* dark mode yellow */
+     --toggle-off: #475569;
 }
 
 /* Apply variables */
@@ -3426,4 +3537,229 @@ a:hover {
 
 * {
      transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.toggleLightDark {
+     margin-left: 20px;
+     /* background-color: var(--toggle-off); */
+}
+
+/* ───────────────────────────────────────────────
+   Better default (neutral) buttons in dark mode
+   ─────────────────────────────────────────────── */
+/* .dark button,
+.dark .btn-secondary,
+.dark .menu-btn,
+.dark #theForm button:not(.btn-primary-blue):not(.btn-primary-green):not(.btn-primary-red):not(.btn-primary-orange):not(.btn-danger) { */
+/* background: #334155 !important; */
+/* slate-700 – visible but not too light */
+/* color: #f1f5f9 !important; */
+/* slate-100 – good readability */
+/* border: 1px solid #475569 !important; */
+/* slate-600 border */
+/* box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); */
+/* } */
+
+.dark button:hover,
+.dark .btn-secondary:hover,
+.dark .menu-btn:hover,
+.dark #theForm button:not(.btn-primary-blue):not(.btn-primary-green):not(.btn-primary-red):not(.btn-primary-orange):not(.btn-danger):hover {
+
+     /* background: #475569 !important; */
+     /* slate-600 – nice hover lift */
+     border-color: #64748b !important;
+}
+
+/* ───────────────────────────────────────────────
+   Primary blue – toned down a bit for dark mode
+   ─────────────────────────────────────────────── */
+.dark .btn-primary-blue,
+.dark .generate-btn,
+.dark .network .btn {
+     /* network dropdown button too */
+
+     background: linear-gradient(135deg, #3b82f6 30%, #2563eb 100%) !important;
+     /* or more muted: linear-gradient(135deg, #60a5fa 40%, #3b82f6 100%) */
+     color: white !important;
+     border: none !important;
+     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35) !important;
+}
+
+.dark .btn-primary-blue:hover,
+.dark .generate-btn:hover {
+     background: linear-gradient(135deg, #2563eb 30%, #1d4ed8 100%) !important;
+     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5) !important;
+}
+
+/* ───────────────────────────────────────────────
+   Green primary – keep emerald but soften a touch
+   ─────────────────────────────────────────────── */
+.dark .btn-primary-green {
+     background: linear-gradient(135deg, #10b981 40%, #059669 100%) !important;
+     color: white !important;
+     box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.dark .btn-primary-green:hover {
+     background: linear-gradient(135deg, #059669 40%, #047857 100%) !important;
+}
+
+/* Orange / Red variants – already quite good, just ensure hover */
+.dark .btn-primary-orange {
+     background: linear-gradient(135deg, #f59e0b 40%, #d97706 100%) !important;
+}
+
+.dark .btn-primary-red,
+.dark .btn-danger {
+     background: linear-gradient(135deg, #ef4444 40%, #dc2626 100%) !important;
+}
+
+/* ───────────────────────────────────────────────
+   Secondary / clear / menu buttons – softer
+   ─────────────────────────────────────────────── */
+.dark .btn-secondary,
+.dark .btn-secondary-clear-fields,
+.dark .menu-btn:not(.active) {
+     background: #1e293b !important;
+     /* slate-800 – very subtle */
+     color: #cbd5e1 !important;
+     /* slate-300 */
+     border: 1px solid #334155 !important;
+}
+
+.dark .menu-btn:hover:not(.active) {
+     background: #334155 !important;
+     color: #e2e8f0 !important;
+}
+
+/* Active menu item – keep your blue accent but soften bg */
+.dark .menu-btn.active {
+     background: #1e40af22 !important;
+     /* very transparent blue */
+     color: #60a5fa !important;
+     border-color: #60a5fa60 !important;
+}
+
+.dark .combobox-item.highlighted {
+     background: #243e5e !important;
+     /* slightly brighter blue-gray */
+     color: #f5cf68 !important;
+     /* yellow text instead */
+}
+
+.dark .combobox-dropdown {
+     background-color: #0f172a !important;
+     border-color: #1e293b !important;
+}
+
+.dark .combobox-input:focus,
+.dark .combobox-wrapper:focus-within {
+     border-color: #f5cf68 !important;
+     box-shadow: 0 0 0 3px rgba(245, 207, 104, 0.25) !important;
+}
+
+/* Force dark mode on destination / account selector dropdown */
+.dark .destination-combobox-wrapper,
+.dark .combobox-item.current-account,
+.dark .destination-combobox-wrapper .combobox-wrapper,
+.dark .destination-combobox-wrapper .combobox-input {
+     background-color: #1e293b !important;
+     /* same dark bg as other inputs */
+     border: 1px solid #475569 !important;
+     color: #e2e8f0 !important;
+}
+
+/* Make sure the toggle arrow / icon is visible */
+.dark .destination-combobox-wrapper .combobox-toggle,
+.dark .destination-combobox-wrapper .combobox-toggle svg {
+     color: #94a3b8 !important;
+}
+
+.dark .destination-combobox-wrapper .combobox-toggle:hover {
+     color: #f5cf68 !important;
+}
+
+/* The opened dropdown list itself */
+.dark .destination-combobox-wrapper .combobox-dropdown,
+.dark .destination-combobox-wrapper .combobox-dropdown-portal,
+.dark .destination-combobox-wrapper .combobox-dropdown-overlay {
+     background-color: #0f172a !important;
+     border: 1px solid #334155 !important;
+     color: #e2e8f0 !important;
+}
+
+/* Items inside the account list */
+.dark .destination-combobox-wrapper .combobox-item {
+     background: transparent !important;
+     color: #e2e8f0 !important;
+}
+
+.dark .destination-combobox-wrapper .combobox-item:hover,
+.dark .destination-combobox-wrapper .combobox-item.highlighted {
+     background: #1e40af22 !important;
+     /* faint blue highlight */
+     color: #60a5fa !important;
+}
+
+/* Optional: stronger focus ring using your yellow accent */
+.dark .destination-combobox-wrapper .combobox-input:focus,
+.dark .destination-combobox-wrapper .combobox-wrapper:focus-within {
+     border-color: #f5cf68 !important;
+     box-shadow: 0 0 0 3px rgba(245, 207, 104, 0.25) !important;
+}
+
+/* Dark mode specific */
+.dark .combobox-toggle {
+     color: #94a3b8 !important;
+     /* slate-400 - good visibility on dark bg */
+}
+
+.dark .combobox-toggle:hover {
+     color: #f5cf68 !important;
+     /* your yellow accent on hover */
+}
+
+/* When dropdown is open - rotate the arrow */
+.combobox-wrapper.open .combobox-toggle,
+.combobox-wrapper[aria-expanded="true"] .combobox-toggle {
+     transform: rotate(180deg) !important;
+     /* this is what makes it flip */
+}
+
+/* If your component adds .open or similar class to the wrapper when expanded */
+.dark .combobox-wrapper.open .combobox-toggle,
+.dark .combobox-wrapper[aria-expanded="true"] .combobox-toggle {
+     color: #f5cf68 !important;
+     /* yellow when open - signals active state */
+}
+
+.dark .dropdown-menu a:hover,
+.dark .accounts-dropdown,
+.dark .dropdown-menu a:hover,
+.dark .escrows-dropdown,
+.dark .dropdown-menu a:hover,
+.dark .utils-dropdow,
+.dark .dropdown-menu a:hover {
+     /* background-color: #e90f0f !important; */
+     color: #91ed80 !important;
+}
+
+/* Kill any remaining light-mode or generic hover background in dark mode */
+.dark .accounts-dropdown .dropdown-menu a:hover,
+.dark .escrows-dropdown .dropdown-menu a:hover,
+.dark .utils-dropdow .dropdown-menu a:hover {
+     background: #1e293b !important;
+     background-color: #1e293b !important;
+     color: #f5cf68 !important;
+}
+
+/* Target any possible pseudo-element or child that might add highlight */
+.dark .accounts-dropdown .dropdown-menu a:hover::before,
+.dark .accounts-dropdown .dropdown-menu a:hover::after,
+.dark .escrows-dropdown .dropdown-menu a:hover::before,
+.dark .escrows-dropdown .dropdown-menu a:hover::after,
+.dark .utils-dropdow .dropdown-menu a:hover::before,
+.dark .utils-dropdow .dropdown-menu a:hover::after {
+     background: transparent !important;
+     display: none !important;
 }
