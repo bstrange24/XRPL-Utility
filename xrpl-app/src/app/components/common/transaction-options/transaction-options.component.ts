@@ -82,4 +82,24 @@ export class TransactionOptionsComponent {
           );
           this.signerQuorum.set(this.txUiService.signerQuorum());
      }
+
+     onMultiSignToggled(enabled: boolean) {
+          if (enabled) {
+               this.isRegularKeyAddress.set(false); // ← turn OFF regular key
+               // optionally clear regular key fields
+               // this.regularKeyAddress.set('');
+               // this.regularKeySeed.set('');
+          }
+          // you can also call toggleMultiSign() here if needed
+     }
+
+     onRegularKeyToggled(enabled: boolean) {
+          if (enabled) {
+               this.useMultiSign.set(false); // ← turn OFF multi-sign
+               // optionally clear multi-sign fields
+               // this.multiSignAddress.set('');
+               // this.multiSignSeeds.set('');
+               // this.signerQuorum.set(0);
+          }
+     }
 }

@@ -100,7 +100,7 @@
                <div class="info-message-wrapper">
                     <div class="info-panel">
                          <div class="info-text">
-                              <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                              <div style="margin-bottom: 6px; line-height: 1.5; cursor: default">
                                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
                                    <code>{{ info.walletName }}</code>
 
@@ -121,7 +121,7 @@
                                    @if (infoPanelExpanded()) {
                                    <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
                                         @for (channel of info.channelsToShow; track channel.id) {
-                                        <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
+                                        <li style="margin-bottom: 6px; display: flex; align-items: flex-start; gap: 12px">
                                              <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + channel.id" tooltipText="View Channel on XRPL Explorer">
                                                   <div style="font-weight: 500; margin-bottom: 4px">{{ channel.totalAmount }} @if (info.activeTab === 'create' || info.activeTab === 'close') { → {{ channel.destination.slice(0,7) + '...' + channel.destination.slice(-7) }} } @else { ← {{ channel.sender?.slice(0,7) + '...' + channel.sender?.slice(-7) }} }</div>
                                                   <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
@@ -363,8 +363,8 @@
                          </div>
 
                          <!-- Execution time -->
-                         <div style="display: flex">
-                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly />
+                         <div class="executionTimeDisplay">
+                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
                          </div>
                          <app-transaction-preview></app-transaction-preview>
                     </div>

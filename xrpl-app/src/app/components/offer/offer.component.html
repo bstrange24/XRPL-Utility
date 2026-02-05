@@ -104,7 +104,7 @@
                          <div class="info-text">
                               <span> @if (info.isOrderBookTab) { Order Book Stats: {{ $any(info).pair }} } @else { @switch (activeTab()) { @case ('createOffer') { Outstanding Offers } @case ('getOffers') { Existing Offers } @case ('getOrderBook') { Existing Offers } @case ('cancelOffer') { Cancellable Offers } } ({{ info.offerCount }}) } </span>
 
-                              <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                              <div style="margin-bottom: 6px; line-height: 1.5; cursor: default">
                                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
                                    <code>{{ info.walletName }}</code>
                                    @if (info.offerCount === 0) { has no outstanding offers. } @else { has <strong>{{ info.offerCount }}</strong> outstanding offer{{ info.offerCount === 1 ? '' : 's' }} @switch (activeTab()) { @case ('createOffer') { created. } @case ('getOffers') { on the DEX. } @case ('getOrderBook') { on the DEX. } @case ('cancelOffer') { that can be cancelled. } } }
@@ -138,7 +138,7 @@
                                         <!-- Existing offers list -->
                                         <ul style="padding-left: 22px; margin: 0">
                                              @for (offer of info.offersToShow; track offer.index) {
-                                             <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
+                                             <li style="margin-bottom: 6px; display: flex; align-items: flex-start; gap: 12px">
                                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'offer/' + offer.index" tooltipText="View Offer on XRPL Explorer">
                                                        <div style="font-weight: 500; margin-bottom: 4px">{{ offer.takerGets }} → {{ offer.takerPays }}</div>
                                                        <div style="color: #555; font-size: 0.88em">

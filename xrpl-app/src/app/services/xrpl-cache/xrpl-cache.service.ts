@@ -139,6 +139,21 @@ export class XrplCacheService {
           return accountObjects;
      }
 
+     async getAccountLines(address: string, forceRefresh?: boolean): Promise<xrpl.AccountLinesResponse> {
+          const infoKey = `account:${address}:info`;
+          const objectsKey = `account:${address}:lines`;
+          const client = await this.getClient(() => this.xrplService.getClient());
+
+          if (forceRefresh) {
+               this.invalidate(infoKey);
+               this.invalidate(objectsKey);
+          }
+
+          const [accountLines] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountLines(client, address, 'validated', ''), 10000)]);
+
+          return accountLines;
+     }
+
      async getAccountObjectsWithType(address: string, forceRefresh?: boolean, type?: string): Promise<xrpl.AccountObjectsResponse> {
           const infoKey = `account:${address}:info:${type}`;
           const objectsKey = `account:${address}:objects:${type}`;

@@ -7,12 +7,12 @@
      </label>
      } @if (showMultiSign && multiSigningEnabled()) {
      <label class="switch">
-          <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="toggleMultiSign()" name="useMultiSign" />
+          <input type="checkbox" [(ngModel)]="useMultiSign" (ngModelChange)="onMultiSignToggled($event)" name="useMultiSign" />
           <span class="slider"></span> Use Multi-Sign
      </label>
      } @if (showRegularKey && regularKeySigningEnabled()) {
      <label class="switch">
-          <input type="checkbox" [(ngModel)]="isRegularKeyAddress" name="isRegularKeyAddress" />
+          <input type="checkbox" [(ngModel)]="isRegularKeyAddress" (ngModelChange)="onRegularKeyToggled($event)" name="isRegularKeyAddress" />
           <span class="slider"></span> Use Regular Key
      </label>
      } @if (showTicket && ticketArray().length > 0) {
@@ -59,13 +59,17 @@
                <label>Regular Key Address</label>
                <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
           </div>
-     </div>
-     <div class="form-row">
           <div class="form-group">
                <label>Regular Key Seed</label>
                <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
           </div>
      </div>
+     <!-- <div class="form-row">
+          <div class="form-group">
+               <label>Regular Key Seed</label>
+               <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
+          </div>
+     </div> -->
 </div>
 }
 
@@ -94,7 +98,7 @@
           } @else {
           <app-select-search-dropdown [items]="ticketItems()" [value]="selectedTicketItem()" (valueChange)="selectedSingleTicket.set($event?.id ?? '')" placeholder="Search or select a ticket..." noResultsText="No tickets available"> </app-select-search-dropdown>
           @if (selectedSingleTicket()) {
-          <div class="selected-ticket-preview" style="margin-top: 8px; font-size: 0.9em; color: #059669">Selected: <strong>Ticket #{{ selectedSingleTicket() }}</strong></div>
+          <div class="selected-ticket-preview">Selected Ticket: <strong>{{ selectedSingleTicket() }}</strong></div>
           } }
      </div>
 </div>

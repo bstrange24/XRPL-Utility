@@ -28,7 +28,13 @@
 .dark .flag-item-account-flags:not(.enabled),
 .dark .flag-item:not(.enabled),
 .dark .token-flags-title,
-.dark .executionTimeDisplay {
+.dark .executionTimeDisplay,
+.dark .helper-text code,
+.dark .flag-desc code,
+.dark .token-flags-desc code,
+.dark .signer-fieldset-dep-auth,
+.dark .signer-fieldset,
+.dark .section-title {
      background-color: #0f172a !important;
      color: #caba8f !important;
 }
@@ -41,12 +47,50 @@
      color: #6b7280 !important;
 }
 
-.dark .banner {
+.dark .banner,
+.dark .language-css .token.string,
+.dark .style .token.string,
+.dark .token.entity,
+.dark .token.operator,
+.dark .token.url,
+.dark .selected-ticket-preview {
      background: #0f172a !important;
+}
+
+.dark .credential-info-panel {
+     background-color: #0f172a !important;
+     color: #caba8f !important;
+     border: 1px solid #0f172a;
+}
+
+.credential-info-panel {
+     background: #f0f9ff;
+     border: 1px solid #bae6fd;
+     border-radius: 10px;
+     padding: 14px 16px;
+     cursor: pointer;
+     user-select: none;
+     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+     transition: all 0.2s
 }
 
 .dark .input:checked+.slider {
      background: #caba8f !important;
+}
+
+.dark .object-count {
+     color: #caba8f !important;
+}
+
+.dark .form-group input:focus {
+     border-color: #caba8f !important;
+}
+
+.dark .form-group input:focus,
+.dark .form-group select:focus {
+     outline: none;
+     border-color: #caba8f !important;
+     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
 .dark input,
@@ -54,20 +98,45 @@
 .dark textarea,
 .dark .form-control,
 .dark .info-panel,
-.dark .submenu-info-text,
-.dark .submenu-info-secondary-text,
 .dark .flags-total,
 .dark .flag-item-account-flags.enabled {
-     background-color: #1e293b !important;
+     background-color: #0f172a !important;
      border-color: #475569 !important;
      color: #e2e8f0 !important;
 }
 
-/* .dark button:not(.btn-primary-blue):not(.btn-danger):not(.my-other-button-class) {
-     background: #334155 !important;
-     color: #f1f5f9 !important;
-     border-color: #475569 !important;
-} */
+.dark .submenu-info-text,
+.dark .submenu-info-secondary-text,
+.dark .submenu-info-main-text {
+     background-color: #0f172a !important;
+     border-color: #0f172a !important;
+     color: #e2e8f0 !important;
+}
+
+.dark .multisign-grid,
+.dark .regular-key-fields,
+.dark .ticket-fields {
+     border: 1px solid #0f172a !important;
+     margin-top: 0.5rem;
+     padding: 0;
+}
+
+.dark .memo-input:focus {
+     outline: none !important;
+     border-color: #caba8f !important;
+     box-shadow: none !important;
+}
+
+.dark .success-message {
+     background-color: #0f172a !important;
+     border-color: #059669 !important;
+     color: #059669 !important;
+}
+
+.dark .tx-message.error {
+     background-color: #0f172a !important;
+     border-color: #e74c3c !important;
+}
 
 .dark .form-hint,
 .dark .text-muted,
@@ -80,7 +149,6 @@
      color: #60a5fa !important;
 }
 
-/* Selected wallet in dark mode – accent style */
 .dark .wallet-card.selected,
 .dark .wallet-item.selected {
      background: linear-gradient(to bottom right, #1e293b, #1e40af22) !important;
@@ -110,37 +178,24 @@
      color: white !important;
 }
 
-/* ───────────────────────────────────────────────
-   Dark mode - Combobox / Dropdown (Currency Code)
-   ─────────────────────────────────────────────── */
-
-/* The wrapper / input field when closed */
 .dark .combobox-wrapper,
 .dark .combobox-input {
-     background-color: #1e293b !important;
-     /* slate-800 - matches your inputs */
+     background-color: #0f172a !important;
      border: 1px solid #475569 !important;
-     /* slate-600 border */
      color: #e2e8f0 !important;
-     /* light text */
 }
 
-/* Placeholder or selected value text */
 .dark .combobox-input::placeholder {
      color: #94a3b8 !important;
-     /* muted gray */
 }
 
-/* Dropdown arrow / toggle icon (if you have one) */
 .dark .combobox-toggle,
 .dark .combobox-toggle svg {
      color: #94a3b8 !important;
-     /* subtle gray */
 }
 
 .dark .combobox-toggle:hover {
      color: #caba8f !important;
-     /* yellow accent on hover */
 }
 
 /* The open dropdown panel */
@@ -148,9 +203,7 @@
 .dark .combobox-dropdown-portal,
 .dark .combobox-dropdown-overlay {
      background-color: #0f172a !important;
-     /* very dark like your body */
      border: 1px solid #334155 !important;
-     /* subtle border */
      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
      color: #e2e8f0 !important;
 }
@@ -173,27 +226,16 @@
 /* Optional: Highlight the current/selected token more */
 .dark .combobox-item .item-name {
      color: #60a5fa !important;
-     /* blue for token names like XRP, BOB */
 }
 
 .dark .combobox-item:hover .item-name {
      color: #93c5fd !important;
-     /* lighter blue on hover */
 }
 
-/* Self-badge or extra tags if present */
 .dark .self-badge {
      background: #334155 !important;
      color: #cbd5e1 !important;
 }
-
-/* .dark .navbar-links a:hover,
-.navbar-links .dropdown-toggle:hover {
-     color: #740101 !important;
-     text-decoration: none;
-} */
-
-
 
 .app-scale {
      transform-origin: top left;
@@ -585,7 +627,7 @@ input[type='text']:focus {
      font-size: 0.9rem;
      display: flex;
      gap: 1.75rem;
-     padding-top: 20px;
+     padding-top: 10px;
 }
 
 @media (min-width: 992px) {
@@ -826,16 +868,36 @@ input[type='text']:focus {
      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
-.memo-input,
-.regular-key-fields,
-.ticket-fields {
+.memo-input {
      width: 100%;
      padding: 0.75rem;
-     border: 1px solid #cbd5e1;
+     /* border: 1px solid #cbd5e1; */
      border-radius: 6px;
      resize: vertical;
      min-height: 80px;
-     margin-top: 1em;
+     /* margin-top: 1em; */
+     margin-top: 0.5rem;
+     /* padding: 0; */
+}
+
+.memo-input:focus {
+     outline: none !important;
+     border-color: #cbd5e1 !important;
+     /* match your normal border color */
+     box-shadow: none !important;
+}
+
+.regular-key-fields,
+.ticket-fields {
+     width: 100%;
+     /* padding: 0.75rem; */
+     /* border: 1px solid #cbd5e1; */
+     border-radius: 6px;
+     resize: vertical;
+     min-height: 80px;
+     /* margin-top: 1em; */
+     margin-top: 0.5rem;
+     padding: 0;
 }
 
 .credential-input {
@@ -1528,17 +1590,19 @@ input:focus+.slider {
 } */
 
 .multisign-grid {
+     margin-top: 0.5rem;
+     padding: 0;
      display: grid;
      grid-template-columns: 2fr 2fr 1fr;
      gap: 1rem;
      align-items: start;
-     margin-top: 1rem;
+     /* margin-top: 1rem; */
      width: 100%;
-     padding: 0.5rem;
-     border: 1px solid #cbd5e1;
+     /* padding: 0.5rem; */
+     /* border: 1px solid #cbd5e1; */
      border-radius: 6px;
      resize: vertical;
-     margin-top: 1em;
+     /* margin-top: 1em; */
 }
 
 .multisign-field {
@@ -1786,7 +1850,7 @@ pre[class*='language-'] {
      border: 1px solid #a5d6a7;
      border-radius: 8px;
      padding: 10px 14px;
-     margin-bottom: 16px;
+     margin-bottom: 10px;
      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
      animation: fadeIn 0.4s ease-in;
 }
@@ -3345,11 +3409,11 @@ ticket-fields .form-group {
 }
 
 .selected-ticket-preview {
-     /* background: #ecfdf5; */
+     font-size: 0.9em;
+     color: #059669;
      background: #fff;
-     padding: 8px 12px;
+     padding: 4px 6px;
      border-radius: 6px;
-     /* border-left: 4px solid #10b981; */
 }
 
 .label-with-link {
@@ -3462,9 +3526,8 @@ ticket-fields .form-group {
 }
 
 /* ==============================================
-   Dark Mode – add at the bottom of styles.css
-   ============================================== */
-
+Dark Mode
+============================================== */
 :root {
      --bg-primary: #ffffff;
      --bg-secondary: #f8f9fa;
@@ -3480,6 +3543,7 @@ ticket-fields .form-group {
      --toggle-on: #4caf50;
      /* light mode default */
      --toggle-off: #888;
+     --text-color: #ffcc88;
 }
 
 .dark {
@@ -3646,11 +3710,13 @@ a:hover {
 .dark .btn-secondary,
 .dark .btn-secondary-clear-fields,
 .dark .menu-btn:not(.active) {
-     background: #1e293b !important;
-     /* slate-800 – very subtle */
+     /* background: #1e293b !important; */
      color: #cbd5e1 !important;
-     /* slate-300 */
      border: 1px solid #334155 !important;
+}
+
+.dark .btn-secondary-clear-fields {
+     background: #334155 !important;
 }
 
 .dark .menu-btn:hover:not(.active) {
@@ -3886,4 +3952,42 @@ a:hover {
 .amount-input::-webkit-inner-spin-button:hover,
 .amount-input::-webkit-outer-spin-button:hover {
      filter: brightness(1.15);
+}
+
+.switch-group .switch {
+     display: inline-flex !important;
+     /* or just flex */
+     align-items: center;
+     gap: 8px;
+     /* tweak if needed */
+     padding: 0;
+     margin: 0 1.2rem 0 0;
+     /* consistent spacing between toggles */
+     justify-content: flex-start;
+     text-align: left;
+}
+
+.switch-group .switch span.slider {
+     margin-right: 0 !important;
+     order: -1;
+     /* slider left of text */
+     flex: 0 0 auto;
+}
+
+.switch-group .switch input {
+     margin: 0 !important;
+}
+
+/* Force not-allowed cursor on all readonly text inputs and textareas */
+input[readonly],
+textarea[readonly] {
+     cursor: not-allowed !important;
+     pointer-events: none;
+}
+
+/* Optional: Also apply to your specific classes if you want to be more targeted */
+.regular-key-fields input[readonly],
+.multisign-grid textarea[readonly] {
+     cursor: not-allowed !important;
+     pointer-events: none;
 }

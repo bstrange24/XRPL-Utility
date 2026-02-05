@@ -1969,12 +1969,79 @@ export class UtilsService {
      }
 
      /**
+      * Checks if the account has insufficient IOU balance on the relevant trust line
+      * to support sending/debiting the specified amount.
+      *
+      * Works for:
+      * - Payment / OfferCreate / etc. → looks at tx.Amount
+      * - CheckCreate           → looks at tx.SendMax
+      *
+      * Returns true if balance is insufficient (or no trust line exists), false otherwise.
+      */
+     isInsufficientIouTrustlineBalance(
+          accountLines: any, // typically from account_lines request .result
+          txObject: any, // Payment | CheckCreate | similar
+          issuer: string // ← often txObject.Destination for Payments, but for Checks it's usually irrelevant
+     ): boolean {
+          try {
+               // Determine which field contains the Amount object (prefer SendMax for Checks, fallback to Amount)
+               let amountField: any = null;
+
+               if (txObject?.SendMax) {
+                    amountField = txObject.SendMax;
+               } else if (txObject?.Amount) {
+                    amountField = txObject.Amount;
+               }
+
+               // Not an IOU amount (XRP string, missing, or invalid structure) → no IOU check needed
+               if (!amountField || typeof amountField === 'string') {
+                    return false;
+               }
+
+               const { currency, issuer: amountIssuer, value } = amountField;
+
+               if (!currency || !amountIssuer || !value) {
+                    throw new Error('Invalid IOU amount structure in transaction');
+               }
+
+               const requestedValue = parseFloat(value);
+               if (isNaN(requestedValue) || requestedValue <= 0) {
+                    throw new Error('Invalid or non-positive IOU amount value');
+               }
+
+               // Find the trust line where *we* (the sender) hold the token
+               // → issuer in trust line == issuer in the amount object
+               // → our account is the one with positive balance when we hold it
+               const trustline = accountLines[0].result.lines.find((line: any) => line.currency === currency && line.account === amountIssuer);
+
+               if (!trustline) {
+                    // No trust line to this issuer/currency → definitely insufficient
+                    return true;
+               }
+
+               // From sender's perspective:
+               //   balance > 0  → we hold this many tokens (can send up to this)
+               //   balance < 0  → we owe this many (can only send back to issuer, usually not useful here)
+               //   balance = 0  → nothing to send
+               const heldBalance = parseFloat(trustline.balance);
+
+               // We can only debit/send positive held amount
+               return heldBalance < requestedValue;
+          } catch (error: any) {
+               console.error('Error checking IOU balance for tx:', error);
+               // In production: you might want to return true (fail-safe = treat as insufficient)
+               // or throw to let caller handle
+               throw new Error(`Failed to check IOU balance: ${error.message || 'Unknown error'}`);
+          }
+     }
+
+     /**
       * Checks if the account has insufficient IOU balance for a transaction.
       * @param accountLines - result of `account_lines` call
       * @param txObject - XRPL transaction object (Payment, OfferCreate, etc.)
       * @returns true if insufficient balance, false if sufficient
       */
-     isInsufficientIouTrustlineBalance(accountLines: any, txObject: any, destination: string): boolean {
+     isInsufficientIouTrustlineBalance1(accountLines: any, txObject: any, destination: string): boolean {
           try {
                if (!txObject?.Amount || typeof txObject.Amount === 'string') {
                     // Not an IOU (string means XRP)

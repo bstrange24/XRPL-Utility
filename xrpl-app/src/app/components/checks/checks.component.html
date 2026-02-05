@@ -80,18 +80,20 @@
                <div class="info-message-wrapper">
                     <div class="info-panel">
                          <div class="info-text">
-                              <div style="margin-bottom: 16px; line-height: 1.5; cursor: default">
+                              <div style="margin-bottom: 6px; line-height: 1.5; cursor: default">
                                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
                                    <code>{{ info.walletName }}</code>
                                    @if (info.checkCount === 0) { has no outstanding checks. } @else {
                                    <!-- else block -->
-                                   has <strong>{{ info.checkCount }}</strong> check{{ info.checkCount === 1 ? '' : 's' }} @switch (activeTab()) {
+                                   has <strong class="object-count">{{ info.checkCount }}</strong> check{{ info.checkCount === 1 ? '' : 's' }} @switch (activeTab()) {
                                    <!-- Display message based on active tab -->
-                                   @case ('create') { created. } @case ('cash') { that can be cashed. } @case ('cancel') { that can be cancelled. } } }
+                                   @case ('create') { created. } @case ('cash') { that can be cashed. } @case ('cancel') { that can be cancelled. } } }@if (info.links) {
+                                   <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
+                                   }
                               </div>
 
                               @if (info.checkCount > 0) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); transition: all 0.2s">
+                              <div class="credential-info-panel" (click)="toggleInfoPanel()">
                                    <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
                                         <span>
                                              @switch (activeTab()) {
@@ -106,7 +108,7 @@
                                    @if (infoPanelExpanded()) {
                                    <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
                                         @for (check of info.checksToShow; track check.id) {
-                                        <li style="margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px">
+                                        <li style="margin-bottom: 6px; display: flex; align-items: flex-start; gap: 12px">
                                              <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + check.index" tooltipText="View Check on XRPL Explorer">
                                                   <div style="font-weight: 500; margin-bottom: 4px">
                                                        {{ check.amount }}
@@ -188,11 +190,6 @@
                                         <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
                                         <input type="number" id="amountField" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
                                    </div>
-                                   <!-- <div class="form-group">
-                                        <label for="amount">Amount</label>
-                                        <p class="form-hint">Amount, in XRP or token, to send to the destination.</p>
-                                        <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
-                                   </div> -->
                               </div>
 
                               <!-- Issuer (only when not XRP) -->

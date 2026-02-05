@@ -125,7 +125,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal(false);
-     amountField = signal<string>('');
      destinationField = signal<string>('');
      destinationTagField = signal<string>('');
      currencyFieldDropDownValue = signal<string>('XRP');
@@ -153,7 +152,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      allEscrowsRaw = signal<any[]>([]); // holds raw escrow objects from ledger
      finishEscrow = signal<any[]>([]);
      existingEscrow = signal<any[]>([]);
-     exsitingMpt = signal<any[]>([]);
      existingIOUs = signal<any[]>([]);
      existingMpts = signal<any[]>([]);
      outstandingEscrowCollapsed = signal<boolean>(true);
@@ -218,6 +216,12 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           if (!code) return null;
           return this.currencyItems().find(item => item.id === code) || null;
      });
+
+     onCurrencySelected(item: SelectItem | null) {
+          const currency = item?.id || 'XRP';
+          this.currencyFieldDropDownValue.set(currency);
+          this.onCurrencyChange(currency); // triggers issuer reload + balance update
+     }
 
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
@@ -296,6 +300,12 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           return this.issuerItems().find((item: { id: string }) => item.id === addr) || null;
      });
 
+     onIssuerSelected(item: SelectItem | null) {
+          const address = item?.id || '';
+          this.trustlineCurrency.selectIssuer(address);
+          this.onIssuerChange(address); // your existing logic runs
+     }
+
      infoData = computed(() => {
           const wallet = this.currentWallet();
           if (!wallet?.address) return null;
@@ -352,7 +362,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           if (this.activeTab() === 'create') {
                const hasEscrows = this.existingEscrow().length > 0;
                const hasIOUs = this.existingIOUs().length > 0;
-               const hasMPTs = this.exsitingMpt().length > 0;
+               const hasMPTs = this.existingMpts().length > 0;
 
                if (hasEscrows) links.push(`<a href="${explorerBase}account/${address}/escrows" target="_blank" rel="noopener" class="xrpl-win-link">View Escrows</a>`);
                if (hasIOUs) links.push(`<a href="${explorerBase}account/${address}/tokens" target="_blank" rel="noopener" class="xrpl-win-link">View IOUs</a>`);
@@ -422,6 +432,8 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           this.refreshStoredIssuers();
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
+          this.currencyFieldDropDownValue.set('XRP');
+          this.populateDefaultDateTime();
 
           // Subscribe once
           this.trustlineCurrency.currencies$.subscribe(currencies => {
@@ -444,8 +456,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                this.currencyBalanceField.set(balance); // ← This is your live balance!
           });
 
-          this.currencyFieldDropDownValue.set('XRP');
-          this.populateDefaultDateTime();
           this.txUiService.clearAllOptions();
      }
 
@@ -519,12 +529,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           this.copyUtilService.copyAndToast(text, label);
      }
 
-     onCurrencySelected(item: SelectItem | null) {
-          const currency = item?.id || 'XRP';
-          this.currencyFieldDropDownValue.set(currency);
-          this.onCurrencyChange(currency); // triggers issuer reload + balance update
-     }
-
      onDestinationSelected(item: SelectItem | null) {
           this.selectedDestinationAddress.set(item?.id || '');
      }
@@ -542,12 +546,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                this.escrowSequenceNumberField.set(escrow.EscrowSequence);
                this.escrowOwnerField.set(escrow.Sender); // owner is the sender
           }
-     }
-
-     onIssuerSelected(item: SelectItem | null) {
-          const address = item?.id || '';
-          this.trustlineCurrency.selectIssuer(address);
-          this.onIssuerChange(address); // your existing logic runs
      }
 
      async setTab(tab: 'create' | 'finish' | 'cancel'): Promise<void> {
@@ -641,9 +639,9 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                     // Build amount object depending on currency
                     const amountToCash =
                          this.currencyFieldDropDownValue() === AppConstants.XRP_CURRENCY
-                              ? xrpl.xrpToDrops(this.amountField())
+                              ? xrpl.xrpToDrops(this.txUiService.amountField())
                               : {
-                                     value: this.amountField(),
+                                     value: this.txUiService.amountField(),
                                      currency: this.utilsService.encodeIfNeeded(this.currencyFieldDropDownValue()),
                                      issuer: this.issuerFields(),
                                 };
@@ -890,7 +888,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      }
 
      private getExistingEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          // this.existingEscrow
           const mapped = (escrowObjects.result.account_objects ?? [])
                .filter(
                     (obj: any) =>
@@ -928,11 +925,9 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
 
           this.existingEscrow.set(mapped);
           this.utilsService.logObjects('existingEscrow', mapped);
-          // return this.existingEscrow;
      }
 
      private getExistingMpts(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          // this.exsitingMpt
           const mapped = (escrowObjects.result.account_objects ?? [])
                .filter((obj: any) => (obj.LedgerEntryType === 'MPToken' || obj.LedgerEntryType === 'MPTokenIssuance') && (obj.Account === classicAddress || obj.Issuer === classicAddress))
                .map((obj: any): MPToken => {
@@ -948,14 +943,11 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                     return ai.localeCompare(bi);
                });
 
-          this.exsitingMpt.set(mapped);
           this.existingMpts.set(mapped);
-          this.utilsService.logObjects('exsitingMpt', mapped);
-          // return this.exsitingMpt;
+          this.utilsService.logObjects('existingMpts', mapped);
      }
 
      private getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          // this.existingIOUs
           const mapped = (accountObjects.result.account_objects ?? [])
                .filter((obj: any) => obj.LedgerEntryType === 'RippleState')
                .map((obj: any): RippleState => {
@@ -981,7 +973,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
 
           this.existingIOUs.set(mapped);
           this.utilsService.logObjects('existingIOUs', mapped);
-          // return this.existingIOUs;
      }
 
      private async getExpiredOrFulfilledEscrows(client: xrpl.Client, escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
@@ -1137,18 +1128,18 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
 
                     const curr: xrpl.MPTAmount = {
                          mpt_issuance_id: this.mptIssuanceIdField(),
-                         value: this.amountField(),
+                         value: this.txUiService.amountField(),
                     };
                     escrowTx.Amount = curr;
                } else if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
                     const curr: xrpl.IssuedCurrencyAmount = {
                          currency: this.currencyFieldDropDownValue.length > 3 ? this.utilsService.encodeCurrencyCode(this.currencyFieldDropDownValue()) : this.currencyFieldDropDownValue(),
                          issuer: this.issuerFields(),
-                         value: this.amountField(),
+                         value: this.txUiService.amountField(),
                     };
                     escrowTx.Amount = curr;
                } else {
-                    escrowTx.Amount = xrpl.xrpToDrops(this.amountField());
+                    escrowTx.Amount = xrpl.xrpToDrops(this.txUiService.amountField());
                }
           }
      }
@@ -1378,15 +1369,39 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           }
      }
 
+     // Optional: help keep exactly 6 decimals when typing manually
+     updateAmount(value: string | number) {
+          let num = typeof value === 'string' ? parseFloat(value) : value;
+
+          if (isNaN(num) || num < 0) {
+               this.txUiService.amountField.set('');
+               return;
+          }
+
+          // Round to 6 decimal places (XRP precision)
+          const rounded = Number(num.toFixed(6));
+          this.txUiService.amountField.set(rounded.toString());
+     }
+
+     // Optional: when user focuses, make sure we show decimals if any exist
+     onFocus(event: FocusEvent) {
+          const input = event.target as HTMLInputElement;
+          if (input.value) {
+               const num = parseFloat(input.value);
+               if (!isNaN(num)) {
+                    input.value = num.toFixed(6); // show full precision on focus
+               }
+          }
+     }
+
      clearFields(all = true) {
-          this.typedDestination.set('');
-          this.selectedDestinationAddress.set('');
           this.escrowFinishTimeField.set('');
           this.escrowCancelTimeField.set('');
           this.escrowSequenceNumberField.set('');
           this.escrowOwnerField.set('');
-          this.amountField.set('');
           this.destinationTagField.set('');
+          this.typedDestination.set('');
+          this.selectedDestinationAddress.set('');
      }
 
      private resetEscrowSelection() {

@@ -24,15 +24,23 @@ export class XrplTransactionExecutorService {
           private xrplService: XrplService
      ) {}
 
-     async execute<T extends xrpl.Transaction>(client: xrpl.Client, wallet: xrpl.Wallet, tx: T, options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; regularKeyAddress?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean }): Promise<{ success: true; hash: string } | { success: false; error: string }> {
-          const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', amount = '0', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', regularKeyAddress = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false } = options;
+     async execute<T extends xrpl.Transaction>(client: xrpl.Client, wallet: xrpl.Wallet, tx: T, options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; regularKeyAddress?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean; paymentType?: string; amount?: any; destination?: string }): Promise<{ success: true; hash: string } | { success: false; error: string }> {
+          const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', regularKeyAddress = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false, paymentType = 'XRP', amount = '0', destination = '' } = options;
 
           // 1. Get fresh data in parallel
           const [{ accountInfo, accountObjects }, { fee, serverInfo }] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFeeAndServerInfo(this.xrplService, { forceRefresh: false })]);
 
           // 2. Balance check
-          if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, amount, wallet.classicAddress, tx, fee)) {
-               return { success: false, error: insufficientXrpMessage };
+          if (paymentType === 'XRP') {
+               if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, amount, wallet.classicAddress, tx, fee)) {
+                    return { success: false, error: insufficientXrpMessage };
+               }
+          } else if (paymentType === 'IOU') {
+               const accountLines = await Promise.all([this.xrplCache.getAccountLines(wallet.classicAddress, false)]);
+               if (this.utilsService.isInsufficientIouTrustlineBalance(accountLines, tx, destination)) {
+                    return { success: false, error: 'Insufficent IOU balance for this transaction' };
+               }
+          } else {
           }
 
           // 3. Show spinner
@@ -189,12 +197,14 @@ export class XrplTransactionExecutorService {
                isRegularKeyAddress?: boolean;
                regularKeyAddress?: string;
                regularKeySeed?: string;
+               amount?: any;
+               paymentType?: string;
+               destination?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulated Check create (no changes will be made)...',
                submitMessage: 'Submitting Check create to Ledger...',
-               amount: '0',
                ...options,
           });
      }
