@@ -14,7 +14,14 @@ import { AppConstants } from '../../../core/app.constants';
      providedIn: 'root',
 })
 export class WalletGeneratorService {
-     constructor(private xrplService: XrplService, private utilsService: UtilsService, private readonly http: HttpClient, private storageService: StorageService, private walletManager: WalletManagerService, private xrplCache: XrplCacheService) {}
+     constructor(
+          private xrplService: XrplService,
+          private utilsService: UtilsService,
+          private readonly http: HttpClient,
+          private storageService: StorageService,
+          private walletManager: WalletManagerService,
+          private xrplCache: XrplCacheService
+     ) {}
 
      private readonly proxyServer = 'http://localhost:3000';
 
@@ -105,20 +112,22 @@ export class WalletGeneratorService {
       * @returns Object containing derived wallet and updated destinations
       * @throws Error if wallet derivation or account validation fails
       */
-     async deriveWalletFromFamilySeed(client: xrpl.Client, seed: string, destinations: any, customDestinations: any) {
+     async deriveWalletFromFamilySeed(client: xrpl.Client, seed: string, destinations: any, customDestinations: any, encryptionType: string) {
           console.log('Entering deriveWalletFromFamilySeed');
           const startTime = Date.now();
           try {
                let wallet;
                let newWalletEntry: any = {};
                try {
-                    wallet = await this.deriveFromFamilySeed(seed, AppConstants.ENCRYPTION.ED25519);
-                    // Return error if the wallet already exist in the application. We do not want duplicate wallets.
-                    customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
-
-                    wallet = await this.deriveFromFamilySeed(seed, AppConstants.ENCRYPTION.SECP256K1);
-                    // Return error if the wallet already exist in the application. We do not want duplicate wallets.
-                    customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
+                    if (encryptionType === AppConstants.ENCRYPTION.ED25519) {
+                         wallet = await this.deriveFromFamilySeed(seed, AppConstants.ENCRYPTION.ED25519);
+                         // Return error if the wallet already exist in the application. We do not want duplicate wallets.
+                         customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
+                    } else if (encryptionType === AppConstants.ENCRYPTION.SECP256K1) {
+                         wallet = await this.deriveFromFamilySeed(seed, AppConstants.ENCRYPTION.SECP256K1);
+                         // Return error if the wallet already exist in the application. We do not want duplicate wallets.
+                         customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
+                    }
 
                     // Get current wallets to calculate next name
                     const currentWallets = this.walletManager.getWallets();

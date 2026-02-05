@@ -275,7 +275,7 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
 
                     const stored = this.storageService.get('destinations');
                     const dest = stored ? stored : [];
-                    const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromFamilySeed(client, this.seed(), dest, dest);
+                    const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromFamilySeed(client, this.seed(), dest, dest, this.encryptionType);
                     // this.destinations = destinations;
                     this.customDestinations.set(customDestinations);
                     this.updateDestinations();
