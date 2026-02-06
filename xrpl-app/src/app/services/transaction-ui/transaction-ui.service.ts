@@ -137,6 +137,7 @@ export class TransactionUiService {
      txHashes: string[] = [];
      isError = signal(false);
      isSuccess = signal(false);
+     suppressSuccessMessage = signal(false);
      result = signal('');
      spinnerMessage = signal('');
      toastId = 0;
@@ -377,6 +378,11 @@ export class TransactionUiService {
           this.setWarning(null);
      }
 
+     async showWithDelay(message: string, delayMs: number = 200) {
+          this.updateSpinnerMessage(message);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+     }
+
      async showSpinnerWithDelay(message: string, delayMs: number = 200) {
           this.spinner.set(true);
           this.updateSpinnerMessage(message);
@@ -408,6 +414,22 @@ export class TransactionUiService {
           this.toasts.set([]);
      }
 
+     setSuccessMultiTransactions(message: string, hash?: string) {
+          this.setSuccessMultiTransactionsProperties();
+          this.handleTransactionResult({
+               result: `${message}`,
+               isError: this.isError(),
+               isSuccess: this.isSuccess(),
+          });
+
+          this.successMessage = message;
+          this.errorMessage = null;
+          this.errorMessageSignal.set(null);
+
+          // Only set a hash when simulate is OFF
+          this.txHash = !this.isSimulateEnabled ? hash || null : null;
+     }
+
      // Called when a real transaction succeeds
      setSuccess(message: string, hash?: string) {
           this.setSuccessProperties();
@@ -429,6 +451,13 @@ export class TransactionUiService {
           this.isSuccess.set(true);
           this.isError.set(false);
           this.spinner.set(false);
+          // this.result = '';
+     }
+
+     setSuccessMultiTransactionsProperties() {
+          this.isSuccess.set(true);
+          this.isError.set(false);
+          this.spinner.set(true);
           // this.result = '';
      }
 

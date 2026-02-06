@@ -225,26 +225,27 @@
                               </div>
 
                               @if (wantsOptions()) {
-                              <!-- Destination Tag -->
+                              <!-- Destination Tag and Source Tag -->
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label for="destinationTag">Destination Tag</label>
+                                        <label for="destinationTagField">Destination Tag </label>
                                         <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
-                                        <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
+                                        <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
                                    </div>
+
                                    <div class="form-group">
-                                        <label for="sourceTag">Source Tag</label>
+                                        <label for="sourceTagField">Source Tag</label>
                                         <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
-                                        <input type="text" [(ngModel)]="sourceTagField" name="sourceTagField" />
+                                        <input type="text" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" name="sourceTagField" />
                                    </div>
                               </div>
 
                               <!-- Source Tag & Invoice ID (create only) -->
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label for="invoiceId">Invoice ID</label>
+                                        <label for="invoiceIdField">Invoice ID</label>
                                         <p class="form-hint">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
-                                        <input type="text" [(ngModel)]="invoiceIdField" name="invoiceIdField" />
+                                        <input type="text" placeholder="e.g. INV_123" [ngModel]="txUiService.invoiceIdField()" (ngModelChange)="txUiService.invoiceIdField.set($event)" name="invoiceIdField" />
                                    </div>
                               </div>
                               }
@@ -278,25 +279,6 @@
                                    </div>
                                    <div class="form-group"></div>
                               </div>
-                              <!-- <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="credentialExpiration">Check Expiration</label>
-                                        <p class="form-hint">Check expiration when the check will expire.</p>
-
-                                        <div class="expiration-input-group">
-                                             <input type="datetime-local" [(ngModel)]="expirationTimeField" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" class="expiration-input" />
-
-                                             <div class="expiration-buttons">
-                                                  <button type="button" (click)="setCheckExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
-                                                  <button type="button" (click)="addCheckToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
-                                                  <button type="button" (click)="addCheckToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
-                                                  <button type="button" (click)="addCheckToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
-                                                  <button type="button" (click)="addCheckToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
-                                             </div>
-                                        </div>
-                                   </div>
-                                   <div class="form-group"></div>
-                              </div> -->
                               }
 
                               <!-- Currency + Amount (shared with create) -->
@@ -324,12 +306,6 @@
                                         <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
                                         <input type="number" id="amountField" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
                                    </div>
-
-                                   <!-- <div class="form-group">
-                                        <label for="amount">Amount</label>
-                                        <p class="form-hint">Amount, in XRP or token, to send to the destination.</p>
-                                        <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
-                                   </div> -->
                               </div>
 
                               <!-- Issuer (only when not XRP) -->
@@ -367,7 +343,7 @@
                                    <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Check' }}</button>
                                    } @else if (activeTab() === 'cash') {
                                    <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cash Check' }}</button>
-                                   } @else if(activeTab() === 'cancel') {
+                                   } @else if (activeTab() === 'cancel') {
                                    <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Check' }}</button>
                                    }
                                    <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">Clear Fields</button>

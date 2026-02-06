@@ -3,11 +3,20 @@
 <div class="spinner-row">
      <div class="spinner"></div>
      <span>{{ txUiService.spinnerMessage() || 'Loading...' }}</span>
+
+     <!-- Optional progress -->
+     @if (txUiService.spinnerMessage().includes('/')) {
+     <span class="ml-2 text-sm text-gray-500">
+          {{ txUiService.spinnerMessage().split(' ')[1] }}
+          <!-- e.g. "3/10" -->
+     </span>
+     }
 </div>
 }
 
 <!-- Success message -->
-@if (txUiService.isSuccess() && !txUiService.isError()) {
+@if (txUiService.isSuccess() && !txUiService.isError() && !txUiService.suppressSuccessMessage()) {
+<!-- @if (txUiService.isSuccess() && !txUiService.isError()) { -->
 <div class="success-message">
      <lucide-icon name="check" size="20"></lucide-icon>
      <div class="success-text">

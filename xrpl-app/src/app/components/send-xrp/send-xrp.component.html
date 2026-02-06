@@ -106,9 +106,7 @@
 
                               <!-- Action buttons -->
                               <div class="button-row">
-                                   <app-tooltip-link href="#" [tooltipText]="getSendXrpButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
-                                        <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Send XRP' }}</button>
-                                   </app-tooltip-link>
+                                   <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Send XRP' }}</button>
                                    <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">Clear Fields</button>
                               </div>
 

@@ -27,12 +27,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
+import { from, switchMap } from 'rxjs';
 
 @Component({
      selector: 'app-send-xrp',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, TooltipLinkComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
@@ -53,6 +53,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
+     private walletCache = new Map<string, xrpl.Wallet>();
      typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
@@ -74,9 +75,9 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      destinationItems = computed(() => {
           const currentAddr = this.currentWallet().address;
 
-          return this.destinations().map(d => ({
+          return this.allDestinations().map(d => ({
                id: d.address,
-               display: d.name || 'Unknown Wallet',
+               display: d.name ?? 'Unknown Wallet',
                secondary: d.address,
                isCurrentAccount: d.address === currentAddr,
           }));
@@ -90,34 +91,27 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           ...this.customDestinations(),
      ]);
 
+     private destinationMap = computed(() => {
+          return new Map(this.allDestinations().map(d => [d.address, d]));
+     });
+
      destinationDisplay = computed(() => {
           const addr = this.selectedDestinationAddress();
-          if (!addr) return this.destinationSearchQuery(); // while typing → show typed text
-
-          const dest = this.destinations().find(d => d.address === addr);
-          if (!dest) return addr;
-
-          return this.dropdownService.formatDisplay(dest);
+          if (!addr) return this.destinationSearchQuery();
+          return this.dropdownService.formatDisplay(this.destinationMap().get(addr) ?? { address: addr });
      });
 
      filteredDestinations = computed(() => {
           const q = this.destinationSearchQuery().trim().toLowerCase();
-          const list = this.destinations();
+          if (!q) return this.allDestinations();
 
-          if (q === '') {
-               return list;
-          }
-
-          return this.destinations()
-               .filter(d => d.address !== this.currentWallet().address)
-               .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
+          const current = this.currentWallet().address;
+          return this.allDestinations().filter(d => d.address !== current && (d.address.toLowerCase().includes(q) || d.name?.toLowerCase().includes(q)));
      });
 
      infoData = computed(() => {
           const wallet = this.currentWallet();
-          if (!wallet?.address) {
-               return null;
-          }
+          if (!wallet?.address) return null;
 
           const walletName = wallet.name || 'Selected wallet';
           const acc = this.accountInfo()?.result?.account_data;
@@ -174,16 +168,22 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                }
           });
 
-          this.walletManagerService.selectedIndex$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async index => {
-               const wallet = this.wallets()[index];
-               if (wallet) {
-                    this.selectWallet(wallet);
-                    this.xrplCache.invalidateAccountCache(wallet.address);
-                    this.txUiService.clearAllOptionsAndMessages();
-                    this.clearInputFields();
-                    await this.onAccountChange(false);
-               }
-          });
+          this.walletManagerService.selectedIndex$
+               .pipe(
+                    takeUntilDestroyed(this.destroyRef),
+                    switchMap(index => {
+                         const wallet = this.wallets()[index];
+                         if (!wallet) return '';
+
+                         this.selectWallet(wallet);
+                         this.xrplCache.invalidateAccountCache(wallet.address);
+                         this.txUiService.clearAllOptionsAndMessages();
+                         this.clearInputFields();
+
+                         return from(this.onAccountChange(false));
+                    })
+               )
+               .subscribe();
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -209,7 +209,9 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
           this.txUiService.clearAllOptionsAndMessages();
+          if (this.hasWallets()) {
           await this.onAccountChange(true);
+          }
      }
 
      private async getClient(): Promise<xrpl.Client> {
@@ -296,8 +298,16 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      }
 
      private async getWallet(): Promise<xrpl.Wallet> {
+          const key = `${this.currentWallet().seed}:${this.currentWallet().encryptionAlgorithm}`;
+          if (this.walletCache.has(key)) {
+               return this.walletCache.get(key)!;
+          }
+
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
+
           if (!wallet) throw new Error('Wallet could not be created');
+
+          this.walletCache.set(key, wallet);
           return wallet;
      }
 
@@ -406,6 +416,16 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           ];
           this.storageService.set('destinations', allItems);
      }
+
+     private readonly allDestinations = computed(() => {
+          const wallets = this.wallets().map(w => ({
+               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
+               address: w.address,
+               source: 'wallet' as const,
+          }));
+
+          return [...wallets, ...this.customDestinations()];
+     });
 
      private truncateAddress(address: string): string {
           return `${address.slice(0, 8)}...${address.slice(-6)}`;

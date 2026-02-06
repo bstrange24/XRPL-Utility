@@ -28,7 +28,7 @@ export class XrplTransactionExecutorService {
           const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', regularKeyAddress = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false, paymentType = 'XRP', amount = '0', destination = '' } = options;
 
           // 1. Get fresh data in parallel
-          const [{ accountInfo, accountObjects }, { fee, serverInfo }] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFeeAndServerInfo(this.xrplService, { forceRefresh: false })]);
+          const [accountInfo, { fee, serverInfo }] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFeeAndServerInfo(this.xrplService, { forceRefresh: false })]);
 
           // 2. Balance check
           if (paymentType === 'XRP') {
@@ -93,12 +93,13 @@ export class XrplTransactionExecutorService {
                     return { success: false, error: userMessage };
                }
 
-               // Success!
-               this.txUiService.setSuccess(this.txUiService.result());
+               // Success for multi-tx: Show multi-tx success message without hash, then add hash signals for each individual tx
+               if (suppressIndividualFeedback) {
+                    this.txUiService.setSuccessMultiTransactions(this.txUiService.result());
+               }
                const hash = response.result.hash ?? response.result.tx_json?.hash ?? 'unknown';
 
-               // === ONLY show success UI if not suppressed ===
-               // Add hash only if not suppressed
+               // Success for single tx: Show success message with hash immediately, then add hash signal (which won't trigger a new success message since it's the same tx)
                if (!suppressIndividualFeedback) {
                     this.txUiService.addTxHashSignal(hash);
                     this.txUiService.setSuccess(this.txUiService.result()); // ← Only for single tx

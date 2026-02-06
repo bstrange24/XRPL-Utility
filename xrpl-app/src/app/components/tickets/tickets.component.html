@@ -94,7 +94,7 @@
                                    <div class="form-group">
                                         <label>Select Tickets to Delete</label>
                                         <p class="form-hint">Select available tickets to delete for the selected account.</p>
-                                        <div class="combobox-container" (clickOutside)="closeTicketDropdown()">
+                                        <div class="combobox-container" style="padding-right: 0; margin-right: 0" (clickOutside)="closeTicketDropdown()">
                                              <input #ticketDropdownInput type="text" [value]="ticketSearchQuery()" (input)="onTicketSearchInput($event)" (focus)="openTicketDropdown()" (keydown)="onTicketKeyDown($event)" [placeholder]="selectedTicketSequences().length > 0 ? selectedTicketSequences().length + ' ticket(s) selected' : 'Search tickets by sequence...'" [value]="ticketSearchQuery()" class="combobox-input" autocomplete="off" />
                                              <button class="combobox-toggle" (click)="toggleTicketDropdown()" type="button">
                                                   <lucide-icon name="chevron-down" size="18"></lucide-icon>
@@ -163,7 +163,7 @@
                                    } @if (activeTab() === 'delete') {
                                    <button type="button" class="btn-primary-red" (click)="deleteTicket()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Delete Ticket' }}</button>
                                    }
-                                   <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
+                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">Clear Fields</button>
                               </div>
 
                               <!-- Execution time -->

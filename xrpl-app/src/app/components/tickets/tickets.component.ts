@@ -26,6 +26,7 @@ import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { from, switchMap } from 'rxjs';
 
 @Component({
      selector: 'app-tickets',
@@ -150,6 +151,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                } else {
                     this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
                     this.txUiService.setError('');
+                    this.txUiService.setInfoMessage('');
                }
           });
 
@@ -162,16 +164,21 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                }
           });
 
-          this.walletManagerService.selectedIndex$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async index => {
-               const wallet = this.wallets()[index];
-               if (wallet) {
-                    this.selectWallet(wallet);
-                    this.xrplCache.invalidateAccountCache(wallet.address);
-                    this.txUiService.clearAllOptionsAndMessages();
-                    this.clearFields();
-                    await this.getTickets(false);
-               }
-          });
+          this.walletManagerService.selectedIndex$
+               .pipe(
+                    takeUntilDestroyed(this.destroyRef),
+                    switchMap(index => {
+                         const wallet = this.wallets()[index];
+                         if (!wallet) return '';
+
+                         this.selectWallet(wallet);
+                         this.xrplCache.invalidateAccountCache(wallet.address);
+                         this.txUiService.clearAllOptionsAndMessages();
+
+                         return from(this.getTickets(false));
+                    })
+               )
+               .subscribe();
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -185,7 +192,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           }
      }
 
-     trackByWalletAddress(index: number, wallet: any) {
+     trackByWalletAddress(index: number, wallet: any): string {
           return wallet.address;
      }
 
@@ -213,6 +220,9 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      async getTickets(forceRefresh = false): Promise<void> {
           await this.withPerf('getTickets', async () => {
                this.txUiService.clearAllOptionsAndMessages();
+               if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
+                    throw new Error('Please select a wallet.');
+               }
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
@@ -287,6 +297,8 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      async deleteTicket() {
           await this.withPerf('deleteTicket', async () => {
                this.txUiService.clearAllOptionsAndMessages();
+               this.txUiService.suppressSuccessMessage.set(true);
+               this.txUiService.spinner.set(true);
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
@@ -311,7 +323,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                     // === SHOW ONE SPINNER FOR THE ENTIRE BATCH ===
                     const total = ticketsToDelete.length;
                     const isSimulate = this.txUiService.isSimulateEnabled();
-                    this.txUiService.showSpinnerWithDelay(isSimulate ? `Simulating deletion of ${total} ticket(s)...` : `Deleting ${total} ticket(s)...`, 200);
+                    this.txUiService.showWithDelay(isSimulate ? `Simulating deletion of ${total} ticket(s)...` : `Deleting ${total} ticket(s)...`, 200);
 
                     let ticketsSuccessfullyDeleted = 0;
                     const invalidTickets: string[] = [];
@@ -322,6 +334,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
 
                          // Update spinner with progress BEFORE calling executor
                          const progressMsg = isSimulate ? `Simulating ticket ${i + 1}/${total}...` : `Deleting ticket ${i + 1}/${total}...`;
+                         // this.txUiService.showWithDelay(progressMsg);
                          this.txUiService.updateSpinnerMessage(progressMsg);
 
                          const ticketExists = ticketObjects.result.account_objects.some((ticket: any) => ticket.TicketSequence === Number(ticketSeq));
@@ -390,6 +403,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
                     this.txUiService.spinner.set(false);
+                    this.txUiService.suppressSuccessMessage.set(false);
                }
           });
      }
@@ -577,6 +591,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
 
      toggleTicketSelection(ticket: string): void {
           this.selectedTicketSequences.update(list => (list.includes(ticket) ? list.filter(t => t !== ticket) : [...list, ticket]));
+          this.txUiService.clearAllOptionsAndMessages();
      }
 
      toggleSelectAll(): void {
