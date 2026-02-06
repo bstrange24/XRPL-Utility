@@ -70,7 +70,7 @@
 
                               <!-- Collabpsible Permissioned Domain list -->
                               @if (info.permissionedDomainCount > 0) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()" style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 14px 16px; cursor: pointer; user-select: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05)">
+                              <div class="credential-info-panel" (click)="toggleInfoPanel()">
                                    <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
                                         <span> Permissioned Domains ({{ info.permissionedDomainCount }})</span>
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">

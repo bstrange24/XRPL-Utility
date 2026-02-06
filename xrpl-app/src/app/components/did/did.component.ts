@@ -14,14 +14,12 @@ import { ValidationService } from '../../services/validation/transaction-validat
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import didSchema from './did-schema.json';
-
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
@@ -61,12 +59,10 @@ interface DidData {
 })
 export class DidComponent extends PerformanceBaseComponent implements OnInit {
      private readonly destroyRef = inject(DestroyRef);
-     // @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
      @ViewChild('didDocumentEditor') didDocumentEditor!: JsonEditorComponent;
      @ViewChild('uriEditor') uriEditor!: JsonEditorComponent;
      @ViewChild('didDataEditor') didDataEditor!: JsonEditorComponent;
 
-     // Services
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
      public readonly walletManagerService = inject(WalletManagerService);
@@ -143,7 +139,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      hasWallets = computed(() => this.wallets().length > 0);
 
-     // Computed signal to check if there's a syntax error
      hasJsonSyntaxError = computed(() => {
           this.didData(); // trigger recompute
 
@@ -222,7 +217,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      getCreateButtonTooltip(): string {
           if (this.txUiService.spinner()) {
-               return 'Processing transaction...';
+               return 'Setting DID on the XRPL';
           }
           if (!this.allFieldsValid()) {
                const issues: string[] = [];
@@ -243,7 +238,14 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
                return 'Cannot submit:\n• ' + issues.join('\n• ');
           }
-          return 'Set DID on the XRPL';
+          return '';
+     }
+
+     getDeleteButtonTooltip(): string {
+          if (this.txUiService.spinner()) {
+               return 'Deleting DID from the XRPL';
+          }
+          return '';
      }
 
      allFieldsValid = computed(() => {
@@ -619,6 +621,11 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      }
 
      clearFields() {
-          this.txUiService.clearAllOptionsAndMessages();
+          this.onDidDataChange('');
+          this.didData();
+          this.onUriDataChange('');
+          this.uriData();
+          this.onDidDocumentDataChange('');
+          this.didDocumentData();
      }
 }

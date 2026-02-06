@@ -13,6 +13,8 @@
 
 .json-schema-success {
      color: #10b981;
+     margin-top: 1rem;
+     margin-bottom: 1rem;
 }
 
 .json-schema-warning {

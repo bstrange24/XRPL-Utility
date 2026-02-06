@@ -46,18 +46,18 @@
           <!-- <a routerLink="/fiat-on-off-ramp" routerLinkActive="active" (click)="setActiveLink('/fiat-on-off-ramp')"> Fiat On/Off Ramp </a> -->
      </div>
 
-     <div class="network-dropdown network network-{{ selectedNetwork | lowercase }}" style="padding-left: 2.5em">
-          <button class="btn dropdown-toggle" type="button" id="networkDropdownButton" (click)="toggleNetworkDropdown()" [style.backgroundColor]="networkColor">
-               <div class="dropdown-toggle-text">{{ selectedNetwork }}</div>
+     <div class="network-dropdown network network-{{ selectedNetwork() | lowercase }}" style="padding-left: 2.5em">
+          <button class="btn dropdown-toggle" type="button" id="networkDropdownButton" (click)="toggleNetworkDropdown()" [style.backgroundColor]="networkColor()">
+               <div class="dropdown-toggle-text">{{ selectedNetwork() }}</div>
                <!-- Connection Status Indicator -->
-               <svg class="arrow" [ngClass]="{ open: isNetworkDropdownOpen }" viewBox="0 0 12 12" width="12" height="12">
+               <svg class="arrow" [ngClass]="{ open: isNetworkDropdownOpen() }" viewBox="0 0 12 12" width="12" height="12">
                     <path fill="black" d="M2 4l4 4 4-4H2z" />
                </svg>
           </button>
-          <div class="dropdown-menu" [ngStyle]="{ display: isNetworkDropdownOpen ? 'block' : 'none' }">
-               <a class="dropdown-item devnet" href="#" (click)="selectNetwork('devnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Devnet' }"> Devnet </a>
-               <a class="dropdown-item testnet" href="#" (click)="selectNetwork('testnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Testnet' }"> Testnet </a>
-               <a class="dropdown-item mainnet" href="#" (click)="selectNetwork('mainnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'Mainnet' }"> Mainnet </a>
+          <div class="dropdown-menu" [ngStyle]="{ display: isNetworkDropdownOpen() ? '-webkit-box' : 'none' }">
+               <a class="dropdown-item devnet" href="#" (click)="selectNetwork('devnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork() === 'Devnet' }"> Devnet </a>
+               <a class="dropdown-item testnet" href="#" (click)="selectNetwork('testnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork() === 'Testnet' }"> Testnet </a>
+               <a class="dropdown-item mainnet" href="#" (click)="selectNetwork('mainnet'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork() === 'Mainnet' }"> Mainnet </a>
                <!-- <a class="dropdown-item testnet" href="#" (click)="selectNetwork('XahauTest'); $event.preventDefault()" [ngClass]="{ active: selectedNetwork === 'XahauTest' }"> Xahau Testnet </a> -->
           </div>
 
@@ -70,8 +70,11 @@
 
      <div class="toggleLightDark">
           <button class="toggleLightDarkButton" (click)="themeService.toggle()" ...>
-               <ng-icon *ngIf="!(isDark$ | async)" name="heroMoon" size="28"></ng-icon>
-               <ng-icon *ngIf="isDark$ | async" name="heroSun" size="28"></ng-icon>
+               @if (!(isDark$ | async)) {
+               <ng-icon name="heroMoon" size="28"></ng-icon>
+               } @if (isDark$ | async) {
+               <ng-icon name="heroSun" size="28"></ng-icon>
+               }
           </button>
      </div>
 </div>

@@ -27,11 +27,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
 
 @Component({
      selector: 'app-send-xrp',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, TooltipLinkComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
@@ -115,7 +116,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      infoData = computed(() => {
           const wallet = this.currentWallet();
           if (!wallet?.address) {
-               // return 'No wallet is currently selected.';
                return null;
           }
 
@@ -126,7 +126,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                return `<code>${walletName}</code> wallet is ready to send XRP.`;
           }
 
-          return `<code>${walletName}</code> wallet has <strong>${this.currentWallet().balance} XRP</strong> available for sending.`;
+          return `<code>${walletName}</code> wallet has <strong class="object-count">${this.currentWallet().balance} XRP</strong> available for sending.`;
      });
 
      hasWallets = computed(() => this.wallets().length > 0);
@@ -327,10 +327,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                this.utilsService.setSourceTagField(tx, this.txUiService.sourceTagField());
           }
 
-          // if (this.txUiService.domainId()) {
-          //      this.utilsService.setDomain(tx, this.txUiService.domainId());
-          // }
-
           if (this.credentialIDs().length > 0) {
                const jsonArray: string[] = this.credentialIDs()
                     .split(',')
@@ -450,6 +446,13 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                     input.value = num.toFixed(6); // show full precision on focus
                }
           }
+     }
+
+     getSendXrpButtonTooltip(): string {
+          if (this.txUiService.spinner()) {
+               return 'Sending XRP on the XRPL';
+          }
+          return '';
      }
 
      clearFields() {
