@@ -26,7 +26,7 @@ import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { from, switchMap } from 'rxjs';
+import { EMPTY, from, switchMap } from 'rxjs';
 
 @Component({
      selector: 'app-tickets',
@@ -43,10 +43,10 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      @ViewChild('ticketDropdownInput') ticketDropdownInput!: ElementRef<HTMLInputElement>;
      @ViewChild('ticketDropdownTemplate') ticketDropdownTemplate!: TemplateRef<any>;
 
+     private walletCache = new Map<string, xrpl.Wallet>();
      private ticketOverlayRef: OverlayRef | null = null;
      private readonly overlay = inject(Overlay);
      private readonly viewContainerRef = inject(ViewContainerRef);
-
      private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
@@ -83,14 +83,6 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      deleteTicketSequence = signal<string>('');
      walletTicketCount = signal<number>(0);
 
-     destinations = computed(() => [
-          ...this.wallets().map((w: DropdownItem) => ({
-               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
-               address: w.address,
-          })),
-          ...this.customDestinations(),
-     ]);
-
      infoData = computed(() => {
           const wallet = this.currentWallet();
           if (!wallet?.address) {
@@ -102,18 +94,20 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
 
           const label = this.activeTab() === 'create' ? 'available Tickets for use.' : 'Tickets that can be deleted.';
 
-          return `<code>${walletName}</code> wallet has <strong>${count}</strong> ${label}`;
+          return `<code>${walletName}</code> wallet has <strong class="object-count">${count}</strong> ${label}`;
      });
 
      hasWallets = computed(() => this.wallets().length > 0);
 
+     private readonly ticketSet = computed(() => {
+          return new Set(this.txUiService.ticketArray());
+     });
+
      filteredTickets = computed(() => {
-          const query = this.ticketSearchQuery().trim();
-          const all = this.txUiService.ticketArray(); // ← should be string[]
+          const q = this.ticketSearchQuery().trim();
+          if (!q) return this.txUiService.ticketArray();
 
-          if (!query) return all;
-
-          return all.filter(t => t.includes(query));
+          return this.txUiService.ticketArray().filter(t => t.includes(q));
      });
 
      convertToString(ticket: any) {
@@ -147,7 +141,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      private async setupWalletSubscriptions() {
           this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
                if (hasWallets) {
-                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
+                    this.txUiService.clearWarning?.();
                } else {
                     this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
                     this.txUiService.setError('');
@@ -169,7 +163,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                     takeUntilDestroyed(this.destroyRef),
                     switchMap(index => {
                          const wallet = this.wallets()[index];
-                         if (!wallet) return '';
+                         if (!wallet) return EMPTY;
 
                          this.selectWallet(wallet);
                          this.xrplCache.invalidateAccountCache(wallet.address);
@@ -228,7 +222,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
 
                     const ticketObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['Ticket']);
-                    this.utilsService.logObjects('ticketObjects', ticketObjects);
+                    this.utilsService.logObjects('ticketObjects', ticketObjects.result.account_objects);
 
                     const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
                     if (errors.length > 0) {
@@ -251,17 +245,18 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    // const inputs = this.txUiService.getValidationInputs({
-                    //      wallet: this.currentWallet(),
-                    //      paymentXrp: { amount: this.txUiService.amountField() },
-                    // });
+                    const inputs = this.txUiService.getValidationInputs({
+                         wallet: this.currentWallet(),
+                         network: { accountInfo, accountObjects, fee, currentLedger },
+                         createTicket: { amount: this.ticketCountField() },
+                         regularKey: { isRegularKey: this.txUiService.isRegularKeyAddress(), address: this.txUiService.regularKeyAddress(), seed: this.txUiService.regularKeySeed() },
+                    });
 
-                    // const errors = await this.validationService.validate('CreateTicket', { inputs, client, accountInfo });
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.join('\n• '));
-                    // }
+                    const errors = await this.validationService.validate('CreateTicket', { inputs, client, accountInfo });
+                    if (errors.length > 0) {
+                         return this.txUiService.setError(errors.join('\n• '));
+                    }
 
                     let ticketCreateTx: xrpl.TicketCreate = {
                          TransactionType: 'TicketCreate',
@@ -297,30 +292,21 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      async deleteTicket() {
           await this.withPerf('deleteTicket', async () => {
                this.txUiService.clearAllOptionsAndMessages();
-               this.txUiService.suppressSuccessMessage.set(true);
-               this.txUiService.spinner.set(true);
                try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-
-                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    // const inputs = this.txUiService.getValidationInputs({
-                    //      wallet: this.currentWallet(),
-                    //      paymentXrp: { amount: this.txUiService.amountField() },
-                    // });
-
-                    // const errors = await this.validationService.validate('DeleteTicket', { inputs, client, accountInfo });
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.join('\n• '));
-                    // }
-
+                    const [client, wallet, fee] = await Promise.all([this.getClient(), this.getWallet(), this.xrplCache.getFee(this.xrplService, false)]);
+                    const [currentLedger] = await Promise.all([this.xrplService.getLastLedgerIndex(client)]);
                     const [ticketObjects] = await Promise.all([await this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'ticket')]);
+
                     const ticketsToDelete = this.selectedTicketSequences();
                     if (!ticketsToDelete.length || this.walletTicketCount() === 0) {
-                         this.txUiService.setWarning(`Ticket <code>${this.deleteTicketSequence}</code> does not exist on this account.`);
+                         this.txUiService.setError(`Ticket sequence can not be empty.`);
                          return;
                     }
 
                     // === SHOW ONE SPINNER FOR THE ENTIRE BATCH ===
+                    this.txUiService.suppressSuccessMessage.set(true);
+                    this.txUiService.spinner.set(true);
+
                     const total = ticketsToDelete.length;
                     const isSimulate = this.txUiService.isSimulateEnabled();
                     this.txUiService.showWithDelay(isSimulate ? `Simulating deletion of ${total} ticket(s)...` : `Deleting ${total} ticket(s)...`, 200);
@@ -334,13 +320,12 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
 
                          // Update spinner with progress BEFORE calling executor
                          const progressMsg = isSimulate ? `Simulating ticket ${i + 1}/${total}...` : `Deleting ticket ${i + 1}/${total}...`;
-                         // this.txUiService.showWithDelay(progressMsg);
                          this.txUiService.updateSpinnerMessage(progressMsg);
 
-                         const ticketExists = ticketObjects.result.account_objects.some((ticket: any) => ticket.TicketSequence === Number(ticketSeq));
-                         let currentLedger = await this.xrplService.getLastLedgerIndex(client);
+                         const existingTickets = new Set(ticketObjects.result.account_objects.map((t: any) => String(t.TicketSequence)));
+                         // let currentLedger = await this.xrplService.getLastLedgerIndex(client);
 
-                         if (!ticketExists) {
+                         if (!existingTickets) {
                               console.warn(`Ticket ${ticketSeq} does not exist for account ${wallet.classicAddress}`);
                               invalidTickets.push(ticketSeq);
                               continue; // skip non-existing ticket
@@ -409,8 +394,18 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      }
 
      private async getWallet(): Promise<xrpl.Wallet> {
-          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
+          const w = this.currentWallet();
+          const key = `${w.seed}:${w.encryptionAlgorithm}`;
+
+          if (this.walletCache.has(key)) {
+               return this.walletCache.get(key)!;
+          }
+
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(w.seed, w.encryptionAlgorithm as 'ed25519' | 'secp256k1');
+
           if (!wallet) throw new Error('Wallet could not be created');
+
+          this.walletCache.set(key, wallet);
           return wallet;
      }
 
@@ -519,8 +514,21 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           return `${address.slice(0, 8)}...${address.slice(-6)}`;
      }
 
+     private readonly allDestinations = computed(() => {
+          const wallets = this.wallets().map(w => ({
+               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
+               address: w.address,
+          }));
+
+          return [...wallets, ...this.customDestinations()];
+     });
+
+     private readonly destinationMap = computed(() => {
+          return new Map(this.allDestinations().map(d => [d.address, d]));
+     });
+
      private addNewDestinationFromUser(destination: string): void {
-          if (destination && xrpl.isValidAddress(destination) && !this.destinations().some(d => d.address === destination)) {
+          if (destination && xrpl.isValidAddress(destination) && !this.allDestinations().some(d => d.address === destination)) {
                this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
                this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
                this.updateDestinations();
@@ -537,46 +545,45 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      }
 
      openTicketDropdown(): void {
-          if (this.ticketOverlayRef?.hasAttached()) return;
+          if (!this.ticketOverlayRef) {
+               this.ticketOverlayRef = this.overlay.create({
+                    hasBackdrop: true,
+                    backdropClass: 'cdk-overlay-transparent-backdrop',
+                    positionStrategy: this.overlay
+                         .position()
+                         .flexibleConnectedTo(this.ticketDropdownInput)
+                         .withPositions([
+                              {
+                                   originX: 'start',
+                                   originY: 'bottom',
+                                   overlayX: 'start',
+                                   overlayY: 'top',
+                                   offsetY: 4,
+                              },
+                              {
+                                   originX: 'start',
+                                   originY: 'top',
+                                   overlayX: 'start',
+                                   overlayY: 'bottom',
+                                   offsetY: -4,
+                              },
+                         ]),
 
-          const positionStrategy = this.overlay
-               .position()
-               .flexibleConnectedTo(this.ticketDropdownInput)
-               .withPositions([
-                    {
-                         originX: 'start',
-                         originY: 'bottom',
-                         overlayX: 'start',
-                         overlayY: 'top',
-                         offsetY: 4,
-                    },
-                    {
-                         originX: 'start',
-                         originY: 'top',
-                         overlayX: 'start',
-                         overlayY: 'bottom',
-                         offsetY: -4,
-                    },
-               ]);
+                    scrollStrategy: this.overlay.scrollStrategies.reposition(),
+                    width: this.ticketDropdownInput.nativeElement.offsetWidth,
+               });
 
-          this.ticketOverlayRef = this.overlay.create({
-               hasBackdrop: true,
-               backdropClass: 'cdk-overlay-transparent-backdrop',
-               positionStrategy,
-               scrollStrategy: this.overlay.scrollStrategies.reposition(),
-               width: this.ticketDropdownInput.nativeElement.getBoundingClientRect().width,
-          });
-
-          if (this.ticketOverlayRef) {
-               this.ticketOverlayRef.attach(new TemplatePortal(this.ticketDropdownTemplate, this.viewContainerRef));
-               this.ticketOverlayRef.backdropClick().subscribe(() => this.closeTicketDropdown());
+               this.ticketOverlayRef
+                    .backdropClick()
+                    .pipe(takeUntilDestroyed(this.destroyRef))
+                    .subscribe(() => this.closeTicketDropdown());
           }
 
-          this.highlightedTicketIndex.set(-1); // reset
+          if (!this.ticketOverlayRef.hasAttached()) {
+               this.ticketOverlayRef.attach(new TemplatePortal(this.ticketDropdownTemplate, this.viewContainerRef));
+          }
 
-          // this.ticketOverlayRef.attach(new TemplatePortal(this.ticketDropdownTemplate, this.viewContainerRef));
-          // this.highlightedTicketIndex.set(-1);
-          // this.ticketOverlayRef.backdropClick().subscribe(() => this.closeTicketDropdown());
+          this.highlightedTicketIndex.set(-1);
      }
 
      closeTicketDropdown(): void {
@@ -603,7 +610,9 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      }
 
      clearAllSelections(): void {
-          this.selectedTicketSequences.set([]);
+          if (this.selectedTicketSequences().length) {
+               this.selectedTicketSequences.set([]);
+          }
      }
 
      onTicketSearchInput(event: Event): void {
@@ -637,9 +646,9 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           this.highlightedTicketIndex.set(index);
 
           // CRITICAL: Scroll the highlighted item into view
-          setTimeout(() => {
-               const highlightedEl = document.querySelector('.ticket-item.highlighted') as HTMLElement;
-               highlightedEl?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          requestAnimationFrame(() => {
+               const el = document.querySelector('.ticket-item.highlighted') as HTMLElement;
+               el?.scrollIntoView({ block: 'nearest' });
           });
      }
 }

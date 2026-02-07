@@ -38,7 +38,10 @@ export class ValidationService {
      private rules = new Map<string, TransactionValidationRule>();
      public readonly txUiService = inject(TransactionUiService);
 
-     constructor(private xrplService: XrplService, private utilsService: UtilsService) {
+     constructor(
+          private xrplService: XrplService,
+          private utilsService: UtilsService
+     ) {
           this.registerBuiltInRules();
      }
 
@@ -192,9 +195,9 @@ export class ValidationService {
           };
      }
 
-     private validDestinationTag(): ValidatorFn {
+     private validDestinationTag(action: string): ValidatorFn {
           return ctx => {
-               const value = ctx.inputs['paymentXrp']?.destinationTag;
+               const value = ctx.inputs[action]?.destinationTag;
                if (!value) return null; // optional
 
                const num = Number(value);
@@ -205,9 +208,9 @@ export class ValidationService {
           };
      }
 
-     private validSourceTag(): ValidatorFn {
+     private validSourceTag(action: string): ValidatorFn {
           return ctx => {
-               const value = ctx.inputs['paymentXrp']?.sourceTag;
+               const value = ctx.inputs[action]?.sourceTag;
                if (!value) return null;
 
                const num = Number(value);
@@ -218,9 +221,9 @@ export class ValidationService {
           };
      }
 
-     private validInvoiceId(): ValidatorFn {
+     private validInvoiceId(action: string): ValidatorFn {
           return ctx => {
-               const value = ctx.inputs['paymentXrp']?.invoiceId;
+               const value = ctx.inputs[action]?.invoiceId;
                if (!value) return null;
 
                const hex = value.toString().replace(/[^0-9a-fA-F]/g, '');
@@ -367,9 +370,9 @@ export class ValidationService {
           // return [this.requireIf(whenRegularKey, 'regularKeyAddress', 'Regular Key Address is required'), this.requireIf(whenRegularKey, 'regularKeySeed', 'Regular Key Seed is required'), this.validAddressIf(whenRegularKey, 'regularKeyAddress'), this.validSecretIf(whenRegularKey, 'regularKeySeed')];
      }
 
-     private positiveAmount(): ValidatorFn {
+     private positiveAmount(action: string): ValidatorFn {
           return ctx => {
-               const value = ctx.inputs['paymentXrp']?.amount;
+               const value = ctx.inputs[action]?.amount;
 
                // If field is empty, let requiredFields handle it
                if (value === '') return null;
@@ -616,14 +619,14 @@ export class ValidationService {
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
-                    this.positiveAmount(),
-                    // // Destination address valid
+                    this.positiveAmount('paymentXrp'),
+                    // Destination address valid
                     this.isValidAddress('paymentXrp.destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
-                    this.validDestinationTag(),
-                    this.validSourceTag(),
-                    this.validInvoiceId(),
+                    this.validDestinationTag('paymentXrp'),
+                    this.validSourceTag('paymentXrp'),
+                    this.validInvoiceId('paymentXrp'),
 
                     this.optionalNumeric('destinationTag', 0),
                     this.optionalNumeric('sourceTag', 0),
@@ -647,30 +650,32 @@ export class ValidationService {
           // CreateTicket
           this.registerRule({
                transactionType: 'CreateTicket',
-               requiredFields: ['amount'],
+               requiredFields: ['wallet.seed', 'createTicket.amount'],
                validators: [
-                    this.positiveAmount(),
-
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.positiveAmount('createTicket'),
+
+                    // // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
+                    // // Ticket validation
                     this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    // // Regular Key signing requirements (only if selected and not multi-signing)
                     ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    // // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
                ],
           });
@@ -678,10 +683,8 @@ export class ValidationService {
           // DeleteTicket
           this.registerRule({
                transactionType: 'DeleteTicket',
-               requiredFields: ['deleteTicketSequence'],
+               requiredFields: ['wallet.seed'],
                validators: [
-                    this.optionalNumeric('deleteTicketSequence', 0),
-
                     ctx => {
                          if (ctx.inputs['seed']) {
                               const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
@@ -1004,35 +1007,41 @@ export class ValidationService {
           // CreateCheck
           this.registerRule({
                transactionType: 'CreateCheck',
-               requiredFields: ['seed', 'amount', 'destination'],
+               requiredFields: ['wallet.seed', 'createCheck.amount', 'createCheck.destination'],
                validators: [
-                    this.positiveAmount(),
-
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
-                    // Destination address valid
-                    this.isValidAddress('destination.address'),
-                    // this.notSelf('senderAddress', 'destination'),
+                    this.positiveAmount('createCheck'),
+                    this.isValidAddress('createCheck.destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.validDestinationTag('createCheck'),
+                    this.validSourceTag('createCheck'),
+                    this.validInvoiceId('createCheck'),
+
+                    this.optionalNumeric('destinationTag', 0),
+                    this.optionalNumeric('sourceTag', 0),
+
+                    // // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
+                    // // Ticket validation
                     this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    // // Regular Key signing requirements (only if selected and not multi-signing)
                     ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    // // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
 
                     this.invoiceId(),
@@ -1042,9 +1051,9 @@ export class ValidationService {
           // CashCheck
           this.registerRule({
                transactionType: 'CashCheck',
-               requiredFields: ['seed', 'amount', 'checkId'],
+               requiredFields: ['wallet.seed', 'cashCheck.amount', 'cashCheck.checkIdField'],
                validators: [
-                    this.positiveAmount(),
+                    this.positiveAmount('cashCheck'),
 
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -1055,11 +1064,6 @@ export class ValidationService {
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
-
-                    // Destination address valid
-                    this.isValidAddress('destination.address'),
-                    // this.notSelf('senderAddress', 'destination'),
-                    this.requireDestinationTagIfNeededNewDestination(),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1072,15 +1076,13 @@ export class ValidationService {
 
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
-
-                    this.invoiceId(),
                ],
           });
 
           // CancelCheck
           this.registerRule({
                transactionType: 'CancelCheck',
-               requiredFields: ['seed', 'checkId'],
+               requiredFields: ['wallet.seed', 'cashCheck.checkIdField'],
                validators: [
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -1106,8 +1108,6 @@ export class ValidationService {
 
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
-
-                    this.invoiceId(),
                ],
           });
 
@@ -1116,7 +1116,7 @@ export class ValidationService {
                transactionType: 'PaymentChannelCreate',
                requiredFields: ['seed', 'amount', 'destination', 'settleDelay'],
                validators: [
-                    this.positiveAmount(),
+                    this.positiveAmount('amount'),
 
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -1154,7 +1154,7 @@ export class ValidationService {
                transactionType: 'PaymentChannelFund',
                requiredFields: ['seed', 'amount', 'destination', 'channelID'],
                validators: [
-                    this.positiveAmount(),
+                    this.positiveAmount('amount'),
 
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -1192,7 +1192,7 @@ export class ValidationService {
                transactionType: 'PaymentChannelRenew',
                requiredFields: ['seed', 'amount', 'destination', 'channelID'],
                validators: [
-                    this.positiveAmount(),
+                    this.positiveAmount('amount'),
 
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -1230,7 +1230,7 @@ export class ValidationService {
                transactionType: 'PaymentChannelClaim',
                requiredFields: ['seed', 'amount', 'channelID', 'channelClaimSignatureField', 'publicKeyField'],
                validators: [
-                    this.positiveAmount(),
+                    this.positiveAmount('amount'),
 
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -1294,7 +1294,7 @@ export class ValidationService {
                transactionType: 'PaymentChannelGenerateCreatorClaimSignature',
                requiredFields: ['seed', 'amount', 'channelID', 'destination'],
                validators: [
-                    this.positiveAmount(),
+                    this.positiveAmount('amount'),
 
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -1723,7 +1723,7 @@ export class ValidationService {
                transactionType: 'CreateTimeBasedEscrow',
                requiredFields: ['seed', 'amount', 'destination', 'finishTime', 'cancelTime'],
                validators: [
-                    this.positiveAmount(),
+                    this.positiveAmount('amount'),
 
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -1764,7 +1764,7 @@ export class ValidationService {
                transactionType: 'FinishTimeBasedEscrow',
                requiredFields: ['seed', 'escrowSequence'],
                validators: [
-                    this.positiveAmount(),
+                    // this.positiveAmount(),
 
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -1802,7 +1802,7 @@ export class ValidationService {
                transactionType: 'CancelTimeBasedEscrow',
                requiredFields: ['seed', 'escrowSequence'],
                validators: [
-                    this.positiveAmount(),
+                    // this.positiveAmount(),
 
                     ctx => {
                          if (ctx.inputs['seed']) {
@@ -1840,7 +1840,7 @@ export class ValidationService {
                transactionType: 'MptCreate',
                requiredFields: ['seed'],
                validators: [
-                    this.positiveAmount(),
+                    // this.positiveAmount(),
 
                     ctx => {
                          if (ctx.inputs['seed']) {

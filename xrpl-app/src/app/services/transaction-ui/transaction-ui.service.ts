@@ -75,6 +75,23 @@ export interface ValidationInputs {
           credentials?: string[];
      };
 
+     createCheck?: {
+          amount?: string;
+          destination?: string;
+          destinationTag?: string;
+          sourceTag?: string;
+          invoiceId?: any;
+     };
+
+     cashCheck?: {
+          amount?: string;
+          checkIdField?: string;
+     };
+
+     cancelCheck?: {
+          checkIdField?: string;
+     };
+
      // ---- Multi-Sign ----
      multiSign?: {
           enabled: boolean;
@@ -147,6 +164,7 @@ export class TransactionUiService {
      invoiceIdField = signal('');
      sourceTagField = signal('');
      domainId = signal('');
+     checkIdField = signal('');
      credentialIDs = signal<string[]>([]);
      isMemoEnabled = signal(false);
      useMultiSign = signal(false);
@@ -516,6 +534,20 @@ export class TransactionUiService {
                sourceTag?: string;
                invoiceId?: any;
           };
+          createCheck?: {
+               amount?: string;
+               destination?: string;
+               destinationTag?: string;
+               sourceTag?: string;
+               invoiceId?: any;
+          };
+          cashCheck?: {
+               amount?: string;
+               checkIdField?: string;
+          };
+          cancelCheck?: {
+               checkIdField?: string;
+          };
           regularKey?: {
                isRegularKey: boolean;
                address: string;
@@ -543,6 +575,9 @@ export class TransactionUiService {
           sequence?: {
                sequenceId?: string;
           };
+          createTicket?: {
+               amount?: string;
+          };
      }): ValidationInputs {
           return {
                wallet: {
@@ -563,7 +598,17 @@ export class TransactionUiService {
                     invoiceId: this.invoiceIdField(),
                     credentials: this.credentialIDs(),
                },
-
+               createCheck: {
+                    amount: this.amountField(),
+                    destination: options?.createCheck?.destination,
+               },
+               cashCheck: {
+                    amount: this.amountField(),
+                    checkIdField: this.checkIdField(),
+               },
+               cancelCheck: {
+                    checkIdField: this.checkIdField(),
+               },
                multiSign: {
                     enabled: this.useMultiSign(),
                     addresses: this.useMultiSign()
@@ -615,6 +660,7 @@ export class TransactionUiService {
 
      clearAllFields() {
           this.amountField.set('');
+          this.checkIdField.set('');
           this.destinationTagField.set('');
           this.invoiceIdField.set('');
           this.sourceTagField.set('');

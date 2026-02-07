@@ -3,30 +3,14 @@
 <div class="spinner-row">
      <div class="spinner"></div>
      <span>{{ txUiService.spinnerMessage() || 'Loading...' }}</span>
-
-     <!-- Optional progress -->
-     @if (txUiService.spinnerMessage().includes('/')) {
-     <span class="ml-2 text-sm text-gray-500">
-          {{ txUiService.spinnerMessage().split(' ')[1] }}
-          <!-- e.g. "3/10" -->
-     </span>
-     }
 </div>
 }
 
 <!-- Success message -->
 @if (txUiService.isSuccess() && !txUiService.isError() && !txUiService.suppressSuccessMessage()) {
-<!-- @if (txUiService.isSuccess() && !txUiService.isError()) { -->
 <div class="success-message">
      <lucide-icon name="check" size="20"></lucide-icon>
      <div class="success-text">
-          <!-- @if (txUiService.txHashSignal() && !txUiService.isSimulateEnabled()) {
-          <span>{{txUiService.successMessage}}</span><br /><br />
-          <span>Transaction hash: <a [href]="`${url()}tx/` + txUiService.txHashSignal()" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashSignal() }} </a></span>
-          } @else {
-          <span>{{txUiService.successMessage}}</span>
-          } -->
-
           <!-- Multiple Hashes -->
           @if (txUiService.txHashSignal() && !txUiService.isSimulateEnabled()) {
           <span>{{txUiService.successMessage}}</span>
@@ -41,11 +25,6 @@
           } @else {
           <span>{{txUiService.successMessage}}</span>
           }
-
-          <!-- Single hash -->
-          <!-- @if (txUiService.txHashSignal().length === 1 && !txUiService.isSimulateEnabled()) {
-          <span>Transaction hash: <a [href]="url() + 'tx/' + txUiService.txHashSignal()[0]" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashSignal()[0] }} </a></span>
-          } -->
      </div>
 </div>
 }

@@ -53,7 +53,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
-     private walletCache = new Map<string, xrpl.Wallet>();
+     private readonly walletCache = new Map<string, xrpl.Wallet>();
      typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
@@ -91,7 +91,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           ...this.customDestinations(),
      ]);
 
-     private destinationMap = computed(() => {
+     private readonly destinationMap = computed(() => {
           return new Map(this.allDestinations().map(d => [d.address, d]));
      });
 
@@ -210,7 +210,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.destinationSearchQuery.set('');
           this.txUiService.clearAllOptionsAndMessages();
           if (this.hasWallets()) {
-          await this.onAccountChange(true);
+               await this.onAccountChange(true);
           }
      }
 
@@ -224,6 +224,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
                     throw new Error('Please select a wallet.');
                }
+
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
@@ -445,9 +446,9 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
 
      // Optional: help keep exactly 6 decimals when typing manually
      updateAmount(value: string | number) {
-          let num = typeof value === 'string' ? parseFloat(value) : value;
+          let num = typeof value === 'string' ? Number.parseFloat(value) : value;
 
-          if (isNaN(num) || num < 0) {
+          if (Number.isNaN(num) || num < 0) {
                this.txUiService.amountField.set('');
                return;
           }
@@ -461,8 +462,8 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      onFocus(event: FocusEvent) {
           const input = event.target as HTMLInputElement;
           if (input.value) {
-               const num = parseFloat(input.value);
-               if (!isNaN(num)) {
+               const num = Number.parseFloat(input.value);
+               if (!Number.isNaN(num)) {
                     input.value = num.toFixed(6); // show full precision on focus
                }
           }

@@ -82,35 +82,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           return sel.display;
      });
 
-     // // Computed Display Value
-     // displayValue = computed(() => {
-     //      if (this.searchQuery()) return this.searchQuery();
-
-     //      const sel = this.value();
-     //      if (!sel) return '';
-
-     //      // Only shorten if showShortAddress is true (default = yes)
-     //      if (this.showShortAddress()) {
-     //           const short = sel.secondary ? `${sel.secondary.slice(0, 7)}...${sel.secondary.slice(-7)}` : '';
-     //           return short ? `${sel.display} (${short})` : sel.display;
-     //      }
-
-     //      // Otherwise: just show display name cleanly
-     //      return sel.display;
-     // });
-
-     // OG
-     // displayValue = computed(() => {
-     //      if (this.searchQuery()) return this.searchQuery();
-
-     //      const sel = this.value();
-     //      if (sel) {
-     //           const short = sel.secondary ? `${sel.secondary.slice(0, 7)}...${sel.secondary.slice(-7)}` : '';
-     //           return short ? `${sel.display} (${short})` : sel.display;
-     //      }
-     //      return '';
-     // });
-
      // Filtering
      filteredItems = computed(() => {
           const q = this.searchQuery().toLowerCase().trim();

@@ -93,7 +93,7 @@
                               </div>
 
                               @if (info.checkCount > 0) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()">
+                              <div class="credential-info-panel" (click)="toggleInfoPanel()" (keydown.enter)="toggleInfoPanel()" (keydown.space)="toggleInfoPanel()" role="button" tabindex="0">
                                    <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
                                         <span>
                                              @switch (activeTab()) {
@@ -188,7 +188,7 @@
                                    <div class="form-group">
                                         <label for="amountField">Amount</label>
                                         <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                                        <input type="number" id="amountField" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                                        <input type="number" id="amountFieldCreate" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
                                    </div>
                               </div>
 
@@ -304,7 +304,7 @@
                                    <div class="form-group">
                                         <label for="amountField">Amount</label>
                                         <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                                        <input type="number" id="amountField" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                                        <input type="number" id="amountFieldCash" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
                                    </div>
                               </div>
 
@@ -328,7 +328,7 @@
                               @if (activeTab() === 'cash' || activeTab() === 'cancel') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label for="selectCheck">Select Check:</label>
+                                        <label for="selectCheck">Select Check to cash</label>
                                         <p class="form-hint">Check ID generated when the check was created.</p>
                                         <app-select-search-dropdown [items]="checkItems()" [value]="selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
                                    </div>

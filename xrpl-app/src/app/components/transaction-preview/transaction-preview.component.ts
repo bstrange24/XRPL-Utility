@@ -1,11 +1,9 @@
-// components/transaction-preview/transaction-preview.component.ts
 import { Component, ViewChild, ElementRef, effect, signal } from '@angular/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-// import { ToastService } from '../../services/toast/toast.service';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
@@ -24,7 +22,12 @@ export class TransactionPreviewComponent {
      @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
      url = signal<string>('');
 
-     constructor(public txUiService: TransactionUiService, public copyUtilService: CopyUtilService, public downloadUtilService: DownloadUtilService, private xrplService: XrplService) {
+     constructor(
+          public txUiService: TransactionUiService,
+          public copyUtilService: CopyUtilService,
+          public downloadUtilService: DownloadUtilService,
+          private xrplService: XrplService
+     ) {
           effect(() => {
                const tx = this.txUiService.txSignal();
                const result = this.txUiService.txResultSignal();
