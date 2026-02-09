@@ -9,12 +9,12 @@
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
      <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
+          <!-- Left Wallet panel -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
           <!-- Right form -->
           <div class="form-panel">
-               <!-- Menu bar -->
+               <!-- Menu / Tabs -->
                <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
@@ -31,23 +31,19 @@
                </div>
 
                <!-- Create Menu -->
-               @if (activeTab() === 'create') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Create Time Based Escrow</h2>
-                              <p class="submenu-info-secondary-text">Create a time based escrow to another XRPL address</p>
-                         </div>
+               <div class="submenu-info-text">
+                    @if (activeTab() === 'create') {
+                    <div class="blue-button-submenu">
+                         <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Create Time Based Escrow</h2>
+                         <p class="submenu-info-secondary-text">Create a time based escrow to another XRPL address</p>
+                    </div>
+                    }
 
-               <!-- Finish Menu -->
-               @if (activeTab() === 'finish') {
-               <div>
+                    <!-- Finish Menu -->
+                    @if (activeTab() === 'finish') {
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
                               <ng-icon name="heroClock" size="27" class="text-red-600"></ng-icon>
@@ -57,12 +53,10 @@
                               <p class="submenu-info-secondary-text">Finish a time based escrow sent from another XRPL address</p>
                          </div>
                     </div>
-               </div>
-               }
+                    }
 
-               <!-- Cancel Menu -->
-               @if (activeTab() === 'cancel') {
-               <div>
+                    <!-- Cancel Menu -->
+                    @if (activeTab() === 'cancel') {
                     <div class="submenu-info-text">
                          <div class="red-button-submenu">
                               <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
@@ -72,8 +66,8 @@
                               <p class="submenu-info-secondary-text">Cancel a time based escrow create from the selected account</p>
                          </div>
                     </div>
+                    }
                </div>
-               }
 
                <!-- Info Message -->
                @if (infoData(); as info) {
@@ -83,15 +77,23 @@
                               <div style="margin-bottom: 6px; line-height: 1.5; cursor: default">
                                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
                                    <code>{{ info.walletName }}</code>
-                                   @if (info.escrowCount === 0) { has no outstanding escrows. } @else { has <strong class="object-count">{{ info.escrowCount }}</strong> escrow{{ info.escrowCount === 1 ? '' : 's' }} @switch (info.activeTab) { @case ('create') { created. } @case ('finish') { that can be finished. } @case ('cancel') { that can be cancelled. } } } @if (info.links) {
+                                   @if (info.escrowCount === 0) { has no outstanding escrows. }
+                                   <!-- else block -->
+                                   @else { has <strong class="object-count">{{ info.escrowCount }}</strong> escrow{{ info.escrowCount === 1 ? '' : 's' }} @switch (info.activeTab) {
+                                   <!-- Display message based on active tab -->
+                                   @case ('create') { created. } @case ('finish') { that can be finished. } @case ('cancel') { that can be cancelled. } } } @if (info.links) {
                                    <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
                                    }
                               </div>
 
                               @if (info.escrowCount > 0) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()">
+                              <div class="credential-info-panel" (click)="toggleInfoPanel()" (keydown.enter)="toggleInfoPanel()" (keydown.space)="toggleInfoPanel()" role="button" tabindex="0">
                                    <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
-                                        <span> @switch (info.activeTab) { @case ('create') { Outstanding Escrows } @case ('finish') { Finishable Escrows } @case ('cancel') { Cancellable Escrows } } ({{ info.escrowCount }}) </span>
+                                        <span>
+                                             @switch (info.activeTab) {
+                                             <!-- Display message based on active tab -->
+                                             @case ('create') { Outstanding Escrows } @case ('finish') { Finishable Escrows } @case ('cancel') { Cancellable Escrows } } ({{ info.escrowCount }})
+                                        </span>
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
                                              <path d="M6 9l6 6 6-6" />
                                         </svg>
@@ -134,88 +136,88 @@
                @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                    <div class="warning-text">{{ safeWarningMessage }}</div>
                </div>
                }
 
                <form #theForm="ngForm" class="send-form">
                     <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab()">
-                              @if(activeTab() === 'create') {
-                              <!-- Currency + Amount -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="currencyCodeCreate">Currency Code</label>
-                                        <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
-                                        <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
-                                             <ng-template #itemTemplate let-item>
-                                                  <div class="flex items-center gap-2">
-                                                       @if (item.id === 'XRP') {
-                                                       <span class="text-yellow-500 font-bold">XRP</span>
-                                                       } @else {
-                                                       <span>{{ item.display }}</span>
-                                                       }
-                                                       <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                                                  </div>
-                                             </ng-template>
-                                        </app-select-search-dropdown>
-                                   </div>
-                                   <div class="form-group">
-                                        <label for="amountField">Amount</label>
-                                        <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                                        <input type="number" id="amountField" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
-                                   </div>
-                              </div>
-
-                              <!-- Issuer (non-XRP, non-MPT) -->
-                              @if (currencyFieldDropDownValue() !== 'XRP' && currencyFieldDropDownValue() !== 'MPT') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="issuer">Issuer</label>
-                                        <p class="form-hint">The XRPL account that issues and controls this currency.</p>
-                                        <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
-                                   </div>
-                                   <div class="form-group">
-                                        <label for="currencyBalance">Currency Balance</label>
-                                        <p class="form-hint">Total currency balance held by this account.</p>
-                                        <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly />
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- MPT Issuance ID -->
-                              @if (currencyFieldDropDownValue() === 'MPT') {
+                         <!-- Create -->
+                         @if(activeTab() === 'create') {
+                         <!-- Currency + Amount -->
+                         <div class="form-row">
                               <div class="form-group">
-                                   <label>Select MPT</label>
-                                   <p class="form-hint">MPT this account holds that can be sent to another account.</p>
-                                   <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                                   <label for="currencyCodeCreate">Currency Code</label>
+                                   <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+                                   <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                        <ng-template #itemTemplate let-item>
+                                             <div class="flex items-center gap-2">
+                                                  @if (item.id === 'XRP') {
+                                                  <span class="text-yellow-500 font-bold">XRP</span>
+                                                  } @else {
+                                                  <span>{{ item.display }}</span>
+                                                  }
+                                                  <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                             </div>
+                                        </ng-template>
+                                   </app-select-search-dropdown>
                               </div>
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="mptIssuanceId">MPT Issuance ID</label>
-                                        <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" />
-                                   </div>
+                              <div class="form-group">
+                                   <label for="amountField">Amount</label>
+                                   <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
+                                   <input type="number" id="amountField" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
                               </div>
-                              }
+                         </div>
 
-                              <!-- Destination + Tag -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="destination">Destination</label>
-                                        <p class="form-hint">Address to receive escrowed XRP.</p>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                   </div>
+                         <!-- Issuer (non-XRP, non-MPT) -->
+                         @if (currencyFieldDropDownValue() !== 'XRP' && currencyFieldDropDownValue() !== 'MPT') {
+                         <div class="form-row">
+                              <div class="form-group">
+                                   <label for="issuer">Issuer</label>
+                                   <p class="form-hint">The XRPL account that issues and controls this currency.</p>
+                                   <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+                              </div>
+                              <div class="form-group">
+                                   <label for="currencyBalance">Currency Balance</label>
+                                   <p class="form-hint">Total currency balance held by this account.</p>
+                                   <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly />
+                              </div>
+                         </div>
+                         }
 
-                                   <div class="form-group">
-                                        <label for="destinationTag">Destination Tag</label>
-                                        <p class="form-hint">Arbitrary tag to further specify the destination for this escrowed.</p>
-                                        <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
-                                   </div>
+                         <!-- MPT Issuance ID -->
+                         @if (currencyFieldDropDownValue() === 'MPT') {
+                         <div class="form-group">
+                              <label>Select MPT</label>
+                              <p class="form-hint">MPT this account holds that can be sent to another account.</p>
+                              <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                         </div>
+                         <div class="form-row">
+                              <div class="form-group">
+                                   <label for="mptIssuanceId">MPT Issuance ID</label>
+                                   <input type="text" [(ngModel)]="mptIssuanceIdField" name="mptIssuanceIdField" />
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Destination + Tag -->
+                         <div class="form-row">
+                              <div class="form-group">
+                                   <label for="destination">Destination</label>
+                                   <p class="form-hint">Address to receive escrowed XRP.</p>
+                                   <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                               </div>
 
-                              <!-- Finish Time -->
-                              <div class="form-row">
-                                   <!-- <div class="form-group" style="padding-bottom: 10px">
+                              <div class="form-group">
+                                   <label for="destinationTag">Destination Tag</label>
+                                   <p class="form-hint">Arbitrary tag to further specify the destination for this escrowed.</p>
+                                   <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
+                              </div>
+                         </div>
+
+                         <!-- Finish Time -->
+                         <div class="form-row">
+                              <!-- <div class="form-group" style="padding-bottom: 10px">
                                         <label for="finishTime">Finish Time</label>
                                         <p class="form-hint">The time, in seconds since the Ripple Epoch, when the escrowed XRP can be released to the recipient.</p>
                                         <input type="text" id="escrowFinishTimeField" placeholder="Enter time" [(ngModel)]="escrowFinishTimeField" name="escrowFinishTimeField" />
@@ -224,43 +226,43 @@
                                         <label>Finish Time Unit</label>
                                         <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedEscrowFinishTimeUnit()" (valueChange)="escrowFinishTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
                                    </div> -->
-                                   <div class="form-group">
-                                        <label for="escrowFinishTime">Finish Time</label>
-                                        <p class="form-hint">The time, in seconds since the Ripple Epoch, when the escrowed XRP can be released to the recipient.</p>
+                              <div class="form-group">
+                                   <label for="escrowFinishTime">Finish Time</label>
+                                   <p class="form-hint">The time, in seconds since the Ripple Epoch, when the escrowed XRP can be released to the recipient.</p>
 
-                                        <div class="expiration-input-group">
-                                             <input type="datetime-local" [(ngModel)]="escrowFinishTimeField" name="escrowFinishExpirationDate" step="1" (focus)="setEscrowFinishToNow()" class="expiration-input" />
+                                   <div class="expiration-input-group">
+                                        <input type="datetime-local" [(ngModel)]="escrowFinishTimeField" name="escrowFinishExpirationDate" step="1" (focus)="setEscrowFinishToNow()" class="expiration-input" />
 
-                                             <div class="expiration-buttons">
-                                                  <button type="button" (click)="setEscrowFinishToNow()" class="btn-small btn-primary-blue">Now</button>
-                                                  <button type="button" (click)="addEscrowFinishToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
-                                                  <button type="button" (click)="addEscrowFinishToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
-                                                  <button type="button" (click)="addEscrowFinishToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
-                                                  <button type="button" (click)="addEscrowFinishToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
-                                             </div>
+                                        <div class="expiration-buttons">
+                                             <button type="button" (click)="setEscrowFinishToNow()" class="btn-small btn-primary-blue">Now</button>
+                                             <button type="button" (click)="addEscrowFinishToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
+                                             <button type="button" (click)="addEscrowFinishToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
+                                             <button type="button" (click)="addEscrowFinishToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
+                                             <button type="button" (click)="addEscrowFinishToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
                                         </div>
                                    </div>
-                                   <div class="form-group">
-                                        <label for="escrowCancelTime">Cancel Time</label>
-                                        <p class="form-hint">
-                                             The time, in seconds since the Ripple Epoch, <br />
-                                             this escrow expires.
-                                        </p>
+                              </div>
+                              <div class="form-group">
+                                   <label for="escrowCancelTime">Cancel Time</label>
+                                   <p class="form-hint">
+                                        The time, in seconds since the Ripple Epoch, <br />
+                                        this escrow expires.
+                                   </p>
 
-                                        <div class="expiration-input-group">
-                                             <input type="datetime-local" [(ngModel)]="escrowCancelTimeField" name="escrowCancelExpirationDate" step="1" (focus)="setEscrowCancelToNow()" class="expiration-input" />
+                                   <div class="expiration-input-group">
+                                        <input type="datetime-local" [(ngModel)]="escrowCancelTimeField" name="escrowCancelExpirationDate" step="1" (focus)="setEscrowCancelToNow()" class="expiration-input" />
 
-                                             <div class="expiration-buttons">
-                                                  <button type="button" (click)="setEscrowCancelToNow()" class="btn-small btn-primary-blue">Now</button>
-                                                  <button type="button" (click)="addEscrowCancelToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
-                                                  <button type="button" (click)="addEscrowCancelToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
-                                                  <button type="button" (click)="addEscrowCancelToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
-                                                  <button type="button" (click)="addEscrowCancelToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
-                                             </div>
+                                        <div class="expiration-buttons">
+                                             <button type="button" (click)="setEscrowCancelToNow()" class="btn-small btn-primary-blue">Now</button>
+                                             <button type="button" (click)="addEscrowCancelToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
+                                             <button type="button" (click)="addEscrowCancelToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
+                                             <button type="button" (click)="addEscrowCancelToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
+                                             <button type="button" (click)="addEscrowCancelToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
                                         </div>
                                    </div>
+                              </div>
 
-                                   <!-- <div class="form-group" style="padding-bottom: 10px">
+                              <!-- <div class="form-group" style="padding-bottom: 10px">
                                         <label for="finishTimeUnit">Finish Time Unit</label>
                                         <select id="escrowFinishTimeUnit" [(ngModel)]="escrowFinishTimeUnit" name="escrowFinishTimeUnit">
                                              <option value="seconds">Seconds</option>
@@ -269,11 +271,11 @@
                                              <option value="days">Days</option>
                                         </select>
                                    </div> -->
-                              </div>
+                         </div>
 
-                              <!-- Cancel Time -->
-                              <!-- <div class="form-row"> -->
-                              <!-- <div class="form-group" style="padding-bottom: 10px">
+                         <!-- Cancel Time -->
+                         <!-- <div class="form-row"> -->
+                         <!-- <div class="form-group" style="padding-bottom: 10px">
                                         <label for="cancelTime">Cancel Time</label>
                                         <p class="form-hint">The time, in seconds since the Ripple Epoch, when this escrow expires.</p>
                                         <input type="text" id="escrowCancelTimeField" placeholder="Enter time" [(ngModel)]="escrowCancelTimeField" name="escrowCancelTimeField" />
@@ -282,7 +284,7 @@
                                         <label>Cancel Time Unit</label>
                                         <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedEscrowCancelTimeUnit()" (valueChange)="escrowCancelTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
                                    </div> -->
-                              <!-- <div class="form-group" style="padding-bottom: 10px">
+                         <!-- <div class="form-group" style="padding-bottom: 10px">
                                         <label for="cancelTimeUnit">Cancel Time Unit</label>
                                         <select id="escrowCancelTimeUnit" [(ngModel)]="escrowCancelTimeUnit" name="escrowCancelTimeUnit">
                                              <option value="seconds">Seconds</option>
@@ -291,64 +293,62 @@
                                              <option value="days">Days</option>
                                         </select>
                                    </div> -->
-                              <!-- </div> -->
-                              }
+                         <!-- </div> -->
+                         }
 
-                              <!-- Finish and Cancel -->
-                              @if (activeTab() === 'finish' || activeTab() === 'cancel') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="selectEscrow">Select Escrow to {{ activeTab() === 'finish' ? 'Finish' : 'Cancel' }}</label>
-                                        <p class="form-hint">Select an existing escrow to {{activeTab() === 'finish' ? 'Finish' : 'Cancel' }}.</p>
-                                        <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available"> </app-select-search-dropdown>
-                                   </div>
+                         <!-- Finish and Cancel -->
+                         @if (activeTab() === 'finish' || activeTab() === 'cancel') {
+                         <div class="form-row">
+                              <div class="form-group">
+                                   <label for="selectEscrow">Select Escrow to {{ activeTab() === 'finish' ? 'Finish' : 'Cancel' }}</label>
+                                   <p class="form-hint">Select an existing escrow to {{activeTab() === 'finish' ? 'Finish' : 'Cancel' }}.</p>
+                                   <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available"> </app-select-search-dropdown>
                               </div>
-
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Escrow Sequence ID</label>
-                                        <p class="form-hint">Sequence ID generated when the escrow was created.</p>
-                                        <input type="text" [(ngModel)]="escrowSequenceNumberField" name="escrowSequenceNumberField" />
-                                   </div>
-                              </div>
-
-                              <!-- Finish only -->
-                              @if(activeTab() === 'finish') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="escrowOwner">Escrow Owner</label>
-                                        <p class="form-hint">The account that orginally created the escrow.</p>
-                                        <input type="text" id="escrowOwnerField" [(ngModel)]="escrowOwnerField" name="escrowOwnerField" />
-                                   </div>
-                              </div>
-                              } }
-
-                              <app-transaction-options [showWhenTab]="['create', 'finish','cancel']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                              <!-- Action buttons -->
-                              <div class="button-row">
-                                   @switch (activeTab()) {
-                                   <!-- create buttons -->
-                                   @case ('create') {
-                                   <button type="button" class="btn-primary-blue" (click)="createTimeBasedEscrow()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Escrow' }}</button>
-                                   }
-                                   <!-- finish buttons -->
-                                   @case ('finish') {
-                                   <button type="button" class="btn-primary-green" (click)="finishTimeBasedEscrow()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Finish Escrow' }}</button>
-                                   }
-                                   <!-- claim buttons -->
-                                   @case ('cancel') {
-                                   <button type="button" class="btn-primary-red" (click)="cancelEscrow()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Escrow' }}</button>
-                                   } }
-                                   <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
-                              </div>
-
-                              <!-- Execution time -->
-                              <div class="executionTimeDisplay">
-                                   <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
-                              </div>
-                              <app-transaction-preview></app-transaction-preview>
                          </div>
+
+                         <div class="form-row">
+                              <div class="form-group">
+                                   <label>Escrow Sequence ID</label>
+                                   <p class="form-hint">Sequence ID generated when the escrow was created.</p>
+                                   <input type="text" [(ngModel)]="escrowSequenceNumberField" name="escrowSequenceNumberField" />
+                              </div>
+                         </div>
+
+                         <!-- Finish only -->
+                         @if(activeTab() === 'finish') {
+                         <div class="form-row">
+                              <div class="form-group">
+                                   <label for="escrowOwner">Escrow Owner</label>
+                                   <p class="form-hint">The account that orginally created the escrow.</p>
+                                   <input type="text" id="escrowOwnerField" [(ngModel)]="escrowOwnerField" name="escrowOwnerField" />
+                              </div>
+                         </div>
+                         } }
+
+                         <app-transaction-options [showWhenTab]="['create', 'finish','cancel']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                         <!-- Action buttons -->
+                         <div class="button-row">
+                              <!-- create buttons -->
+                              @if (activeTab() === 'create') {
+                              <button type="button" class="btn-primary-blue" (click)="createTimeBasedEscrow()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Escrow' }}</button>
+                              }
+                              <!-- finish buttons -->
+                              @else if (activeTab() === 'finish') {
+                              <button type="button" class="btn-primary-green" (click)="finishTimeBasedEscrow()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Finish Escrow' }}</button>
+                              }
+                              <!-- claim buttons -->
+                              @else if (activeTab() === 'cancel') {
+                              <button type="button" class="btn-primary-red" (click)="cancelEscrow()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Escrow' }}</button>
+                              }
+                              <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">Clear Fields</button>
+                         </div>
+
+                         <!-- Execution time -->
+                         <div class="executionTimeDisplay">
+                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
+                         </div>
+                         <app-transaction-preview></app-transaction-preview>
                     </div>
                </form>
           </div>

@@ -372,7 +372,12 @@ export class ValidationService {
 
      private positiveAmount(action: string): ValidatorFn {
           return ctx => {
-               const value = ctx.inputs[action]?.amount;
+               let value;
+               if (action === 'createTicket') {
+                    value = ctx.inputs[action]?.ticketCountField;
+               } else {
+                    value = ctx.inputs[action]?.amount;
+               }
 
                // If field is empty, let requiredFields handle it
                if (value === '') return null;
@@ -650,7 +655,7 @@ export class ValidationService {
           // CreateTicket
           this.registerRule({
                transactionType: 'CreateTicket',
-               requiredFields: ['wallet.seed', 'createTicket.amount'],
+               requiredFields: ['wallet.seed', 'createTicket.ticketCountField'],
                validators: [
                     ctx => {
                          const seed = this.getSeed(ctx);

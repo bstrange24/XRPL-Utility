@@ -16,7 +16,7 @@ export class XrplCacheService {
 
      // Generic cache with TTL per key
      private cache = new Map<string, CacheEntry<any>>();
-     private defaultTTL = 10_000; // 10 seconds
+     private defaultTTL = 15_000; // 15 seconds
 
      // Optional: per-network TTL or custom TTLs
      private ttlMap = new Map<string, number>();
@@ -29,6 +29,7 @@ export class XrplCacheService {
 
      async getClient(getFreshClient: () => Promise<xrpl.Client>): Promise<xrpl.Client> {
           if (this.client && this.client.isConnected()) {
+               console.log('Using cached XRPL client connection');
                return this.client;
           }
 
@@ -77,8 +78,22 @@ export class XrplCacheService {
                return cached;
           }
 
-          const data = await fetchFn();
-          this.set(key, data, ttl);
+          let data: T;
+          try {
+               data = await fetchFn();
+          } catch (err) {
+               console.error(`Fetch failed for ${key}:`, err);
+               throw err;
+          }
+
+          try {
+               this.set(key, data, ttl);
+               console.log(`Cached ${key} successfully (size ~${JSON.stringify(data).length} chars)`);
+          } catch (err) {
+               console.error(`Failed to cache ${key}:`, err);
+               // Optionally: still return data even if caching failed
+          }
+
           return data;
      }
 
@@ -103,7 +118,7 @@ export class XrplCacheService {
                this.invalidate(objectsKey);
           }
 
-          const [accountInfo, accountObjects] = await Promise.all([this.getOrFetch(infoKey, () => this.xrplService.getAccountInfo(client, address, 'validated', ''), 10000), this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', ''), 10000)]);
+          const [accountInfo, accountObjects] = await Promise.all([this.getOrFetch(infoKey, () => this.xrplService.getAccountInfo(client, address, 'validated', ''), this.defaultTTL), this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', ''), this.defaultTTL)]);
 
           return { accountInfo, accountObjects };
      }
@@ -118,7 +133,7 @@ export class XrplCacheService {
                this.invalidate(objectsKey);
           }
 
-          const [accountInfo] = await Promise.all([this.getOrFetch(infoKey, () => this.xrplService.getAccountInfo(client, address, 'validated', ''), 10000)]);
+          const [accountInfo] = await Promise.all([this.getOrFetch(infoKey, () => this.xrplService.getAccountInfo(client, address, 'validated', ''), this.defaultTTL)]);
 
           // return { accountInfo };
           return accountInfo;
@@ -134,7 +149,7 @@ export class XrplCacheService {
                this.invalidate(objectsKey);
           }
 
-          const [accountObjects] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', ''), 10000)]);
+          const [accountObjects] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', ''), this.defaultTTL)]);
 
           return accountObjects;
      }
@@ -149,7 +164,7 @@ export class XrplCacheService {
                this.invalidate(objectsKey);
           }
 
-          const [accountLines] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountLines(client, address, 'validated', ''), 10000)]);
+          const [accountLines] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountLines(client, address, 'validated', ''), this.defaultTTL)]);
 
           return accountLines;
      }
@@ -164,7 +179,7 @@ export class XrplCacheService {
                this.invalidate(objectsKey);
           }
 
-          const [getAccountObjectsWithType] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', type ? type : ''), 10000)]);
+          const [getAccountObjectsWithType] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', type ? type : ''), this.defaultTTL)]);
 
           return getAccountObjectsWithType;
      }
@@ -224,6 +239,21 @@ export class XrplCacheService {
      private getFeeTtl(): number {
           const net = this.xrplService.getNet().environment;
           return net === 'mainnet' ? 15_000 : 8_000; // 8-second cache – longer on mainnet, fees change slower
+     }
+
+     private txCache = new Map<string, { data: any; timestamp: number }>();
+
+     async getTxCached(txid: string, ttlSeconds = 60): Promise<any> {
+          const cached = this.txCache.get(txid);
+          if (cached && Date.now() - cached.timestamp < ttlSeconds * 1000) {
+               return cached.data;
+          }
+
+          const client = await this.getClient(() => this.xrplService.getClient());
+          const result = await this.xrplService.getTxData(client, txid);
+          //   const result = await this.client.request({ command: 'tx', transaction: txid });
+          this.txCache.set(txid, { data: result, timestamp: Date.now() });
+          return result;
      }
 
      /** Pretty-print the entire cache – call it anywhere! */

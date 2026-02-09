@@ -40,7 +40,7 @@
           @if (txUiService.txHashSignal().length > 0) {
           <span>Transaction hash: <a [href]="`${url()}tx/` + txUiService.txHashSignal()" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashSignal() }} </a></span>
           } } @else {
-          <span>{{ txUiService.result() }}</span>
+          <span>{{ txUiService.result() }}</span><br />
           }
      </div>
 </div>

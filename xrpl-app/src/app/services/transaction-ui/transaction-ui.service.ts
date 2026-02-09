@@ -83,6 +83,10 @@ export interface ValidationInputs {
           invoiceId?: any;
      };
 
+     createTicket?: {
+          ticketCountField?: string;
+     };
+
      cashCheck?: {
           amount?: string;
           checkIdField?: string;
@@ -165,6 +169,7 @@ export class TransactionUiService {
      sourceTagField = signal('');
      domainId = signal('');
      checkIdField = signal('');
+     ticketCountField = signal('');
      credentialIDs = signal<string[]>([]);
      isMemoEnabled = signal(false);
      useMultiSign = signal(false);
@@ -548,6 +553,9 @@ export class TransactionUiService {
           cancelCheck?: {
                checkIdField?: string;
           };
+          createTicket?: {
+               ticketCountField?: any;
+          };
           regularKey?: {
                isRegularKey: boolean;
                address: string;
@@ -574,9 +582,6 @@ export class TransactionUiService {
           };
           sequence?: {
                sequenceId?: string;
-          };
-          createTicket?: {
-               amount?: string;
           };
      }): ValidationInputs {
           return {
@@ -608,6 +613,9 @@ export class TransactionUiService {
                },
                cancelCheck: {
                     checkIdField: this.checkIdField(),
+               },
+               createTicket: {
+                    ticketCountField: this.ticketCountField(),
                },
                multiSign: {
                     enabled: this.useMultiSign(),

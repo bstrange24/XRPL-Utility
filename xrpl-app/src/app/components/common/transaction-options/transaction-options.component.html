@@ -22,7 +22,7 @@
      </label>
      } @if (showSimulate) {
      <label class="switch">
-          <input type="checkbox" [(ngModel)]="txUiService.isSimulateEnabled" (ngModelChange)="toggleSimulate($event)" name="isSimulateEnabled" />
+          <input type="checkbox" [(ngModel)]="isSimulateEnabled" (ngModelChange)="toggleSimulate($event)" name="isSimulateEnabled" />
           <span class="slider"></span> Simulate
      </label>
      }
@@ -64,27 +64,10 @@
                <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
           </div>
      </div>
-     <!-- <div class="form-row">
-          <div class="form-group">
-               <label>Regular Key Seed</label>
-               <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
-          </div>
-     </div> -->
 </div>
 }
 
 <!-- Check if Ticket slider is enabled -->
-<!-- @if (isTicket() && showTicket && ticketArray().length > 0) {
-<div class="ticket-fields">
-     <div class="form-group">
-          <label>Ticket Sequence</label>
-          <app-select-search-dropdown [items]="ticketItems()" [value]="selectedTicketItem()" (valueChange)="selectedSingleTicket.set($event?.id ?? '')" placeholder="Search or select a ticket..." noResultsText="No tickets available"> </app-select-search-dropdown>
-          @if (selectedSingleTicket()) {
-          <div class="selected-ticket-preview" style="margin-top: 8px; font-size: 0.9em; color: #059669">Selected: <strong>Ticket #{{ selectedSingleTicket() }}</strong></div>
-          }
-     </div>
-</div>
-} -->
 @if (isTicket() && showTicket && ticketArray().length > 0) {
 <div class="ticket-fields">
      <div class="form-group">

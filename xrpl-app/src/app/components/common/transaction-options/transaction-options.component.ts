@@ -32,6 +32,7 @@ export class TransactionOptionsComponent {
      isMemoEnabled = this.txUiService.isMemoEnabled;
      useMultiSign = this.txUiService.useMultiSign;
      isRegularKeyAddress = this.txUiService.isRegularKeyAddress;
+     isSimulateEnabled = this.txUiService.isSimulateEnabled;
      isTicket = this.txUiService.isTicket;
      memoField = this.txUiService.memoField;
      multiSignAddress = this.txUiService.multiSignAddress;

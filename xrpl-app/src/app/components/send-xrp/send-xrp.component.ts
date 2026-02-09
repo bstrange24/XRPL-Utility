@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, DestroyRef, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, DestroyRef, signal, computed, effect } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -27,7 +27,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { from, switchMap } from 'rxjs';
+import { EMPTY, from, switchMap } from 'rxjs';
 
 @Component({
      selector: 'app-send-xrp',
@@ -54,7 +54,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 
      private readonly walletCache = new Map<string, xrpl.Wallet>();
-     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
@@ -90,10 +89,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           })),
           ...this.customDestinations(),
      ]);
-
-     private readonly destinationMap = computed(() => {
-          return new Map(this.allDestinations().map(d => [d.address, d]));
-     });
 
      destinationDisplay = computed(() => {
           const addr = this.selectedDestinationAddress();
@@ -134,6 +129,19 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
 
      constructor() {
           super();
+
+          // Auto-select typed address if it's valid and not already selected
+          effect(() => {
+               const typed = this.destinationSearchQuery().trim();
+               const current = this.selectedDestinationAddress();
+
+               if (typed && typed !== current && xrpl.isValidAddress(typed)) {
+                    // Only auto-set if it's not already in the list (prevents loop)
+                    if (!this.allDestinations().some(d => d.address === typed)) {
+                         this.selectedDestinationAddress.set(typed);
+                    }
+               }
+          });
           this.txUiService.clearAllOptionsAndMessages();
      }
 
@@ -151,7 +159,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      private async setupWalletSubscriptions() {
           this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
                if (hasWallets) {
-                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
+                    this.txUiService.clearWarning?.();
                } else {
                     this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
                     this.txUiService.setError('');
@@ -173,13 +181,12 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                     takeUntilDestroyed(this.destroyRef),
                     switchMap(index => {
                          const wallet = this.wallets()[index];
-                         if (!wallet) return '';
+                         if (!wallet) return EMPTY;
 
                          this.selectWallet(wallet);
-                         this.xrplCache.invalidateAccountCache(wallet.address);
-                         this.txUiService.clearAllOptionsAndMessages();
-                         this.clearInputFields();
-
+                         // this.xrplCache.invalidateAccountCache(wallet.address);
+                         this.txUiService.clearAllOptions();
+                         this.clearFields();
                          return from(this.onAccountChange(false));
                     })
                )
@@ -189,7 +196,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      private selectWallet(wallet: Wallet): void {
           this.currentWallet.set({ ...wallet });
           this.txUiService.currentWallet.set({ ...wallet });
-          this.xrplCache.invalidateAccountCache(wallet.address);
+          // this.xrplCache.invalidateAccountCache(wallet.address);
 
           // Prevent self as destination
           if (this.selectedDestinationAddress() === wallet.address) {
@@ -210,7 +217,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.destinationSearchQuery.set('');
           this.txUiService.clearAllOptionsAndMessages();
           if (this.hasWallets()) {
-               await this.onAccountChange(true);
+               await this.onAccountChange(false);
           }
      }
 
@@ -251,7 +258,18 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
+                    let destinationAddress = this.selectedDestinationAddress().trim();
+                    if (!destinationAddress) {
+                         // Fallback: allow manual typing from search query if valid
+                         const typed = this.destinationSearchQuery().trim();
+                         if (typed && xrpl.isValidAddress(typed)) {
+                              destinationAddress = typed;
+                         }
+                    }
+
+                    if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
+                         return this.txUiService.setError('Please enter a valid destination address or select one from the dropdown.');
+                    }
 
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
                     const inputs = this.txUiService.getValidationInputs({
@@ -301,9 +319,11 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      private async getWallet(): Promise<xrpl.Wallet> {
           const key = `${this.currentWallet().seed}:${this.currentWallet().encryptionAlgorithm}`;
           if (this.walletCache.has(key)) {
+               console.log('Using cached wallet for seed with key', key);
                return this.walletCache.get(key)!;
           }
 
+          console.log('Creating wallet for seed with encryption algorithm', this.currentWallet().encryptionAlgorithm);
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
 
           if (!wallet) throw new Error('Wallet could not be created');
@@ -355,7 +375,26 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.accountInfo.set(accountInfo);
 
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-          if (addDest && destination) this.addNewDestinationFromUser(destination);
+          // if (addDest && destination) this.addNewDestinationFromUser(destination);
+          if (addDest && destination) {
+               const addr = destination.trim();
+
+               if (xrpl.isValidAddress(addr)) {
+                    // Add to custom list if not already present
+                    const exists = this.allDestinations().some(d => d.address === addr);
+                    if (!exists) {
+                         this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: addr }]);
+                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
+                         this.updateDestinations();
+                    }
+
+                    // Force select it (so next send starts with it pre-selected)
+                    this.selectedDestinationAddress.set(addr);
+
+                    // Clear typing state so display shows nice formatted name
+                    this.destinationSearchQuery.set('');
+               }
+          }
           this.refreshUiState(wallet, accountInfo, accountObjects);
           this.txUiService.clearAllOptions();
      }
@@ -428,12 +467,16 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           return [...wallets, ...this.customDestinations()];
      });
 
+     private readonly destinationMap = computed(() => {
+          return new Map(this.allDestinations().map(d => [d.address, d]));
+     });
+
      private truncateAddress(address: string): string {
           return `${address.slice(0, 8)}...${address.slice(-6)}`;
      }
 
      private addNewDestinationFromUser(destination: string): void {
-          if (destination && xrpl.isValidAddress(destination) && !this.destinations().some(d => d.address === destination)) {
+          if (destination && xrpl.isValidAddress(destination) && !this.allDestinations().some(d => d.address === destination)) {
                this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
                this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
                this.updateDestinations();
@@ -444,7 +487,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
      }
 
-     // Optional: help keep exactly 6 decimals when typing manually
      updateAmount(value: string | number) {
           let num = typeof value === 'string' ? Number.parseFloat(value) : value;
 
@@ -458,7 +500,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.txUiService.amountField.set(rounded.toString());
      }
 
-     // Optional: when user focuses, make sure we show decimals if any exist
      onFocus(event: FocusEvent) {
           const input = event.target as HTMLInputElement;
           if (input.value) {
@@ -469,20 +510,13 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           }
      }
 
-     getSendXrpButtonTooltip(): string {
-          if (this.txUiService.spinner()) {
-               return 'Sending XRP on the XRPL';
-          }
-          return '';
-     }
-
      clearFields() {
           this.clearInputFields();
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      clearInputFields() {
-          this.typedDestination.set('');
+          this.destinationSearchQuery.set('');
           this.selectedDestinationAddress.set('');
           this.txUiService.amountField.set('');
           this.clearOptionalFields();

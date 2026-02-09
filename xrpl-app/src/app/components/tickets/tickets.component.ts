@@ -166,9 +166,9 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                          if (!wallet) return EMPTY;
 
                          this.selectWallet(wallet);
-                         this.xrplCache.invalidateAccountCache(wallet.address);
-                         this.txUiService.clearAllOptionsAndMessages();
-
+                         // this.xrplCache.invalidateAccountCache(wallet.address);
+                         this.txUiService.clearAllOptions();
+                         this.clearFields();
                          return from(this.getTickets(false));
                     })
                )
@@ -178,7 +178,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      private selectWallet(wallet: Wallet): void {
           this.currentWallet.set({ ...wallet });
           this.txUiService.currentWallet.set({ ...wallet });
-          this.xrplCache.invalidateAccountCache(wallet.address);
+          // this.xrplCache.invalidateAccountCache(wallet.address);
 
           // Prevent self as destination
           if (this.selectedDestinationAddress() === wallet.address) {
@@ -217,6 +217,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
                     throw new Error('Please select a wallet.');
                }
+
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
@@ -249,7 +250,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                     const inputs = this.txUiService.getValidationInputs({
                          wallet: this.currentWallet(),
                          network: { accountInfo, accountObjects, fee, currentLedger },
-                         createTicket: { amount: this.ticketCountField() },
+                         createTicket: { ticketCountField: this.txUiService.ticketCountField.set(this.ticketCountField()) },
                          regularKey: { isRegularKey: this.txUiService.isRegularKeyAddress(), address: this.txUiService.regularKeyAddress(), seed: this.txUiService.regularKeySeed() },
                     });
 
@@ -394,14 +395,14 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      }
 
      private async getWallet(): Promise<xrpl.Wallet> {
-          const w = this.currentWallet();
-          const key = `${w.seed}:${w.encryptionAlgorithm}`;
-
+          const key = `${this.currentWallet().seed}:${this.currentWallet().encryptionAlgorithm}`;
           if (this.walletCache.has(key)) {
+               console.log('Using cached wallet for seed with key', key);
                return this.walletCache.get(key)!;
           }
 
-          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(w.seed, w.encryptionAlgorithm as 'ed25519' | 'secp256k1');
+          console.log('Creating wallet for seed with encryption algorithm', this.currentWallet().encryptionAlgorithm);
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
 
           if (!wallet) throw new Error('Wallet could not be created');
 
@@ -518,6 +519,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           const wallets = this.wallets().map(w => ({
                name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
                address: w.address,
+               source: 'wallet' as const,
           }));
 
           return [...wallets, ...this.customDestinations()];
