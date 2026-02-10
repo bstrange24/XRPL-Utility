@@ -63,6 +63,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      infoPanelExpanded = signal(false);
      accountInfo = signal<any>(null);
      credentialIDs = signal<string>('');
+     domainId = signal<string>('');
      wantsOptions = signal<boolean>(false);
 
      selectedDestinationItem = computed(() => {
@@ -358,6 +359,10 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                this.utilsService.setSourceTagField(tx, this.txUiService.sourceTagField());
           }
 
+          if (this.txUiService.domainId()) {
+               this.utilsService.setDomainId(tx, this.txUiService.domainId());
+          }
+
           if (this.credentialIDs().length > 0) {
                const jsonArray: string[] = this.credentialIDs()
                     .split(',')
@@ -375,7 +380,12 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.accountInfo.set(accountInfo);
 
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-          // if (addDest && destination) this.addNewDestinationFromUser(destination);
+          this.addCustomDestination(addDest, destination);
+          this.refreshUiState(wallet, accountInfo, accountObjects);
+          this.txUiService.clearAllOptions();
+     }
+
+     private addCustomDestination(addDest: boolean, destination: string | null) {
           if (addDest && destination) {
                const addr = destination.trim();
 
@@ -395,8 +405,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                     this.destinationSearchQuery.set('');
                }
           }
-          this.refreshUiState(wallet, accountInfo, accountObjects);
-          this.txUiService.clearAllOptions();
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -475,14 +483,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           return `${address.slice(0, 8)}...${address.slice(-6)}`;
      }
 
-     private addNewDestinationFromUser(destination: string): void {
-          if (destination && xrpl.isValidAddress(destination) && !this.allDestinations().some(d => d.address === destination)) {
-               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
-               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
-               this.updateDestinations();
-          }
-     }
-
      get safeWarningMessage() {
           return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
      }
@@ -526,6 +526,8 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.txUiService.destinationTagField.set('');
           this.txUiService.invoiceIdField.set('');
           this.txUiService.sourceTagField.set('');
+          this.txUiService.memoField.set('');
+          this.txUiService.domainId.set('');
           this.credentialIDs.set('');
      }
 }

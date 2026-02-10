@@ -520,7 +520,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
      }
 
      async createMpt() {
-          await this.withPerf('createCheck', async () => {
+          await this.withPerf('createMpt', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
                     const byteLength = this.metadataByteLength();
@@ -540,7 +540,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit {
 
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-                    const [{ accountInfo, accountObjects }, trustLines, checkObjects, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getAccountObjectsWithType(this.currentWallet().address, true, 'check'), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
+                    const [{ accountInfo, accountObjects }, trustLines, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
                     // this.utilsService.logAccountInfoObjects(accountInfo, null);
                     // this.utilsService.logLedgerObjects(fee, currentLedger, serverInfo);
 

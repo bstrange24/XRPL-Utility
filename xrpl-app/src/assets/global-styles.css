@@ -51,6 +51,11 @@
      color: #6b7280 !important;
 }
 
+.dark .signer-fieldset-dep-auth,
+.dark .signer-fieldset {
+     border: 1px solid #6b7280;
+}
+
 .dark .format-did-data {
      background-color: #6b7280 !important;
      color: #0f172a !important;
@@ -2937,13 +2942,32 @@ app-root {
      align-items: end;
 } */
 
+.claims-line {
+     border-top: 1px solid #e5e7eb;
+     margin: 16px 0;
+}
+
+.dark .claims-line {
+     border-top: 1px solid #6b7280;
+     margin: 16px 0;
+}
+
 .actions-row {
      display: flex;
      justify-content: space-between;
      align-items: end;
      /* margin-top: 2rem; */
      padding-top: 1.25rem;
-     border-top: 1px dashed #e5e7eb;
+     border-top: 1px solid #e5e7eb;
+}
+
+.dark .actions-row {
+     display: flex;
+     justify-content: space-between;
+     align-items: end;
+     /* margin-top: 2rem; */
+     padding-top: 1.25rem;
+     border-top: 1px solid #6b7280;
 }
 
 .actions-row .form-group:last-child {
@@ -3709,6 +3733,7 @@ body {
 .form-group select,
 input[type="text"],
 input[type="datetime-local"] {
+     margin-right: 0px;
      background-color: var(--input-bg);
      border-color: var(--input-border);
      color: var(--text-primary);

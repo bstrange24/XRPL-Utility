@@ -30,8 +30,8 @@
                     </button>
                </div>
 
-               <!-- Create Menu -->
                <div class="submenu-info-text">
+                    <!-- Create Menu -->
                     @if (activeTab() === 'create') {
                     <div class="blue-button-submenu">
                          <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
@@ -44,27 +44,23 @@
 
                     <!-- Finish Menu -->
                     @if (activeTab() === 'finish') {
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroClock" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Finish Time Based Escrow</h2>
-                              <p class="submenu-info-secondary-text">Finish a time based escrow sent from another XRPL address</p>
-                         </div>
+                    <div class="green-button-submenu">
+                         <ng-icon name="heroClock" size="27" class="text-red-600"></ng-icon>
+                    </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">Finish Time Based Escrow</h2>
+                         <p class="submenu-info-secondary-text">Finish a time based escrow sent from another XRPL address</p>
                     </div>
                     }
 
                     <!-- Cancel Menu -->
                     @if (activeTab() === 'cancel') {
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Cancel Time Based Escrow</h2>
-                              <p class="submenu-info-secondary-text">Cancel a time based escrow create from the selected account</p>
-                         </div>
+                    <div class="red-button-submenu">
+                         <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
+                    </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">Cancel Time Based Escrow</h2>
+                         <p class="submenu-info-secondary-text">Cancel a time based escrow create from the selected account</p>
                     </div>
                     }
                </div>
@@ -217,15 +213,6 @@
 
                          <!-- Finish Time -->
                          <div class="form-row">
-                              <!-- <div class="form-group" style="padding-bottom: 10px">
-                                        <label for="finishTime">Finish Time</label>
-                                        <p class="form-hint">The time, in seconds since the Ripple Epoch, when the escrowed XRP can be released to the recipient.</p>
-                                        <input type="text" id="escrowFinishTimeField" placeholder="Enter time" [(ngModel)]="escrowFinishTimeField" name="escrowFinishTimeField" />
-                                   </div>
-                                   <div class="form-group">
-                                        <label>Finish Time Unit</label>
-                                        <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedEscrowFinishTimeUnit()" (valueChange)="escrowFinishTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
-                                   </div> -->
                               <div class="form-group">
                                    <label for="escrowFinishTime">Finish Time</label>
                                    <p class="form-hint">The time, in seconds since the Ripple Epoch, when the escrowed XRP can be released to the recipient.</p>
@@ -261,39 +248,7 @@
                                         </div>
                                    </div>
                               </div>
-
-                              <!-- <div class="form-group" style="padding-bottom: 10px">
-                                        <label for="finishTimeUnit">Finish Time Unit</label>
-                                        <select id="escrowFinishTimeUnit" [(ngModel)]="escrowFinishTimeUnit" name="escrowFinishTimeUnit">
-                                             <option value="seconds">Seconds</option>
-                                             <option value="minutes">Minutes</option>
-                                             <option value="hours">Hours</option>
-                                             <option value="days">Days</option>
-                                        </select>
-                                   </div> -->
                          </div>
-
-                         <!-- Cancel Time -->
-                         <!-- <div class="form-row"> -->
-                         <!-- <div class="form-group" style="padding-bottom: 10px">
-                                        <label for="cancelTime">Cancel Time</label>
-                                        <p class="form-hint">The time, in seconds since the Ripple Epoch, when this escrow expires.</p>
-                                        <input type="text" id="escrowCancelTimeField" placeholder="Enter time" [(ngModel)]="escrowCancelTimeField" name="escrowCancelTimeField" />
-                                   </div>
-                                   <div class="form-group">
-                                        <label>Cancel Time Unit</label>
-                                        <app-select-search-dropdown [items]="timeUnitItems()" [value]="selectedEscrowCancelTimeUnit()" (valueChange)="escrowCancelTimeUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
-                                   </div> -->
-                         <!-- <div class="form-group" style="padding-bottom: 10px">
-                                        <label for="cancelTimeUnit">Cancel Time Unit</label>
-                                        <select id="escrowCancelTimeUnit" [(ngModel)]="escrowCancelTimeUnit" name="escrowCancelTimeUnit">
-                                             <option value="seconds">Seconds</option>
-                                             <option value="minutes">Minutes</option>
-                                             <option value="hours">Hours</option>
-                                             <option value="days">Days</option>
-                                        </select>
-                                   </div> -->
-                         <!-- </div> -->
                          }
 
                          <!-- Finish and Cancel -->

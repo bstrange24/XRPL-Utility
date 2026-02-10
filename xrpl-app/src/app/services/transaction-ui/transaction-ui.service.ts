@@ -83,6 +83,56 @@ export interface ValidationInputs {
           invoiceId?: any;
      };
 
+     createTimeBasedEscrow?: {
+          amount?: string;
+          destination?: string;
+          finishAfter?: number;
+          cancelAfter?: number;
+          currency?: string;
+          issuer?: string;
+     };
+
+     finishTimeBasedEscrow?: {
+          escrowOwner?: string;
+          escrowSequence?: string;
+     };
+
+     cancelTimeBasedEscrow?: {
+          escrowSequence?: string;
+     };
+
+     createConditionalEscrow?: {
+          amount?: string;
+          destination?: string;
+          finishAfter?: number;
+          cancelAfter?: number;
+          currency?: string;
+          issuer?: string;
+          condition?: string;
+     };
+
+     finishConditionalEscrow?: {
+          escrowOwner?: string;
+          escrowSequence?: string;
+          condition?: string;
+          fulfillment?: string;
+     };
+
+     paymentChannelCreate?: {
+          amount?: string;
+          destination?: string;
+          settleDelay?: string;
+     };
+
+     paymentChannelFund?: {
+          amount?: string;
+          channelIDField?: string;
+     };
+
+     paymentChannelClose?: {
+          channelIDField?: string;
+     };
+
      createTicket?: {
           ticketCountField?: string;
      };
@@ -171,6 +221,10 @@ export class TransactionUiService {
      checkIdField = signal('');
      ticketCountField = signal('');
      credentialIDs = signal<string[]>([]);
+     finishAfter = signal(0);
+     cancelAfter = signal(0);
+     currency = signal('');
+     issuer = signal('');
      isMemoEnabled = signal(false);
      useMultiSign = signal(false);
      isRegularKeyAddress = signal(false);
@@ -193,6 +247,12 @@ export class TransactionUiService {
      domain = signal<string>('');
      avatarUrl = signal<string>('');
      userEmail = signal('');
+     channelIDField = signal<string>('');
+     settleDelayField = signal<string>('');
+     publicKeyField = signal<string>('');
+     channelClaimSignatureField = signal<string>('');
+     authorizedWalletAddress = signal<string>('');
+     authorizedWallets: { name?: string; address: string }[] = [];
      memoField = signal('');
      multiSignAddress = signal('');
      multiSignSeeds = signal('');
@@ -222,8 +282,6 @@ export class TransactionUiService {
      explorerUrl = computed(() => {
           const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
           return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
-          // const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
-          // return AppConstants.XRPL_EXPLORER_URL[env] || AppConstants.XRPL_EXPLORER_URL.DEVNET;
      });
 
      private _infoData = new BehaviorSubject<any | null>(null);
@@ -556,6 +614,48 @@ export class TransactionUiService {
           createTicket?: {
                ticketCountField?: any;
           };
+          createTimeBasedEscrow?: {
+               amount?: string;
+               destination?: string;
+               finishAfter?: number;
+               cancelAfter?: number;
+               currency?: string;
+               issuer?: string;
+          };
+          finishTimeBasedEscrow?: {
+               escrowOwner?: string;
+               escrowSequence?: string;
+          };
+          cancelTimeBasedEscrow?: {
+               escrowSequence?: string;
+          };
+          createConditionalEscrow?: {
+               amount?: string;
+               destination?: string;
+               finishAfter?: number;
+               cancelAfter?: number;
+               currency?: string;
+               issuer?: string;
+               condition?: string;
+          };
+          finishConditionalEscrow?: {
+               escrowOwner?: string;
+               escrowSequence?: string;
+               condition?: string;
+               fulfillment?: string;
+          };
+          paymentChannelCreate?: {
+               amount?: string;
+               destination?: string;
+               settleDelay?: string;
+          };
+          paymentChannelFund?: {
+               amount?: string;
+               channelIDField?: string;
+          };
+          paymentChannelClose?: {
+               channelIDField?: string;
+          };
           regularKey?: {
                isRegularKey: boolean;
                address: string;
@@ -616,6 +716,48 @@ export class TransactionUiService {
                },
                createTicket: {
                     ticketCountField: this.ticketCountField(),
+               },
+               createTimeBasedEscrow: {
+                    amount: this.amountField(),
+                    destination: options?.createTimeBasedEscrow?.destination,
+                    finishAfter: options?.createTimeBasedEscrow?.finishAfter || this.finishAfter(),
+                    cancelAfter: options?.createTimeBasedEscrow?.cancelAfter || this.cancelAfter(),
+                    currency: this.currency(),
+                    issuer: this.issuer(),
+               },
+               finishTimeBasedEscrow: {
+                    escrowOwner: options?.finishTimeBasedEscrow?.escrowOwner,
+                    escrowSequence: options?.finishTimeBasedEscrow?.escrowSequence,
+               },
+               cancelTimeBasedEscrow: {
+                    escrowSequence: options?.cancelTimeBasedEscrow?.escrowSequence,
+               },
+               createConditionalEscrow: {
+                    amount: this.amountField(),
+                    destination: options?.createConditionalEscrow?.destination,
+                    finishAfter: options?.createConditionalEscrow?.finishAfter || this.finishAfter(),
+                    cancelAfter: options?.createConditionalEscrow?.cancelAfter || this.cancelAfter(),
+                    currency: this.currency(),
+                    issuer: this.issuer(),
+                    condition: options?.createConditionalEscrow?.condition,
+               },
+               finishConditionalEscrow: {
+                    escrowOwner: options?.finishConditionalEscrow?.escrowOwner,
+                    escrowSequence: options?.finishConditionalEscrow?.escrowSequence,
+                    condition: options?.finishConditionalEscrow?.condition,
+                    fulfillment: options?.finishConditionalEscrow?.fulfillment,
+               },
+               paymentChannelCreate: {
+                    amount: this.amountField(),
+                    destination: options?.paymentChannelCreate?.destination,
+                    settleDelay: options?.paymentChannelCreate?.settleDelay,
+               },
+               paymentChannelFund: {
+                    amount: options?.paymentChannelFund?.amount,
+                    channelIDField: options?.paymentChannelFund?.channelIDField,
+               },
+               paymentChannelClose: {
+                    channelIDField: options?.paymentChannelClose?.channelIDField,
                },
                multiSign: {
                     enabled: this.useMultiSign(),

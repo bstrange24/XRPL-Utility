@@ -66,7 +66,7 @@
                          <div class="switch-group">
                               <label class="switch">
                                    <input type="checkbox" [checked]="wantsOptions()" (change)="toggleOptions($event.target.checked)" name="showOptionalXrp" />
-                                   <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID, Credentials)
+                                   <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
                               </label>
                          </div>
 
@@ -93,12 +93,21 @@
                                    <p class="form-hint">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
                                    <input type="text" placeholder="e.g. INV_123" [ngModel]="txUiService.invoiceIdField()" (ngModelChange)="txUiService.invoiceIdField.set($event)" name="invoiceIdField" />
                               </div>
+                         </div>
+
+                         <!-- Domain ID and Credential ID -->
+                         <!-- <div class="form-row">
+                              <div class="form-group">
+                                   <label for="invoiceIdField">Domain ID</label>
+                                   <p class="form-hint">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
+                                   <textarea [(ngModel)]="txUiService.domainId" name="domainId" placeholder="Valid Domain ID" class="memo-input"></textarea>
+                              </div>
                               <div class="form-group">
                                    <label for="invoiceIdField">Credential IDs</label>
                                    <p class="form-hint">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
                                    <textarea [(ngModel)]="credentialIDs" name="credentialIDs" placeholder="Separate multiple credential IDs with commas" class="memo-input"></textarea>
                               </div>
-                         </div>
+                         </div> -->
                          }
 
                          <app-transaction-options [showWhenTab]="['send']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />

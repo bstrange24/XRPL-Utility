@@ -2440,6 +2440,10 @@ export class UtilsService {
           }
      }
 
+     setDomainId(tx: any, domainId: string) {
+          tx.DomainID = domainId;
+     }
+
      setCredentialIDsField(tx: any, credentials: string[]) {
           tx.CredentialIDs = credentials;
      }

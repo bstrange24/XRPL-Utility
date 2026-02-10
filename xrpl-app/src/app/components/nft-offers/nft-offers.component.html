@@ -38,82 +38,64 @@
                     </button>
                </div>
 
-               <!-- Sell NFT Menu -->
-               @if (activeTab() === 'sell') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <!-- <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon> -->
-                              <!-- <ng-icon name="heroBanknotes" size="27" class="text-red-600"></ng-icon> -->
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Sell NFT</h2>
-                              <p class="submenu-info-secondary-text">Sell an NFT on the market.</p>
-                         </div>
+               <div class="submenu-info-text">
+                    <!-- Sell NFT Menu -->
+                    @if (activeTab() === 'sell') {
+                    <div class="blue-button-submenu">
+                         <!-- <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon> -->
+                         <!-- <ng-icon name="heroBanknotes" size="27" class="text-red-600"></ng-icon> -->
+                         <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Sell NFT</h2>
+                         <p class="submenu-info-secondary-text">Sell an NFT on the market.</p>
+                    </div>
+                    }
 
-               <!-- Buy NFT Menu -->
-               @if (activeTab() === 'buy') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Buy NFT</h2>
-                              <p class="submenu-info-secondary-text">Buy an NFT from the market.</p>
-                         </div>
+                    <!-- Buy NFT Menu -->
+                    @if (activeTab() === 'buy') {
+                    <div class="green-button-submenu">
+                         <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Buy NFT</h2>
+                         <p class="submenu-info-secondary-text">Buy an NFT from the market.</p>
+                    </div>
+                    }
 
-               <!-- Sell Offer Menu -->
-               @if (activeTab() === 'sellOffer') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Sell NFT Offer</h2>
-                              <p class="submenu-info-secondary-text">Create an offer to sell an NFT.</p>
-                         </div>
+                    <!-- Sell Offer Menu -->
+                    @if (activeTab() === 'sellOffer') {
+                    <div class="blue-button-submenu">
+                         <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Sell NFT Offer</h2>
+                         <p class="submenu-info-secondary-text">Create an offer to sell an NFT.</p>
+                    </div>
+                    }
 
-               <!-- Buy Offer Menu -->
-               @if (activeTab() === 'buyOffer') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Buy NFT Offer</h2>
-                              <p class="submenu-info-secondary-text">Create an offer to buy an NFT.</p>
-                         </div>
+                    <!-- Buy Offer Menu -->
+                    @if (activeTab() === 'buyOffer') {
+                    <div class="green-button-submenu">
+                         <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Buy NFT Offer</h2>
+                         <p class="submenu-info-secondary-text">Create an offer to buy an NFT.</p>
+                    </div>
+                    }
 
-               <!-- Cancel Offer Menu -->
-               @if (activeTab() === 'cancelOffer') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Cancel NFT Offer</h2>
-                              <p class="submenu-info-secondary-text">Cancel and existing NFT offer.</p>
-                         </div>
+                    <!-- Cancel Offer Menu -->
+                    @if (activeTab() === 'cancelOffer') {
+                    <div class="red-button-submenu">
+                         <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
                     </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">Cancel NFT Offer</h2>
+                         <p class="submenu-info-secondary-text">Cancel and existing NFT offer.</p>
+                    </div>
+                    }
                </div>
-               }
 
                <!-- Dynamic info panel -->
                <!-- NFT Offers Info Panel - Collapsible & Beautiful -->

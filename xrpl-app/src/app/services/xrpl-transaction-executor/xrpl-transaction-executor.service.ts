@@ -518,8 +518,8 @@ export class XrplTransactionExecutorService {
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
-               simulateMessage: 'Simulating Escrow cancel (no changes will be made)...',
-               submitMessage: 'Cancelling escrow on the XRP Ledger...',
+               simulateMessage: 'Simulating Payment Channel creation (no changes will be made)...',
+               submitMessage: 'Creating Payment Channel on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -539,8 +539,8 @@ export class XrplTransactionExecutorService {
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
-               simulateMessage: 'Simulating Escrow cancel (no changes will be made)...',
-               submitMessage: 'Cancelling escrow on the XRP Ledger...',
+               simulateMessage: 'Simulating Payment Channel funding (no changes will be made)...',
+               submitMessage: 'Funding Payment Channel on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });
@@ -560,8 +560,8 @@ export class XrplTransactionExecutorService {
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
-               simulateMessage: 'Simulating Escrow cancel (no changes will be made)...',
-               submitMessage: 'Cancelling escrow on the XRP Ledger...',
+               simulateMessage: 'Simulating Payment Channel action (no changes will be made)...',
+               submitMessage: 'Sending Payment Channel action to the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });

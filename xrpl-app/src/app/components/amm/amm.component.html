@@ -42,9 +42,9 @@
                     </button>
                </div>
 
-               <!-- Create AMM Menu -->
-               @if (activeTab() === 'createAMM') {
                <div class="submenu-info-text">
+                    <!-- Create AMM Menu -->
+                    @if (activeTab() === 'createAMM') {
                     <div class="blue-button-submenu">
                          <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                     </div>
@@ -52,12 +52,10 @@
                          <h2 class="submenu-info-main-text">Create</h2>
                          <p class="submenu-info-secondary-text">Create an AMM on the XRPL.</p>
                     </div>
-               </div>
-               }
+                    }
 
-               <!-- Deposit to AMM Menu -->
-               @if (activeTab() === 'depositToAMM') {
-               <div class="submenu-info-text">
+                    <!-- Deposit to AMM Menu -->
+                    @if (activeTab() === 'depositToAMM') {
                     <div class="blue-button-submenu">
                          <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
@@ -65,12 +63,10 @@
                          <h2 class="submenu-info-main-text">Deposit assets to AMM</h2>
                          <p class="submenu-info-secondary-text">Deposit assets to an AMM for the currency pair.</p>
                     </div>
-               </div>
-               }
+                    }
 
-               <!-- Withdrawl Token From AMM Menu -->
-               @if (activeTab() === 'withdrawlTokenFromAMM') {
-               <div class="submenu-info-text">
+                    <!-- Withdrawl Token From AMM Menu -->
+                    @if (activeTab() === 'withdrawlTokenFromAMM') {
                     <div class="blue-button-submenu">
                          <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
@@ -78,12 +74,10 @@
                          <h2 class="submenu-info-main-text">Withdrawl assets from AMM</h2>
                          <p class="submenu-info-secondary-text">Withdrawl assets from an AMM for the currency pair..</p>
                     </div>
-               </div>
-               }
+                    }
 
-               <!-- Clawback From AMM Menu -->
-               @if (activeTab() === 'clawbackFromAMM') {
-               <div class="submenu-info-text">
+                    <!-- Clawback From AMM Menu -->
+                    @if (activeTab() === 'clawbackFromAMM') {
                     <div class="blue-button-submenu">
                          <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
@@ -91,12 +85,10 @@
                          <h2 class="submenu-info-main-text">Clawback assets from AMM</h2>
                          <p class="submenu-info-secondary-text">Clawback assets issued from an AMM.</p>
                     </div>
-               </div>
-               }
+                    }
 
-               <!-- Swap Via AMM Menu -->
-               @if (activeTab() === 'swapViaAMM') {
-               <div class="submenu-info-text">
+                    <!-- Swap Via AMM Menu -->
+                    @if (activeTab() === 'swapViaAMM') {
                     <div class="blue-button-submenu">
                          <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
@@ -104,12 +96,10 @@
                          <h2 class="submenu-info-main-text">Swap assets Via AMM</h2>
                          <p class="submenu-info-secondary-text">Swap assets on an AMM.</p>
                     </div>
-               </div>
-               }
+                    }
 
-               <!-- Delete AMM Menu -->
-               @if (activeTab() === 'deleteAMM') {
-               <div class="submenu-info-text">
+                    <!-- Delete AMM Menu -->
+                    @if (activeTab() === 'deleteAMM') {
                     <div class="blue-button-submenu">
                          <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
@@ -117,8 +107,8 @@
                          <h2 class="submenu-info-main-text">Delete AMM</h2>
                          <p class="submenu-info-secondary-text">Delete AMM from the XRPL.</p>
                     </div>
+                    }
                </div>
-               }
 
                <!-- Info Message -->
                <!-- @if (txUiService.infoMessage) {

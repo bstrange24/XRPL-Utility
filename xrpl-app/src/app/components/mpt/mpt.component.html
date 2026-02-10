@@ -43,96 +43,74 @@
                     </button>
                </div>
 
-               <!-- Create Menu -->
-               @if (activeTab() === 'create') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Create MPT Token</h2>
-                              <p class="submenu-info-secondary-text">Create MPT Tokens for the selected account.</p>
-                         </div>
+               <div class="submenu-info-text">
+                    <!-- Create Menu -->
+                    @if (activeTab() === 'create') {
+                    <div class="blue-button-submenu">
+                         <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Create MPT Token</h2>
+                         <p class="submenu-info-secondary-text">Create MPT Tokens for the selected account.</p>
+                    </div>
+                    }
 
-               <!-- Authorize/Unauthorize Menu -->
-               @if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Authorize/Unauthorize MPT Token</h2>
-                              <p class="submenu-info-secondary-text">Authorize/Unauthorize MPT Tokens for the selected account.</p>
-                         </div>
+                    <!-- Authorize/Unauthorize Menu -->
+                    @if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
+                    <div class="blue-button-submenu">
+                         <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Authorize/Unauthorize MPT Token</h2>
+                         <p class="submenu-info-secondary-text">Authorize/Unauthorize MPT Tokens for the selected account.</p>
+                    </div>
+                    }
 
-               <!-- Fund Menu -->
-               @if (activeTab() === 'send') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <!-- <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon> -->
-                              <ng-icon name="heroBanknotes" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Send MPT</h2>
-                              <p class="submenu-info-secondary-text">Send created MPT to another XRPL address</p>
-                         </div>
+                    <!-- Fund Menu -->
+                    @if (activeTab() === 'send') {
+                    <div class="green-button-submenu">
+                         <!-- <lucide-icon name="banknote-arrow-down" size="25"></lucide-icon> -->
+                         <ng-icon name="heroBanknotes" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Send MPT</h2>
+                         <p class="submenu-info-secondary-text">Send created MPT to another XRPL address</p>
+                    </div>
+                    }
 
-               <!-- Claim Menu -->
-               @if (activeTab() === 'lock' || activeTab() === 'unlock') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroLockOpen" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Lock/Unlock MPT</h2>
-                              <p class="submenu-info-secondary-text">Lock/Unlock MPT so another XRPL address can't send it</p>
-                         </div>
+                    <!-- Claim Menu -->
+                    @if (activeTab() === 'lock' || activeTab() === 'unlock') {
+                    <div class="blue-button-submenu">
+                         <ng-icon name="heroLockOpen" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Lock/Unlock MPT</h2>
+                         <p class="submenu-info-secondary-text">Lock/Unlock MPT so another XRPL address can't send it</p>
+                    </div>
+                    }
 
-               <!-- Close Menu -->
-               @if (activeTab() === 'clawback') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Clawback MPT</h2>
-                              <p class="submenu-info-secondary-text">Clawback a previously created MPT</p>
-                         </div>
+                    <!-- Close Menu -->
+                    @if (activeTab() === 'clawback') {
+                    <div class="red-button-submenu">
+                         <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Clawback MPT</h2>
+                         <p class="submenu-info-secondary-text">Clawback a previously created MPT</p>
+                    </div>
+                    }
 
-               <!-- Close Menu -->
-               @if (activeTab() === 'destroy') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Destroy MPT</h2>
-                              <p class="submenu-info-secondary-text">Destroy a previously created MPT</p>
-                         </div>
+                    <!-- Close Menu -->
+                    @if (activeTab() === 'destroy') {
+                    <div class="red-button-submenu">
+                         <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
                     </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">Destroy MPT</h2>
+                         <p class="submenu-info-secondary-text">Destroy a previously created MPT</p>
+                    </div>
+                    }
                </div>
-               }
 
                <!-- Dynamic info panel -->
                <!-- MPT Info Panel - Collapsible & Premium -->

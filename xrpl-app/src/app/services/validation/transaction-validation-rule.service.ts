@@ -389,6 +389,20 @@ export class ValidationService {
           };
      }
 
+     private validateDate(action: any, field: string): ValidatorFn {
+          return ctx => {
+               let value = ctx.inputs[action]?.[field];
+
+               // If field is empty, let requiredFields handle it
+               if (value === '') return null;
+
+               const num = Number(value);
+               if (isNaN(num)) return 'Date must be a valid number';
+               if (num <= 0) return 'Date must be greater than 0';
+               return null;
+          };
+     }
+
      private validateDidData(data: string, documentType: string): ValidatorFn {
           return ctx => {
                if (!data) return null; // Not required
@@ -1119,26 +1133,27 @@ export class ValidationService {
           // PaymentChannelCreate
           this.registerRule({
                transactionType: 'PaymentChannelCreate',
-               requiredFields: ['seed', 'amount', 'destination', 'settleDelay'],
+               requiredFields: ['wallet.seed', 'paymentChannelCreate.amount', 'paymentChannelCreate.destination', 'paymentChannelCreate.settleDelay'],
                validators: [
-                    this.positiveAmount('amount'),
+                    this.positiveAmount('paymentChannelCreate'),
 
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     // Destination address valid
-                    this.isValidAddress('destination.address'),
-                    // this.notSelf('senderAddress', 'destination'),
+                    this.isValidAddress('paymentChannelCreate.destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
-                    this.optionalNumeric('settleDelay', 0),
+                    this.optionalNumeric('paymentChannelCreate.settleDelay', 0),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1157,26 +1172,25 @@ export class ValidationService {
           // PaymentChannelFund
           this.registerRule({
                transactionType: 'PaymentChannelFund',
-               requiredFields: ['seed', 'amount', 'destination', 'channelID'],
+               requiredFields: ['wallet.seed', 'paymentChannelFund.amount', 'paymentChannelFund.channelIDField'],
                validators: [
-                    this.positiveAmount('amount'),
+                    this.positiveAmount('paymentChannelFund'),
 
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
-                    // Destination address valid
-                    this.isValidAddress('destination.address'),
-                    // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
-                    this.optionalNumeric('channelID', 0),
+                    this.optionalNumeric('paymentChannelFund.amount', 0),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1195,26 +1209,28 @@ export class ValidationService {
           // PaymentChannelRenew
           this.registerRule({
                transactionType: 'PaymentChannelRenew',
-               requiredFields: ['seed', 'amount', 'destination', 'channelID'],
+               requiredFields: ['wallet.seed', 'paymentChannelRenew.amount', 'paymentChannelRenew.destination', 'paymentChannelRenew.channelIDField'],
                validators: [
-                    this.positiveAmount('amount'),
+                    this.positiveAmount('paymentChannelRenew'),
 
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
                     // Destination address valid
-                    this.isValidAddress('destination.address'),
+                    this.isValidAddress('paymentChannelRenew.destination'),
                     // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
-                    this.optionalNumeric('channelID', 0),
+                    this.optionalNumeric('paymentChannelRenew.channelIDField', 0),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1233,21 +1249,23 @@ export class ValidationService {
           // PaymentChannelClaim
           this.registerRule({
                transactionType: 'PaymentChannelClaim',
-               requiredFields: ['seed', 'amount', 'channelID', 'channelClaimSignatureField', 'publicKeyField'],
+               requiredFields: ['wallet.seed', 'paymentChannelClaim.amount', 'paymentChannelClaim.channelIDField', 'paymentChannelClaim.channelClaimSignatureField', 'paymentChannelClaim.publicKeyField'],
                validators: [
-                    this.positiveAmount('amount'),
+                    this.positiveAmount('paymentChannelClaim'),
 
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
-                    this.optionalNumeric('channelID', 0),
+                    this.optionalNumeric('paymentChannelClaim.channelIDField', 0),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1266,19 +1284,21 @@ export class ValidationService {
           // PaymentChannelClose
           this.registerRule({
                transactionType: 'PaymentChannelClose',
-               requiredFields: ['seed', 'channelID'],
+               requiredFields: ['wallet.seed', 'paymentChannelClose.channelIDField'],
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
-                    this.optionalNumeric('channelID', 0),
+                    this.optionalNumeric('channelIDField.channelIDField', 0),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1297,15 +1317,17 @@ export class ValidationService {
           // PaymentChannelGenerateCreatorClaimSignature
           this.registerRule({
                transactionType: 'PaymentChannelGenerateCreatorClaimSignature',
-               requiredFields: ['seed', 'amount', 'channelID', 'destination'],
+               requiredFields: ['seed', 'amount', 'channelIDField', 'destination'],
                validators: [
                     this.positiveAmount('amount'),
 
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -1316,7 +1338,7 @@ export class ValidationService {
                     // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
-                    this.optionalNumeric('channelID', 0),
+                    this.optionalNumeric('channelIDField', 0),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1338,10 +1360,12 @@ export class ValidationService {
                requiredFields: ['seed'], // adjust as needed
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -1383,10 +1407,12 @@ export class ValidationService {
                requiredFields: ['seed'], // adjust as needed
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -1454,10 +1480,12 @@ export class ValidationService {
                requiredFields: ['seed'], // adjust as needed
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -1498,10 +1526,12 @@ export class ValidationService {
                requiredFields: ['seed'], // adjust as needed
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -1527,10 +1557,12 @@ export class ValidationService {
                requiredFields: ['seed'], // adjust as needed
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -1563,10 +1595,12 @@ export class ValidationService {
                requiredFields: ['seed'], // adjust as needed
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
@@ -1592,10 +1626,12 @@ export class ValidationService {
                requiredFields: ['currency', 'issuer', 'amount'],
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
@@ -1622,10 +1658,12 @@ export class ValidationService {
                requiredFields: ['currency', 'issuer'],
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
@@ -1651,10 +1689,12 @@ export class ValidationService {
                requiredFields: ['currency', 'issuer', 'amount'],
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
@@ -1681,10 +1721,12 @@ export class ValidationService {
                requiredFields: ['currency', 'issuer', 'amount'],
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
@@ -1711,10 +1753,12 @@ export class ValidationService {
                requiredFields: ['destination'],
                validators: [
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
@@ -1726,38 +1770,47 @@ export class ValidationService {
           // CreateTimeBasedEscrow
           this.registerRule({
                transactionType: 'CreateTimeBasedEscrow',
-               requiredFields: ['seed', 'amount', 'destination', 'finishTime', 'cancelTime'],
+               requiredFields: ['wallet.seed', 'createTimeBasedEscrow.amount', 'createTimeBasedEscrow.destination', 'createTimeBasedEscrow.finishAfter', 'createTimeBasedEscrow.cancelAfter'],
                validators: [
-                    this.positiveAmount('amount'),
-
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
 
-                    // Destination address valid
-                    this.isValidAddress('destination.address'),
-                    // this.notSelf('senderAddress', 'destination'),
+                    this.positiveAmount('createTimeBasedEscrow'),
+                    this.validateDate('createTimeBasedEscrow', 'finishAfter'),
+                    this.validateDate('createTimeBasedEscrow', 'cancelAfter'),
+                    ctx => {
+                         const finishAfter = new Date(ctx.inputs['createTimeBasedEscrow'].finishAfter).getTime();
+                         const cancelAfter = new Date(ctx.inputs['createTimeBasedEscrow'].cancelAfter).getTime();
+                         if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {
+                              return 'Finish After must be before Cancel After';
+                         }
+                         return null;
+                    },
+                    this.isValidAddress('createTimeBasedEscrow.destination'),
                     this.requireDestinationTagIfNeededNewDestination(),
 
-                    this.optionalNumeric('finishTime', 0),
-                    this.optionalNumeric('cancelTime', 0),
+                    this.validDestinationTag('createTimeBasedEscrow'),
+                    this.optionalNumeric('destinationTag', 0),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
+                    // // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
+                    // // Ticket validation
                     this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    // // Regular Key signing requirements (only if selected and not multi-signing)
                     ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    // // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
 
                     this.invoiceId(),
@@ -1767,7 +1820,7 @@ export class ValidationService {
           // FinishTimeBasedEscrow
           this.registerRule({
                transactionType: 'FinishTimeBasedEscrow',
-               requiredFields: ['seed', 'escrowSequence'],
+               requiredFields: ['wallet.seed', 'finishTimeBasedEscrow.escrowOwner', 'finishTimeBasedEscrow.escrowSequence'],
                validators: [
                     // this.positiveAmount(),
 
@@ -1780,9 +1833,6 @@ export class ValidationService {
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
-
-                    // this.notSelf('senderAddress', 'destination'),
-                    this.requireDestinationTagIfNeededNewDestination(),
 
                     this.optionalNumeric('escrowSequence', 0),
 
@@ -1797,30 +1847,25 @@ export class ValidationService {
 
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
-
-                    this.invoiceId(),
                ],
           });
 
           // CancelTimeBasedEscrow
           this.registerRule({
                transactionType: 'CancelTimeBasedEscrow',
-               requiredFields: ['seed', 'escrowSequence'],
+               requiredFields: ['wallet.seed', 'cancelTimeBasedEscrow.escrowSequence'],
                validators: [
-                    // this.positiveAmount(),
-
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 
                     ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
-
-                    // this.notSelf('senderAddress', 'destination'),
-                    this.requireDestinationTagIfNeededNewDestination(),
 
                     this.optionalNumeric('escrowSequence', 0),
 
@@ -1835,8 +1880,87 @@ export class ValidationService {
 
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
+               ],
+          });
 
-                    this.invoiceId(),
+          // CreateConditionalEscrow
+          this.registerRule({
+               transactionType: 'CreateConditionalEscrow',
+               requiredFields: ['wallet.seed', 'createConditionalEscrow.amount', 'createConditionalEscrow.destination', 'createConditionalEscrow.finishAfter', 'createConditionalEscrow.cancelAfter', 'createConditionalEscrow.condition'],
+               validators: [
+                    ctx => {
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    this.positiveAmount('createConditionalEscrow'),
+                    this.validateDate('createConditionalEscrow', 'finishAfter'),
+                    this.validateDate('createConditionalEscrow', 'cancelAfter'),
+                    ctx => {
+                         const finishAfter = new Date(ctx.inputs['createConditionalEscrow'].finishAfter).getTime();
+                         const cancelAfter = new Date(ctx.inputs['createConditionalEscrow'].cancelAfter).getTime();
+                         if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {
+                              return 'Finish After must be before Cancel After';
+                         }
+                         return null;
+                    },
+                    this.isValidAddress('createConditionalEscrow.destination'),
+                    this.requireDestinationTagIfNeededNewDestination(),
+
+                    this.validDestinationTag('createConditionalEscrow'),
+                    this.optionalNumeric('destinationTag', 0),
+
+                    // // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // // Ticket validation
+                    this.ticketValidation(),
+
+                    // // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // FinishConditionalEscrow
+          this.registerRule({
+               transactionType: 'FinishConditionalEscrow',
+               requiredFields: ['wallet.seed', 'finishConditionalEscrow.escrowOwner', 'finishConditionalEscrow.escrowSequence', 'finishConditionalEscrow.condition', 'finishConditionalEscrow.fulfillment'],
+               validators: [
+                    ctx => {
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              if (value === 'unknown') return 'Account seed is invalid';
+                         }
+
+                         return null;
+                    },
+
+                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+
+                    this.optionalNumeric('escrowSequence', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
                ],
           });
 
@@ -1848,10 +1972,12 @@ export class ValidationService {
                     // this.positiveAmount(),
 
                     ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                         const seed = this.getSeed(ctx);
+                         if (seed) {
+                              const { type, value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
+
                          return null;
                     },
 

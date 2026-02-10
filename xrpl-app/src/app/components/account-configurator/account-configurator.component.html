@@ -22,98 +22,80 @@
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'modifyMetaData'" (click)="setTab('modifyMetaData')">
                          <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
-                         Account Meta Data
+                         Meta Data
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'modifyDepositAuth'" (click)="setTab('modifyDepositAuth')">
                          <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
-                         Deposit Authorization
+                         Deposit Auth
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'modifyMultiSigners'" (click)="setTab('modifyMultiSigners')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Multi Signer Accounts
+                         Multi Sign
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'modifyRegularKey'" (click)="setTab('modifyRegularKey')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Regular Key Account
+                         Regular Key
                     </button>
                </div>
 
-               <!-- Modify Flag Menu -->
-               @if (activeTab() === 'modifyAccountFlags') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="white-button-submenu">
-                              <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Modify Account Flags</h2>
-                              <p class="submenu-info-secondary-text">Set or Clear account level flags.</p>
-                         </div>
+               <div class="submenu-info-text">
+                    <!-- Modify Flag Menu -->
+                    @if (activeTab() === 'modifyAccountFlags') {
+                    <div class="white-button-submenu">
+                         <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Modify Account Flags</h2>
+                         <p class="submenu-info-secondary-text">Set or Clear account level flags.</p>
+                    </div>
+                    }
 
-               <!-- Modify Meta Data Menu -->
-               @if (activeTab() === 'modifyMetaData') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="white-button-submenu">
-                              <!-- <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon> -->
-                              <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Modify Account Meta Data</h2>
-                              <p class="submenu-info-secondary-text">Modify the account meta data.</p>
-                         </div>
+                    <!-- Modify Meta Data Menu -->
+                    @if (activeTab() === 'modifyMetaData') {
+                    <div class="white-button-submenu">
+                         <!-- <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon> -->
+                         <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Modify Account Meta Data</h2>
+                         <p class="submenu-info-secondary-text">Modify the account meta data.</p>
+                    </div>
+                    }
 
-               <!-- Modify Deposti Auth Menu -->
-               @if (activeTab() === 'modifyDepositAuth') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="white-button-submenu">
-                              <!-- <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon> -->
-                              <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Modify Account Deposit Auth</h2>
-                              <p class="submenu-info-secondary-text">Modify the account Deposit Authorization Addresses</p>
-                         </div>
+                    <!-- Modify Deposti Auth Menu -->
+                    @if (activeTab() === 'modifyDepositAuth') {
+                    <div class="white-button-submenu">
+                         <!-- <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon> -->
+                         <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Modify Account Deposit Auth</h2>
+                         <p class="submenu-info-secondary-text">Modify the account Deposit Authorization Addresses</p>
+                    </div>
+                    }
 
-               <!-- Add Multi Signer Menu -->
-               @if (activeTab() === 'modifyMultiSigners') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Modify Multi Sign</h2>
-                              <p class="submenu-info-secondary-text">Modify Multi Signers for signing transactions.</p>
-                         </div>
+                    <!-- Add Multi Signer Menu -->
+                    @if (activeTab() === 'modifyMultiSigners') {
+                    <div class="green-button-submenu">
+                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Modify Multi Sign</h2>
+                         <p class="submenu-info-secondary-text">Modify Multi Signers for signing transactions.</p>
+                    </div>
+                    }
 
-               <!-- Add Regular Key signer Menu -->
-               @if (activeTab() === 'modifyRegularKey') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Modify Regular Key Address</h2>
-                              <p class="submenu-info-secondary-text">Modify Regular Key address for signing transactions.</p>
-                         </div>
+                    <!-- Add Regular Key signer Menu -->
+                    @if (activeTab() === 'modifyRegularKey') {
+                    <div class="green-button-submenu">
+                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
                     </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">Modify Regular Key Address</h2>
+                         <p class="submenu-info-secondary-text">Modify Regular Key address for signing transactions.</p>
+                    </div>
+                    }
                </div>
-               }
 
                <!-- Dynamic info panel -->
                <!-- Structured, collapsible Account Configuration Info Panel -->
@@ -330,7 +312,7 @@
                                    </div>
 
                                    <div>
-                                        <div class="form-row-account-flags" style="margin-top: 0.5em; margin-bottom: 0.5em">
+                                        <div class="form-row-account-flags" style="margin-top: 0.5em; margin-bottom: 1em">
                                              <!-- isMessageKey -->
                                              <div class="flag-item-account-flags" [class.enabled]="txUiService.isMessageKey()" (click)="toggleMessageKey()">
                                                   <div class="flag-header-account">

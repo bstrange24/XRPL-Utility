@@ -34,25 +34,20 @@
                     </button>
                </div>
 
-               <!-- Create Offer Menu -->
-               @if (activeTab() === 'createOffer') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Create Offer</h2>
-                              <p class="submenu-info-secondary-text">Create Offer on the XRPL DEX.</p>
-                         </div>
+               <div class="submenu-info-text">
+                    <!-- Create Offer Menu -->
+                    @if (activeTab() === 'createOffer') {
+                    <div class="blue-button-submenu">
+                         <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Create Offer</h2>
+                         <p class="submenu-info-secondary-text">Create Offer on the XRPL DEX.</p>
+                    </div>
+                    }
 
-               <!-- Get Offer Menu -->
-               <!-- @if (activeTab() === 'getOffers') {
-               <div>
-                    <div class="submenu-info-text">
+                    <!-- Get Offer Menu -->
+                    <!-- @if (activeTab() === 'getOffers') {
                          <div class="blue-button-submenu">
                               <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                          </div>
@@ -60,39 +55,30 @@
                               <h2 class="submenu-info-main-text">Offers</h2>
                               <p class="submenu-info-secondary-text">Get existing offers, orderbooks and create offers on the XRPL DEX.</p>
                          </div>
-                    </div>
-               </div>
                } -->
 
-               <!-- Get OrderBook Menu -->
-               @if (activeTab() === 'getOrderBook') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Get Order Book</h2>
-                              <p class="submenu-info-secondary-text">Get order book on the XRPL Dex for the currency pair.</p>
-                         </div>
+                    <!-- Get OrderBook Menu -->
+                    @if (activeTab() === 'getOrderBook') {
+                    <div class="blue-button-submenu">
+                         <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Get Order Book</h2>
+                         <p class="submenu-info-secondary-text">Get order book on the XRPL Dex for the currency pair.</p>
+                    </div>
+                    }
 
-               <!-- Cancel Offer Menu -->
-               @if (activeTab() === 'cancelOffer') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Cancel Offer</h2>
-                              <p class="submenu-info-secondary-text">Cancel offer on the XRPL DEX.</p>
-                         </div>
+                    <!-- Cancel Offer Menu -->
+                    @if (activeTab() === 'cancelOffer') {
+                    <div class="red-button-submenu">
+                         <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
                     </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">Cancel Offer</h2>
+                         <p class="submenu-info-secondary-text">Cancel offer on the XRPL DEX.</p>
+                    </div>
+                    }
                </div>
-               }
 
                <!-- Info Message -->
                <!-- Replace the problematic sections in your template -->

@@ -30,50 +30,40 @@
                     </button>
                </div>
 
-               <!-- Create Menu -->
-               @if (activeTab() === 'create') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Create NFT</h2>
-                              <p class="submenu-info-secondary-text">Create NFT for the selected account.</p>
-                         </div>
+               <div class="submenu-info-text">
+                    <!-- Create Menu -->
+                    @if (activeTab() === 'create') {
+                    <div class="blue-button-submenu">
+                         <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Create NFT</h2>
+                         <p class="submenu-info-secondary-text">Create NFT for the selected account.</p>
+                    </div>
+                    }
 
-               <!-- Authorize/Unauthorize Menu -->
-               @if (activeTab() === 'burn') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Burn NFT</h2>
-                              <p class="submenu-info-secondary-text">Burn NFT for the selected account.</p>
-                         </div>
+                    <!-- Authorize/Unauthorize Menu -->
+                    @if (activeTab() === 'burn') {
+                    <div class="red-button-submenu">
+                         <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
                     </div>
-               </div>
-               }
+                    <div>
+                         <h2 class="submenu-info-main-text">Burn NFT</h2>
+                         <p class="submenu-info-secondary-text">Burn NFT for the selected account.</p>
+                    </div>
+                    }
 
-               <!-- Fund Menu -->
-               @if (activeTab() === 'updateNFTMetadata') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="white-button-submenu">
-                              <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Modify NFT Meta Data</h2>
-                              <p class="submenu-info-secondary-text">Modify NFT Meta Data for the selected NFT</p>
-                         </div>
+                    <!-- Fund Menu -->
+                    @if (activeTab() === 'updateNFTMetadata') {
+                    <div class="white-button-submenu">
+                         <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
                     </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">Modify NFT Meta Data</h2>
+                         <p class="submenu-info-secondary-text">Modify NFT Meta Data for the selected NFT</p>
+                    </div>
+                    }
                </div>
-               }
 
                <!-- Dynamic info panel -->
                @if (infoData(); as info) {

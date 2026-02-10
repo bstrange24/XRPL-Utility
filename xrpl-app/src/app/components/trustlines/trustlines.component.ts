@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, computed, DestroyRef, signal, ChangeDetectionStrategy } from '@angular/core';
+import { OnInit, Component, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, effect } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -29,6 +29,7 @@ import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.compon
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { EMPTY, from, switchMap } from 'rxjs';
 
 interface RippleState {
      LedgerEntryType: 'RippleState';
@@ -81,13 +82,14 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
 
      // Destination Dropdown
-     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
      destinationSearchQuery = signal<string>(''); // ← What user is typing right now
      checkIdSearchQuery = signal<string>('');
 
      // Reactive State (Signals)
+     private walletCache = new Map<string, xrpl.Wallet>();
+     private readonly knownTrustLinesIssuers = signal<{ [key: string]: string[] }>({ XRP: [] });
      activeTab = signal<'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'clawbackTokens' | 'addNewIssuers'>('setTrustline');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
@@ -169,9 +171,9 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      destinationItems = computed(() => {
           const currentAddr = this.currentWallet().address;
 
-          return this.destinations().map(d => ({
+          return this.allDestinations().map(d => ({
                id: d.address,
-               display: d.name || 'Unknown Wallet',
+               display: d.name ?? 'Unknown Wallet',
                secondary: d.address,
                isCurrentAccount: d.address === currentAddr,
           }));
@@ -192,7 +194,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                                 return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
                            })(),
                isCurrentAccount: false,
-               isCurrentCode: curr === currentCode, // This one!
+               isCurrentCode: curr === currentCode,
                isCurrentToken: false,
           }));
      });
@@ -217,27 +219,22 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           ...this.customDestinations(),
      ]);
 
+     private readonly destinationMap = computed(() => {
+          return new Map(this.allDestinations().map(d => [d.address, d]));
+     });
+
      destinationDisplay = computed(() => {
           const addr = this.selectedDestinationAddress();
-          if (!addr) return this.destinationSearchQuery(); // while typing → show typed text
-
-          const dest = this.destinations().find(d => d.address === addr);
-          if (!dest) return addr;
-
-          return this.dropdownService.formatDisplay(dest);
+          if (!addr) return this.destinationSearchQuery();
+          return this.dropdownService.formatDisplay(this.destinationMap().get(addr) ?? { address: addr });
      });
 
      filteredDestinations = computed(() => {
           const q = this.destinationSearchQuery().trim().toLowerCase();
-          const list = this.destinations();
+          if (!q) return this.allDestinations();
 
-          if (q === '') {
-               return list;
-          }
-
-          return this.destinations()
-               .filter(d => d.address !== this.currentWallet().address)
-               .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
+          const current = this.currentWallet().address;
+          return this.allDestinations().filter(d => d.address !== current && (d.address.toLowerCase().includes(q) || d.name?.toLowerCase().includes(q)));
      });
 
      issuerItems = computed(() => {
@@ -271,15 +268,14 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           if (!wallet?.address) return null;
 
           const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
-          const baseUrl = this.txUiService.explorerUrl();
+          const explorerBase = this.txUiService.explorerUrl();
           const address = wallet.address;
 
-          // Just count — NO heavy mapping!
           const allTrustlines = this.existingIOUs();
           const count = allTrustlines.length;
 
           // Super lightweight links
-          const links = count > 0 ? `<a href="${baseUrl}account/${address}/tokens" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View tokens</a>` : '';
+          const links = count > 0 ? `<a href="${explorerBase}account/${address}/tokens" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View tokens</a>` : '';
 
           // Only build list when panel is expanded — this is the key!
           const trustlinesToShow = this.infoPanelExpanded()
@@ -320,6 +316,18 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
 
      constructor() {
           super();
+          // Auto-select typed address if it's valid and not already selected
+          effect(() => {
+               const typed = this.destinationSearchQuery().trim();
+               const current = this.selectedDestinationAddress();
+
+               if (typed && typed !== current && xrpl.isValidAddress(typed)) {
+                    // Only auto-set if it's not already in the list (prevents loop)
+                    if (!this.allDestinations().some(d => d.address === typed)) {
+                         this.selectedDestinationAddress.set(typed);
+                    }
+               }
+          });
           this.txUiService.clearAllOptionsAndMessages();
      }
 
@@ -329,7 +337,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           this.currencyFieldDropDownValue.set('XRP');
 
           // Subscribe once
-          this.trustlineCurrency.currencies$.subscribe(currencies => {
+          this.trustlineCurrency.currencies$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(currencies => {
                this.currencies.set(currencies);
                if (currencies.length > 0 && !this.currencyFieldDropDownValue()) {
                     this.currencyFieldDropDownValue.set(currencies[0]);
@@ -337,17 +345,18 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                }
           });
 
-          this.trustlineCurrency.issuers$.subscribe(issuers => {
+          this.trustlineCurrency.issuers$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(issuers => {
                this.issuers.set(issuers);
           });
 
-          this.trustlineCurrency.selectedIssuer$.subscribe(issuer => {
+          this.trustlineCurrency.selectedIssuer$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(issuer => {
                this.issuerFields.set(issuer);
           });
 
-          this.trustlineCurrency.balance$.subscribe(balance => {
+          this.trustlineCurrency.balance$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(balance => {
                this.currencyBalanceField.set(balance); // ← This is your live balance!
           });
+
           this.txUiService.clearAllOptions();
      }
 
@@ -359,10 +368,11 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      private async setupWalletSubscriptions() {
           this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
                if (hasWallets) {
-                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
+                    this.txUiService.clearWarning?.();
                } else {
                     this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
                     this.txUiService.setError('');
+                    this.txUiService.setInfoMessage('');
                }
           });
 
@@ -378,21 +388,27 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                }
           });
 
-          this.walletManagerService.selectedIndex$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async index => {
-               const wallet = this.wallets()[index];
-               if (wallet) {
-                    this.selectWallet(wallet);
-                    this.xrplCache.invalidateAccountCache(wallet.address);
-                    this.clearFields(true);
-                    await this.getTrustlinesForAccount(false);
-               }
-          });
+          this.walletManagerService.selectedIndex$
+               .pipe(
+                    takeUntilDestroyed(this.destroyRef),
+                    switchMap(index => {
+                         const wallet = this.wallets()[index];
+                         if (!wallet) return EMPTY;
+
+                         this.selectWallet(wallet);
+                         // this.xrplCache.invalidateAccountCache(wallet.address);
+                         this.txUiService.clearAllOptions();
+                         this.clearFields(true);
+                         return from(this.getTrustlinesForAccount(false));
+                    })
+               )
+               .subscribe();
      }
 
      private selectWallet(wallet: Wallet): void {
           this.currentWallet.set({ ...wallet });
           this.txUiService.currentWallet.set({ ...wallet });
-          this.xrplCache.invalidateAccountCache(wallet.address);
+          // this.xrplCache.invalidateAccountCache(wallet.address);
 
           // Prevent self as destination
           if (this.selectedDestinationAddress() === wallet.address) {
@@ -425,7 +441,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      toggleInfoPanel() {
-          this.infoPanelExpanded.update(v => !v);
+          this.infoPanelExpanded.update(expanded => !expanded);
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -470,7 +486,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
 
           this.clearFields(true);
           if (this.hasWallets()) {
-               await this.getTrustlinesForAccount(true);
+               await this.getTrustlinesForAccount(false);
           }
      }
 
@@ -481,6 +497,10 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      async getTrustlinesForAccount(forceRefresh = false): Promise<void> {
           await this.withPerf('getChecks', async () => {
                this.txUiService.clearAllOptionsAndMessages();
+               if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
+                    throw new Error('Please select a wallet.');
+               }
+
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
@@ -672,11 +692,23 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                this.txUiService.clearAllOptionsAndMessages();
 
                try {
+                    let destinationAddress = this.selectedDestinationAddress().trim();
+                    if (!destinationAddress) {
+                         // Fallback: allow manual typing from search query if valid
+                         const typed = this.destinationSearchQuery().trim();
+                         if (typed && xrpl.isValidAddress(typed)) {
+                              destinationAddress = typed;
+                         }
+                    }
+
+                    if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
+                         return this.txUiService.setError('Please enter a valid destination address or select one from the dropdown.');
+                    }
+
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
                     let [accountInfo, fee, lastLedgerIndex, trustLines, serverInfo] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplService.getXrplServerInfo(client, 'current', '')]);
                     // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
-                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
 
                     // this.utilsService.logAccountInfoObjects(accountInfo, null);
                     // this.utilsService.logLedgerObjects(fee, lastLedgerIndex, serverInfo);
@@ -790,10 +822,20 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           await this.withPerf('clawbackTokens', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
+                    let destinationAddress = this.selectedDestinationAddress().trim();
+                    if (!destinationAddress) {
+                         // Fallback: allow manual typing from search query if valid
+                         const typed = this.destinationSearchQuery().trim();
+                         if (typed && xrpl.isValidAddress(typed)) {
+                              destinationAddress = typed;
+                         }
+                    }
 
-                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
-                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
+                    if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
+                         return this.txUiService.setError('Please enter a valid destination address or select one from the dropdown.');
+                    }
+
+                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [accountInfo, accountObjects, trustLines, serverInfo, fee, currentLedger] = await Promise.all([
                          this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
                          this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''),
@@ -893,7 +935,6 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      private getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          // this.existingIOUs
           const mapped = (accountObjects.result.account_objects ?? [])
                .filter((obj: any): obj is xrpl.LedgerEntry.RippleState => {
                     if (obj.LedgerEntryType !== 'RippleState') return false;
@@ -930,9 +971,11 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                          },
                     };
                })
+               // Sort alphabetically by issuer or currency if available
                .sort((a, b) => a.HighLimit.issuer.localeCompare(b.HighLimit.issuer));
+
           this.existingIOUs.set(mapped);
-          this.utilsService.logObjects('existingIOUs - filtered', mapped);
+          this.utilsService.logObjects('existingIOUs', mapped);
      }
 
      get availableCurrencies(): string[] {
@@ -940,8 +983,18 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      private async getWallet(): Promise<xrpl.Wallet> {
+          const key = `${this.currentWallet().seed}:${this.currentWallet().encryptionAlgorithm}`;
+          if (this.walletCache.has(key)) {
+               console.log('Using cached wallet for seed with key', key);
+               return this.walletCache.get(key)!;
+          }
+
+          console.log('Creating wallet for seed with encryption algorithm', this.currentWallet().encryptionAlgorithm);
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
+
           if (!wallet) throw new Error('Wallet could not be created');
+
+          this.walletCache.set(key, wallet);
           return wallet;
      }
 
@@ -969,9 +1022,31 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           this.getExistingIOUs(accountObjects, wallet.classicAddress);
           this.getExistingMpts(accountObjects, wallet.classicAddress);
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-          if (addDest) this.addNewDestinationFromUser(destination || '');
+          this.addCustomDestination(addDest, destination);
           this.refreshUiState(wallet, accountInfo, accountObjects);
           this.txUiService.clearAllOptions();
+     }
+
+     private addCustomDestination(addDest: boolean, destination: string | null) {
+          if (addDest && destination) {
+               const addr = destination.trim();
+
+               if (xrpl.isValidAddress(addr)) {
+                    // Add to custom list if not already present
+                    const exists = this.allDestinations().some(d => d.address === addr);
+                    if (!exists) {
+                         this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: addr }]);
+                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
+                         this.updateDestinations();
+                    }
+
+                    // Force select it (so next send starts with it pre-selected)
+                    this.selectedDestinationAddress.set(addr);
+
+                    // Clear typing state so display shows nice formatted name
+                    this.destinationSearchQuery.set('');
+               }
+          }
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -1032,6 +1107,16 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           this.storageService.set('destinations', allItems);
           this.ensureDefaultNotSelected();
      }
+
+     private readonly allDestinations = computed(() => {
+          const wallets = this.wallets().map(w => ({
+               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
+               address: w.address,
+               source: 'wallet' as const,
+          }));
+
+          return [...wallets, ...this.customDestinations()];
+     });
 
      ensureDefaultNotSelected() {
           const currentAddress = this.currentWallet().address;
@@ -1157,17 +1242,8 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                this.newIssuer.set('');
                this.clearFlagsValue();
           }
-          this.typedDestination.set('');
           this.selectedDestinationAddress.set('');
           this.ticketSequence.set('');
-     }
-
-     private addNewDestinationFromUser(destination: string): void {
-          if (destination && xrpl.isValidAddress(destination) && !this.destinations().some(d => d.address === destination)) {
-               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
-               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
-               this.updateDestinations();
-          }
      }
 
      copyMptId(mpt_issuance_id: string) {

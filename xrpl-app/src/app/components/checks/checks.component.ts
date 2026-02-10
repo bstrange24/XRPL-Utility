@@ -1028,7 +1028,12 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.getExistingMpts(accountObjects, wallet.classicAddress);
           this.getExistingIOUs(accountObjects, wallet.classicAddress);
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-          // if (addDest && destination) this.addNewDestinationFromUser(destination);
+          this.addCustomDestination(addDest, destination);
+          this.refreshUiState(wallet, accountInfo, accountObjects);
+          this.txUiService.clearAllOptions();
+     }
+
+     private addCustomDestination(addDest: boolean, destination: string | null) {
           if (addDest && destination) {
                const addr = destination.trim();
 
@@ -1048,8 +1053,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     this.destinationSearchQuery.set('');
                }
           }
-          this.refreshUiState(wallet, accountInfo, accountObjects);
-          this.txUiService.clearAllOptions();
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
