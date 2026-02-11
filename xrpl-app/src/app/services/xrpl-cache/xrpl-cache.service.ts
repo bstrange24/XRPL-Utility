@@ -29,7 +29,6 @@ export class XrplCacheService {
 
      async getClient(getFreshClient: () => Promise<xrpl.Client>): Promise<xrpl.Client> {
           if (this.client && this.client.isConnected()) {
-               console.log('Using cached XRPL client connection');
                return this.client;
           }
 
@@ -74,7 +73,6 @@ export class XrplCacheService {
      async getOrFetch<T>(key: string, fetchFn: () => Promise<T>, ttl?: number): Promise<T> {
           const cached = this.get<T>(key);
           if (cached !== null) {
-               console.log('Using cache data.................');
                return cached;
           }
 
@@ -88,10 +86,8 @@ export class XrplCacheService {
 
           try {
                this.set(key, data, ttl);
-               console.log(`Cached ${key} successfully (size ~${JSON.stringify(data).length} chars)`);
           } catch (err) {
                console.error(`Failed to cache ${key}:`, err);
-               // Optionally: still return data even if caching failed
           }
 
           return data;

@@ -1249,7 +1249,7 @@ export class ValidationService {
           // PaymentChannelClaim
           this.registerRule({
                transactionType: 'PaymentChannelClaim',
-               requiredFields: ['wallet.seed', 'paymentChannelClaim.amount', 'paymentChannelClaim.channelIDField', 'paymentChannelClaim.channelClaimSignatureField', 'paymentChannelClaim.publicKeyField'],
+               requiredFields: ['wallet.seed', 'paymentChannelClaim.amount', 'paymentChannelClaim.channelIDField', 'paymentChannelClaim.claimSignature'],
                validators: [
                     this.positiveAmount('paymentChannelClaim'),
 

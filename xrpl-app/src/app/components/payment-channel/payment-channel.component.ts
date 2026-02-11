@@ -6,7 +6,6 @@ import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
-import { PaymentChannelFund, PaymentChannelClaim } from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { sign, verify } from 'ripple-keypairs';
 import { UtilsService } from '../../services/util-service/utils.service';
@@ -31,7 +30,7 @@ import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/selec
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, switchMap } from 'rxjs';
+import { EMPTY, from, switchMap } from 'rxjs';
 
 interface PaymentChannelObject {
      LedgerEntryType: string;
@@ -99,17 +98,9 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal(false);
      paymentChannelCancelAfterTimeField = signal<string>('');
-     paymentChannelCancelAfterTimeUnit = signal<string>('seconds');
      channelAction = signal<string>('create');
      selectedWalletIndex = signal<number>(0);
      authorizedWalletIndex = signal<number>(1);
-     actions = [
-          { value: 'create', label: 'Create' },
-          { value: 'fund', label: 'Fund' },
-          { value: 'renew', label: 'Renew' },
-          { value: 'claim', label: 'Claim' },
-          { value: 'close', label: 'Close' },
-     ];
      flags = {
           renew: false,
           close: true,
@@ -151,10 +142,6 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           ...this.customDestinations(),
      ]);
 
-     private readonly destinationMap = computed(() => {
-          return new Map(this.allDestinations().map(d => [d.address, d]));
-     });
-
      destinationDisplay = computed(() => {
           const addr = this.selectedDestinationAddress();
           if (!addr) return this.destinationSearchQuery();
@@ -169,206 +156,47 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           return this.allDestinations().filter(d => d.address !== current && (d.address.toLowerCase().includes(q) || d.name?.toLowerCase().includes(q)));
      });
 
-     closeableItems = computed(() => {
-          return this.closablePaymentChannels().map(e => {
-               const amt = `${(e.totalAmount || '0').split(' ')[0]} XRP Total`;
-               const remainingSafe = e.remaining ?? '0'; // fallback if missing
-               return {
-                    id: e.id?.toString() ?? 'unknown',
-                    display: `${amt} → ${remainingSafe} Remaining`,
-                    secondary: `Channel ID: ${e.id ?? '?'} • You created`,
-               };
-          });
-     });
+     closeableItems = computed(() => this.closablePaymentChannels().map(e => this.formatChannelItem(e, '→', 'You created')));
+     claimItems = computed(() => this.receivablePaymentChannels().map(e => this.formatChannelItem(e, '←', `From ${e.sender?.slice(0, 7)}...${e.sender?.slice(-7) ?? 'unknown'}`)));
+     renewableItems = computed(() => this.existingPaymentChannels().map(e => this.formatChannelItem(e, '→', 'You created')));
+     fundableItems = computed(() => this.existingPaymentChannels().map(e => this.formatChannelItem(e, '→', 'You created')));
+     signatureItems = computed(() => this.existingPaymentChannels().map(e => this.formatChannelItem(e, '→', `Destination: ${e.destination.slice(0, 7)}...${e.destination.slice(-7)}`)));
 
-     claimItems = computed(() => {
-          return this.receivablePaymentChannels().map(e => {
-               const amt = `${(e.totalAmount || '0').split(' ')[0]} XRP Total`;
-               const remainingSafe = e.remaining ?? '0'; // fallback
-               return {
-                    id: e.id?.toString() ?? 'unknown',
-                    display: `${amt} ← ${remainingSafe} Remaining`,
-                    secondary: `Channel ID: ${e.id ?? '?'} • From ${e.sender?.slice(0, 7) + '...' + e.sender?.slice(-7) || 'unknown'}`,
-               };
-          });
-     });
+     private selectedChannelId = computed(() => this.txUiService.channelIDField()?.toString() ?? '');
+     selectedClosablePaymentChannelItem = computed(() => this.closeableItems().find(i => i.id === this.selectedChannelId()) ?? null);
+     selectedClaimPaymentChannelItem = computed(() => this.claimItems().find(i => i.id === this.selectedChannelId()) ?? null);
+     selectedRenewPaymentChannelItem = computed(() => this.renewableItems().find(i => i.id === this.selectedChannelId()) ?? null);
+     selectedFundPaymentChannelItem = computed(() => this.fundableItems().find(i => i.id === this.selectedChannelId()) ?? null);
+     selectedSignatureChannelItem = computed(() => this.signatureItems().find(i => i.id === this.selectedChannelId()) ?? null);
 
-     renewableItems = computed(() => {
-          return this.existingPaymentChannels().map(e => {
-               const amt = `${(e.totalAmount || '0').split(' ')[0]} XRP Total`;
-               const remainingSafe = e.remaining ?? '0';
-               return {
-                    id: e.id?.toString() ?? 'unknown',
-                    display: `${amt} → ${remainingSafe} Remaining`,
-                    secondary: `Channel ID: ${e.id ?? '?'} • You created`,
-               };
-          });
-     });
+     onClosePaymentChannelIdSelected = this.setChannelId;
+     onClaimPaymentChannelIdSelected = this.setChannelId;
+     onRenewPaymentChannelIdSelected = this.setChannelId;
+     onFundPaymentChannelIdSelected = this.setChannelId;
 
-     fundableItems = computed(() => {
-          return this.existingPaymentChannels().map(e => {
-               const amt = `${(e.totalAmount || '0').split(' ')[0]} XRP`;
-               const remainingSafe = e.remaining ?? '0';
-               return {
-                    id: e.id?.toString() ?? 'unknown',
-                    display: `${amt} → ${remainingSafe} Remaining`,
-                    secondary: `Channel ID: ${e.id ?? '?'} • You created`,
-               };
-          });
-     });
-
-     selectedClosablePaymentChannelItem = computed(() => {
-          const channelId = this.txUiService.channelIDField();
-          if (!channelId) return null;
-          return this.closeableItems().find(i => i.id === channelId) || null;
-     });
-
-     selectedClaimPaymentChannelItem = computed(() => {
-          const channelId = this.txUiService.channelIDField()?.toString();
-          if (!channelId) return null;
-          return this.claimItems().find(i => i.id === channelId) || null;
-     });
-
-     selectedRenewPaymentChannelItem = computed(() => {
-          const channelId = this.txUiService.channelIDField();
-          if (!channelId) return null;
-          return this.renewableItems().find(i => i.id === channelId) || null;
-     });
-
-     selectedFundPaymentChannelItem = computed(() => {
-          const channelId = this.txUiService.channelIDField()?.toString();
-          if (!channelId) return null;
-          return this.fundableItems().find(i => i.id === channelId) || null;
-     });
-
-     onClosePaymentChannelIdSelected(item: SelectItem | null) {
-          if (!item?.id) {
-               this.txUiService.channelIDField.set('');
-               return;
-          }
-
-          const paymentChannel = this.closablePaymentChannels().find((e: any) => e.id?.toString() === item.id);
-
-          if (paymentChannel) {
-               this.txUiService.channelIDField.set(paymentChannel.id);
-          }
-     }
-
-     onClaimPaymentChannelIdSelected(item: SelectItem | null) {
-          if (!item?.id) {
-               this.txUiService.channelIDField.set('');
-               return;
-          }
-
-          const paymentChannel = this.receivablePaymentChannels().find((e: any) => e.id?.toString() === item.id);
-
-          if (paymentChannel) {
-               this.txUiService.channelIDField.set(paymentChannel.id);
-          }
-     }
-
-     onRenewPaymentChannelIdSelected(item: SelectItem | null) {
-          if (!item?.id) {
-               this.txUiService.channelIDField.set('');
-               return;
-          }
-
-          const paymentChannel = this.existingPaymentChannels().find((e: any) => e.id?.toString() === item.id);
-
-          if (paymentChannel) {
-               this.txUiService.channelIDField.set(paymentChannel.id);
-          }
-     }
-
-     onFundPaymentChannelIdSelected(item: SelectItem | null) {
-          if (!item?.id) {
-               this.txUiService.channelIDField.set('');
-               return;
-          }
-
-          const paymentChannel = this.existingPaymentChannels().find((e: any) => e.id?.toString() === item.id);
-
-          if (paymentChannel) {
-               this.txUiService.channelIDField.set(paymentChannel.id);
-          }
-     }
-
-     selectedChannelForClaim = computed(() => {
-          const channelId = this.txUiService.channelIDField();
-          if (!channelId) return null;
-
-          // Look in receivable channels (you're the destination)
-          return this.receivablePaymentChannels().find(c => c.id === channelId) || null;
-     });
-
-     selectedChannelForRenewOrClose = computed(() => {
-          const channelId = this.txUiService.channelIDField();
-          if (!channelId) return null;
-
-          // Look in channels you created (you're the source)
-          return this.existingPaymentChannels().find(c => c.id === channelId) || null;
-     });
+     selectedChannelForClaim = computed(() => this.receivableChannelMap().get(this.selectedChannelId()) ?? null);
+     selectedChannelForRenewOrClose = computed(() => this.existingChannelMap().get(this.selectedChannelId()) ?? null);
+     selectedChannelForClose = computed(() => this.closableChannelMap().get(this.selectedChannelId()) ?? null);
 
      isCurrentWalletDestination = computed(() => {
-          const channel = this.selectedChannelForClaim();
-          return !!channel && channel.sender !== this.currentWallet().address;
+          const c = this.selectedChannelForClaim();
+          return !!c && c.sender !== this.currentWallet().address;
      });
 
      isCurrentWalletSource = computed(() => {
-          const channel = this.selectedChannelForRenewOrClose();
-          return !!channel && channel.destination !== this.currentWallet().address; // or check sender if you added it
+          const c = this.selectedChannelForRenewOrClose();
+          return !!c && c.destination !== this.currentWallet().address;
      });
 
      hasClaimableChannels = computed(() => this.receivablePaymentChannels().length > 0);
      hasRenewableChannels = computed(() => this.existingPaymentChannels().length > 0);
 
-     selectedClaimChannel = computed(() => {
-          const id = this.txUiService.channelIDField();
-          return this.receivablePaymentChannels().find(c => c.id === id) ?? null;
-     });
-
-     signatureItems = computed(() => {
-          return this.existingPaymentChannels().map(e => {
-               const amt = `${(e.totalAmount || '0').split(' ')[0]} XRP Total`;
-               const remainingSafe = e.remaining ?? '0';
-               return {
-                    id: e.id?.toString() ?? 'unknown',
-                    display: `${amt} → ${remainingSafe} Remaining`,
-                    secondary: `Channel ID: ${e.id ?? '?'} • Destination: ${e.destination.slice(0, 7)}...${e.destination.slice(-7)}`,
-               };
-          });
-     });
-
-     selectedSignatureChannelItem = computed(() => {
-          const channelId = this.txUiService.channelIDField()?.toString();
-          if (!channelId) return null;
-          return this.signatureItems().find(i => i.id === channelId) || null;
-     });
-
-     onSignatureChannelSelected(item: SelectItem | null) {
-          if (!item?.id) {
-               this.txUiService.channelIDField.set('');
-               return;
-          }
-          const channel = this.existingPaymentChannels().find(e => e.id?.toString() === item.id);
-          if (channel) {
-               this.txUiService.channelIDField.set(channel.id);
-               // Optional: pre-fill amount with full remaining if desired
-               this.txUiService.amountField.set(channel.totalAmount.split(' ')[0] || '0');
-          }
-     }
-
-     selectedRenewChannel = computed(() => {
-          const id = this.txUiService.channelIDField();
-          return this.existingPaymentChannels().find(c => c.id === id) ?? null;
-     });
-
      isValidClaimTab = computed(
-          () => this.activeTab() === 'claim' && this.hasClaimableChannels() && !!this.selectedClaimChannel() && this.selectedClaimChannel()!.sender !== this.currentWallet().address // destination = current
+          () => this.activeTab() === 'claim' && this.hasClaimableChannels() && !!this.selectedChannelForClaim() && this.selectedChannelForClaim()!.sender !== this.currentWallet().address // destination = current
      );
 
      isValidRenewTab = computed(
-          () => this.activeTab() === 'renew' && this.hasRenewableChannels() && !!this.selectedRenewChannel() && this.selectedRenewChannel()!.destination !== this.currentWallet().address // source = current
+          () => this.activeTab() === 'renew' && this.hasRenewableChannels() && !!this.selectedChannelForRenewOrClose() && this.selectedChannelForRenewOrClose()!.destination !== this.currentWallet().address // source = current
      );
 
      infoData = computed(() => {
@@ -400,6 +228,8 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      });
 
      hasWallets = computed(() => this.wallets().length > 0);
+
+     private walletKey = computed(() => `${this.currentWallet().seed}:${this.currentWallet().encryptionAlgorithm}`);
 
      constructor() {
           super();
@@ -461,7 +291,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                          this.txUiService.clearAllOptionsAndMessages();
                          this.clearInputFields();
                          this.populateDefaultDateTime();
-                         return this.getPaymentChannels(true);
+                         return from(this.getPaymentChannels(false));
                     })
                )
                .subscribe();
@@ -539,25 +369,33 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      }
 
      async getPaymentChannels(forceRefresh = false): Promise<void> {
-          await this.withPerf('getPaymentChannels', async () => {
+          await this.measure('getPaymentChannels', async () => {
                this.txUiService.clearAllOptionsAndMessages();
+
                if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
                     throw new Error('Please select a wallet.');
                }
 
                try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const [{ accountInfo, accountObjects }, paymentChannelObjects] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'payment_channel')]);
+                    const [client, wallet] = await this.measure('getPaymentChannels:fetchClientAndWallet', () => Promise.all([this.getClient(), this.getWallet()]));
+                    const [{ accountInfo, accountObjects }, paymentChannelObjects] = await this.measure('getPaymentChannels:fetchAccountDataAndChannels', () => Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh), this.xrplCache.getAccountObjectsWithType(wallet.classicAddress, false, 'payment_channel')]));
+                    const errors = await this.measure('getPaymentChannels:validateAccountInfo', () =>
+                         this.validationService.validate('AccountInfo', {
+                              inputs: { seed: this.currentWallet().seed, accountInfo },
+                              client,
+                              accountInfo,
+                         })
+                    );
 
-                    const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
                     if (errors.length > 0) {
                          return this.txUiService.setError(errors.join('\n• '));
                     }
 
-                    this.processPaymentChannels(paymentChannelObjects.result.account_objects as PaymentChannelObject[], wallet.classicAddress);
-
-                    this.walletPaymentChannelCount.set(paymentChannelObjects.result.account_objects.length);
-                    this.refreshUiState(wallet, accountInfo, accountObjects);
+                    await this.measure('getPaymentChannels:processAndUpdate', async () => {
+                         this.processPaymentChannels(paymentChannelObjects.result.account_objects as PaymentChannelObject[], wallet.classicAddress);
+                         this.walletPaymentChannelCount.set(paymentChannelObjects.result.account_objects.length);
+                         this.refreshUiState(wallet, accountInfo, accountObjects);
+                    });
                } catch (error: any) {
                     console.error('Error in getPaymentChannels:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -606,256 +444,342 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      }
 
      private async createChannel(client: xrpl.Client, wallet: xrpl.Wallet, accountInfo: any, fee: string, currentLedger: number) {
-          let destinationAddress = this.selectedDestinationAddress().trim();
-          if (!destinationAddress) {
-               // Fallback: allow manual typing from search query if valid
-               const typed = this.destinationSearchQuery().trim();
-               if (typed && xrpl.isValidAddress(typed)) {
-                    destinationAddress = typed;
+          await this.measure('createChannel', async () => {
+               let destinationAddress = this.selectedDestinationAddress().trim();
+               if (!destinationAddress) {
+                    // Fallback: allow manual typing from search query if valid
+                    const typed = this.destinationSearchQuery().trim();
+                    if (typed && xrpl.isValidAddress(typed)) {
+                         destinationAddress = typed;
+                    }
                }
-          }
 
-          if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
-               return this.txUiService.setError('Please enter a valid destination address or select one from the dropdown.');
-          }
+               if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
+                    return this.txUiService.setError('Please enter a valid destination address or select one from the dropdown.');
+               }
 
-          const inputs = this.txUiService.getValidationInputs({
-               wallet: this.currentWallet(),
-               network: { accountInfo, fee, currentLedger },
-               paymentChannelCreate: { amount: this.txUiService.amountField(), destination: destinationAddress, settleDelay: this.txUiService.settleDelayField() },
-               regularKey: { isRegularKey: this.txUiService.isRegularKeyAddress(), address: this.txUiService.regularKeyAddress(), seed: this.txUiService.regularKeySeed() },
+               const inputs = this.txUiService.getValidationInputs({
+                    wallet: this.currentWallet(),
+                    network: { accountInfo, fee, currentLedger },
+                    paymentChannelCreate: {
+                         amount: this.txUiService.amountField(),
+                         destination: destinationAddress,
+                         settleDelay: this.txUiService.settleDelayField(),
+                    },
+                    regularKey: {
+                         isRegularKey: this.txUiService.isRegularKeyAddress(),
+                         address: this.txUiService.regularKeyAddress(),
+                         seed: this.txUiService.regularKeySeed(),
+                    },
+               });
+
+               // Measure validation (can be costly if many rules or network calls)
+               const errors = await this.measure('createChannel:validate', () => this.validationService.validate('PaymentChannelCreate', { inputs, client, accountInfo }));
+
+               if (errors.length > 0) {
+                    return this.txUiService.setError(errors.join('\n• '));
+               }
+
+               // Build the base transaction
+               let paymentChannelCreateTx: xrpl.PaymentChannelCreate = {
+                    TransactionType: 'PaymentChannelCreate',
+                    Account: wallet.classicAddress,
+                    Amount: xrpl.xrpToDrops(this.txUiService.amountField()),
+                    Destination: destinationAddress,
+                    SettleDelay: parseInt(this.txUiService.settleDelayField()),
+                    PublicKey: wallet.publicKey, // Required for PaymentChannelCreate
+                    Fee: fee,
+                    LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+               };
+
+               // Measure optional field setup (may involve additional client requests, e.g., for sequence/nonce)
+               await this.measure('createChannel:setOptionalFields', () => this.setTxOptionalFields(client, paymentChannelCreateTx, wallet, accountInfo));
+
+               // Measure the actual signing + submission / simulation
+               const result = await this.measure('createChannel:execute', () =>
+                    this.txExecutor.paymentChannelCreate(paymentChannelCreateTx, wallet, client, {
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    })
+               );
+
+               if (!result.success) {
+                    return this.txUiService.setError(`${result.error}`);
+               }
+
+               this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Payment Channel creation successfully!' : 'Payment Channel created successfully!';
           });
-
-          const errors = await this.validationService.validate('PaymentChannelCreate', { inputs, client, accountInfo });
-          if (errors.length > 0) {
-               return this.txUiService.setError(errors.join('\n• '));
-          }
-
-          let paymentChannelCreateTx: any = {
-               TransactionType: 'PaymentChannelCreate',
-               Account: wallet.classicAddress,
-               Amount: xrpl.xrpToDrops(this.txUiService.amountField()),
-               Destination: destinationAddress,
-               SettleDelay: parseInt(this.txUiService.settleDelayField()),
-               PublicKey: wallet.publicKey,
-               Fee: fee,
-               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-          };
-
-          await this.setTxOptionalFields(client, paymentChannelCreateTx, wallet, accountInfo);
-
-          const result = await this.txExecutor.paymentChannelCreate(paymentChannelCreateTx, wallet, client, {
-               useMultiSign: this.txUiService.useMultiSign(),
-               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-               regularKeyAddress: this.txUiService.regularKeyAddress(),
-               regularKeySeed: this.txUiService.regularKeySeed(),
-               multiSignAddress: this.txUiService.multiSignAddress(),
-               multiSignSeeds: this.txUiService.multiSignSeeds(),
-          });
-          if (!result.success) return this.txUiService.setError(`${result.error}`);
-          this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Payment Channel creation successfully!' : 'Payment Channel created successfully!';
      }
 
      private async fundChannel(client: xrpl.Client, wallet: xrpl.Wallet, accountInfo: any, fee: string, currentLedger: number) {
-          const inputs = this.txUiService.getValidationInputs({
-               wallet: this.currentWallet(),
-               network: { accountInfo, fee, currentLedger },
-               paymentChannelFund: { amount: this.txUiService.amountField(), channelIDField: this.txUiService.channelIDField() },
-               regularKey: { isRegularKey: this.txUiService.isRegularKeyAddress(), address: this.txUiService.regularKeyAddress(), seed: this.txUiService.regularKeySeed() },
+          await this.measure('fundChannel', async () => {
+               const inputs = this.txUiService.getValidationInputs({
+                    wallet: this.currentWallet(),
+                    network: { accountInfo, fee, currentLedger },
+                    paymentChannelFund: {
+                         amount: this.txUiService.amountField(),
+                         channelIDField: this.txUiService.channelIDField(),
+                    },
+                    regularKey: {
+                         isRegularKey: this.txUiService.isRegularKeyAddress(),
+                         address: this.txUiService.regularKeyAddress(),
+                         seed: this.txUiService.regularKeySeed(),
+                    },
+               });
+
+               // Measure validation (often involves multiple rules / potential network checks)
+               const errors = await this.measure('fundChannel:validate', () => this.validationService.validate('PaymentChannelFund', { inputs, client, accountInfo }));
+
+               if (errors.length > 0) {
+                    return this.txUiService.setError(errors.join('\n• '));
+               }
+
+               // Build the base transaction
+               let paymentChannelFundTx: xrpl.PaymentChannelFund = {
+                    TransactionType: 'PaymentChannelFund',
+                    Account: wallet.classicAddress,
+                    Channel: this.txUiService.channelIDField(),
+                    Amount: xrpl.xrpToDrops(this.txUiService.amountField()),
+                    Fee: fee,
+                    LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+               };
+
+               // Measure optional field setup (may involve ledger queries, sequence, etc.)
+               await this.measure('fundChannel:setOptionalFields', () => this.setTxOptionalFields(client, paymentChannelFundTx, wallet, accountInfo));
+
+               // Measure the signing + submission / simulation step (usually the slowest)
+               const result = await this.measure('fundChannel:execute', () =>
+                    this.txExecutor.paymentChannelFundTx(paymentChannelFundTx, wallet, client, {
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    })
+               );
+
+               if (!result.success) {
+                    return this.txUiService.setError(`${result.error}`);
+               }
+
+               this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Payment Channel funding successfully!' : 'Funded Payment Channel successfully!';
           });
-
-          const errors = await this.validationService.validate('PaymentChannelFund', { inputs, client, accountInfo });
-          if (errors.length > 0) {
-               return this.txUiService.setError(errors.join('\n• '));
-          }
-
-          let paymentChannelFundTx: PaymentChannelFund = {
-               TransactionType: 'PaymentChannelFund',
-               Account: wallet.classicAddress,
-               Channel: this.txUiService.channelIDField(),
-               Amount: xrpl.xrpToDrops(this.txUiService.amountField()),
-               Fee: fee,
-               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-          };
-
-          await this.setTxOptionalFields(client, paymentChannelFundTx, wallet, accountInfo);
-
-          const result = await this.txExecutor.paymentChannelFundTx(paymentChannelFundTx, wallet, client, {
-               useMultiSign: this.txUiService.useMultiSign(),
-               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-               regularKeyAddress: this.txUiService.regularKeyAddress(),
-               regularKeySeed: this.txUiService.regularKeySeed(),
-               multiSignAddress: this.txUiService.multiSignAddress(),
-               multiSignSeeds: this.txUiService.multiSignSeeds(),
-          });
-          if (!result.success) return this.txUiService.setError(`${result.error}`);
-          this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Payment Channel funding successfully!' : 'Funded Payment Channel successfully!';
      }
 
      private async claimChannel(client: xrpl.Client, wallet: xrpl.Wallet, accountInfo: any, fee: string, currentLedger: number, paymentChannelObjects: any) {
-          // Claim requires signature
-          if (!this.isValidClaimTab()) {
-               return this.txUiService.setError('Invalid claim setup. Ensure you are the destination and a channel is selected.');
-          }
+          await this.measure('claimChannel', async () => {
+               if (!this.isValidClaimTab()) {
+                    return this.txUiService.setError('Invalid claim setup. Ensure you are the destination and a channel is selected.');
+               }
 
-          if (!this.isCurrentWalletDestination()) {
-               return this.txUiService.setError('You can only claim from a payment channel if you are the destination account.');
-          }
+               if (!this.isCurrentWalletDestination()) {
+                    return this.txUiService.setError('You can only claim from a payment channel if you are the destination account.');
+               }
 
-          // const inputs = this.txUiService.getValidationInputs({
-          //      wallet: this.currentWallet(),
-          //      network: { accountInfo, fee, currentLedger },
-          //      paymentChannelFund: { amount: this.txUiService.amountField(), channelIDField: this.txUiService.channelIDField() },
-          //      regularKey: { isRegularKey: this.txUiService.isRegularKeyAddress(), address: this.txUiService.regularKeyAddress(), seed: this.txUiService.regularKeySeed() },
-          // });
+               const inputs = this.txUiService.getValidationInputs({
+                    wallet: this.currentWallet(),
+                    network: { accountInfo, fee, currentLedger },
+                    paymentChannelClaim: {
+                         amount: this.txUiService.amountField(),
+                         channelIDField: this.txUiService.channelIDField(),
+                         claimSignature: this.txUiService.channelClaimSignatureField(),
+                    },
+                    regularKey: {
+                         isRegularKey: this.txUiService.isRegularKeyAddress(),
+                         address: this.txUiService.regularKeyAddress(),
+                         seed: this.txUiService.regularKeySeed(),
+                    },
+               });
 
-          // const errors = await this.validationService.validate('PaymentChannelClaim', { inputs, client, accountInfo });
-          // if (errors.length > 0) {
-          //      return this.txUiService.setError(errors.join('\n• '));
-          // }
+               // Measure validation (rules engine + possible async checks)
+               const errors = await this.measure('claimChannel:validate', () => this.validationService.validate('PaymentChannelClaim', { inputs, client, accountInfo }));
 
-          const authorizedWallet = await this.getPaymentChannelAuthorizedWallet(this.txUiService.authorizedWalletAddress());
-          const [signatureVerified] = await Promise.all([this.xrplService.getChannelVerifiy(client, this.txUiService.channelIDField(), this.txUiService.amountField(), this.txUiService.publicKeyField(), this.txUiService.channelClaimSignatureField()), this.xrplService.getPaymentChannelAuthorized(client, this.txUiService.channelIDField(), this.txUiService.amountField(), authorizedWallet)]);
+               if (errors.length > 0) {
+                    return this.txUiService.setError(errors.join('\n• '));
+               }
 
-          const channels = paymentChannelObjects.result.account_objects as PaymentChannelObject[];
-          const channel = channels.find(c => c.index === this.txUiService.channelIDField());
-          if (!channel) {
-               return this.txUiService.setError(`Payment channel ${this.txUiService.channelIDField()} not found`);
-          }
+               const requestedDrops = xrpl.xrpToDrops(this.txUiService.amountField() || '0');
+               const channelExist = (paymentChannelObjects.result.account_objects as PaymentChannelObject[]).find(c => c.index === this.txUiService.channelIDField());
 
-          if (!signatureVerified.result.signature_verified) {
-               return this.txUiService.setError('Invalid signature');
-          }
+               if (!channelExist) {
+                    return this.txUiService.setError(`Payment channel ${this.txUiService.channelIDField()} not found`);
+               }
 
-          let paymentChannelClaimTx: PaymentChannelClaim = {
-               TransactionType: 'PaymentChannelClaim',
-               Account: wallet.classicAddress,
-               Channel: this.txUiService.channelIDField(),
-               Balance: xrpl.xrpToDrops(this.txUiService.amountField() || '0'),
-               Signature: this.txUiService.channelClaimSignatureField(),
-               PublicKey: this.txUiService.publicKeyField() || wallet.publicKey,
-               Fee: fee,
-               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-               Flags: this.flags.close ? xrpl.PaymentChannelClaimFlags.tfClose : undefined, // optional tfClose if you allow it
-          };
+               const remainingDrops = BigInt(channelExist.Amount || '0') - BigInt(channelExist.Balance || '0');
+               if (BigInt(requestedDrops) > remainingDrops) {
+                    return this.txUiService.setError(`Claim amount exceeds remaining (${xrpl.dropsToXrp(remainingDrops.toString())} XRP)`);
+               }
 
-          await this.setTxOptionalFields(client, paymentChannelClaimTx, wallet, accountInfo);
+               // Measure signature verification – this usually involves a network call to the ledger
+               const signatureVerified = await this.measure('claimChannel:verifySignature', () => this.xrplService.getChannelVerifiy(client, this.txUiService.channelIDField(), this.txUiService.amountField(), this.txUiService.publicKeyField(), this.txUiService.channelClaimSignatureField()));
 
-          const result = await this.txExecutor.paymentChannelClaimTx(paymentChannelClaimTx, wallet, client, {
-               useMultiSign: this.txUiService.useMultiSign(),
-               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-               regularKeyAddress: this.txUiService.regularKeyAddress(),
-               regularKeySeed: this.txUiService.regularKeySeed(),
-               multiSignAddress: this.txUiService.multiSignAddress(),
-               multiSignSeeds: this.txUiService.multiSignSeeds(),
+               if (!signatureVerified.result.signature_verified) {
+                    return this.txUiService.setError('Invalid signature');
+               }
+
+               // Build the claim transaction
+               let paymentChannelClaimTx: xrpl.PaymentChannelClaim = {
+                    TransactionType: 'PaymentChannelClaim',
+                    Account: wallet.classicAddress,
+                    Channel: this.txUiService.channelIDField(),
+                    Balance: xrpl.xrpToDrops(this.txUiService.amountField() || '0'),
+                    Signature: this.txUiService.channelClaimSignatureField(),
+                    PublicKey: this.txUiService.publicKeyField() || wallet.publicKey,
+                    Fee: fee,
+                    LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                    Flags: this.flags.close ? xrpl.PaymentChannelClaimFlags.tfClose : undefined,
+               };
+
+               // Measure optional fields setup (sequence, memos, etc. – may hit ledger)
+               await this.measure('claimChannel:setOptionalFields', () => this.setTxOptionalFields(client, paymentChannelClaimTx, wallet, accountInfo));
+
+               // Measure the actual signing + submission / simulation
+               const result = await this.measure('claimChannel:execute', () =>
+                    this.txExecutor.paymentChannelClaimTx(paymentChannelClaimTx, wallet, client, {
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    })
+               );
+
+               if (!result.success) {
+                    return this.txUiService.setError(`${result.error}`);
+               }
+
+               this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated claim successfully!' : 'Claim submitted successfully!';
           });
-
-          if (!result.success) return this.txUiService.setError(`${result.error}`);
-          this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated claim successfully!' : 'Claim submitted successfully!';
      }
 
      private async renewChannel(client: xrpl.Client, wallet: xrpl.Wallet, accountInfo: any, fee: string, currentLedger: number) {
-          // Source-only, no signature required
-          if (!this.isValidRenewTab()) {
-               return this.txUiService.setError('Invalid renew setup. Ensure you are the source/creator and a channel is selected.');
-          }
+          await this.measure('renewChannel', async () => {
+               if (!this.isValidRenewTab()) {
+                    return this.txUiService.setError('Invalid renew setup. Ensure you are the source/creator and a channel is selected.');
+               }
 
-          if (!this.isCurrentWalletSource()) {
-               return this.txUiService.setError('You can only renew a payment channel if you are the creator (source) of the channel.');
-          }
+               if (!this.isCurrentWalletSource()) {
+                    return this.txUiService.setError('You can only renew a payment channel if you are the creator (source) of the channel.');
+               }
 
-          // Renew typically uses PaymentChannelClaim with tfRenew (source resets expiration)
-          let paymentChannelClaimTx: PaymentChannelClaim = {
-               TransactionType: 'PaymentChannelClaim',
-               Account: wallet.classicAddress,
-               Channel: this.txUiService.channelIDField(),
-               Fee: fee,
-               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-               Flags: xrpl.PaymentChannelClaimFlags.tfRenew, // always set for renew
-          };
+               // Build minimal renew transaction (PaymentChannelClaim + tfRenew)
+               let paymentChannelClaimTx: xrpl.PaymentChannelClaim = {
+                    TransactionType: 'PaymentChannelClaim',
+                    Account: wallet.classicAddress,
+                    Channel: this.txUiService.channelIDField(),
+                    Fee: fee,
+                    LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                    Flags: xrpl.PaymentChannelClaimFlags.tfRenew,
+               };
 
-          // No Balance, Signature, or PublicKey needed for pure renew
-          await this.setTxOptionalFields(client, paymentChannelClaimTx, wallet, accountInfo);
+               // Measure optional fields (sequence, memos, etc. — may involve ledger lookup)
+               await this.measure('renewChannel:setOptionalFields', () => this.setTxOptionalFields(client, paymentChannelClaimTx, wallet, accountInfo));
 
-          const result = await this.txExecutor.paymentChannelClaimTx(paymentChannelClaimTx, wallet, client, {
-               useMultiSign: this.txUiService.useMultiSign(),
-               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-               regularKeyAddress: this.txUiService.regularKeyAddress(),
-               regularKeySeed: this.txUiService.regularKeySeed(),
-               multiSignAddress: this.txUiService.multiSignAddress(),
-               multiSignSeeds: this.txUiService.multiSignSeeds(),
+               // Measure signing + submission / simulation
+               const result = await this.measure('renewChannel:execute', () =>
+                    this.txExecutor.paymentChannelClaimTx(paymentChannelClaimTx, wallet, client, {
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    })
+               );
+
+               if (!result.success) {
+                    return this.txUiService.setError(`${result.error}`);
+               }
+
+               this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated renew successfully!' : 'Channel renewed successfully!';
           });
-
-          if (!result.success) return this.txUiService.setError(`${result.error}`);
-          this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated renew successfully!' : 'Channel renewed successfully!';
      }
 
      private async closeChannel(client: xrpl.Client, wallet: xrpl.Wallet, accountInfo: any, fee: string, currentLedger: number, paymentChannelObjects: any) {
-          const inputs = this.txUiService.getValidationInputs({
-               wallet: this.currentWallet(),
-               network: { accountInfo, fee, currentLedger },
-               paymentChannelClose: { channelIDField: this.txUiService.channelIDField() },
-               regularKey: { isRegularKey: this.txUiService.isRegularKeyAddress(), address: this.txUiService.regularKeyAddress(), seed: this.txUiService.regularKeySeed() },
-          });
+          await this.measure('closeChannel', async () => {
+               const inputs = this.txUiService.getValidationInputs({
+                    wallet: this.currentWallet(),
+                    network: { accountInfo, fee, currentLedger },
+                    paymentChannelClose: { channelIDField: this.txUiService.channelIDField() },
+                    regularKey: {
+                         isRegularKey: this.txUiService.isRegularKeyAddress(),
+                         address: this.txUiService.regularKeyAddress(),
+                         seed: this.txUiService.regularKeySeed(),
+                    },
+               });
 
-          const errors = await this.validationService.validate('PaymentChannelClose', { inputs, client, accountInfo });
-          if (errors.length > 0) {
-               return this.txUiService.setError(errors.join('\n• '));
-          }
+               // Measure validation
+               const errors = await this.measure('closeChannel:validate', () => this.validationService.validate('PaymentChannelClose', { inputs, client, accountInfo }));
 
-          const channels = paymentChannelObjects.result.account_objects as PaymentChannelObject[];
-          const channel = channels.find(c => c.index === this.txUiService.channelIDField());
-          if (!channel) {
-               return this.txUiService.setError(`Payment channel ${this.txUiService.channelIDField} not found`);
-          }
-
-          let isOwnerCancelling = false;
-          if (wallet.classicAddress == channel.Account) {
-               isOwnerCancelling = true;
-          }
-
-          const currentLedgerTime = await this.xrplService.getLedgerCloseTime(client);
-          if (channel.Expiration && channel.Expiration > currentLedgerTime) {
-               return this.txUiService.setError('Cannot close channel before expiration');
-          }
-
-          let hasChannelExpired = this.checkChannelExpired(channel);
-
-          const ownerCancelling = !!isOwnerCancelling;
-          const expired = !!hasChannelExpired;
-
-          if (ownerCancelling || expired) {
-               // skip balance check — allowed to close (owner or expired)
-          } else {
-               const amount = BigInt(channel.Amount ?? '0');
-               const balance = BigInt(channel.Balance ?? '0');
-               const remaining = amount - balance;
-               if (remaining > 0n) {
-                    return this.txUiService.setError(`Cannot close channel with non-zero balance. ${xrpl.dropsToXrp(remaining.toString())} XRP still available to claim.`);
+               if (errors.length > 0) {
+                    return this.txUiService.setError(errors.join('\n• '));
                }
-          }
 
-          let paymentChannelClaimTx: PaymentChannelClaim = {
-               TransactionType: 'PaymentChannelClaim',
-               Account: wallet.classicAddress,
-               Channel: this.txUiService.channelIDField(),
-               Flags: xrpl.PaymentChannelClaimFlags.tfClose,
-               Fee: fee,
-               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-          };
+               const channels = paymentChannelObjects.result.account_objects as PaymentChannelObject[];
+               const channel = channels.find(c => c.index === this.txUiService.channelIDField());
+               if (!channel) {
+                    return this.txUiService.setError(`Payment channel ${this.txUiService.channelIDField()} not found`);
+               }
 
-          await this.setTxOptionalFields(client, paymentChannelClaimTx, wallet, accountInfo);
+               let isOwnerCancelling = wallet.classicAddress === channel.Account;
 
-          const result = await this.txExecutor.paymentChannelClaimTx(paymentChannelClaimTx, wallet, client, {
-               useMultiSign: this.txUiService.useMultiSign(),
-               isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-               regularKeyAddress: this.txUiService.regularKeyAddress(),
-               regularKeySeed: this.txUiService.regularKeySeed(),
-               multiSignAddress: this.txUiService.multiSignAddress(),
-               multiSignSeeds: this.txUiService.multiSignSeeds(),
+               // Measure ledger close time fetch (network call)
+               const currentLedgerTime = await this.measure('closeChannel:getLedgerCloseTime', () => this.xrplService.getLedgerCloseTime(client));
+
+               if (channel.Expiration && channel.Expiration > currentLedgerTime) {
+                    return this.txUiService.setError('Cannot close channel before expiration');
+               }
+
+               const hasChannelExpired = this.checkChannelExpired(channel);
+
+               const ownerCancelling = !!isOwnerCancelling;
+               const expired = !!hasChannelExpired;
+
+               if (!ownerCancelling && !expired) {
+                    const amount = BigInt(channel.Amount ?? '0');
+                    const balance = BigInt(channel.Balance ?? '0');
+                    const remaining = amount - balance;
+                    if (remaining > 0n) {
+                         return this.txUiService.setError(`Cannot close channel with non-zero balance. ${xrpl.dropsToXrp(remaining.toString())} XRP still available to claim.`);
+                    }
+               }
+
+               let paymentChannelClaimTx: xrpl.PaymentChannelClaim = {
+                    TransactionType: 'PaymentChannelClaim',
+                    Account: wallet.classicAddress,
+                    Channel: this.txUiService.channelIDField(),
+                    Flags: xrpl.PaymentChannelClaimFlags.tfClose,
+                    Fee: fee,
+                    LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+               };
+
+               // Measure optional fields setup
+               await this.measure('closeChannel:setOptionalFields', () => this.setTxOptionalFields(client, paymentChannelClaimTx, wallet, accountInfo));
+
+               // Measure execution (sign + submit)
+               const result = await this.measure('closeChannel:execute', () =>
+                    this.txExecutor.paymentChannelClaimTx(paymentChannelClaimTx, wallet, client, {
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    })
+               );
+
+               if (!result.success) {
+                    return this.txUiService.setError(`${result.error}`);
+               }
+
+               this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Closing Payment Channel successfully!' : 'Closed Payment Channel successfully!';
           });
-          if (!result.success) return this.txUiService.setError(`${result.error}`);
-          this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Closing Payment Channel successfully!' : 'Closed Payment Channel successfully!';
      }
 
      private processPaymentChannels(objects: PaymentChannelObject[], classicAddress: string) {
@@ -868,22 +792,18 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           for (const obj of objects) {
                if (obj.LedgerEntryType !== 'PayChannel') continue;
 
-               // Use BigInt for exact arithmetic — avoids floating-point issues
                const totalDrops = BigInt(obj.Amount || '0');
                const balanceDrops = BigInt(obj.Balance || '0');
                const remainingDrops = totalDrops - balanceDrops;
 
-               // Convert once — reuse strings
                const totalXrp = xrpl.dropsToXrp(totalDrops.toString());
                const balanceXrp = xrpl.dropsToXrp(balanceDrops.toString());
                const remainingXrp = remainingDrops > 0n ? xrpl.dropsToXrp(remainingDrops.toString()) : '0';
 
-               // Handle both Expiration and CancelAfter (XRPL allows either/both)
                const expirationRipple = obj.Expiration ?? obj.CancelAfter;
                const expirationUnix = expirationRipple ? Number(expirationRipple) + 946684800 : null;
-               const isExpired = expirationUnix ? nowUnix >= expirationUnix : false; // >= to be safe
+               const isExpired = expirationUnix ? nowUnix >= expirationUnix : false;
 
-               // Shared base properties
                const base: Partial<UnifiedPaymentChannel> = {
                     id: obj.index,
                     totalAmount: `${totalXrp} XRP`,
@@ -893,10 +813,8 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                     expiration: expirationUnix ? new Date(expirationUnix * 1000).toLocaleString() : '—',
                };
 
-               // === Source / Creator channels ===
                if (obj.Account === classicAddress) {
                     const status = isExpired ? 'Expired' : remainingDrops === 0n ? 'Fully Claimed' : 'Open';
-
                     const entry: UnifiedPaymentChannel = {
                          ...(base as UnifiedPaymentChannel),
                          destination: obj.Destination,
@@ -904,41 +822,34 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                          status,
                          canClose: status !== 'Open' || isExpired,
                     };
-
                     existing.push(entry);
-
-                    // Source can always close (subject to settle delay if unclaimed)
                     closable.push(entry);
                }
 
-               // === Destination / Receivable channels ===
                if (obj.Destination === classicAddress) {
                     const status = isExpired ? 'Expired' : remainingDrops > 0n ? 'Claimable' : 'Fully Claimed';
-
                     const entry: UnifiedPaymentChannel = {
                          ...(base as UnifiedPaymentChannel),
                          sender: obj.Account,
                          status,
                          canClaim: !isExpired && remainingDrops > 0n,
                     };
-
                     receivable.push(entry);
 
-                    // Optional: destination can close if fully claimed/expired (rare, but valid)
                     if (remainingDrops === 0n || isExpired) {
                          closable.push({ ...entry, canClose: true });
                     }
                }
           }
 
-          // Optional: sort by remaining amount descending (nice UX)
+          // Sort by remaining amount descending (synchronous operation)
           const sortByRemaining = (a: UnifiedPaymentChannel, b: UnifiedPaymentChannel) => Number(b.remaining.split(' ')[0]) - Number(a.remaining.split(' ')[0]);
 
           existing.sort(sortByRemaining);
           receivable.sort(sortByRemaining);
           closable.sort(sortByRemaining);
 
-          // Debug logging (remove in production or make conditional)
+          // Optional debug (keep conditional if you want)
           console.group('Payment Channels Processed');
           console.log('Created (source):', existing.length);
           console.log('Receivable (dest):', receivable.length);
@@ -950,30 +861,9 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           this.closablePaymentChannels.set(closable);
      }
 
-     private async getPaymentChannelAuthorizedWallet(authorizedWalletAddress: string) {
-          if (!this.wallets() || this.wallets().length === 0) {
-               throw new Error('No wallets available');
-          }
-          if (!authorizedWalletAddress || authorizedWalletAddress === this.currentWallet().address) {
-               throw new Error('Invalid authorized wallet address (must be different from selected)');
-          }
-          const authorizedWalletData = this.wallets().find((w: { address: string }) => w.address === authorizedWalletAddress);
-          if (!authorizedWalletData) {
-               throw new Error('Authorized wallet not found');
-          }
-          const authorizedSeed = authorizedWalletData.seed || authorizedWalletData.mnemonic || authorizedWalletData.secretNumbers;
-          if (!authorizedSeed) {
-               throw new Error('No seed available for authorized wallet');
-          }
-          const authorizedWallet = await this.utilsService.getWallet(authorizedSeed);
-          if (!authorizedWallet) {
-               throw new Error('Authorized wallet could not be created or is undefined');
-          }
-          return authorizedWallet;
-     }
-
      async generateCreatorClaimSignature() {
           await this.withPerf('generateCreatorClaimSignature', async () => {
+               this.txUiService.clearAllOptionsAndMessages();
                try {
                     const wallet = await this.getWallet();
                     this.txUiService.publicKeyField.set(wallet.publicKey);
@@ -990,15 +880,15 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      generateChannelSignature(channelID: string, amountXRP: BigNumber.Value, wallet: xrpl.Wallet) {
           try {
                if (!/^[0-9A-Fa-f]{64}$/.test(channelID)) {
-                    throw new Error('Invalid channelID: must be a 64-character hexadecimal string');
+                    throw new Error('Invalid Channel ID: ID must be a 64-character hexadecimal string');
                }
 
                if (!amountXRP || amountXRP.toString().trim() === '') {
-                    throw new Error('Invalid amountXRP: must be a valid number or string');
+                    throw new Error('Amount can not be empty');
                }
                const amountDrops = xrpl.xrpToDrops(amountXRP);
                if (isNaN(parseFloat(this.txUiService.amountField())) || parseFloat(this.txUiService.amountField()) <= 0) {
-                    throw new Error('Invalid amountXRP: must be a valid number or string');
+                    throw new Error('Amount must be a valid number and greater than 0');
                }
 
                // Convert the amount to 8-byte big-endian buffer
@@ -1024,7 +914,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
 
                return signature.toUpperCase();
           } catch (error: any) {
-               throw new Error(`Failed to generate channel signature: ${error.message}`);
+               throw new Error(`${error.message}`);
           }
      }
 
@@ -1043,8 +933,6 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                return false;
           }
      }
-
-     private walletKey = computed(() => `${this.currentWallet().seed}:${this.currentWallet().encryptionAlgorithm}`);
 
      private async getWallet(): Promise<xrpl.Wallet> {
           const key = this.walletKey();
@@ -1084,25 +972,27 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                this.utilsService.setDestinationTag(paymentChannelTx, this.txUiService.destinationTagField());
           }
 
-          if (this.txUiService.publicKeyField()) this.utilsService.setPublicKey(paymentChannelTx, this.txUiService.publicKeyField());
+          if (this.channelAction() === 'create' || this.channelAction() === 'claim') {
+               if (this.txUiService.publicKeyField()) this.utilsService.setPublicKey(paymentChannelTx, this.txUiService.publicKeyField());
+          }
 
-          // if (this.paymentChannelCancelAfterTimeField() && (this.channelAction() === 'fund' || this.channelAction() === 'claim' || this.channelAction() === 'create')) {
-          //      const cancelAfterTime = this.utilsService.toRippleTime(this.paymentChannelCancelAfterTimeField());
-          //      const currentLedgerTime = await this.xrplService.getLedgerCloseTime(client);
-          //      if (cancelAfterTime <= currentLedgerTime) {
-          //           return this.txUiService.setError('Cancel After time must be in the future');
-          //      }
-          //      this.utilsService.setCancelAfter(paymentChannelTx, cancelAfterTime);
-          // }
+          if (this.paymentChannelCancelAfterTimeField() && this.channelAction() === 'create') {
+               const cancelAfterTime = this.utilsService.toRippleTime(this.paymentChannelCancelAfterTimeField());
+               const currentLedgerTime = await this.xrplService.getLedgerCloseTime(client);
+               if (cancelAfterTime <= currentLedgerTime) {
+                    return this.txUiService.setError('Cancel After time must be in the future');
+               }
+               this.utilsService.setCancelAfter(paymentChannelTx, cancelAfterTime);
+          }
 
-          // if (this.paymentChannelCancelAfterTimeField() && this.channelAction() === 'fund') {
-          //      const newExpiration = this.utilsService.addTime(this.paymentChannelCancelAfterTimeField(), this.paymentChannelCancelAfterTimeUnit() as 'seconds' | 'minutes' | 'hours' | 'days');
-          //      const currentLedgerTime = await this.xrplService.getLedgerCloseTime(client);
-          //      if (newExpiration <= currentLedgerTime) {
-          //           return this.txUiService.setError('New expiration time must be in the future');
-          //      }
-          //      this.utilsService.setExpiration(paymentChannelTx, newExpiration);
-          // }
+          if (this.paymentChannelCancelAfterTimeField() && this.channelAction() === 'fund') {
+               const expireAfterTime = this.utilsService.toRippleTime(this.paymentChannelCancelAfterTimeField());
+               const currentLedgerTime = await this.xrplService.getLedgerCloseTime(client);
+               if (expireAfterTime <= currentLedgerTime) {
+                    return this.txUiService.setError('Cancel After time must be in the future');
+               }
+               this.utilsService.setExpiration(paymentChannelTx, expireAfterTime);
+          }
      }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
@@ -1241,7 +1131,6 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           writableSignal.set(newDateTime);
      }
 
-     // Helper to avoid duplicating formatting code
      private formatDateTimeLocal(date: Date): string {
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -1253,7 +1142,6 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
           return `${year}-${month}-${day}T${hours}:${minutes}:${secs}`;
      }
 
-     // Now update your public methods
      addCancelAfterToExpiration(seconds: number): void {
           this.addToDateTimeField(this.paymentChannelCancelAfterTimeField, this.paymentChannelCancelAfterTimeField, seconds);
      }
@@ -1270,11 +1158,75 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      }
 
      populateDefaultDateTime() {
-          this.setCancelAfterExpirationToNow();
+          // this.setCancelAfterExpirationToNow();
+          this.paymentChannelCancelAfterTimeField.set('');
+     }
+
+     private setChannelId(item: SelectItem | null): void {
+          const next = item?.id ?? '';
+          if (this.txUiService.channelIDField() !== next) {
+               this.txUiService.channelIDField.set(next);
+          }
+     }
+
+     onSignatureChannelSelected(item: SelectItem | null) {
+          if (!item?.id) {
+               this.txUiService.channelIDField.set('');
+               return;
+          }
+          const channel = this.existingPaymentChannels().find(e => e.id?.toString() === item.id);
+          if (channel) {
+               this.txUiService.channelIDField.set(channel.id);
+               // Optional: pre-fill amount with full remaining if desired
+               this.txUiService.amountField.set(channel.totalAmount.split(' ')[0] || '0');
+          }
+     }
+
+     private readonly destinationMap = computed(() => {
+          return new Map(this.allDestinations().map(d => [d.address, d]));
+     });
+
+     private existingChannelMap = computed(() => {
+          const map = new Map<string, any>();
+          for (const c of this.existingPaymentChannels()) {
+               if (c.id) map.set(String(c.id), c);
+          }
+          return map;
+     });
+
+     private receivableChannelMap = computed(() => {
+          const map = new Map<string, any>();
+          for (const c of this.receivablePaymentChannels()) {
+               if (c.id) map.set(String(c.id), c);
+          }
+          return map;
+     });
+
+     private closableChannelMap = computed(() => {
+          const map = new Map<string, any>();
+          for (const c of this.closablePaymentChannels()) {
+               if (c.id) map.set(String(c.id), c);
+          }
+          return map;
+     });
+
+     private formatChannelItem(e: any, arrow: '→' | '←', secondarySuffix: string): SelectItem {
+          const total = (e.totalAmount ?? '0').split(' ')[0];
+          const remaining = e.remaining ?? '0';
+
+          return {
+               id: String(e.id ?? 'unknown'),
+               display: `${total} XRP ${arrow} ${remaining} Remaining`,
+               secondary: `Channel ID: ${e.id ?? '?'} • ${secondarySuffix}`,
+          };
      }
 
      private resetChannelIdSelection() {
-          this.txUiService.channelIDField.set('');
+          if (this.txUiService.errorMessage?.length && this.txUiService.errorMessage?.length <= 0) {
+               this.txUiService.channelIDField.set('');
+               this.txUiService.channelClaimSignatureField.set('');
+               this.txUiService.amountField.set('');
+          }
      }
 
      clearFlagsValue() {
@@ -1304,7 +1256,6 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
 
      clearFields() {
           this.paymentChannelCancelAfterTimeField.set('');
-          this.paymentChannelCancelAfterTimeUnit.set('seconds');
           this.clearInputFields();
           this.txUiService.clearAllOptionsAndMessages();
      }

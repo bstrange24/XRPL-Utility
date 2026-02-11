@@ -129,6 +129,12 @@ export interface ValidationInputs {
           channelIDField?: string;
      };
 
+     paymentChannelClaim?: {
+          amount?: string;
+          channelIDField?: string;
+          claimSignature?: string;
+     };
+
      paymentChannelClose?: {
           channelIDField?: string;
      };
@@ -653,6 +659,11 @@ export class TransactionUiService {
                amount?: string;
                channelIDField?: string;
           };
+          paymentChannelClaim?: {
+               amount?: string;
+               channelIDField?: string;
+               claimSignature?: string;
+          };
           paymentChannelClose?: {
                channelIDField?: string;
           };
@@ -755,6 +766,11 @@ export class TransactionUiService {
                paymentChannelFund: {
                     amount: options?.paymentChannelFund?.amount,
                     channelIDField: options?.paymentChannelFund?.channelIDField,
+               },
+               paymentChannelClaim: {
+                    amount: options?.paymentChannelClaim?.amount,
+                    channelIDField: options?.paymentChannelClaim?.channelIDField,
+                    claimSignature: options?.paymentChannelClaim?.claimSignature,
                },
                paymentChannelClose: {
                     channelIDField: options?.paymentChannelClose?.channelIDField,

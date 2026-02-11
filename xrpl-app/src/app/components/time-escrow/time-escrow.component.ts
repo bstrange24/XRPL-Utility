@@ -1029,8 +1029,10 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           ];
      }
 
+     private walletKey = computed(() => `${this.currentWallet().seed}:${this.currentWallet().encryptionAlgorithm}`);
+
      private async getWallet(): Promise<xrpl.Wallet> {
-          const key = `${this.currentWallet().seed}:${this.currentWallet().encryptionAlgorithm}`;
+          const key = this.walletKey();
           if (this.walletCache.has(key)) {
                console.log('Using cached wallet for seed with key', key);
                return this.walletCache.get(key)!;
@@ -1044,7 +1046,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           this.walletCache.set(key, wallet);
           return wallet;
      }
-
      private async setTxOptionalFields(client: xrpl.Client, escrowTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (this.txUiService.isTicket()) {
                const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];

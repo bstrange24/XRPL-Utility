@@ -145,7 +145,7 @@
                                                        <!-- Create and Close-->
                                                        @if (info.activeTab === 'create' || info.activeTab === 'close') { → {{ channel.destination.slice(0,7) + '...' + channel.destination.slice(-7) }}
                                                        <!-- Create and Close-->
-                                                       } @else { ← {{ channel.destination?.slice(0,7) + '...' + channel.destination?.slice(-7) }} }
+                                                       } @else { ← {{ channel.sender?.slice(0,7) + '...' + channel.sender?.slice(-7) }} }
                                                   </div>
                                                   <div style="color: #555; font-size: 0.88em; display: flex; flex-direction: column; gap: 4px">
                                                        <div>Channel ID: <code>{{ channel.id.slice(0,10) }}...{{ channel.id.slice(-8) }}</code></div>
@@ -224,8 +224,8 @@
 
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label for="credentialExpiration">Optional Channel Expiration Time</label>
-                                        <p class="form-hint">Expiration time when the channel expires.</p>
+                                        <label for="credentialExpiration">Channel Expiration Time (optional)</label>
+                                        <p class="form-hint">Expiration time when the channel expires. Any transaction that would modify the channel after this time, <code style="font-style: oblique; color: #caba8f !important">closes the channel</code>, without otherwise affecting it. This value is immutable. The channel can be closed earlier than this time but cannot remain open after this time.</p>
                                         <div class="expiration-input-group">
                                              <input type="datetime-local" [(ngModel)]="paymentChannelCancelAfterTimeField" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" class="expiration-input" />
                                              <div class="expiration-buttons">
@@ -270,8 +270,11 @@
                                    </div>
 
                                    <div class="form-group">
-                                        <label>Optional New Expiration Time for the Channel</label>
-                                        <p class="form-hint">Optional new expiration time for the currently selected payment channel.</p>
+                                        <label>New Expiration Time for the Channel (optional)</label>
+                                        <p class="form-hint">
+                                             This must be later than either the current time plus the SettleDelay of the channel, or the existing Expiration of the channel. After the Expiration time, any transaction that would access the channel <code style="font-style: oblique; color: #caba8f !important">closes the channel</code> without taking its normal action.<br />
+                                             Any unspent XRP is returned to the source address when the channel closes.
+                                        </p>
                                         <div class="expiration-input-group">
                                              <input type="datetime-local" [(ngModel)]="paymentChannelCancelAfterTimeField" name="expirationDate" step="1" (focus)="populateDefaultDateTime()" class="expiration-input" />
                                              <div class="expiration-buttons">
@@ -528,10 +531,9 @@
                          <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Channel' }}</button>
                          } @case ('fund') {
                          <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Fund Channel' }}</button>
-                         } @case ('claim') {
+                         } @case ('claim') { @if(!isCreatorMode()) {
                          <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Claim Funds' }}</button>
-                         <!-- <button type="button" class="btn-primary-blue" (click)="generateCreatorClaimSignature()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Generate Claim Signature' }}</button> -->
-                         } @case ('renew') {
+                         } } @case ('renew') {
                          <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Renew Channel' }}</button>
                          } @case ('close') {
                          <button type="button" class="btn-primary-red" (click)="handlePaymentChannelAction()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Close Channel' }}</button>

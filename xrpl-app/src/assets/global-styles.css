@@ -890,7 +890,7 @@ input[type='text']:focus {
 .send-form {
      display: flex;
      flex-direction: column;
-     gap: 1rem;
+     /* gap: 1rem; */
 }
 
 .form-row {

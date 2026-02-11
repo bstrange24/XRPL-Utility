@@ -982,8 +982,10 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           return this.trustlineCurrency.getCurrencies(); // or subscribe to currencies$
      }
 
+     private walletKey = computed(() => `${this.currentWallet().seed}:${this.currentWallet().encryptionAlgorithm}`);
+
      private async getWallet(): Promise<xrpl.Wallet> {
-          const key = `${this.currentWallet().seed}:${this.currentWallet().encryptionAlgorithm}`;
+          const key = this.walletKey();
           if (this.walletCache.has(key)) {
                console.log('Using cached wallet for seed with key', key);
                return this.walletCache.get(key)!;

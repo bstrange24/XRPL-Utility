@@ -39,22 +39,24 @@ export class PerformanceBaseComponent {
           return this.xrplService.getNet().environment || 'devnet';
      }
 
-     protected async measure<T>(label: string, fn: () => Promise<T>): Promise<T> {
+     protected async measure<T>(label: string, fetchFn: () => Promise<T>): Promise<T> {
           const start = `${label}:start`;
           const end = `${label}:end`;
 
           performance.mark(start);
 
           try {
-               return await fn();
+               return await fetchFn();
           } finally {
                performance.mark(end);
                performance.measure(label, start, end);
 
-               const entry = performance.getEntriesByName(label).at(-1);
-               if (entry) {
-                    console.debug(`[PERF] ${label}: ${entry.duration.toFixed(2)}ms`);
-                    this.executionTime.set(`Execution time: ${entry.duration.toFixed(0)} ms`);
+               if (this.environment() !== 'mainnet') {
+                    const entry = performance.getEntriesByName(label).at(-1);
+                    if (entry) {
+                         console.debug(`[PERF] ${label}: ${entry.duration.toFixed(2)}ms`);
+                         this.executionTime.set(`Execution time: ${entry.duration.toFixed(0)} ms`);
+                    }
                }
 
                performance.clearMarks(start);
