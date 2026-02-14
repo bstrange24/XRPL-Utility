@@ -359,7 +359,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      async getAllCredentialsForAccount(): Promise<void> {
           await this.withPerf('getAllCredentials', async () => {
                const wallet = await this.getWallet();
-               const accountObjects = await this.xrplCache.getAccountObjects(wallet.classicAddress, false);
+               const accountObjects = await this.xrplCache.getAccountObjects(await this.getClient(), wallet.classicAddress, false);
                this.parseCredentials(accountObjects, wallet.classicAddress);
           });
      }

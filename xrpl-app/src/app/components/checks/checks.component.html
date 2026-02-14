@@ -69,7 +69,7 @@
                </div>
                }
 
-               <!-- Info Message -->
+               <!-- Dynamic info panel -->
                @if (infoData(); as info) {
                <div class="info-message-wrapper">
                     <div class="info-panel">
@@ -180,7 +180,7 @@
                               <div class="form-group">
                                    <label for="amountField">Amount</label>
                                    <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                                   <input type="number" id="amountFieldCreate" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                                   <input type="number" id="amountFieldCreate" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
                               </div>
                          </div>
 
@@ -211,12 +211,12 @@
 
                          <div class="switch-group">
                               <label class="switch">
-                                   <input type="checkbox" id="showOptionalXrp" [checked]="wantsOptions()" (change)="toggleOptions($event.target.checked)" />
+                                   <input type="checkbox" id="showOptionalXrp" [checked]="txUiService.wantsOptions()" (change)="toggleOptions($event.target.checked)" />
                                    <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
                               </label>
                          </div>
 
-                         @if (wantsOptions()) {
+                         @if (txUiService.wantsOptions()) {
                          <!-- Destination Tag and Source Tag -->
                          <div class="form-row">
                               <div class="form-group">
@@ -276,7 +276,7 @@
                          <!-- Currency + Amount (shared with create) -->
                          @if (activeTab() === 'cash') {
                          <div class="form-row">
-                              <div class="form-group">
+                              <!-- <div class="form-group">
                                    <label for="currencyCodeCash">Currency Code</label>
                                    <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
                                    <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
@@ -291,18 +291,23 @@
                                              </div>
                                         </ng-template>
                                    </app-select-search-dropdown>
-                              </div>
+                              </div> -->
 
                               <div class="form-group">
+                                   <label for="selectCheck">Select Check to cash</label>
+                                   <p class="form-hint">Check ID generated when the check was created.</p>
+                                   <app-select-search-dropdown [items]="checkItems()" [value]="selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+                              </div>
+                              <div class="form-group">
                                    <label for="amountField">Amount</label>
-                                   <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                                   <input type="number" id="amountFieldCash" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                                   <p class="form-hint">Amount, in XRP or token, to cash. Use arrows for ±0.000001 precision.</p>
+                                   <input type="number" id="amountFieldCash" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
                               </div>
                          </div>
                          }
 
                          <!-- Issuer (only when not XRP) -->
-                         @if (currencyFieldDropDownValue() !== 'XRP') {
+                         <!-- @if (currencyFieldDropDownValue() !== 'XRP') {
                          <div class="form-row">
                               <div class="form-group">
                                    <label for="issuer">Issuer</label>
@@ -315,10 +320,10 @@
                                    <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly />
                               </div>
                          </div>
-                         }
+                         } -->
 
                          <!-- Unified Check ID Dropdown - Works for cash & cancel -->
-                         @if (activeTab() === 'cash' || activeTab() === 'cancel') {
+                         @if (activeTab() === 'cancel') {
                          <div class="form-row">
                               <div class="form-group">
                                    <label for="selectCheck">Select Check to cash</label>
@@ -344,7 +349,7 @@
 
                          <!-- Execution time -->
                          <div class="executionTimeDisplay">
-                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
+                              <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
                          </div>
                          <app-transaction-preview></app-transaction-preview>
                     </div>

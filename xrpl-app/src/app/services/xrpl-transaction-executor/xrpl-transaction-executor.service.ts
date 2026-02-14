@@ -1,4 +1,3 @@
-// xrpl-transaction-executor.service.ts
 import { Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
@@ -6,6 +5,7 @@ import { UtilsService } from '../util-service/utils.service';
 import { XrplCacheService } from '../xrpl-cache/xrpl-cache.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { XrplTransactionService } from '../xrpl-transactions/xrpl-transaction.service';
+import { Wallet } from '../wallets/manager/wallet-manager.service';
 
 export interface TxExecutionOptions {
      simulateMessage: string;
@@ -17,15 +17,17 @@ export interface TxExecutionOptions {
 @Injectable({ providedIn: 'root' })
 export class XrplTransactionExecutorService {
      constructor(
-          private xrplTransactions: XrplTransactionService,
-          private utilsService: UtilsService,
-          private txUiService: TransactionUiService,
-          private xrplCache: XrplCacheService,
-          private xrplService: XrplService
+          private readonly xrplTransactions: XrplTransactionService,
+          private readonly utilsService: UtilsService,
+          private readonly txUiService: TransactionUiService,
+          private readonly xrplCache: XrplCacheService,
+          private readonly xrplService: XrplService
      ) {}
 
      async execute<T extends xrpl.Transaction>(client: xrpl.Client, wallet: xrpl.Wallet, tx: T, options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; regularKeyAddress?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean; paymentType?: string; amount?: any; destination?: string }): Promise<{ success: true; hash: string } | { success: false; error: string }> {
           const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', regularKeyAddress = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false, paymentType = 'XRP', amount = '0', destination = '' } = options;
+
+          if (!this.txUiService.isSimulateEnabled()) this.txUiService.currentStep.set('preparing');
 
           // 1. Get fresh data in parallel
           const [accountInfo, { fee, serverInfo }] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFeeAndServerInfo(this.xrplService, { forceRefresh: false })]);
@@ -36,11 +38,10 @@ export class XrplTransactionExecutorService {
                     return { success: false, error: insufficientXrpMessage };
                }
           } else if (paymentType === 'IOU') {
-               const accountLines = await Promise.all([this.xrplCache.getAccountLines(wallet.classicAddress, false)]);
+               const accountLines = await this.xrplCache.getAccountLines(client, wallet.classicAddress, false);
                if (this.utilsService.isInsufficientIouTrustlineBalance(accountLines, tx, destination)) {
                     return { success: false, error: 'Insufficent IOU balance for this transaction' };
                }
-          } else {
           }
 
           // 3. Show spinner
@@ -54,8 +55,11 @@ export class XrplTransactionExecutorService {
           try {
                if (this.txUiService.isSimulateEnabled()) {
                     response = await this.xrplTransactions.simulateTransaction(client, tx);
+                    this.txUiService.addTxResultSignal(response.result);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(useMultiSign, regularKeyAddress, isRegularKeyAddress, regularKeySeed);
+
+                    // this.txUiService.currentStep.set('signing');
 
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, tx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, useMultiSign, multiSignAddress, multiSignSeeds);
 
@@ -63,25 +67,24 @@ export class XrplTransactionExecutorService {
                          return { success: false, error: 'Failed to sign transaction.' };
                     }
 
-                    response = await this.xrplTransactions.submitTransaction(client, signedTx);
+                    // this.txUiService.currentStep.set('submitting');
+                    response = await this.xrplTransactions.submitTransaction1(client, signedTx);
+                    this.txUiService.currentStep.set('waiting_validation');
                }
 
                // 5. Handle result
-               this.txUiService.addTxResultSignal(response.result);
-               // this.txUiService.setTxResultSignal(response.result);
+               // this.txUiService.addTxResultSignal(response.result);
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
-               // Inside XrplTransactionExecutorService.execute()
-
                if (!isSuccess) {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
                     console.error(`Transaction ${this.txUiService.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
 
-                    // CRITICAL: Keep this so your <app-transaction-preview> shows the nice message
+                    // Shows the message <app-transaction-preview>
                     if (response.result) {
-                         (response.result as any).errorMessage = userMessage;
+                         response.result.errorMessage = userMessage;
                     }
 
                     // Update the signal so preview updates immediately

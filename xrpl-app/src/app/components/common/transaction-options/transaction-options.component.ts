@@ -14,7 +14,7 @@ import { SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-
 })
 export class TransactionOptionsComponent {
      public txUiService = inject(TransactionUiService);
-     private utilsService = inject(UtilsService);
+     private readonly utilsService = inject(UtilsService);
      Array = Array;
 
      // Inputs from parent

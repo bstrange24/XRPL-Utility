@@ -1,17 +1,21 @@
-<!-- Spinner -->
-@if (txUiService.spinner()) {
+<!-- Spinner / progress (shown during preparing → waiting_validation) -->
+@if (txUiService.currentStep() !== 'idle' && txUiService.currentStep() !== 'success' && txUiService.currentStep() !== 'failed') {
 <div class="spinner-row">
      <div class="spinner"></div>
-     <span>{{ txUiService.spinnerMessage() || 'Loading...' }}</span>
+     <span>{{ txUiService.stepMessage() }}</span>
+
+     <!-- detailedStatus -->
+     @if (txUiService.detailedStatus()) {
+     <p class="detailed">{{ txUiService.detailedStatus() }}</p>
+     }
 </div>
 }
 
 <!-- Success message -->
-@if (txUiService.isSuccess() && !txUiService.isError() && !txUiService.suppressSuccessMessage()) {
+<!-- @if (txUiService.isSuccess() && !txUiService.isError() && !txUiService.suppressSuccessMessage()) {
 <div class="success-message">
      <lucide-icon name="check" size="20"></lucide-icon>
      <div class="success-text">
-          <!-- Multiple Hashes -->
           @if (txUiService.txHashSignal() && !txUiService.isSimulateEnabled()) {
           <span>{{txUiService.successMessage}}</span>
           <div class="tx-hashes">
@@ -27,14 +31,13 @@
           }
      </div>
 </div>
-}
+} -->
 
 <!-- Error message -->
-@if (txUiService.isError() && txUiService.result()) {
+<!-- @if (txUiService.isError() && txUiService.result()) {
 <div class="tx-message error">
      <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
      <div class="tx-text">
-          <!-- Display Tx Hash if we are not in simulation mode-->
           @if (txUiService.txHashSignal() && !txUiService.isSimulateEnabled()) {
           <span>{{ txUiService.result() }}</span><br />
           @if (txUiService.txHashSignal().length > 0) {
@@ -44,7 +47,7 @@
           }
      </div>
 </div>
-}
+} -->
 
 <!-- Tx Preview -->
 @if (txUiService.txSignal().length > 0) {

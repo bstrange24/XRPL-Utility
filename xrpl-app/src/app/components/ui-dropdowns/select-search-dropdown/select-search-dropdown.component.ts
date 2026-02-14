@@ -14,6 +14,7 @@ export interface SelectItem {
      group?: string;
      pending?: boolean;
      showSecondaryInInput?: boolean;
+     issuer?: string;
 }
 
 @Component({

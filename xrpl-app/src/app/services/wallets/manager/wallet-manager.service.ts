@@ -26,13 +26,13 @@ export interface Wallet {
      providedIn: 'root',
 })
 export class WalletManagerService {
-     private walletsSubject = new BehaviorSubject<Wallet[]>([]);
+     private readonly walletsSubject = new BehaviorSubject<Wallet[]>([]);
      public wallets$ = this.walletsSubject.asObservable();
 
      private editingIndex: number | null = null; // Wallet name change state
-     private tempName = '';
+     private readonly tempName = '';
      private currentNetwork = 'devnet';
-     private selectedIndexSource = new BehaviorSubject<number>(0);
+     private readonly selectedIndexSource = new BehaviorSubject<number>(0);
      selectedIndex$ = this.selectedIndexSource.asObservable();
      // Add these near your other subjects/observables
      // private hasWalletsSubject = new BehaviorSubject<boolean>(false);
@@ -50,7 +50,10 @@ export class WalletManagerService {
           distinctUntilChanged()
      );
 
-     constructor(private storageService: StorageService, private networkService: NetworkService) {
+     constructor(
+          private readonly storageService: StorageService,
+          private readonly networkService: NetworkService
+     ) {
           const net = this.storageService.getNet();
           this.currentNetwork = net?.environment || 'devnet';
 
@@ -89,8 +92,8 @@ export class WalletManagerService {
           const selectedKey = `selectedIndex_${this.currentNetwork}`;
           const storedIndex = this.storageService.get(selectedKey);
           if (storedIndex !== null) {
-               const index = parseInt(storedIndex, 10);
-               if (!isNaN(index) && index >= 0 && index < wallets.length) {
+               const index = Number.parseInt(storedIndex, 10);
+               if (!Number.isNaN(index) && index >= 0 && index < wallets.length) {
                     this.selectedIndexSource.next(index);
                } else {
                     this.selectedIndexSource.next(0); // Fallback to 0 if invalid
@@ -216,5 +219,24 @@ export class WalletManagerService {
           }
 
           return null; // No match
+     }
+
+     getSelectedWallet(): Wallet | null {
+          const wallets = this.walletsSubject.value;
+          const index = this.selectedIndexSource.value;
+
+          if (!wallets.length || index < 0 || index >= wallets.length) {
+               return null; // ← changed: no throw when no wallets or invalid index
+          }
+
+          // if (!wallets.length) {
+          //      throw new Error('No wallets available.');
+          // }
+
+          // if (index < 0 || index >= wallets.length) {
+          //      throw new Error('Selected wallet index is invalid.');
+          // }
+
+          return wallets[index];
      }
 }

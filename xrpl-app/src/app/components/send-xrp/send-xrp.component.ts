@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, DestroyRef, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, DestroyRef, signal, computed } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -10,30 +10,34 @@ import { AppConstants } from '../../core/app.constants';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
+import { TxEnvironmentServiceService } from '../../services/transaction-environment/tx-environment-service.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
-import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
-import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { EMPTY, from, switchMap } from 'rxjs';
+import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
+import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 
 @Component({
      selector: 'app-send-xrp',
      standalone: true,
      imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent],
-     animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
+     animations: [
+          trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])]),
+          trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-20px)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(100%)' }))])]),
+     ],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,64 +50,34 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
-     private readonly dropdownService = inject(DestinationDropdownService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
+     public readonly xrplTransactionService = inject(XrplTransactionService);
+     public readonly txEnvironmentServiceService = inject(TxEnvironmentServiceService);
+     public readonly transactionDropdownService = inject(TransactionDropdownService);
 
-     private readonly walletCache = new Map<string, xrpl.Wallet>();
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
-     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
-     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
-     activeTab = signal<'send'>('send');
+     selectedDestinationAddress = signal<string>('');
+     destinationSearchQuery = signal<string>('');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal(false);
      accountInfo = signal<any>(null);
      credentialIDs = signal<string>('');
-     domainId = signal<string>('');
-     wantsOptions = signal<boolean>(false);
 
-     selectedDestinationItem = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return null;
-          return this.destinationItems().find(d => d.id === addr) || null;
-     });
+     allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
+     destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
+     destinationItems = this.transactionDropdownService.destinationItems(this.allDestinations);
+     selectedDestinationItem = this.transactionDropdownService.selectedDestinationItem(this.selectedDestinationAddress, this.destinationMap, this.destinationItems);
+     filteredDestinations = this.transactionDropdownService.filteredDestinations(this.allDestinations, this.destinationSearchQuery);
+     destinationDisplay = this.transactionDropdownService.destinationDisplay(this.selectedDestinationAddress, this.destinationSearchQuery, this.destinationMap);
 
-     destinationItems = computed(() => {
-          const currentAddr = this.currentWallet().address;
-
-          return this.allDestinations().map(d => ({
-               id: d.address,
-               display: d.name ?? 'Unknown Wallet',
-               secondary: d.address,
-               isCurrentAccount: d.address === currentAddr,
-          }));
-     });
-
-     destinations = computed(() => [
-          ...this.wallets().map((w: DropdownItem) => ({
-               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
-               address: w.address,
-          })),
-          ...this.customDestinations(),
-     ]);
-
-     destinationDisplay = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return this.destinationSearchQuery();
-          return this.dropdownService.formatDisplay(this.destinationMap().get(addr) ?? { address: addr });
-     });
-
-     filteredDestinations = computed(() => {
-          const q = this.destinationSearchQuery().trim().toLowerCase();
-          if (!q) return this.allDestinations();
-
-          const current = this.currentWallet().address;
-          return this.allDestinations().filter(d => d.address !== current && (d.address.toLowerCase().includes(q) || d.name?.toLowerCase().includes(q)));
-     });
+     readonly currentAddress = computed(() => this.currentWallet().address);
+     private readonly hasWallets = computed(() => this.wallets().length > 0);
+     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
+     readonly hasWalletsSignal = toSignal(this.walletManagerService.hasWallets$, { initialValue: false });
 
      infoData = computed(() => {
           const wallet = this.currentWallet();
@@ -116,45 +90,33 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                return `<code>${walletName}</code> wallet is ready to send XRP.`;
           }
 
-          return `<code>${walletName}</code> wallet has <strong class="object-count">${this.currentWallet().balance} XRP</strong> available for sending.`;
+          return `<code>${walletName}</code> wallet has <strong class="object-count">${wallet.balance} XRP</strong> available for sending.`;
      });
 
-     hasWallets = computed(() => this.wallets().length > 0);
+     readonly sendButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Send XRP';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
 
      toggleOptions(enabled: boolean): void {
-          this.wantsOptions.set(enabled);
+          this.txUiService.wantsOptions.set(enabled);
           if (!enabled) {
-               this.clearOptionalFields();
+               this.clearInputFields();
           }
      }
 
      constructor() {
           super();
-
-          // Auto-select typed address if it's valid and not already selected
-          effect(() => {
-               const typed = this.destinationSearchQuery().trim();
-               const current = this.selectedDestinationAddress();
-
-               if (typed && typed !== current && xrpl.isValidAddress(typed)) {
-                    // Only auto-set if it's not already in the list (prevents loop)
-                    if (!this.allDestinations().some(d => d.address === typed)) {
-                         this.selectedDestinationAddress.set(typed);
-                    }
-               }
-          });
+          this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
-          this.loadCustomDestinations();
+          this.transactionDropdownService.loadCustomDestinations();
           this.setupWalletSubscriptions();
           this.txUiService.clearAllOptions();
-     }
-
-     private loadCustomDestinations(): void {
-          const stored = this.storageService.get('customDestinations');
-          if (stored) this.customDestinations.set(JSON.parse(stored));
      }
 
      private async setupWalletSubscriptions() {
@@ -170,7 +132,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
 
           this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
                this.wallets.set(wallets);
-               if (this.hasWallets() && !this.currentWallet().address) {
+               if (this.hasWallets() && !this.currentAddress()) {
                     const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
                     const wallet = wallets[idx];
                     if (wallet) this.selectWallet(wallet);
@@ -185,7 +147,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                          if (!wallet) return EMPTY;
 
                          this.selectWallet(wallet);
-                         // this.xrplCache.invalidateAccountCache(wallet.address);
                          this.txUiService.clearAllOptions();
                          this.clearFields();
                          return from(this.onAccountChange(false));
@@ -195,11 +156,8 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      }
 
      private selectWallet(wallet: Wallet): void {
-          this.currentWallet.set({ ...wallet });
-          this.txUiService.currentWallet.set({ ...wallet });
-          // this.xrplCache.invalidateAccountCache(wallet.address);
-
-          // Prevent self as destination
+          this.currentWallet.set(wallet);
+          this.txUiService.currentWallet.set(wallet);
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
@@ -213,8 +171,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.selectWallet(wallet);
      }
 
-     async setTab(tab: 'send'): Promise<void> {
-          this.activeTab.set(tab);
+     async setTab(): Promise<void> {
           this.destinationSearchQuery.set('');
           this.txUiService.clearAllOptionsAndMessages();
           if (this.hasWallets()) {
@@ -222,34 +179,29 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           }
      }
 
-     private async getClient(): Promise<xrpl.Client> {
-          return this.xrplCache.getClient(() => this.xrplService.getClient());
-     }
-
      async onAccountChange(forceRefresh = false): Promise<void> {
           await this.withPerf('onAccountChange', async () => {
                this.txUiService.clearAllOptionsAndMessages();
+               this.txUiService.resetCurrentStepToIdle();
+
                if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
                     throw new Error('Please select a wallet.');
                }
 
                try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
+                    const { wallet, accountInfo, accountObjects } = await this.txEnvironmentServiceService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         forceRefresh: forceRefresh,
+                    });
 
-                    const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.join('\n• '));
-                    }
-
-                    // Just set the signal — infoMessage() recomputes automatically!
                     this.accountInfo.set(accountInfo);
                     this.refreshUiState(wallet, accountInfo, accountObjects);
                } catch (error: any) {
                     console.error('Failed to load account:', error);
-                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+                    this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
                } finally {
-                    this.txUiService.spinner.set(false);
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
@@ -257,86 +209,98 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      async sendXrp() {
           await this.withPerf('sendXrp', async () => {
                this.txUiService.clearAllOptionsAndMessages();
+               this.txUiService.resetCurrentStepToIdle();
+
                try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    let destinationAddress = this.selectedDestinationAddress().trim();
+                    const amount = Number(this.txUiService.amountField());
+                    const isSimulate = this.txUiService.isSimulateEnabled();
+                    const useMultiSign = this.txUiService.useMultiSign();
+                    const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
+                    const regularKeyAddress = this.txUiService.regularKeyAddress();
+                    const regularKeySeed = this.txUiService.regularKeySeed();
+                    const multiSignAddress = this.txUiService.multiSignAddress();
+                    const multiSignSeeds = this.txUiService.multiSignSeeds();
+
+                    const destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
                     if (!destinationAddress) {
-                         // Fallback: allow manual typing from search query if valid
-                         const typed = this.destinationSearchQuery().trim();
-                         if (typed && xrpl.isValidAddress(typed)) {
-                              destinationAddress = typed;
-                         }
+                         return this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
                     }
 
-                    if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
-                         return this.txUiService.setError('Please enter a valid destination address or select one from the dropdown.');
-                    }
-
-                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    const inputs = this.txUiService.getValidationInputs({
-                         wallet: this.currentWallet(),
-                         network: { accountInfo, accountObjects, fee, currentLedger },
-                         paymentXrp: { amount: this.txUiService.amountField(), destination: destinationAddress },
-                         regularKey: { isRegularKey: this.txUiService.isRegularKeyAddress(), address: this.txUiService.regularKeyAddress(), seed: this.txUiService.regularKeySeed() },
+                    const { client, wallet, fee, currentLedger, accountInfo, accountObjects } = await this.txEnvironmentServiceService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeFee: true,
+                         includeLedgerIndex: true,
                     });
 
-                    const errors = await this.validationService.validate('PaymentXrp', { inputs, client, accountInfo });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.join('\n• '));
+                    if (!accountInfo || !accountObjects) {
+                         throw new Error('Failed to fetch account information');
                     }
 
-                    let paymentTx: xrpl.Payment = {
-                         TransactionType: 'Payment',
-                         Account: wallet.classicAddress,
-                         Destination: destinationAddress,
-                         Amount: xrpl.xrpToDrops(this.txUiService.amountField()),
-                         Fee: fee,
-                         LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-                    };
+                    const inputs = this.getValidationInputs(accountInfo, accountObjects, fee!, currentLedger!, destinationAddress);
+
+                    const errors = await this.validationService.validate('PaymentXrp', { inputs, client, accountInfo });
+                    if (errors.length) {
+                         return this.toastService.error(errors.join('\n• '), AppConstants.TOAST.ERROR);
+                    }
+
+                    let paymentTx: xrpl.Payment = this.xrplTransactionService.buildSendXrpTransaction(wallet, destinationAddress, amount, fee!, currentLedger!);
 
                     await this.setTxOptionalFields(client, paymentTx, wallet, accountInfo);
 
-                    const result = await this.txExecutor.sendXrpPayment(paymentTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeyAddress: this.txUiService.regularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    });
-                    if (!result.success) return this.txUiService.setError(`${result.error}`);
+                    const result = await this.sendXrpPayment(paymentTx, wallet, client, useMultiSign, isRegularKeyAddress, regularKeyAddress, regularKeySeed, multiSignAddress, multiSignSeeds);
+                    if (!result.success) {
+                         return this.toastService.error(result.error || `Failed to submit transaction`, AppConstants.TOAST.ERROR);
+                    }
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated XRP payment successfully!' : 'XRP payment sent successfully!';
+                    const shortDest = destinationAddress.slice(0, 7) + '…' + destinationAddress.slice(-7);
+                    if (isSimulate) {
+                         this.txUiService.resetCurrentStepToIdle();
+                         return this.toastService.success(`Simulated Sending ${amount} XRP to ${shortDest}`, AppConstants.TOAST.SUCCESS, false, result.hash, this.txUiService.explorerUrl() + 'tx/');
+                    }
+
+                    try {
+                         const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, result.hash || '', paymentTx.LastLedgerSequence!);
+                         this.txUiService.setTxResultSignal(finalResult);
+                         this.xrplTransactionService.processTxFinalResult(finalResult, `Successfully Sent ${amount} XRP to ${shortDest}`, result);
+                    } catch (waitError: any) {
+                         this.xrplTransactionService.processTxError(waitError);
+                    }
+
                     await this.refreshAfterTx(client, wallet, destinationAddress, true);
+                    this.clearInputFields();
                } catch (error: any) {
-                    console.error('Error in sendXrp:', error);
-                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+                    console.error('Critical error in sendXrp:', error);
+                    this.toastService.error(error.message || 'Unexpected error occurred', AppConstants.TOAST.ERROR);
                } finally {
-                    this.txUiService.spinner.set(false);
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
 
-     private walletKey = computed(() => `${this.currentWallet().seed}:${this.currentWallet().encryptionAlgorithm}`);
+     private async sendXrpPayment(paymentTx: xrpl.Payment, wallet: xrpl.Wallet, client: xrpl.Client, useMultiSign: boolean, isRegularKeyAddress: boolean, regularKeyAddress: string, regularKeySeed: string, multiSignAddress: string, multiSignSeeds: string) {
+          return await this.txExecutor.sendXrpPayment(paymentTx, wallet, client, {
+               useMultiSign: useMultiSign,
+               isRegularKeyAddress: isRegularKeyAddress,
+               regularKeyAddress: regularKeyAddress,
+               regularKeySeed: regularKeySeed,
+               multiSignAddress: multiSignAddress,
+               multiSignSeeds: multiSignSeeds,
+          });
+     }
 
-     private async getWallet(): Promise<xrpl.Wallet> {
-          const key = this.walletKey();
-          if (this.walletCache.has(key)) {
-               console.log('Using cached wallet for seed with key', key);
-               return this.walletCache.get(key)!;
-          }
-
-          console.log('Creating wallet for seed with encryption algorithm', this.currentWallet().encryptionAlgorithm);
-          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
-
-          if (!wallet) throw new Error('Wallet could not be created');
-
-          this.walletCache.set(key, wallet);
-          return wallet;
+     private getValidationInputs(accountInfo: xrpl.AccountInfoResponse, accountObjects: xrpl.AccountObjectsResponse, fee: string, currentLedger: number, destinationAddress: string) {
+          return this.txUiService.getValidationInputs({
+               wallet: this.currentWallet(),
+               network: { accountInfo, accountObjects, fee, currentLedger },
+               paymentXrp: { amount: this.txUiService.amountField(), destination: destinationAddress },
+               regularKey: { isRegularKey: this.txUiService.isRegularKeyAddress(), address: this.txUiService.regularKeyAddress(), seed: this.txUiService.regularKeySeed() },
+          });
      }
 
      private async setTxOptionalFields(client: xrpl.Client, tx: xrpl.Payment, wallet: xrpl.Wallet, accountInfo: any) {
-          if (this.txUiService.isTicket()) {
+          const isTicket = this.txUiService.isTicket();
+          if (isTicket) {
                const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
@@ -345,24 +309,29 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                }
           }
 
-          if (this.txUiService.destinationTagField()) {
-               this.utilsService.setDestinationTag(tx, this.txUiService.destinationTagField());
+          const destinationTag = this.txUiService.destinationTagField();
+          if (destinationTag) {
+               this.utilsService.setDestinationTag(tx, destinationTag);
           }
 
-          if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
-               this.utilsService.setMemoField(tx, this.txUiService.memoField());
+          const memoField = this.txUiService.memoField();
+          if (this.txUiService.isMemoEnabled() && memoField) {
+               this.utilsService.setMemoField(tx, memoField);
           }
 
-          if (this.txUiService.invoiceIdField()) {
-               this.utilsService.setInvoiceIdField(tx, this.txUiService.invoiceIdField());
+          const invoiceIdField = this.txUiService.invoiceIdField();
+          if (invoiceIdField) {
+               this.utilsService.setInvoiceIdField(tx, invoiceIdField);
           }
 
-          if (this.txUiService.sourceTagField()) {
-               this.utilsService.setSourceTagField(tx, this.txUiService.sourceTagField());
+          const sourceTagField = this.txUiService.sourceTagField();
+          if (sourceTagField) {
+               this.utilsService.setSourceTagField(tx, sourceTagField);
           }
 
-          if (this.txUiService.domainId()) {
-               this.utilsService.setDomainId(tx, this.txUiService.domainId());
+          const domainId = this.txUiService.domainId();
+          if (domainId) {
+               this.utilsService.setDomainId(tx, domainId);
           }
 
           if (this.credentialIDs().length > 0) {
@@ -381,32 +350,10 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           // This triggers infoMessage() to update automatically
           this.accountInfo.set(accountInfo);
 
-          destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+          await this.refreshWallets(client, destination ? [wallet.classicAddress, destination] : [wallet.classicAddress]);
           this.addCustomDestination(addDest, destination);
           this.refreshUiState(wallet, accountInfo, accountObjects);
-          this.txUiService.clearAllOptions();
-     }
-
-     private addCustomDestination(addDest: boolean, destination: string | null) {
-          if (addDest && destination) {
-               const addr = destination.trim();
-
-               if (xrpl.isValidAddress(addr)) {
-                    // Add to custom list if not already present
-                    const exists = this.allDestinations().some(d => d.address === addr);
-                    if (!exists) {
-                         this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: addr }]);
-                         this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
-                         this.updateDestinations();
-                    }
-
-                    // Force select it (so next send starts with it pre-selected)
-                    this.selectedDestinationAddress.set(addr);
-
-                    // Clear typing state so display shows nice formatted name
-                    this.destinationSearchQuery.set('');
-               }
-          }
+          this.clearInputFields();
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -455,51 +402,20 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.storageService.removeValue('signerEntries');
      }
 
-     updateDestinations() {
-          // Optional: persist destinations
-          const allItems = [
-               ...this.wallets().map(wallet => ({
-                    name: wallet.name ?? this.truncateAddress(wallet.address),
-                    address: wallet.address,
-               })),
-               ...this.customDestinations(),
-          ];
-          this.storageService.set('destinations', allItems);
-     }
-
-     private readonly allDestinations = computed(() => {
-          const wallets = this.wallets().map(w => ({
-               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
-               address: w.address,
-               source: 'wallet' as const,
-          }));
-
-          return [...wallets, ...this.customDestinations()];
-     });
-
-     private readonly destinationMap = computed(() => {
-          return new Map(this.allDestinations().map(d => [d.address, d]));
-     });
-
-     private truncateAddress(address: string): string {
-          return `${address.slice(0, 8)}...${address.slice(-6)}`;
+     private addCustomDestination(addDest: boolean, destination: string | null) {
+          if (addDest && destination) {
+               const addr = destination.trim();
+               if (xrpl.isValidAddress(addr)) {
+                    const added = this.transactionDropdownService.addCustomIfNewAndSelect(destination, this.destinationMap, this.selectedDestinationAddress, this.destinationSearchQuery);
+                    if (added) {
+                         console.log('Custom added via service');
+                    }
+               }
+          }
      }
 
      get safeWarningMessage() {
           return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-     }
-
-     updateAmount(value: string | number) {
-          let num = typeof value === 'string' ? Number.parseFloat(value) : value;
-
-          if (Number.isNaN(num) || num < 0) {
-               this.txUiService.amountField.set('');
-               return;
-          }
-
-          // Round to 6 decimal places (XRP precision)
-          const rounded = Number(num.toFixed(6));
-          this.txUiService.amountField.set(rounded.toString());
      }
 
      onFocus(event: FocusEvent) {
@@ -518,18 +434,9 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      }
 
      clearInputFields() {
-          this.destinationSearchQuery.set('');
-          this.selectedDestinationAddress.set('');
-          this.txUiService.amountField.set('');
-          this.clearOptionalFields();
-     }
-
-     clearOptionalFields() {
-          this.txUiService.destinationTagField.set('');
-          this.txUiService.invoiceIdField.set('');
-          this.txUiService.sourceTagField.set('');
-          this.txUiService.memoField.set('');
-          this.txUiService.domainId.set('');
+          this.transactionDropdownService.resetDestinationInputs(this.destinationSearchQuery, this.selectedDestinationAddress);
+          this.txUiService.clearAllFields();
+          this.txUiService.clearAllOptions();
           this.credentialIDs.set('');
      }
 }

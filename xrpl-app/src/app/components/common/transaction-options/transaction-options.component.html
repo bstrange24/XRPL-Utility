@@ -37,15 +37,15 @@
 @if (useMultiSign()) {
 <div class="multisign-grid">
      <div class="multisign-field">
-          <label>Signers</label>
+          <label for="signers">Signers</label>
           <textarea [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
      </div>
      <div class="multisign-field">
-          <label>Seeds</label>
+          <label for="seeds">Seeds</label>
           <textarea [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
      </div>
      <div class="multisign-field quorum-field">
-          <label>Quorum</label>
+          <label for="quorum">Quorum</label>
           <input type="text" [(ngModel)]="signerQuorum" name="signerQuorumField" readonly />
      </div>
 </div>
@@ -56,11 +56,11 @@
 <div class="regular-key-fields">
      <div class="form-row">
           <div class="form-group">
-               <label>Regular Key Address</label>
+               <label for="regularKeyAddress">Regular Key Address</label>
                <input type="text" [(ngModel)]="regularKeyAddress" name="regularKeyAddress" readonly />
           </div>
           <div class="form-group">
-               <label>Regular Key Seed</label>
+               <label for="regularKeySeed">Regular Key Seed</label>
                <input type="text" [(ngModel)]="regularKeySeed" name="regularKeySeed" readonly />
           </div>
      </div>
@@ -71,7 +71,7 @@
 @if (isTicket() && showTicket && ticketArray().length > 0) {
 <div class="ticket-fields">
      <div class="form-group">
-          <label>Ticket Sequence</label>
+          <label for="ticketSequence">Ticket Sequence</label>
           @if (multiSelectMode()) {
           <select [(ngModel)]="selectedTickets" multiple [ngModelOptions]="{standalone: true}">
                @for (ticket of ticketArray(); track ticket) {

@@ -13,27 +13,50 @@ interface CacheEntry<T> {
 })
 export class XrplCacheService {
      private client: xrpl.Client | null = null;
+     private clientPromise: Promise<xrpl.Client> | null = null;
 
      // Generic cache with TTL per key
-     private cache = new Map<string, CacheEntry<any>>();
-     private defaultTTL = 15_000; // 15 seconds
+     private readonly inflight = new Map<string, Promise<any>>();
+     private readonly cache = new Map<string, CacheEntry<any>>();
+     private readonly defaultTTL = 15_000; // 15 seconds
 
      // Optional: per-network TTL or custom TTLs
-     private ttlMap = new Map<string, number>();
+     private readonly ttlMap = new Map<string, number>();
+     private readonly txCache = new Map<string, { data: any; timestamp: number }>();
 
-     constructor(private xrplService: XrplService) {}
+     constructor(private readonly xrplService: XrplService) {}
 
      setTTL(key: string, ttl: number) {
           this.ttlMap.set(key, ttl);
      }
 
      async getClient(getFreshClient: () => Promise<xrpl.Client>): Promise<xrpl.Client> {
-          if (this.client && this.client.isConnected()) {
+          if (this.client?.isConnected()) {
                return this.client;
           }
 
-          this.client = await getFreshClient();
-          return this.client;
+          if (this.clientPromise) {
+               try {
+                    this.client = await this.clientPromise;
+                    this.clientPromise = null;
+                    return this.client;
+               } catch (error) {
+                    this.clientPromise = null;
+                    this.client = null;
+                    throw error;
+               }
+          }
+
+          this.clientPromise = getFreshClient();
+          try {
+               this.client = await this.clientPromise;
+               this.clientPromise = null;
+               return this.client;
+          } catch (error) {
+               this.clientPromise = null;
+               this.client = null;
+               throw error;
+          }
      }
 
      get<T>(key: string): T | null {
@@ -71,26 +94,31 @@ export class XrplCacheService {
 
      // Convenience methods for common patterns
      async getOrFetch<T>(key: string, fetchFn: () => Promise<T>, ttl?: number): Promise<T> {
+          // Return cached resolved value if valid
           const cached = this.get<T>(key);
           if (cached !== null) {
                return cached;
           }
 
-          let data: T;
-          try {
-               data = await fetchFn();
-          } catch (err) {
-               console.error(`Fetch failed for ${key}:`, err);
-               throw err;
+          // If request already in progress, return same promise
+          const existingPromise = this.inflight.get(key);
+          if (existingPromise) {
+               return existingPromise;
           }
 
-          try {
-               this.set(key, data, ttl);
-          } catch (err) {
-               console.error(`Failed to cache ${key}:`, err);
-          }
+          // Create and store in-flight promise
+          const fetchPromise = (async () => {
+               try {
+                    const data = await fetchFn();
+                    this.set(key, data, ttl);
+                    return data;
+               } finally {
+                    this.inflight.delete(key); // always clean up
+               }
+          })();
 
-          return data;
+          this.inflight.set(key, fetchPromise);
+          return fetchPromise;
      }
 
      // Invalidate all account-related cache when wallet changes
@@ -129,55 +157,55 @@ export class XrplCacheService {
                this.invalidate(objectsKey);
           }
 
-          const [accountInfo] = await Promise.all([this.getOrFetch(infoKey, () => this.xrplService.getAccountInfo(client, address, 'validated', ''), this.defaultTTL)]);
-
-          // return { accountInfo };
-          return accountInfo;
+          return await this.getOrFetch(infoKey, () => this.xrplService.getAccountInfo(client, address, 'validated', ''), this.defaultTTL);
      }
 
-     async getAccountObjects(address: string, forceRefresh?: boolean): Promise<xrpl.AccountObjectsResponse> {
+     async getAccountInfoTickets(client: xrpl.Client, address: string, forceRefresh?: boolean): Promise<xrpl.AccountInfoResponse> {
           const infoKey = `account:${address}:info`;
           const objectsKey = `account:${address}:objects`;
-          const client = await this.getClient(() => this.xrplService.getClient());
 
           if (forceRefresh) {
                this.invalidate(infoKey);
                this.invalidate(objectsKey);
           }
 
-          const [accountObjects] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', ''), this.defaultTTL)]);
-
-          return accountObjects;
+          return await this.getOrFetch(infoKey, () => this.xrplService.getAccountInfo(client, address, 'validated', ''), this.defaultTTL);
      }
 
-     async getAccountLines(address: string, forceRefresh?: boolean): Promise<xrpl.AccountLinesResponse> {
+     async getAccountObjects(client: xrpl.Client, address: string, forceRefresh?: boolean): Promise<xrpl.AccountObjectsResponse> {
+          const infoKey = `account:${address}:info`;
+          const objectsKey = `account:${address}:objects`;
+
+          if (forceRefresh) {
+               this.invalidate(infoKey);
+               this.invalidate(objectsKey);
+          }
+
+          return await this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', ''), this.defaultTTL);
+     }
+
+     async getAccountLines(client: xrpl.Client, address: string, forceRefresh?: boolean): Promise<xrpl.AccountLinesResponse> {
           const infoKey = `account:${address}:info`;
           const objectsKey = `account:${address}:lines`;
-          const client = await this.getClient(() => this.xrplService.getClient());
 
           if (forceRefresh) {
                this.invalidate(infoKey);
                this.invalidate(objectsKey);
           }
 
-          const [accountLines] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountLines(client, address, 'validated', ''), this.defaultTTL)]);
-
-          return accountLines;
+          return await this.getOrFetch(objectsKey, () => this.xrplService.getAccountLines(client, address, 'validated', ''), this.defaultTTL);
      }
 
-     async getAccountObjectsWithType(address: string, forceRefresh?: boolean, type?: string): Promise<xrpl.AccountObjectsResponse> {
+     async getAccountObjectsWithType(client: xrpl.Client, address: string, forceRefresh?: boolean, type?: string): Promise<xrpl.AccountObjectsResponse> {
           const infoKey = `account:${address}:info:${type}`;
           const objectsKey = `account:${address}:objects:${type}`;
-          const client = await this.getClient(() => this.xrplService.getClient());
 
           if (forceRefresh) {
                this.invalidate(infoKey);
                this.invalidate(objectsKey);
           }
 
-          const [getAccountObjectsWithType] = await Promise.all([this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', type ? type : ''), this.defaultTTL)]);
-
-          return getAccountObjectsWithType;
+          return await this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', type || ''), this.defaultTTL);
      }
 
      /** Get current transaction fee (drops or XRP) – cached for 8 seconds (fees change slowly) */
@@ -194,6 +222,20 @@ export class XrplCacheService {
                     return await xrplService.calculateTransactionFee(client);
                },
                this.getFeeTtl()
+          );
+     }
+
+     async getLedgerIndex(client: xrpl.Client, forceRefresh = false): Promise<number> {
+          const key = `server:ledgerIndex`;
+
+          if (forceRefresh) this.cache.delete(key);
+
+          return this.getOrFetch(
+               key,
+               async () => {
+                    return await this.xrplService.getLastLedgerIndex(client);
+               },
+               4000 // 4 sec TTL is perfect
           );
      }
 
@@ -222,7 +264,7 @@ export class XrplCacheService {
           const ledgerData = ledger_info.result.state.validated_ledger;
           const baseFee = ledgerData?.base_fee;
           const baseFeeXrpStr = baseFee?.toString() ?? '0.000010'; // 10 drops default
-          return Math.ceil(parseFloat(baseFeeXrpStr) * 1_000_000);
+          return Math.ceil(Number.parseFloat(baseFeeXrpStr) * 1_000_000);
      }
 
      /** ONE-LINER: Get both fee and server info in parallel (most common use case) */
@@ -237,8 +279,6 @@ export class XrplCacheService {
           return net === 'mainnet' ? 15_000 : 8_000; // 8-second cache – longer on mainnet, fees change slower
      }
 
-     private txCache = new Map<string, { data: any; timestamp: number }>();
-
      async getTxCached(txid: string, ttlSeconds = 60): Promise<any> {
           const cached = this.txCache.get(txid);
           if (cached && Date.now() - cached.timestamp < ttlSeconds * 1000) {
@@ -247,7 +287,6 @@ export class XrplCacheService {
 
           const client = await this.getClient(() => this.xrplService.getClient());
           const result = await this.xrplService.getTxData(client, txid);
-          //   const result = await this.client.request({ command: 'tx', transaction: txid });
           this.txCache.set(txid, { data: result, timestamp: Date.now() });
           return result;
      }

@@ -34,6 +34,8 @@ export interface Wallet {
      encryptionAlgorithm?: string | '';
 }
 
+export type TxStep = 'idle' | 'preparing' | 'signing' | 'submitting' | 'waiting_validation' | 'finalizing' | 'success' | 'failed';
+
 export interface ValidationInputs {
      // ---- Wallet / Sender ----
      wallet: {
@@ -206,8 +208,8 @@ export interface ValidationInputs {
 @Injectable({ providedIn: 'root' })
 export class TransactionUiService {
      constructor(
-          private sanitizer: DomSanitizer,
-          private xrplService: XrplService
+          private readonly sanitizer: DomSanitizer,
+          private readonly xrplService: XrplService
      ) {}
 
      txHash: string | null = null;
@@ -284,13 +286,43 @@ export class TransactionUiService {
      spinnerMessageSignal = signal<string>('');
      executionTime = signal<string>('');
      url = signal<string>('');
+     wantsOptions = signal<boolean>(false);
+
+     currentStep = signal<TxStep>('idle');
+     detailedStatus = signal<string>('');
+     stepMessage = computed(() => {
+          const step = this.currentStep();
+          switch (step) {
+               case 'preparing':
+                    return 'Preparing transaction...';
+               case 'signing':
+                    return 'Signing transaction...';
+               case 'submitting':
+                    return 'Broadcasting to the XRP Ledger...';
+               case 'waiting_validation':
+                    return 'Waiting for ledger validation (usually 4–10 seconds)... The transaction will still process even if you leave this page.';
+               case 'finalizing':
+                    return 'Processing final result...';
+               case 'success':
+                    return 'Transaction confirmed successfully!';
+               case 'failed':
+                    return 'Transaction failed';
+               default:
+                    return '';
+          }
+     });
+
+     resetCurrentStepToIdle() {
+          this.currentStep.set('idle');
+          this.detailedStatus.set('');
+     }
 
      explorerUrl = computed(() => {
           const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
           return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
      });
 
-     private _infoData = new BehaviorSubject<any | null>(null);
+     private readonly _infoData = new BehaviorSubject<any | null>(null);
      infoData$ = this._infoData.asObservable();
 
      setInfoData(data: any | null) {
@@ -842,6 +874,7 @@ export class TransactionUiService {
           this.regularKeyAddress.set('');
           this.regularKeySeed.set('');
           this.selectedSingleTicket.set('');
+          this.wantsOptions.set(false);
      }
 
      clearAllOptions() {
@@ -866,6 +899,7 @@ export class TransactionUiService {
           this.clearTxHashSignal();
           this.clearTxSignal();
           this.clearMessages();
+
           // this.isTicket.set(false);
           // this.selectedSingleTicket.set('');
           // this.selectedTickets.set([]);

@@ -378,7 +378,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
 
                try {
                     const [client, wallet] = await this.measure('getPaymentChannels:fetchClientAndWallet', () => Promise.all([this.getClient(), this.getWallet()]));
-                    const [{ accountInfo, accountObjects }, paymentChannelObjects] = await this.measure('getPaymentChannels:fetchAccountDataAndChannels', () => Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh), this.xrplCache.getAccountObjectsWithType(wallet.classicAddress, false, 'payment_channel')]));
+                    const [{ accountInfo, accountObjects }, paymentChannelObjects] = await this.measure('getPaymentChannels:fetchAccountDataAndChannels', () => Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh), this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, false, 'payment_channel')]));
                     const errors = await this.measure('getPaymentChannels:validateAccountInfo', () =>
                          this.validationService.validate('AccountInfo', {
                               inputs: { seed: this.currentWallet().seed, accountInfo },

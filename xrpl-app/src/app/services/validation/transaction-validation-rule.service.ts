@@ -6,7 +6,7 @@ import { UtilsService } from '../util-service/utils.service';
 import * as xrpl from 'xrpl';
 import didSchema from '../../components/did/did-schema.json';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
-import { percentToTransferRate, transferRateToDecimal } from 'xrpl';
+import { percentToTransferRate } from 'xrpl';
 
 export interface ValidationContext {
      inputs: Record<string, any>;
@@ -35,12 +35,12 @@ export interface TransactionValidationRule {
 
 @Injectable({ providedIn: 'root' })
 export class ValidationService {
-     private rules = new Map<string, TransactionValidationRule>();
+     private readonly rules = new Map<string, TransactionValidationRule>();
      public readonly txUiService = inject(TransactionUiService);
 
      constructor(
-          private xrplService: XrplService,
-          private utilsService: UtilsService
+          private readonly xrplService: XrplService,
+          private readonly utilsService: UtilsService
      ) {
           this.registerBuiltInRules();
      }
@@ -71,11 +71,7 @@ export class ValidationService {
                     if (value === undefined || value === null || value === '') {
                          errors.push(`${this.capitalize(field.split('.')[1])} is required`);
                     }
-                    // if (!context.inputs[field]) {
-                    // errors.push(`${this.capitalize(field)} is required`);
-                    // }
                }
-               // if (errors.length > 0) return errors;
           }
 
           // Run all validators
@@ -89,9 +85,9 @@ export class ValidationService {
           return (
                str
                     // Insert space before a capital only when NOT followed by another capital
-                    .replace(/([a-z])([A-Z])(?![A-Z])/g, '$1 $2')
+                    .replaceAll(/([a-z])([A-Z])(?![A-Z])/g, '$1 $2')
                     // Insert space between sequences like "ABCd" → "ABC d"
-                    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+                    .replaceAll(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
                     // Capitalize first character
                     .replace(/^./, m => m.toUpperCase())
           );
@@ -103,11 +99,7 @@ export class ValidationService {
 
      private isValidAddress(field: string): ValidatorFn {
           return ctx => {
-               // const value = ctx.inputs[field];
                const value = this.getValueByPath(ctx.inputs, field);
-               // if (!value) {
-               // return `${this.capitalize(field.split('.')[1])} is required`;
-               // }
                if (value && !xrpl.isValidAddress(value)) {
                     return 'Invalid XRP Address';
                }
@@ -134,10 +126,10 @@ export class ValidationService {
                     return null;
                }
 
-               const num = parseFloat(value as string);
+               const num = Number.parseFloat(value as string);
 
                // Not a valid number
-               if (isNaN(num) || !isFinite(num)) {
+               if (Number.isNaN(num) || !Number.isFinite(num)) {
                     return message || `${this.capitalize(field)} must be a valid number`;
                }
 
@@ -163,8 +155,8 @@ export class ValidationService {
      private isValidNumber(value: string | undefined, fieldName: string, minValue?: number, maxValue?: number, allowEmpty: boolean = false): ValidatorFn {
           return async ctx => {
                if (value === undefined || (allowEmpty && value === '')) return null; // Skip if undefined or empty (when allowed)
-               const num = parseFloat(value);
-               if (isNaN(num) || !isFinite(num)) {
+               const num = Number.parseFloat(value);
+               if (Number.isNaN(num) || !Number.isFinite(num)) {
                     return `${fieldName} must be a valid number`;
                }
                if (minValue !== undefined && num < minValue) {
@@ -201,7 +193,7 @@ export class ValidationService {
                if (!value) return null; // optional
 
                const num = Number(value);
-               if (isNaN(num) || num < 0 || num > 4294967295 || !Number.isInteger(num)) {
+               if (Number.isNaN(num) || num < 0 || num > 4294967295 || !Number.isInteger(num)) {
                     return 'Destination Tag must be an integer between 0 and 4294967295';
                }
                return null;
@@ -214,7 +206,7 @@ export class ValidationService {
                if (!value) return null;
 
                const num = Number(value);
-               if (isNaN(num) || num < 0 || num > 4294967295 || !Number.isInteger(num)) {
+               if (Number.isNaN(num) || num < 0 || num > 4294967295 || !Number.isInteger(num)) {
                     return 'Source Tag must be an integer between 0 and 4294967295';
                }
                return null;
@@ -226,7 +218,7 @@ export class ValidationService {
                const value = ctx.inputs[action]?.invoiceId;
                if (!value) return null;
 
-               const hex = value.toString().replace(/[^0-9a-fA-F]/g, '');
+               const hex = value.toString().replaceAll(/[^0-9a-fA-F]/g, '');
                if (hex.length === 0) {
                     return 'Invoice ID contains no valid hex characters';
                }
@@ -255,7 +247,7 @@ export class ValidationService {
           };
      }
 
-     private shouldSkipNumericValidation = (value: string | undefined): boolean => {
+     private readonly shouldSkipNumericValidation = (value: string | undefined): boolean => {
           return value === undefined || value === null || value.trim() === '';
      };
 
@@ -353,8 +345,8 @@ export class ValidationService {
                if (!ctx.inputs['selectedSingleTicket']) {
                     return 'Ticket Sequence is required when using a ticket';
                }
-               const num = parseFloat(ctx.inputs['selectedSingleTicket'] as string);
-               if (isNaN(num) || num <= 0) {
+               const num = Number.parseFloat(ctx.inputs['selectedSingleTicket'] as string);
+               if (Number.isNaN(num) || num <= 0) {
                     return 'Ticket Sequence must be a valid number greater than 0';
                }
                return null;
@@ -366,8 +358,6 @@ export class ValidationService {
 
           // And use these paths:
           return [this.requireIf(whenRegularKey, 'isRegularKey.address', 'Regular Key Address is required'), this.requireIf(whenRegularKey, 'isRegularKey.seed', 'Regular Key Seed is required'), this.validAddressIf(whenRegularKey, 'isRegularKey.address'), this.validSecretIf(whenRegularKey, 'isRegularKey.seed')];
-          // const whenRegularKey = (ctx: ValidationContext) => !!ctx.inputs['isRegularKeyAddress'] && !ctx.inputs['useMultiSign'];
-          // return [this.requireIf(whenRegularKey, 'regularKeyAddress', 'Regular Key Address is required'), this.requireIf(whenRegularKey, 'regularKeySeed', 'Regular Key Seed is required'), this.validAddressIf(whenRegularKey, 'regularKeyAddress'), this.validSecretIf(whenRegularKey, 'regularKeySeed')];
      }
 
      private positiveAmount(action: string): ValidatorFn {
@@ -383,7 +373,7 @@ export class ValidationService {
                if (value === '') return null;
 
                const num = Number(value);
-               if (isNaN(num)) return 'Amount must be a valid number';
+               if (Number.isNaN(num)) return 'Amount must be a valid number';
                if (num <= 0) return 'Amount must be greater than 0';
                return null;
           };
@@ -397,7 +387,7 @@ export class ValidationService {
                if (value === '') return null;
 
                const num = Number(value);
-               if (isNaN(num)) return 'Date must be a valid number';
+               if (Number.isNaN(num)) return 'Date must be a valid number';
                if (num <= 0) return 'Date must be greater than 0';
                return null;
           };
@@ -451,7 +441,7 @@ export class ValidationService {
                const value = ctx.inputs[field];
                if (!value) return null;
                const num = Number(value);
-               if (isNaN(num) || num <= 0) {
+               if (Number.isNaN(num) || num <= 0) {
                     return `${this.capitalize(field)} must be greater than 0`;
                }
                return null;
@@ -473,8 +463,8 @@ export class ValidationService {
                }
 
                const invalid = sequences.find(seq => {
-                    const n = parseInt(seq, 10);
-                    return isNaN(n) || n <= 0;
+                    const n = Number.parseInt(seq, 10);
+                    return Number.isNaN(n) || n <= 0;
                });
 
                if (invalid) {
@@ -503,7 +493,7 @@ export class ValidationService {
                const value = ctx.inputs['tradingFeeField'];
                if (!value) return null;
                const num = Number(value);
-               if (isNaN(num) || num < 0 || num > 1000) {
+               if (Number.isNaN(num) || num < 0 || num > 1000) {
                     return 'Trading fee must be between 0 and 1000 (inclusive)';
                }
                return null;
@@ -520,17 +510,17 @@ export class ValidationService {
           };
      }
 
-     private validLpTokenAmount(field = 'lpTokenAmountField'): ValidatorFn {
-          return ctx => {
-               const value = ctx.inputs[field];
-               if (!value) return null;
-               const num = Number(value);
-               if (isNaN(num) || num <= 0) {
-                    return `${this.capitalize(field)} must be greater than 0`;
-               }
-               return null;
-          };
-     }
+     // private validLpTokenAmount(field = 'lpTokenAmountField'): ValidatorFn {
+     //      return ctx => {
+     //           const value = ctx.inputs[field];
+     //           if (!value) return null;
+     //           const num = Number(value);
+     //           if (Number.isNaN(num) || num <= 0) {
+     //                return `${this.capitalize(field)} must be greater than 0`;
+     //           }
+     //           return null;
+     //      };
+     // }
 
      private requireCurrencyPair(): ValidatorFn {
           return ctx => {
@@ -629,14 +619,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.positiveAmount('paymentXrp'),
                     // Destination address valid
@@ -674,14 +663,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.positiveAmount('createTicket'),
 
@@ -706,13 +694,13 @@ export class ValidationService {
                validators: [
                     ctx => {
                          if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -736,14 +724,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Destination address valid
                     this.isValidAddress('destination.address'),
@@ -772,13 +759,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Destination address valid
                     this.isValidAddress('subject.subject'),
@@ -807,14 +794,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use alt signing
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -838,14 +824,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // ctx => this.validateDidData(ctx.inputs['didDocument'], 'DID Document')(ctx),
                     // ctx => this.validateDidData(ctx.inputs['didUri'], 'DID URI')(ctx),
@@ -873,14 +858,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use alt signing
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -904,14 +888,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -938,14 +921,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -969,14 +951,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1000,14 +981,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1031,14 +1011,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.positiveAmount('createCheck'),
                     this.isValidAddress('createCheck.destination'),
@@ -1076,13 +1055,13 @@ export class ValidationService {
 
                     ctx => {
                          if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1105,13 +1084,13 @@ export class ValidationService {
                validators: [
                     ctx => {
                          if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Destination address valid
                     this.requireDestinationTagIfNeededNewDestination(),
@@ -1140,14 +1119,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Destination address valid
                     this.isValidAddress('paymentChannelCreate.destination'),
@@ -1179,14 +1157,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.requireDestinationTagIfNeededNewDestination(),
 
@@ -1216,14 +1193,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Destination address valid
                     this.isValidAddress('paymentChannelRenew.destination'),
@@ -1256,14 +1232,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.optionalNumeric('paymentChannelClaim.channelIDField', 0),
 
@@ -1289,14 +1264,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.optionalNumeric('channelIDField.channelIDField', 0),
 
@@ -1324,14 +1298,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Destination address valid
                     this.isValidAddress('destination.address'),
@@ -1362,15 +1335,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
-
+                    ctx => (ctx.inputs['accountInfo'] ? null : 'Account info not loaded'),
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
 
@@ -1409,18 +1380,17 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
+                    ctx => (ctx.inputs['accountInfo'] ? null : 'Account info not loaded'),
 
                     ctx => {
                          if (this.txUiService.tickSize()) {
-                              const tickSize = parseInt(this.txUiService.tickSize());
+                              const tickSize = Number.parseInt(this.txUiService.tickSize());
                               if (tickSize == 0) {
                                    return null;
                               }
@@ -1445,6 +1415,7 @@ export class ValidationService {
                                         return `Invalid transfer rate. Must be between 0% (no fee) and 100% inclusive.`;
                                    }
                               } catch (error) {
+                                   console.error('Error parsing transfer rate:', error);
                                    return `Invalid transfer rate. Must be between 0% (no fee) and 100% inclusive.`;
                               }
                          }
@@ -1482,14 +1453,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
+                    ctx => (ctx.inputs['accountInfo'] ? null : 'Account info not loaded'),
 
                     ctx => {
                          // Validate each address
@@ -1528,14 +1498,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
+                    ctx => (ctx.inputs['accountInfo'] ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1559,14 +1528,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
+                    ctx => (ctx.inputs['accountInfo'] ? null : 'Account info not loaded'),
 
                     ctx => {
                          if (this.txUiService.regularKeyAddress() === '' || this.txUiService.regularKeyAddress() === 'No RegularKey configured for account' || this.txUiService.regularKeySeed() === '') {
@@ -1597,14 +1565,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.inputs['accountInfo'] ? 'Account info not loaded' : null),
+                    ctx => (ctx.inputs['accountInfo'] ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1628,13 +1595,12 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.inputs['accountInfo'] ? null : 'Account info not loaded'),
                     ctx => (Number(ctx.inputs['amount']) < 0 ? 'Trust amount cannot be negative' : null),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
@@ -1660,13 +1626,12 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1691,13 +1656,12 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
                     ctx => (Number(ctx.inputs['amount']) < 0 ? 'Trust amount cannot be negative' : null),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
@@ -1723,13 +1687,12 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
                     ctx => (Number(ctx.inputs['amount']) < 0 ? 'Trust amount cannot be negative' : null),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
@@ -1755,13 +1718,12 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.isValidAddress('destination.address'),
                ],
@@ -1775,14 +1737,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.inputs['accountInfo'] ? null : 'Account info not loaded'),
 
                     this.positiveAmount('createTimeBasedEscrow'),
                     this.validateDate('createTimeBasedEscrow', 'finishAfter'),
@@ -1826,13 +1787,13 @@ export class ValidationService {
 
                     ctx => {
                          if (ctx.inputs['seed']) {
-                              const { type, value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.optionalNumeric('escrowSequence', 0),
 
@@ -1858,14 +1819,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.inputs['accountInfo'] ? null : 'Account info not loaded'),
 
                     this.optionalNumeric('escrowSequence', 0),
 
@@ -1891,14 +1851,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.inputs['accountInfo'] ? null : 'Account info not loaded'),
 
                     this.positiveAmount('createConditionalEscrow'),
                     this.validateDate('createConditionalEscrow', 'finishAfter'),
@@ -1939,14 +1898,13 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
-
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.inputs['accountInfo'] ? null : 'Account info not loaded'),
 
                     this.optionalNumeric('escrowSequence', 0),
 
@@ -1974,14 +1932,14 @@ export class ValidationService {
                     ctx => {
                          const seed = this.getSeed(ctx);
                          if (seed) {
-                              const { type, value } = this.utilsService.detectXrpInputType(seed);
+                              const { value } = this.utilsService.detectXrpInputType(seed);
                               if (value === 'unknown') return 'Account seed is invalid';
                          }
 
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.optionalNumeric('tokenCountField', 0),
 
@@ -2036,7 +1994,7 @@ export class ValidationService {
                     this.notSelfOffer('weWantIssuerField'),
                     this.notSelfOffer('weSpendIssuerField'),
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled check
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -2059,7 +2017,7 @@ export class ValidationService {
                validators: [
                     this.validOfferSequences('offerSequenceField'),
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -2100,7 +2058,7 @@ export class ValidationService {
                     this.validIssuerIfProvided('firstPoolCurrencyField', 'firstPoolIssuerField'),
                     this.validIssuerIfProvided('secondPoolCurrencyField', 'secondPoolIssuerField'),
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
                     this.masterKeyDisabledRequiresAltSigning(),
                     this.ticketValidation(),
                     ...this.regularKeySigningValidation(),
@@ -2129,7 +2087,7 @@ export class ValidationService {
                     this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
                     this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
                     this.masterKeyDisabledRequiresAltSigning(),
                     this.ticketValidation(),
                     ...this.regularKeySigningValidation(),
@@ -2158,7 +2116,7 @@ export class ValidationService {
                     ctx => (ctx.inputs['weWantAmountField'] ? this.positiveNumber('weWantAmountField')(ctx) : null),
                     ctx => (ctx.inputs['weSpendAmountField'] ? this.positiveNumber('weSpendAmountField')(ctx) : null),
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
                     this.masterKeyDisabledRequiresAltSigning(),
                     this.ticketValidation(),
                     ...this.regularKeySigningValidation(),
@@ -2181,7 +2139,7 @@ export class ValidationService {
                     this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
                     this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
                     this.masterKeyDisabledRequiresAltSigning(),
                     this.ticketValidation(),
                     ...this.regularKeySigningValidation(),
@@ -2203,7 +2161,7 @@ export class ValidationService {
                     this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
                     this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
                     this.masterKeyDisabledRequiresAltSigning(),
                     this.ticketValidation(),
                     ...this.regularKeySigningValidation(),
@@ -2225,7 +2183,7 @@ export class ValidationService {
                     this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
                     this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
                     this.masterKeyDisabledRequiresAltSigning(),
                     this.ticketValidation(),
                     ...this.regularKeySigningValidation(),
@@ -2262,7 +2220,7 @@ export class ValidationService {
                          return null;
                     },
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
                     this.masterKeyDisabledRequiresAltSigning(),
                     this.ticketValidation(),
                     ...this.regularKeySigningValidation(),
@@ -2289,7 +2247,7 @@ export class ValidationService {
                     this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
                     this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
 
-                    ctx => (!ctx.accountInfo ? 'Account info not loaded' : null),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
                     this.masterKeyDisabledRequiresAltSigning(),
                     this.ticketValidation(),
                     ...this.regularKeySigningValidation(),

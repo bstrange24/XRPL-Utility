@@ -345,6 +345,11 @@ export const AppConstants = {
      MAX_FEE: '12',
      MIN_FEE: '10',
      MAX_ESCROW_FEE: '24',
+     TOAST: {
+          SUCCESS: 6000,
+          ERROR: 7000,
+          INFO: 4000,
+     },
 
      TRUSTLINE: {
           FLAGS: {

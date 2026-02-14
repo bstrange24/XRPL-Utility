@@ -21,6 +21,7 @@ export class PerformanceBaseComponent {
                console.log(`Entering ${name}`);
           }
 
+          this.executionTime.set(`Execution time: working...`);
           const start = Date.now();
 
           try {

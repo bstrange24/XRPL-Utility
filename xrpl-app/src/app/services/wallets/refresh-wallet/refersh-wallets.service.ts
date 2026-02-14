@@ -1,8 +1,18 @@
 import { Injectable, NgZone } from '@angular/core';
 import * as xrpl from 'xrpl';
+import { Subject, from } from 'rxjs';
+import { debounceTime, exhaustMap } from 'rxjs/operators';
 import { UtilsService } from '../../util-service/utils.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 import { Wallet, WalletManagerService } from '../manager/wallet-manager.service';
+
+interface RefreshPayload {
+     client: xrpl.Client;
+     wallets: Wallet[];
+     selectedWalletIndex: number;
+     addressesToRefresh?: string[];
+     onUpdate?: (updatedWallets: Wallet[], newCurrentWallet: Wallet) => void;
+}
 
 @Injectable({
      providedIn: 'root',
@@ -11,20 +21,34 @@ export class WalletDataService {
      private cachedReserves: any = null;
      private readonly REFRESH_THRESHOLD_MS = 3000;
 
+     private refreshRequests$ = new Subject<RefreshPayload>();
+
      constructor(
           private ngZone: NgZone,
           private utilsService: UtilsService,
           private xrplService: XrplService,
           private walletManagerService: WalletManagerService
-     ) {}
+     ) {
+          // Debounced + non-overlapping refresh pipeline
+          this.refreshRequests$
+               .pipe(
+                    debounceTime(250),
+                    exhaustMap(payload => from(this.performRefreshWallets(payload.client, payload.wallets, payload.selectedWalletIndex, payload.addressesToRefresh, payload.onUpdate)))
+               )
+               .subscribe();
+     }
 
+     //  This only queues a refresh request.
      async refreshWallets(client: xrpl.Client, wallets: Wallet[], selectedWalletIndex: number, addressesToRefresh?: string[], onUpdate?: (updatedWallets: Wallet[], newCurrentWallet: Wallet) => void): Promise<void> {
-          console.info('Leaving refreshWallets');
+          this.refreshRequests$.next({ client, wallets, selectedWalletIndex, addressesToRefresh, onUpdate });
+     }
+
+     private async performRefreshWallets(client: xrpl.Client, wallets: Wallet[], selectedWalletIndex: number, addressesToRefresh?: string[], onUpdate?: (updatedWallets: Wallet[], newCurrentWallet: Wallet) => void): Promise<void> {
+          console.info('Entering refreshWallets');
           const start = performance.now();
           const now = Date.now();
 
           try {
-               // Normalize once
                const normalize = (w: Wallet) => w.classicAddress ?? w.address;
 
                const addressFilter = addressesToRefresh ? new Set(addressesToRefresh) : null;
@@ -38,12 +62,15 @@ export class WalletDataService {
                     return needsUpdate && inFilter;
                });
 
-               if (!walletsToUpdate.length) return;
+               if (!walletsToUpdate.length) {
+                    console.info('Leaving refreshWallets (nothing to update)');
+                    return;
+               }
 
                // Parallel account fetch
                const accountInfos = await Promise.all(walletsToUpdate.map(w => this.xrplService.getAccountInfo(client, normalize(w), 'validated', '')));
 
-               // Cache reserves once
+               // Cache reserve once per service lifecycle
                if (!this.cachedReserves) {
                     this.cachedReserves = await this.utilsService.getXrplReserve(client);
                }
@@ -84,6 +111,7 @@ export class WalletDataService {
                     return results;
                });
 
+               // Re-enter Angular zone for state updates
                this.ngZone.run(() => {
                     const walletMap = new Map(updatedWallets.map(w => [normalize(w), w]));
 

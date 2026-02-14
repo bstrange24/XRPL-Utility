@@ -45,7 +45,11 @@ export class XrplService {
      private connectionMessage = new BehaviorSubject<string>('Disconnected');
      public connectionMessage$ = this.connectionMessage.asObservable();
 
-     constructor(private readonly storageService: StorageService, private readonly http: HttpClient, private readonly tokenCacheService: TokenCacheService) {}
+     constructor(
+          private readonly storageService: StorageService,
+          private readonly http: HttpClient,
+          private readonly tokenCacheService: TokenCacheService
+     ) {}
 
      async getClient(): Promise<xrpl.Client> {
           // CASE 1: Already connected → return immediately

@@ -1,8 +1,6 @@
-import { ElementRef, ViewChild } from '@angular/core';
-import { Injectable } from '@angular/core';
+import { Injectable, ElementRef, ViewChild } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { walletFromSecretNumbers, Wallet } from 'xrpl';
-import { flagNames } from 'flagnames';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { AppConstants } from '../../core/app.constants';
 import { sha256 } from 'js-sha256';
@@ -11,6 +9,7 @@ import addFormats from 'ajv-formats';
 import { StorageService } from '../local-storage/storage.service';
 import md5 from 'blueimp-md5';
 import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
+import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -71,7 +70,8 @@ export class UtilsService {
      constructor(
           private readonly xrplService: XrplService,
           private readonly storageService: StorageService,
-          private walletManagerService: WalletManagerService
+          private readonly walletManagerService: WalletManagerService,
+          public readonly txUiService: TransactionUiService
      ) {}
 
      MPT_FLAGS: Record<number, string> = {
@@ -221,8 +221,6 @@ export class UtilsService {
           },
           AMM: {
                fields: [
-                    // { key: 'Asset1', format: (v: any)=> `${v.currency} (Issuer: ${v.issuer || null})` },
-                    // { key: 'Asset2', format: (v: any)=> `${v.currency} (Issuer: ${v.issuer || null})` },
                     { key: 'LPTokenBalance', format: (v: any) => `${v.value} ${v.currency}` },
                     { key: 'TradingFee', format: (v: any) => v || null },
                     { key: 'PreviousTxnID', format: (v: any) => v || null },
@@ -259,7 +257,6 @@ export class UtilsService {
           },
           NFT: {
                fields: [
-                    // { key: 'Flags', format: (v: any)=> v || '0' },
                     { key: 'Flags', format: (v: any) => this.decodeNFTFlags(Number(v)) },
                     { key: 'Issuer', format: (v: any) => v || null },
                     { key: 'NFTokenID', format: (v: any) => v || null },
@@ -271,22 +268,6 @@ export class UtilsService {
                pluralLabel: 'NFTs',
           },
      };
-
-     // getSelectedSeedWithIssuer(selectedAccount: string, account1: any, account2: any, issuer: any): string {
-     //      return selectedAccount === 'account1' ? account1.seed : selectedAccount === 'account2' ? account2.seed : issuer.seed;
-     // }
-
-     // getSelectedAddressWithIssuer(selectedAccount: string, account1: any, account2: any, issuer: any): string {
-     //      return selectedAccount === 'account1' ? account1.address : selectedAccount === 'account2' ? account2.address : issuer.address;
-     // }
-
-     // getSelectedAddressWithOutIssuer(selectedAccount: string, account1: any, account2: any): string {
-     //      return selectedAccount === 'account1' ? account1.address : account2.address;
-     // }
-
-     // getSelectedSeedWithOutIssuer(selectedAccount: string, account1: any, account2: any): string {
-     //      return selectedAccount === 'account1' ? account1.seed : account2.seed;
-     // }
 
      sleep(ms: number) {
           return new Promise(resolve => setTimeout(resolve, ms));
@@ -340,7 +321,8 @@ export class UtilsService {
                if (computedHash !== condition) {
                     return 'Fulfillment does not match the condition';
                }
-          } catch (error) {
+          } catch (error: any) {
+               console.error(`Error validateFulfillment ${error.message}`);
                return 'Invalid fulfillment: unable to compute SHA-256 hash';
           }
           return null;
@@ -365,18 +347,18 @@ export class UtilsService {
      }
 
      formatXRPLAmount = (value: any): string => {
-          if (value == null || isNaN(value)) {
+          if (value == null || Number.isNaN(value)) {
                return 'Invalid amount';
           }
 
           if (typeof value === 'object' && value.currency && value.value) {
                return `${value.value} ${value.currency}${value.issuer ? ` (Issuer: ${value.issuer})` : ''}`;
           }
-          return `${(parseInt(value) / 1000000).toFixed(6)} XRP`;
+          return `${(Number.parseInt(value) / 1000000).toFixed(6)} XRP`;
      };
 
      isValidDate(value: any): boolean {
-          return value && !isNaN(new Date(value).getTime());
+          return value && !Number.isNaN(new Date(value).getTime());
      }
 
      isValidAddress(address: string): boolean {
@@ -431,6 +413,19 @@ export class UtilsService {
           }
      }
 
+     updateAmount(value: string | number) {
+          let num = typeof value === 'string' ? Number.parseFloat(value) : value;
+
+          if (Number.isNaN(num) || num < 0) {
+               this.txUiService.amountField.set('');
+               return;
+          }
+
+          // Round to 6 decimal places (XRP precision)
+          const rounded = Number(num.toFixed(6));
+          this.txUiService.amountField.set(rounded.toString());
+     }
+
      issuedAmount(currency: string, issuer: string, value: any) {
           return { currency, issuer, value: value.toString() };
      }
@@ -441,16 +436,7 @@ export class UtilsService {
 
           const cancelAfterDate = new Date(cancelAfterUnix * 1000);
           const formatter1 = this.dateFormatter();
-          // console.debug('toUTCString: ', cancelAfterDate.toUTCString());
-          // console.debug('Formatter 1: ', formatter1.format(cancelAfterDate));
           return formatter1.format(cancelAfterDate);
-
-          // Convert Ripple time (seconds since Jan 1, 2000) to UTC datetime
-          // const rippleEpoch = 946684800; // Jan 1, 2000 in Unix time
-          // const date = new Date((rippleTime + rippleEpoch) * 1000);
-          // const formatter = this.dateFormatter();
-          // console.log('Formatter OG: ', formatter.format(date));
-          // return formatter.format(date);
      }
 
      convertToUnixTimestamp(dateString: any) {
@@ -458,37 +444,6 @@ export class UtilsService {
           const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
           return Math.floor(date.getTime() / 1000);
      }
-
-     /**
-      * Convert XRPL Expiration (Ripple Epoch seconds) to "MM/DD/YYYY HH:MM:SS" UTC string
-      * @param rippleSeconds - Expiration from XRPL tx (seconds since 2000-01-01 UTC)
-      */
-     // toFormattedExpiration(rippleSeconds: number): string {
-     //      // Convert to UNIX epoch seconds
-     //      const unixSeconds = rippleSeconds + 946684800;
-     //      const date = new Date(unixSeconds * 1000);
-
-     //      const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Months are 0-based
-     //      const day = String(date.getUTCDate()).padStart(2, '0');
-     //      const year = date.getUTCFullYear();
-
-     //      let hours = date.getUTCHours();
-     //      const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-     //      const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-
-     //      const ampm = hours >= 12 ? 'PM' : 'AM';
-     //      hours = hours % 12;
-     //      if (hours === 0) hours = 12; // handle midnight/noon
-     //      const hoursStr = String(hours).padStart(2, '0');
-
-     //      return `${month}/${day}/${year} ${hoursStr}:${minutes}:${seconds} ${ampm}`;
-     // }
-
-     // toRippleTime(dateTimeStr: string): number {
-     //      // dateTimeStr example: "2025-12-25T15:30"
-     //      const date = new Date(dateTimeStr + ':00Z'); // Force UTC
-     //      return Math.floor(date.getTime() / 1000) - 946684800;
-     // }
 
      toRippleTime(isoDate: string): number {
           // Ripple epoch starts 2000-01-01T00:00:00Z
@@ -543,7 +498,7 @@ export class UtilsService {
           // If it's a string (YYYY-MM-DD) — the normal case for <input type="date">
           if (typeof v === 'string') {
                const parts = v.split('-').map(Number);
-               if (parts.length !== 3 || parts.some(isNaN)) {
+               if (parts.length !== 3 || parts.some(Number.isNaN)) {
                     throw new Error('expirationDate must be YYYY-MM-DD or Date');
                }
                const [year, month, day] = parts;
@@ -772,7 +727,7 @@ export class UtilsService {
 
           try {
                // Convert hex to Uint8Array
-               const bytes = new Uint8Array(invoiceIdHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
+               const bytes = new Uint8Array(invoiceIdHex.match(/.{1,2}/g)!.map(byte => Number.parseInt(byte, 16)));
 
                // Try to decode as UTF-8
                const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -826,7 +781,7 @@ export class UtilsService {
                return currencyCode.trim();
           }
 
-          if (currencyCode.match(/^[a-fA-F0-9]{40}$/) && !isNaN(parseInt(currencyCode, 16))) {
+          if (currencyCode.match(/^[a-fA-F0-9]{40}$/) && !Number.isNaN(Number.parseInt(currencyCode, 16))) {
                // Hexadecimal currency code
                const hex = currencyCode.toString().replace(/(00)+$/g, '');
                if (hex.startsWith('01')) {
@@ -919,8 +874,8 @@ export class UtilsService {
      }
 
      parseTransferRateToPercentage(transferRate: string) {
-          const rate = parseInt(transferRate, 10);
-          if (isNaN(rate) || rate < 1000000000) {
+          const rate = Number.parseInt(transferRate, 10);
+          if (Number.isNaN(rate) || rate < 1000000000) {
                return 0; // Default rate is 0% fee (1.0x multiplier)
           }
           return (rate / 1_000_000_000 - 1) * 100;
@@ -1657,7 +1612,7 @@ export class UtilsService {
 
      formatAmount(value: any): string {
           if (typeof value === 'string' && /^\d+$/.test(value)) {
-               return (parseInt(value) / 1_000_000).toFixed(6) + ' XRP';
+               return (Number.parseInt(value) / 1_000_000).toFixed(6) + ' XRP';
           } else if (typeof value === 'object' && value.currency) {
                return `${value.value} ${value.currency}${value.issuer ? ` (<code>${value.issuer}</code>)` : ''}`;
           }
@@ -1721,7 +1676,7 @@ export class UtilsService {
           switch (type) {
                case 'TrustSet':
                     // Non-zero limit or flags will likely create a trustline
-                    const limit = parseFloat(tx?.LimitAmount?.value || '0');
+                    const limit = Number.parseFloat(tx?.LimitAmount?.value || '0');
                     const flags = tx?.Flags || 0;
                     return limit !== 0 || flags !== 0;
 
@@ -1781,7 +1736,7 @@ export class UtilsService {
      }
 
      roundToEightDecimals(value: number): number {
-          return parseFloat(value.toFixed(8));
+          return Number.parseFloat(value.toFixed(8));
      }
 
      sortByLedgerEntryType(response: any) {
@@ -1857,8 +1812,8 @@ export class UtilsService {
           // Check we_spend if it's an issued currency
           if (typeof we_spend !== 'string') {
                const trustLine = trustLines.find((line: any) => line.Balance.currency === we_spend.currency && (line.LowLimit.issuer === we_spend.issuer || line.HighLimit.issuer === we_spend.issuer));
-               const availableBalance = trustLine ? Math.abs(parseFloat(trustLine.Balance.value)) : 0;
-               if (availableBalance < parseFloat(we_spend.value)) {
+               const availableBalance = trustLine ? Math.abs(Number.parseFloat(trustLine.Balance.value)) : 0;
+               if (availableBalance < Number.parseFloat(we_spend.value)) {
                     return `Insufficient ${we_spend.currency} balance`;
                }
           }
@@ -1866,8 +1821,8 @@ export class UtilsService {
           // Check we_want if it's an issued currency
           if (typeof we_want !== 'string') {
                const trustLine = trustLines.find((line: any) => line.Balance.currency === we_want.currency && (line.LowLimit.issuer === we_want.issuer || line.HighLimit.issuer === we_want.issuer));
-               const availableBalance = trustLine ? Math.abs(parseFloat(trustLine.Balance.value)) : 0;
-               if (availableBalance < parseFloat(we_want.value)) {
+               const availableBalance = trustLine ? Math.abs(Number.parseFloat(trustLine.Balance.value)) : 0;
+               if (availableBalance < Number.parseFloat(we_want.value)) {
                     return `Insufficient ${we_want.currency} balance`;
                }
           }
@@ -1879,8 +1834,8 @@ export class UtilsService {
      validateAmmWithdrawBalances(xrpBalance: string, accountObjects: any[], lpTokenAmount: string, participation: any): string | null {
           // Validate LP token balance
           if (participation?.lpTokens?.[0]) {
-               const availableLpBalance = parseFloat(participation.lpTokens[0].balance);
-               const requestedLpAmount = parseFloat(lpTokenAmount);
+               const availableLpBalance = Number.parseFloat(participation.lpTokens[0].balance);
+               const requestedLpAmount = Number.parseFloat(lpTokenAmount);
 
                if (requestedLpAmount > availableLpBalance) {
                     return `Insufficient LP token balance. Available: ${availableLpBalance}`;
@@ -1908,8 +1863,8 @@ export class UtilsService {
 
                const trustLine = trustLines.find(line => line.Balance.currency === we_want.currency && (line.LowLimit.issuer === we_want.issuer || line.HighLimit.issuer === we_want.issuer));
 
-               const availableBalance = trustLine ? Math.abs(parseFloat(trustLine.Balance.value)) : 0;
-               if (availableBalance < parseFloat(we_want.value)) {
+               const availableBalance = trustLine ? Math.abs(Number.parseFloat(trustLine.Balance.value)) : 0;
+               if (availableBalance < Number.parseFloat(we_want.value)) {
                     return `Insufficient ${we_want.currency} balance. Required: ${we_want.value}`;
                }
           }
@@ -1920,7 +1875,7 @@ export class UtilsService {
      isInsufficientXrpBalance1(serverInfo: any, accountInfo: any, amountXrp: string, address: string, txObject: any, feeDrops: string = '10'): boolean {
           try {
                // Validate inputs
-               if (!amountXrp || isNaN(parseFloat(amountXrp)) || parseFloat(amountXrp) < 0) {
+               if (!amountXrp || Number.isNaN(Number.parseFloat(amountXrp)) || Number.parseFloat(amountXrp) < 0) {
                     throw new Error('Invalid amount: must be a non-negative number');
                }
 
@@ -1934,7 +1889,7 @@ export class UtilsService {
                     if (txObject?.Amount && typeof txObject.Amount === 'string') {
                          // XRP to XRP
                          amountDrops = BigInt(txObject.Amount);
-                    } else if (typeof amountXrp === 'string' && !isNaN(Number(amountXrp))) {
+                    } else if (typeof amountXrp === 'string' && !Number.isNaN(Number(amountXrp))) {
                          amountDrops = BigInt(xrpl.xrpToDrops(amountXrp));
                     }
                } else {
@@ -2004,15 +1959,15 @@ export class UtilsService {
                     throw new Error('Invalid IOU amount structure in transaction');
                }
 
-               const requestedValue = parseFloat(value);
-               if (isNaN(requestedValue) || requestedValue <= 0) {
+               const requestedValue = Number.parseFloat(value);
+               if (Number.isNaN(requestedValue) || requestedValue <= 0) {
                     throw new Error('Invalid or non-positive IOU amount value');
                }
 
                // Find the trust line where *we* (the sender) hold the token
                // → issuer in trust line == issuer in the amount object
                // → our account is the one with positive balance when we hold it
-               const trustline = accountLines[0].result.lines.find((line: any) => line.currency === currency && line.account === amountIssuer);
+               const trustline = accountLines.result.lines.find((line: any) => line.currency === currency && line.account === amountIssuer);
 
                if (!trustline) {
                     // No trust line to this issuer/currency → definitely insufficient
@@ -2023,7 +1978,7 @@ export class UtilsService {
                //   balance > 0  → we hold this many tokens (can send up to this)
                //   balance < 0  → we owe this many (can only send back to issuer, usually not useful here)
                //   balance = 0  → nothing to send
-               const heldBalance = parseFloat(trustline.balance);
+               const heldBalance = Number.parseFloat(trustline.balance);
 
                // We can only debit/send positive held amount
                return heldBalance < requestedValue;
@@ -2055,8 +2010,8 @@ export class UtilsService {
                     throw new Error('Invalid IOU Amount structure');
                }
 
-               const amountValue = parseFloat(value);
-               if (isNaN(amountValue) || amountValue < 0) {
+               const amountValue = Number.parseFloat(value);
+               if (Number.isNaN(amountValue) || amountValue < 0) {
                     throw new Error('Invalid IOU amount value');
                }
 
@@ -2070,7 +2025,7 @@ export class UtilsService {
 
                // Trustline balance is from *our perspective*
                // Negative balance = we owe IOUs, positive = we hold IOUs
-               const balance = parseFloat(trustline.balance);
+               const balance = Number.parseFloat(trustline.balance);
 
                // We can only send what we have (positive balance)
                return Math.abs(balance) < amountValue;
@@ -2187,8 +2142,8 @@ export class UtilsService {
 
                               if (currency === assetCurrency) {
                                    console.log(`  Match: ${currency} = ${assetCurrency}`);
-                                   const value = parseFloat(asset.value);
-                                   if (!isNaN(value)) {
+                                   const value = Number.parseFloat(asset.value);
+                                   if (!Number.isNaN(value)) {
                                         tokenTotal += value;
                                         if (!issuers.includes(issuer)) {
                                              issuers.push(issuer);
@@ -2233,7 +2188,7 @@ export class UtilsService {
                const matchingObjects: AccountObjectWithBalance[] = account_objects.filter((obj: any): obj is AccountObjectWithBalance => obj.Balance && obj.Balance.currency === currency.toUpperCase());
 
                const total = matchingObjects.reduce((sum, obj) => {
-                    return sum + parseFloat(obj.Balance.value);
+                    return sum + Number.parseFloat(obj.Balance.value);
                }, 0);
 
                return total;
@@ -2251,7 +2206,7 @@ export class UtilsService {
                }
 
                const matchingObjects: any[] = account_objects.filter((obj: any) => {
-                    if (!obj.Balance || obj.Balance.currency !== currency.toUpperCase()) return false;
+                    if (obj.Balance?.currency !== currency.toUpperCase()) return false;
 
                     const lowIssuer = obj.LowLimit?.issuer;
                     const highIssuer = obj.HighLimit?.issuer;
@@ -2262,7 +2217,7 @@ export class UtilsService {
 
                let total = 0;
                for (const obj of matchingObjects) {
-                    const balanceValue = parseFloat(obj.Balance.value);
+                    const balanceValue = Number.parseFloat(obj.Balance.value);
                     // Sign the balance from the account's perspective
                     const signedBalance = account === obj.HighLimit?.issuer ? balanceValue : -balanceValue;
                     total += signedBalance;
@@ -2302,7 +2257,8 @@ export class UtilsService {
                const hashArray = Array.from(new Uint8Array(hashBuffer));
                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
                return hashHex.toUpperCase();
-          } catch (error) {
+          } catch (error: any) {
+               console.error(`Error in getValidInvoiceID ${error.message}`);
                throw new Error('Failed to hash InvoiceID');
           }
      }
@@ -2353,7 +2309,6 @@ export class UtilsService {
      }
 
      setURI(tx: any, uri: string) {
-          // tx.URI = Buffer.from(uri, 'utf8').toString('hex');
           tx.URI = xrpl.convertStringToHex(uri);
      }
 
@@ -2420,7 +2375,7 @@ export class UtilsService {
      }
 
      setDestinationTag(tx: any, destinationTagField: string) {
-          tx.DestinationTag = parseInt(destinationTagField, 10);
+          tx.DestinationTag = Number.parseInt(destinationTagField, 10);
      }
 
      setMessageKey(tx: any, messageKey: string) {
@@ -2454,7 +2409,7 @@ export class UtilsService {
      }
 
      setTransferFee(tx: any, transferFee: string) {
-          tx.TransferFee = parseInt(transferFee, 10);
+          tx.TransferFee = Number.parseInt(transferFee, 10);
      }
 
      setTickSize(tx: any, tickSize: number) {

@@ -14,9 +14,8 @@
 
           <!-- Right form -->
           <div class="form-panel">
-               <!-- Send XRP Menu -->
-               @if (activeTab() === 'send') {
-               <div style="padding-top: 2em">
+               <!-- Menu bar -->
+               <div class="submenu-container">
                     <div class="submenu-info-text">
                          <div class="green-button-submenu">
                               <ng-icon name="heroPaperAirplane" size="27" class="text-red-600"></ng-icon>
@@ -27,7 +26,6 @@
                          </div>
                     </div>
                </div>
-               }
 
                <!-- Dynamic info panel -->
                @if (infoData()) {
@@ -47,84 +45,81 @@
                </div>
                }
 
-               <form #theForm="ngForm" class="send-form">
-                    <div class="tab-content-container">
-                         <!-- Amount and Destination -->
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label for="destination">Destination</label>
-                                   <p class="form-hint">The unique address of the account receiving the XRP payment. Select destination from the dropdown or manually enter a new destination.</p>
-                                   <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                              </div>
-                              <div class="form-group">
-                                   <label for="amountField">XRP Amount</label>
-                                   <p class="form-hint">Amount, in XRP, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                                   <input type="number" id="amountField" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
-                              </div>
-                         </div>
-
-                         <div class="switch-group">
-                              <label class="switch">
-                                   <input type="checkbox" [checked]="wantsOptions()" (change)="toggleOptions($event.target.checked)" name="showOptionalXrp" />
-                                   <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
-                              </label>
-                         </div>
-
-                         @if (wantsOptions()) {
-                         <!-- Destination Tag and Source Tag -->
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label for="destinationTagField">Destination Tag </label>
-                                   <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
-                                   <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
-                              </div>
-
-                              <div class="form-group">
-                                   <label for="sourceTagField">Source Tag</label>
-                                   <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
-                                   <input type="text" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" name="sourceTagField" />
-                              </div>
-                         </div>
-
-                         <!-- Invoice ID and Credential ID -->
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label for="invoiceIdField">Invoice ID</label>
-                                   <p class="form-hint">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
-                                   <input type="text" placeholder="e.g. INV_123" [ngModel]="txUiService.invoiceIdField()" (ngModelChange)="txUiService.invoiceIdField.set($event)" name="invoiceIdField" />
-                              </div>
-                         </div>
-
-                         <!-- Domain ID and Credential ID -->
-                         <!-- <div class="form-row">
-                              <div class="form-group">
-                                   <label for="invoiceIdField">Domain ID</label>
-                                   <p class="form-hint">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
-                                   <textarea [(ngModel)]="txUiService.domainId" name="domainId" placeholder="Valid Domain ID" class="memo-input"></textarea>
-                              </div>
-                              <div class="form-group">
-                                   <label for="invoiceIdField">Credential IDs</label>
-                                   <p class="form-hint">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
-                                   <textarea [(ngModel)]="credentialIDs" name="credentialIDs" placeholder="Separate multiple credential IDs with commas" class="memo-input"></textarea>
-                              </div>
-                         </div> -->
-                         }
-
-                         <app-transaction-options [showWhenTab]="['send']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                         <!-- Action buttons -->
-                         <div class="button-row">
-                              <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Send XRP' }}</button>
-                              <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">Clear Fields</button>
-                         </div>
-
-                         <!-- Execution time -->
-                         <div class="executionTimeDisplay">
-                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
-                         </div>
-                         <app-transaction-preview></app-transaction-preview>
+               <!-- Amount and Destination -->
+               <div class="form-row">
+                    <div class="form-group">
+                         <label for="destination">Destination</label>
+                         <p class="form-hint">The unique address of the account receiving the XRP payment. Select destination from the dropdown or manually enter a new destination.</p>
+                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
                     </div>
-               </form>
+                    <div class="form-group">
+                         <label for="amountField">XRP Amount</label>
+                         <p class="form-hint">Amount, in XRP, to send to the destination. Use arrows for ±0.000001 precision.</p>
+                         <input type="number" id="amountField" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                    </div>
+               </div>
+
+               <div class="switch-group">
+                    <label class="switch">
+                         <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="toggleOptions($event.target.checked)" name="showOptionalXrp" />
+                         <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
+                    </label>
+               </div>
+
+               @if (txUiService.wantsOptions()) {
+               <!-- Destination Tag and Source Tag -->
+               <div class="form-row">
+                    <div class="form-group">
+                         <label for="destinationTagField">Destination Tag </label>
+                         <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
+                         <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
+                    </div>
+
+                    <div class="form-group">
+                         <label for="sourceTagField">Source Tag</label>
+                         <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
+                         <input type="text" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" name="sourceTagField" />
+                    </div>
+               </div>
+
+               <!-- Invoice ID and Credential ID -->
+               <div class="form-row">
+                    <div class="form-group">
+                         <label for="invoiceIdField">Invoice ID</label>
+                         <p class="form-hint">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
+                         <input type="text" placeholder="e.g. INV_123" [ngModel]="txUiService.invoiceIdField()" (ngModelChange)="txUiService.invoiceIdField.set($event)" name="invoiceIdField" />
+                    </div>
+               </div>
+
+               <!-- Domain ID and Credential ID -->
+               <div class="form-row">
+                    <div class="form-group">
+                         <label for="domainIdField">Domain ID</label>
+                         <p class="form-hint">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
+                         <textarea [ngModel]="txUiService.domainId()" (ngModelChange)="txUiService.domainId.set($event)" name="domainId" class="memo-input"></textarea>
+                    </div>
+                    <div class="form-group">
+                         <label for="credentialIDsField">Credential IDs</label>
+                         <p class="form-hint">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
+                         <textarea [ngModel]="credentialIDs()" (ngModelChange)="credentialIDs.set($event)" name="credentialIDs" class="memo-input"></textarea>
+                    </div>
+               </div>
+               }
+
+               <app-transaction-options [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+               <!-- Action buttons -->
+               <div class="button-row">
+                    <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="!isIdle() || !hasWalletsSignal()">{{ sendButtonLabel() }}</button>
+                    <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.currentStep() !== 'idle' || !hasWalletsSignal()">Clear Fields</button>
+               </div>
+
+               <!-- Execution time -->
+               <div class="executionTimeDisplay">
+                    <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
+               </div>
+
+               <app-transaction-preview></app-transaction-preview>
           </div>
      </div>
 </div>
