@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, ChangeDetectionStrategy, DestroyRef, signal, Signal, WritableSignal, effect } from '@angular/core';
+import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, Signal, WritableSignal, effect } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,7 @@ import { AppConstants } from '../../core/app.constants';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
+import { TxEnvironmentServiceService } from '../../services/transaction-environment/tx-environment-service.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
@@ -30,13 +31,23 @@ import { TransactionOptionsComponent } from '../common/transaction-options/trans
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { EMPTY, from, switchMap } from 'rxjs';
+import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
+import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { EscrowDataForUI, EscrowObject, IssuerItem, MPToken, RippleState } from '../../models/interface-items.model';
+import { CheckUtilService } from '../../services/checks/check-util/check-util.service';
+import { AcccountDataService } from '../../services/account-data/acccount-data.service';
+import { CheckTransactionService } from '../../services/checks/checks-transaction/checks-transaction.service';
+import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.service';
+import { EscrowUtilService } from '../../services/escrow-util/escrow-util.service';
 
 @Component({
      selector: 'app-time-escrow',
      standalone: true,
      imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent],
-     animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
+     animations: [
+          trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])]),
+          trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-20px)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(100%)' }))])]),
+     ],
      templateUrl: './time-escrow.component.html',
      styleUrl: './time-escrow.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,6 +67,14 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
+     public readonly xrplTransactionService = inject(XrplTransactionService);
+     public readonly txEnvironmentServiceService = inject(TxEnvironmentServiceService);
+     public readonly transactionDropdownService = inject(TransactionDropdownService);
+     public readonly checkUtilService = inject(CheckUtilService);
+     public readonly acccountDataService = inject(AcccountDataService);
+     public readonly checkTransactionService = inject(CheckTransactionService);
+     public readonly mptUtilService = inject(MptUtilService);
+     public readonly escrowUtilService = inject(EscrowUtilService);
 
      // Destination Dropdown
      customDestinations = signal<{ name?: string; address: string }[]>([]);
@@ -102,24 +121,14 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      outstandingMptCollapsed = signal<boolean>(true);
      outstandingIOUCollapsed = signal<boolean>(true);
 
-     selectedDestinationItem = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return null;
-          return this.destinationItems().find(d => d.id === addr) || null;
-     });
+     allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
+     destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
+     destinationItems = this.transactionDropdownService.destinationItems(this.allDestinations);
+     selectedDestinationItem = this.transactionDropdownService.selectedDestinationItem(this.selectedDestinationAddress, this.destinationMap, this.destinationItems);
+     filteredDestinations = this.transactionDropdownService.filteredDestinations(this.allDestinations, this.destinationSearchQuery);
+     destinationDisplay = this.transactionDropdownService.destinationDisplay(this.selectedDestinationAddress, this.destinationSearchQuery, this.destinationMap);
 
-     destinationItems = computed(() => {
-          const currentAddr = this.currentWallet().address;
-
-          return this.allDestinations().map(d => ({
-               id: d.address,
-               display: d.name ?? 'Unknown Wallet',
-               secondary: d.address,
-               isCurrentAccount: d.address === currentAddr,
-               isCurrentCode: false,
-               isCurrentToken: false,
-          }));
-     });
+     readonly currentAddress = computed(() => this.currentWallet().address);
 
      currencyItems = computed(() => {
           const currentCode = this.currencyFieldDropDownValue();
@@ -160,24 +169,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           })),
           ...this.customDestinations(),
      ]);
-
-     private readonly destinationMap = computed(() => {
-          return new Map(this.allDestinations().map(d => [d.address, d]));
-     });
-
-     destinationDisplay = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return this.destinationSearchQuery();
-          return this.dropdownService.formatDisplay(this.destinationMap().get(addr) ?? { address: addr });
-     });
-
-     filteredDestinations = computed(() => {
-          const q = this.destinationSearchQuery().trim().toLowerCase();
-          if (!q) return this.allDestinations();
-
-          const current = this.currentWallet().address;
-          return this.allDestinations().filter(d => d.address !== current && (d.address.toLowerCase().includes(q) || d.name?.toLowerCase().includes(q)));
-     });
 
      escrowItems = computed(() => {
           const escrows = this.allEscrowsRaw();
@@ -220,9 +211,9 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      selectedIssuerAddress = computed(() => this.trustlineCurrency.getSelectedIssuer());
 
      selectedIssuerItem = computed(() => {
-          const addr = this.trustlineCurrency.getSelectedIssuer(); // ← read directly from service
+          const addr = this.trustlineCurrency.selectedIssuer();
           if (!addr) return null;
-          return this.issuerItems().find((item: { id: string }) => item.id === addr) || null;
+          return this.issuerItems().find(item => item.id === addr) || null;
      });
 
      onIssuerSelected(item: SelectItem | null) {
@@ -355,7 +346,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                const current = this.selectedDestinationAddress();
 
                if (typed && typed !== current && xrpl.isValidAddress(typed)) {
-                    // Only auto-set if it's not already in the list (prevents loop)
                     if (!this.allDestinations().some(d => d.address === typed)) {
                          this.selectedDestinationAddress.set(typed);
                     }
@@ -365,33 +355,14 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      }
 
      ngOnInit(): void {
-          this.loadKnownIssuers();
-          this.refreshStoredIssuers();
-          this.loadCustomDestinations();
+          this.trustlineCurrency.setPreferXrpAsDefault(true); // ← this page wants XRP default
+          this.transactionDropdownService.loadCustomDestinations();
           this.setupWalletSubscriptions();
-          this.currencyFieldDropDownValue.set('XRP');
           this.populateDefaultDateTime();
 
-          // Subscribe once
-          this.trustlineCurrency.currencies$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(currencies => {
-               this.currencies.set(currencies);
-               if (currencies.length > 0 && !this.currencyFieldDropDownValue()) {
-                    this.currencyFieldDropDownValue.set(currencies[0]);
-                    this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
-               }
-          });
-
-          this.trustlineCurrency.issuers$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(issuers => {
-               this.issuers.set(issuers);
-          });
-
-          this.trustlineCurrency.selectedIssuer$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(issuer => {
-               this.issuerFields.set(issuer);
-          });
-
-          this.trustlineCurrency.balance$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(balance => {
-               this.currencyBalanceField.set(balance); // ← This is your live balance!
-          });
+          if (this.trustlineCurrency.currencies().length > 0) {
+               this.trustlineCurrency.selectCurrency(this.trustlineCurrency.currencies()[0], '');
+          }
 
           this.txUiService.clearAllOptions();
      }
@@ -414,13 +385,10 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
 
           this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
                this.wallets.set(wallets);
-               if (this.hasWallets() && !this.currentWallet().address) {
+               if (this.hasWallets() && !this.currentAddress()) {
                     const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
                     const wallet = wallets[idx];
-                    if (wallet) {
-                         this.clearFields(true);
-                         this.selectWallet(wallet);
-                    }
+                    if (wallet) this.selectWallet(wallet);
                }
           });
 
@@ -432,7 +400,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                          if (!wallet) return EMPTY;
 
                          this.selectWallet(wallet);
-                         // this.xrplCache.invalidateAccountCache(wallet.address);
                          this.txUiService.clearAllOptions();
                          this.clearFields();
                          return from(this.getEscrows(false));
@@ -442,21 +409,16 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      }
 
      private selectWallet(wallet: Wallet): void {
-          this.currentWallet.set({ ...wallet });
-          this.txUiService.currentWallet.set({ ...wallet });
-          // this.xrplCache.invalidateAccountCache(wallet.address);
-
-          // Prevent self as destination
+          this.currentWallet.set(wallet);
+          this.txUiService.currentWallet.set(wallet);
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
           this.populateDefaultDateTime();
 
-          this.currencyFieldDropDownValue.set('XRP');
-          // this.currencyFieldDropDownValue.set(this.currencyFieldDropDownValue() || 'XRP');
-          // if (this.currencyFieldDropDownValue() !== 'XRP' && this.issuerFields() === '') {
-          // this.onCurrencyChange(this.issuerFields()); // triggers issuer reload + balance update
-          // }
+          const currencyValue = this.currencyFieldDropDownValue();
+          this.currencyFieldDropDownValue.set(currencyValue || 'XRP');
+          this.onCurrencyChange(currencyValue); // triggers issuer reload + balance update
      }
 
      trackByAddress(index: number, item: DropdownItem): string {
@@ -502,11 +464,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
 
-          if (Object.keys(this.knownTrustLinesIssuers()).length > 0 && this.issuerFields() === '' && this.currencyFieldDropDownValue() !== 'XRP') {
-               this.currencyFieldDropDownValue.set(Object.keys(this.knownTrustLinesIssuers())[0]);
-          }
-
-          this.clearFields(true);
+          this.clearFields();
           if (this.hasWallets()) {
                await this.getEscrows(false);
                this.populateDefaultDateTime();
@@ -520,6 +478,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      async getEscrows(forceRefresh = false): Promise<void> {
           await this.withPerf('getEscrows', async () => {
                this.txUiService.clearAllOptionsAndMessages();
+               this.txUiService.resetCurrentStepToIdle();
                if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
                     throw new Error('Please select a wallet.');
                }
@@ -533,11 +492,19 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                          return this.txUiService.setError(errors.join('\n• '));
                     }
 
-                    this.getExistingEscrows(accountObjects, wallet.classicAddress);
-                    this.getExistingMpts(accountObjects, wallet.classicAddress);
-                    this.getExistingIOUs(accountObjects, wallet.classicAddress);
-                    this.getExpiredOrFulfilledEscrows(accountObjects, wallet.classicAddress);
-                    this.loadAllEscrows(client, accountObjects);
+                    this.existingEscrow.set(this.escrowUtilService.getExistingEscrows(accountObjects, wallet.classicAddress));
+                    this.expiredOrFulfilledEscrows.set(await this.escrowUtilService.getExpiredOrFulfilledEscrows(accountObjects, wallet.classicAddress, this.activeTab()));
+                    // this.getExpiredOrFulfilledEscrows(accountObjects, wallet.classicAddress);
+                    // this.getExistingEscrows(accountObjects, wallet.classicAddress);
+                    this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, wallet.classicAddress));
+                    this.existingIOUs.set(this.trustlineCurrency.getExistingIOUs(accountObjects, wallet.classicAddress));
+                    // this.getExistingMpts(accountObjects, wallet.classicAddress);
+                    // this.getExistingIOUs(accountObjects, wallet.classicAddress);
+                    // this.loadAllEscrows(client, accountObjects);
+                    const escrows = await this.escrowUtilService.loadAllEscrows(accountObjects);
+                    this.allEscrowsRaw.set(escrows);
+
+                    // this.allEscrowsRaw.set(this.escrowUtilService.loadAllEscrows(accountObjects));
 
                     if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT' && this.issuerFields() !== '') {
                          this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
@@ -797,170 +764,170 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      }
 
      // This runs once when account data loads
-     private loadAllEscrows(client: xrpl.Client, accountObjects: xrpl.AccountObjectsResponse) {
-          const rawEscrows = (accountObjects.result.account_objects ?? [])
-               .filter(obj => obj.LedgerEntryType === 'Escrow' && (obj.FinishAfter || obj.CancelAfter)) // && !obj.Condition)
-               .map(async (obj: any) => {
-                    let EscrowSequence: number | null = null;
-                    if (obj.PreviousTxnID) {
-                         try {
-                              // const tx = await this.xrplService.getTxData(client, obj.PreviousTxnID);
-                              const tx = await this.xrplCache.getTxCached(obj.PreviousTxnID, 90);
-                              EscrowSequence = tx.result.tx_json.Sequence ?? null;
-                         } catch (e) {
-                              console.warn('Failed to fetch sequence for escrow', obj.PreviousTxnID);
-                         }
-                    }
+     // private loadAllEscrows(client: xrpl.Client, accountObjects: xrpl.AccountObjectsResponse) {
+     //      const rawEscrows = (accountObjects.result.account_objects ?? [])
+     //           .filter(obj => obj.LedgerEntryType === 'Escrow' && (obj.FinishAfter || obj.CancelAfter)) // && !obj.Condition)
+     //           .map(async (obj: any) => {
+     //                let EscrowSequence: number | null = null;
+     //                if (obj.PreviousTxnID) {
+     //                     try {
+     //                          // const tx = await this.xrplService.getTxData(client, obj.PreviousTxnID);
+     //                          const tx = await this.xrplCache.getTxCached(obj.PreviousTxnID, 90);
+     //                          EscrowSequence = tx.result.tx_json.Sequence ?? null;
+     //                     } catch (e) {
+     //                          console.warn('Failed to fetch sequence for escrow', obj.PreviousTxnID);
+     //                     }
+     //                }
 
-                    const amount = typeof obj.Amount === 'string' ? xrpl.dropsToXrp(obj.Amount) : obj.Amount.value + ' ' + this.utilsService.normalizeCurrencyCode(obj.Amount.currency);
+     //                const amount = typeof obj.Amount === 'string' ? xrpl.dropsToXrp(obj.Amount) : obj.Amount.value + ' ' + this.utilsService.normalizeCurrencyCode(obj.Amount.currency);
 
-                    return {
-                         Sender: obj.Account,
-                         Destination: obj.Destination,
-                         Amount: obj.Amount,
-                         EscrowSequence,
-                         CancelAfter: obj.CancelAfter,
-                         FinishAfter: obj.FinishAfter,
-                    };
-               });
+     //                return {
+     //                     Sender: obj.Account,
+     //                     Destination: obj.Destination,
+     //                     Amount: obj.Amount,
+     //                     EscrowSequence,
+     //                     CancelAfter: obj.CancelAfter,
+     //                     FinishAfter: obj.FinishAfter,
+     //                };
+     //           });
 
-          // Resolve all async sequences
-          Promise.all(rawEscrows).then(resolved => {
-               this.allEscrowsRaw.set(resolved);
-          });
-     }
+     //      // Resolve all async sequences
+     //      Promise.all(rawEscrows).then(resolved => {
+     //           this.allEscrowsRaw.set(resolved);
+     //      });
+     // }
 
-     private getExistingEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          const mapped = (escrowObjects.result.account_objects ?? [])
-               .filter(
-                    (obj: any) =>
-                         obj.LedgerEntryType === 'Escrow' &&
-                         obj.Account === classicAddress &&
-                         // Only time-based escrows:
-                         (obj.FinishAfter || obj.CancelAfter) &&
-                         !obj.Condition
-               )
-               .map((obj: any): EscrowDataForUI => {
-                    const sendMax = obj.Amount;
-                    let amount = '0';
-                    let currency = '';
+     // private getExistingEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+     //      const mapped = (escrowObjects.result.account_objects ?? [])
+     //           .filter(
+     //                (obj: any) =>
+     //                     obj.LedgerEntryType === 'Escrow' &&
+     //                     obj.Account === classicAddress &&
+     //                     // Only time-based escrows:
+     //                     (obj.FinishAfter || obj.CancelAfter) &&
+     //                     !obj.Condition
+     //           )
+     //           .map((obj: any): EscrowDataForUI => {
+     //                const sendMax = obj.Amount;
+     //                let amount = '0';
+     //                let currency = '';
 
-                    if (typeof sendMax === 'string') {
-                         amount = String(xrpl.dropsToXrp(sendMax));
-                         currency = '';
-                    } else if (sendMax?.value) {
-                         amount = sendMax.value;
-                         currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
-                    }
+     //                if (typeof sendMax === 'string') {
+     //                     amount = String(xrpl.dropsToXrp(sendMax));
+     //                     currency = '';
+     //                } else if (sendMax?.value) {
+     //                     amount = sendMax.value;
+     //                     currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
+     //                }
 
-                    return {
-                         Account: obj.Account,
-                         Amount: `${amount} ${currency}`,
-                         Destination: obj.Destination,
-                         DestinationTag: obj.DestinationTag,
-                         CancelAfter: obj.CancelAfter,
-                         FinishAfter: obj.FinishAfter,
-                         TxHash: obj.PreviousTxnID,
-                         Sequence: obj.PreviousTxnID,
-                    };
-               })
-               .sort((a, b) => a.Destination.localeCompare(b.Destination));
+     //                return {
+     //                     Account: obj.Account,
+     //                     Amount: `${amount} ${currency}`,
+     //                     Destination: obj.Destination,
+     //                     DestinationTag: obj.DestinationTag,
+     //                     CancelAfter: obj.CancelAfter,
+     //                     FinishAfter: obj.FinishAfter,
+     //                     TxHash: obj.PreviousTxnID,
+     //                     Sequence: obj.PreviousTxnID,
+     //                };
+     //           })
+     //           .sort((a, b) => a.Destination.localeCompare(b.Destination));
 
-          this.existingEscrow.set(mapped);
-          this.utilsService.logObjects('existingEscrow', mapped);
-     }
+     //      this.existingEscrow.set(mapped);
+     //      this.utilsService.logObjects('existingEscrow', mapped);
+     // }
 
-     private getExistingMpts(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          const mapped = (escrowObjects.result.account_objects ?? [])
-               .filter((obj: any) => (obj.LedgerEntryType === 'MPToken' || obj.LedgerEntryType === 'MPTokenIssuance') && (obj.Account === classicAddress || obj.Issuer === classicAddress))
-               .map((obj: any): MPToken => {
-                    return {
-                         LedgerEntryType: obj.LedgerEntryType,
-                         MPTAmount: obj.MaximumAmount ? obj.MaximumAmount : obj.MPTAmount,
-                         mpt_issuance_id: obj.mpt_issuance_id ? obj.mpt_issuance_id : obj.MPTokenIssuanceID,
-                    };
-               })
-               .sort((a, b) => {
-                    const ai = a.mpt_issuance_id ?? '';
-                    const bi = b.mpt_issuance_id ?? '';
-                    return ai.localeCompare(bi);
-               });
+     // private getExistingMpts(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+     //      const mapped = (escrowObjects.result.account_objects ?? [])
+     //           .filter((obj: any) => (obj.LedgerEntryType === 'MPToken' || obj.LedgerEntryType === 'MPTokenIssuance') && (obj.Account === classicAddress || obj.Issuer === classicAddress))
+     //           .map((obj: any): MPToken => {
+     //                return {
+     //                     LedgerEntryType: obj.LedgerEntryType,
+     //                     MPTAmount: obj.MaximumAmount ? obj.MaximumAmount : obj.MPTAmount,
+     //                     mpt_issuance_id: obj.mpt_issuance_id ? obj.mpt_issuance_id : obj.MPTokenIssuanceID,
+     //                };
+     //           })
+     //           .sort((a, b) => {
+     //                const ai = a.mpt_issuance_id ?? '';
+     //                const bi = b.mpt_issuance_id ?? '';
+     //                return ai.localeCompare(bi);
+     //           });
 
-          this.existingMpts.set(mapped);
-          this.utilsService.logObjects('existingMpts', mapped);
-     }
+     //      this.existingMpts.set(mapped);
+     //      this.utilsService.logObjects('existingMpts', mapped);
+     // }
 
-     private getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          const mapped = (accountObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'RippleState')
-               .map((obj: any): RippleState => {
-                    const balance = obj.Balance?.value ?? '0';
-                    const currency = this.utilsService.normalizeCurrencyCode(obj.Balance?.currency);
+     // private getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+     //      const mapped = (accountObjects.result.account_objects ?? [])
+     //           .filter((obj: any) => obj.LedgerEntryType === 'RippleState')
+     //           .map((obj: any): RippleState => {
+     //                const balance = obj.Balance?.value ?? '0';
+     //                const currency = this.utilsService.normalizeCurrencyCode(obj.Balance?.currency);
 
-                    // Determine if this account is the issuer or holder
-                    const issuer = obj.HighLimit?.issuer === classicAddress ? obj.LowLimit?.issuer : obj.HighLimit?.issuer;
+     //                // Determine if this account is the issuer or holder
+     //                const issuer = obj.HighLimit?.issuer === classicAddress ? obj.LowLimit?.issuer : obj.HighLimit?.issuer;
 
-                    return {
-                         LedgerEntryType: 'RippleState',
-                         Balance: {
-                              currency,
-                              value: balance,
-                         },
-                         HighLimit: {
-                              issuer,
-                         },
-                    };
-               })
-               // Sort alphabetically by issuer or currency if available
-               .sort((a, b) => a.HighLimit.issuer.localeCompare(b.HighLimit.issuer));
+     //                return {
+     //                     LedgerEntryType: 'RippleState',
+     //                     Balance: {
+     //                          currency,
+     //                          value: balance,
+     //                     },
+     //                     HighLimit: {
+     //                          issuer,
+     //                     },
+     //                };
+     //           })
+     //           // Sort alphabetically by issuer or currency if available
+     //           .sort((a, b) => a.HighLimit.issuer.localeCompare(b.HighLimit.issuer));
 
-          this.existingIOUs.set(mapped);
-          this.utilsService.logObjects('existingIOUs', mapped);
-     }
+     //      this.existingIOUs.set(mapped);
+     //      this.utilsService.logObjects('existingIOUs', mapped);
+     // }
 
-     private async getExpiredOrFulfilledEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          const filteredEscrows = (escrowObjects.result.account_objects ?? []).filter(
-               (obj: any) =>
-                    obj.LedgerEntryType === 'Escrow' &&
-                    (this.activeTab() === 'cancel'
-                         ? obj.Account === classicAddress // owner can cancel
-                         : obj.Destination === classicAddress) // receiver can finish
-          );
+     // private async getExpiredOrFulfilledEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+     //      const filteredEscrows = (escrowObjects.result.account_objects ?? []).filter(
+     //           (obj: any) =>
+     //                obj.LedgerEntryType === 'Escrow' &&
+     //                (this.activeTab() === 'cancel'
+     //                     ? obj.Account === classicAddress // owner can cancel
+     //                     : obj.Destination === classicAddress) // receiver can finish
+     //      );
 
-          const processedEscrows = await Promise.all(
-               filteredEscrows.map(async (obj: any) => {
-                    const sendMax = obj.Amount;
-                    let amount = '0';
+     //      const processedEscrows = await Promise.all(
+     //           filteredEscrows.map(async (obj: any) => {
+     //                const sendMax = obj.Amount;
+     //                let amount = '0';
 
-                    if (typeof sendMax === 'string') {
-                         amount = String(xrpl.dropsToXrp(sendMax));
-                    } else if (sendMax?.value) {
-                         amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
-                    }
+     //                if (typeof sendMax === 'string') {
+     //                     amount = String(xrpl.dropsToXrp(sendMax));
+     //                } else if (sendMax?.value) {
+     //                     amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
+     //                }
 
-                    let EscrowSequence: number | null = null;
-                    if (obj.PreviousTxnID) {
-                         try {
-                              // const sequenceTx = await this.xrplService.getTxData(client, obj.PreviousTxnID);
-                              const sequenceTx = await this.xrplCache.getTxCached(obj.PreviousTxnID, 90);
-                              EscrowSequence = sequenceTx?.result?.tx_json?.Sequence ?? null;
-                         } catch (error) {
-                              console.warn(`Failed to fetch escrow sequence for ${obj.PreviousTxnID}:`, error);
-                         }
-                    }
+     //                let EscrowSequence: number | null = null;
+     //                if (obj.PreviousTxnID) {
+     //                     try {
+     //                          // const sequenceTx = await this.xrplService.getTxData(client, obj.PreviousTxnID);
+     //                          const sequenceTx = await this.xrplCache.getTxCached(obj.PreviousTxnID, 90);
+     //                          EscrowSequence = sequenceTx?.result?.tx_json?.Sequence ?? null;
+     //                     } catch (error) {
+     //                          console.warn(`Failed to fetch escrow sequence for ${obj.PreviousTxnID}:`, error);
+     //                     }
+     //                }
 
-                    return {
-                         Amount: amount,
-                         Sender: obj.Account,
-                         Destination: obj.Destination,
-                         EscrowSequence,
-                    };
-               })
-          );
+     //                return {
+     //                     Amount: amount,
+     //                     Sender: obj.Account,
+     //                     Destination: obj.Destination,
+     //                     EscrowSequence,
+     //                };
+     //           })
+     //      );
 
-          this.expiredOrFulfilledEscrows.set(processedEscrows.sort((a, b) => a.Sender.localeCompare(b.Sender)));
-          this.utilsService.logObjects('expiredOrFulfilledEscrows', this.expiredOrFulfilledEscrows());
-     }
+     //      this.expiredOrFulfilledEscrows.set(processedEscrows.sort((a, b) => a.Sender.localeCompare(b.Sender)));
+     //      this.utilsService.logObjects('expiredOrFulfilledEscrows', this.expiredOrFulfilledEscrows());
+     // }
 
      get availableCurrencies(): string[] {
           return [
@@ -1039,11 +1006,17 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-          this.getExistingEscrows(accountObjects, wallet.classicAddress);
-          this.getExistingMpts(accountObjects, wallet.classicAddress);
-          this.getExistingIOUs(accountObjects, wallet.classicAddress);
-          this.getExpiredOrFulfilledEscrows(accountObjects, wallet.classicAddress);
-          this.loadAllEscrows(client, accountObjects);
+          // this.getExistingEscrows(accountObjects, wallet.classicAddress);
+          this.existingEscrow.set(this.escrowUtilService.getExistingEscrows(accountObjects, wallet.classicAddress));
+          this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, wallet.classicAddress));
+          this.existingIOUs.set(this.trustlineCurrency.getExistingIOUs(accountObjects, wallet.classicAddress));
+          // this.getExistingMpts(accountObjects, wallet.classicAddress);
+          // this.getExistingIOUs(accountObjects, wallet.classicAddress);
+          this.expiredOrFulfilledEscrows.set(await this.escrowUtilService.getExpiredOrFulfilledEscrows(accountObjects, wallet.classicAddress, this.activeTab()));
+          // this.getExpiredOrFulfilledEscrows(accountObjects, wallet.classicAddress);
+          const escrows = await this.escrowUtilService.loadAllEscrows(accountObjects);
+          this.allEscrowsRaw.set(escrows);
+          // this.loadAllEscrows(client, accountObjects);
 
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
           this.addCustomDestination(addDest, destination);
@@ -1131,16 +1104,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           this.storageService.set('destinations', allItems);
           this.ensureDefaultNotSelected();
      }
-
-     private readonly allDestinations = computed(() => {
-          const wallets = this.wallets().map(w => ({
-               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
-               address: w.address,
-               source: 'wallet' as const,
-          }));
-
-          return [...wallets, ...this.customDestinations()];
-     });
 
      ensureDefaultNotSelected() {
           const currentAddress = this.currentWallet().address;

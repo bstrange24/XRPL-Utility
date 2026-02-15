@@ -5,6 +5,8 @@ import { XrplService } from '../xrpl-services/xrpl.service';
 import { UtilsService } from '../util-service/utils.service';
 import { Wallet, WalletManagerService } from '../wallets/manager/wallet-manager.service';
 import { SelectItem } from '../destination-dropdown/destination-dropdown.service';
+import { RippleState } from '../../models/interface-items.model';
+import * as xrpl from 'xrpl';
 
 interface IssuerItem {
      name: string;
@@ -40,7 +42,8 @@ export class TrustlineCurrencyService {
           private readonly storage: StorageService,
           private readonly xrplService: XrplService,
           private readonly utils: UtilsService,
-          private readonly walletManagerService: WalletManagerService
+          private readonly walletManagerService: WalletManagerService,
+          private readonly utilsService: UtilsService
      ) {
           this.loadFromStorage();
 
@@ -79,6 +82,35 @@ export class TrustlineCurrencyService {
           this.issuers$.subscribe(i => this.issuers.set(i));
           this.selectedIssuer$.subscribe(i => this.selectedIssuer.set(i));
           this.balance$.subscribe(b => this.balance.set(b));
+     }
+
+     getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+          const mapped = (accountObjects.result.account_objects ?? [])
+               .filter((obj: any) => obj.LedgerEntryType === 'RippleState')
+               .map((obj: any): RippleState => {
+                    const balance = obj.Balance?.value ?? '0';
+                    const currency = this.utilsService.normalizeCurrencyCode(obj.Balance?.currency);
+
+                    // Determine if this account is the issuer or holder
+                    const issuer = obj.HighLimit?.issuer === classicAddress ? obj.LowLimit?.issuer : obj.HighLimit?.issuer;
+
+                    return {
+                         LedgerEntryType: 'RippleState',
+                         Balance: {
+                              currency,
+                              value: balance,
+                         },
+                         HighLimit: {
+                              issuer,
+                         },
+                    };
+               })
+               // Sort alphabetically by issuer or currency if available
+               .sort((a, b) => a.HighLimit.issuer.localeCompare(b.HighLimit.issuer));
+
+          // this.existingIOUs.set(mapped);
+          this.utilsService.logObjects('existingIOUs', mapped);
+          return mapped;
      }
 
      setPreferXrpAsDefault(prefer: boolean) {

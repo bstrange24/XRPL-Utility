@@ -36,6 +36,7 @@ import { MPToken, RippleState } from '../../models/interface-items.model';
 import { CheckUtilService } from '../../services/checks/check-util/check-util.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { CheckTransactionService } from '../../services/checks/checks-transaction/checks-transaction.service';
+import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.service';
 
 @Component({
      selector: 'app-checks',
@@ -68,6 +69,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      public readonly checkUtilService = inject(CheckUtilService);
      public readonly acccountDataService = inject(AcccountDataService);
      public readonly checkTransactionService = inject(CheckTransactionService);
+     public readonly mptUtilService = inject(MptUtilService);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
@@ -396,8 +398,8 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     this.existingChecks.set(this.checkUtilService.getExistingChecks(accountObjects, wallet.classicAddress));
                     this.cashableChecks.set(this.checkUtilService.getCashableChecks(accountObjects, wallet.classicAddress));
                     this.cancellableChecks.set(this.checkUtilService.getCancelableChecks(accountObjects, wallet.classicAddress));
-                    this.getExistingMpts(accountObjects, wallet.classicAddress);
-                    this.getExistingIOUs(accountObjects, wallet.classicAddress);
+                    this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, wallet.classicAddress));
+                    this.existingIOUs.set(this.trustlineCurrency.getExistingIOUs(accountObjects, wallet.classicAddress));
 
                     const currencyValue = this.currencyFieldDropDownValue();
                     if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.trustlineCurrency.selectedIssuer()) {
@@ -414,24 +416,33 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           });
      }
 
-     async createCheck() {
-          await this.checkTransactionService.createCheck({
-               wallet: this.currentWallet(),
-               destination: this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery),
-               amount: this.txUiService.amountField(),
-               currencyValue: this.currencyFieldDropDownValue(),
-               issuer: this.trustlineCurrency.selectedIssuer(),
-               isSimulate: this.txUiService.isSimulateEnabled(),
-               useMultiSign: this.txUiService.useMultiSign(),
-               isRegularKey: this.txUiService.isRegularKeyAddress(),
-               regularKeyAddress: this.txUiService.regularKeyAddress(),
-               regularKeySeed: this.txUiService.regularKeySeed(),
-               multiSignAddress: this.txUiService.multiSignAddress(),
-               multiSignSeeds: this.txUiService.multiSignSeeds(),
+     async createCheck1() {
+          await this.withPerf('createCheck', async () => {
+               try {
+                    await this.checkTransactionService.createCheck({
+                         wallet: this.currentWallet(),
+                         destination: this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery),
+                         amount: this.txUiService.amountField(),
+                         currencyValue: this.currencyFieldDropDownValue(),
+                         issuer: this.trustlineCurrency.selectedIssuer(),
+                         isSimulate: this.txUiService.isSimulateEnabled(),
+                         useMultiSign: this.txUiService.useMultiSign(),
+                         isRegularKey: this.txUiService.isRegularKeyAddress(),
+                         regularKeyAddress: this.txUiService.regularKeyAddress(),
+                         regularKeySeed: this.txUiService.regularKeySeed(),
+                         multiSignAddress: this.txUiService.multiSignAddress(),
+                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    });
+               } catch (error: any) {
+                    console.error('Critical error in createCheck:', error);
+                    this.toastService.error(error.message || 'Unexpected error occurred', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
+               }
           });
      }
 
-     async createCheck1() {
+     async createCheck() {
           await this.withPerf('createCheck', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                this.txUiService.resetCurrentStepToIdle();
@@ -753,53 +764,53 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           });
      }
 
-     private getExistingMpts(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          const mapped = (escrowObjects.result.account_objects ?? [])
-               .filter((obj: any) => (obj.LedgerEntryType === 'MPToken' || obj.LedgerEntryType === 'MPTokenIssuance') && (obj.Account === classicAddress || obj.Issuer === classicAddress))
-               .map((obj: any): MPToken => {
-                    return {
-                         LedgerEntryType: obj.LedgerEntryType,
-                         MPTAmount: obj.MaximumAmount ? obj.MaximumAmount : obj.MPTAmount,
-                         mpt_issuance_id: obj.mpt_issuance_id ? obj.mpt_issuance_id : obj.MPTokenIssuanceID,
-                    };
-               })
-               .sort((a, b) => {
-                    const ai = a.mpt_issuance_id ?? '';
-                    const bi = b.mpt_issuance_id ?? '';
-                    return ai.localeCompare(bi);
-               });
+     // private getExistingMpts(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+     //      const mapped = (escrowObjects.result.account_objects ?? [])
+     //           .filter((obj: any) => (obj.LedgerEntryType === 'MPToken' || obj.LedgerEntryType === 'MPTokenIssuance') && (obj.Account === classicAddress || obj.Issuer === classicAddress))
+     //           .map((obj: any): MPToken => {
+     //                return {
+     //                     LedgerEntryType: obj.LedgerEntryType,
+     //                     MPTAmount: obj.MaximumAmount ? obj.MaximumAmount : obj.MPTAmount,
+     //                     mpt_issuance_id: obj.mpt_issuance_id ? obj.mpt_issuance_id : obj.MPTokenIssuanceID,
+     //                };
+     //           })
+     //           .sort((a, b) => {
+     //                const ai = a.mpt_issuance_id ?? '';
+     //                const bi = b.mpt_issuance_id ?? '';
+     //                return ai.localeCompare(bi);
+     //           });
 
-          this.existingMpts.set(mapped);
-          this.utilsService.logObjects('existingMpts', mapped);
-     }
+     //      this.existingMpts.set(mapped);
+     //      this.utilsService.logObjects('existingMpts', mapped);
+     // }
 
-     private getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          const mapped = (accountObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'RippleState')
-               .map((obj: any): RippleState => {
-                    const balance = obj.Balance?.value ?? '0';
-                    const currency = this.utilsService.normalizeCurrencyCode(obj.Balance?.currency);
+     // private getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+     //      const mapped = (accountObjects.result.account_objects ?? [])
+     //           .filter((obj: any) => obj.LedgerEntryType === 'RippleState')
+     //           .map((obj: any): RippleState => {
+     //                const balance = obj.Balance?.value ?? '0';
+     //                const currency = this.utilsService.normalizeCurrencyCode(obj.Balance?.currency);
 
-                    // Determine if this account is the issuer or holder
-                    const issuer = obj.HighLimit?.issuer === classicAddress ? obj.LowLimit?.issuer : obj.HighLimit?.issuer;
+     //                // Determine if this account is the issuer or holder
+     //                const issuer = obj.HighLimit?.issuer === classicAddress ? obj.LowLimit?.issuer : obj.HighLimit?.issuer;
 
-                    return {
-                         LedgerEntryType: 'RippleState',
-                         Balance: {
-                              currency,
-                              value: balance,
-                         },
-                         HighLimit: {
-                              issuer,
-                         },
-                    };
-               })
-               // Sort alphabetically by issuer or currency if available
-               .sort((a, b) => a.HighLimit.issuer.localeCompare(b.HighLimit.issuer));
+     //                return {
+     //                     LedgerEntryType: 'RippleState',
+     //                     Balance: {
+     //                          currency,
+     //                          value: balance,
+     //                     },
+     //                     HighLimit: {
+     //                          issuer,
+     //                     },
+     //                };
+     //           })
+     //           // Sort alphabetically by issuer or currency if available
+     //           .sort((a, b) => a.HighLimit.issuer.localeCompare(b.HighLimit.issuer));
 
-          this.existingIOUs.set(mapped);
-          this.utilsService.logObjects('existingIOUs', mapped);
-     }
+     //      this.existingIOUs.set(mapped);
+     //      this.utilsService.logObjects('existingIOUs', mapped);
+     // }
 
      private async setTxOptionalFields(client: xrpl.Client, checkTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (txType === 'create') {
@@ -848,8 +859,8 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.existingChecks.set(this.checkUtilService.getExistingChecks(accountObjects, wallet.classicAddress));
           this.cashableChecks.set(this.checkUtilService.getCashableChecks(accountObjects, wallet.classicAddress));
           this.cancellableChecks.set(this.checkUtilService.getCancelableChecks(accountObjects, wallet.classicAddress));
-          this.getExistingMpts(accountObjects, wallet.classicAddress);
-          this.getExistingIOUs(accountObjects, wallet.classicAddress);
+          this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, wallet.classicAddress));
+          this.existingIOUs.set(this.trustlineCurrency.getExistingIOUs(accountObjects, wallet.classicAddress));
           await this.refreshWallets(client, destination ? [wallet.classicAddress, destination] : [wallet.classicAddress]);
           this.addCustomDestination(addDest, destination);
           this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
