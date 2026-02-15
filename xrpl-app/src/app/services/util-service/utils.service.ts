@@ -10,6 +10,7 @@ import { StorageService } from '../local-storage/storage.service';
 import md5 from 'blueimp-md5';
 import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
+import { EscrowWithTxData, MPToken, RippleState } from '../../models/interface-items.model';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -20,42 +21,6 @@ type DidValidationResult = {
 };
 
 type InputType = 'seed' | 'mnemonic' | 'secret_numbers' | 'unknown';
-
-interface EscrowWithTxData {
-     LedgerEntryType: 'Escrow';
-     Account: string;
-     Amount?: string | { currency: string; value: string } | { mpt_issuance_id: string; value: string };
-     Destination: string;
-     PreviousTxnID?: string;
-     Condition?: string;
-     CancelAfter?: number;
-     FinishAfter?: number;
-     DestinationTag?: number;
-     SourceTag?: number;
-     Sequence?: number | null;
-     TicketSequence?: string | number;
-     Memo?: string | null;
-}
-
-interface RippleState {
-     LedgerEntryType: 'RippleState';
-     Balance: { currency: string; value: string };
-     HighLimit: { issuer: string };
-}
-
-interface MPToken {
-     LedgerEntryType: 'MPToken';
-     index: string;
-     mpt_issuance_id?: string;
-     MPTokenIssuanceID?: string;
-     PreviousTxnID: string;
-     Flags?: number;
-     MPTAmount?: string | number;
-     MaximumAmount?: string | number;
-     OutstandingAmount?: string | number;
-     TransferFee?: string | number;
-     MPTokenMetadata?: string;
-}
 
 @Injectable({
      providedIn: 'root',

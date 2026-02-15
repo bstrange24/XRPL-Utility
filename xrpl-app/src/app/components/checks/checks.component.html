@@ -211,7 +211,7 @@
 
                          <div class="switch-group">
                               <label class="switch">
-                                   <input type="checkbox" id="showOptionalXrp" [checked]="txUiService.wantsOptions()" (change)="toggleOptions($event.target.checked)" />
+                         <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="toggleOptions($event.target.checked)" name="showOptionalXrp" />
                                    <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
                               </label>
                          </div>

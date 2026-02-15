@@ -9,11 +9,13 @@ interface PrepareTxEnvironmentOptions {
      includeEscrows?: boolean;
      includeChecks?: boolean;
      includeTrustlines?: boolean;
+     includeDestinationAccountInfo?: boolean;
      includeAccountInfo?: boolean;
      includeAccountObject?: boolean;
      includeLedgerIndex?: boolean;
      includeFee?: boolean;
      forceRefresh?: boolean;
+     destinationAddress?: string;
 }
 
 interface PrepareTxEnvironmentResult {
@@ -27,6 +29,7 @@ interface PrepareTxEnvironmentResult {
      checkObjects?: xrpl.AccountObjectsResponse;
      trustlines?: xrpl.AccountLinesResponse;
      accountInfo?: xrpl.AccountInfoResponse;
+     destinationAccountInfo?: xrpl.AccountInfoResponse;
 }
 
 @Injectable({
@@ -38,7 +41,7 @@ export class TxEnvironmentServiceService {
      private readonly walletManager = inject(WalletManagerService);
      private readonly walletCache = new Map<string, xrpl.Wallet>();
 
-     async prepareTxEnvironment({ includeTickets = false, includeEscrows = false, includeChecks = false, includeTrustlines = false, includeAccountInfo = false, includeAccountObject = false, includeLedgerIndex = false, includeFee = false, forceRefresh = false }: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
+     async prepareTxEnvironment({ includeTickets = false, includeEscrows = false, includeChecks = false, includeTrustlines = false, includeDestinationAccountInfo = false, includeAccountInfo = false, includeAccountObject = false, includeLedgerIndex = false, includeFee = false, forceRefresh = false, destinationAddress = '' }: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
           // Client (cached internally)
           const client = await this.xrplCache.getClient(() => this.xrplService.getClient());
 
@@ -73,6 +76,11 @@ export class TxEnvironmentServiceService {
           if (includeAccountInfo) {
                networkCalls.push(this.xrplCache.getAccountInfo(wallet.classicAddress, forceRefresh));
                networkKeys.push('accountInfo');
+          }
+
+          if (includeDestinationAccountInfo) {
+               networkCalls.push(this.xrplCache.getAccountInfo(destinationAddress, forceRefresh));
+               networkKeys.push('destinationAccountInfo');
           }
 
           if (includeAccountObject) {

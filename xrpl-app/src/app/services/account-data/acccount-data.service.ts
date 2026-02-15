@@ -33,7 +33,33 @@ export class AcccountDataService extends PerformanceBaseComponent {
 
      hasSignerList = signal<boolean>(false);
 
-     public refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
+     refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
+          // Update multi-sign & regular key flags
+          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
+          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
+
+          // Update service state
+          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
+
+          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
+          const hasSignerList = signerAccounts?.length > 0;
+          this.txUiService.signerQuorum.set(signerQuorum);
+          const checkForMultiSigner = signerAccounts?.length > 0;
+          checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
+
+          this.txUiService.multiSigningEnabled.set(hasSignerList);
+          if (hasSignerList) {
+               const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+               this.txUiService.signers.set(entries);
+          }
+
+          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
+
+          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
+          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
+     }
+
+     public refreshUiState1(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
           // Update multi-sign & regular key flags
           const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
           this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
@@ -70,14 +96,28 @@ export class AcccountDataService extends PerformanceBaseComponent {
           this.refreshUiAccountMetaData(accountInfo?.result?.account_data);
      }
 
-     private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
+     public setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
           const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
           this.txUiService.signers.set(signerEntries);
           this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
           this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
      }
 
-     private clearMultiSignersConfiguration(): void {
+     public clearMultiSignersConfiguration(): void {
+          this.txUiService.signerQuorum.set(0);
+          this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
+          this.txUiService.multiSignSeeds.set('');
+          this.storageService.removeValue('signerEntries');
+     }
+
+     private setupMultiSignersConfiguration1(wallet: xrpl.Wallet): void {
+          const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+          this.txUiService.signers.set(signerEntries);
+          this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
+          this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
+     }
+
+     private clearMultiSignersConfiguration1(): void {
           this.txUiService.signerQuorum.set(0);
           this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
           this.txUiService.multiSignSeeds.set('');

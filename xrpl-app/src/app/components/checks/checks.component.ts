@@ -33,40 +33,9 @@ import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/selec
 import { EMPTY, from, switchMap } from 'rxjs';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
-
-interface MPToken {
-     LedgerEntryType: 'MPToken';
-     index?: string;
-     mpt_issuance_id?: string;
-     MPTokenIssuanceID?: string;
-     PreviousTxnID?: string;
-     Flags?: number;
-     MPTAmount?: string | number;
-     MaximumAmount?: string | number;
-     OutstandingAmount?: string | number;
-     TransferFee?: string | number;
-     MPTokenMetadata?: string;
-}
-
-interface IssuerItem {
-     name: string;
-     address: string;
-}
-
-interface CheckItem {
-     id: string;
-     display: string;
-     isCurrentAccount: boolean;
-     secondary: string;
-     currency: string;
-     issuer: string;
-}
-
-interface RippleState {
-     LedgerEntryType: 'RippleState';
-     Balance: { currency: string; value: string };
-     HighLimit: { issuer: string };
-}
+import { CheckItem, IssuerItem, MPToken, RippleState } from '../../models/interface-items.model';
+import { CheckUtilService } from '../../services/check-util/check-util.service';
+import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 
 @Component({
      selector: 'app-checks',
@@ -97,6 +66,8 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly txEnvironmentServiceService = inject(TxEnvironmentServiceService);
      public readonly transactionDropdownService = inject(TransactionDropdownService);
+     public readonly checkUtilService = inject(CheckUtilService);
+     public readonly acccountDataService = inject(AcccountDataService);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
@@ -126,21 +97,10 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      mptIssuanceIdField = signal<string>('');
      isMptEnabled = signal(false);
      currencyBalanceField = signal<string>('0');
-     gatewayBalance = signal<string>('0');
-     issuerToRemove = signal<string>('');
      currencies = signal<string[]>([]);
-     userAddedCurrencyFieldDropDownValue = signal<string[]>([]);
-     userAddedissuerFields = signal<string>('');
-     allKnownIssuers = signal<string[]>([]);
      storedIssuers = signal<IssuerItem[]>([]);
      selectedIssuer = signal<string>('');
-     newCurrency = signal<string>('');
-     newIssuer = signal<string>('');
-     tokenToRemove = signal<string>('');
-     selectedWalletIndex = signal<number>(0);
      issuers = signal<{ name?: string; address: string }[]>([]);
-     lastCurrency = signal<string>('');
-     lastIssuer = signal<string>('');
      cancellableChecks = signal<any[]>([]);
      cashableChecks = signal<any[]>([]);
      existingChecks = signal<any[]>([]);
@@ -149,12 +109,14 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      existingMpts = signal<any[]>([]);
      currencyChangeTrigger = signal(0);
      wantsExpiration = signal<boolean>(false);
-     wantsOptions = signal<boolean>(false);
      isCheckReadonly = signal(true);
      checkCreator = signal<string>('');
      checkCurrencyCode = signal<string>('');
      currencyIssuer = signal<string>('');
 
+     readonly currentAddress = computed(() => this.currentWallet().address);
+
+     // selectedCheckItem = this.checkUtilService.getSelectedCheckItem(this.activeTab(),this.cashCheckItems(), this.cancelCheckItems());
      selectedCheckItem = computed<CheckItem | null>(() => {
           const id = this.txUiService.checkIdField();
           if (!id) return null;
@@ -348,18 +310,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           };
      });
 
-     timeUnitItems = computed(() => [
-          { id: 'seconds', display: 'Seconds' },
-          { id: 'minutes', display: 'Minutes' },
-          { id: 'hours', display: 'Hours' },
-          { id: 'days', display: 'Days' },
-     ]);
-
-     selectedTimeUnitItem = computed(() => {
-          const unit = this.checkExpirationTime();
-          return this.timeUnitItems().find(i => i.id === unit) || null;
-     });
-
      hasWallets = computed(() => this.wallets().length > 0);
 
      constructor() {
@@ -420,11 +370,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.txUiService.clearAllOptions();
      }
 
-     // private loadCustomDestinations(): void {
-     //      const stored = this.storageService.get('customDestinations');
-     //      if (stored) this.customDestinations.set(JSON.parse(stored));
-     // }
-
      private async setupWalletSubscriptions() {
           this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
                if (hasWallets) {
@@ -438,7 +383,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
           this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
                this.wallets.set(wallets);
-               if (this.hasWallets() && !this.currentWallet().address) {
+               if (this.hasWallets() && !this.currentAddress()) {
                     const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
                     const wallet = wallets[idx];
                     if (wallet) this.selectWallet(wallet);
@@ -466,7 +411,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
 
-          // Prevent self as destination
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
@@ -532,17 +476,19 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                }
 
                try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
+                    const { wallet, accountInfo, accountObjects } = await this.txEnvironmentServiceService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         forceRefresh: forceRefresh,
+                    });
 
-                    const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
-                    if (errors.length > 0) {
-                         this.toastService.error(errors.join('\n• '), AppConstants.TOAST.ERROR);
+                    if (!accountInfo || !accountObjects) {
+                         throw new Error('Failed to fetch account information');
                     }
 
-                    this.getExistingChecks(accountObjects, wallet.classicAddress);
-                    this.getCashableChecks(accountObjects, wallet.classicAddress);
-                    this.getCancelableChecks(accountObjects, wallet.classicAddress);
+                    this.existingChecks.set(this.checkUtilService.getExistingChecks(accountObjects, wallet.classicAddress));
+                    this.cashableChecks.set(this.checkUtilService.getCashableChecks(accountObjects, wallet.classicAddress));
+                    this.cancellableChecks.set(this.checkUtilService.getCancelableChecks(accountObjects, wallet.classicAddress));
                     this.getExistingMpts(accountObjects, wallet.classicAddress);
                     this.getExistingIOUs(accountObjects, wallet.classicAddress);
 
@@ -551,7 +497,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          this.trustlineCurrency.selectCurrency(currencyValue, this.currentWallet().address);
                     }
 
-                    this.refreshUiState(wallet, accountInfo, accountObjects);
+                    this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
                } catch (error: any) {
                     console.error('Failed to load account:', error);
                     this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
@@ -567,37 +513,40 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                this.txUiService.resetCurrentStepToIdle();
 
                try {
-                    this.txUiService.detailedStatus.set('');
-                    let destinationAddress = this.selectedDestinationAddress().trim();
-                    if (!destinationAddress) {
-                         const typed = this.destinationSearchQuery().trim();
-                         if (typed && xrpl.isValidAddress(typed)) {
-                              destinationAddress = typed;
-                         }
-                    }
+                    const amount = Number(this.txUiService.amountField());
+                    const isSimulate = this.txUiService.isSimulateEnabled();
+                    const useMultiSign = this.txUiService.useMultiSign();
+                    const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
+                    const regularKeyAddress = this.txUiService.regularKeyAddress();
+                    const regularKeySeed = this.txUiService.regularKeySeed();
+                    const multiSignAddress = this.txUiService.multiSignAddress();
+                    const multiSignSeeds = this.txUiService.multiSignSeeds();
 
-                    if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
+                    const destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+                    if (!destinationAddress) {
                          return this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
                     }
 
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const [{ accountInfo, accountObjects }, fee, currentLedger, destinationAccountInfo] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client), this.xrplCache.getAccountInfo(destinationAddress, false)]);
-                    const inputs = this.txUiService.getValidationInputs({
-                         wallet: this.currentWallet(),
-                         network: { accountInfo, accountObjects, fee, currentLedger },
-                         createCheck: { amount: this.txUiService.amountField(), destination: destinationAddress },
-                         regularKey: { isRegularKey: this.txUiService.isRegularKeyAddress(), address: this.txUiService.regularKeyAddress(), seed: this.txUiService.regularKeySeed() },
+                    const { client, wallet, fee, currentLedger, accountInfo, accountObjects, destinationAccountInfo } = await this.txEnvironmentServiceService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeFee: true,
+                         includeLedgerIndex: true,
                     });
-
-                    const errors = await this.validationService.validate('CreateCheck', { inputs, client, accountInfo });
-                    if (errors.length > 0) {
-                         this.toastService.error(errors.join('\n• '), AppConstants.TOAST.ERROR);
-                         this.txUiService.currentStep.set('idle');
-                         return;
-                    }
 
                     if (destinationAccountInfo?.result?.account_flags?.disallowIncomingCheck) {
                          return this.toastService.error(`Destination ${destinationAddress} has disallowIncomingCheck enabled. This wallet can not recieve checks.`, AppConstants.TOAST.ERROR);
+                    }
+
+                    if (!accountInfo || !accountObjects) {
+                         throw new Error('Failed to fetch account information');
+                    }
+
+                    const inputs = this.getValidationInputs(accountInfo, accountObjects, fee, currentLedger, destinationAddress);
+
+                    const errors = await this.validationService.validate('CreateCheck', { inputs, client, accountInfo });
+                    if (errors.length) {
+                         return this.toastService.error(errors.join('\n• '), AppConstants.TOAST.ERROR);
                     }
 
                     // Build SendMax amount
@@ -611,9 +560,9 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     let paymentType;
                     let currency;
                     if (currencyValue === AppConstants.XRP_CURRENCY) {
-                         // if (this.isMptEnabled) {
-                         // sendMax = curr;
-                         // paymentType = 'MPT';
+                         // if (this.isMptEnabled()) {
+                         //      sendMax = curr;
+                         //      paymentType = 'MPT';
                          // } else {
                          sendMax = xrpl.xrpToDrops(this.txUiService.amountField());
                          paymentType = 'XRP';
@@ -629,7 +578,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          currency = this.utilsService.encodeIfNeeded(currencyValue);
                     }
 
-                    const isSimulate = this.txUiService.isSimulateEnabled();
                     if (!isSimulate) {
                          this.txUiService.currentStep.set('preparing');
                     }
@@ -640,7 +588,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          SendMax: sendMax,
                          Destination: destinationAddress,
                          Fee: fee,
-                         LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                         LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
                     };
 
                     await this.setTxOptionalFields(client, checkCreateTx, wallet, accountInfo, 'create');
@@ -652,55 +600,54 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     const result = await this.txExecutor.checkCreate(checkCreateTx, wallet, client, {
                          destination: destinationAddress,
                          paymentType: paymentType,
-                         amount: this.txUiService.amountField(),
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeyAddress: this.txUiService.regularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                         amount: amount,
+                         useMultiSign: useMultiSign,
+                         isRegularKeyAddress: isRegularKeyAddress,
+                         regularKeyAddress: regularKeyAddress,
+                         regularKeySeed: regularKeySeed,
+                         multiSignAddress: multiSignAddress,
+                         multiSignSeeds: multiSignSeeds,
                     });
                     if (!result.success) {
-                         this.txUiService.currentStep.set('idle');
-                         return this.toastService.error(result.error || `Failed to submit transaction ${result.error}`, AppConstants.TOAST.ERROR);
+                         return this.toastService.error(result.error || `Failed to submit transaction`, AppConstants.TOAST.ERROR);
                     }
 
                     const shortDest = destinationAddress.slice(0, 7) + '…' + destinationAddress.slice(-7);
-                    if (!isSimulate) {
-                         this.txUiService.currentStep.set('waiting_validation');
-                         try {
-                              const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, result.hash ? result.hash : '', checkCreateTx.LastLedgerSequence!);
-                              this.txUiService.setTxResultSignal(finalResult);
-                              if (this.utilsService.isTxSuccessful({ result: finalResult })) {
-                                   this.toastService.success(`Successfully Sent Check of ${this.txUiService.amountField()} ${currency} to ${shortDest}\n`, AppConstants.TOAST.SUCCESS, true, result.hash, this.txUiService.explorerUrl() + 'tx/');
-                                   this.txUiService.currentStep.set('success');
-                              } else {
-                                   const errorMsg = this.utilsService.getTransactionResultMessage({ result: finalResult });
-                                   this.toastService.error(`Transaction failed ${this.utilsService.processErrorMessageFromLedger(errorMsg)}\n`, AppConstants.TOAST.ERROR, true, result.hash, this.txUiService.explorerUrl() + 'tx/');
-                                   this.txUiService.currentStep.set('failed');
-                              }
-                         } catch (waitError: any) {
-                              this.txUiService.currentStep.set('failed');
-                              const msg = waitError.message?.includes('expired') ? 'Transaction expired (ledger timeout). It was not included in the ledger.' : `Failed to confirm transaction: ${waitError.message}`;
-                              this.toastService.error(msg, 7000);
-                         } finally {
-                              setTimeout(() => this.txUiService.currentStep.set('idle'), 500);
-                         }
-                         await this.refreshAfterTx(client, wallet, destinationAddress, true);
-
-                         if (currencyValue !== 'XRP' && currencyValue !== 'MPT') {
-                              this.onCurrencyChange(currencyValue);
-                         }
-                    } else {
-                         this.txUiService.currentStep.set('success');
+                    if (isSimulate) {
+                         this.txUiService.resetCurrentStepToIdle();
                          this.toastService.success(`Simulated Sending Check of ${this.txUiService.amountField()} ${currency} to ${shortDest}`, AppConstants.TOAST.SUCCESS, false, result.hash, this.txUiService.explorerUrl() + 'tx/');
                     }
+
+                    try {
+                         const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, result.hash || '', checkCreateTx.LastLedgerSequence!);
+                         this.txUiService.setTxResultSignal(finalResult);
+                         this.xrplTransactionService.processTxFinalResult(finalResult, `Successfully Sent Check of ${this.txUiService.amountField()} ${currency} to ${shortDest}`, result);
+                    } catch (waitError: any) {
+                         this.xrplTransactionService.processTxError(waitError);
+                    }
+
+                    await this.refreshAfterTx(client, wallet, destinationAddress, true);
+
+                    if (currencyValue !== 'XRP' && currencyValue !== 'MPT') {
+                         this.onCurrencyChange(currencyValue);
+                    }
+
+                    this.clearInputFields();
                } catch (error: any) {
-                    console.error('Error in createCheck:', error);
+                    console.error('Critical error in createCheck:', error);
                     this.toastService.error(error.message || 'Unexpected error occurred', AppConstants.TOAST.ERROR);
                } finally {
                     this.txUiService.resetCurrentStepToIdle();
                }
+          });
+     }
+
+     private getValidationInputs(accountInfo: xrpl.AccountInfoResponse | undefined, accountObjects: xrpl.AccountObjectsResponse | undefined, fee: string | undefined, currentLedger: number | undefined, destinationAddress: string) {
+          return this.txUiService.getValidationInputs({
+               wallet: this.currentWallet(),
+               network: { accountInfo, accountObjects, fee, currentLedger },
+               createCheck: { amount: this.txUiService.amountField(), destination: destinationAddress },
+               regularKey: { isRegularKey: this.txUiService.isRegularKeyAddress(), address: this.txUiService.regularKeyAddress(), seed: this.txUiService.regularKeySeed() },
           });
      }
 
@@ -937,90 +884,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           });
      }
 
-     private getExistingChecks(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          const mapped = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'Check' && obj.Account === classicAddress)
-               .map((obj: any) => {
-                    const sendMax = obj.SendMax;
-                    let amount = '0';
-                    let currency = '';
-
-                    if (typeof sendMax === 'string') {
-                         amount = String(xrpl.dropsToXrp(sendMax));
-                    } else if (sendMax?.value) {
-                         amount = sendMax.value;
-                         currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
-                    }
-
-                    return {
-                         id: obj.index,
-                         index: obj.index,
-                         amount: `${amount} ${currency}`,
-                         destination: obj.Destination,
-                         sendMax,
-                         expiration: obj.Expiration,
-                         destinationTag: obj.DestinationTag,
-                         sourceTag: obj.SourceTag,
-                         invoiceId: obj.InvoiceID,
-                    };
-               })
-               .sort((a, b) => a.destination.localeCompare(b.destination));
-          this.existingChecks.set(mapped);
-          this.utilsService.logObjects('existingChecks', mapped);
-     }
-
-     private getCashableChecks(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          const mapped = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'Check' && obj.Destination === classicAddress)
-               .map((obj: any) => {
-                    const sendMax = obj.SendMax;
-                    let amount = '0';
-                    if (typeof sendMax === 'string') {
-                         amount = String(xrpl.dropsToXrp(sendMax));
-                    } else if (sendMax?.value) {
-                         amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
-                    }
-                    return {
-                         id: obj.index,
-                         index: obj.index,
-                         amount,
-                         sender: obj.Account,
-                         sendMax,
-                    };
-               })
-               .sort((a, b) => a.sender.localeCompare(b.sender));
-          this.cashableChecks.set(mapped);
-          this.utilsService.logObjects('cashableChecks', mapped);
-     }
-
-     private getCancelableChecks(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
-          const mapped = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'Check' && obj.Account === sender)
-               .map((obj: any) => {
-                    const sendMax = obj.SendMax;
-                    let amount = '0';
-
-                    if (typeof sendMax === 'string') {
-                         // XRP (drops)
-                         amount = String(xrpl.dropsToXrp(sendMax));
-                    } else if (sendMax?.value) {
-                         // IOU
-                         amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
-                    }
-
-                    return {
-                         id: obj.index, // <-- CheckID
-                         index: obj.index,
-                         amount,
-                         destination: obj.Destination,
-                         sendMax,
-                    };
-               })
-               .sort((a, b) => a.destination.localeCompare(b.destination));
-          this.cancellableChecks.set(mapped);
-          this.utilsService.logObjects('cancellableChecks', mapped);
-     }
-
      private getExistingMpts(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const mapped = (escrowObjects.result.account_objects ?? [])
                .filter((obj: any) => (obj.LedgerEntryType === 'MPToken' || obj.LedgerEntryType === 'MPTokenIssuance') && (obj.Account === classicAddress || obj.Issuer === classicAddress))
@@ -1104,20 +967,24 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     }
                }
 
-               if (this.txUiService.invoiceIdField()) {
-                    this.utilsService.setInvoiceIdField(checkTx, this.txUiService.invoiceIdField());
+               const invoiceIdField = this.txUiService.invoiceIdField();
+               if (invoiceIdField) {
+                    this.utilsService.setInvoiceIdField(checkTx, invoiceIdField);
                }
 
-               if (this.txUiService.sourceTagField()) {
-                    this.utilsService.setSourceTagField(checkTx, this.txUiService.sourceTagField());
+               const sourceTagField = this.txUiService.sourceTagField();
+               if (sourceTagField) {
+                    this.utilsService.setSourceTagField(checkTx, sourceTagField);
                }
 
-               if (this.txUiService.destinationTagField()) {
-                    this.utilsService.setDestinationTag(checkTx, this.txUiService.destinationTagField());
+               const destinationTagField = this.txUiService.destinationTagField();
+               if (destinationTagField) {
+                    this.utilsService.setDestinationTag(checkTx, destinationTagField);
                }
           }
 
-          if (this.txUiService.isTicket()) {
+          const isTicket = this.txUiService.isTicket();
+          if (isTicket) {
                const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
@@ -1126,22 +993,29 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                }
           }
 
-          if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
-               this.utilsService.setMemoField(checkTx, this.txUiService.memoField());
+          const memoField = this.txUiService.memoField();
+          if (this.txUiService.isMemoEnabled() && memoField) {
+               this.utilsService.setMemoField(checkTx, memoField);
           }
      }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-          this.getExistingChecks(accountObjects, wallet.classicAddress);
-          this.getCashableChecks(accountObjects, wallet.classicAddress);
-          this.getCancelableChecks(accountObjects, wallet.classicAddress);
+          this.existingChecks.set(this.checkUtilService.getExistingChecks(accountObjects, wallet.classicAddress));
+          this.cashableChecks.set(this.checkUtilService.getCashableChecks(accountObjects, wallet.classicAddress));
+          this.cancellableChecks.set(this.checkUtilService.getCancelableChecks(accountObjects, wallet.classicAddress));
           this.getExistingMpts(accountObjects, wallet.classicAddress);
           this.getExistingIOUs(accountObjects, wallet.classicAddress);
-          destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+          await this.refreshWallets(client, destination ? [wallet.classicAddress, destination] : [wallet.classicAddress]);
           this.addCustomDestination(addDest, destination);
-          this.refreshUiState(wallet, accountInfo, accountObjects);
+          this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
           this.txUiService.clearAllOptions();
+     }
+
+     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+               this.currentWallet.set({ ...newCurrent });
+          });
      }
 
      private addCustomDestination(addDest: boolean, destination: string | null) {
@@ -1154,52 +1028,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     }
                }
           }
-     }
-
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-               this.currentWallet.set({ ...newCurrent });
-          });
-     }
-
-     private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
-          // Update multi-sign & regular key flags
-          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
-
-          // Update service state
-          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
-
-          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
-          const hasSignerList = signerAccounts?.length > 0;
-          this.txUiService.signerQuorum.set(signerQuorum);
-          const checkForMultiSigner = signerAccounts?.length > 0;
-          checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
-
-          this.txUiService.multiSigningEnabled.set(hasSignerList);
-          if (hasSignerList) {
-               const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.txUiService.signers.set(entries);
-          }
-
-          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
-
-          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
-          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
-     }
-
-     private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
-          const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-          this.txUiService.signers.set(signerEntries);
-          this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
-          this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
-     }
-
-     private clearMultiSignersConfiguration(): void {
-          this.txUiService.signerQuorum.set(0);
-          this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
-          this.txUiService.multiSignSeeds.set('');
-          this.storageService.removeValue('signerEntries');
      }
 
      private addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
@@ -1254,7 +1082,10 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      }
 
      toggleOptions(enabled: boolean): void {
-          this.wantsOptions.set(enabled);
+          this.txUiService.wantsOptions.set(enabled);
+          if (!enabled) {
+               this.clearInputFields();
+          }
      }
 
      toggleExpiration(enabled: boolean): void {
@@ -1351,10 +1182,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      }
 
      clearFields() {
-          this.selectedDestinationAddress.set('');
-          this.destinationSearchQuery.set('');
           this.expirationTimeField.set('');
-          this.checkExpirationTime.set('seconds');
           this.currencyFieldDropDownValue.set('XRP');
           this.selectedIssuer.set('');
           this.checkIdSearchQuery.set('');
@@ -1362,18 +1190,15 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.checkCreator.set('');
           this.checkCurrencyCode.set('');
           this.currencyIssuer.set('');
-          this.clearOptionalFields();
+          this.clearInputFields();
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     clearOptionalFields() {
-          this.wantsOptions.set(false);
+     clearInputFields() {
           this.wantsExpiration.set(false);
-          this.txUiService.checkIdField.set('');
-          this.txUiService.amountField.set('');
-          this.txUiService.destinationTagField.set('');
-          this.txUiService.invoiceIdField.set('');
-          this.txUiService.sourceTagField.set('');
+          this.transactionDropdownService.resetDestinationInputs(this.destinationSearchQuery, this.selectedDestinationAddress);
+          this.txUiService.clearAllFields();
+          this.txUiService.clearAllOptions();
      }
 
      onCurrencyChange(currency: string) {

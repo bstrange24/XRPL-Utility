@@ -29,6 +29,7 @@ import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dro
 import { EMPTY, from, switchMap } from 'rxjs';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
+import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 
 @Component({
      selector: 'app-send-xrp',
@@ -58,6 +59,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly txEnvironmentServiceService = inject(TxEnvironmentServiceService);
      public readonly transactionDropdownService = inject(TransactionDropdownService);
+     public readonly acccountDataService = inject(AcccountDataService);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
@@ -196,7 +198,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                     });
 
                     this.accountInfo.set(accountInfo);
-                    this.refreshUiState(wallet, accountInfo, accountObjects);
+                    this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
                } catch (error: any) {
                     console.error('Failed to load account:', error);
                     this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
@@ -352,7 +354,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
 
           await this.refreshWallets(client, destination ? [wallet.classicAddress, destination] : [wallet.classicAddress]);
           this.addCustomDestination(addDest, destination);
-          this.refreshUiState(wallet, accountInfo, accountObjects);
+          this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
           this.clearInputFields();
      }
 
@@ -360,46 +362,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
                this.currentWallet.set({ ...newCurrent });
           });
-     }
-
-     private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
-          // Update multi-sign & regular key flags
-          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
-
-          // Update service state
-          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
-
-          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
-          const hasSignerList = signerAccounts?.length > 0;
-          this.txUiService.signerQuorum.set(signerQuorum);
-          const checkForMultiSigner = signerAccounts?.length > 0;
-          checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
-
-          this.txUiService.multiSigningEnabled.set(hasSignerList);
-          if (hasSignerList) {
-               const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.txUiService.signers.set(entries);
-          }
-
-          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
-
-          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
-          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
-     }
-
-     private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
-          const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-          this.txUiService.signers.set(signerEntries);
-          this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
-          this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
-     }
-
-     private clearMultiSignersConfiguration(): void {
-          this.txUiService.signerQuorum.set(0);
-          this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
-          this.txUiService.multiSignSeeds.set('');
-          this.storageService.removeValue('signerEntries');
      }
 
      private addCustomDestination(addDest: boolean, destination: string | null) {

@@ -30,64 +30,7 @@ import { TransactionOptionsComponent } from '../common/transaction-options/trans
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { EMPTY, from, switchMap } from 'rxjs';
-
-interface EscrowObject {
-     Account: string;
-     index: string;
-     Expiration?: number;
-     Destination: string;
-     Condition: string;
-     CancelAfter: string;
-     FinishAfter: string;
-     Amount: string;
-     DestinationTag: string;
-     Balance: string;
-     SourceTag: number;
-     PreviousTxnID: string;
-     Memo: string | null | undefined;
-     Sequence: number | null | undefined;
-     TicketSequence: number | null | undefined;
-}
-
-interface EscrowDataForUI {
-     Account: string;
-     Amount?: string | { currency: string; value: string } | { mpt_issuance_id: string; value: string };
-     CancelAfter?: number;
-     Destination: string;
-     DestinationNode?: string;
-     FinishAfter?: number;
-     Condition?: string;
-     Fulfillment?: string;
-     DestinationTag?: number;
-     Sequence?: number | null;
-     EscrowSequence?: string | null;
-     TxHash?: number | null;
-}
-
-interface RippleState {
-     LedgerEntryType: 'RippleState';
-     Balance: { currency: string; value: string };
-     HighLimit: { issuer: string };
-}
-
-interface MPToken {
-     LedgerEntryType?: string;
-     index?: string;
-     mpt_issuance_id?: string;
-     MPTokenIssuanceID?: string;
-     PreviousTxnID?: string;
-     Flags?: number;
-     MPTAmount?: string | number;
-     MaximumAmount?: string | number;
-     OutstandingAmount?: string | number;
-     TransferFee?: string | number;
-     MPTokenMetadata?: string;
-}
-
-interface IssuerItem {
-     name: string;
-     address: string;
-}
+import { EscrowDataForUI, EscrowObject, IssuerItem, MPToken, RippleState } from '../../models/interface-items.model';
 
 @Component({
      selector: 'app-time-escrow',

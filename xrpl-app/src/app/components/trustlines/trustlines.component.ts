@@ -30,31 +30,7 @@ import { TransactionOptionsComponent } from '../common/transaction-options/trans
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { EMPTY, from, switchMap } from 'rxjs';
-
-interface RippleState {
-     LedgerEntryType: 'RippleState';
-     Balance: { currency: string; value: string };
-     HighLimit: { issuer: string };
-}
-
-interface MPToken {
-     LedgerEntryType?: string;
-     index?: string;
-     mpt_issuance_id?: string;
-     MPTokenIssuanceID?: string;
-     PreviousTxnID?: string;
-     Flags?: number;
-     MPTAmount?: string | number;
-     MaximumAmount?: string | number;
-     OutstandingAmount?: string | number;
-     TransferFee?: string | number;
-     MPTokenMetadata?: string;
-}
-
-interface IssuerItem {
-     name: string;
-     address: string;
-}
+import { EscrowDataForUI, EscrowObject, IssuerItem, MPToken, RippleState } from '../../models/interface-items.model';
 
 @Component({
      selector: 'app-trustlines',
