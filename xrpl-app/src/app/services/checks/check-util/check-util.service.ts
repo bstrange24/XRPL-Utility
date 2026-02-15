@@ -1,24 +1,23 @@
-import { computed, inject, Injectable } from '@angular/core';
-import { CheckItem } from '../../models/interface-items.model';
-import { CopyUtilService } from '../copy-util/copy-util.service';
-import { DownloadUtilService } from '../download-util/download-util.service';
-import { StorageService } from '../local-storage/storage.service';
-import { ToastService } from '../toast/toast.service';
-import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../trustline-currency/trustline-currency.service';
-import { UtilsService } from '../util-service/utils.service';
-import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
-import { XrplTransactionExecutorService } from '../xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { XrplTransactionService } from '../xrpl-transactions/xrpl-transaction.service';
-import { PerformanceBaseComponent } from '../../components/base/performance-base/performance-base.component';
+import { computed, inject, Injectable, Signal, WritableSignal } from '@angular/core';
+import { CheckItem } from '../../../models/interface-items.model';
+import { CopyUtilService } from '../../copy-util/copy-util.service';
+import { DownloadUtilService } from '../../download-util/download-util.service';
+import { ToastService } from '../../toast/toast.service';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { TrustlineCurrencyService } from '../../trustline-currency/trustline-currency.service';
+import { UtilsService } from '../../util-service/utils.service';
+import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
+import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
+import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
+import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
 import * as xrpl from 'xrpl';
+import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 
 @Injectable({
      providedIn: 'root',
 })
 export class CheckUtilService extends PerformanceBaseComponent {
      public readonly utilsService = inject(UtilsService);
-     private readonly storageService = inject(StorageService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly downloadUtilService = inject(DownloadUtilService);
@@ -56,7 +55,6 @@ export class CheckUtilService extends PerformanceBaseComponent {
                     };
                })
                .sort((a, b) => a.destination.localeCompare(b.destination));
-          // this.existingChecks.set(mapped);
           this.utilsService.logObjects('existingChecks', mapped);
           return mapped;
      }
@@ -81,7 +79,6 @@ export class CheckUtilService extends PerformanceBaseComponent {
                     };
                })
                .sort((a, b) => a.sender.localeCompare(b.sender));
-          // this.cashableChecks.set(mapped);
           this.utilsService.logObjects('cashableChecks', mapped);
           return mapped;
      }
@@ -110,7 +107,6 @@ export class CheckUtilService extends PerformanceBaseComponent {
                     };
                })
                .sort((a, b) => a.destination.localeCompare(b.destination));
-          // this.cancellableChecks.set(mapped);
           this.utilsService.logObjects('cancellableChecks', mapped);
           return mapped;
      }
@@ -127,5 +123,61 @@ export class CheckUtilService extends PerformanceBaseComponent {
           if (!items) return null;
 
           return items.find((item: { id: string }) => item.id === id) ?? null;
+     }
+
+     mapCheckItems(checks: Signal<any[]>, mode: Signal<'cash' | 'cancel' | 'create'>, formatAmount: (amount: any) => string): Signal<SelectItem[]> {
+          return computed(() => {
+               const list = checks();
+               const currentMode = mode();
+
+               return list.map(check => {
+                    const addr = currentMode === 'cash' ? check.sender : check.destination;
+                    const short = addr ? `${addr.slice(0, 8)}...${addr.slice(-6)}` : 'Unknown';
+                    const amount = formatAmount(check.sendMax);
+                    const arrow = currentMode === 'cash' ? '←' : '→';
+
+                    return {
+                         id: check.id,
+                         display: `${amount} ${arrow} ${short}`,
+                         secondary: check.id,
+                         isCurrentAccount: false,
+                         currency: check.sendMax.currency || 'XRP',
+                         issuer: check.sendMax.issuer ?? '',
+                    } as SelectItem;
+               });
+          });
+     }
+
+     filteredCheckItems(items: Signal<SelectItem[]>, searchQuery: Signal<string>): Signal<SelectItem[]> {
+          return computed(() => {
+               const q = searchQuery().trim().toLowerCase();
+               if (!q) return items();
+
+               return items().filter(item => {
+                    return item.id.toLowerCase().includes(q) || item.display.toLowerCase().includes(q);
+               });
+          });
+     }
+
+     checkIdDisplay(selectedId: Signal<string>, items: Signal<SelectItem[]>, searchQuery: Signal<string>): Signal<string> {
+          return computed(() => {
+               const id = selectedId();
+               if (!id) return searchQuery() || '';
+
+               const item = items().find(i => i.id === id);
+               return item ? item.display : id.slice(0, 20) + '...';
+          });
+     }
+
+     onCheckSelected(item: SelectItem | null, checkIdField: WritableSignal<string>, checkCreator: WritableSignal<string>, checkCurrencyCode: WritableSignal<string>, currencyIssuer: WritableSignal<string>) {
+          const id = item?.id || '';
+          checkIdField.set(id);
+
+          if (item) {
+               const parts = item.display?.split(' ') || [];
+               checkCreator.set(parts[3] || '');
+               checkCurrencyCode.set(parts[1] || '');
+               currencyIssuer.set(item.issuer || '');
+          }
      }
 }

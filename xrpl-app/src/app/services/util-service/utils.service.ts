@@ -546,22 +546,6 @@ export class UtilsService {
                .filter((s: string) => s.length > 0 && s !== '');
      }
 
-     populateKnownDestinations(knownDestinations: any, account1: string, account2: string, issuer: string) {
-          return (knownDestinations = {
-               Account1: account1,
-               Account2: account2,
-               Account3: issuer,
-          });
-     }
-
-     populateKnownWhitelistAddresses(knownDestinations: any, account1: string, account2: string, issuer: string) {
-          return (knownDestinations = {
-               Account1: account1,
-               Account2: account2,
-               Account3: issuer,
-          });
-     }
-
      formatTokenBalance(field: string, roundTo: number): string {
           Number(field).toLocaleString();
           return Number(field).toLocaleString(undefined, {
@@ -572,14 +556,14 @@ export class UtilsService {
      }
 
      removeCommaFromAmount(field: string): string {
-          return field.replace(/,/g, '');
+          return field.replaceAll(/,/g, '');
      }
 
      normalizeMnemonic(input: string): string {
           return input
                .toLowerCase()
-               .replace(/[^a-z\s]/g, '') // remove symbols
-               .replace(/\s+/g, ' ') // collapse spaces
+               .replaceAll(/[^a-z\s]/g, '') // remove symbols
+               .replaceAll(/\s+/g, ' ') // collapse spaces
                .trim();
      }
 
@@ -595,8 +579,8 @@ export class UtilsService {
 
           return input
                .trim()
-               .replace(/\s+/g, '') // remove all spaces (including pasted line breaks)
-               .replace(/[\u200B-\u200D\uFEFF]/g, ''); // remove invisible unicode chars
+               .replaceAll(/\s+/g, '') // remove all spaces (including pasted line breaks)
+               .replaceAll(/[\u200B-\u200D\uFEFF]/g, ''); // remove invisible unicode chars
      }
 
      isValidSecret(secrets: string[]): boolean {
@@ -748,7 +732,7 @@ export class UtilsService {
 
           if (currencyCode.match(/^[a-fA-F0-9]{40}$/) && !Number.isNaN(Number.parseInt(currencyCode, 16))) {
                // Hexadecimal currency code
-               const hex = currencyCode.toString().replace(/(00)+$/g, '');
+               const hex = currencyCode.toString().replaceAll(/(00)+$/g, '');
                if (hex.startsWith('01')) {
                     // Old demurrage code. https://xrpl.org/demurrage.html
                     return this.convertDemurrageToUTF8(currencyCode);
@@ -1463,7 +1447,6 @@ export class UtilsService {
           const signerBlobs: string[] = [];
 
           for (let i = 0; i < signerAddresses.length; i++) {
-               // const signerWallet = await this.getWallet(signerSeeds[i]);
                let signerWallet = await this.getWalletWithEncryptionAlgorithm(signerSeeds[i], 'secp256k1');
 
                if (signerWallet.classicAddress !== signerAddresses[i]) {
@@ -1587,9 +1570,12 @@ export class UtilsService {
      formatIOUXrpAmountUI(amount: any): string {
           if (!amount) return 'Unknown';
 
-          if (typeof amount === 'string') {
+          if (typeof amount === 'string' && amount.split(' ').length === 1) {
                // XRP in drops
-               return `${xrpl.dropsToXrp(amount)} XRP`;
+               return `${amount} XRP`;
+          } else if (amount.split(' ').length === 2) {
+               const splitAmount = amount.split(' ');
+               return `${splitAmount[0]} ${splitAmount[1]}`;
           }
 
           if (typeof amount === 'object') {
@@ -1599,6 +1585,22 @@ export class UtilsService {
           }
 
           return 'Unknown';
+     }
+
+     formatIOUXrpAmountOutstanding(amount: any): string {
+          if (!amount) return 'Unknown';
+
+          if (typeof amount === 'string' && /^[0-9]+$/.test(amount)) {
+               return `${xrpl.dropsToXrp(amount)} XRP`;
+          }
+
+          if (typeof amount === 'object') {
+               // Issued currency
+               const { currency, value } = amount;
+               return `${value} ${this.decodeIfNeeded(currency)}`;
+          }
+
+          return `${amount} XRP`;
      }
 
      formatValue(key: string, value: any, nestedFields: string[] = []): string {

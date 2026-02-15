@@ -245,6 +245,7 @@ export class XrplTransactionExecutorService {
                isRegularKeyAddress?: boolean;
                regularKeyAddress?: string;
                regularKeySeed?: string;
+               paymentType?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {

@@ -177,4 +177,87 @@ export class XrplTransactionService {
                LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
           };
      }
+
+     buildCreateCheckTransaction(wallet: xrpl.Wallet, sendMax: string | { currency: string; value: string; issuer: string }, destinationAddress: string, fee: string | undefined, currentLedger: number | undefined): xrpl.CheckCreate {
+          return {
+               TransactionType: 'CheckCreate',
+               Account: wallet.classicAddress,
+               SendMax: sendMax,
+               Destination: destinationAddress,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildCashCheckTransaction(wallet: xrpl.Wallet, amountToCash: any, checkId: string, fee: string | undefined, currentLedger: number | undefined): xrpl.CheckCash {
+          return {
+               TransactionType: 'CheckCash',
+               Account: wallet.classicAddress,
+               Amount: amountToCash,
+               CheckID: checkId,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildCheckCancelTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, checkIdField: string): xrpl.CheckCancel {
+          return {
+               TransactionType: 'CheckCancel',
+               Account: wallet.classicAddress,
+               CheckID: checkIdField,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildSendMaxAmount(currencyValue: string, issuerField: string, mptNeeded: boolean) {
+          let sendMax;
+          let paymentType;
+          let currency;
+          if (currencyValue === AppConstants.XRP_CURRENCY) {
+               sendMax = xrpl.xrpToDrops(this.txUiService.amountField());
+               paymentType = 'XRP';
+               currency = 'XRP';
+          } else if (mptNeeded) {
+               const curr: any = {
+                    mpt_issuance_id: this.txUiService.mptIssuanceIdField(),
+                    value: this.txUiService.amountField(),
+               };
+               sendMax = curr;
+               paymentType = 'MPT';
+          } else {
+               sendMax = {
+                    currency: this.utilsService.encodeIfNeeded(currencyValue),
+                    value: this.txUiService.amountField(),
+                    issuer: issuerField,
+               };
+               paymentType = 'IOU';
+               currency = this.utilsService.encodeIfNeeded(currencyValue);
+          }
+          return { sendMax, paymentType, currency };
+     }
+
+     buildAmount(currencyCode: string, amount: string, currencyIssuer: string) {
+          let amountToCash: any;
+          let currency: string;
+          let paymentType;
+
+          if (currencyCode === AppConstants.XRP_CURRENCY) {
+               amountToCash = xrpl.xrpToDrops(amount);
+               currency = 'XRP';
+               paymentType = 'XRP';
+          } else {
+               const encodedCurrency = this.utilsService.encodeIfNeeded(currencyCode);
+
+               amountToCash = {
+                    value: amount,
+                    currency: encodedCurrency,
+                    issuer: currencyIssuer,
+               };
+
+               currency = encodedCurrency;
+               paymentType = 'IOU';
+          }
+          return { amountToCash, paymentType, currency };
+     }
 }

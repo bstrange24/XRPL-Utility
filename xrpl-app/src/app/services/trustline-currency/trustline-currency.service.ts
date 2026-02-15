@@ -1,9 +1,10 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, Injectable, Signal, signal } from '@angular/core';
 import { BehaviorSubject, combineLatest, Subject, takeUntil } from 'rxjs';
 import { StorageService } from '../local-storage/storage.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { UtilsService } from '../util-service/utils.service';
 import { Wallet, WalletManagerService } from '../wallets/manager/wallet-manager.service';
+import { SelectItem } from '../destination-dropdown/destination-dropdown.service';
 
 interface IssuerItem {
      name: string;
@@ -12,17 +13,13 @@ interface IssuerItem {
 
 @Injectable({ providedIn: 'root' })
 export class TrustlineCurrencyService {
-     // private knownTrustLinesIssuers: Record<string, string[]> = { XRP: [] };
      private readonly knownTrustLinesIssuers = signal<Record<string, string[]>>({ XRP: [] });
-     // Public read-only signal for components that need the full map
      public readonly knownTrustLinesIssuers$ = this.knownTrustLinesIssuers.asReadonly();
-
-     // Public observables
+     public readonly preferXrpAsDefault = signal<boolean>(true); // default = true (most pages)
      private readonly destroy$ = new Subject<void>();
      private readonly currentWalletAddress = signal<string>('');
      private readonly currentCurrency = signal<string>('');
      private readonly currentIssuer = signal<string>('');
-     // Cache gateway balances per wallet (8 sec)
      private readonly balanceCache = new Map<string, { data: any; timestamp: number }>();
 
      // Keep track of current wallet from streams
@@ -34,7 +31,17 @@ export class TrustlineCurrencyService {
      selectedIssuer$ = new BehaviorSubject<string>('');
      balance$ = new BehaviorSubject<string>('0');
 
-     constructor(private readonly storage: StorageService, private readonly xrplService: XrplService, private readonly utils: UtilsService, private readonly walletManagerService: WalletManagerService) {
+     public readonly currencies = signal<string[]>([]);
+     public readonly issuers = signal<IssuerItem[]>([]);
+     public readonly selectedIssuer = signal<string>('');
+     public readonly balance = signal<string>('0');
+
+     constructor(
+          private readonly storage: StorageService,
+          private readonly xrplService: XrplService,
+          private readonly utils: UtilsService,
+          private readonly walletManagerService: WalletManagerService
+     ) {
           this.loadFromStorage();
 
           // Subscribe to both streams and derive current wallet
@@ -61,7 +68,23 @@ export class TrustlineCurrencyService {
                               this.updateBalanceForCurrentCombo();
                          }
                     }
+
+                    // Auto-initialize default currency when wallet is ready
+                    if (this.currentWalletAddress()) {
+                         this.initializeDefaultCurrency();
+                    }
                });
+
+          this.currencies$.subscribe(c => this.currencies.set(c));
+          this.issuers$.subscribe(i => this.issuers.set(i));
+          this.selectedIssuer$.subscribe(i => this.selectedIssuer.set(i));
+          this.balance$.subscribe(b => this.balance.set(b));
+     }
+
+     setPreferXrpAsDefault(prefer: boolean) {
+          this.preferXrpAsDefault.set(prefer);
+          // Optionally re-apply default immediately
+          this.initializeDefaultCurrency();
      }
 
      private clearCurrentSelection() {
@@ -69,6 +92,55 @@ export class TrustlineCurrencyService {
           this.currentIssuer.set('');
           this.selectedIssuer$.next('');
           this.balance$.next('0');
+     }
+
+     private initializeDefaultCurrency() {
+          // Only auto-select if preferXrpAsDefault is true
+          if (this.preferXrpAsDefault()) {
+               this.selectCurrency('XRP', '');
+               return;
+          }
+
+          // Otherwise fall back to first available non-XRP (or nothing)
+          const currencies = this.currencies();
+          if (currencies.length > 0) {
+               const firstNonXrp = currencies.find(c => c !== 'XRP') || currencies[0];
+               this.selectCurrency(firstNonXrp, '');
+          }
+     }
+
+     getIssuerItems(): Signal<SelectItem[]> {
+          return computed(() => {
+               return this.issuers().map(iss => ({
+                    id: iss.address,
+                    display: iss.name || `Issuer ${iss.address.slice(0, 8)}...`,
+                    secondary: iss.address,
+                    isCurrentAccount: false,
+                    isCurrentCode: false,
+                    isCurrentToken: iss.address === this.selectedIssuer(),
+               }));
+          });
+     }
+
+     getCurrencyItems(): Signal<SelectItem[]> {
+          return computed(() => {
+               const currentCode = this.currentCurrency();
+
+               return this.currencies().map(curr => ({
+                    id: curr,
+                    display: curr === 'XRP' ? 'XRP' : curr,
+                    secondary:
+                         curr === 'XRP'
+                              ? 'Native currency'
+                              : (() => {
+                                     const count = this.getIssuersForCurrency(curr).length;
+                                     return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
+                                })(),
+                    isCurrentAccount: false,
+                    isCurrentCode: curr === currentCode,
+                    isCurrentToken: false,
+               }));
+          });
      }
 
      private loadFromStorage() {
@@ -139,13 +211,33 @@ export class TrustlineCurrencyService {
 
      // Keep existing updateCurrencies logic
      private updateCurrencies() {
+          const nonXrpCurrencies = Object.keys(this.knownTrustLinesIssuers())
+               .filter(c => c !== 'XRP' && c.trim() !== '')
+               .sort((a, b) => a.localeCompare(b));
+
+          // Always include XRP in the list
+          const allCurrencies = ['XRP', ...nonXrpCurrencies];
+
+          this.currencies$.next(allCurrencies);
+          this.currencies.set(allCurrencies); // sync signal too
+
+          // Auto-select default only if preferXrpAsDefault is true
+          if (this.preferXrpAsDefault()) {
+               this.selectCurrency('XRP', '');
+          } else if (nonXrpCurrencies.length > 0 && !this.currentCurrency()) {
+               // Fallback to first non-XRP
+               this.selectCurrency(nonXrpCurrencies[0], '');
+          }
+     }
+
+     private updateCurrencies1() {
           const currencies = Object.keys(this.knownTrustLinesIssuers())
                .filter(c => c !== 'XRP')
                .sort((a, b) => a.localeCompare(b));
           this.currencies$.next(currencies);
 
           if (currencies.length > 0 && !this.currentCurrency()) {
-               this.selectCurrency(currencies[0]);
+               this.selectCurrency(currencies[0], '');
           }
      }
 
@@ -159,17 +251,20 @@ export class TrustlineCurrencyService {
           return currencies.sort((a, b) => a.localeCompare(b));
      }
 
-     async selectCurrency(currency: string, nothing?: string) {
+     async selectCurrency(currency: string, nothing: string) {
           if (!currency || currency === 'XRP') {
                this.currentCurrency.set('');
                this.currentIssuer.set('');
                this.issuers$.next([]);
                this.selectedIssuer$.next('');
                this.balance$.next('0');
+               this.currencies$.next(this.currencies()); // trigger any UI refresh if needed
                return;
           }
 
           this.currentCurrency.set(currency);
+          this.loadIssuersForCurrency(currency); // your existing method
+          this.updateBalanceForCurrentCombo(); // your existing method
 
           // Get current wallet address from the combined stream above
           // Use latest known wallet
@@ -294,7 +389,6 @@ export class TrustlineCurrencyService {
           return '0';
      }
 
-     // Public helpers
      getCurrencies(): string[] {
           return this.currencies$.value;
      }
@@ -307,14 +401,8 @@ export class TrustlineCurrencyService {
           return this.currentIssuer();
      }
 
-     /**
-      * Returns the array of issuer addresses for a given currency code.
-      * Safe to call – always returns an array (empty if currency not found).
-      */
      getIssuersForCurrency(currency: string): string[] {
           if (!currency || currency === 'XRP') return [];
-
-          // knownTrustLinesIssuers is: Record<string, string[]>
           return this.knownTrustLinesIssuers()[currency] || [];
      }
 }

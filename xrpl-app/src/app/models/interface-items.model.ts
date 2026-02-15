@@ -94,3 +94,15 @@ export interface EscrowWithTxData {
      TicketSequence?: string | number;
      Memo?: string | null;
 }
+
+export interface Destination {
+     address: string;
+     name?: string;
+}
+
+export interface DestinationItem {
+     id: string;
+     display: string;
+     secondary: string;
+     isCurrentAccount: boolean;
+}

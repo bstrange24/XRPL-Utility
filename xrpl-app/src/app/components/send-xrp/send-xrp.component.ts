@@ -239,7 +239,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                          throw new Error('Failed to fetch account information');
                     }
 
-                    const inputs = this.getValidationInputs(accountInfo, accountObjects, fee!, currentLedger!, destinationAddress);
+                    const inputs = this.getValidationInputs(accountInfo, accountObjects, fee, currentLedger, destinationAddress);
 
                     const errors = await this.validationService.validate('PaymentXrp', { inputs, client, accountInfo });
                     if (errors.length) {
@@ -291,7 +291,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           });
      }
 
-     private getValidationInputs(accountInfo: xrpl.AccountInfoResponse, accountObjects: xrpl.AccountObjectsResponse, fee: string, currentLedger: number, destinationAddress: string) {
+     private getValidationInputs(accountInfo: xrpl.AccountInfoResponse | undefined, accountObjects: xrpl.AccountObjectsResponse | undefined, fee: string | undefined, currentLedger: number | undefined, destinationAddress: string) {
           return this.txUiService.getValidationInputs({
                wallet: this.currentWallet(),
                network: { accountInfo, accountObjects, fee, currentLedger },

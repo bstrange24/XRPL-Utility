@@ -287,6 +287,7 @@ export class TransactionUiService {
      executionTime = signal<string>('');
      url = signal<string>('');
      wantsOptions = signal<boolean>(false);
+     mptIssuanceIdField = signal<string>('');
 
      currentStep = signal<TxStep>('idle');
      detailedStatus = signal<string>('');

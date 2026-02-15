@@ -5,19 +5,7 @@ import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { Wallet, WalletManagerService } from '../wallets/manager/wallet-manager.service';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Observable } from 'rxjs';
-
-export interface Destination {
-     address: string;
-     name?: string;
-}
-
-export interface DestinationItem {
-     id: string;
-     display: string;
-     secondary: string;
-     isCurrentAccount: boolean;
-}
+import { Destination, DestinationItem } from '../../models/interface-items.model';
 
 @Injectable({ providedIn: 'root' })
 export class TransactionDropdownService {
@@ -29,9 +17,18 @@ export class TransactionDropdownService {
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
 
-     readonly wallets: Signal<Wallet[]> = toSignal(this.walletManager.wallets$ as Observable<Wallet[]>, { initialValue: [] });
+     readonly wallets: Signal<Wallet[]> = toSignal(this.walletManager.wallets$, { initialValue: [] });
 
-     currentWallet = computed(() => this.walletManager.getSelectedWallet() ?? ({} as Wallet));
+     readonly selectedIndex: Signal<number> = toSignal(this.walletManager.selectedIndex$, { initialValue: 0 });
+
+     readonly currentWallet = computed(() => {
+          const index = this.selectedIndex();
+          const wallets = this.wallets();
+          if (wallets.length === 0 || index < 0 || index >= wallets.length) return null;
+          return wallets[index];
+     });
+
+     readonly currentAddress = computed(() => this.currentWallet()?.address ?? '');
 
      loadCustomDestinations() {
           const stored = this.storageService.get('customDestinations');
@@ -59,7 +56,7 @@ export class TransactionDropdownService {
      ) {
           return computed(() => {
                // If you were deriving wallets here — guard it
-               const selected = this.walletManager.getSelectedWallet();
+               const selected = this.currentWallet();
                if (!selected) {
                     return customDest(); // only customs when no wallets
                }
@@ -89,9 +86,9 @@ export class TransactionDropdownService {
                     return [];
                }
 
-               const currentWallet = this.walletManager.getSelectedWallet(); // now returns null-safe
+               const currentAddr = this.currentAddress(); // now returns null-safe
 
-               const currentAddr = currentWallet?.address ?? '';
+               console.log('destinationItems recomputed — currentAddr:', currentAddr);
 
                return dests.map(d => ({
                     id: d.address,
@@ -114,7 +111,7 @@ export class TransactionDropdownService {
                          id: dest.address,
                          display: dest.name ?? 'Unknown Wallet',
                          secondary: dest.address,
-                         isCurrentAccount: dest.address === this.walletManager.getSelectedWallet()?.classicAddress,
+                         isCurrentAccount: dest.address === this.currentAddress(),
                     };
                }
 
@@ -128,7 +125,7 @@ export class TransactionDropdownService {
                const q = searchQuery().trim().toLowerCase();
                if (!q) return allDest();
 
-               const current = this.walletManager.getSelectedWallet()?.classicAddress;
+               const current = this.currentAddress();
                return allDest().filter(d => d.address !== current && (d.address.toLowerCase().includes(q) || d.name?.toLowerCase().includes(q)));
           });
      }
