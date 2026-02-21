@@ -5932,3 +5932,33 @@ button.flag-item-account-flags:focus-visible {
      outline: 2px solid currentColor;
      outline-offset: 2px;
 } */
+
+/* For tabTransition equivalent */
+:host ::ng-deep .tab-content {  /* or use a specific class on your tab container */
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms cubic-bezier(0.4, 0, 0.2, 1), transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:host ::ng-deep .tab-content:enter,
+:host ::ng-deep .tab-content.ng-animating {  /* :enter is Angular's pseudo-class */
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+/* For toastAnimation equivalent */
+.toast {  /* add class="toast" to your toast elements */
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 200ms ease-in, transform 200ms ease-in;
+}
+
+.toast:enter {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.toast:leave {
+  opacity: 0;
+  transform: translateX(100%);
+}
