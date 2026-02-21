@@ -180,7 +180,7 @@
                     </div>
 
                     <!-- Issuer (only when not XRP) -->
-                    @if (trustlineCurrency.currentCurrency() !== 'XRP') {
+                    @if (trustlineCurrencyService.currentCurrency() !== 'XRP') {
                     <div class="form-row">
                          <div class="form-group">
                               <label for="issuer">Issuer</label>
@@ -354,15 +354,15 @@
                     <div class="button-row">
                          <!-- Create -->
                          @if (activeTab() === 'create') {
-                         <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="!isIdle() || !hasWallets">{{ checkUtilService.createCheckButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="!isIdle() || !hasWallets()">{{ checkUtilService.createCheckButtonLabel() }}</button>
                          }
                          <!-- Cash -->
                          @else if (activeTab() === 'cash') {
-                         <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="!isIdle() || !hasWallets || selectedCheckIsExpired()">{{ checkUtilService.cashCheckButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="!isIdle() || !hasWallets() || selectedCheckIsExpired()">{{ checkUtilService.cashCheckButtonLabel() }}</button>
                          }
                          <!-- Cancel -->
                          @else if (activeTab() === 'cancel') {
-                         <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="!isIdle() || !hasWallets">{{ checkUtilService.cancelCheckButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="!isIdle() || !hasWallets()">{{ checkUtilService.cancelCheckButtonLabel() }}</button>
                          }
                          <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                     </div>

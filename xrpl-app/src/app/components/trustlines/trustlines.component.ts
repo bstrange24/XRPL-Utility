@@ -19,7 +19,6 @@ import { DestinationDropdownService, SelectItem } from '../../services/destinati
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
@@ -31,6 +30,7 @@ import { TransactionPreviewComponent } from '../transaction-preview/transaction-
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { EMPTY, from, switchMap } from 'rxjs';
 import { EscrowDataForUI, EscrowObject, IssuerItem, MPToken, RippleState } from '../../models/interface-items.model';
+import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 
 @Component({
      selector: 'app-trustlines',

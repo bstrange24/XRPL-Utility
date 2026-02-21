@@ -180,6 +180,50 @@ export class XrplTransactionService {
           };
      }
 
+     buildTrustlineSetTransaction(wallet: xrpl.Wallet, sendMax: string | { currency: string; value: string; issuer: string }, destinationAddress: string, fee: string | undefined, currentLedger: number | undefined): xrpl.TrustSet {
+          return {
+               TransactionType: 'TrustSet',
+               Account: wallet.classicAddress,
+               LimitAmount: {
+                    currency: 'currencyFieldTemp',
+                    issuer: 'issuerFields',
+                    value: '',
+               },
+               Destination: destinationAddress,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildIssueCurrencyTransaction(wallet: xrpl.Wallet, sendMax: string | { currency: string; value: string; issuer: string }, destinationAddress: string, fee: string | undefined, currentLedger: number | undefined): xrpl.Payment {
+          return {
+               TransactionType: 'Payment',
+               Account: wallet.classicAddress,
+               Destination: destinationAddress,
+               Amount: {
+                    currency: '',
+                    value: '',
+                    issuer: 'this.issuerFields()',
+               },
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildClawbackTransaction(wallet: xrpl.Wallet, sendMax: string | { currency: string; value: string; issuer: string }, destinationAddress: string, fee: string | undefined, currentLedger: number | undefined): xrpl.Clawback {
+          return {
+               TransactionType: 'Clawback',
+               Account: wallet.classicAddress,
+               Amount: {
+                    currency: 'currencyFieldTemp',
+                    issuer: destinationAddress,
+                    value: 'this.amountField()',
+               },
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
      buildCreateCheckTransaction(wallet: xrpl.Wallet, sendMax: string | { currency: string; value: string; issuer: string }, destinationAddress: string, fee: string | undefined, currentLedger: number | undefined): xrpl.CheckCreate {
           return {
                TransactionType: 'CheckCreate',

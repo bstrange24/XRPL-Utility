@@ -29,11 +29,11 @@ import { TransactionOptionsComponent } from '../common/transaction-options/trans
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { ToastService } from '../../services/toast/toast.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 
 interface XRPLCurrency {
      currency: string;

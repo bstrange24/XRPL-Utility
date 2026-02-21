@@ -25,7 +25,6 @@ import { OfferCurrencyService } from '../../services/offer-currency/offer-curren
 import BigNumber from 'bignumber.js';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ToastService } from '../../services/toast/toast.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
@@ -34,6 +33,7 @@ import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.compon
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 
 interface XRPLCurrency {
      currency: string;

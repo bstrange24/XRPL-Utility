@@ -22,7 +22,6 @@ import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
 import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
@@ -37,6 +36,7 @@ import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.ser
 import { EscrowUtilService } from '../../services/escrow/escrow-util/escrow-util.service';
 import { TimeBasedEscrowOrchestrator } from '../../services/escrow/escrow-orchestrator/escrow-orchestrator.service';
 import * as cc from 'five-bells-condition';
+import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 
 @Component({
      selector: 'app-conditional-escrow',

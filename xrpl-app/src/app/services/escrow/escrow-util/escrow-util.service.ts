@@ -3,7 +3,6 @@ import { CopyUtilService } from '../../copy-util/copy-util.service';
 import { DownloadUtilService } from '../../download-util/download-util.service';
 import { ToastService } from '../../toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-currency.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
@@ -11,6 +10,7 @@ import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction
 import * as xrpl from 'xrpl';
 import { EscrowDataForUI, EscrowDisplayItem, EscrowObject } from '../../../models/interface-items.model';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
+import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
 
 type EscrowTxType = 'create' | 'finish' | 'cancel';
 

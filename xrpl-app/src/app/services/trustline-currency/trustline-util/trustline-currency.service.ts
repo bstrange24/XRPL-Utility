@@ -1,12 +1,13 @@
 import { computed, Injectable, Signal, signal } from '@angular/core';
 import { BehaviorSubject, combineLatest, Subject, takeUntil } from 'rxjs';
-import { StorageService } from '../local-storage/storage.service';
-import { XrplService } from '../xrpl-services/xrpl.service';
-import { UtilsService } from '../util-service/utils.service';
-import { Wallet, WalletManagerService } from '../wallets/manager/wallet-manager.service';
-import { SelectItem } from '../destination-dropdown/destination-dropdown.service';
-import { RippleState } from '../../models/interface-items.model';
+
 import * as xrpl from 'xrpl';
+import { Wallet, WalletManagerService } from '../../wallets/manager/wallet-manager.service';
+import { SelectItem } from '../../destination-dropdown/destination-dropdown.service';
+import { StorageService } from '../../local-storage/storage.service';
+import { UtilsService } from '../../util-service/utils.service';
+import { XrplService } from '../../xrpl-services/xrpl.service';
+import { RippleState } from '../../../models/interface-items.model';
 
 interface IssuerItem {
      name: string;

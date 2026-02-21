@@ -17,7 +17,6 @@ import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { ToastService } from '../../services/toast/toast.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
@@ -36,6 +35,7 @@ import { TxEnvironmentService } from '../../services/transaction-environment/tx-
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { switchMap, from } from 'rxjs';
 import { MptOrchestratorServiceService } from '../../services/mpt-service/mpt-orchestrator/mpt-orchestrator.service.service';
+import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 
 @Component({
      selector: 'app-mpt',

@@ -4,7 +4,6 @@ import { CopyUtilService } from '../../copy-util/copy-util.service';
 import { DownloadUtilService } from '../../download-util/download-util.service';
 import { ToastService } from '../../toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-currency.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
@@ -13,6 +12,7 @@ import { PerformanceBaseComponent } from '../../../components/base/performance-b
 import * as xrpl from 'xrpl';
 import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { AppConstants } from '../../../core/app.constants';
+import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
 
 @Injectable({
      providedIn: 'root',

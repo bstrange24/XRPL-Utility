@@ -18,7 +18,7 @@ import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
@@ -28,7 +28,7 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { SendXrpTransactionOrchestratorService } from '../../services/send-xrp/send-xrp-orchestrator/send-xrp-transaction-orchestrator.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 
 @Component({
      selector: 'app-send-xrp',
@@ -74,7 +74,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-     readonly hasWalletsSignal = toSignal(this.walletManagerService.hasWallets$, { initialValue: false });
 
      readonly infoData = computed(() => {
           const wallet = this.currentWallet();
@@ -107,6 +106,8 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      }
 
      ngOnInit(): void {
+          this.trustlineCurrencyService.setPreferXrpAsDefault(false);
+          this.trustlineCurrencyService.setAddMptInDropdown(false);
           this.transactionDropdownService.loadCustomDestinations();
           this.setupWalletSubscriptions();
      }
@@ -152,6 +153,14 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           }
      }
 
+     private ensureWalletSelected(): boolean {
+          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
+               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
+               return false;
+          }
+          return true;
+     }
+
      onWalletSelected(wallet: Wallet): void {
           this.selectWallet(wallet);
      }
@@ -179,9 +188,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           await this.measure('onAccountChange', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
 
-               if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
-                    return this.toastService.error('Please select a wallet.', AppConstants.TOAST.ERROR);
-               }
+               if (!this.ensureWalletSelected()) return;
 
                try {
                     const { wallet, accountInfo, accountObjects } = await this.measure('onAccountChange:prepareTxEnvironment', true, async () =>
@@ -193,13 +200,12 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                     );
 
                     if (!accountInfo || !accountObjects) {
-                         throw new Error('Failed to fetch account information');
+                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+                         return;
                     }
 
-                    await this.measure('onAccountChange:processAndUpdate', true, async () => {
-                         this.accountInfo.set(accountInfo);
-                         this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
-                    });
+                    this.accountInfo.set(accountInfo);
+                    this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
                } catch (error: any) {
                     console.error('Failed to load account:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
@@ -213,14 +219,13 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           await this.withPerf('sendXrp', async () => {
                this.txUiService.resetCurrentStepToIdle();
 
-               if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
-                    return this.toastService.error('Please select a wallet.', AppConstants.TOAST.ERROR);
-               }
+               if (!this.ensureWalletSelected()) return;
 
                const destination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
 
                if (!destination) {
-                    return this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
+                    this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
+                    return;
                }
 
                try {
@@ -248,18 +253,24 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                          },
                     });
 
-                    if (!result.success) {
-                         this.toastService.error(result.error || 'Failed to send XRP');
-                         return;
-                    }
-
-                    await this.refreshAfterTx(env.client, env.wallet, destination);
-                    this.clearInputFields();
+                    await this.handleTxResult(result, env.client, env.wallet, destination, 'Failed to send XRP');
                } catch (error: any) {
                     console.error('Error sending XRP:', error);
-                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    this.toastService.error(error.message || 'Error sending XRP', AppConstants.TOAST.ERROR);
                }
           });
+     }
+
+     private async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, errorMessage: string): Promise<boolean> {
+          if (!result.success) {
+               this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
+               return false;
+          }
+
+          await this.refreshAfterTx(client, wallet, destination);
+
+          this.clearInputFields();
+          return true;
      }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null): Promise<void> {

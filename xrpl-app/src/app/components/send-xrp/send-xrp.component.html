@@ -114,8 +114,8 @@
 
                     <!-- Action buttons -->
                     <div class="button-row">
-                         <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="!isIdle() || !hasWalletsSignal()">{{ sendButtonLabel() }}</button>
-                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWalletsSignal()">Clear Fields</button>
+                         <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="!isIdle() || !hasWallets()">{{ sendButtonLabel() }}</button>
+                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                     </div>
 
                     <!-- Execution time -->
