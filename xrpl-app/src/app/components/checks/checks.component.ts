@@ -33,6 +33,7 @@ import { AcccountDataService } from '../../services/account-data/acccount-data.s
 import { CheckTransactionOrchestrator } from '../../services/checks/checks-transaction-orchestrator/checks-transaction-orchestrator.service';
 import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineOrchestratorService } from '../../services/trustline-currency/trustline-orchestrator/trustline-orchestrator.service';
 
 @Component({
      selector: 'app-checks',
@@ -61,6 +62,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      public readonly acccountDataService = inject(AcccountDataService);
      public readonly checkTransactionOrchestrator = inject(CheckTransactionOrchestrator);
      public readonly mptUtilService = inject(MptUtilService);
+     public readonly trustlineOrchestratorService = inject(TrustlineOrchestratorService);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
@@ -92,6 +94,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      private readonly createCheckSpecificKeys = ['amountField', 'destinationTagField', 'sourceTagField', 'invoiceIdField', 'currencyCode', 'currencyIssuer'] as const;
      private readonly cashCheckSpecificKeys = ['amountField', 'checkIdField', 'currencyCode', 'currencyIssuer', 'checkCreator'] as const;
+     private readonly setTrustlineSpecificKeys = ['trustlineLimitField', 'currencyCode', 'currencyIssuer'] as const;
      private readonly cancelCheckSpecificKeys = ['checkIdField'] as const;
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.wallets().length > 0);
@@ -509,24 +512,41 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          }
                     }
 
-                    // if (this.txUiService.showEnableTrustline()) {
-                    //      const info = this.txUiService.missingTrustlineInfo();
-                    //      if (!info) return;
+                    if (this.txUiService.showEnableTrustline()) {
+                         const currencyCode = this.txUiService.missingTrustlineInfo.currencyCode();
+                         const currencyIssuer = this.txUiService.missingTrustlineInfo.issuer();
+                         if (!currencyCode || !currencyIssuer) return;
 
-                    //      const trustResult = await this.trustlineTransactionOrchestrator.createTrustline({
-                    //           wallet: this.currentWallet(),
-                    //           currency: info.currency,
-                    //           issuer: info.issuer,
-                    //           limit: '1000000000', // or dynamic
-                    //      });
+                         const resetTrustlinesult = await this.trustlineOrchestratorService.executeTrustlineTx('setTrustline', {
+                              wallet: this.currentWallet(),
+                              formValues: {
+                                   ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.setTrustlineSpecificKeys)),
+                              },
+                              extra: {},
+                              preFetchedEnv: {
+                                   client: env.client,
+                                   accountInfo: env.accountInfo,
+                                   checkObjects: env.checkObjects,
+                                   fee: env.fee!,
+                                   currentLedger: env.currentLedger!,
+                                   wallet: env.wallet,
+                              },
+                         });
 
-                    //      if (!trustResult.success) {
-                    //           this.toastService.error(trustResult.error || 'Failed to create trustline');
-                    //           return;
-                    //      }
+                         // const trustResult = await this.trustlineOrchestratorService.createTrustline({
+                         //      wallet: this.currentWallet(),
+                         //      currency: info.currency,
+                         //      issuer: info.issuer,
+                         //      limit: '1000000000', // or dynamic
+                         // });
 
-                    //      this.toastService.success('Trustline created successfully.');
-                    // }
+                         if (!resetTrustlinesult.success) {
+                              this.toastService.error(resetTrustlinesult.error || 'Failed to create trustline');
+                              return;
+                         }
+
+                         this.toastService.success('Trustline created successfully.');
+                    }
 
                     if (currencyCode !== AppConstants.XRP_CURRENCY) {
                          const issuer = this.txUiService.currencyIssuer();
