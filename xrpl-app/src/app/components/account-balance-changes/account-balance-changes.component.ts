@@ -28,7 +28,6 @@ import { NgIcon } from '@ng-icons/core';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
-import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -41,6 +40,7 @@ import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 
 interface BalanceChange {
      date: Date;

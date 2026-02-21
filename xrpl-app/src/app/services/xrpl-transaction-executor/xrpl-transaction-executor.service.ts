@@ -59,15 +59,12 @@ export class XrplTransactionExecutorService {
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(useMultiSign, regularKeyAddress, isRegularKeyAddress, regularKeySeed);
 
-                    // this.txUiService.currentStep.set('signing');
-
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, tx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, useMultiSign, multiSignAddress, multiSignSeeds);
 
                     if (!signedTx) {
                          return { success: false, error: 'Failed to sign transaction.' };
                     }
 
-                    // this.txUiService.currentStep.set('submitting');
                     response = await this.xrplTransactions.submitTransaction1(client, signedTx);
                     this.txUiService.currentStep.set('waiting_validation');
                }

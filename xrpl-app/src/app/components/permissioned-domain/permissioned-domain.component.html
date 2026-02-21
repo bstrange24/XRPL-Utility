@@ -57,60 +57,63 @@
                }
 
                <!-- Info Message -->
+               <!-- Info Message + Permissioned Domains List Card -->
                @if (infoData(); as info) {
-               <div class="info-message-wrapper">
-                    <div class="info-panel">
-                         <div class="info-text">
-                              <div style="margin-bottom: 6px; line-height: 1.5; cursor: default">
-                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
-                                   <code>{{ info.walletName }}</code>
-                                   @if (info.permissionedDomainCount === 0) { has no permissioned domains. } @else { has issued <strong>{{ info.permissionedDomainCount }}</strong>
-                                   permissioned domain{{ info.permissionedDomainCount === 1 ? '' : 's' }}. }
-                              </div>
+               <div class="info-and-permissioned-domains-card" [class.has-domains]="info.permissionedDomainCount > 0">
+                    <!-- Always-visible summary row -->
+                    <div class="summary-header">
+                         <div class="summary-text">
+                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
+                              <code>{{ info.walletName }}</code>
 
-                              <!-- Collabpsible Permissioned Domain list -->
-                              @if (info.permissionedDomainCount > 0) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()">
-                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
-                                        <span> Permissioned Domains ({{ info.permissionedDomainCount }})</span>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
-                                             <path d="M6 9l6 6 6-6" />
-                                        </svg>
-                                   </div>
-
-                                   @if (infoPanelExpanded()) {
-                                   <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
-                                        @for (domain of info.permissionedDomainsToShow; track domain.index) {
-                                        <li style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px">
-                                             <!-- Only the text part is the explorer link -->
-                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer" style="flex: 1; min-width: 0">
-                                                  <div style="font-weight: 500; margin-bottom: 4px">{{ domain.Domain || 'Permissioned Domain' }}</div>
-
-                                                  <div style="color: #555; font-size: 0.88em; display: flex; align-items: center; gap: 8px">
-                                                       <span>Domain ID:</span>
-                                                       <code style="font-size: 0.95em">{{ domain.index.slice(0,10) }}...{{ domain.index.slice(-8) }}</code>
-                                                  </div>
-                                                  <div style="color: #555; font-size: 0.88em; display: flex; align-items: center; gap: 8px">
-                                                       <span>Credential</span>
-                                                       <code style="font-size: 0.95em">{{ domain.AcceptedCredentials }}</code>
-                                                  </div>
-                                             </app-tooltip-link>
-
-                                             <!-- Copy button completely outside the link -->
-                                             <button (click)="copyAndToast(domain.index, 'Domain ID'); $event.stopPropagation()" class="copy-btn" title="Copy Domain ID" style="background: none; border: none; cursor: pointer; padding: 4px; opacity: 0.7; margin-left: auto">
-                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                                  </svg>
-                                             </button>
-                                        </li>
-                                        }
-                                   </ul>
-                                   }
-                              </div>
+                              @if (info.permissionedDomainCount === 0) {
+                              <span> has no permissioned domains.</span>
+                              } @else {
+                              <span> has issued <strong class="object-count">{{ info.permissionedDomainCount }}</strong> permissioned domain{{ info.permissionedDomainCount === 1 ? '' : 's' }}.</span>
                               }
+                              <!-- @if (info.links) {
+                              <div class="xrpl-win-link-small"><span [innerHTML]="info.links"></span> on XRPL Win</div>
+                              } -->
                          </div>
+
+                         <!-- Expand/Collapse toggle (only when there are domains) -->
+                         @if (info.permissionedDomainCount > 0) {
+                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle permissioned domains list">
+                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} list</span>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'">
+                                   <path d="M6 9l6 6 6-6" />
+                              </svg>
+                         </button>
+                         }
                     </div>
+
+                    <!-- Collapsible detailed list with internal scroll -->
+                    @if (info.permissionedDomainCount > 0) {
+                    <div class="permissioned-domains-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                         <ul class="permissioned-domains-list">
+                              @for (domain of info.permissionedDomainsToShow; track domain.index) {
+                              <li class="permissioned-domain-item">
+                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer" style="flex: 1; min-width: 0">
+                                        <div class="domain-main-line">{{ domain.Domain || 'Permissioned Domain' }}</div>
+
+                                        <div class="domain-meta">
+                                             <div>Domain ID: <code>{{ domain.index.slice(0,10) }}...{{ domain.index.slice(-8) }}</code></div>
+                                             <div>Credential: <code>{{ domain.AcceptedCredentials }}</code></div>
+                                        </div>
+                                   </app-tooltip-link>
+
+                                   <!-- Copy button outside the link -->
+                                   <button (click)="copyAndToast(domain.index, 'Domain ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Domain ID">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                   </button>
+                              </li>
+                              }
+                         </ul>
+                    </div>
+                    }
                </div>
                }
 
@@ -122,7 +125,7 @@
                </div>
                }
 
-               <form #theForm="ngForm" class="send-form">
+               <form #theForm="ngForm" class="main-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab()">
                               <div class="form-row">

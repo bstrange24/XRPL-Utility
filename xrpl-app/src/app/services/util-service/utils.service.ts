@@ -1,4 +1,4 @@
-import { Injectable, ElementRef, ViewChild } from '@angular/core';
+import { Injectable, ElementRef, ViewChild, WritableSignal, Signal } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { walletFromSecretNumbers, Wallet } from 'xrpl';
 import { XrplService } from '../xrpl-services/xrpl.service';
@@ -10,7 +10,7 @@ import { StorageService } from '../local-storage/storage.service';
 import md5 from 'blueimp-md5';
 import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
-import { EscrowWithTxData, MPToken, RippleState } from '../../models/interface-items.model';
+import { MPToken, RippleState } from '../../models/interface-items.model';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -389,6 +389,19 @@ export class UtilsService {
           // Round to 6 decimal places (XRP precision)
           const rounded = Number(num.toFixed(6));
           this.txUiService.amountField.set(rounded.toString());
+     }
+
+     updateTrustlineLimitAmount(value: string | number) {
+          let num = typeof value === 'string' ? Number.parseFloat(value) : value;
+
+          if (Number.isNaN(num) || num < 0) {
+               this.txUiService.trustlineLimitField.set(0);
+               return;
+          }
+
+          // Round to 6 decimal places (XRP precision)
+          const rounded = Number(num.toFixed(10));
+          this.txUiService.trustlineLimitField.set(rounded);
      }
 
      issuedAmount(currency: string, issuer: string, value: any) {
@@ -788,10 +801,6 @@ export class UtilsService {
           return Buffer.from(padded).toString('hex').toUpperCase(); // 40-char hex string
      }
 
-     isEscrow(obj: any): obj is EscrowWithTxData {
-          return obj && obj.LedgerEntryType === 'Escrow';
-     }
-
      isRippleState(obj: any): obj is RippleState {
           return obj && obj.LedgerEntryType === 'RippleState';
      }
@@ -888,6 +897,45 @@ export class UtilsService {
           return rippleEpoch;
      }
 
+     setDateTimeFieldToNow() {
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, '0');
+          const day = String(now.getDate()).padStart(2, '0');
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const seconds = String(now.getSeconds()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+     }
+
+     addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
+          let currentValue = fieldSignal();
+
+          // If field is empty, start from now
+          if (!currentValue) {
+               const now = new Date();
+               currentValue = this.formatDateTimeLocal(now);
+          }
+
+          const date = new Date(currentValue);
+          date.setSeconds(date.getSeconds() + seconds);
+
+          const newDateTime = this.formatDateTimeLocal(date);
+
+          writableSignal.set(newDateTime);
+     }
+
+     formatDateTimeLocal(date: Date): string {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const secs = String(date.getSeconds()).padStart(2, '0');
+
+          return `${year}-${month}-${day}T${hours}:${minutes}:${secs}`;
+     }
+
      // getTransferRate(percentage: number): number {
      //      // Placeholder: Implement your getTransferRate from utils.js
      //      // Example: Convert percentage to XRPL TransferRate
@@ -932,7 +980,8 @@ export class UtilsService {
                } else {
                     throw new Error('Invalid input format');
                }
-          } catch (error) {
+          } catch (error: any) {
+               console.error(`Error getting wallet with encryption ${error.message}`);
                throw new Error('Invalid input or algorithm mismatch');
           }
      }
@@ -963,6 +1012,7 @@ export class UtilsService {
                     }
                }
           } catch (error: any) {
+               console.error(`Invalid seed or mnemonic format ${error.message}`);
                throw new Error('Invalid seed or mnemonic format');
           }
      }
@@ -993,6 +1043,7 @@ export class UtilsService {
                }
                return true;
           } catch (error: any) {
+               console.error(`Error validation seed ${error.message}`);
                return false;
           }
      }
@@ -1132,109 +1183,6 @@ export class UtilsService {
      cleanUpMultiSelection(selectedTickets: any, ticketArray: any) {
           // Filter out any selected tickets that no longer exist
           return selectedTickets.filter((ticket: any) => ticketArray.includes(ticket));
-     }
-
-     checkTimeBasedEscrowStatus(escrow: { FinishAfter?: number; CancelAfter?: number; owner: string }, currentRippleTime: number, callerAddress: string, operation: string): { canFinish: boolean; canCancel: boolean; reasonFinish: string; reasonCancel: string } {
-          const now = currentRippleTime;
-          const { FinishAfter, CancelAfter, owner } = escrow;
-
-          let canFinish = false;
-          let canCancel = false;
-          let reasonFinish = '';
-          let reasonCancel = '';
-
-          // --- Check finish eligibility ---
-          if (FinishAfter !== undefined) {
-               if (now >= FinishAfter) {
-                    canFinish = true;
-               } else {
-                    reasonFinish = `Escrow can only be finished after: ${this.convertXRPLTime(FinishAfter)} The current time is: ${this.convertXRPLTime(now)}.`;
-               }
-          } else {
-               reasonFinish = `No FinishAfter time defined.`;
-          }
-
-          // --- Check cancel eligibility ---
-          if (CancelAfter !== undefined) {
-               if (now >= CancelAfter) {
-                    if (callerAddress === owner) {
-                         canCancel = true;
-                    } else {
-                         reasonCancel = `The Escrow has expired and can only be cancelled. Only the escrow owner (${owner}) can cancel this escrow.`;
-                    }
-               } else {
-                    reasonCancel = `Escrow can only be canceled after: ${this.convertXRPLTime(CancelAfter)} The Current time is: ${this.convertXRPLTime(now)}.`;
-               }
-          } else {
-               reasonCancel = `No CancelAfter time defined.`;
-          }
-
-          if (operation === 'finishEscrow' && canCancel && canFinish) {
-               canFinish = false;
-               canCancel = true;
-               reasonFinish = `The Escrow has expired and can only be cancelled.`;
-          }
-
-          return { canFinish, canCancel, reasonFinish, reasonCancel };
-     }
-
-     checkEscrowStatus(escrow: { FinishAfter?: number; CancelAfter?: number; Condition?: string; owner: string }, currentRippleTime: number, callerAddress: string, operation: 'finishEscrow' | 'cancelEscrow', fulfillment?: string): { canFinish: boolean; canCancel: boolean; reasonFinish: string; reasonCancel: string } {
-          const now = currentRippleTime;
-          const { FinishAfter, CancelAfter, Condition, owner } = escrow;
-
-          let canFinish = true; // Default to true for condition-only escrows
-          let canCancel = false;
-          let reasonFinish = '';
-          let reasonCancel = '';
-
-          // --- Check finish eligibility ---
-          // Time-based check
-          if (FinishAfter !== undefined) {
-               if (now < FinishAfter) {
-                    canFinish = false;
-                    reasonFinish = `Escrow can only be finished after ${this.convertXRPLTime(FinishAfter)}, current time is ${this.convertXRPLTime(now)}.`;
-               }
-          }
-
-          // Condition-based check
-          if (Condition) {
-               if (!fulfillment) {
-                    canFinish = false;
-                    reasonFinish = reasonFinish ? `${reasonFinish} Additionally, a fulfillment is required for condition-based escrow.` : 'A fulfillment is required for condition-based escrow.';
-               }
-          } else if (fulfillment && !Condition) {
-               canFinish = false;
-               reasonFinish = reasonFinish ? `${reasonFinish} No condition is set, so fulfillment is not applicable.` : 'No condition is set, so fulfillment is not applicable.';
-          }
-
-          // If no FinishAfter or Condition is set, finishing is not possible
-          if (FinishAfter === undefined && !Condition) {
-               canFinish = false;
-               reasonFinish = 'No FinishAfter time or Condition defined.';
-          }
-
-          // --- Check cancel eligibility ---
-          if (CancelAfter !== undefined) {
-               if (now >= CancelAfter) {
-                    if (callerAddress === owner) {
-                         canCancel = true;
-                    } else {
-                         reasonCancel = `Only the escrow owner (${owner}) can cancel this escrow.`;
-                    }
-               } else {
-                    reasonCancel = `Escrow can only be canceled after ${this.convertXRPLTime(CancelAfter)}, current time is ${this.convertXRPLTime(now)}.`;
-               }
-          } else {
-               reasonCancel = 'No CancelAfter time defined.';
-          }
-
-          // If escrow has expired (CancelAfter passed), prioritize cancellation for finishEscrow operation
-          if (operation === 'finishEscrow' && canCancel && canFinish) {
-               canFinish = false;
-               reasonFinish = reasonFinish ? `${reasonFinish} The escrow has expired and can only be canceled.` : 'The escrow has expired and can only be canceled.';
-          }
-
-          return { canFinish, canCancel, reasonFinish, reasonCancel };
      }
 
      isTxResponse(obj: any): obj is xrpl.TxResponse<xrpl.SubmittableTransaction> {
@@ -1603,6 +1551,27 @@ export class UtilsService {
           return `${amount} XRP`;
      }
 
+     setTxAmount(type: string, formValues: any, tx: xrpl.Transaction) {
+          if (type === 'create') {
+               if (formValues.currencyValue === 'MPT') {
+                    const curr: xrpl.MPTAmount = {
+                         mpt_issuance_id: this.txUiService.mptIssuanceIdField(),
+                         value: this.txUiService.amountField(),
+                    };
+                    tx.Amount = curr;
+               } else if (formValues.currencyValue !== 'XRP' && formValues.currencyValue !== 'MPT') {
+                    const curr: xrpl.IssuedCurrencyAmount = {
+                         currency: formValues.currencyValue.length > 3 ? this.encodeCurrencyCode(formValues.currencyValue) : formValues.currencyValue,
+                         issuer: formValues.issuer,
+                         value: this.txUiService.amountField(),
+                    };
+                    tx.Amount = curr;
+               } else {
+                    tx.Amount = xrpl.xrpToDrops(this.txUiService.amountField());
+               }
+          }
+     }
+
      formatValue(key: string, value: any, nestedFields: string[] = []): string {
           if (key === 'Account' || key.includes('PubKey') || key.includes('Signature') || key.includes('index')) {
                return `<code>${value}</code>`;
@@ -1756,6 +1725,12 @@ export class UtilsService {
           }
 
           return true;
+     }
+
+     adjustTextareaHeight(event: Event): void {
+          const ta = event.target as HTMLTextAreaElement;
+          ta.style.height = 'auto'; // reset
+          ta.style.height = ta.scrollHeight + 'px';
      }
 
      validateAmmDepositBalances(xrpBalance: string, accountObjects: any[], we_want: CurrencyAmount, we_spend: CurrencyAmount): string | null {
@@ -2025,28 +2000,6 @@ export class UtilsService {
           }
      }
 
-     // async getAccountReserves(client: xrpl.Client, accountInfo: any, address: string) {
-     //      try {
-     //           // Get the current ledger index from the client
-     //           const accountData = accountInfo.result.account_data;
-     //           const ownerCount = accountData.OwnerCount;
-
-     //           const reserveData = await this.getXrplReserve(client);
-     //           if (!reserveData) {
-     //                throw new Error('Failed to fetch XRPL reserve data');
-     //           }
-
-     //           const { reserveBaseXRP, reserveIncrementXRP } = reserveData;
-     //           const totalReserveXRP = reserveBaseXRP + ownerCount * reserveIncrementXRP;
-
-     //           return { ownerCount, totalReserveXRP };
-     //      } catch (error: any) {
-     //           console.error('Error:', error);
-     //           this.setError(`${error.message || 'Unknown error'}`, undefined);
-     //           return undefined;
-     //      }
-     // }
-
      async getXrplReserve(client: xrpl.Client) {
           try {
                const ledger_info = await this.xrplService.getXrplServerState(client, 'current', '');
@@ -2057,8 +2010,6 @@ export class UtilsService {
                const baseFee = ledgerData.base_fee;
                const reserveBaseXRP = ledgerData.reserve_base;
                const reserveIncrementXRP = ledgerData.reserve_inc;
-
-               // console.debug(`baseFee: ${baseFee} reserveBaseXRP: ${xrpl.dropsToXrp(reserveBaseXRP)} Total incremental owner count: ${xrpl.dropsToXrp(reserveIncrementXRP)} XRP Total Reserve: ${xrpl.dropsToXrp(reserveIncrementXRP)} XRP`);
 
                return { reserveBaseXRP, reserveIncrementXRP };
           } catch (error: any) {
@@ -2078,123 +2029,6 @@ export class UtilsService {
                console.debug(`Owner Count: ${ownerCount} Total XRP Reserves: ${totalXrpReserves}`);
           }
           return { ownerCount, totalXrpReserves };
-     }
-
-     async getOnlyTokenBalance(client: xrpl.Client, address: string, currency: string): Promise<string> {
-          try {
-               const response = await this.xrplService.getAccountLines(client, address, 'validated', '');
-               const lines = response.result.lines || [];
-               const tokenLine = lines.find((line: any) => line.currency.toUpperCase() === currency.toUpperCase());
-               return tokenLine ? tokenLine.balance : '0';
-          } catch (error: any) {
-               console.error('Error fetching token balance:', error);
-               return '0';
-          }
-     }
-
-     async getTokenBalance(client: xrpl.Client, accountInfo: any, address: string, currency: string, hotwallet: string): Promise<{ issuers: string[]; total: number; xrpBalance: number }> {
-          try {
-               const gatewayBalances = await this.xrplService.getTokenBalance(client, address, 'validated', '');
-               console.debug(`gatewayBalances:`, gatewayBalances.result);
-
-               let tokenTotal = 0;
-               const issuers: string[] = [];
-
-               if (gatewayBalances.result.assets) {
-                    Object.entries(gatewayBalances.result.assets).forEach(([issuer, assets]) => {
-                         console.log(`Issuer: ${issuer}`);
-                         assets.forEach((asset: any) => {
-                              console.log(`  Currency: ${asset.currency}, Value: ${asset.value}`);
-                              let assetCurrency = asset.currency.length > 3 ? this.decodeCurrencyCode(asset.currency) : asset.currency;
-
-                              if (currency === assetCurrency) {
-                                   console.log(`  Match: ${currency} = ${assetCurrency}`);
-                                   const value = Number.parseFloat(asset.value);
-                                   if (!Number.isNaN(value)) {
-                                        tokenTotal += value;
-                                        if (!issuers.includes(issuer)) {
-                                             issuers.push(issuer);
-                                        }
-                                   }
-                              }
-                         });
-                    });
-               }
-
-               const roundedTotal = Math.round(tokenTotal * 100) / 100;
-               const xrpBalance = await client.getXrpBalance(address);
-               await this.updateOwnerCountAndReserves(client, accountInfo, address);
-
-               return {
-                    issuers,
-                    total: roundedTotal,
-                    xrpBalance,
-               };
-          } catch (error: any) {
-               console.error('Error fetching token balance:', error);
-               throw error; // Let the caller handle the error
-          }
-     }
-
-     async getCurrencyBalance(currency: string, accountObjects: xrpl.AccountObjectsResponse) {
-          try {
-               let account_objects: any[] = [];
-               if (accountObjects && !Array.isArray(accountObjects) && accountObjects.result && Array.isArray(accountObjects.result.account_objects)) {
-                    account_objects = accountObjects.result.account_objects;
-               }
-
-               interface AccountObjectWithBalance {
-                    Balance: {
-                         value: string;
-                         currency: string;
-                         [key: string]: any;
-                    };
-                    [key: string]: any;
-               }
-
-               const matchingObjects: AccountObjectWithBalance[] = account_objects.filter((obj: any): obj is AccountObjectWithBalance => obj.Balance && obj.Balance.currency === currency.toUpperCase());
-
-               const total = matchingObjects.reduce((sum, obj) => {
-                    return sum + Number.parseFloat(obj.Balance.value);
-               }, 0);
-
-               return total;
-          } catch (error) {
-               console.error('Error fetching balance:', error);
-               return null;
-          }
-     }
-
-     async getCurrencyBalanceWithIssuer(currency: string, issuer: string, accountObjects: xrpl.AccountObjectsResponse, account: string): Promise<number | null> {
-          try {
-               let account_objects: any[] = [];
-               if (accountObjects && !Array.isArray(accountObjects) && accountObjects.result && Array.isArray(accountObjects.result.account_objects)) {
-                    account_objects = accountObjects.result.account_objects;
-               }
-
-               const matchingObjects: any[] = account_objects.filter((obj: any) => {
-                    if (obj.Balance?.currency !== currency.toUpperCase()) return false;
-
-                    const lowIssuer = obj.LowLimit?.issuer;
-                    const highIssuer = obj.HighLimit?.issuer;
-
-                    // Check if this trustline is between the account and the specified issuer
-                    return (lowIssuer === account && highIssuer === issuer) || (highIssuer === account && lowIssuer === issuer);
-               });
-
-               let total = 0;
-               for (const obj of matchingObjects) {
-                    const balanceValue = Number.parseFloat(obj.Balance.value);
-                    // Sign the balance from the account's perspective
-                    const signedBalance = account === obj.HighLimit?.issuer ? balanceValue : -balanceValue;
-                    total += signedBalance;
-               }
-
-               return total;
-          } catch (error) {
-               console.error('Error fetching balance:', error);
-               return null;
-          }
      }
 
      setError(message: string, spinner: { style: { display: string } } | undefined) {

@@ -6,6 +6,7 @@ import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { TokenCacheService } from '../token-cache/token-cache.service';
 import { StorageService } from '../local-storage/storage.service';
+import { EscrowObject } from '../../models/interface-items.model';
 
 interface MptInfoRequest {
      command: 'mpt_info';
@@ -1005,10 +1006,10 @@ export class XrplService {
      async getEscrowBySequence(client: xrpl.Client, account: string, sequence: number): Promise<any | null> {
           try {
                const escrowObjects = await this.getAccountObjects(client, account, 'validated', 'escrow');
-               for (const [ignore, obj] of escrowObjects.result.account_objects.entries()) {
+               for (const [, obj] of escrowObjects.result.account_objects.entries()) {
                     if (obj.PreviousTxnID) {
                          const sequenceTx = await this.getTxData(client, obj.PreviousTxnID);
-                         if (sequenceTx.result.tx_json.Sequence === sequence) {
+                         if (sequenceTx.result.tx_json.Sequence === sequence || sequenceTx.result.tx_json.TicketSequence === sequence) {
                               return { ...obj, Sequence: sequenceTx.result.tx_json.Sequence };
                          }
                     }

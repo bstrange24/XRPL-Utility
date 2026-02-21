@@ -30,10 +30,96 @@
                }
 
                <!-- Info Message -->
+               <!-- Info Message + Account Deletion Readiness Card -->
                @if (infoData(); as info) {
-               <div class="info-panel">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -7.7px"></ng-icon>
-                    <div class="info-text" [innerHTML]="info.message"></div>
+               <div class="info-and-deletion-card" [class.can-delete]="info.canDelete" [class.has-blockers]="info.blockers.length > 0">
+                    <!-- Always-visible summary row -->
+                    <div class="summary-header">
+                         <div class="summary-text">
+                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
+                              <code>{{ info.walletName }}</code>
+
+                              @if (info.canDelete) {
+                              <span> wallet <strong>can be deleted</strong> — no blockers found.</span>
+                              } @else if (info.blockers.length === 0) {
+                              <span> wallet is ready for deletion (after final checks).</span>
+                              } @else {
+                              <span> wallet has <strong>{{ info.blockers.length }}</strong> configuration blocker{{ info.blockers.length === 1 ? '' : 's' }} preventing deletion.</span>
+                              }
+                         </div>
+
+                         <!-- Expand/Collapse toggle (always shown if there's meaningful content) -->
+                         @if (info.blockers.length > 0 || !info.canDelete || info.balanceWarning) {
+                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle account deletion details">
+                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} details</span>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'">
+                                   <path d="M6 9l6 6 6-6" />
+                              </svg>
+                         </button>
+                         }
+                    </div>
+
+                    <!-- Collapsible detailed content -->
+                    @if (info.blockers.length > 0 || !info.canDelete || info.balanceWarning) {
+                    <div class="deletion-details-container" [style.max-height]="infoPanelExpanded() ? '400px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                         <div class="deletion-content">
+                              <!-- Blockers list -->
+                              @if (info.blockers.length > 0) {
+                              <div class="blockers-section">
+                                   <h4 class="blockers-title">Blocking configurations:</h4>
+                                   <ul class="blockers-list">
+                                        @for (blocker of info.blockers; track blocker) {
+                                        <li class="blocker-item">
+                                             <ng-icon name="heroXCircle" size="18" class="blocker-icon"></ng-icon>
+                                             <span [innerHTML]="blocker"></span>
+                                        </li>
+                                        }
+                                   </ul>
+                              </div>
+                              }
+
+                              <!-- Balance warning -->
+                              @if (info.balanceWarning) {
+                              <div class="balance-warning"><strong>Warning:</strong> {{ info.balanceWarning }}</div>
+                              }
+
+                              <!-- Requirements checklist (always shown when expanded) -->
+                              <div class="requirements-section">
+                                   <h4 class="requirements-title">Requirements for successful account deletion:</h4>
+                                   <ul class="requirements-list">
+                                        <li class="requirement-item">
+                                             <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                                             All owner objects must be deleted first (trust lines, offers, escrows, checks, NFTs, MPTs, etc.)
+                                        </li>
+                                        <li class="requirement-item">
+                                             <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                                             All Tickets must be used or canceled (TicketCount must be 0)
+                                        </li>
+                                        <li class="requirement-item">
+                                             <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                                             All Hooks must be removed (if any are installed)
+                                        </li>
+                                        <li class="requirement-item">
+                                             <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                                             The account must send all remaining XRP to another account
+                                        </li>
+                                        <li class="requirement-item">
+                                             <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                                             The account must have no Regular Key configured
+                                        </li>
+                                        <li class="requirement-item">
+                                             <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                                             The account must have no active Signer List
+                                        </li>
+                                        <li class="requirement-item">
+                                             <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                                             Wait 256 ledgers (~15–20 minutes) after the last transaction
+                                        </li>
+                                   </ul>
+                              </div>
+                         </div>
+                    </div>
+                    }
                </div>
                }
 
@@ -45,7 +131,7 @@
                </div>
                }
 
-               <form #theForm="ngForm" class="send-form">
+               <form #theForm="ngForm" class="main-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab()">
                               <div class="form-row">

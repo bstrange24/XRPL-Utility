@@ -57,62 +57,63 @@
                }
 
                <!-- Info Message -->
+               <!-- Info Message + DID Entry Card -->
                @if (infoData(); as info) {
-               <div class="info-panel">
-                    <div class="info-text">
-                         <div style="margin-bottom: 6px; line-height: 1.5; cursor: default">
-                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
+               <div class="info-and-did-card" [class.has-did]="info.existingDid.length === 1">
+                    <!-- Always-visible summary row -->
+                    <div class="summary-header">
+                         <div class="summary-text">
+                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
                               <code>{{ info.walletName }}</code>
 
-                              @switch (info.mode) { @case ('set') { @if (info.didCount === 0) { has not created a DID yet. } @else { has a DID set. Only <strong>1</strong> DID can exist per account. } } @case ('delete') { @if (info.didCount === 0) { has no DID to delete. } @else { has <strong>1</strong> DID that can be deleted. } } }
+                              @switch (info.mode) { @case ('set') { @if (info.didCount === 0) {
+                              <span> has not created a DID yet.</span>
+                              } @else {
+                              <span> has a DID set. Only <strong>1</strong> DID can exist per account.</span>
+                              } } @case ('delete') { @if (info.didCount === 0) {
+                              <span> has no DID to delete.</span>
+                              } @else {
+                              <span> has <strong>1</strong> DID that can be deleted.</span>
+                              } } }
                          </div>
 
-                         <!-- Collapsable DID panel only shown when a DID actually exists -->
+                         <!-- Expand/Collapse toggle (only when a DID exists) -->
                          @if (info.existingDid.length === 1) {
-                         <div class="credential-info-panel" (click)="toggleInfoPanel()">
-                              <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
-                                   <span>
-                                        DID Entry @if (info.mode === 'delete') { — <strong>ready for deletion</strong>
-                                        } @else { — active. }
-                                   </span>
-                                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" style="transition: transform 0.25s ease">
-                                        <path d="M6 9l6 6 6-6" />
-                                   </svg>
-                              </div>
-
-                              @if (infoPanelExpanded()) {
-                              <div style="margin-top: 14px; font-size: 0.92em; line-height: 1">
-                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + info.existingDid[0].index" tooltipText="View DID entry on XRPL Explorer">
-                                        <!-- <div style="font-weight: 500; color: #0c4a6e; cursor: pointer">DID Ledger Entry</div> -->
-                                        <div style="color: #555; margin-top: 10px; word-break: break-all"><strong>Index:</strong> {{ info.existingDid[0].index }}</div>
-
-                                        @if (info.existingDid[0].URI && info.existingDid[0].URI !== 'N/A') {
-                                        <div style="color: #555; margin-top: 10px; margin-bottom: 6px">
-                                             <strong>URI:</strong>
-                                             <span> {{ info.existingDid[0].URI }} </span>
-                                        </div>
-                                        }
-                                   </app-tooltip-link>
-
-                                   <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed #bae6fd" (mouseenter)="$event.stopPropagation()" (mouseleave)="$event.stopPropagation()" (mousemove)="$event.stopPropagation()">
-                                        @if (info.existingDid[0].DIDDocument && info.existingDid[0].DIDDocument !== 'N/A') {
-                                        <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].DIDDocument, 'DID Document')">Copy full DID Document (JSON)</div>
-                                        } @if (info.existingDid[0].Data && info.existingDid[0].Data !== 'N/A') {
-                                        <br /><br />
-                                        <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].Data, 'DID Data')">Copy Data field (JSON)</div>
-                                        } @if (info.existingDid[0].Data && info.existingDid[0].Data !== 'N/A') {
-                                        <br /><br />
-                                        <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].URI, 'URI Data')">Copy URI Field</div>
-                                        }@if (info.existingDid[0].Data && info.existingDid[0].index !== 'N/A') {
-                                        <br /><br />
-                                        <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].index, 'Index')">Copy Index</div>
-                                        }
-                                   </div>
-                              </div>
-                              }
-                         </div>
+                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle DID details">
+                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} details</span>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'">
+                                   <path d="M6 9l6 6 6-6" />
+                              </svg>
+                         </button>
                          }
                     </div>
+
+                    <!-- Collapsible DID details with internal scroll -->
+                    @if (info.existingDid.length === 1) {
+                    <div class="did-details-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                         <div class="did-entry">
+                              <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + info.existingDid[0].index" tooltipText="View DID entry on XRPL Explorer">
+                                   <div class="did-index"><strong>Index:</strong> <code>{{ info.existingDid[0].index }}</code></div>
+
+                                   @if (info.existingDid[0].URI && info.existingDid[0].URI !== 'N/A') {
+                                   <div class="did-uri"><strong>URI:</strong> {{ info.existingDid[0].URI }}</div>
+                                   }
+                              </app-tooltip-link>
+
+                              <!-- Copy actions -->
+                              <div class="did-copy-actions" (mouseenter)="$event.stopPropagation()" (mouseleave)="$event.stopPropagation()" (mousemove)="$event.stopPropagation()">
+                                   @if (info.existingDid[0].DIDDocument && info.existingDid[0].DIDDocument !== 'N/A') {
+                                   <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].DIDDocument, 'DID Document')">Copy full DID Document (JSON)</div>
+                                   } @if (info.existingDid[0].Data && info.existingDid[0].Data !== 'N/A') {
+                                   <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].Data, 'DID Data')">Copy Data field (JSON)</div>
+                                   } @if (info.existingDid[0].URI && info.existingDid[0].URI !== 'N/A') {
+                                   <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].URI, 'URI Data')">Copy URI Field</div>
+                                   }
+                                   <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].index, 'Index')">Copy Index</div>
+                              </div>
+                         </div>
+                    </div>
+                    }
                </div>
                }
 
@@ -124,7 +125,7 @@
                </div>
                }
 
-               <form #theForm="ngForm" class="send-form">
+               <form #theForm="ngForm" class="main-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab()">
                               @if (activeTab() === 'set' && existingDid().length <= 0) {

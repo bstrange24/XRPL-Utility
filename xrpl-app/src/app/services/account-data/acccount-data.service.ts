@@ -1,17 +1,13 @@
-import { Injectable, signal } from '@angular/core';
-import { inject, DestroyRef } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
-import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-currency.service';
 import { ToastService } from '../../services/toast/toast.service';
-import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import * as xrpl from 'xrpl';
 import { PerformanceBaseComponent } from '../../components/base/performance-base/performance-base.component';
@@ -107,21 +103,6 @@ export class AcccountDataService extends PerformanceBaseComponent {
           this.txUiService.signerQuorum.set(0);
           this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
           this.txUiService.multiSignSeeds.set('');
-          this.storageService.removeValue('signerEntries');
-     }
-
-     private setupMultiSignersConfiguration1(wallet: xrpl.Wallet): void {
-          const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-          this.txUiService.signers.set(signerEntries);
-          this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
-          this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
-     }
-
-     private clearMultiSignersConfiguration1(): void {
-          this.txUiService.signerQuorum.set(0);
-          this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
-          this.txUiService.multiSignSeeds.set('');
-          this.txUiService.signers.set([{ Account: '', seed: '', SignerWeight: 1 }]);
           this.storageService.removeValue('signerEntries');
      }
 

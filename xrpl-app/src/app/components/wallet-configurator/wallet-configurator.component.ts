@@ -14,7 +14,6 @@ import { DownloadUtilService } from '../../services/download-util/download-util.
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
-import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
@@ -26,6 +25,7 @@ import { PerformanceBaseComponent } from '../base/performance-base/performance-b
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 
 @Component({
      selector: 'app-wallet-configurator',
@@ -207,7 +207,7 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
           await this.withPerf('getAccountDetails', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
-                    throw new Error('Please select a wallet.');
+                    return this.toastService.error('Please select a wallet.');
                }
 
                try {

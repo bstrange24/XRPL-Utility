@@ -12,6 +12,7 @@ import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction
 import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
 import * as xrpl from 'xrpl';
 import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { AppConstants } from '../../../core/app.constants';
 
 @Injectable({
      providedIn: 'root',
@@ -26,6 +27,27 @@ export class CheckUtilService extends PerformanceBaseComponent {
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactions = inject(XrplTransactionService);
+
+     readonly createCheckButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Create Check';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly cashCheckButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Cash Check';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly cancelCheckButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Cancel Check';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
 
      getExistingChecks(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const mapped = (checkObjects.result.account_objects ?? [])
@@ -70,12 +92,25 @@ export class CheckUtilService extends PerformanceBaseComponent {
                     } else if (sendMax?.value) {
                          amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
                     }
+
+                    const expiration = obj.Expiration;
+                    let isExpired = false;
+                    if (expiration) {
+                         const expirationUnix = expiration + AppConstants.RIPPLE_EPOCH_START;
+                         const nowUnix = Math.floor(Date.now() / 1000);
+                         isExpired = nowUnix > expirationUnix;
+                    }
+
                     return {
                          id: obj.index,
                          index: obj.index,
                          amount,
                          sender: obj.Account,
                          sendMax,
+                         expiration: obj.Expiration,
+                         isExpired,
+                         destinationTag: obj.DestinationTag,
+                         invoiceId: obj.InvoiceID,
                     };
                })
                .sort((a, b) => a.sender.localeCompare(b.sender));
@@ -98,12 +133,22 @@ export class CheckUtilService extends PerformanceBaseComponent {
                          amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
                     }
 
+                    const expiration = obj.Expiration;
+                    let isExpired = false;
+                    if (expiration) {
+                         const expirationUnix = expiration + AppConstants.RIPPLE_EPOCH_START;
+                         const nowUnix = Math.floor(Date.now() / 1000);
+                         isExpired = nowUnix > expirationUnix;
+                    }
+
                     return {
                          id: obj.index, // <-- CheckID
                          index: obj.index,
                          amount,
                          destination: obj.Destination,
                          sendMax,
+                         expiration: obj.Expiration,
+                         isExpired,
                     };
                })
                .sort((a, b) => a.destination.localeCompare(b.destination));
@@ -169,15 +214,40 @@ export class CheckUtilService extends PerformanceBaseComponent {
           });
      }
 
-     onCheckSelected(item: SelectItem | null, checkIdField: WritableSignal<string>, checkCreator: WritableSignal<string>, checkCurrencyCode: WritableSignal<string>, currencyIssuer: WritableSignal<string>) {
+     onCheckSelected(item: SelectItem | null) {
           const id = item?.id || '';
-          checkIdField.set(id);
+          this.txUiService.checkIdField.set(id);
 
           if (item) {
                const parts = item.display?.split(' ') || [];
-               checkCreator.set(parts[3] || '');
-               checkCurrencyCode.set(parts[1] || '');
-               currencyIssuer.set(item.issuer || '');
+               this.txUiService.checkCreator.set(parts[3] || '');
+               this.txUiService.currencyCode.set(parts[1] || '');
+               this.txUiService.currencyIssuer.set(item.issuer || '');
           }
+     }
+
+     isCheckExpired = (expiration?: number): boolean => {
+          if (!expiration) return false;
+          const rippleEpochStart = new Date('2000-01-01T00:00:00Z').getTime() / 1000;
+          const expirationUnix = expiration + rippleEpochStart;
+          const nowUnix = Math.floor(Date.now() / 1000);
+          return nowUnix > expirationUnix;
+     };
+
+     addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
+          let currentValue = fieldSignal();
+
+          // If field is empty, start from now
+          if (!currentValue) {
+               const now = new Date();
+               currentValue = this.utilsService.formatDateTimeLocal(now);
+          }
+
+          const date = new Date(currentValue);
+          date.setSeconds(date.getSeconds() + seconds);
+
+          const newDateTime = this.utilsService.formatDateTimeLocal(date);
+
+          writableSignal.set(newDateTime);
      }
 }

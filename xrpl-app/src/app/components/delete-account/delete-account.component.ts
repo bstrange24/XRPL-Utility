@@ -13,7 +13,7 @@ import { TransactionUiService } from '../../services/transaction-ui/transaction-
 import { UtilsService } from '../../services/util-service/utils.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
@@ -60,6 +60,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
+     infoPanelExpanded = signal(false);
 
      // Reactive State (Signals)
      activeTab = signal<'deleteAccount'>('deleteAccount');
@@ -99,25 +100,25 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
 
      infoData = computed(() => {
           const wallet = this.currentWallet();
-          if (!wallet?.address) {
-               return null;
-          }
+          if (!wallet?.address) return null;
 
           const walletName = wallet.name || 'Selected wallet';
           const acc = this.accountInfo()?.result?.account_data;
           const flags = this.accountInfo()?.result?.account_flags;
           const srv = this.serverInfo()?.result?.info?.validated_ledger;
           const blockingObjects = this.blockingObjects();
-          const blockingObjectsCount = blockingObjects?.result?.account_objects?.length;
+          const blockingObjectsCount = blockingObjects?.result?.account_objects?.length ?? 0;
 
           if (!acc) {
                return {
                     walletName,
-                    message: `<code>${walletName}</code> wallet can be deleted.`,
+                    canDelete: true,
+                    blockers: [],
+                    balanceWarning: null,
                };
           }
 
-          // === Extract data safely ===
+          // Extract data
           const hasRegularKey = !!acc.RegularKey;
           const hasSignerList = !!flags?.enableSignerList;
           const ownerCount = Number(acc.OwnerCount || 0);
@@ -127,58 +128,48 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           const currentLedger = Number(srv?.seq ?? 0);
           const totalCount = ownerCount + blockingObjectsCount;
 
-          // === Build blockers ===
-          const issues: string[] = [];
-          if (hasRegularKey) issues.push('This account has a Regular Key configured.');
-          if (hasSignerList) issues.push('This account has a Signer List configured.');
-          if (totalCount > 0) issues.push(`This account has <strong>${totalCount}</strong> owner object${totalCount == 1 ? '' : 's'} (trust lines, offers, escrows, checks, etc.).`);
-          if (ticketCount > 0) issues.push(`This account has <strong>${ticketCount}</strong> allocated Ticket${ticketCount == 1 ? '' : 's'}. All tickets must be used or canceled.`);
-          if (hasHooks) issues.push('This account has one or more Hooks installed. All Hooks must be removed first.');
+          // Build blockers list
+          const blockers: string[] = [];
+          if (hasRegularKey) blockers.push('This account has a Regular Key configured.');
+          if (hasSignerList) blockers.push('This account has a Signer List configured.');
+          if (totalCount > 0) blockers.push(`This account has ${totalCount} owner object${totalCount === 1 ? '' : 's'} (trust lines, offers, escrows, checks, etc.).`);
+          if (ticketCount > 0) blockers.push(`This account has ${ticketCount} allocated Ticket${ticketCount === 1 ? '' : 's'}. All tickets must be used or canceled.`);
+          if (hasHooks) blockers.push('This account has one or more Hooks installed. All Hooks must be removed first.');
 
-          // === 256-ledger rule ===
+          // 256-ledger rule
+          let ledgerWaitMessage = null;
           if (lastTxLedger > 0 && currentLedger > 0) {
                const ledgersSinceLastTx = currentLedger - lastTxLedger;
                const required = 256;
                if (ledgersSinceLastTx < required) {
                     const remaining = required - ledgersSinceLastTx;
                     const approxMinutes = Math.ceil((remaining * 4) / 60);
-                    issues.push(`This account made a recent transaction. You must wait <strong>${remaining} more ledgers</strong> (~ ${approxMinutes} minute${approxMinutes !== 1 ? 's' : ''}) before deletion is allowed.`);
+                    ledgerWaitMessage = `This account made a recent transaction. You must wait <strong>${remaining} more ledgers (~ ${approxMinutes} minute${approxMinutes !== 1 ? 's' : ''}) before deletion is allowed.`;
+                    blockers.push(ledgerWaitMessage);
                }
           }
 
-          // === Build message ===
-          let message = `<code>${walletName}</code> wallet `;
-
-          if (issues.length === 0) {
-               message += `<strong>can be deleted</strong>. There are no blocking configurations on this account.<br><br>`;
-          } else {
-               message += `has the following configuration that <strong>prevents deletion</strong>:<ul>`;
-               issues.forEach(i => (message += `<li>${i}</li>`));
-               message += `</ul>`;
-          }
-
-          // === Requirements list ===
-          message += `<strong>Requirements for successful account deletion:</strong><ul>
-    <li>All owner objects must be deleted first (trust lines, offers, escrows, checks, NFTs, etc.)</li>
-    <li>All Tickets must be used or canceled (TicketCount must be 0)</li>
-    <li>All Hooks must be removed (if any are installed)</li>
-    <li>The account must send all remaining XRP to another account</li>
-    <li>The account must have no Regular Key configured</li>
-    <li>The account must have no active Signer List</li>
-  </ul>`;
-
-          // === Balance check ===
+          // Balance check
+          let balanceWarning: string | null = null;
           const balanceXrp = Number(xrpl.dropsToXrp(String(acc.Balance)));
           const baseReserve = Number(this.serverInfo()?.result?.info?.validated_ledger?.base_fee_xrp ?? '0.000001');
           const ownerReserve = Number(this.serverInfo()?.result?.info?.validated_ledger?.reserve_inc_xrp ?? 2);
           const totalReserve = baseReserve + ownerCount * ownerReserve;
-          const minNeeded = totalReserve + 0.2; // +2 XRP delete fee
+          const minNeeded = totalReserve + 2; // +2 XRP delete fee
 
           if (balanceXrp < minNeeded) {
-               message += `<br><strong>Warning:</strong> Insufficient balance. Account needs at least <strong>${minNeeded.toFixed(6)} XRP</strong> (${totalReserve.toFixed(6)} reserve + 2 XRP deletion fee).`;
+               balanceWarning = `Insufficient balance. Account needs at least <strong>${minNeeded.toFixed(6)} XRP (${totalReserve.toFixed(6)} reserve + 2 XRP deletion fee).`;
           }
 
-          return { walletName, message };
+          // Final status
+          const canDelete = blockers.length === 0 && !balanceWarning;
+
+          return {
+               walletName,
+               canDelete,
+               blockers,
+               balanceWarning,
+          };
      });
 
      // Update blockers & canDelete from the same source
@@ -221,6 +212,10 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
           this.loadCustomDestinations();
           this.setupWalletSubscriptions();
           this.txUiService.clearAllOptions();
+     }
+
+     toggleInfoPanel() {
+          this.infoPanelExpanded.update(expanded => !expanded);
      }
 
      private loadCustomDestinations(): void {

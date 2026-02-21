@@ -40,7 +40,7 @@ export class PerformanceBaseComponent {
           return this.xrplService.getNet().environment || 'devnet';
      }
 
-     protected async measure<T>(label: string, fetchFn: () => Promise<T>): Promise<T> {
+     protected async measure<T>(label: string, clearExecutionTime: boolean, fetchFn: () => Promise<T>): Promise<T> {
           const start = `${label}:start`;
           const end = `${label}:end`;
 
@@ -56,8 +56,12 @@ export class PerformanceBaseComponent {
                     const entry = performance.getEntriesByName(label).at(-1);
                     if (entry) {
                          console.debug(`[PERF] ${label}: ${entry.duration.toFixed(2)}ms`);
-                         this.executionTime.set(`Execution time: ${entry.duration.toFixed(0)} ms`);
+                         // this.executionTime.set(`Execution time: ${entry.duration.toFixed(0)} ms`);
                     }
+               }
+
+               if (clearExecutionTime) {
+                    this.executionTime.set(``);
                }
 
                performance.clearMarks(start);

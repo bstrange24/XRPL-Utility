@@ -99,42 +99,49 @@
 
                <!-- Dynamic info panel -->
                <!-- Structured, collapsible Account Configuration Info Panel -->
+               <!-- Info Message + Account Configuration Card -->
                @if (infoData(); as info) {
-               <div class="info-message-wrapper">
-                    <div class="info-panel">
-                         <div class="info-text">
-                              <div style="margin-bottom: 6px; line-height: 1.5; cursor: default">
-                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
-                                   <code>{{ info.walletName }}</code>
-                                   @if (!info.hasSpecialConfig) { wallet has no special account configuration. All flags are in default state. } @else { wallet has the following account configuration: }
-                              </div>
+               <div class="info-and-config-card" [class.has-config]="info.hasSpecialConfig">
+                    <!-- Always-visible summary row -->
+                    <div class="summary-header">
+                         <div class="summary-text">
+                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
+                              <code>{{ info.walletName }}</code>
 
-                              @if (info.hasSpecialConfig) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()">
-                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
-                                        <span>Account Configuration Details ({{ info.configItems.length + info.irreversibleFlags.length }})</span>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" style="transition: transform 0.25s ease">
-                                             <path d="M6 9l6 6 6-6" />
-                                        </svg>
-                                   </div>
-
-                                   @if (infoPanelExpanded()) {
-                                   <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
-                                        @for (item of info.configItems; track item) {
-                                        <li style="margin-bottom: 8px">{{ item }}</li>
-                                        } @if (info.hasIrreversible) {
-                                        <li style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #bae6fd; font-weight: 600; color: #dc2626">
-                                             Irreversible flags enabled:
-                                             <strong>{{ info.irreversibleFlags.join(', ') }}</strong>
-                                             <em style="display: block; font-size: 0.88em; font-weight: normal; margin-top: 4px; color: #b91c1c"> These cannot be disabled once set. </em>
-                                        </li>
-                                        }
-                                   </ul>
-                                   }
-                              </div>
+                              @if (!info.hasSpecialConfig) {
+                              <span> wallet has no special account configuration. All flags are in default state.</span>
+                              } @else {
+                              <span> wallet has special account configuration ({{ info.configItems.length + info.irreversibleFlags.length }} items).</span>
                               }
                          </div>
+
+                         <!-- Expand/Collapse toggle (only when there is special config) -->
+                         @if (info.hasSpecialConfig) {
+                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle account configuration details">
+                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} details</span>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'">
+                                   <path d="M6 9l6 6 6-6" />
+                              </svg>
+                         </button>
+                         }
                     </div>
+
+                    <!-- Collapsible detailed list with internal scroll -->
+                    @if (info.hasSpecialConfig) {
+                    <div class="config-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                         <ul class="config-list">
+                              @for (item of info.configItems; track item) {
+                              <li class="config-item">{{ item }}</li>
+                              } @if (info.hasIrreversible) {
+                              <li class="irreversible-warning">
+                                   <strong>Irreversible flags enabled:</strong>
+                                   <span class="irreversible-flags">{{ info.irreversibleFlags.join(', ') }}</span>
+                                   <em class="irreversible-note"> These cannot be disabled once set. </em>
+                              </li>
+                              }
+                         </ul>
+                    </div>
+                    }
                </div>
                }
                <!-- @if (txUiService.infoMessage) {
@@ -152,7 +159,7 @@
                </div>
                }
 
-               <form #theForm="ngForm" class="send-form">
+               <form #theForm="ngForm" class="main-form">
                     <div [@tabTransition]="activeTab()">
                          <div class="tab-content-columns">
                               <!-- Left Form Fields -->

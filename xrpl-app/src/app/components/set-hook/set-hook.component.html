@@ -47,7 +47,7 @@
                </div>
                }
 
-               <form #theForm="ngForm" class="send-form">
+               <form #theForm="ngForm" class="main-form">
                     <div class="tab-content-container">
                          <div [@tabTransition]="activeTab()">
                               <!-- Amount and Destination -->
@@ -55,7 +55,7 @@
                                    <div class="form-group">
                                         <label for="hookWasmHex">Hook WASM Hex</label>
                                         <p class="form-hint">Paste the compiled WASM hex from Hooks Builder.</p>
-                                        <textarea [ngModel]="hookWasmHex()" (ngModelChange)="hookWasmHex.set($event)" name="hookWasmHex"></textarea>
+                                        <textarea [ngModel]="hookWasmHex()" (ngModelChange)="hookWasmHex.set($event)" name="hookWasmHex" readonly rows="2" (input)="utilsService.adjustTextareaHeight($event)"></textarea>
                                    </div>
                                    <div class="form-group">
                                         <label for="hookNamespace">Hook Namespace (hex)</label>

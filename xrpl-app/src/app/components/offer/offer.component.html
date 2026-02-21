@@ -81,77 +81,79 @@
                </div>
 
                <!-- Info Message -->
-               <!-- Replace the problematic sections in your template -->
-
-               <!-- Info Message -->
+               <!-- Info Message + Offers / Order Book Card -->
                @if (infoData(); as info) {
-               <div class="info-message-wrapper">
-                    <div class="info-panel">
-                         <div class="info-text">
-                              <span> @if (info.isOrderBookTab) { Order Book Stats: {{ $any(info).pair }} } @else { @switch (activeTab()) { @case ('createOffer') { Outstanding Offers } @case ('getOffers') { Existing Offers } @case ('getOrderBook') { Existing Offers } @case ('cancelOffer') { Cancellable Offers } } ({{ info.offerCount }}) } </span>
+               <div class="info-and-offers-card" [class.has-offers]="info.offerCount > 0 || info.isOrderBookTab">
+                    <!-- Always-visible summary row -->
+                    <div class="summary-header">
+                         <div class="summary-text">
+                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
+                              <code>{{ info.walletName }}</code>
 
-                              <div style="margin-bottom: 6px; line-height: 1.5; cursor: default">
-                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
-                                   <code>{{ info.walletName }}</code>
-                                   @if (info.offerCount === 0) { has no outstanding offers. } @else { has <strong>{{ info.offerCount }}</strong> outstanding offer{{ info.offerCount === 1 ? '' : 's' }} @switch (activeTab()) { @case ('createOffer') { created. } @case ('getOffers') { on the DEX. } @case ('getOrderBook') { on the DEX. } @case ('cancelOffer') { that can be cancelled. } } }
-                              </div>
-
-                              @if (info.offerCount > 0 || info.isOrderBookTab) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()">
-                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
-                                        <span> @if (info.isOrderBookTab) { Order Book Stats: {{ $any(info).pair }} } @else { @switch (activeTab()) { @case ('createOffer') { Outstanding Offers } @case ('getOffers') { Existing Offers } @case ('getOrderBook') { Existing Offers } @case ('cancelOffer') { Cancellable Offers } } ({{ info.offerCount }}) } </span>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
-                                             <path d="M6 9l6 6 6-6" />
-                                        </svg>
-                                   </div>
-
-                                   <!-- Inside the expanded panel -->
-                                   @if (infoPanelExpanded()) {
-                                   <div style="margin-top: 12px; font-size: 0.9em; line-height: 1.7">
-                                        @if (info.isOrderBookTab) {
-                                        <ul style="padding-left: 22px; margin: 0">
-                                             <li><strong>Pair:</strong> {{ $any(info).pair }}</li>
-                                             <li><strong>VWAP:</strong> {{ $any(info).stats.vwap }} {{ $any(info).pair }}</li>
-                                             <li><strong>Simple Avg:</strong> {{ $any(info).stats.simpleAvg }} {{ $any(info).pair }}</li>
-                                             <li><strong>Best Rate:</strong> {{ $any(info).stats.bestRate }} {{ $any(info).pair }}</li>
-                                             <li><strong>Spread:</strong> {{ $any(info).stats.spread }} ({{ $any(info).stats.spreadPercent }}%)</li>
-                                             <li><strong>Depth (30% slippage):</strong> {{ $any(info).stats.depth }}</li>
-                                             <li><strong>Execution (15 input):</strong> {{ $any(info).stats.execution }}</li>
-                                             <li><strong>Volatility:</strong> {{ $any(info).stats.volatility }}</li>
-                                             <li><strong>Liquidity Ratio:</strong> {{ $any(info).stats.liquidityRatio }}</li>
-                                        </ul>
-                                        } @else {
-                                        <!-- Existing offers list -->
-                                        <ul style="padding-left: 22px; margin: 0">
-                                             @for (offer of info.offersToShow; track offer.index) {
-                                             <li style="margin-bottom: 6px; display: flex; align-items: flex-start; gap: 12px">
-                                                  <app-tooltip-link [href]="txUiService.explorerUrl() + 'offer/' + offer.index" tooltipText="View Offer on XRPL Explorer">
-                                                       <div style="font-weight: 500; margin-bottom: 4px">{{ offer.takerGets }} → {{ offer.takerPays }}</div>
-                                                       <div style="color: #555; font-size: 0.88em">
-                                                            <span>Offer Index:</span>
-                                                            <code style="font-size: 0.95em">{{ offer.index }}</code>
-                                                       </div>
-                                                       @if (offer.flags.length) {
-                                                       <div style="color: #555; font-size: 0.88em"><span>Flags:</span> {{ offer.flags.join(', ') }}</div>
-                                                       }
-                                                  </app-tooltip-link>
-
-                                                  <button (click)="copyAndToast(offer.index, 'Offer Index'); $event.stopPropagation()" class="copy-btn" title="Copy Offer Index">
-                                                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                                       </svg>
-                                                  </button>
-                                             </li>
-                                             }
-                                        </ul>
-                                        }
-                                   </div>
-                                   }
-                              </div>
+                              @if (info.offerCount === 0 && !info.isOrderBookTab) {
+                              <span> has no outstanding offers.</span>
+                              } @else {
+                              <span> @if (info.isOrderBookTab) { viewing order book for <strong>{{ $any(info).pair }}</strong> } @else { has <strong class="object-count">{{ info.offerCount }}</strong> outstanding offer{{ info.offerCount === 1 ? '' : 's' }} @switch (activeTab()) { @case ('createOffer') { created. } @case ('getOffers') { on the DEX. } @case ('getOrderBook') { on the DEX. } @case ('cancelOffer') { that can be cancelled. } } } </span>
                               }
                          </div>
+
+                         <!-- Expand/Collapse toggle (shown if there is content to expand) -->
+                         @if (info.offerCount > 0 || info.isOrderBookTab) {
+                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle offers / order book details">
+                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} details</span>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'">
+                                   <path d="M6 9l6 6 6-6" />
+                              </svg>
+                         </button>
+                         }
                     </div>
+
+                    <!-- Collapsible content area with scroll -->
+                    @if (info.offerCount > 0 || info.isOrderBookTab) {
+                    <div class="offers-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                         <!-- Order Book Stats (when in getOrderBook tab) -->
+                         @if (info.isOrderBookTab) {
+                         <div class="orderbook-stats">
+                              <ul class="stats-list">
+                                   <li><strong>Pair:</strong> {{ $any(info).pair }}</li>
+                                   <li><strong>VWAP:</strong> {{ $any(info).stats.vwap }} {{ $any(info).pair }}</li>
+                                   <li><strong>Simple Avg:</strong> {{ $any(info).stats.simpleAvg }} {{ $any(info).pair }}</li>
+                                   <li><strong>Best Rate:</strong> {{ $any(info).stats.bestRate }} {{ $any(info).pair }}</li>
+                                   <li><strong>Spread:</strong> {{ $any(info).stats.spread }} ({{ $any(info).stats.spreadPercent }}%)</li>
+                                   <li><strong>Depth (30% slippage):</strong> {{ $any(info).stats.depth }}</li>
+                                   <li><strong>Execution (15 input):</strong> {{ $any(info).stats.execution }}</li>
+                                   <li><strong>Volatility:</strong> {{ $any(info).stats.volatility }}</li>
+                                   <li><strong>Liquidity Ratio:</strong> {{ $any(info).stats.liquidityRatio }}</li>
+                              </ul>
+                         </div>
+                         } @else {
+                         <!-- Normal offers list -->
+                         <ul class="offers-list">
+                              @for (offer of info.offersToShow; track offer.index) {
+                              <li class="offer-item">
+                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'offer/' + offer.index" tooltipText="View Offer on XRPL Explorer">
+                                        <div class="offer-main-line">{{ offer.takerGets }} → {{ offer.takerPays }}</div>
+
+                                        <div class="offer-meta">
+                                             <div>Offer Index: <code>{{ offer.index }}</code></div>
+                                             @if (offer.flags.length) {
+                                             <div>Flags: {{ offer.flags.join(', ') }}</div>
+                                             }
+                                        </div>
+                                   </app-tooltip-link>
+
+                                   <button (click)="copyAndToast(offer.index, 'Offer Index'); $event.stopPropagation()" class="copy-btn-small" title="Copy Offer Index">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                   </button>
+                              </li>
+                              }
+                         </ul>
+                         }
+                    </div>
+                    }
                </div>
                }
 
@@ -231,7 +233,7 @@
                </div>
                } -->
 
-               <form #theForm="ngForm" class="send-form">
+               <form #theForm="ngForm" class="main-form">
                     <div [@tabTransition]="activeTab()">
                          <div class="tab-content-columns">
                               <!-- ==================== LEFT: FORM FIELDS ==================== -->

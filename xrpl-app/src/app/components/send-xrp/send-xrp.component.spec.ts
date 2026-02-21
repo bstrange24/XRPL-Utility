@@ -8,13 +8,13 @@ import { Wallet, WalletManagerService } from '../../services/wallets/manager/wal
 import { UtilsService } from '../../services/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService, TxStep } from '../../services/transaction-ui/transaction-ui.service';
-import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
-import { TxEnvironmentServiceService } from '../../services/transaction-environment/tx-environment-service.service';
+import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
@@ -122,7 +122,7 @@ class ValidationServiceMock implements Partial<ValidationService> {
      validate = jasmine.createSpy('validate').and.resolveTo([]);
 }
 
-class TxEnvironmentServiceMock implements Partial<TxEnvironmentServiceService> {
+class TxEnvironmentServiceMock implements Partial<TxEnvironmentService> {
      prepareTxEnvironment = jasmine.createSpy().and.resolveTo({
           client: { isConnected: () => true } as any,
           wallet: { classicAddress: 'rTEST' } as any,
@@ -186,7 +186,7 @@ fdescribe('SendXrpModernComponent', () => {
                          },
                     },
                     { provide: WalletManagerService, useClass: WalletManagerServiceMock },
-                    { provide: TxEnvironmentServiceService, useClass: TxEnvironmentServiceMock },
+                    { provide: TxEnvironmentService, useClass: TxEnvironmentServiceMock },
                     { provide: ValidationService, useClass: ValidationServiceMock },
                     {
                          provide: HttpClient,
@@ -236,7 +236,7 @@ fdescribe('SendXrpModernComponent', () => {
           txUi = TestBed.inject(TransactionUiService) as unknown as TransactionUiServiceMock;
           toast = TestBed.inject(ToastService) as unknown as ToastServiceMock;
           validation = TestBed.inject(ValidationService) as unknown as ValidationServiceMock;
-          txEnv = TestBed.inject(TxEnvironmentServiceService) as unknown as TxEnvironmentServiceMock;
+          txEnv = TestBed.inject(TxEnvironmentService) as unknown as TxEnvironmentServiceMock;
 
           // Seed data
           walletManager.wallets$.next([

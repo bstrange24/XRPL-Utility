@@ -80,19 +80,19 @@
                     <div class="form-group">
                          <label for="ticketCountField">Number of Tickets to create</label>
                          <p class="form-hint">Number of Tickets to create for the selected account.</p>
-                         <input type="text" [(ngModel)]="ticketCountField" name="ticketCountField" placeholder="Total max tickets, per account, is 250" />
+                         <input type="text" [(ngModel)]="txUiService.ticketCountField" name="ticketCountField" placeholder="Total max tickets, per account, is 250" />
                     </div>
                </div>
                }
 
                <!-- Unified Ticket Dropdown (only shown on delete tab and if tickets exist) -->
-               @if (activeTab() === 'delete' && walletTicketCount() > 0) {
+               @if (activeTab() === 'delete' && txUiService.walletTicketCount() > 0) {
                <div class="form-row" style="margin-bottom: 1.2em">
                     <div class="form-group">
                          <label for="ticketDropdownField">Select Tickets to Delete</label>
                          <p class="form-hint">Select available tickets to delete for the selected account.</p>
                          <div class="combobox-container" style="padding-right: 0; margin-right: 0" (clickOutside)="closeTicketDropdown()">
-                              <input #ticketDropdownInput type="text" [value]="ticketSearchQuery()" (input)="onTicketSearchInput($event)" (focus)="openTicketDropdown()" (keydown)="onTicketKeyDown($event)" [placeholder]="selectedTicketSequences().length > 0 ? selectedTicketSequences().length + ' ticket(s) selected' : 'Search tickets by sequence...'" [value]="ticketSearchQuery()" class="combobox-input" autocomplete="off" />
+                              <input #ticketDropdownInput type="text" [value]="ticketSearchQuery()" (input)="onTicketSearchInput($event)" (focus)="openTicketDropdown()" (keydown)="onTicketKeyDown($event)" [placeholder]="txUiService.selectedTicketSequences().length > 0 ? txUiService.selectedTicketSequences().length + ' ticket(s) selected' : 'Search tickets by sequence...'" [value]="ticketSearchQuery()" class="combobox-input" autocomplete="off" />
                               <button class="combobox-toggle" (click)="toggleTicketDropdown()" type="button">
                                    <lucide-icon name="chevron-down" size="18"></lucide-icon>
                               </button>
@@ -101,11 +101,11 @@
                </div>
 
                <!-- NEW: Selected Tickets Chips -->
-               @if (selectedTicketSequences().length > 0) {
+               @if (txUiService.selectedTicketSequences().length > 0) {
                <div class="ticket-container">
                     <!-- List of selected tickets -->
                     <div class="ticket-list">
-                         @for (ticketSeq of selectedTicketSequences(); track ticketSeq) {
+                         @for (ticketSeq of txUiService.selectedTicketSequences(); track ticketSeq) {
                          <div class="ticket-item">
                               <span class="ticket-number">{{ ticketSeq }}</span>
 
@@ -133,13 +133,13 @@
                                         <input type="checkbox" [checked]="allTicketsSelected()" (change)="toggleSelectAll()" style="width: 16px; height: 16px" />
                                         <span>Select All</span>
                                    </label>
-                                   <button class="clear-btn" (click)="clearAllSelections()" [disabled]="selectedTicketSequences().length === 0" style="color: #dc2626; font-size: 0.875rem; font-weight: 500; background: none; border: none; cursor: pointer; opacity: 0.8" [style.opacity]="selectedTicketSequences().length === 0 ? 0.5 : 1">Clear</button>
+                                   <button class="clear-btn" (click)="clearAllSelections()" [disabled]="txUiService.selectedTicketSequences().length === 0" style="color: #dc2626; font-size: 0.875rem; font-weight: 500; background: none; border: none; cursor: pointer; opacity: 0.8" [style.opacity]="txUiService.selectedTicketSequences().length === 0 ? 0.5 : 1">Clear</button>
                               </div>
 
                               <!-- Ticket Items -->
                               @for (ticket of filteredTickets(); track ticket) {
                               <label class="combobox-item ticket-item" [class.highlighted]="highlightedTicketIndex() === $index" (mouseenter)="highlightedTicketIndex.set($index)" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; user-select: none">
-                                   <input type="checkbox" [checked]="selectedTicketSequences().includes(convertToString(ticket))" (change)="toggleTicketSelection(ticket)" style="width: 16px; height: 16px; cursor: pointer" />
+                                   <input type="checkbox" [checked]="txUiService.selectedTicketSequences().includes(ticketsUtilService.convertToString(ticket))" (change)="toggleTicketSelection(ticket)" style="width: 16px; height: 16px; cursor: pointer" />
 
                                    <span class="ticket-sequence" style="font-family: monospace; font-size: 0.95em; color: #1f2937"> {{ ticket }} </span>
                               </label>
@@ -156,9 +156,9 @@
                <!-- Action buttons -->
                <div class="button-row">
                     @if (activeTab() === 'create') {
-                    <button type="button" class="btn-primary-blue" (click)="createTicket()" [disabled]="!isIdle() || !hasWalletsSignal()">{{ createTicketLabel() }}</button>
+                    <button type="button" class="btn-primary-blue" (click)="createTickets()" [disabled]="!isIdle() || !hasWalletsSignal()">{{ ticketsUtilService.createButtonLabel() }}</button>
                     } @if (activeTab() === 'delete') {
-                    <button type="button" class="btn-primary-red" (click)="deleteTicket()" [disabled]="!isIdle() || !hasWalletsSignal()">{{ deleteTicketLabel() }}</button>
+                    <button type="button" class="btn-primary-red" (click)="deleteSelectedTickets()" [disabled]="!isIdle() || !hasWalletsSignal()">{{ ticketsUtilService.deleteButtonLabel() }}</button>
                     }
                     <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.currentStep() !== 'idle' || !hasWalletsSignal()">Clear Fields</button>
                </div>

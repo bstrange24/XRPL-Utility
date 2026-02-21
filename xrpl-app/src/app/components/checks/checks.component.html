@@ -9,12 +9,12 @@
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
      <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
+          <!-- Left Wallet panel -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
           <!-- Right form -->
           <div class="form-panel">
-               <!-- Menu bar -->
+               <!-- Menu / Tabs -->
                <div class="menu-bar">
                     <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
                          <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
@@ -30,9 +30,10 @@
                     </button>
                </div>
 
-               <!-- Create Menu -->
-               @if (activeTab() === 'create') {
                <div class="submenu-info-text">
+                    <!-- Create Menu -->
+                    @if (activeTab() === 'create') {
+
                     <div class="blue-button-submenu">
                          <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
                     </div>
@@ -40,12 +41,10 @@
                          <h2 class="submenu-info-main-text">Create Check</h2>
                          <p class="submenu-info-secondary-text">Create a check to another XRPL address</p>
                     </div>
-               </div>
-               }
+                    }
 
-               <!-- Cash Menu -->
-               @if (activeTab() === 'cash') {
-               <div class="submenu-info-text">
+                    <!-- Cash Menu -->
+                    @if (activeTab() === 'cash') {
                     <div class="green-button-submenu">
                          <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
@@ -53,12 +52,10 @@
                          <h2 class="submenu-info-main-text">Cash Check</h2>
                          <p class="submenu-info-secondary-text">Cash check sent from another XRPL address</p>
                     </div>
-               </div>
-               }
+                    }
 
-               <!-- Cancel Menu -->
-               @if (activeTab() === 'cancel') {
-               <div class="submenu-info-text">
+                    <!-- Cancel Menu -->
+                    @if (activeTab() === 'cancel') {
                     <div class="red-button-submenu">
                          <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
                     </div>
@@ -66,84 +63,83 @@
                          <h2 class="submenu-info-main-text">Cancel Check</h2>
                          <p class="submenu-info-secondary-text">Cancel check create from the selected account</p>
                     </div>
+                    }
                </div>
-               }
 
                <!-- Dynamic info panel -->
                @if (infoData(); as info) {
-               <div class="info-message-wrapper">
-                    <div class="info-panel">
-                         <div class="info-text">
-                              <div style="margin-bottom: 6px; line-height: 1.5; cursor: default">
-                                   <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" style="vertical-align: -4px; margin-right: 8px"></ng-icon>
-                                   <code>{{ info.walletName }}</code>
-                                   @if (info.checkCount === 0) { has no outstanding checks. } @else {
-                                   <!-- else block -->
-                                   has <strong class="object-count">{{ info.checkCount }}</strong> check{{ info.checkCount === 1 ? '' : 's' }} @switch (activeTab()) {
-                                   <!-- Display message based on active tab -->
-                                   @case ('create') { created. } @case ('cash') { that can be cashed. } @case ('cancel') { that can be cancelled. } } }@if (info.links) {
-                                   <div style="margin-top: 8px; font-size: 0.9em"><span [innerHTML]="info.links"></span> on XRPL Win</div>
-                                   }
-                              </div>
+               <div class="info-and-checks-card" [class.has-checks]="info.checkCount > 0">
+                    <!-- Always-visible summary row -->
+                    <div class="summary-header">
+                         <div class="summary-text">
+                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
+                              <code>{{ info.walletName }}</code>
 
-                              @if (info.checkCount > 0) {
-                              <div class="credential-info-panel" (click)="toggleInfoPanel()" (keydown.enter)="toggleInfoPanel()" (keydown.space)="toggleInfoPanel()" role="button" tabindex="0">
-                                   <div class="info-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: #0369a1">
-                                        <span>
-                                             @switch (activeTab()) {
-                                             <!-- Display message based on active tab -->
-                                             @case ('create') { Outstanding Checks } @case ('cash') { Cashable Checks } @case ('cancel') { Cancellable Checks } } ({{ info.checkCount }})
-                                        </span>
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="3" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0)'" style="transition: transform 0.25s ease">
-                                             <path d="M6 9l6 6 6-6" />
-                                        </svg>
-                                   </div>
-
-                                   @if (infoPanelExpanded()) {
-                                   <ul style="margin: 12px 0 0; padding-left: 22px; font-size: 0.9em; line-height: 1.7">
-                                        @for (check of info.checksToShow; track check.id) {
-                                        <li style="margin-bottom: 6px; display: flex; align-items: flex-start; gap: 12px">
-                                             <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + check.index" tooltipText="View Check on XRPL Explorer">
-                                                  <div style="font-weight: 500; margin-bottom: 4px">
-                                                       {{ check.amount }}
-                                                       <!-- Display message based on active tab -->
-                                                       @if (activeTab() === 'create') {
-                                                       <!-- create active tab -->
-                                                       → {{ check.destination.slice(0,7) + '...' + check.destination.slice(-7) }} } @if (activeTab() === 'cash') {
-                                                       <!-- cash active tab -->
-                                                       ← {{ check.sender.slice(0,7) + '...' + check.sender.slice(-7) }} } @if (activeTab() === 'cancel') {
-                                                       <!-- cancel active tab -->
-                                                       → {{ check.destination.slice(0,7) + '...' + check.destination.slice(-7) }} }
-                                                  </div>
-
-                                                  <div style="color: #555; font-size: 0.88em; display: flex; align-items: center; gap: 8px">
-                                                       <span>Check ID:</span>
-                                                       <code style="font-size: 0.95em">{{ check.index }}</code>
-                                                  </div>
-
-                                                  @if (check.destinationTag) {
-                                                  <div style="color: #555; font-size: 0.88em"><span>Dest Tag: </span> <code>{{ check.destinationTag }}</code></div>
-                                                  } @if (check.expiration) {
-                                                  <div style="color: #555; font-size: 0.88em"><span>Expires: </span> <code>{{ formatXrplTimestamp(check.expiration) }}</code></div>
-                                                  } @if (check.invoiceId) {
-                                                  <div style="color: #555; font-size: 0.88em"><span>Invoice ID: </span> <code>{{ formatInvoiceId(check.invoiceId) }}</code></div>
-                                                  }
-                                             </app-tooltip-link>
-
-                                             <button (click)="copyAndToast(check.index, 'Check ID'); $event.stopPropagation()" class="copy-btn" title="Copy Check ID" style="background: none; border: none; cursor: pointer; padding: 4px; opacity: 0.7; margin-left: auto">
-                                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                       <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                                  </svg>
-                                             </button>
-                                        </li>
-                                        }
-                                   </ul>
-                                   }
-                              </div>
+                              @if (info.checkCount === 0) {
+                              <span> has no outstanding checks.</span>
+                              } @else {
+                              <span> has <strong class="object-count">{{ info.checkCount }}</strong> check{{ info.checkCount === 1 ? '' : 's' }} @switch (activeTab()) { @case ('create') { created. } @case ('cash') { that can be cashed. } @case ('cancel') { that can be cancelled. } } </span>
                               }
                          </div>
+                         @if (info.links) {
+                         <div class="xrpl-win-link-small"><span [innerHTML]="info.links"></span> on XRPL Win</div>
+                         }
+
+                         <!-- Expand/Collapse toggle (only when there are checks) -->
+                         @if (info.checkCount > 0) {
+                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle checks list">
+                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} list</span>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'">
+                                   <path d="M6 9l6 6 6-6" />
+                              </svg>
+                         </button>
+                         }
                     </div>
+
+                    <!-- Collapsible detailed list with internal scroll -->
+                    @if (info.checkCount > 0) {
+                    <div class="checks-list-container" [style.max-height]="infoPanelExpanded() ? '380px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                         <ul class="checks-list">
+                              @for (check of info.checksToShow; track check.index ?? $index) {
+                              <li class="check-item" [class.expired]="check.isExpired">
+                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + check.index" tooltipText="View Check on XRPL Explorer">
+                                        <div class="check-main-line">
+                                             <span class="check-amount" [class.expired]="check.isExpired"> {{ check.amount }} </span>
+
+                                             @if (activeTab() === 'create' || activeTab() === 'cancel') {
+                                             <span class="check-arrow"> → </span>
+                                             <span class="check-address">{{ check.destination.slice(0,7) + '...' + check.destination.slice(-7) }}</span>
+                                             } @if (activeTab() === 'cash') {
+                                             <span class="check-arrow"> ← </span>
+                                             <span class="check-address">{{ check.sender.slice(0,7) + '...' + check.sender.slice(-7) }}</span>
+                                             } @if (check.isExpired) {
+                                             <span class="expired-badge">Expired</span>
+                                             }
+                                        </div>
+
+                                        <div class="check-meta" [class.expired]="check.isExpired">
+                                             <div>Check ID: <code>{{ check.index }}</code></div>
+                                             @if (check.destinationTag) {
+                                             <div>Destination Tag: <code>{{ check.destinationTag }}</code></div>
+                                             } @if (check.expiration) {
+                                             <div>Expires: <code [class.expired]="check.isExpired"> {{ utilsService.convertXRPLTime(check.expiration) }} </code></div>
+                                             } @if (check.invoiceId) {
+                                             <div>Invoice ID: <code>{{ utilsService.formatInvoiceId(check.invoiceId || '') }}</code></div>
+                                             }
+                                        </div>
+                                   </app-tooltip-link>
+
+                                   <button (click)="copyAndToast(check.index, 'Check ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Check ID">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                   </button>
+                              </li>
+                              }
+                         </ul>
+                    </div>
+                    }
                </div>
                }
 
@@ -151,175 +147,231 @@
                @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage }}</div>
+                    <div class="warning-text">{{ safeWarningMessage() }}</div>
                </div>
                }
 
-               <form #theForm="ngForm" class="send-form">
-                    <div class="tab-content-container">
+               <form #theForm="ngForm" class="main-form">
+                    <!-- Create -->
+                    @if(activeTab() === 'create') {
+                    <!-- Currency + Amount -->
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="currencyCodeCreate">Currency Code</label>
+                              <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+                              <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                   <ng-template #itemTemplate let-item>
+                                        <div class="flex items-center gap-2">
+                                             @if (item.id === 'XRP') {
+                                             <span class="text-yellow-500 font-bold">XRP</span>
+                                             } @else {
+                                             <span>{{ item.display }}</span>
+                                             }
+                                             <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                        </div>
+                                   </ng-template>
+                              </app-select-search-dropdown>
+                         </div>
+                         <div class="form-group">
+                              <label for="amountField">Amount</label>
+                              <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
+                              <input type="number" id="amountFieldCreate" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                         </div>
+                    </div>
+
+                    <!-- Issuer (only when not XRP) -->
+                    @if (trustlineCurrency.currentCurrency() !== 'XRP') {
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="issuer">Issuer</label>
+                              <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." />
+                         </div>
+                         <div class="form-group">
+                              <label for="currencyBalance">Currency Balance</label>
+                              <input type="text" [value]="currencyBalanceField()" readonly name="currencyBalanceField" />
+                         </div>
+                    </div>
+                    }
+
+                    <!-- Destination -->
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="destination">Destination</label>
+                              <p class="form-hint">The unique address of the account receiving the payment. Select destination from the dropdown or manually enter a new destination.</p>
+                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                         </div>
+                    </div>
+
+                    <div class="switch-group">
+                         <label class="switch">
+                              <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="toggleOptions($event.target.checked)" name="showOptionalXrp" />
+                              <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
+                         </label>
+                    </div>
+
+                    @if (txUiService.wantsOptions()) {
+                    <!-- Destination Tag and Source Tag -->
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="destinationTagField">Destination Tag </label>
+                              <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
+                              <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
+                         </div>
+
+                         <div class="form-group">
+                              <label for="sourceTagField">Source Tag</label>
+                              <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
+                              <input type="text" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" name="sourceTagField" />
+                         </div>
+                    </div>
+
+                    <!-- Source Tag & Invoice ID (create only) -->
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="invoiceIdField">Invoice ID</label>
+                              <p class="form-hint">
+                                   64-character hexadecimal string (e.g. sha256 hash).
+                                   <a href="https://xrpl.org/docs/references/protocol/transactions/types/payment#invoiceid" target="_blank" class="external-link">Learn more</a>
+                              </p>
+                              <input type="text" id="invoiceIdField" placeholder="64 hex chars (optional)" [ngModel]="txUiService.invoiceIdField()" maxlength="64" pattern="[0-9a-fA-F]{0,64}" />
+                         </div>
+                    </div>
+                    }
+
+                    <!-- Expiration (create only) -->
+                    <div class="switch-group">
+                         <label class="switch">
+                              <input type="checkbox" id="setExpiration" [checked]="txUiService.enableExpirationDate()" (change)="toggleExpiration($event.target.checked)" />
+                              <span class="slider"></span> Set Check expiration date
+                         </label>
+                    </div>
+
+                    <div class="form-row">
+                         <div class="form-group">
+                              <!-- Date picker + buttons appear only when checked -->
+                              @if (txUiService.enableExpirationDate()) {
+                              <p class="form-hint" style="padding-left: 0.08rem">Check expiration when the check will expire. Leave unchecked for no expiration (check never expires automatically).</p>
+                              <div class="expiration-input-group">
+                                   <input type="datetime-local" [ngModel]="txUiService.expirationTimeField()" name="expirationDate" step="1" class="expiration-input" />
+
+                                   <div class="expiration-buttons">
+                                        <button type="button" (click)="setExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
+                                        <button type="button" (click)="addCheckToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
+                                        <button type="button" (click)="addCheckToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
+                                        <button type="button" (click)="addCheckToExpiration(60)" class="btn-small btn-primary-blue">+1 min</button>
+                                        <button type="button" (click)="addCheckToExpiration(300)" class="btn-small btn-primary-blue">+5 min</button>
+                                        <button type="button" (click)="clearExpiration()" class="btn-small btn-primary-red">Clear</button>
+                                   </div>
+                              </div>
+                              }
+                         </div>
+                         <div class="form-group"></div>
+                    </div>
+                    }
+
+                    <!-- Currency + Amount (shared with create) -->
+                    @if (activeTab() === 'cash') {
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="selectCheck">Select Check to cash</label>
+                              <p class="form-hint">Check ID generated when the check was created.</p>
+                              <app-select-search-dropdown [items]="checkItems()" [value]="selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+                              @if (selectedCheckIsExpired()) {
+                              <div class="warning-message expired-warning">
+                                   <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
+                                   This selected check has expired and cannot be cashed.
+                              </div>
+                              }
+                         </div>
+                         <div class="form-group">
+                              <label for="amountField">Amount</label>
+                              <p class="form-hint">Amount, in XRP or token, to cash. Use arrows for ±0.000001 precision.</p>
+                              <input type="number" id="amountFieldCash" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                         </div>
+                    </div>
+
+                    <!-- Trustline  -->
+                    @if (txUiService.showEnableTrustline()) {
+                    <div class="form-row trustline-section">
+                         <div class="form-group">
+                              <label for="currencyCode">Currency Code</label>
+                              <input type="text" id="trustlineCurrencyCode" name="trustlineCurrencyCode" readonly [ngModel]="txUiService.missingTrustlineInfo.currencyCode()" />
+                         </div>
+                         <div class="form-group">
+                              <label for="issuer">Issuer</label>
+                              <input type="text" id="trustlineIssuer" name="trustlineIssuer" readonly [ngModel]="txUiService.missingTrustlineInfo.issuer()" />
+                         </div>
+                    </div>
+
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="trustlineLimitField">Trust Limit</label>
+                              <p class="form-hint">Max amount you're willing to hold (set reasonably high)</p>
+                              <input type="number" id="trustlineLimitField" name="trustlineLimitField" min="0" placeholder="e.g. 1000000" [ngModel]="txUiService.trustlineLimitField()" (ngModelChange)="utilsService.updateTrustlineLimitAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                         </div>
+                    </div>
+
+                    <!-- Optional: small note -->
+                    <p class="form-hint trustline-note">Enabling this trustline will add a <strong>TrustSet</strong> transaction before cashing the check.</p>
+                    }
+                    <!-- @if (txUiService.showEnableTrustline()) {
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="currencyCodeCreate">Currency Code</label>
+                              <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+                              <input type="text" id="trustlineCurrencyCode" name="trustlineCurrencyCode" [ngModel]="txUiService.missingTrustlineInfo.currencyCode()" />
+                         </div>
+                         <div class="form-group">
+                              <label for="issuerCreate">Issuer</label>
+                              <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+                              <input type="text" id="trustlineIssuer" name="trustlineIssuer" [ngModel]="txUiService.missingTrustlineInfo.issuer()" />
+                         </div>
+                    </div>
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="trustlineLimitField">Trustline Limit</label>
+                              <p class="form-hint">Maximum amount of currency to hold. Use arrows for ±0.00000001 precision.</p>
+                              <input type="number" id="trustlineLimitField" name="trustlineLimitField" placeholder="e.g. 10.5" step="0.00000001" min="0" [ngModel]="txUiService.trustlineLimitField()" (ngModelChange)="utilsService.updateTrustlineLimitAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                         </div>
+                    </div>
+                    }  -->
+                    }
+
+                    <!-- Unified Check ID Dropdown - Works for cash & cancel -->
+                    @if (activeTab() === 'cancel') {
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="selectCheck">Select Check to cancel</label>
+                              <p class="form-hint">Check ID generated when the check was created.</p>
+                              <app-select-search-dropdown [items]="checkItems()" [value]="selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+                         </div>
+                    </div>
+                    }
+
+                    <app-transaction-options [showWhenTab]="['create', 'cash','cancel']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                    <!-- Action buttons -->
+                    <div class="button-row">
                          <!-- Create -->
                          @if (activeTab() === 'create') {
-                         <!-- Currency + Amount -->
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label for="currencyCodeCreate">Currency Code</label>
-                                   <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
-                                   <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
-                                        <ng-template #itemTemplate let-item>
-                                             <div class="flex items-center gap-2">
-                                                  @if (item.id === 'XRP') {
-                                                  <span class="text-yellow-500 font-bold">XRP</span>
-                                                  } @else {
-                                                  <span>{{ item.display }}</span>
-                                                  }
-                                                  <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                                             </div>
-                                        </ng-template>
-                                   </app-select-search-dropdown>
-                              </div>
-                              <div class="form-group">
-                                   <label for="amountField">Amount</label>
-                                   <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                                   <input type="number" id="amountFieldCreate" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
-                              </div>
-                         </div>
-
-                         <!-- Issuer (only when not XRP) -->
-                         @if (currencyFieldDropDownValue() !== 'XRP') {
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label for="issuer">Issuer</label>
-                                   <p class="form-hint">The XRPL account that issues and controls this currency.</p>
-                                   <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
-                              </div>
-                              <div class="form-group">
-                                   <label for="currencyBalance">Currency Balance</label>
-                                   <p class="form-hint">Total currency balance held by this account.</p>
-                                   <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly />
-                              </div>
-                         </div>
+                         <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="!isIdle() || !hasWallets">{{ checkUtilService.createCheckButtonLabel() }}</button>
                          }
-
-                         <!-- Destination -->
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label for="destination">Destination</label>
-                                   <p class="form-hint">The unique address of the account receiving the payment. Select destination from the dropdown or manually enter a new destination.</p>
-                                   <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                              </div>
-                         </div>
-
-                         <div class="switch-group">
-                              <label class="switch">
-                                   <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="toggleOptions($event.target.checked)" name="showOptionalXrp" />
-                                   <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
-                              </label>
-                         </div>
-
-                         @if (txUiService.wantsOptions()) {
-                         <!-- Destination Tag and Source Tag -->
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label for="destinationTagField">Destination Tag </label>
-                                   <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
-                                   <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
-                              </div>
-
-                              <div class="form-group">
-                                   <label for="sourceTagField">Source Tag</label>
-                                   <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
-                                   <input type="text" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" name="sourceTagField" />
-                              </div>
-                         </div>
-
-                         <!-- Source Tag & Invoice ID (create only) -->
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label for="invoiceIdField">Invoice ID</label>
-                                   <p class="form-hint">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
-                                   <input type="text" placeholder="e.g. INV_123" [ngModel]="txUiService.invoiceIdField()" (ngModelChange)="txUiService.invoiceIdField.set($event)" name="invoiceIdField" />
-                              </div>
-                         </div>
+                         <!-- Cash -->
+                         @else if (activeTab() === 'cash') {
+                         <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="!isIdle() || !hasWallets || selectedCheckIsExpired()">{{ checkUtilService.cashCheckButtonLabel() }}</button>
                          }
-
-                         <!-- Expiration (create only) -->
-                         <div class="switch-group">
-                              <label class="switch">
-                                   <input type="checkbox" id="setExpiration" [checked]="wantsExpiration()" (change)="toggleExpiration($event.target.checked)" />
-                                   <span class="slider"></span> Set Check expiration date
-                              </label>
-                         </div>
-
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <!-- Date picker + buttons appear only when checked -->
-                                   @if (wantsExpiration()) {
-                                   <p class="form-hint" style="padding-left: 0.08rem">Check expiration when the check will expire. Leave unchecked for no expiration (check never expires automatically).</p>
-                                   <div class="expiration-input-group">
-                                        <input type="datetime-local" [(ngModel)]="expirationTimeField" name="expirationDate" step="1" class="expiration-input" />
-
-                                        <div class="expiration-buttons">
-                                             <button type="button" (click)="setCheckExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
-                                             <button type="button" (click)="addCheckToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
-                                             <button type="button" (click)="addCheckToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
-                                             <button type="button" (click)="addCheckToExpiration(60)" class="btn-small btn-primary-blue">+1 min</button>
-                                             <button type="button" (click)="addCheckToExpiration(300)" class="btn-small btn-primary-blue">+5 min</button>
-                                             <button type="button" (click)="clearExpiration()" class="btn-small btn-primary-red">Clear</button>
-                                        </div>
-                                   </div>
-                                   }
-                              </div>
-                              <div class="form-group"></div>
-                         </div>
+                         <!-- Cancel -->
+                         @else if (activeTab() === 'cancel') {
+                         <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="!isIdle() || !hasWallets">{{ checkUtilService.cancelCheckButtonLabel() }}</button>
                          }
-
-                         <!-- Currency + Amount (shared with create) -->
-                         @if (activeTab() === 'cash') {
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label for="selectCheck">Select Check to cash</label>
-                                   <p class="form-hint">Check ID generated when the check was created.</p>
-                                   <app-select-search-dropdown [items]="checkItems()" [value]="selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
-                              </div>
-                              <div class="form-group">
-                                   <label for="amountField">Amount</label>
-                                   <p class="form-hint">Amount, in XRP or token, to cash. Use arrows for ±0.000001 precision.</p>
-                                   <input type="number" id="amountFieldCash" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Unified Check ID Dropdown - Works for cash & cancel -->
-                         @if (activeTab() === 'cancel') {
-                         <div class="form-row">
-                              <div class="form-group">
-                                   <label for="selectCheck">Select Check to cash</label>
-                                   <p class="form-hint">Check ID generated when the check was created.</p>
-                                   <app-select-search-dropdown [items]="checkItems()" [value]="selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
-                              </div>
-                         </div>
-                         }
-
-                         <app-transaction-options [showWhenTab]="['create', 'cash','cancel']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                         <!-- Action buttons -->
-                         <div class="button-row">
-                              @if (activeTab() === 'create') {
-                              <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Create Check' }}</button>
-                              } @else if (activeTab() === 'cash') {
-                              <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cash Check' }}</button>
-                              } @else if (activeTab() === 'cancel') {
-                              <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Check' }}</button>
-                              }
-                              <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">Clear Fields</button>
-                         </div>
-
-                         <!-- Execution time -->
-                         <div class="executionTimeDisplay">
-                              <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
-                         </div>
-                         <app-transaction-preview></app-transaction-preview>
+                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                     </div>
+
+                    <!-- Execution time -->
+                    <div class="executionTimeDisplay">
+                         <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
+                    </div>
+                    <app-transaction-preview></app-transaction-preview>
                </form>
           </div>
      </div>

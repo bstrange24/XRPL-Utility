@@ -12,7 +12,7 @@ import { TransactionUiService } from '../../services/transaction-ui/transaction-
 import { UtilsService } from '../../services/util-service/utils.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import didSchema from './did-schema.json';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';

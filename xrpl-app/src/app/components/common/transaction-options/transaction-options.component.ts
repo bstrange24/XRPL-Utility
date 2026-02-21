@@ -14,10 +14,9 @@ import { SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-
 })
 export class TransactionOptionsComponent {
      public txUiService = inject(TransactionUiService);
-     private readonly utilsService = inject(UtilsService);
+     public readonly utilsService = inject(UtilsService);
      Array = Array;
 
-     // Inputs from parent
      @Input() activeTab?: () => string;
      @Input() showWhenTab: string | string[] = '*'; // '*' = always show
      @Input() multiSigningEnabled = signal(false);
@@ -27,8 +26,10 @@ export class TransactionOptionsComponent {
      @Input() showRegularKey = true;
      @Input() showTicket = true;
      @Input() showSimulate = true;
+     @Input() showEnableTrustline = signal(false);
 
-     // Direct access to service signals (correct way)
+     isShowEnableTrustline = this.txUiService.showEnableTrustline;
+     // missingTrustlineInfo = this.txUiService.missingTrustlineInfo;
      isMemoEnabled = this.txUiService.isMemoEnabled;
      useMultiSign = this.txUiService.useMultiSign;
      isRegularKeyAddress = this.txUiService.isRegularKeyAddress;
@@ -67,6 +68,10 @@ export class TransactionOptionsComponent {
           this.txUiService.toggleSimulate(event);
      }
 
+     toggleShowEnableTrustline(event: boolean) {
+          this.txUiService.toggleShowEnableTrustline(event);
+     }
+
      toggleMultiSign() {
           this.utilsService.toggleMultiSign(this.useMultiSign(), this.txUiService.signers(), this.txUiService.currentWallet()?.classicAddress || '');
           this.multiSignAddress.set(
@@ -86,21 +91,13 @@ export class TransactionOptionsComponent {
 
      onMultiSignToggled(enabled: boolean) {
           if (enabled) {
-               this.isRegularKeyAddress.set(false); // ← turn OFF regular key
-               // optionally clear regular key fields
-               // this.regularKeyAddress.set('');
-               // this.regularKeySeed.set('');
+               this.isRegularKeyAddress.set(false);
           }
-          // you can also call toggleMultiSign() here if needed
      }
 
      onRegularKeyToggled(enabled: boolean) {
           if (enabled) {
-               this.useMultiSign.set(false); // ← turn OFF multi-sign
-               // optionally clear multi-sign fields
-               // this.multiSignAddress.set('');
-               // this.multiSignSeeds.set('');
-               // this.signerQuorum.set(0);
+               this.useMultiSign.set(false);
           }
      }
 }

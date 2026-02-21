@@ -12,23 +12,63 @@ export class TooltipLinkComponent implements OnDestroy {
      @Input() tooltipText = 'Open in Explorer';
 
      private tooltipEl!: HTMLElement | null;
-     private showTimeout = 0;
-     private hideTimeout = 0;
+     private showTimeout: ReturnType<typeof setTimeout> | undefined;
+     private hideTimeout: ReturnType<typeof setTimeout> | undefined;
 
-     constructor(private host: ElementRef<HTMLElement>, private renderer: Renderer2) {}
+     constructor(
+          private readonly host: ElementRef<HTMLElement>,
+          private readonly renderer: Renderer2
+     ) {}
 
      @HostListener('mouseenter')
      onMouseEnter() {
-          window.clearTimeout(this.hideTimeout);
-          this.showTimeout = window.setTimeout(() => {
-               this.showTooltip();
-          }, 120);
+          this.showTooltipWithDelay();
      }
 
      @HostListener('mouseleave')
      onMouseLeave() {
-          window.clearTimeout(this.showTimeout);
-          this.hideTimeout = window.setTimeout(() => {
+          this.hideTooltipWithDelay();
+     }
+
+     // Handle keyboard focus
+     onFocus() {
+          this.showTooltipWithDelay();
+     }
+
+     // Handle keyboard blur
+     onBlur() {
+          this.hideTooltipWithDelay();
+     }
+
+     // NEW: Handle Enter and Space keys
+     onKeyDown(event: KeyboardEvent) {
+          // Only handle Enter and Space keys
+          if (event.key === 'Enter' || event.key === ' ') {
+               this.showTooltipWithDelay();
+
+               // Prevent default for Space (page scroll)
+               if (event.key === ' ') {
+                    event.preventDefault();
+               }
+               // For Enter, let the link open naturally - don't call preventDefault()
+          }
+     }
+
+     handleSpacePreventDefault(event: KeyboardEvent) {
+          event.preventDefault();
+     }
+
+     // Helper methods to consolidate logic
+     private showTooltipWithDelay() {
+          globalThis.clearTimeout(this.hideTimeout);
+          this.showTimeout = globalThis.setTimeout(() => {
+               this.showTooltip();
+          }, 120);
+     }
+
+     private hideTooltipWithDelay() {
+          globalThis.clearTimeout(this.showTimeout);
+          this.hideTimeout = globalThis.setTimeout(() => {
                this.hideTooltip();
           }, 60);
      }
@@ -60,7 +100,6 @@ export class TooltipLinkComponent implements OnDestroy {
 
           // Determine vertical placement
           const spaceAbove = hostRect.top;
-          const spaceBelow = window.innerHeight - hostRect.bottom;
           const placeAbove = spaceAbove > tooltipRect.height + offset;
 
           if (placeAbove) {

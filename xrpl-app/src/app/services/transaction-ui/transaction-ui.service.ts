@@ -2,208 +2,17 @@ import { computed, Injectable, signal, WritableSignal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
-import { BehaviorSubject } from 'rxjs';
-
-interface Toast {
-     id: number;
-     message: string;
-     duration: number;
-}
-
-export type Signer = {
-     Account: string;
-     seed: string;
-     SignerWeight: number;
-};
-
-export interface Wallet {
-     name?: string;
-     classicAddress: string;
-     address: string;
-     seed: string;
-     mnemonic?: string;
-     secretNumbers?: string;
-     balance?: string;
-     ownerCount?: string;
-     xrpReserves?: string;
-     spendableXrp?: string;
-     showSecret?: boolean;
-     lastUpdated?: any;
-     isIssuer?: boolean;
-     algorithm?: 'ed25519' | 'secp256k1';
-     encryptionAlgorithm?: string | '';
-}
+import { Signer, Toast, ValidationInputs, Wallet } from '../../models/interface-items.model';
 
 export type TxStep = 'idle' | 'preparing' | 'signing' | 'submitting' | 'waiting_validation' | 'finalizing' | 'success' | 'failed';
 
-export interface ValidationInputs {
-     // ---- Wallet / Sender ----
-     wallet: {
-          address: string;
-          seed?: string;
-          subject?: string;
-     };
+type SignalMap = {
+     [K in keyof TransactionUiService]: TransactionUiService[K] extends (...args: any) => any ? never : TransactionUiService[K] extends () => unknown ? K : never;
+};
 
-     // ---- Network / XRPL ----
-     network?: {
-          accountInfo?: any;
-          accountObjects?: any;
-          fee?: string;
-          currentLedger?: number;
-     };
-
-     // ---- Permission Domain Subject ---
-     subject?: {
-          subject?: string;
-     };
-
-     // ---- Destination ----
-     destination?: {
-          address?: string;
-          tag?: string;
-     };
-
-     // ---- Amount ----
-     amountXrp?: {
-          amount?: string;
-     };
-
-     paymentXrp?: {
-          amount?: string;
-          destination?: string;
-          destinationTag?: string;
-          sourceTag?: string;
-          invoiceId?: any;
-          credentials?: string[];
-     };
-
-     createCheck?: {
-          amount?: string;
-          destination?: string;
-          destinationTag?: string;
-          sourceTag?: string;
-          invoiceId?: any;
-     };
-
-     createTimeBasedEscrow?: {
-          amount?: string;
-          destination?: string;
-          finishAfter?: number;
-          cancelAfter?: number;
-          currency?: string;
-          issuer?: string;
-     };
-
-     finishTimeBasedEscrow?: {
-          escrowOwner?: string;
-          escrowSequence?: string;
-     };
-
-     cancelTimeBasedEscrow?: {
-          escrowSequence?: string;
-     };
-
-     createConditionalEscrow?: {
-          amount?: string;
-          destination?: string;
-          finishAfter?: number;
-          cancelAfter?: number;
-          currency?: string;
-          issuer?: string;
-          condition?: string;
-     };
-
-     finishConditionalEscrow?: {
-          escrowOwner?: string;
-          escrowSequence?: string;
-          condition?: string;
-          fulfillment?: string;
-     };
-
-     paymentChannelCreate?: {
-          amount?: string;
-          destination?: string;
-          settleDelay?: string;
-     };
-
-     paymentChannelFund?: {
-          amount?: string;
-          channelIDField?: string;
-     };
-
-     paymentChannelClaim?: {
-          amount?: string;
-          channelIDField?: string;
-          claimSignature?: string;
-     };
-
-     paymentChannelClose?: {
-          channelIDField?: string;
-     };
-
-     createTicket?: {
-          ticketCountField?: string;
-     };
-
-     cashCheck?: {
-          amount?: string;
-          checkIdField?: string;
-     };
-
-     cancelCheck?: {
-          checkIdField?: string;
-     };
-
-     // ---- Multi-Sign ----
-     multiSign?: {
-          enabled: boolean;
-          addresses?: string[];
-          seeds?: string[];
-          signerQuorum?: number;
-          signers?: { Account: string; SignerWeight: number }[];
-     };
-
-     // ---- Regular Key ----
-     regularKey?: {
-          isRegularKey: boolean;
-          address?: string;
-          seed?: string;
-     };
-
-     // ---- Tickets ----
-     ticket?: {
-          enabled: boolean;
-          singleTicket?: string;
-          selectedTicket?: string;
-     };
-
-     // ---- DID ----
-     did?: {
-          document?: any;
-          uri?: string;
-          data?: any;
-     };
-
-     // ---- Domain / Permissioned Domains ----
-     domain?: {
-          domainId?: string;
-          date?: number;
-     };
-
-     // ---- Credentials  ----
-     credentials?: {
-          credentialType?: string;
-          subject?: string;
-          destination?: string;
-          date?: number;
-          credentialId?: string;
-     };
-
-     // ---- Sequence ID  ----
-     sequence?: {
-          sequenceId?: string;
-     };
-}
+type SignalKey = {
+     [K in keyof TransactionUiService]: TransactionUiService[K] extends () => any ? K : never;
+}[keyof TransactionUiService];
 
 @Injectable({ providedIn: 'root' })
 export class TransactionUiService {
@@ -212,6 +21,7 @@ export class TransactionUiService {
           private readonly xrplService: XrplService
      ) {}
 
+     readonly baseTxKeys = ['isSimulateEnabled', 'useMultiSign', 'isRegularKeyAddress', 'regularKeyAddress', 'regularKeySeed', 'multiSignAddress', 'multiSignSeeds'] as const;
      txHash: string | null = null;
      txHashes: string[] = [];
      isError = signal(false);
@@ -222,12 +32,25 @@ export class TransactionUiService {
      toastId = 0;
      errorMessageSignal = signal<string | null>(null);
      amountField = signal('');
+     trustlineLimitField = signal(0);
      destinationTagField = signal('');
      invoiceIdField = signal('');
      sourceTagField = signal('');
      domainId = signal('');
      checkIdField = signal('');
+     checkCreator = signal<string>('');
+     currencyCode = signal<string>('XRP');
+     currencyIssuer = signal<string>('');
      ticketCountField = signal('');
+     expirationTimeField = signal<string>('');
+     enableExpirationDate = signal<boolean>(false);
+     showEnableTrustline = signal<boolean>(false);
+     missingTrustlineInfo = {
+          currencyCode: signal(''),
+          issuer: signal(''),
+     };
+
+     selectedTicketSequences = signal<string[]>([]);
      credentialIDs = signal<string[]>([]);
      finishAfter = signal(0);
      cancelAfter = signal(0);
@@ -237,6 +60,7 @@ export class TransactionUiService {
      useMultiSign = signal(false);
      isRegularKeyAddress = signal(false);
      isTicket = signal(false);
+     walletTicketCount = signal<number>(0);
      isSimulateEnabled = signal(false);
      masterKeyDisabled = signal(false);
      depositAuthEnabled = signal(false);
@@ -288,6 +112,28 @@ export class TransactionUiService {
      url = signal<string>('');
      wantsOptions = signal<boolean>(false);
      mptIssuanceIdField = signal<string>('');
+     escrowFinishTimeField = signal<string>('');
+     escrowCancelTimeField = signal<string>('');
+     escrowOwnerField = signal<string>('');
+     escrowSequenceNumberField = signal<string>('');
+     escrowConditionField = signal<string>('');
+     escrowFulfillmentField = signal<string>('');
+     paymentChannelCancelAfterTimeField = signal<string>('');
+
+     // MPT
+     isMptEnabled = signal(false);
+     metaDataField = signal<string>('');
+     authAction = signal<string>('authorize');
+     lockAction = signal<string>('unlock');
+     metadataError = signal<string>('');
+     tokenCountField = signal<number>(0);
+     assetScaleField = signal<number>(0);
+     isMptFlagModeEnabled = signal<boolean>(false);
+     transferFeeField = signal<number>(0);
+     isAuthorized = signal<boolean>(false);
+     isUnauthorize = signal<boolean>(false);
+     lockedUnlock = signal<string>('');
+     holderAccount = signal<string>('');
 
      currentStep = signal<TxStep>('idle');
      detailedStatus = signal<string>('');
@@ -313,6 +159,24 @@ export class TransactionUiService {
           }
      });
 
+     getValues<K extends SignalKey>(
+          keys: readonly K[]
+     ): {
+          [P in K]: ReturnType<this[P]>;
+     } {
+          const result = {} as any;
+
+          for (const key of keys) {
+               result[key] = (this as any)[key]();
+          }
+
+          return result;
+     }
+
+     buildTxKeys<const T extends readonly any[]>(...extra: T) {
+          return [...this.baseTxKeys, ...extra] as const;
+     }
+
      resetCurrentStepToIdle() {
           this.currentStep.set('idle');
           this.detailedStatus.set('');
@@ -323,12 +187,12 @@ export class TransactionUiService {
           return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
      });
 
-     private readonly _infoData = new BehaviorSubject<any | null>(null);
-     infoData$ = this._infoData.asObservable();
+     // private readonly _infoData = new BehaviorSubject<any | null>(null);
+     // infoData$ = this._infoData.asObservable();
 
-     setInfoData(data: any | null) {
-          this._infoData.next(data);
-     }
+     // setInfoData(data: any | null) {
+     //      this._infoData.next(data);
+     // }
 
      setPaymentTxSignal(tx: any) {
           this.paymentTxSignal.set(Array.isArray(tx) ? tx : [tx]);
@@ -419,6 +283,10 @@ export class TransactionUiService {
           this.txResult = [...this.txResult, result];
      }
 
+     toggleShowEnableTrustline(enabled: boolean) {
+          this.showEnableTrustline.set(enabled);
+     }
+
      // Called when user toggles the simulate slider
      toggleSimulate(enabled: boolean) {
           this.isSimulateEnabled.set(enabled);
@@ -452,20 +320,20 @@ export class TransactionUiService {
 
           // 1. Escape everything first
           let escaped = html;
-          html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          html.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
           // 2. Restore paired tags: <code>…</code>, <strong>…</strong>, <ul>…</ul>, <li>…</li>, etc.
           const pairedTags = tags.filter(t => t !== 'br');
           if (pairedTags.length > 0) {
-               const regex = new RegExp(`&lt;(${pairedTags.join('|')})\\b[^&]*&gt;(.*?)&lt;/\\1&gt;`, 'gi');
-               escaped = escaped.replace(regex, '<$1>$2</$1>');
+               const regex = new RegExp(String.raw`&lt;(${pairedTags.join('|')})\b[^&]*&gt;(.*?)&lt;/\1&gt;`, 'gi');
+               escaped = escaped.replaceAll(regex, '<$1>$2</$1>');
           }
 
           // 3. Restore <br> and <br/>
-          escaped = escaped.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
+          escaped = escaped.replaceAll(/&lt;br\s*\/?&gt;/gi, '<br>');
 
           // 4. Restore <a> links
-          escaped = escaped.replace(/&lt;a\s+href="([^"]*)"[^&]*&gt;([^&]*)&lt;\/a&gt;/gi, '<a href="$1" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">$2</a>');
+          escaped = escaped.replaceAll(/&lt;a\s+href="([^"]*)"[^&]*&gt;([^&]*)&lt;\/a&gt;/gi, '<a href="$1" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">$2</a>');
 
           return this.sanitizer.bypassSecurityTrustHtml(escaped);
      }
@@ -547,7 +415,7 @@ export class TransactionUiService {
           this.errorMessageSignal.set(null);
 
           // Only set a hash when simulate is OFF
-          this.txHash = !this.isSimulateEnabled ? hash || null : null;
+          this.txHash = this.isSimulateEnabled() ? null : hash || null;
      }
 
      // Called when a real transaction succeeds
@@ -564,21 +432,19 @@ export class TransactionUiService {
           this.errorMessageSignal.set(null);
 
           // Only set a hash when simulate is OFF
-          this.txHash = !this.isSimulateEnabled ? hash || null : null;
+          this.txHash = this.isSimulateEnabled() ? null : hash || null;
      }
 
      setSuccessProperties() {
           this.isSuccess.set(true);
           this.isError.set(false);
           this.spinner.set(false);
-          // this.result = '';
      }
 
      setSuccessMultiTransactionsProperties() {
           this.isSuccess.set(true);
           this.isError.set(false);
           this.spinner.set(true);
-          // this.result = '';
      }
 
      // Called when an error occurs
@@ -594,7 +460,7 @@ export class TransactionUiService {
           this.successMessage = null;
 
           // Only set a hash if not simulated
-          this.txHash = !this.isSimulateEnabled ? hash || null : null;
+          this.txHash = this.isSimulateEnabled() ? null : hash || null;
      }
 
      private setErrorProperties() {
@@ -876,9 +742,30 @@ export class TransactionUiService {
           this.regularKeySeed.set('');
           this.selectedSingleTicket.set('');
           this.wantsOptions.set(false);
+          this.escrowFinishTimeField.set('');
+          this.escrowCancelTimeField.set('');
+          this.escrowOwnerField.set('');
+          this.escrowSequenceNumberField.set('');
+          this.isMptEnabled.set(false);
+          this.metaDataField.set('');
+          this.authAction.set('authorize');
+          this.lockAction.set('unlock');
+          this.metadataError.set('');
+          this.tokenCountField.set(0);
+          this.assetScaleField.set(0);
+          this.isMptFlagModeEnabled.set(false);
+          this.transferFeeField.set(0);
+          this.isAuthorized.set(false);
+          this.isUnauthorize.set(false);
+          this.lockedUnlock.set('');
+          this.holderAccount.set('');
+          this.expirationTimeField.set('');
+          this.enableExpirationDate.set(false);
+          this.showEnableTrustline.set(false);
      }
 
      clearAllOptions() {
+          this.showEnableTrustline.set(false);
           this.isMemoEnabled.set(false);
           this.useMultiSign.set(false);
           // this.multiSigningEnabled.set(false);

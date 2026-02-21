@@ -14,7 +14,7 @@ import { DownloadUtilService } from '../../services/download-util/download-util.
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
-import { WalletDataService } from '../../services/wallets/refresh-wallet/refersh-wallets.service';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
@@ -225,7 +225,7 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
           await this.withPerf('onAccountChange', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
-                    throw new Error('Please select a wallet.');
+                    return this.toastService.error('Please select a wallet.');
                }
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);

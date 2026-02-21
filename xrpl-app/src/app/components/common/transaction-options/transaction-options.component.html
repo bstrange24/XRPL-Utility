@@ -25,12 +25,17 @@
           <input type="checkbox" [(ngModel)]="isSimulateEnabled" (ngModelChange)="toggleSimulate($event)" name="isSimulateEnabled" />
           <span class="slider"></span> Simulate
      </label>
+     }@if (showEnableTrustline()) {
+     <label class="switch">
+          <input type="checkbox" [ngModel]="isShowEnableTrustline" (ngModelChange)="toggleShowEnableTrustline($event)" name="showEnableTrustline" />
+          <span class="slider"></span> Enable Trustline
+     </label>
      }
 </div>
 
 <!-- Check if memo slider is enabled -->
 @if (isMemoEnabled()) {
-<textarea [(ngModel)]="memoField" name="memoField" placeholder="Separate multiple memos with commas" class="memo-input"></textarea>
+<textarea class="memo-input auto-expand-textarea" [ngModel]="memoField()" name="memoField" placeholder="Separate multiple memos with commas" (input)="utilsService.adjustTextareaHeight($event)"></textarea>
 }
 
 <!-- Check if Multi sign slider is enabled -->
@@ -38,11 +43,11 @@
 <div class="multisign-grid">
      <div class="multisign-field">
           <label for="signers">Signers</label>
-          <textarea [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly></textarea>
+          <textarea [(ngModel)]="multiSignAddress" name="multiSignAddress" readonly rows="2" (input)="utilsService.adjustTextareaHeight($event)"></textarea>
      </div>
      <div class="multisign-field">
           <label for="seeds">Seeds</label>
-          <textarea [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly></textarea>
+          <textarea [(ngModel)]="multiSignSeeds" name="multiSignSeeds" readonly rows="2" (input)="utilsService.adjustTextareaHeight($event)"></textarea>
      </div>
      <div class="multisign-field quorum-field">
           <label for="quorum">Quorum</label>

@@ -1,21 +1,26 @@
 import { Injectable, inject } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
+import { XrplCacheService } from '../xrpl-cache/xrpl-cache.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
-import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
+import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
 
 interface PrepareTxEnvironmentOptions {
      includeTickets?: boolean;
      includeEscrows?: boolean;
+     includeEscrowBySequenceId?: boolean;
      includeChecks?: boolean;
      includeTrustlines?: boolean;
      includeDestinationAccountInfo?: boolean;
+     includeDestinationAccountObject?: boolean;
      includeAccountInfo?: boolean;
      includeAccountObject?: boolean;
      includeLedgerIndex?: boolean;
+     includePaymentChannelObjects?: boolean;
+     includeMptObjects?: boolean;
      includeFee?: boolean;
      forceRefresh?: boolean;
      destinationAddress?: string;
+     escrowSequenceNumberField?: string;
 }
 
 interface PrepareTxEnvironmentResult {
@@ -26,22 +31,42 @@ interface PrepareTxEnvironmentResult {
      accountObjects?: xrpl.AccountObjectsResponse;
      ticketObjects?: xrpl.AccountObjectsResponse;
      escrowObjects?: xrpl.AccountObjectsResponse;
+     escrowObjectsBySequenceId?: any;
      checkObjects?: xrpl.AccountObjectsResponse;
+     paymentChannelObjects?: any;
      trustlines?: xrpl.AccountLinesResponse;
      accountInfo?: xrpl.AccountInfoResponse;
      destinationAccountInfo?: xrpl.AccountInfoResponse;
+     destinationAccountObject?: xrpl.AccountObjectsResponse;
 }
 
 @Injectable({
      providedIn: 'root',
 })
-export class TxEnvironmentServiceService {
+export class TxEnvironmentService {
      private readonly xrplCache = inject(XrplCacheService);
      private readonly xrplService = inject(XrplService);
      private readonly walletManager = inject(WalletManagerService);
      private readonly walletCache = new Map<string, xrpl.Wallet>();
 
-     async prepareTxEnvironment({ includeTickets = false, includeEscrows = false, includeChecks = false, includeTrustlines = false, includeDestinationAccountInfo = false, includeAccountInfo = false, includeAccountObject = false, includeLedgerIndex = false, includeFee = false, forceRefresh = false, destinationAddress = '' }: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
+     async prepareTxEnvironment({
+          includeTickets = false,
+          includeEscrows = false,
+          includeEscrowBySequenceId = false,
+          includeChecks = false,
+          includeTrustlines = false,
+          includeDestinationAccountInfo = false,
+          includeDestinationAccountObject = false,
+          includeAccountInfo = false,
+          includeAccountObject = false,
+          includeLedgerIndex = false,
+          includePaymentChannelObjects = false,
+          includeMptObjects = false,
+          includeFee = false,
+          forceRefresh = false,
+          destinationAddress = '',
+          escrowSequenceNumberField = '',
+     }: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
           // Client (cached internally)
           const client = await this.xrplCache.getClient(() => this.xrplService.getClient());
 
@@ -78,9 +103,14 @@ export class TxEnvironmentServiceService {
                networkKeys.push('accountInfo');
           }
 
-          if (includeDestinationAccountInfo) {
+          if (includeDestinationAccountInfo && destinationAddress) {
                networkCalls.push(this.xrplCache.getAccountInfo(destinationAddress, forceRefresh));
                networkKeys.push('destinationAccountInfo');
+          }
+
+          if (includeDestinationAccountObject && destinationAddress) {
+               networkCalls.push(this.xrplCache.getAccountObjects(client, destinationAddress, forceRefresh));
+               networkKeys.push('destinationAccountObject');
           }
 
           if (includeAccountObject) {
@@ -103,23 +133,33 @@ export class TxEnvironmentServiceService {
                networkKeys.push('escrowObjects');
           }
 
+          if (includeEscrowBySequenceId) {
+               networkCalls.push(this.xrplService.getEscrowBySequence(client, wallet.classicAddress, Number(escrowSequenceNumberField)));
+               networkKeys.push('escrowObjectsBySequenceId');
+          }
+
           if (includeChecks) {
                networkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'check'));
                networkKeys.push('checkObjects');
           }
 
+          if (includeMptObjects) {
+               networkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'check'));
+               networkKeys.push('mptObjects');
+          }
+
+          if (includePaymentChannelObjects) {
+               networkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'payment_channel'));
+               networkKeys.push('paymentChannelObjects');
+          }
+
           const networkResults = networkCalls.length ? await Promise.all(networkCalls) : [];
 
           // Build result
-          const result: PrepareTxEnvironmentResult = {
-               client,
-               wallet,
-          };
-
+          const result: PrepareTxEnvironmentResult = { client, wallet };
           networkKeys.forEach((key, index) => {
                (result as any)[key] = networkResults[index];
           });
-
           return result;
      }
 }

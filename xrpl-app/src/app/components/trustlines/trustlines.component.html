@@ -97,7 +97,72 @@
 
                @if (activeTab() !== 'addNewIssuers') {
                <!-- Only show if we are not adding an issuer -->
+               <!-- Info Message + Trustlines List Card -->
                @if (infoData(); as info) {
+               <div class="info-and-trustlines-card" [class.has-trustlines]="info.trustlineCount > 0">
+                    <!-- Always-visible summary row -->
+                    <div class="summary-header">
+                         <div class="summary-text">
+                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
+                              <code>{{ info.walletName }}</code>
+
+                              @if (info.trustlineCount === 0) {
+                              <span> has no trustlines.</span>
+                              } @else {
+                              <span> has <strong class="object-count">{{ info.trustlineCount }}</strong> trustline{{ info.trustlineCount === 1 ? '' : 's' }} @switch (info.activeTab) { @case ('setTrustline') { available to set. } @case ('removeTrustline') { that can be removed. } @case ('issueCurrency') { available for issuing tokens. } @case ('clawbackTokens') { that support clawback. } @case ('addNewIssuers') { configured. } } </span>
+                              } @if (info.links) {
+                              <!-- <div class="xrpl-win-link-small"><span [innerHTML]="info.links"></span> on XRPL Win</div> -->
+                              }
+                         </div>
+
+                         <!-- Expand/Collapse toggle (only when there are trustlines) -->
+                         @if (info.trustlineCount > 0) {
+                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle trustlines list">
+                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} list</span>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'">
+                                   <path d="M6 9l6 6 6-6" />
+                              </svg>
+                         </button>
+                         }
+                    </div>
+
+                    <!-- Collapsible detailed list with internal scroll -->
+                    @if (info.trustlineCount > 0) {
+                    <div class="trustlines-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                         <ul class="trustlines-list">
+                              @for (tl of info.trustlinesToShow; track tl.currency + tl.issuer) {
+                              <li class="trustline-item">
+                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'account/' + tl.issuer + '/tokens'" tooltipText="View issuer tokens on XRPL Explorer">
+                                        <div class="trustline-main-line">
+                                             <strong class="trustline-currency">{{ tl.currency }}</strong>
+                                             @if (tl.balance !== '0') {
+                                             <span class="balance-badge"> {{ tl.balance }} held </span>
+                                             }
+                                        </div>
+
+                                        <div class="trustline-meta">
+                                             <div>Issuer: <code>{{ tl.issuer.slice(0,10) }}...{{ tl.issuer.slice(-8) }}</code></div>
+                                             <div>Limit: {{ tl.limit }} • Balance: {{ tl.balance }}</div>
+                                             @if (tl.flags && tl.flags.length > 0) {
+                                             <div>Flags: {{ tl.flags.join(', ') }}</div>
+                                             }
+                                        </div>
+                                   </app-tooltip-link>
+
+                                   <button (click)="copyAndToast(tl.issuer, 'Issuer Address'); $event.stopPropagation()" class="copy-btn-small" title="Copy Issuer Address">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                   </button>
+                              </li>
+                              }
+                         </ul>
+                    </div>
+                    }
+               </div>
+               }
+               <!-- @if (infoData(); as info) {
                <div class="info-message-wrapper">
                     <div class="info-panel">
                          <div class="info-text">
@@ -155,7 +220,8 @@
                          </div>
                     </div>
                </div>
-               } }
+               }  -->
+               }
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
@@ -165,7 +231,7 @@
                </div>
                }
 
-               <form #theForm="ngForm" class="send-form">
+               <form #theForm="ngForm" class="main-form">
                     <div class="tab-content-columns">
                          <div class="tab-content-container form-fields-container">
                               @if (activeTab() === 'setTrustline' || activeTab() === 'removeTrustline' || activeTab() === 'issueCurrency' || activeTab() === 'clawbackTokens') {

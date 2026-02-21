@@ -4,6 +4,7 @@ import { UtilsService } from '../../services/util-service/utils.service';
 import { AppConstants } from '../../core/app.constants';
 import { ToastService } from '../toast/toast.service';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
+import { PaymentChannelUtilService } from '../payment-channel/payment-channel-util/payment-channel-util.service';
 
 @Injectable({
      providedIn: 'root',
@@ -12,7 +13,8 @@ export class XrplTransactionService {
      constructor(
           private readonly utilsService: UtilsService,
           private readonly toastService: ToastService,
-          private readonly txUiService: TransactionUiService
+          private readonly txUiService: TransactionUiService,
+          private readonly paymentChannelUtilService: PaymentChannelUtilService
      ) {}
 
      // HELPER: Sign transaction (handles both single and multi-sign)
@@ -142,8 +144,8 @@ export class XrplTransactionService {
 
      processTxError(waitError: any) {
           this.txUiService.currentStep.set('failed');
-          const msg = waitError.message?.includes('expired') ? 'Transaction expired (ledger timeout). It was not included in the ledger.' : `Failed to confirm transaction: ${waitError.message}`;
-          this.toastService.error(msg, 7000);
+          // const msg = waitError.message?.includes('expired') ? 'Transaction expired (ledger timeout). It was not included in the ledger.' : `Failed to confirm transaction: ${waitError.message}`;
+          // this.toastService.error(msg, 7000);
      }
 
      buildSendXrpTransaction(wallet: xrpl.Wallet, destinationAddress: string, amount: number, fee: string, currentLedger: number): xrpl.Payment {
@@ -210,25 +212,186 @@ export class XrplTransactionService {
           };
      }
 
-     buildSendMaxAmount(currencyValue: string, issuerField: string, mptNeeded: boolean) {
+     buildCreateTimeBasedEscrowTransaction(wallet: xrpl.Wallet, amountToCash: any, destinationAddress: string, finishAfterTime: number, cancelAfterTime: number, fee: string | undefined, currentLedger: number | undefined): xrpl.EscrowCreate {
+          return {
+               TransactionType: 'EscrowCreate',
+               Account: wallet.address,
+               Amount: amountToCash,
+               Destination: destinationAddress,
+               FinishAfter: finishAfterTime,
+               CancelAfter: cancelAfterTime,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildFinishTimeBasedEscrowTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, escrowOwnerField: string, escrowSequenceNumberField: number): xrpl.EscrowFinish {
+          return {
+               TransactionType: 'EscrowFinish',
+               Account: wallet.classicAddress,
+               Owner: escrowOwnerField,
+               OfferSequence: escrowSequenceNumberField,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildCancelTimeBasedEscrowTransaction(wallet: xrpl.Wallet, escrowOwner: string, fee: string | undefined, currentLedger: number | undefined, escrowSequenceNumberField: number): xrpl.EscrowCancel {
+          return {
+               TransactionType: 'EscrowCancel',
+               Account: wallet.classicAddress,
+               Owner: escrowOwner,
+               OfferSequence: escrowSequenceNumberField,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildPaymentChannelCreateTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.PaymentChannelCreate {
+          return {
+               TransactionType: 'PaymentChannelCreate',
+               Account: wallet.classicAddress,
+               Amount: xrpl.xrpToDrops(formValues.amount),
+               Destination: formValues.destinationAddress,
+               SettleDelay: Number.parseInt(formValues.settleDelay),
+               PublicKey: wallet.publicKey,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildPaymentChannelFundTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.PaymentChannelFund {
+          return {
+               TransactionType: 'PaymentChannelFund',
+               Account: wallet.classicAddress,
+               Channel: formValues.channelIDField,
+               Amount: xrpl.xrpToDrops(formValues.amount),
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildPaymentChannelClaimTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.PaymentChannelClaim {
+          return {
+               TransactionType: 'PaymentChannelClaim',
+               Account: wallet.classicAddress,
+               Channel: formValues.channelIDField,
+               Balance: xrpl.xrpToDrops(formValues.amount),
+               Signature: formValues.channelClaimSignatureField,
+               PublicKey: formValues.publicKeyField || wallet.publicKey,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+               Flags: this.paymentChannelUtilService.flags.close ? xrpl.PaymentChannelClaimFlags.tfClose : undefined,
+          };
+     }
+
+     buildPaymentChannelRenewTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.PaymentChannelClaim {
+          return {
+               TransactionType: 'PaymentChannelClaim',
+               Account: wallet.classicAddress,
+               Channel: formValues.channelIDField,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+               Flags: xrpl.PaymentChannelClaimFlags.tfRenew,
+          };
+     }
+
+     buildPaymentChannelCloseTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, channelIDField: string): xrpl.PaymentChannelClaim {
+          return {
+               TransactionType: 'PaymentChannelClaim',
+               Account: wallet.classicAddress,
+               Channel: channelIDField,
+               Flags: xrpl.PaymentChannelClaimFlags.tfClose,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildMptCreateTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.MPTokenIssuanceCreate {
+          return {
+               TransactionType: 'MPTokenIssuanceCreate',
+               Account: wallet.classicAddress,
+               MaximumAmount: formValues.tokenCountField.toString(),
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildMptAuthorizeTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.MPTokenAuthorize {
+          return {
+               TransactionType: 'MPTokenAuthorize',
+               Account: wallet.classicAddress,
+               MPTokenIssuanceID: formValues.mptIssuanceIdField,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildMptLockTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.MPTokenIssuanceSet {
+          return {
+               TransactionType: 'MPTokenIssuanceSet',
+               Account: wallet.classicAddress,
+               MPTokenIssuanceID: formValues.mptIssuanceIdField,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+               Fee: fee,
+          };
+     }
+
+     buildMptSendTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.Payment {
+          return {
+               TransactionType: 'Payment',
+               Account: wallet.classicAddress,
+               Amount: {
+                    mpt_issuance_id: formValues.mptIssuanceIdField,
+                    value: formValues.amount.toString(),
+               },
+               Destination: formValues.destinationAddress,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+               Fee: fee,
+          };
+     }
+
+     buildMptDestroyTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.MPTokenIssuanceDestroy {
+          return {
+               TransactionType: 'MPTokenIssuanceDestroy',
+               Account: wallet.classicAddress,
+               MPTokenIssuanceID: formValues.mptIssuanceIdField,
+               Fee: fee,
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildMptClawbackTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.Clawback {
+          return {
+               TransactionType: 'Clawback',
+               Account: wallet.classicAddress,
+               Amount: formValues.tokenCountField.toString(),
+               Holder: formValues.destinationAddress,
+               Fee: fee,
+               Flags: 0, // Typically 0 for clawback unless specific flags are needed
+               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildSendMaxAmount(currencyValue: string, issuerField: string, amountField: string, mptNeeded: boolean) {
           let sendMax;
           let paymentType;
           let currency;
           if (currencyValue === AppConstants.XRP_CURRENCY) {
-               sendMax = xrpl.xrpToDrops(this.txUiService.amountField());
+               sendMax = xrpl.xrpToDrops(amountField);
                paymentType = 'XRP';
                currency = 'XRP';
           } else if (mptNeeded) {
                const curr: any = {
                     mpt_issuance_id: this.txUiService.mptIssuanceIdField(),
-                    value: this.txUiService.amountField(),
+                    value: amountField,
                };
                sendMax = curr;
                paymentType = 'MPT';
           } else {
                sendMax = {
                     currency: this.utilsService.encodeIfNeeded(currencyValue),
-                    value: this.txUiService.amountField(),
+                    value: amountField,
                     issuer: issuerField,
                };
                paymentType = 'IOU';
