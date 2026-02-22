@@ -25,7 +25,7 @@ import { TransactionPreviewComponent } from '../transaction-preview/transaction-
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
+import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 
 interface XRPLPermissionEntry {

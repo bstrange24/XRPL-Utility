@@ -30,7 +30,7 @@ import { Subject } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { SignTransactionUtilService } from '../../services/sign-transactions-util/sign-transaction-util.service';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
+import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';

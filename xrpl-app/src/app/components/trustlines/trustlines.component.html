@@ -96,8 +96,7 @@
                </div>
 
                @if (activeTab() !== 'addNewIssuers') {
-               <!-- Only show if we are not adding an issuer -->
-               <!-- Info Message + Trustlines List Card -->
+               <!-- Dynamic info panel -->
                @if (infoData(); as info) {
                <div class="info-and-trustlines-card" [class.has-trustlines]="info.trustlineCount > 0">
                     <!-- Always-visible summary row -->
@@ -227,7 +226,7 @@
                @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage }}</div>
+                    <div class="warning-text">{{ safeWarningMessage() }}</div>
                </div>
                }
 
@@ -235,46 +234,7 @@
                     <div class="tab-content-columns">
                          <div class="tab-content-container form-fields-container">
                               @if (activeTab() === 'setTrustline' || activeTab() === 'removeTrustline' || activeTab() === 'issueCurrency' || activeTab() === 'clawbackTokens') {
-                              <!-- Currency Code and Issuer-->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="currencyCodeCash">Currency Code</label>
-                                        <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
-                                        <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
-                                             <ng-template #itemTemplate let-item>
-                                                  <div class="flex items-center gap-2">
-                                                       @if (item.id === 'XRP') {
-                                                       <span class="text-yellow-500 font-bold">XRP</span>
-                                                       } @else {
-                                                       <span>{{ item.display }}</span>
-                                                       }
-                                                       <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                                                  </div>
-                                             </ng-template>
-                                        </app-select-search-dropdown>
-                                   </div>
-
-                                   <div class="form-group">
-                                        <label for="issuer">Issuer</label>
-                                        <p class="form-hint">The XRPL account that issues and controls this currency.</p>
-                                        <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
-                                   </div>
-                              </div>
-
-                              <!-- Amount and Currency Balance -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label>Amount</label>
-                                        <p class="form-hint">Amount of currency to use in the transaction.</p>
-                                        <input type="text" [(ngModel)]="amountField" name="amountField" placeholder="e.g. 10.5" />
-                                   </div>
-
-                                   <div class="form-group">
-                                        <label>Currency Balance</label>
-                                        <p class="form-hint">Total currency balance held by this account.</p>
-                                        <input type="text" [(ngModel)]="currencyBalanceField" name="currencyBalanceField" readonly placeholder="" />
-                                   </div>
-                              </div>
+                              <app-currency-form-section [layout]="currencyLayout()" [currencyItems]="currencyItems()" [issuerItems]="issuerItems()" [selectedCurrency]="selectedCurrencyItem()" [selectedIssuer]="selectedIssuerItem()" [amount]="txUiService.amountField()" [currencyBalance]="currencyBalanceField()" (currencyChange)="onCurrencySelected($event)" (issuerChange)="onIssuerSelected($event)" (amountChange)="utilsService.updateAmount($event)"> </app-currency-form-section>
                               }
 
                               <!-- Destination and Destination Tag -->
@@ -293,9 +253,9 @@
 
                                    @if (activeTab() === 'issueCurrency') {
                                    <div class="form-group">
-                                        <label>Destination Tag</label>
+                                        <label for="destinationTagField">Destination Tag </label>
                                         <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
-                                        <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
+                                        <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
                                    </div>
                                    }
                               </div>
@@ -305,20 +265,20 @@
                               @if (activeTab() === 'addNewIssuers') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Add Currency Code</label>
+                                        <label for="addCurrencyCode">Add Currency Code</label>
                                         <p class="form-hint">Add a unique currency code to this application.</p>
-                                        <input type="text" [(ngModel)]="newCurrency" name="newCurrency" placeholder="e.g. USDC, EUR, BTC" class="input-field" />
+                                        <input type="text" [ngModel]="txUiService.newCurrency()" (ngModelChange)="txUiService.newCurrency.set($event)" name="newCurrency" placeholder="e.g. USDC, EUR, BTC" class="input-field" />
                                    </div>
 
                                    <div class="form-group">
-                                        <label>Add Issuer Address</label>
+                                        <label for="addIssuerAddress">Add Issuer Address</label>
                                         <p class="form-hint">Add a unique issuer address to this application.</p>
-                                        <input type="text" [(ngModel)]="newIssuer" name="newIssuer" placeholder="r..." class="input-field" />
+                                        <input type="text" [ngModel]="txUiService.newIssuer()" (ngModelChange)="txUiService.newIssuer.set($event)" name="newIssuer" placeholder="r..." class="input-field" />
                                    </div>
                               </div>
 
                               <div class="form-row">
-                                   <button type="button" class="btn-primary-blue" (click)="addNewCurrencyIssuer()" [disabled]="!isAddValid() || txUiService.spinner()">{{ txUiService.spinner() ? 'Adding...' : 'Add Currency/Issuer' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="addNewCurrencyIssuer()" [disabled]="!isIdle() || !isAddValid()">{{ trustlineCurrencyService.addCurrencyIssuerButtonLabel() }}</button>
                               </div>
 
                               <div class="form-row">
@@ -347,13 +307,13 @@
                               </div>
 
                               <div class="form-row">
-                                   <button type="button" class="btn-primary-red" (click)="removeCurrentCurrencyIssuer()" [disabled]="!isRemoveValid() || txUiService.spinner()">{{ txUiService.spinner() ? 'Removing...' : 'Remove Selected Issuer' }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="removeCurrentCurrencyIssuer()" [disabled]="!isIdle() || !isRemoveValid()">{{ trustlineCurrencyService.removeSelectedIssuerButtonLabel() }}</button>
                               </div>
                               }
                          </div>
 
                          @if (activeTab() === 'setTrustline' || activeTab() === 'removeTrustline') {
-                         <div class="tab-content-container flags-container" style="min-width: 570px">
+                         <div class="tab-content-container flags-container" style="min-width: 350px">
                               <div class="flags-wrapper">
                                    <!-- Header -->
                                    <div class="token-flags-header">
@@ -364,9 +324,9 @@
                                    <!-- Set Trustline tab — Only "Set" flags -->
                                    @if (activeTab() === 'setTrustline') {
                                    <!-- tfSetfAuth -->
-                                   <div class="flag-item-account-flags" [class.enabled]="flags.tfSetfAuth" (click)="toggleFlag('tfSetfAuth')">
+                                   <button class="flag-item-account-flags" [class.enabled]="trustlineCurrencyService.flags.tfSetfAuth" (click)="trustlineCurrencyService.toggleFlag('tfSetfAuth')">
                                         <div class="flag-header-account">
-                                             <input type="checkbox" [checked]="flags.tfSetfAuth" class="flag-checkbox" />
+                                             <input type="checkbox" [checked]="trustlineCurrencyService.flags.tfSetfAuth" class="flag-checkbox" />
                                              <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                   <path d="M9 12l2 2 4-4" />
                                                   <circle cx="12" cy="12" r="10" />
@@ -375,12 +335,12 @@
                                         </div>
                                         <div class="flag-value">0x00010000</div>
                                         <div class="flag-desc">Authorize the other party to hold currency issued by this account. (No effect unless using the <code>asfRequireAuth</code> AccountSet flag.) Cannot be unset.</div>
-                                   </div>
+                                   </button>
 
                                    <!-- tfSetNoRipple -->
-                                   <div class="flag-item-account-flags" [class.enabled]="flags.tfSetNoRipple" (click)="toggleFlag('tfSetNoRipple')">
+                                   <button class="flag-item-account-flags" [class.enabled]="trustlineCurrencyService.flags.tfSetNoRipple" (click)="trustlineCurrencyService.toggleFlag('tfSetNoRipple')">
                                         <div class="flag-header-account">
-                                             <input type="checkbox" [checked]="flags.tfSetNoRipple" class="flag-checkbox" />
+                                             <input type="checkbox" [checked]="trustlineCurrencyService.flags.tfSetNoRipple" class="flag-checkbox" />
                                              <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                                              </svg>
@@ -388,12 +348,12 @@
                                         </div>
                                         <div class="flag-value">0x00020000</div>
                                         <div class="flag-desc">Enable the No Ripple flag, which blocks rippling between two trust lines of the same currency if this flag is enabled on both.</div>
-                                   </div>
+                                   </button>
 
                                    <!-- tfSetFreeze -->
-                                   <div class="flag-item-account-flags" [class.enabled]="flags.tfSetFreeze" (click)="toggleFlag('tfSetFreeze')">
+                                   <button class="flag-item-account-flags" [class.enabled]="trustlineCurrencyService.flags.tfSetFreeze" (click)="trustlineCurrencyService.toggleFlag('tfSetFreeze')">
                                         <div class="flag-header-account">
-                                             <input type="checkbox" [checked]="flags.tfSetFreeze" class="flag-checkbox" />
+                                             <input type="checkbox" [checked]="trustlineCurrencyService.flags.tfSetFreeze" class="flag-checkbox" />
                                              <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                   <path d="M12 2v20M2 12h20" />
                                              </svg>
@@ -401,12 +361,12 @@
                                         </div>
                                         <div class="flag-value">0x00100000</div>
                                         <div class="flag-desc">Freeze the trustline (prevent transfers).</div>
-                                   </div>
+                                   </button>
 
                                    <!-- tfSetDeepFreeze -->
-                                   <div class="flag-item-account-flags" [class.enabled]="flags.tfSetDeepFreeze" (click)="toggleFlag('tfSetDeepFreeze')">
+                                   <button class="flag-item-account-flags" [class.enabled]="trustlineCurrencyService.flags.tfSetDeepFreeze" (click)="trustlineCurrencyService.toggleFlag('tfSetDeepFreeze')">
                                         <div class="flag-header-account">
-                                             <input type="checkbox" [checked]="flags.tfSetDeepFreeze" class="flag-checkbox" />
+                                             <input type="checkbox" [checked]="trustlineCurrencyService.flags.tfSetDeepFreeze" class="flag-checkbox" />
                                              <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                   <path d="M12 2v20M2 12h20M5 5l14 14M5 19l14-14" />
                                              </svg>
@@ -414,55 +374,55 @@
                                         </div>
                                         <div class="flag-value">0x00400000</div>
                                         <div class="flag-desc">Deep-Freeze (block sending & receiving). Requires freeze first.</div>
-                                   </div>
+                                   </button>
                                    } @if (activeTab() === 'removeTrustline') {
                                    <!-- tfClearNoRipple -->
-                                   <div class="flag-item-account-flags" [class.enabled]="flags.tfClearNoRipple">
+                                   <button class="flag-item-account-flags" [class.enabled]="trustlineCurrencyService.flags.tfClearNoRipple">
                                         <div class="flag-header-account">
-                                             <input type="checkbox" [checked]="flags.tfClearNoRipple" [disabled]="true" class="flag-checkbox" />
+                                             <input type="checkbox" [checked]="trustlineCurrencyService.flags.tfClearNoRipple" [disabled]="true" class="flag-checkbox" />
                                              <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                   <path d="M18 6L6 18M6 6l12 12" />
                                              </svg>
                                              <span class="flag-title">ClearNoRipple</span>
-                                             @if (flags.tfClearNoRipple) {
+                                             @if (trustlineCurrencyService.flags.tfClearNoRipple) {
                                              <span class="required-hint">(Required)</span>
                                              }
                                         </div>
                                         <div class="flag-value">0x00040000</div>
                                         <div class="flag-desc">Required to remove trustline when NoRipple is enabled.</div>
-                                   </div>
+                                   </button>
 
                                    <!-- tfClearFreeze -->
-                                   <div class="flag-item-account-flags" [class.enabled]="flags.tfClearFreeze">
+                                   <button class="flag-item-account-flags" [class.enabled]="trustlineCurrencyService.flags.tfClearFreeze">
                                         <div class="flag-header-account">
-                                             <input type="checkbox" [checked]="flags.tfClearFreeze" [disabled]="true" class="flag-checkbox" />
+                                             <input type="checkbox" [checked]="trustlineCurrencyService.flags.tfClearFreeze" [disabled]="true" class="flag-checkbox" />
                                              <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                   <path d="M12 2v20M2 12h20" />
                                              </svg>
                                              <span class="flag-title">ClearFreeze</span>
-                                             @if (flags.tfClearFreeze) {
+                                             @if (trustlineCurrencyService.flags.tfClearFreeze) {
                                              <span class="required-hint">(Required)</span>
                                              }
                                         </div>
                                         <div class="flag-value">0x00200000</div>
                                         <div class="flag-desc">Required to remove a frozen trustline.</div>
-                                   </div>
+                                   </button>
 
                                    <!-- tfClearDeepFreeze -->
-                                   <div class="flag-item-account-flags" [class.enabled]="flags.tfClearDeepFreeze">
+                                   <button class="flag-item-account-flags" [class.enabled]="trustlineCurrencyService.flags.tfClearDeepFreeze">
                                         <div class="flag-header-account">
-                                             <input type="checkbox" [checked]="flags.tfClearDeepFreeze" [disabled]="true" class="flag-checkbox" />
+                                             <input type="checkbox" [checked]="trustlineCurrencyService.flags.tfClearDeepFreeze" [disabled]="true" class="flag-checkbox" />
                                              <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                   <path d="M12 2v20M2 12h20M5 5l14 14M5 19l14-14" />
                                              </svg>
                                              <span class="flag-title">ClearDeepFreeze</span>
-                                             @if (flags.tfClearDeepFreeze) {
+                                             @if (trustlineCurrencyService.flags.tfClearDeepFreeze) {
                                              <span class="required-hint">(Required)</span>
                                              }
                                         </div>
                                         <div class="flag-value">0x00800000</div>
                                         <div class="flag-desc">Required to remove a deep-frozen trustline.</div>
-                                   </div>
+                                   </button>
 
                                    <!-- Optional: Info box about zero-limit trustlines -->
                                    <div class="info-box" style="margin-top: 16px; font-size: 0.9em; opacity: 0.9"><strong>Note:</strong> Setting limit to 0 removes ability to hold balance. The trustline remains in the ledger (normal XRPL behavior). This app hides zero-limit lines.</div>
@@ -470,7 +430,7 @@
 
                                    <div class="flags-total" style="margin-top: 20px; padding: 12px; background: rgba(0, 0, 0, 0.05); border-radius: 8px">
                                         <span class="total-label">Total Flags Value:</span>
-                                        <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
+                                        <span class="total-value">{{ trustlineCurrencyService.totalFlagsValue() }} ({{ trustlineCurrencyService.totalFlagsHex() }})</span>
                                    </div>
                               </div>
                          </div>
@@ -481,22 +441,31 @@
 
                     <!-- Action buttons -->
                     <div class="button-row">
+                         <!-- Set Trustline -->
                          @if(activeTab() === 'setTrustline') {
-                         <button type="button" class="btn-primary-blue" (click)="setTrustLine()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Set Trustline' }}</button>
-                         } @else if (activeTab() === 'removeTrustline') {
-                         <button type="button" class="btn-primary-red" (click)="removeTrustline()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Remove Trustline' }}</button>
-                         } @else if (activeTab() === 'issueCurrency') {
-                         <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Issue Currency' }}</button>
-                         } @else if (activeTab() === 'clawbackTokens') {
-                         <button type="button" class="btn-primary-red" (click)="clawbackTokens()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets$ | async)">{{ txUiService.spinner() ? 'Processing...' : 'Clawback Tokens' }}</button>
-                         } @if (activeTab() !== 'addNewIssuers') {
-                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields(true)">Clear Fields</button>
+                         <button type="button" class="btn-primary-blue" (click)="setTrustLine()" [disabled]="!isIdle() || !hasWallets()">{{ trustlineCurrencyService.trustlineSetButtonLabel() }}</button>
+                         }
+                         <!-- Remove Trustline -->
+                         @else if (activeTab() === 'removeTrustline') {
+                         <button type="button" class="btn-primary-red" (click)="removeTrustline()" [disabled]="!isIdle() || !hasWallets()">{{ trustlineCurrencyService.trustlineRemoveButtonLabel() }}</button>
+                         }
+                         <!-- Issue Currency -->
+                         @else if (activeTab() === 'issueCurrency') {
+                         <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="!isIdle() || !hasWallets()">{{ trustlineCurrencyService.issueCurrencyButtonLabel() }}</button>
+                         }
+                         <!-- Clawback Tokens -->
+                         @else if (activeTab() === 'clawbackTokens') {
+                         <button type="button" class="btn-primary-red" (click)="clawbackTokens()" [disabled]="!isIdle() || !hasWallets()">{{ trustlineCurrencyService.clawbackButtonLabel() }}</button>
+                         }
+                         <!-- Add New Issuers -->
+                         @if (activeTab() !== 'addNewIssuers') {
+                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
                          }
                     </div>
 
                     <!-- Execution time -->
                     <div class="executionTimeDisplay">
-                         <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
+                         <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
                     </div>
                     <app-transaction-preview></app-transaction-preview>
                </form>

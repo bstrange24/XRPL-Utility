@@ -180,16 +180,11 @@ export class XrplTransactionService {
           };
      }
 
-     buildTrustlineSetTransaction(wallet: xrpl.Wallet, sendMax: string | { currency: string; value: string; issuer: string }, destinationAddress: string, fee: string | undefined, currentLedger: number | undefined): xrpl.TrustSet {
+     buildTrustlineSetTransaction(wallet: xrpl.Wallet, limitAmount: xrpl.IssuedCurrencyAmount, fee: string | undefined, currentLedger: number | undefined): xrpl.TrustSet {
           return {
                TransactionType: 'TrustSet',
                Account: wallet.classicAddress,
-               LimitAmount: {
-                    currency: 'currencyFieldTemp',
-                    issuer: 'issuerFields',
-                    value: '',
-               },
-               Destination: destinationAddress,
+               LimitAmount: limitAmount,
                Fee: fee,
                LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
           };
@@ -457,7 +452,7 @@ export class XrplTransactionService {
                const encodedCurrency = this.utilsService.encodeIfNeeded(currencyCode);
 
                amountToCash = {
-                    value: amount,
+                    value: amount.toString(),
                     currency: encodedCurrency,
                     issuer: currencyIssuer,
                };

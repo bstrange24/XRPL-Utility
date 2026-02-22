@@ -32,7 +32,7 @@ export class TransactionUiService {
      toastId = 0;
      errorMessageSignal = signal<string | null>(null);
      amountField = signal('');
-     trustlineLimitField = signal(0);
+     trustlineLimitField = signal(10000000);
      destinationTagField = signal('');
      invoiceIdField = signal('');
      sourceTagField = signal('');
@@ -41,6 +41,15 @@ export class TransactionUiService {
      checkCreator = signal<string>('');
      currencyCode = signal<string>('XRP');
      currencyIssuer = signal<string>('');
+     tokenToRemove = signal<string>('');
+     lastCurrency = signal<string>('');
+     lastIssuer = signal<string>('');
+     userAddedissuerFields = signal<string>('');
+     newCurrency = signal<string>('');
+     newIssuer = signal<string>('');
+     issuerToRemove = signal<string>('');
+
+     submitAndWait = signal<boolean>(false);
      ticketCountField = signal('');
      expirationTimeField = signal<string>('');
      enableExpirationDate = signal<boolean>(false);

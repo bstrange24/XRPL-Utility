@@ -410,6 +410,7 @@
                          @if (activeTab() === 'create') {
                          <div class="tab-content-container flags-container" style="min-width: 350px">
                               <div class="flags-wrapper">
+                                   <!-- Header -->
                                    <div class="token-flags-header">
                                         <lucide-icon name="flag" size="20"></lucide-icon>
                                         <span class="token-flags-title">MPT Flags</span>
@@ -433,7 +434,8 @@
                                         <div class="flag-header">
                                              <input type="checkbox" [checked]="mptUtilService.flags.isRequireAuth" class="flag-checkbox" disabled />
                                              <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+                                                  <path d="M9 12l2 2 4-4" />
+                                                  <circle cx="12" cy="12" r="10" />
                                              </svg>
                                              <span class="flag-title">MPTRequireAuth</span>
                                         </div>

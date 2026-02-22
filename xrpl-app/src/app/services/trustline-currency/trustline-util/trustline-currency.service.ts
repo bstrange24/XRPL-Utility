@@ -1,4 +1,4 @@
-import { computed, Injectable, Signal, signal } from '@angular/core';
+import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 import { BehaviorSubject, combineLatest, Subject, takeUntil } from 'rxjs';
 
 import * as xrpl from 'xrpl';
@@ -8,6 +8,8 @@ import { StorageService } from '../../local-storage/storage.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 import { RippleState } from '../../../models/interface-items.model';
+import { AppConstants } from '../../../core/app.constants';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 
 interface IssuerItem {
      name: string;
@@ -16,6 +18,8 @@ interface IssuerItem {
 
 @Injectable({ providedIn: 'root' })
 export class TrustlineCurrencyService {
+     public readonly txUiService = inject(TransactionUiService);
+
      private readonly knownTrustLinesIssuers = signal<Record<string, string[]>>({ XRP: [] });
      public readonly knownTrustLinesIssuers$ = this.knownTrustLinesIssuers.asReadonly();
      public readonly preferXrpAsDefault = signal<boolean>(true); // default = true (most pages)
@@ -39,6 +43,33 @@ export class TrustlineCurrencyService {
      public readonly issuers = signal<IssuerItem[]>([]);
      public readonly selectedIssuer = signal<string>('');
      public readonly balance = signal<string>('0');
+
+     flags = {
+          tfSetfAuth: false,
+          tfSetNoRipple: false,
+          tfClearNoRipple: false,
+          tfSetFreeze: false,
+          tfClearFreeze: false,
+          tfSetDeepFreeze: false,
+          tfClearDeepFreeze: false,
+     };
+     totalFlagsValue = signal<number>(0);
+     totalFlagsHex = signal<string>('0x0');
+
+     private readonly flagValues = {
+          tfSetfAuth: 0x00010000,
+          tfSetNoRipple: 0x00020000,
+          tfClearNoRipple: 0x00040000,
+          tfSetFreeze: 0x00100000,
+          tfClearFreeze: 0x00200000,
+          tfSetDeepFreeze: 0x00400000,
+          tfClearDeepFreeze: 0x00800000,
+     };
+
+     trustlineFlags: Record<string, boolean> = { ...AppConstants.TRUSTLINE.FLAGS };
+     trustlineFlagList = AppConstants.TRUSTLINE.FLAG_LIST;
+     flagMap = AppConstants.TRUSTLINE.FLAG_MAP;
+     ledgerFlagMap = AppConstants.TRUSTLINE.LEDGER_FLAG_MAP;
 
      constructor(
           private readonly storage: StorageService,
@@ -86,6 +117,83 @@ export class TrustlineCurrencyService {
           this.balance$.subscribe(b => this.balance.set(b));
      }
 
+     readonly trustlineSetButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Set Trustline';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly trustlineRemoveButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Remove Trustline';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly issueCurrencyButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Issue Currency';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly clawbackButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Clawback Tokens';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly addCurrencyIssuerButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Add Currency/Issuer';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly removeSelectedIssuerButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Remove Selected Issuer';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     toggleFlag(key: 'tfSetfAuth' | 'tfSetNoRipple' | 'tfClearNoRipple' | 'tfSetFreeze' | 'tfClearFreeze' | 'tfSetDeepFreeze' | 'tfClearDeepFreeze') {
+          this.flags[key] = !this.flags[key];
+          this.updateFlagTotal();
+     }
+
+     updateFlagTotal() {
+          let sum = 0;
+          if (this.flags.tfSetfAuth) sum |= this.flagValues.tfSetfAuth;
+          if (this.flags.tfSetNoRipple) sum |= this.flagValues.tfSetNoRipple;
+          if (this.flags.tfClearNoRipple) sum |= this.flagValues.tfClearNoRipple;
+          if (this.flags.tfSetFreeze) sum |= this.flagValues.tfSetFreeze;
+          if (this.flags.tfClearFreeze) sum |= this.flagValues.tfClearFreeze;
+          if (this.flags.tfSetDeepFreeze) sum |= this.flagValues.tfSetDeepFreeze;
+          if (this.flags.tfClearDeepFreeze) sum |= this.flagValues.tfClearDeepFreeze;
+
+          this.totalFlagsValue.set(sum);
+          this.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
+     }
+
+     clearFlagsValue(activeTab: string) {
+          if (activeTab !== 'removeTrustline') {
+               this.flags = {
+                    tfSetfAuth: false,
+                    tfSetNoRipple: false,
+                    tfClearNoRipple: false,
+                    tfSetFreeze: false,
+                    tfClearFreeze: false,
+                    tfSetDeepFreeze: false,
+                    tfClearDeepFreeze: false,
+               };
+               this.totalFlagsValue.set(0);
+               this.totalFlagsHex.set('0x0');
+          }
+     }
+
      getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const mapped = (accountObjects.result.account_objects ?? [])
                .filter((obj: any) => obj.LedgerEntryType === 'RippleState')
@@ -117,8 +225,14 @@ export class TrustlineCurrencyService {
      async hasTrustline(trustlines: xrpl.AccountLinesResponse, currency: string, issuer: string): Promise<boolean> {
           const normalizedCurrency = this.utilsService.decodeIfNeeded(currency);
 
-          return trustlines.result.lines.some((line: { account: string; currency: string }) => {
-               return line.account === issuer && this.utilsService.decodeIfNeeded(line.currency) === normalizedCurrency;
+          return trustlines.result.lines.some((line: { account: string; currency: string; limit: string }) => {
+               const currencyMatches = this.utilsService.decodeIfNeeded(line.currency) === normalizedCurrency;
+
+               const issuerMatches = line.account === issuer;
+
+               const limitIsPositive = Number.parseFloat(line.limit) > 0;
+
+               return issuerMatches && currencyMatches && limitIsPositive;
           });
      }
 

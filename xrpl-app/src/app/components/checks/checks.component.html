@@ -188,6 +188,7 @@
                          </div>
                          <div class="form-group">
                               <label for="currencyBalance">Currency Balance</label>
+                              <p class="form-hint">Total currency balance held by this account.</p>
                               <input type="text" [value]="currencyBalanceField()" readonly name="currencyBalanceField" />
                          </div>
                     </div>
@@ -210,32 +211,7 @@
                     </div>
 
                     @if (txUiService.wantsOptions()) {
-                    <!-- Destination Tag and Source Tag -->
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label for="destinationTagField">Destination Tag </label>
-                              <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
-                              <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
-                         </div>
-
-                         <div class="form-group">
-                              <label for="sourceTagField">Source Tag</label>
-                              <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
-                              <input type="text" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" name="sourceTagField" />
-                         </div>
-                    </div>
-
-                    <!-- Source Tag & Invoice ID (create only) -->
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label for="invoiceIdField">Invoice ID</label>
-                              <p class="form-hint">
-                                   64-character hexadecimal string (e.g. sha256 hash).
-                                   <a href="https://xrpl.org/docs/references/protocol/transactions/types/payment#invoiceid" target="_blank" class="external-link">Learn more</a>
-                              </p>
-                              <input type="text" id="invoiceIdField" placeholder="64 hex chars (optional)" [ngModel]="txUiService.invoiceIdField()" maxlength="64" pattern="[0-9a-fA-F]{0,64}" />
-                         </div>
-                    </div>
+                    <app-transaction-options-section></app-transaction-options-section>
                     }
 
                     <!-- Expiration (create only) -->

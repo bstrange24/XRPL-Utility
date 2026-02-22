@@ -1565,7 +1565,7 @@ export class ValidationService {
           // TrustSet
           this.registerRule({
                transactionType: 'TrustSet',
-               requiredFields: ['currency', 'issuer', 'amount'],
+               requiredFields: ['wallet.seed', 'setTrustline.trustlineLimitField', 'setTrustline.currencyCode', 'setTrustline.currencyIssuer'],
                validators: [
                     ctx => {
                          const seed = this.getSeed(ctx);
@@ -1575,8 +1575,10 @@ export class ValidationService {
                          }
                          return null;
                     },
+
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
-                    ctx => (Number(ctx.inputs['amount']) < 0 ? 'Trust amount cannot be negative' : null),
+
+                    this.optionalNumeric('channelIDField.trustlineLimitField', 0),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1589,7 +1591,6 @@ export class ValidationService {
 
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
-                    this.isValidAddress('issuer'),
                ],
           });
 

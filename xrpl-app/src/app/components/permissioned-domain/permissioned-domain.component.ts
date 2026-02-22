@@ -20,8 +20,8 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
-import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
+import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
+import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';

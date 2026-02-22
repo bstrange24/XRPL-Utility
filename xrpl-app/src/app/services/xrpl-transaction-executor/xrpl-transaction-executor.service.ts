@@ -24,8 +24,8 @@ export class XrplTransactionExecutorService {
           private readonly xrplService: XrplService
      ) {}
 
-     async execute<T extends xrpl.Transaction>(client: xrpl.Client, wallet: xrpl.Wallet, tx: T, options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; regularKeyAddress?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean; paymentType?: string; amount?: any; destination?: string }): Promise<{ success: true; hash: string } | { success: false; error: string }> {
-          const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', regularKeyAddress = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false, paymentType = 'XRP', amount = '0', destination = '' } = options;
+     async execute<T extends xrpl.Transaction>(client: xrpl.Client, wallet: xrpl.Wallet, tx: T, options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; regularKeyAddress?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean; paymentType?: string; amount?: any; destination?: string; submitAndWait?: boolean }): Promise<{ success: true; hash: string } | { success: false; error: string }> {
+          const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', regularKeyAddress = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false, paymentType = 'XRP', amount = '0', destination = '', submitAndWait = false } = options;
 
           if (!this.txUiService.isSimulateEnabled()) this.txUiService.currentStep.set('preparing');
 
@@ -65,12 +65,19 @@ export class XrplTransactionExecutorService {
                          return { success: false, error: 'Failed to sign transaction.' };
                     }
 
-                    response = await this.xrplTransactions.submitTransaction1(client, signedTx);
+                    if (submitAndWait) {
+                         response = await this.xrplTransactions.submitTransaction(client, signedTx);
+                    } else {
+                         response = await this.xrplTransactions.submitTransaction1(client, signedTx);
+                    }
+
                     this.txUiService.currentStep.set('waiting_validation');
                }
 
                // 5. Handle result
                // this.txUiService.addTxResultSignal(response.result);
+
+               console.log('response: ', response);
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
@@ -579,6 +586,7 @@ export class XrplTransactionExecutorService {
                isRegularKeyAddress?: boolean;
                regularKeyAddress?: string;
                regularKeySeed?: string;
+               submitAndWait?: boolean;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {

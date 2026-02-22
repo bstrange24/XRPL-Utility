@@ -21,8 +21,8 @@ import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
-import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
+import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
+import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { from, switchMap } from 'rxjs';
@@ -34,11 +34,12 @@ import { CheckTransactionOrchestrator } from '../../services/checks/checks-trans
 import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { TrustlineOrchestratorService } from '../../services/trustline-currency/trustline-orchestrator/trustline-orchestrator.service';
+import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
 
 @Component({
      selector: 'app-checks',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, TransactionOptionsSectionComponent],
      templateUrl: './checks.component.html',
      styleUrl: './checks.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -81,7 +82,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      cancellableChecks = signal<any[]>([]);
      cashableChecks = signal<any[]>([]);
      existingChecks = signal<any[]>([]);
-     outstandingChecksCollapsed = signal(true);
+     outstandingChecksCollapsed = signal<boolean>(true);
      existingIOUs = signal<any[]>([]);
      existingMpts = signal<any[]>([]);
 
@@ -94,7 +95,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      private readonly createCheckSpecificKeys = ['amountField', 'destinationTagField', 'sourceTagField', 'invoiceIdField', 'currencyCode', 'currencyIssuer'] as const;
      private readonly cashCheckSpecificKeys = ['amountField', 'checkIdField', 'currencyCode', 'currencyIssuer', 'checkCreator'] as const;
-     private readonly setTrustlineSpecificKeys = ['trustlineLimitField', 'currencyCode', 'currencyIssuer'] as const;
+     private readonly setTrustlineSpecificKeys = ['trustlineLimitField', 'currencyCode', 'currencyIssuer', 'submitAndWait'] as const;
      private readonly cancelCheckSpecificKeys = ['checkIdField'] as const;
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.wallets().length > 0);
@@ -220,7 +221,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      constructor() {
           super();
-
           effect(() => {
                const item = this.selectedCheckItem();
                if (item) {
@@ -239,7 +239,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.transactionDropdownService.loadCustomDestinations();
           this.setupWalletSubscriptions();
           this.setExpirationToNow();
-
           // Force initial default + balance refresh
           this.trustlineCurrencyService.resetToDefault();
      }
@@ -512,10 +511,15 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          }
                     }
 
+                    console.log(`${env.wallet.classicAddress} trustlines: ${env.trustlines}`);
+
+                    let trustlinesToCheck: any = env.trustlines;
                     if (this.txUiService.showEnableTrustline()) {
                          const currencyCode = this.txUiService.missingTrustlineInfo.currencyCode();
                          const currencyIssuer = this.txUiService.missingTrustlineInfo.issuer();
                          if (!currencyCode || !currencyIssuer) return;
+
+                         this.txUiService.submitAndWait.set(true);
 
                          const resetTrustlinesult = await this.trustlineOrchestratorService.executeTrustlineTx('setTrustline', {
                               wallet: this.currentWallet(),
@@ -533,58 +537,43 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                               },
                          });
 
-                         // const trustResult = await this.trustlineOrchestratorService.createTrustline({
-                         //      wallet: this.currentWallet(),
-                         //      currency: info.currency,
-                         //      issuer: info.issuer,
-                         //      limit: '1000000000', // or dynamic
-                         // });
-
                          if (!resetTrustlinesult.success) {
                               this.toastService.error(resetTrustlinesult.error || 'Failed to create trustline');
                               return;
                          }
 
                          this.toastService.success('Trustline created successfully.');
+
+                         const updatedEnv = await this.txEnvironmentService.prepareTxEnvironment({
+                              includeTrustlines: true,
+                              forceRefresh: true,
+                         });
+
+                         trustlinesToCheck = updatedEnv.trustlines ?? [];
                     }
+
+                    console.log('trustlinesToCheck:', trustlinesToCheck);
 
                     if (currencyCode !== AppConstants.XRP_CURRENCY) {
                          const issuer = this.txUiService.currencyIssuer();
-                         const hasTrustline = await this.trustlineCurrencyService.hasTrustline(env.trustlines!, currencyCode, issuer);
+                         const hasTrustline = await this.trustlineCurrencyService.hasTrustline(trustlinesToCheck, currencyCode, issuer);
 
                          console.log('hasTrustline for', currencyCode, issuer, ':', hasTrustline);
 
-                         if (!hasTrustline) {
-                              // ────────────────────────────────────────
+                         if (hasTrustline) {
+                              this.txUiService.showEnableTrustline.set(false);
+                         } else {
                               // Fix: show the slider / section when MISSING
-                              // ────────────────────────────────────────
-                              this.txUiService.showEnableTrustline.set(true); // ← changed
+                              this.txUiService.showEnableTrustline.set(true);
 
                               this.txUiService.missingTrustlineInfo.currencyCode.set(currencyCode);
                               this.txUiService.missingTrustlineInfo.issuer.set(issuer);
 
                               // Optional: better user message
-                              this.toastService.error(`No trustline found for ${currencyCode} (${issuer}). ` + `Enable trustline below to proceed with cashing.`, AppConstants.TOAST.ERROR);
+                              this.toastService.error(`No trustline found for ${currencyCode} (${issuer}).\nEnable trustline below to proceed with cashing.`, AppConstants.TOAST.ERROR);
                               return;
-                         } else {
-                              this.txUiService.showEnableTrustline.set(false);
                          }
                     }
-
-                    // const issuer = this.txUiService.currencyIssuer();
-                    // if (currencyCode !== AppConstants.XRP_CURRENCY) {
-                    //      const hasLine = await this.trustlineCurrencyService.hasTrustline(env.trustlines!, currencyCode, issuer);
-                    //      console.log('hasLine', hasLine);
-
-                    //      if (!hasLine) {
-                    //           this.txUiService.showEnableTrustline.set(true);
-                    //           this.txUiService.missingTrustlineInfo.currencyCode.set(currencyCode);
-                    //           this.txUiService.missingTrustlineInfo.issuer.set(issuer);
-
-                    //           this.toastService.error(`No trustline found for ${currencyCode}. Enable trustline to proceed.`, AppConstants.TOAST.ERROR);
-                    //           return;
-                    //      }
-                    // }
 
                     const result = await this.checkTransactionOrchestrator.executeCheckTx('cash', {
                          wallet: this.currentWallet(),

@@ -28,8 +28,8 @@ import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators'
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
-import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
+import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
+import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { ToastService } from '../../services/toast/toast.service';

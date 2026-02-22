@@ -27,7 +27,7 @@ import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
+import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 
@@ -450,10 +450,10 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     const { setFlags, clearFlags } = this.utilsService.getFlagUpdates(accountInfo.result.account_flags);
 
                     this.accountInfo = accountInfo;
-                    const errors = await this.validationService.validate('UpdateAccountFlags', { inputs: { seed: this.currentWallet().seed, accountInfo, flags: accountInfo.result.account_flags, setFlags: setFlags, clearFlags: clearFlags }, client });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
-                    }
+                    // const errors = await this.validationService.validate('UpdateAccountFlags', { inputs: { seed: this.currentWallet().seed, accountInfo, flags: accountInfo.result.account_flags, setFlags: setFlags, clearFlags: clearFlags }, client });
+                    // if (errors.length > 0) {
+                    //      return this.txUiService.setError(errors.length === 1 ? errors[0] : `Errors:\n• ${errors.join('\n• ')}`);
+                    // }
 
                     this.txUiService.showSpinnerWithDelay(this.txUiService.isSimulateEnabled() ? 'Simulating Flag Modifications (no changes will be made)...' : 'Submitting Flag Modifications to Ledger...', 200);
 

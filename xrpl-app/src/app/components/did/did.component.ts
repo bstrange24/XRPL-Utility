@@ -16,7 +16,7 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import didSchema from './did-schema.json';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { TransactionOptionsComponent } from '../common/transaction-options/transaction-options.component';
+import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
@@ -26,7 +26,7 @@ import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { TooltipLinkComponent } from '../common/tooltip-link/tooltip-link.component';
+import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { JsonEditorComponent } from '../json-editor/json-editor.component';
 
 interface DidItem {
