@@ -1578,7 +1578,7 @@ export class ValidationService {
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    this.optionalNumeric('channelIDField.trustlineLimitField', 0),
+                    this.optionalNumeric('setTrustline.trustlineLimitField', 0),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1597,7 +1597,7 @@ export class ValidationService {
           // RemoveTrustline
           this.registerRule({
                transactionType: 'RemoveTrustline',
-               requiredFields: ['currency', 'issuer'],
+               requiredFields: ['removeTrustline.trustlineLimitField','removeTrustline.currencyCode', 'removeTrustline.currencyIssuer'],
                validators: [
                     ctx => {
                          const seed = this.getSeed(ctx);
@@ -1607,6 +1607,7 @@ export class ValidationService {
                          }
                          return null;
                     },
+
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
@@ -1627,7 +1628,7 @@ export class ValidationService {
           // IssueCurrency
           this.registerRule({
                transactionType: 'IssueCurrency',
-               requiredFields: ['currency', 'issuer', 'amount'],
+               requiredFields: ['wallet.seed', 'issueCurrency.destination','issueCurrency.trustlineLimitField','issueCurrency.currencyCode', 'issueCurrency.currencyIssuer'],
                validators: [
                     ctx => {
                          const seed = this.getSeed(ctx);
@@ -1637,21 +1638,34 @@ export class ValidationService {
                          }
                          return null;
                     },
-                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
-                    ctx => (Number(ctx.inputs['amount']) < 0 ? 'Trust amount cannot be negative' : null),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    this.positiveAmount('issueCurrency'),
+                    // Destination address valid
+                    this.isValidAddress('issueCurrency.destination'),
+                    this.requireDestinationTagIfNeeded('issueCurrency'),
+
+                    this.validDestinationTag('issueCurrency'),
+                    this.validSourceTag('issueCurrency'),
+                    this.validInvoiceId('issueCurrency'),
+
+                    this.optionalNumeric('destinationTag', 0),
+                    this.optionalNumeric('sourceTag', 0),
+
+                    // // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
+                    // // Ticket validation
                     this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    // // Regular Key signing requirements (only if selected and not multi-signing)
                     ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    // // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
-                    this.isValidAddress('issuer'),
+
+                    this.invoiceId('paymentXrp'),
                ],
           });
 
