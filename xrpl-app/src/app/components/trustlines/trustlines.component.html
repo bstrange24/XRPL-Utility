@@ -26,7 +26,7 @@
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'issueCurrency'" (click)="setTab('issueCurrency')">
                          <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Issue IOU
+                         Send / Issue Currency
                     </button>
                     <button class="menu-btn" [class.active]="activeTab() === 'clawbackTokens'" (click)="setTab('clawbackTokens')">
                          <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
@@ -67,8 +67,8 @@
                          <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
                     </div>
                     <div>
-                         <h2 class="submenu-info-main-text">Issue Currency</h2>
-                         <p class="submenu-info-secondary-text">Issue currency to another XRPL address</p>
+                         <h2 class="submenu-info-main-text">Send / Issue Currency</h2>
+                         <p class="submenu-info-secondary-text">Send / Issue currency to another XRPL address</p>
                     </div>
                     }
 
@@ -106,13 +106,30 @@
                               <code>{{ info.walletName }}</code>
 
                               @if (info.trustlineCount === 0) {
+                              <span> {{ info.emptyMessage }}</span>
+                              } @else {
+                              <span>
+                                   has <strong class="object-count">{{ info.trustlineCount }}</strong>
+                                   {{ info.countText }}.
+                              </span>
+                              } @if (info.helpHint) {
+                              <br />
+                              <span>({{ info.helpHint }})</span>
+                              }
+                         </div>
+
+                         <!-- <div class="summary-text">
+                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
+                              <code>{{ info.walletName }}</code>
+
+                              @if (info.trustlineCount === 0) {
                               <span> has no trustlines.</span>
                               } @else {
                               <span> has <strong class="object-count">{{ info.trustlineCount }}</strong> trustline{{ info.trustlineCount === 1 ? '' : 's' }} @switch (info.activeTab) { @case ('setTrustline') { available to set. } @case ('removeTrustline') { that can be removed. } @case ('issueCurrency') { available for issuing tokens. } @case ('clawbackTokens') { that support clawback. } @case ('addNewIssuers') { configured. } } </span>
                               } @if (info.links) {
-                              <!-- <div class="xrpl-win-link-small"><span [innerHTML]="info.links"></span> on XRPL Win</div> -->
+                              <div class="xrpl-win-link-small"><span [innerHTML]="info.links"></span> on XRPL Win</div>
                               }
-                         </div>
+                         </div> -->
 
                          <!-- Expand/Collapse toggle (only when there are trustlines) -->
                          @if (info.trustlineCount > 0) {
@@ -235,20 +252,36 @@
                          <div class="tab-content-container form-fields-container">
                               @if (activeTab() === 'setTrustline' || activeTab() === 'removeTrustline' || activeTab() === 'issueCurrency' || activeTab() === 'clawbackTokens') {
                               <app-currency-form-section [layout]="currencyLayout()" [currencyItems]="currencyItems()" [issuerItems]="issuerItems()" [selectedCurrency]="selectedCurrencyItem()" [selectedIssuer]="selectedIssuerItem()" [amount]="txUiService.amountField()" [currencyBalance]="currencyBalanceField()" (currencyChange)="onCurrencySelected($event)" (issuerChange)="onIssuerSelected($event)" (amountChange)="utilsService.updateAmount($event)"> </app-currency-form-section>
-                              }
+                              @if(activeTab() === 'setTrustline' && trustlineAlreadyExist()) {
+                              <div class="warning-panel">
+                                   <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                                   Trustline already exist for this currency/issuer pair.
+                              </div>
+                              } @if(activeTab() === 'removeTrustline' && !removeTrustlineAviable()) {
+                              <div class="warning-panel" style="display: flow-root">
+                                   <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
+                                   <strong> Unable to remove trustline:</strong>
+                                   <ul>
+                                        @for (reason of removeTrustlineMessage(); track reason) {
+                                        <li>{{ reason }}</li>
+                                        }
+                                   </ul>
+                              </div>
+                              } }
 
                               <!-- Destination and Destination Tag -->
                               @if (activeTab() === 'issueCurrency' || activeTab() === 'clawbackTokens') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label for="destination">Destination</label>
                                         @if (activeTab() === 'issueCurrency') {
-                                        <p class="form-hint">The unique address of the account receiving the payment.</p>
+                                        <label for="formTitle" class="dynamic-title">{{ formTitle() }}</label>
+                                        <p class="form-hint dynamic-hint">{{ hintText() }}</p>
+                                        <!-- <p class="form-hint">The unique address of the account receiving the payment.</p> -->
                                         } @else{
+                                        <label for="formTitle">Destination</label>
                                         <p class="form-hint">Tokens will be clawback from this address.</p>
                                         }
                                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                        <!-- <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" /> -->
                                    </div>
 
                                    @if (activeTab() === 'issueCurrency') {
@@ -312,6 +345,7 @@
                               }
                          </div>
 
+                         <!-- Trustline Flags -->
                          @if (activeTab() === 'setTrustline' || activeTab() === 'removeTrustline') {
                          <div class="tab-content-container flags-container" style="min-width: 350px">
                               <div class="flags-wrapper">
@@ -443,15 +477,15 @@
                     <div class="button-row">
                          <!-- Set Trustline -->
                          @if(activeTab() === 'setTrustline') {
-                         <button type="button" class="btn-primary-blue" (click)="setTrustLine()" [disabled]="!isIdle() || !hasWallets()">{{ trustlineCurrencyService.trustlineSetButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-blue" (click)="setTrustLine()" [disabled]="!isIdle() || !hasWallets() || trustlineAlreadyExist()">{{ trustlineCurrencyService.trustlineSetButtonLabel() }}</button>
                          }
                          <!-- Remove Trustline -->
                          @else if (activeTab() === 'removeTrustline') {
-                         <button type="button" class="btn-primary-red" (click)="removeTrustline()" [disabled]="!isIdle() || !hasWallets()">{{ trustlineCurrencyService.trustlineRemoveButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-red" (click)="removeTrustline()" [disabled]="!isIdle() || !hasWallets() || !removeTrustlineAviable()">{{ trustlineCurrencyService.trustlineRemoveButtonLabel() }}</button>
                          }
                          <!-- Issue Currency -->
                          @else if (activeTab() === 'issueCurrency') {
-                         <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="!isIdle() || !hasWallets()">{{ trustlineCurrencyService.issueCurrencyButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-green" (click)="issueCurrency()" [disabled]="!isIdle() || !hasWallets()">{{ actionButtonLabel() }}</button>
                          }
                          <!-- Clawback Tokens -->
                          @else if (activeTab() === 'clawbackTokens') {
@@ -459,7 +493,7 @@
                          }
                          <!-- Add New Issuers -->
                          @if (activeTab() !== 'addNewIssuers') {
-                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets$ | async)" (click)="clearFields()">Clear Fields</button>
+                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!isIdle() || !hasWallets()" (click)="clearInputFields()">Clear Fields</button>
                          }
                     </div>
 

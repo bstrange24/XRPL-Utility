@@ -743,7 +743,7 @@ export class UtilsService {
                return currencyCode.trim();
           }
 
-          if (currencyCode.match(/^[a-fA-F0-9]{40}$/) && !Number.isNaN(Number.parseInt(currencyCode, 16))) {
+          if (new RegExp(/^[a-fA-F0-9]{40}$/).exec(currencyCode) && !Number.isNaN(Number.parseInt(currencyCode, 16))) {
                // Hexadecimal currency code
                const hex = currencyCode.toString().replaceAll(/(00)+$/g, '');
                if (hex.startsWith('01')) {
@@ -754,7 +754,7 @@ export class UtilsService {
                     // XLS-16d NFT Metadata using XLS-15d Concise Transaction Identifier
                     // https://github.com/XRPLF/XRPL-Standards/discussions/37
                     const xlf15d = Buffer.from(hex, 'hex').slice(8).toString('utf-8').slice(0, maxLength).trim();
-                    if (xlf15d.match(/[a-zA-Z0-9]{3,}/) && xlf15d.toLowerCase() !== 'xrp') {
+                    if (new RegExp(/[a-zA-Z0-9]{3,}/).exec(xlf15d) && xlf15d.toLowerCase() !== 'xrp') {
                          return xlf15d;
                     }
                }
@@ -762,10 +762,14 @@ export class UtilsService {
                     return 'LP Token ' + hex;
                }
                const decodedHex = Buffer.from(hex, 'hex').toString('utf-8').slice(0, maxLength).trim();
-               if (decodedHex.match(/[a-zA-Z0-9]{3,}/) && decodedHex.toLowerCase() !== 'xrp') {
+               if (new RegExp(/[a-zA-Z0-9]{3,}/).exec(decodedHex) && decodedHex.toLowerCase() !== 'xrp') {
                     // ASCII or UTF-8 encoded alphanumeric code, 3+ characters long
                     return decodedHex;
                }
+          }
+
+          if (currencyCode.length > 3) {
+               return this.encodeIfNeeded(currencyCode);
           }
           return '';
      }

@@ -347,8 +347,8 @@ export const AppConstants = {
      MIN_FEE: '10',
      MAX_ESCROW_FEE: '24',
      TOAST: {
-          SUCCESS: 6000,
-          ERROR: 7000,
+          SUCCESS: 4000,
+          ERROR: 4000,
           INFO: 4000,
      },
 
@@ -359,6 +359,7 @@ export const AppConstants = {
                tfClearNoRipple: false,
                tfSetFreeze: false,
                tfClearFreeze: false,
+               tfSetDeepFreeze: false,
           },
           FLAG_LIST: [
                { key: 'tfSetfAuth', label: 'Require Authorization (tfSetfAuth)' },
@@ -366,6 +367,7 @@ export const AppConstants = {
                { key: 'tfClearNoRipple', label: 'Clear No Ripple (tfClearNoRipple)' },
                { key: 'tfSetFreeze', label: 'Set Freeze (tfSetFreeze)' },
                { key: 'tfClearFreeze', label: 'Clear Freeze (tfClearFreeze)' },
+               { key: 'tfSetDeepFreeze', label: 'Set Freeze (tfSetDeepFreeze)' },
           ],
           FLAG_MAP: {
                tfSetfAuth: TrustSetFlags.tfSetfAuth,
@@ -373,6 +375,7 @@ export const AppConstants = {
                tfClearNoRipple: TrustSetFlags.tfClearNoRipple,
                tfSetFreeze: TrustSetFlags.tfSetFreeze,
                tfClearFreeze: TrustSetFlags.tfClearFreeze,
+               tfSetDeepFreeze: TrustSetFlags.tfSetDeepFreeze,
           },
           LEDGER_FLAG_MAP: {
                lsfLowAuth: 0x00010000,

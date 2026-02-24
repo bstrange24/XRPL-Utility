@@ -19,8 +19,6 @@ interface TrustLineTxConfig {
      formValues: {
           amountField?: string;
           destinationAddress?: string;
-          checkIdField?: string;
-          checkCreator?: string;
           currency?: string;
           issuer?: string;
           submitAndWait?: boolean;
@@ -31,6 +29,8 @@ interface TrustLineTxConfig {
           regularKeyAddress?: string;
           regularKeySeed?: string;
           multiSignAddress?: string;
+          trustlineFlags?: any;
+          suppressIndividualFeedback?: boolean;
           multiSignSeeds?: string | string[];
           [key: string]: any;
      };
@@ -120,7 +120,7 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
                }
 
                // 3. Build transaction
-               const tx = this.buildCheckTransaction(type, env.wallet, env, formValues, extra);
+               const tx = this.buildTrustlineTransaction(type, env.wallet, env, formValues, extra);
 
                // 4. Apply optional fields
                await this.applyOptionalFields(client, tx, env.wallet, env.accountInfo, type, extra);
@@ -164,7 +164,7 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
                setTrustline: 'TrustSet',
                removeTrustline: 'RemoveTrustline',
                issueCurrency: 'IssueCurrency',
-               clawbackTokens: 'CancelCheck',
+               clawbackTokens: 'ClawbackTokens',
           };
 
           return ruleMap[type];
@@ -210,7 +210,7 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
                          trustlineLimitField: formValues.amountField,
                          currencyCode: formValues.currencyCode,
                          currencyIssuer: formValues.currencyIssuer,
-                         destination: formValues.destination,
+                         destination: formValues.destinationAddress,
                     },
                };
           }
@@ -218,40 +218,52 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
           // clawbackTokens
           return {
                ...base,
-               cancelCheck: {
-                    checkIdField: formValues.checkIdField,
+               clawbackTokens: {
+                    trustlineLimitField: formValues.amountField,
+                    currencyCode: formValues.currencyCode,
+                    currencyIssuer: formValues.currencyIssuer,
+                    destination: formValues.destinationAddress,
                },
           };
      }
 
-     private buildCheckTransaction(type: TrustLineTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
+     private buildTrustlineTransaction(type: TrustLineTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
           const { fee, currentLedger } = env;
 
           if (type === 'setTrustline') {
                let limitAmount = this.xrplTransactionService.buildAmount(formValues.currencyCode, formValues.trustlineLimitField, formValues.currencyIssuer ?? '');
                const tx: xrpl.TrustSet = this.xrplTransactionService.buildTrustlineSetTransaction(wallet, limitAmount.amountToCash, fee, currentLedger);
+
+               if (formValues.trustlineFlags) {
+                    tx.Flags = formValues.trustlineFlags;
+               }
+
                return tx;
           }
 
           if (type === 'removeTrustline') {
                let limitAmount = this.xrplTransactionService.buildAmount(formValues.currencyCode, '0', formValues.currencyIssuer ?? '');
                const tx: xrpl.TrustSet = this.xrplTransactionService.buildTrustlineSetTransaction(wallet, limitAmount.amountToCash, fee, currentLedger);
+
+               if (formValues.trustlineFlags) {
+                    tx.Flags = formValues.trustlineFlags;
+               }
+
                return tx;
           }
 
           if (type === 'issueCurrency') {
                let sendMax = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyCode, formValues.currencyIssuer ?? '', formValues.amountField, false).sendMax;
-               return this.xrplTransactionService.buildIssueCurrencyTransaction(wallet, sendMax, fee, currentLedger, formValues.checkIdField);
+               return this.xrplTransactionService.buildIssueCurrencyTransaction(wallet, sendMax, formValues.destinationAddress, fee, currentLedger);
           }
 
           // clawbackTokens
-          let sendMax = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyCode, formValues.currencyIssuer ?? '', formValues.amountField, false).sendMax;
-          return this.xrplTransactionService.buildClawbackTransaction(wallet, sendMax, fee, currentLedger, formValues.checkIdField);
+          return this.xrplTransactionService.buildClawbackTransaction(wallet, formValues, fee, currentLedger);
      }
 
-     private async applyOptionalFields(client: xrpl.Client, checkTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string, extra: any) {
-          if (txType === 'create') {
-               this.setCreateTxOptionalFields(checkTx, extra);
+     private async applyOptionalFields(client: xrpl.Client, trustlineTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string, extra: any) {
+          if (txType === 'create' || txType === 'issuedCurrency') {
+               this.setCreateTxOptionalFields(trustlineTx, extra);
           }
 
           const isTicket = this.txUiService.isTicket();
@@ -260,38 +272,30 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);
-                    this.utilsService.setTicketSequence(checkTx, ticket, true);
+                    this.utilsService.setTicketSequence(trustlineTx, ticket, true);
                }
           }
 
           const memoField = this.txUiService.memoField();
           if (this.txUiService.isMemoEnabled() && memoField) {
-               this.utilsService.setMemoField(checkTx, memoField);
+               this.utilsService.setMemoField(trustlineTx, memoField);
           }
      }
 
-     private setCreateTxOptionalFields(checkTx: any, extra: any) {
-          const expValue = extra.expiration;
-          if (expValue && expValue != '' && extra.enableExpirationDate) {
-               if (expValue?.trim()) {
-                    const checkExpiration = this.utilsService.toRippleTime(expValue);
-                    this.utilsService.setExpiration(checkTx, Number(checkExpiration));
-               }
-          }
-
+     private setCreateTxOptionalFields(trustlineTx: any, extra: any) {
           const invoiceIdField = this.txUiService.invoiceIdField();
           if (invoiceIdField) {
-               this.utilsService.setInvoiceIdField(checkTx, invoiceIdField);
+               this.utilsService.setInvoiceIdField(trustlineTx, invoiceIdField);
           }
 
           const sourceTagField = this.txUiService.sourceTagField();
           if (sourceTagField) {
-               this.utilsService.setSourceTagField(checkTx, sourceTagField);
+               this.utilsService.setSourceTagField(trustlineTx, sourceTagField);
           }
 
           const destinationTagField = this.txUiService.destinationTagField();
           if (destinationTagField) {
-               this.utilsService.setDestinationTag(checkTx, destinationTagField);
+               this.utilsService.setDestinationTag(trustlineTx, destinationTagField);
           }
      }
 
@@ -299,8 +303,9 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
           if (type === 'setTrustline') {
                return this.executor.setTrustline(tx as xrpl.TrustSet, wallet, client, {
                     // destination: formValues.destinationAddress,
-                    // paymentType: 'issued', // or determine from currency
-                    // amount: Number(formValues.amountField),
+                    paymentType: 'issued',
+                    suppressIndividualFeedback: formValues.suppressIndividualFeedback,
+                    customSpinnerMessage: `Settimg trustline...`,
                     submitAndWait: formValues.submitAndWait,
                     useMultiSign: formValues.useMultiSign,
                     isRegularKeyAddress: formValues.isRegularKeyAddress,
@@ -313,7 +318,7 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
 
           if (type === 'removeTrustline') {
                return this.executor.setTrustline(tx as xrpl.TrustSet, wallet, client, {
-                    // paymentType: 'issued', // improve later
+                    paymentType: 'issued', // improve later
                     useMultiSign: formValues.useMultiSign,
                     isRegularKeyAddress: formValues.isRegularKeyAddress,
                     regularKeyAddress: formValues.regularKeyAddress,
@@ -325,7 +330,7 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
 
           if (type === 'issueCurrency') {
                return this.executor.issueCurrency(tx as xrpl.Payment, wallet, client, {
-                    // paymentType: 'issued', // improve later
+                    paymentType: 'issued', // improve later
                     useMultiSign: formValues.useMultiSign,
                     isRegularKeyAddress: formValues.isRegularKeyAddress,
                     regularKeyAddress: formValues.regularKeyAddress,

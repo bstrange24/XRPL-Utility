@@ -31,6 +31,7 @@ interface CheckTxConfig {
           regularKeySeed?: string;
           multiSignAddress?: string;
           multiSignSeeds?: string | string[];
+          suppressIndividualFeedback?: boolean;
           [key: string]: any;
      };
      extra?: {
@@ -280,7 +281,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
           if (type === 'create') {
                return this.executor.checkCreate(tx as xrpl.CheckCreate, wallet, client, {
                     destination: formValues.destinationAddress,
-                    paymentType: 'issued', // or determine from currency
+                    // paymentType: 'issued', // or determine from currency
                     amount: Number(formValues.amountField),
                     useMultiSign: formValues.useMultiSign,
                     isRegularKeyAddress: formValues.isRegularKeyAddress,
@@ -293,7 +294,8 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
 
           if (type === 'cash') {
                return this.executor.checkCash(tx as xrpl.CheckCash, wallet, client, {
-                    paymentType: 'issued', // improve later
+                    // paymentType: 'issued', // improve later
+                    suppressIndividualFeedback: formValues.suppressIndividualFeedback,
                     useMultiSign: formValues.useMultiSign,
                     isRegularKeyAddress: formValues.isRegularKeyAddress,
                     regularKeyAddress: formValues.regularKeyAddress,

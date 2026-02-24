@@ -27,18 +27,37 @@ export class TransactionUiService {
      isError = signal(false);
      isSuccess = signal(false);
      suppressSuccessMessage = signal(false);
+     suppressIndividualFeedback = signal<boolean>(false);
+     submitAndWait = signal<boolean>(false);
      result = signal('');
      spinnerMessage = signal('');
      toastId = 0;
      errorMessageSignal = signal<string | null>(null);
+     spinner = signal(false);
+     currentWallet = signal<Wallet>({} as Wallet);
+     toasts = signal<Toast[]>([]);
+     paymentTxSignal = signal<any[]>([]);
+     txSignal = signal<any[]>([]);
+     txResultSignal = signal<any[]>([]);
+     txHashSignal = signal<string[]>([]);
+     successMessageSignal = signal<string>('');
+     spinnerMessageSignal = signal<string>('');
+     executionTime = signal<string>('');
+     wantsOptions = signal<boolean>(false);
+
+     // Payment
      amountField = signal('');
-     trustlineLimitField = signal(10000000);
      destinationTagField = signal('');
      invoiceIdField = signal('');
      sourceTagField = signal('');
      domainId = signal('');
+
+     // Checks
      checkIdField = signal('');
      checkCreator = signal<string>('');
+
+     // Tokens + Trustlines
+     trustlineLimitField = signal(0);
      currencyCode = signal<string>('XRP');
      currencyIssuer = signal<string>('');
      tokenToRemove = signal<string>('');
@@ -48,27 +67,47 @@ export class TransactionUiService {
      newCurrency = signal<string>('');
      newIssuer = signal<string>('');
      issuerToRemove = signal<string>('');
-
-     submitAndWait = signal<boolean>(false);
-     ticketCountField = signal('');
-     expirationTimeField = signal<string>('');
-     enableExpirationDate = signal<boolean>(false);
+     trustlineFlags = signal<number>(0);
      showEnableTrustline = signal<boolean>(false);
      missingTrustlineInfo = {
           currencyCode: signal(''),
           issuer: signal(''),
      };
-
-     selectedTicketSequences = signal<string[]>([]);
-     credentialIDs = signal<string[]>([]);
-     finishAfter = signal(0);
-     cancelAfter = signal(0);
      currency = signal('');
      issuer = signal('');
+
+     // Tickets
+     ticketCountField = signal('');
+     selectedTicketSequences = signal<string[]>([]);
+     isTicket = signal(false);
+     selectedSingleTicket = signal('');
+     selectedTickets = signal<string[]>([]);
+     multiSelectMode = signal(false);
+     ticketArray = signal<string[]>([]);
+
+     // Expiration Dates
+     expirationTimeField = signal<string>('');
+     enableExpirationDate = signal<boolean>(false);
+     finishAfter = signal(0);
+     cancelAfter = signal(0);
+
+     // Credentials
+     credentialIDs = signal<string[]>([]);
+
+     // Account config
+     memoField = signal('');
+     multiSignAddress = signal('');
+     multiSignSeeds = signal('');
+     signerQuorum = signal(0);
+     regularKeyAddress = signal('');
+     regularKeySeed = signal('');
      isMemoEnabled = signal(false);
      useMultiSign = signal(false);
      isRegularKeyAddress = signal(false);
-     isTicket = signal(false);
+     regularKeySigningEnabled = signal(false);
+     multiSigningEnabled = signal(false);
+     signers: WritableSignal<Signer[]> = signal<Signer[]>([{ Account: '', seed: '', SignerWeight: 1 }]);
+     depositAuthAddresses = signal<{ account: string }[]>([{ account: '' }]);
      walletTicketCount = signal<number>(0);
      isSimulateEnabled = signal(false);
      masterKeyDisabled = signal(false);
@@ -88,48 +127,27 @@ export class TransactionUiService {
      domain = signal<string>('');
      avatarUrl = signal<string>('');
      userEmail = signal('');
-     channelIDField = signal<string>('');
-     settleDelayField = signal<string>('');
-     publicKeyField = signal<string>('');
-     channelClaimSignatureField = signal<string>('');
-     authorizedWalletAddress = signal<string>('');
-     authorizedWallets: { name?: string; address: string }[] = [];
-     memoField = signal('');
-     multiSignAddress = signal('');
-     multiSignSeeds = signal('');
-     signerQuorum = signal(0);
-     regularKeyAddress = signal('');
-     regularKeySeed = signal('');
-     selectedSingleTicket = signal('');
-     selectedTickets = signal<string[]>([]);
-     multiSelectMode = signal(false);
-     ticketArray = signal<string[]>([]);
-     regularKeySigningEnabled = signal(false);
-     multiSigningEnabled = signal(false);
-     signers: WritableSignal<Signer[]> = signal<Signer[]>([{ Account: '', seed: '', SignerWeight: 1 }]);
-     depositAuthAddresses = signal<{ account: string }[]>([{ account: '' }]);
-     spinner = signal(false);
-     currentWallet = signal<Wallet>({} as Wallet);
-     toasts = signal<Toast[]>([]);
-     paymentTxSignal = signal<any[]>([]);
-     txSignal = signal<any[]>([]);
-     txResultSignal = signal<any[]>([]);
-     txHashSignal = signal<string[]>([]);
-     successMessageSignal = signal<string>('');
-     spinnerMessageSignal = signal<string>('');
-     executionTime = signal<string>('');
      url = signal<string>('');
-     wantsOptions = signal<boolean>(false);
-     mptIssuanceIdField = signal<string>('');
+
+     // Escrows
      escrowFinishTimeField = signal<string>('');
      escrowCancelTimeField = signal<string>('');
      escrowOwnerField = signal<string>('');
      escrowSequenceNumberField = signal<string>('');
      escrowConditionField = signal<string>('');
      escrowFulfillmentField = signal<string>('');
+
+     // Payment Channel
+     channelIDField = signal<string>('');
+     settleDelayField = signal<string>('');
+     publicKeyField = signal<string>('');
+     channelClaimSignatureField = signal<string>('');
+     authorizedWalletAddress = signal<string>('');
+     authorizedWallets: { name?: string; address: string }[] = [];
      paymentChannelCancelAfterTimeField = signal<string>('');
 
      // MPT
+     mptIssuanceIdField = signal<string>('');
      isMptEnabled = signal(false);
      metaDataField = signal<string>('');
      authAction = signal<string>('authorize');
@@ -195,13 +213,6 @@ export class TransactionUiService {
           const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
           return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
      });
-
-     // private readonly _infoData = new BehaviorSubject<any | null>(null);
-     // infoData$ = this._infoData.asObservable();
-
-     // setInfoData(data: any | null) {
-     //      this._infoData.next(data);
-     // }
 
      setPaymentTxSignal(tx: any) {
           this.paymentTxSignal.set(Array.isArray(tx) ? tx : [tx]);

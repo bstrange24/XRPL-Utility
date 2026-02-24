@@ -250,6 +250,7 @@ export class XrplTransactionExecutorService {
                regularKeyAddress?: string;
                regularKeySeed?: string;
                paymentType?: string;
+               suppressIndividualFeedback?: boolean;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
@@ -586,7 +587,10 @@ export class XrplTransactionExecutorService {
                isRegularKeyAddress?: boolean;
                regularKeyAddress?: string;
                regularKeySeed?: string;
+               paymentType?: string;
+               suppressIndividualFeedback?: boolean;
                submitAndWait?: boolean;
+               customSpinnerMessage?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {
@@ -629,6 +633,7 @@ export class XrplTransactionExecutorService {
                isRegularKeyAddress?: boolean;
                regularKeyAddress?: string;
                regularKeySeed?: string;
+               paymentType?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
           return this.execute(client, wallet, tx, {

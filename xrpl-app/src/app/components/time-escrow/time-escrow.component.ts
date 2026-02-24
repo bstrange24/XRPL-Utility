@@ -41,10 +41,6 @@ import { TrustlineCurrencyService } from '../../services/trustline-currency/trus
      selector: 'app-time-escrow',
      standalone: true,
      imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent],
-     animations: [
-          trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])]),
-          trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-20px)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(100%)' }))])]),
-     ],
      templateUrl: './time-escrow.component.html',
      styleUrl: './time-escrow.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,7 +56,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
-     public readonly trustlineCurrency = inject(TrustlineCurrencyService);
+     public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly txEnvironmentService = inject(TxEnvironmentService);
      public readonly transactionDropdownService = inject(TransactionDropdownService);
@@ -110,10 +106,10 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
 
      selectedEscrowItem = computed(() => this.escrowUtilService.selectedEscrowItem(this.escrowItems(), this.escrowSequenceNumberField()));
 
-     selectedIssuerAddress = computed(() => this.trustlineCurrency.getSelectedIssuer());
+     selectedIssuerAddress = computed(() => this.trustlineCurrencyService.getSelectedIssuer());
 
      // Currency dropdown → use service
-     currencyItems = this.trustlineCurrency.getCurrencyItems();
+     currencyItems = this.trustlineCurrencyService.getCurrencyItems();
 
      // Selected currency
      selectedCurrencyItem = computed(() => {
@@ -123,11 +119,11 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      });
 
      // Issuer dropdown → use service
-     issuerItems = this.trustlineCurrency.getIssuerItems();
+     issuerItems = this.trustlineCurrencyService.getIssuerItems();
 
      // Selected issuer
      selectedIssuerItem = computed(() => {
-          const addr = this.trustlineCurrency.selectedIssuer();
+          const addr = this.trustlineCurrencyService.selectedIssuer();
           if (!addr) return null;
           return this.issuerItems().find(item => item.id === addr) || null;
      });
@@ -226,15 +222,15 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           this.txUiService.mptIssuanceIdField.set(item?.id || '');
      }
 
-     currencyBalanceField = this.trustlineCurrency.balance;
+     currencyBalanceField = this.trustlineCurrencyService.balance;
 
      constructor() {
           super();
           // Auto-select typed address if it's valid and not already selected
           effect(() => {
-               if (this.trustlineCurrency.currencies().length > 0 && !this.currencyFieldDropDownValue()) {
-                    this.currencyFieldDropDownValue.set(this.trustlineCurrency.currencies()[0]);
-                    this.trustlineCurrency.selectCurrency(this.trustlineCurrency.currencies()[0], '');
+               if (this.trustlineCurrencyService.currencies().length > 0 && !this.currencyFieldDropDownValue()) {
+                    this.currencyFieldDropDownValue.set(this.trustlineCurrencyService.currencies()[0]);
+                    this.trustlineCurrencyService.selectCurrency(this.trustlineCurrencyService.currencies()[0], '');
                }
           });
 
@@ -253,14 +249,16 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      }
 
      ngOnInit(): void {
-          this.trustlineCurrency.setPreferXrpAsDefault(true); // ← this page wants XRP default
+          this.trustlineCurrencyService.setPreferXrpAsDefault(true);
+          this.trustlineCurrencyService.setXrpInDropdown(true);
+          this.trustlineCurrencyService.setAddMptInDropdown(true);
+
           this.transactionDropdownService.loadCustomDestinations();
           this.setupWalletSubscriptions();
           this.setExpirationToNow();
 
-          this.trustlineCurrency.setAddMptInDropdown(true);
-          if (this.trustlineCurrency.currencies().length > 0) {
-               this.trustlineCurrency.selectCurrency(this.trustlineCurrency.currencies()[0], '');
+          if (this.trustlineCurrencyService.currencies().length > 0) {
+               this.trustlineCurrencyService.selectCurrency(this.trustlineCurrencyService.currencies()[0], '');
           }
 
           this.txUiService.clearAllOptions();
@@ -269,13 +267,13 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      onCurrencySelected(item: SelectItem | null) {
           const currency = item?.id || 'XRP';
           this.currencyFieldDropDownValue.set(currency);
-          this.trustlineCurrency.selectCurrency(currency, '');
+          this.trustlineCurrencyService.selectCurrency(currency, '');
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      onIssuerSelected(item: SelectItem | null) {
           const address = item?.id || '';
-          this.trustlineCurrency.selectIssuer(address);
+          this.trustlineCurrencyService.selectIssuer(address);
      }
 
      private async setupWalletSubscriptions() {
@@ -315,6 +313,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      }
 
      private selectWallet(wallet: Wallet): void {
+          if (wallet?.address === this.currentWallet()?.address) return;
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
           if (this.selectedDestinationAddress() === wallet.address) {
@@ -399,13 +398,13 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                          this.existingEscrow.set(this.escrowUtilService.getExistingEscrows(accountObjects, wallet.classicAddress));
                          this.expiredOrFulfilledEscrows.set(await this.escrowUtilService.getExpiredOrFulfilledEscrows(accountObjects, wallet.classicAddress, this.activeTab()));
                          this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, wallet.classicAddress));
-                         this.existingIOUs.set(this.trustlineCurrency.getExistingIOUs(accountObjects, wallet.classicAddress));
+                         this.existingIOUs.set(this.trustlineCurrencyService.getExistingIOUs(accountObjects, wallet.classicAddress));
                          const escrows = await this.escrowUtilService.loadAllEscrows(accountObjects);
                          this.allEscrowsRaw.set(escrows);
 
                          const currencyValue = this.currencyFieldDropDownValue();
-                         if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.trustlineCurrency.selectedIssuer()) {
-                              this.trustlineCurrency.selectCurrency(currencyValue, '');
+                         if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.trustlineCurrencyService.selectedIssuer()) {
+                              this.trustlineCurrencyService.selectCurrency(currencyValue, '');
                          }
 
                          this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
@@ -437,9 +436,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                          destinationAddress,
                     });
 
-                    const { client, wallet, accountInfo, accountObjects, destinationAccountInfo } = env;
-
-                    if (!accountInfo || !accountObjects || !destinationAccountInfo) {
+                    if (!env.accountInfo || !env.accountObjects || !env.destinationAccountInfo) {
                          throw new Error('Failed to fetch account information');
                     }
 
@@ -449,16 +446,16 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                               ...this.getTransactionValues(),
                               destinationAddress,
                               currencyValue: this.currencyFieldDropDownValue?.() || 'XRP',
-                              issuer: this.trustlineCurrency?.selectedIssuer?.() || '',
+                              issuer: this.trustlineCurrencyService?.selectedIssuer?.() || '',
                          },
                          extra: {},
                          preFetchedEnv: {
-                              client,
-                              accountInfo,
-                              accountObjects,
+                              client: env.client,
+                              accountInfo: env.accountInfo,
+                              accountObjects: env.accountObjects,
                               fee: env.fee!,
                               currentLedger: env.currentLedger!,
-                              destinationAccountInfo,
+                              destinationAccountInfo: env.destinationAccountInfo,
                               wallet: env.wallet,
                          },
                     });
@@ -468,7 +465,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                          return;
                     }
 
-                    await this.refreshAfterTx(env.client, env.wallet, null, true);
+                    await this.refreshAfterTx(env.client, env.wallet, destinationAddress, true);
 
                     const currency = this.currencyFieldDropDownValue?.() || 'XRP';
                     if (currency !== 'XRP' && currency !== 'MPT') {
@@ -489,7 +486,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                     const { escrowSequenceNumberField, escrowOwner } = this.getTransactionValues();
 
                     if (!escrowSequenceNumberField) {
-                         return this.toastService.error('Sequence ID isrequired.', AppConstants.TOAST.ERROR);
+                         return this.toastService.error('Sequence ID is required.', AppConstants.TOAST.ERROR);
                     }
 
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
@@ -500,11 +497,9 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                          escrowSequenceNumberField: escrowSequenceNumberField,
                     });
 
-                    const { client, wallet, accountInfo, escrowObjectsBySequenceId } = env;
-
-                    const currentRippleTime = await this.xrplService.getCurrentRippleTime(client);
-                    const finishAfterNum = escrowObjectsBySequenceId.FinishAfter ? Number(escrowObjectsBySequenceId.FinishAfter) : undefined;
-                    const cancelAfterNum = escrowObjectsBySequenceId.CancelAfter ? Number(escrowObjectsBySequenceId.CancelAfter) : undefined;
+                    const currentRippleTime = await this.xrplService.getCurrentRippleTime(env.client);
+                    const finishAfterNum = env.escrowObjectsBySequenceId.FinishAfter ? Number(env.escrowObjectsBySequenceId.FinishAfter) : undefined;
+                    const cancelAfterNum = env.escrowObjectsBySequenceId.CancelAfter ? Number(env.escrowObjectsBySequenceId.CancelAfter) : undefined;
                     if (!finishAfterNum || !cancelAfterNum) {
                          throw new Error('Invalid escrow cancel after or finish after time');
                     }
@@ -515,7 +510,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                               owner: escrowOwner,
                          },
                          currentRippleTime,
-                         wallet.classicAddress
+                         env.wallet.classicAddress
                     );
 
                     if (!escrowStatus.canFinish && !escrowStatus.canCancel) {
@@ -535,8 +530,8 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                          formValues: { ...this.getTransactionValues(), escrowSequenceNumberField, escrowOwner },
                          extra: {},
                          preFetchedEnv: {
-                              client,
-                              accountInfo,
+                              client: env.client,
+                              accountInfo: env.accountInfo,
                               fee: env.fee!,
                               currentLedger: env.currentLedger!,
                               wallet: env.wallet,
@@ -579,18 +574,16 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                          includeEscrows: true,
                     });
 
-                    const { client, wallet, accountInfo, escrowObjects } = env;
-
-                    if (!accountInfo || !escrowObjects) {
+                    if (!env.accountInfo || !env.escrowObjects) {
                          throw new Error('Failed to fetch account information or escrows');
                     }
 
-                    let { escrow, escrowOwner }: { escrow: EscrowObject | undefined; escrowOwner: string } = await this.escrowUtilService.findEscrowAndOwner(escrowObjects, escrowSequenceNumberField);
+                    let { escrow, escrowOwner }: { escrow: EscrowObject | undefined; escrowOwner: string } = await this.escrowUtilService.findEscrowAndOwner(env.escrowObjects, escrowSequenceNumberField);
                     if (!escrow) {
                          return this.toastService.error(`No escrow found for sequence ${escrowSequenceNumberField}`, AppConstants.TOAST.ERROR);
                     }
 
-                    const currentRippleTime = await this.xrplService.getCurrentRippleTime(client);
+                    const currentRippleTime = await this.xrplService.getCurrentRippleTime(env.client);
                     const finishAfterNum = escrow.FinishAfter ? Number(escrow.FinishAfter) : undefined;
                     const cancelAfterNum = escrow.CancelAfter ? Number(escrow.CancelAfter) : undefined;
                     if (!finishAfterNum || !cancelAfterNum) {
@@ -603,7 +596,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                               owner: escrowOwner,
                          },
                          currentRippleTime,
-                         wallet.classicAddress
+                         env.wallet.classicAddress
                     );
 
                     if (!escrowStatus.canCancel) {
@@ -619,8 +612,8 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                          },
                          extra: {},
                          preFetchedEnv: {
-                              client,
-                              accountInfo,
+                              client: env.client,
+                              accountInfo: env.accountInfo,
                               accountObjects: env.accountObjects,
                               fee: env.fee!,
                               currentLedger: env.currentLedger!,
@@ -657,10 +650,10 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           const regularKeySeed = this.txUiService.regularKeySeed();
           const multiSignAddress = this.txUiService.multiSignAddress();
           const multiSignSeeds = this.txUiService.multiSignSeeds();
-          const currencyValue = this.utilsService.encodeIfNeeded(this.trustlineCurrency.currentCurrency());
+          const currencyValue = this.utilsService.encodeIfNeeded(this.trustlineCurrencyService.currentCurrency());
           const escrowSequenceNumberField = this.escrowSequenceNumberField();
           let escrowOwner = this.escrowOwnerField();
-          const issuer = this.trustlineCurrency.selectedIssuer();
+          const issuer = this.trustlineCurrencyService.selectedIssuer();
           const finishAfter = this.escrowFinishTimeField();
           const cancelAfter = this.escrowCancelTimeField();
           return { amount, isSimulate, useMultiSign, isRegularKeyAddress, regularKeyAddress, regularKeySeed, multiSignAddress, multiSignSeeds, currencyValue, escrowSequenceNumberField, escrowOwner, issuer, finishAfter, cancelAfter };
@@ -670,7 +663,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
           this.existingEscrow.set(this.escrowUtilService.getExistingEscrows(accountObjects, wallet.classicAddress));
           this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, wallet.classicAddress));
-          this.existingIOUs.set(this.trustlineCurrency.getExistingIOUs(accountObjects, wallet.classicAddress));
+          this.existingIOUs.set(this.trustlineCurrencyService.getExistingIOUs(accountObjects, wallet.classicAddress));
           this.expiredOrFulfilledEscrows.set(await this.escrowUtilService.getExpiredOrFulfilledEscrows(accountObjects, wallet.classicAddress, this.activeTab()));
           const escrows = await this.escrowUtilService.loadAllEscrows(accountObjects);
           this.allEscrowsRaw.set(escrows);
@@ -700,11 +693,11 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      }
 
      onCurrencyChange(currency: string) {
-          this.trustlineCurrency.selectCurrency(currency, '');
+          this.trustlineCurrencyService.selectCurrency(currency, '');
      }
 
      onIssuerChange(issuer: string) {
-          this.trustlineCurrency.selectIssuer(issuer);
+          this.trustlineCurrencyService.selectIssuer(issuer);
      }
 
      setExpirationToNow() {

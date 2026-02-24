@@ -29,6 +29,7 @@ export class TrustlineCurrencyService {
      private readonly currentIssuer = signal<string>('');
      private readonly balanceCache = new Map<string, { data: any; timestamp: number }>();
      public addMptInCurrencyDropdown = signal<boolean>(false);
+     public addXrpInCurrencyDropdown = signal<boolean>(false);
 
      // Keep track of current wallet from streams
      private latestWallets: Wallet[] = [];
@@ -117,47 +118,39 @@ export class TrustlineCurrencyService {
           this.balance$.subscribe(b => this.balance.set(b));
      }
 
-     readonly trustlineSetButtonLabel = computed(() => {
-          const step = this.txUiService.currentStep();
-          if (step === 'idle') return 'Set Trustline';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
-          return this.txUiService.stepMessage();
-     });
+     private buildTxLabel(defaultText: string) {
+          return computed(() => {
+               const step = this.txUiService.currentStep();
+               if (step === 'idle') return defaultText;
+               if (step === 'waiting_validation') return 'Waiting for confirmation...';
+               return this.txUiService.stepMessage();
+          });
+     }
 
-     readonly trustlineRemoveButtonLabel = computed(() => {
-          const step = this.txUiService.currentStep();
-          if (step === 'idle') return 'Remove Trustline';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
-          return this.txUiService.stepMessage();
-     });
+     readonly trustlineSetButtonLabel = this.buildTxLabel('Set Trustline');
+     readonly trustlineRemoveButtonLabel = this.buildTxLabel('Remove Trustline');
+     readonly issueCurrencyButtonLabel = this.buildTxLabel('Issue Currency');
+     readonly clawbackButtonLabel = this.buildTxLabel('Clawback Tokens');
+     readonly addCurrencyIssuerButtonLabel = this.buildTxLabel('Add Currency/Issuer');
+     readonly removeSelectedIssuerButtonLabel = this.buildTxLabel('Remove Selected Issuer');
 
-     readonly issueCurrencyButtonLabel = computed(() => {
-          const step = this.txUiService.currentStep();
-          if (step === 'idle') return 'Issue Currency';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
-          return this.txUiService.stepMessage();
-     });
+     findWalletAsIssuer(walletAddress: string): { currency: string; issuer: string } | null {
+          const normalizedAddr = walletAddress.trim().toLowerCase();
 
-     readonly clawbackButtonLabel = computed(() => {
-          const step = this.txUiService.currentStep();
-          if (step === 'idle') return 'Clawback Tokens';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
-          return this.txUiService.stepMessage();
-     });
+          const known = this.knownTrustLinesIssuers();
 
-     readonly addCurrencyIssuerButtonLabel = computed(() => {
-          const step = this.txUiService.currentStep();
-          if (step === 'idle') return 'Add Currency/Issuer';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
-          return this.txUiService.stepMessage();
-     });
+          for (const [currency, issuers] of Object.entries(known)) {
+               if (currency === 'XRP') continue; // skip native
 
-     readonly removeSelectedIssuerButtonLabel = computed(() => {
-          const step = this.txUiService.currentStep();
-          if (step === 'idle') return 'Remove Selected Issuer';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
-          return this.txUiService.stepMessage();
-     });
+               for (const issuer of issuers) {
+                    if (issuer.toLowerCase() === normalizedAddr) {
+                         return { currency, issuer };
+                    }
+               }
+          }
+
+          return null;
+     }
 
      toggleFlag(key: 'tfSetfAuth' | 'tfSetNoRipple' | 'tfClearNoRipple' | 'tfSetFreeze' | 'tfClearFreeze' | 'tfSetDeepFreeze' | 'tfClearDeepFreeze') {
           this.flags[key] = !this.flags[key];
@@ -195,6 +188,105 @@ export class TrustlineCurrencyService {
      }
 
      getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+          const mapped = (accountObjects.result.account_objects ?? [])
+               .filter((obj): obj is xrpl.LedgerEntry.RippleState => obj.LedgerEntryType === 'RippleState')
+               .filter(obj => {
+                    const bal = Number(obj.Balance?.value ?? 0);
+                    const myLimitVal = obj.LowLimit?.issuer === classicAddress ? obj.LowLimit?.value : obj.HighLimit?.value;
+                    const peerLimitVal = obj.LowLimit?.issuer === classicAddress ? obj.HighLimit?.value : obj.LowLimit?.value;
+
+                    // Keep only meaningful trustlines (your existing filter logic)
+                    return !(bal === 0 && myLimitVal === '0' && peerLimitVal === '0');
+               })
+               .map(obj => {
+                    const isHighSide = obj.HighLimit.issuer === classicAddress;
+
+                    const myLimitObj = isHighSide ? obj.HighLimit : obj.LowLimit;
+                    const peerLimitObj = isHighSide ? obj.LowLimit : obj.HighLimit;
+
+                    const myLimitValue = myLimitObj.value;
+                    const peerLimitValue = peerLimitObj.value;
+
+                    // The issuer is the one whose limit is typically non-zero while the holder's is set
+                    // But more reliably: the issuer sees negative balance when tokens are issued
+                    const rawBalance = Number(obj.Balance.value ?? '0');
+
+                    // Balance is always expressed from the perspective of the LowLimit holder
+                    // If we're the high side, we need to invert the sign
+                    const signedBalance = isHighSide ? -rawBalance : rawBalance;
+
+                    const currency = this.utilsService.normalizeCurrencyCode(obj.Balance?.currency ?? '');
+
+                    // Extract flags as array of strings
+                    const flags: string[] = [];
+                    const ledgerFlags = obj.Flags ?? 0;
+                    if (ledgerFlags & 0x00010000) flags.push('Authorized'); // lsfLowAuth / lsfHighAuth simplified
+                    if (ledgerFlags & 0x00020000) flags.push('NoRipple');
+                    if (ledgerFlags & 0x00100000) flags.push('Freeze'); // lsfLowFreeze or lsfHighFreeze
+                    // add more if you use them: DeepFreeze 0x00400000 etc.
+
+                    return {
+                         currency,
+                         issuer: peerLimitObj.issuer, // the other party = issuer if we're holder
+                         balance: signedBalance.toString(), // now correctly signed from OUR perspective
+                         limit: myLimitValue,
+                         flags,
+                         isIssuer: signedBalance < 0 && Number(myLimitValue) > 0, // strong indicator
+                         rawLedgerBalance: rawBalance, // for debugging
+                         isHighSide, // for debugging
+                    };
+               })
+               .sort((a, b) => a.issuer.localeCompare(b.issuer));
+
+          return mapped;
+     }
+
+     getExistingIOUs2(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+          const mapped = (accountObjects.result.account_objects ?? [])
+               .filter((obj: any): obj is xrpl.LedgerEntry.RippleState => {
+                    if (obj.LedgerEntryType !== 'RippleState') return false;
+
+                    const balanceValue = obj.Balance?.value ?? '0';
+                    const myLimit = obj.LowLimit?.issuer === classicAddress ? obj.LowLimit?.value : obj.HighLimit?.value;
+
+                    const peerLimit = obj.LowLimit?.issuer === classicAddress ? obj.HighLimit?.value : obj.LowLimit?.value;
+
+                    // Hide if:
+                    // 1. Balance is exactly zero
+                    // 2. AND both sides have zero limit (i.e. user "removed" it)
+                    const balanceIsZero = Number.parseFloat(balanceValue) === 0;
+                    const myLimitIsZero = myLimit === '0' || myLimit === 0;
+                    const peerLimitIsZero = peerLimit === '0' || peerLimit === 0;
+
+                    return !(balanceIsZero && myLimitIsZero && peerLimitIsZero);
+               })
+               .map((obj: xrpl.LedgerEntry.RippleState): RippleState => {
+                    const balance = obj.Balance?.value ?? '0';
+                    const currency = this.utilsService.normalizeCurrencyCode(obj.Balance?.currency);
+
+                    const isHighSide = obj.HighLimit.issuer === classicAddress;
+                    const issuer = isHighSide ? obj.LowLimit.issuer : obj.HighLimit.issuer;
+
+                    return {
+                         LedgerEntryType: 'RippleState',
+                         Balance: {
+                              currency,
+                              value: balance,
+                         },
+                         HighLimit: {
+                              issuer,
+                         },
+                    };
+               })
+               // Sort alphabetically by issuer or currency if available
+               .sort((a, b) => a.HighLimit.issuer.localeCompare(b.HighLimit.issuer));
+
+          // this.existingIOUs.set(mapped);
+          this.utilsService.logObjects('existingIOUs', mapped);
+          return mapped;
+     }
+
+     getExistingIOUs1(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const mapped = (accountObjects.result.account_objects ?? [])
                .filter((obj: any) => obj.LedgerEntryType === 'RippleState')
                .map((obj: any): RippleState => {
@@ -319,24 +411,20 @@ export class TrustlineCurrencyService {
      readonly issuerItems = computed<SelectItem[]>(() => {
           const iss = this.issuers();
           const active = this.selectedIssuer();
-          //  const currentCode = this.currentCurrency();
 
           return iss.map(i => ({
                id: i.address,
                display: i.name || i.address.slice(0, 8) + '...',
                secondary: i.address,
                isCurrentAccount: i.address === active,
-               // isCurrentCode: curr === currentCode,
                isCurrentToken: false,
           }));
      });
 
      readonly currencyBalance = computed<string>(() => this.balance());
 
-     // Call this when wallet changes or tab needs reset
      public resetToDefault(): void {
           this.selectCurrency('XRP', '');
-          // this.updateBalanceForCurrentCombo();
      }
 
      getCurrencyItems(): Signal<SelectItem[]> {
@@ -346,6 +434,10 @@ export class TrustlineCurrencyService {
                // If flag is false, exclude MPT from display
                if (!this.addMptInCurrencyDropdown()) {
                     visibleCurrencies = visibleCurrencies.filter(c => c !== 'MPT');
+               }
+
+               if (!this.addXrpInCurrencyDropdown()) {
+                    visibleCurrencies = visibleCurrencies.filter(c => c !== 'XRP');
                }
 
                const currentCode = this.currentCurrency();
@@ -386,7 +478,7 @@ export class TrustlineCurrencyService {
                     let displayName: string;
                     let secondaryText: string;
 
-                    if (curr === 'XRP') {
+                    if (curr === 'XRP' && this.addXrpInCurrencyDropdown()) {
                          displayName = 'XRP';
                          secondaryText = 'Native currency';
                     } else if (curr === 'MPT' && this.addMptInCurrencyDropdown()) {
@@ -497,7 +589,7 @@ export class TrustlineCurrencyService {
           this.updateCurrencies();
      }
 
-     private updateCurrencies() {
+     updateCurrencies() {
           const known = this.knownTrustLinesIssuers();
 
           // Standard IOU currencies (excluding XRP and MPT)
@@ -506,7 +598,11 @@ export class TrustlineCurrencyService {
                .sort((a, b) => a.localeCompare(b));
 
           // Build final list - conditionally include XRP
-          const allCurrencies: string[] = ['XRP'];
+          const allCurrencies: string[] = [];
+
+          if (this.addXrpInCurrencyDropdown()) {
+               allCurrencies.push('XRP');
+          }
 
           // Add MPT conditionally
           if (this.addMptInCurrencyDropdown()) {
@@ -671,13 +767,13 @@ export class TrustlineCurrencyService {
 
           // Check assets (others issued to you)
           if (result.assets?.[issuer]) {
-               const asset = result.assets[issuer].find((a: any) => this.utils.normalizeCurrencyCode(a.currency) === normalized);
+               const asset = result.assets[issuer].find((a: any) => a.currency === normalized);
                if (asset) return this.utils.formatTokenBalance(asset.value, 18);
           }
 
           // Check balances (owed to you)
           if (result.balances?.[issuer]) {
-               const bal = result.balances[issuer].find((b: any) => this.utils.normalizeCurrencyCode(b.currency) === normalized);
+               const bal = result.balances[issuer].find((b: any) => b.currency === normalized);
                if (bal) return this.utils.formatTokenBalance(bal.value, 18);
           }
 
@@ -703,6 +799,11 @@ export class TrustlineCurrencyService {
 
      public setAddMptInDropdown(show: boolean): void {
           this.addMptInCurrencyDropdown.set(show);
+          this.updateCurrencies();
+     }
+
+     public setXrpInDropdown(show: boolean): void {
+          this.addXrpInCurrencyDropdown.set(show);
           this.updateCurrencies();
      }
 }

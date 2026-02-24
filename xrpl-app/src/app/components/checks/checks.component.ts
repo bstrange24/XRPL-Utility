@@ -84,8 +84,10 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      existingChecks = signal<any[]>([]);
      outstandingChecksCollapsed = signal<boolean>(true);
      existingIOUs = signal<any[]>([]);
-     existingMpts = signal<any[]>([]);
-
+     /**
+      * If the XRPL adds MPT to checks, we can uncomment the MPT.
+      * existingMpts = signal<any[]>([]);
+      */
      allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
      destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
      destinationItems = this.transactionDropdownService.destinationItems(this.allDestinations);
@@ -94,8 +96,8 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      destinationDisplay = this.transactionDropdownService.destinationDisplay(this.selectedDestinationAddress, this.destinationSearchQuery, this.destinationMap);
 
      private readonly createCheckSpecificKeys = ['amountField', 'destinationTagField', 'sourceTagField', 'invoiceIdField', 'currencyCode', 'currencyIssuer'] as const;
-     private readonly cashCheckSpecificKeys = ['amountField', 'checkIdField', 'currencyCode', 'currencyIssuer', 'checkCreator'] as const;
-     private readonly setTrustlineSpecificKeys = ['trustlineLimitField', 'currencyCode', 'currencyIssuer', 'submitAndWait'] as const;
+     private readonly cashCheckSpecificKeys = ['amountField', 'checkIdField', 'currencyCode', 'currencyIssuer', 'checkCreator', 'suppressIndividualFeedback'] as const;
+     private readonly setTrustlineSpecificKeys = ['trustlineLimitField', 'currencyCode', 'currencyIssuer', 'submitAndWait', 'suppressIndividualFeedback'] as const;
      private readonly cancelCheckSpecificKeys = ['checkIdField'] as const;
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.wallets().length > 0);
@@ -155,7 +157,9 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           const tab = this.activeTab();
           const existingChecks = this.existingChecks();
           const existingIOUs = this.existingIOUs();
-          const existingMpts = this.existingMpts();
+          /**
+           * const existingMpts = this.existingMpts();
+           */
 
           switch (tab) {
                case 'create':
@@ -202,11 +206,15 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           if (tab === 'create') {
                const hasChecks = existingChecks.length > 0;
                const hasIOUs = existingIOUs.length > 0;
-               const hasMPTs = existingMpts.length > 0;
+               /**
+                * const hasMPTs = existingMpts.length > 0;
+                */
 
                if (hasChecks) links.push(`<a href="${explorerBase}account/${address}/checks" target="_blank" rel="noopener" class="xrpl-win-link">View Checks</a>`);
                if (hasIOUs) links.push(`<a href="${explorerBase}account/${address}/tokens" target="_blank" rel="noopener" class="xrpl-win-link">View IOUs</a>`);
-               if (hasMPTs) links.push(`<a href="${explorerBase}account/${address}/mpts/owned" target="_blank" rel="noopener" class="xrpl-win-link">View MPTs</a>`);
+               /**
+                * if (hasMPTs) links.push(`<a href="${explorerBase}account/${address}/mpts/owned" target="_blank" rel="noopener" class="xrpl-win-link">View MPTs</a>`);
+                */
           }
 
           return {
@@ -235,6 +243,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      ngOnInit(): void {
           this.trustlineCurrencyService.setPreferXrpAsDefault(true);
+          this.trustlineCurrencyService.setXrpInDropdown(true);
           this.trustlineCurrencyService.setAddMptInDropdown(false);
           this.transactionDropdownService.loadCustomDestinations();
           this.setupWalletSubscriptions();
@@ -293,6 +302,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
+          this.txUiService.showEnableTrustline.set(false);
 
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
@@ -374,27 +384,25 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                if (!this.ensureWalletSelected()) return;
 
                try {
-                    const { wallet, accountInfo, accountObjects } = await this.measure('getChecks:prepareTxEnvironment', false, async () =>
-                         this.txEnvironmentService.prepareTxEnvironment({
-                              includeAccountInfo: true,
-                              includeAccountObject: true,
-                              forceRefresh: forceRefresh,
-                         })
-                    );
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         forceRefresh: forceRefresh,
+                    });
 
-                    if (!accountInfo || !accountObjects) {
+                    if (!env.accountInfo || !env.accountObjects) {
                          this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
                          return;
                     }
 
-                    this.updateLocalAccountState(accountObjects, wallet.classicAddress);
+                    this.updateLocalAccountState(env.accountObjects, env.wallet.classicAddress);
 
                     const currencyValue = this.trustlineCurrencyService.currentCurrency() ?? 'XRP';
                     if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.trustlineCurrencyService.selectedIssuer()) {
                          this.trustlineCurrencyService.selectCurrency(currencyValue, '');
                     }
 
-                    this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Failed to load checks:', error);
                     this.toastService.error(error.message || 'Failed to load checks', AppConstants.TOAST.ERROR);
@@ -511,8 +519,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          }
                     }
 
-                    console.log(`${env.wallet.classicAddress} trustlines: ${env.trustlines}`);
-
                     let trustlinesToCheck: any = env.trustlines;
                     if (this.txUiService.showEnableTrustline()) {
                          const currencyCode = this.txUiService.missingTrustlineInfo.currencyCode();
@@ -520,6 +526,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          if (!currencyCode || !currencyIssuer) return;
 
                          this.txUiService.submitAndWait.set(true);
+                         this.txUiService.suppressIndividualFeedback.set(true);
 
                          const resetTrustlinesult = await this.trustlineOrchestratorService.executeTrustlineTx('setTrustline', {
                               wallet: this.currentWallet(),
@@ -541,8 +548,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                               this.toastService.error(resetTrustlinesult.error || 'Failed to create trustline');
                               return;
                          }
-
-                         this.toastService.success('Trustline created successfully.');
 
                          const updatedEnv = await this.txEnvironmentService.prepareTxEnvironment({
                               includeTrustlines: true,
@@ -570,7 +575,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                               this.txUiService.missingTrustlineInfo.issuer.set(issuer);
 
                               // Optional: better user message
-                              this.toastService.error(`No trustline found for ${currencyCode} (${issuer}).\nEnable trustline below to proceed with cashing.`, AppConstants.TOAST.ERROR);
+                              this.toastService.error(`No trustline found for ${currencyCode} (${issuer}).\nCashing this check will create a trustline to ${issuer}.`, AppConstants.TOAST.ERROR);
                               return;
                          }
                     }
@@ -673,7 +678,9 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.existingChecks.set(this.checkUtilService.getExistingChecks(accountObjects, address));
           this.cashableChecks.set(this.checkUtilService.getCashableChecks(accountObjects, address));
           this.cancellableChecks.set(this.checkUtilService.getCancelableChecks(accountObjects, address));
-          this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, address));
+          /**
+           * this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, address));
+           */
           this.existingIOUs.set(this.trustlineCurrencyService.getExistingIOUs(accountObjects, address));
      }
 

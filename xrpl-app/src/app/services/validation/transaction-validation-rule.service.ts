@@ -344,20 +344,27 @@ export class ValidationService {
      private positiveAmount(action: string): ValidatorFn {
           return ctx => {
                let value;
+               let field;
                if (action === 'createTicket') {
                     value = ctx.inputs[action]?.ticketCountField;
+                    field = 'Ticket Count';
                } else if (action === 'createMpt') {
                     value = ctx.inputs[action]?.tokenCountField;
+                    field = 'Ticket Count';
+               } else if (action === 'issueCurrency' || action === 'clawbackTokens' || action === 'setTrustline') {
+                    value = ctx.inputs[action]?.trustlineLimitField;
+                    field = 'Trustline Limit';
                } else {
                     value = ctx.inputs[action]?.amount;
+                    field = 'Amount';
                }
 
                // If field is empty, let requiredFields handle it
                if (value === '') return null;
 
                const num = Number(value);
-               if (Number.isNaN(num)) return 'Amount must be a valid number';
-               if (num <= 0) return 'Amount must be greater than 0';
+               if (Number.isNaN(num)) return `${field} must be a valid number`;
+               if (num <= 0) return `${field} must be greater than 0`;
                return null;
           };
      }
@@ -1578,7 +1585,7 @@ export class ValidationService {
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    this.optionalNumeric('setTrustline.trustlineLimitField', 0),
+                    this.positiveAmount('setTrustline'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1597,7 +1604,7 @@ export class ValidationService {
           // RemoveTrustline
           this.registerRule({
                transactionType: 'RemoveTrustline',
-               requiredFields: ['removeTrustline.trustlineLimitField','removeTrustline.currencyCode', 'removeTrustline.currencyIssuer'],
+               requiredFields: ['removeTrustline.trustlineLimitField', 'removeTrustline.currencyCode', 'removeTrustline.currencyIssuer'],
                validators: [
                     ctx => {
                          const seed = this.getSeed(ctx);
@@ -1628,7 +1635,7 @@ export class ValidationService {
           // IssueCurrency
           this.registerRule({
                transactionType: 'IssueCurrency',
-               requiredFields: ['wallet.seed', 'issueCurrency.destination','issueCurrency.trustlineLimitField','issueCurrency.currencyCode', 'issueCurrency.currencyIssuer'],
+               requiredFields: ['wallet.seed', 'issueCurrency.destination', 'issueCurrency.trustlineLimitField', 'issueCurrency.currencyCode', 'issueCurrency.currencyIssuer'],
                validators: [
                     ctx => {
                          const seed = this.getSeed(ctx);
@@ -1665,14 +1672,14 @@ export class ValidationService {
                     // // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
 
-                    this.invoiceId('paymentXrp'),
+                    this.invoiceId('issueCurrency'),
                ],
           });
 
           // ClawbackTokens
           this.registerRule({
                transactionType: 'ClawbackTokens',
-               requiredFields: ['currency', 'issuer', 'amount'],
+               requiredFields: ['wallet.seed', 'clawbackTokens.destination', 'clawbackTokens.trustlineLimitField', 'clawbackTokens.currencyCode', 'clawbackTokens.currencyIssuer'],
                validators: [
                     ctx => {
                          const seed = this.getSeed(ctx);
@@ -1682,21 +1689,34 @@ export class ValidationService {
                          }
                          return null;
                     },
-                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
-                    ctx => (Number(ctx.inputs['amount']) < 0 ? 'Trust amount cannot be negative' : null),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    this.positiveAmount('clawbackTokens'),
+                    // Destination address valid
+                    this.isValidAddress('clawbackTokens.destination'),
+                    this.requireDestinationTagIfNeeded('clawbackTokens'),
+
+                    this.validDestinationTag('clawbackTokens'),
+                    this.validSourceTag('clawbackTokens'),
+                    this.validInvoiceId('clawbackTokens'),
+
+                    this.optionalNumeric('destinationTag', 0),
+                    this.optionalNumeric('sourceTag', 0),
+
+                    // // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
+                    // // Ticket validation
                     this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    // // Regular Key signing requirements (only if selected and not multi-signing)
                     ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    // // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
-                    this.isValidAddress('issuer'),
+
+                    this.invoiceId('clawbackTokens'),
                ],
           });
 
