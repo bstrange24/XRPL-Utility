@@ -4,7 +4,16 @@ import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { Signer, Toast, ValidationInputs, Wallet } from '../../models/interface-items.model';
 
-export type TxStep = 'idle' | 'preparing' | 'signing' | 'submitting' | 'waiting_validation' | 'finalizing' | 'success' | 'failed';
+export type TxStep = 'idle' | 'preparing' | 'signing' | 'submitting' | 'waiting_validation' | 'waiting_for_wallet_creation' | 'finalizing' | 'success' | 'failed';
+
+export type ButtonLoadingState = {
+     generateNewWalletFromSeed: boolean;
+     generateNewWalletFromMnemonic: boolean;
+     generateNewWalletFromSecretNumbers: boolean;
+     deriveWalletFromFamilySeed: boolean;
+     deriveWalletFromMnemonic: boolean;
+     deriveWalletFromSecretNumbers: boolean;
+};
 
 type SignalMap = {
      [K in keyof TransactionUiService]: TransactionUiService[K] extends (...args: any) => any ? never : TransactionUiService[K] extends () => unknown ? K : never;
@@ -24,16 +33,16 @@ export class TransactionUiService {
      readonly baseTxKeys = ['isSimulateEnabled', 'useMultiSign', 'isRegularKeyAddress', 'regularKeyAddress', 'regularKeySeed', 'multiSignAddress', 'multiSignSeeds'] as const;
      txHash: string | null = null;
      txHashes: string[] = [];
-     isError = signal(false);
-     isSuccess = signal(false);
-     suppressSuccessMessage = signal(false);
+     isError = signal<boolean>(false);
+     isSuccess = signal<boolean>(false);
+     suppressSuccessMessage = signal<boolean>(false);
      suppressIndividualFeedback = signal<boolean>(false);
      submitAndWait = signal<boolean>(false);
      result = signal('');
      spinnerMessage = signal('');
      toastId = 0;
      errorMessageSignal = signal<string | null>(null);
-     spinner = signal(false);
+     spinner = signal<boolean>(false);
      currentWallet = signal<Wallet>({} as Wallet);
      toasts = signal<Toast[]>([]);
      paymentTxSignal = signal<any[]>([]);
@@ -44,6 +53,7 @@ export class TransactionUiService {
      spinnerMessageSignal = signal<string>('');
      executionTime = signal<string>('');
      wantsOptions = signal<boolean>(false);
+     infoPanelExpanded = signal<boolean>(false);
 
      // Payment
      amountField = signal('');
@@ -79,10 +89,10 @@ export class TransactionUiService {
      // Tickets
      ticketCountField = signal('');
      selectedTicketSequences = signal<string[]>([]);
-     isTicket = signal(false);
+     isTicket = signal<boolean>(false);
      selectedSingleTicket = signal('');
      selectedTickets = signal<string[]>([]);
-     multiSelectMode = signal(false);
+     multiSelectMode = signal<boolean>(false);
      ticketArray = signal<string[]>([]);
 
      // Expiration Dates
@@ -101,18 +111,18 @@ export class TransactionUiService {
      signerQuorum = signal(0);
      regularKeyAddress = signal('');
      regularKeySeed = signal('');
-     isMemoEnabled = signal(false);
-     useMultiSign = signal(false);
-     isRegularKeyAddress = signal(false);
-     regularKeySigningEnabled = signal(false);
-     multiSigningEnabled = signal(false);
+     isMemoEnabled = signal<boolean>(false);
+     useMultiSign = signal<boolean>(false);
+     isRegularKeyAddress = signal<boolean>(false);
+     regularKeySigningEnabled = signal<boolean>(false);
+     multiSigningEnabled = signal<boolean>(false);
      signers: WritableSignal<Signer[]> = signal<Signer[]>([{ Account: '', seed: '', SignerWeight: 1 }]);
      depositAuthAddresses = signal<{ account: string }[]>([{ account: '' }]);
      walletTicketCount = signal<number>(0);
-     isSimulateEnabled = signal(false);
-     masterKeyDisabled = signal(false);
-     depositAuthEnabled = signal(false);
-     isdepositAuthAddress = signal(false);
+     isSimulateEnabled = signal<boolean>(false);
+     masterKeyDisabled = signal<boolean>(false);
+     depositAuthEnabled = signal<boolean>(false);
+     isdepositAuthAddress = signal<boolean>(false);
      isNFTokenMinterEnabled = signal<boolean>(false);
      nfTokenMinterAddress = signal<string>('');
      isUpdateMetaData = signal<boolean>(false);
@@ -148,7 +158,7 @@ export class TransactionUiService {
 
      // MPT
      mptIssuanceIdField = signal<string>('');
-     isMptEnabled = signal(false);
+     isMptEnabled = signal<boolean>(false);
      metaDataField = signal<string>('');
      authAction = signal<string>('authorize');
      lockAction = signal<string>('unlock');
@@ -161,6 +171,28 @@ export class TransactionUiService {
      isUnauthorize = signal<boolean>(false);
      lockedUnlock = signal<string>('');
      holderAccount = signal<string>('');
+
+     // Wallets
+     mnemonicInput = signal<string>('');
+     mnemonicValid = signal<boolean>(false);
+     secretNumberInput = signal<string[]>([]);
+     secretNumberValid = signal<boolean>(false);
+     seedInput = signal<string>('');
+     seedValid = signal<boolean>(false);
+     encryptionType = signal<string>('');
+     seed = signal<string>('');
+     mnemonic = signal<string>('');
+     secretNumbers = signal<string>('');
+     ed25519_encryption_type = signal<boolean>(false);
+     secp256k1_encryption_type = signal<boolean>(false);
+     buttonLoading = signal<ButtonLoadingState>({
+          generateNewWalletFromSeed: false,
+          generateNewWalletFromMnemonic: false,
+          generateNewWalletFromSecretNumbers: false,
+          deriveWalletFromFamilySeed: false,
+          deriveWalletFromMnemonic: false,
+          deriveWalletFromSecretNumbers: false,
+     });
 
      currentStep = signal<TxStep>('idle');
      detailedStatus = signal<string>('');
@@ -175,6 +207,8 @@ export class TransactionUiService {
                     return 'Broadcasting to the XRP Ledger...';
                case 'waiting_validation':
                     return 'Waiting for ledger validation (usually 4–10 seconds)... The transaction will still process even if you leave this page.';
+               case 'waiting_for_wallet_creation':
+                    return 'Waiting for wallet creation and funding.';
                case 'finalizing':
                     return 'Processing final result...';
                case 'success':
@@ -803,9 +837,7 @@ export class TransactionUiService {
           this.errorMessage = '';
           this.errorMessageSignal.set(null);
           this.updateSpinnerMessageSignal('');
-          this.clearTxResultSignal();
-          this.clearTxHashSignal();
-          this.clearTxSignal();
+          this.clearTxResultsHash();
           this.clearMessages();
 
           // this.isTicket.set(false);
@@ -814,5 +846,11 @@ export class TransactionUiService {
           // this.isMemoEnabled.set(false);
           // this.clearWarning();
           this.successMessage = '';
+     }
+
+     clearTxResultsHash() {
+          this.clearTxResultSignal();
+          this.clearTxHashSignal();
+          this.clearTxSignal();
      }
 }

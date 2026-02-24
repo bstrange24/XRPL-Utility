@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, effect } from '@angular/core';
+import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -64,13 +64,15 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      public readonly checkTransactionOrchestrator = inject(CheckTransactionOrchestrator);
      public readonly mptUtilService = inject(MptUtilService);
      public readonly trustlineOrchestratorService = inject(TrustlineOrchestratorService);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
      checkIdSearchQuery = signal<string>('');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
+     infoPanelExpanded = signal<boolean>(false);
      activeTab = signal<'create' | 'cash' | 'cancel'>('create');
 
      currencyItems = this.trustlineCurrencyService.currencyItems;
@@ -102,6 +104,34 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
+
+     // Effect 1: Has wallets → warning handling
+     private readonly hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Effect 2: Wallets list sync
+     private readonly walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
+     private readonly selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearInputFields();
+
+          // Fire-and-forget refresh
+          void this.getChecks(false);
+     });
 
      selectedCheckItem = computed<SelectItem | null>(() => {
           const id = this.txUiService.checkIdField();
@@ -246,7 +276,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.trustlineCurrencyService.setXrpInDropdown(true);
           this.trustlineCurrencyService.setAddMptInDropdown(false);
           this.transactionDropdownService.loadCustomDestinations();
-          this.setupWalletSubscriptions();
           this.setExpirationToNow();
           // Force initial default + balance refresh
           this.trustlineCurrencyService.resetToDefault();
@@ -265,36 +294,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      onIssuerSelected(item: SelectItem | null) {
           const address = item?.id || '';
           this.trustlineCurrencyService.selectIssuer(address);
-     }
-
-     private setupWalletSubscriptions(): void {
-          // Has wallets → clear warning
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.();
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.txUiService.setError('');
-                    this.txUiService.setInfoMessage('');
-               }
-          });
-
-          // Wallets list changes
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-          });
-
-          // Selected wallet index changes
-          this.walletManagerService.selectedIndex$
-               .pipe(
-                    takeUntilDestroyed(this.destroyRef),
-                    switchMap(() => {
-                         this.txUiService.clearAllOptionsAndMessages();
-                         this.clearInputFields();
-                         return from(this.getChecks(false));
-                    })
-               )
-               .subscribe();
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -684,9 +683,19 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.existingIOUs.set(this.trustlineCurrencyService.getExistingIOUs(accountObjects, address));
      }
 
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]): Promise<void> {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (_, newCurrent) => this.currentWallet.set({ ...newCurrent }));
+     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+          await this.walletDataService.refreshWallets(
+               client,
+               addresses, // only the addresses to target
+               (updatedList, newCurrent) => {
+                    this.currentWallet.set({ ...newCurrent });
+               }
+          );
      }
+
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]): Promise<void> {
+     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (_, newCurrent) => this.currentWallet.set({ ...newCurrent }));
+     // }
 
      private addCustomDestination(destination: string | null): void {
           if (!destination) return;

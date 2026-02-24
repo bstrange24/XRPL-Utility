@@ -133,9 +133,9 @@
 
                          <!-- Expand/Collapse toggle (only when there are trustlines) -->
                          @if (info.trustlineCount > 0) {
-                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle trustlines list">
-                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} list</span>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'">
+                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="txUiService.infoPanelExpanded()" aria-label="Toggle trustlines list">
+                              <span>{{ txUiService.infoPanelExpanded() ? 'Hide' : 'Show' }} list</span>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.transform]="txUiService.infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'">
                                    <path d="M6 9l6 6 6-6" />
                               </svg>
                          </button>
@@ -144,7 +144,7 @@
 
                     <!-- Collapsible detailed list with internal scroll -->
                     @if (info.trustlineCount > 0) {
-                    <div class="trustlines-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                    <div class="trustlines-list-container" [style.max-height]="txUiService.infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="txUiService.infoPanelExpanded() ? '1' : '0'" [style.padding]="txUiService.infoPanelExpanded() ? '12px 0' : '0'">
                          <ul class="trustlines-list">
                               @for (tl of info.trustlinesToShow; track tl.currency + tl.issuer) {
                               <li class="trustline-item">

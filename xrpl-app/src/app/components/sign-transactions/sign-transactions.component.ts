@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef, ElementRef, ViewChild, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef, computed, signal, DestroyRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ChangeDetectorRef, ElementRef, ViewChild, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef, computed, signal, DestroyRef, effect } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { MatSortModule } from '@angular/material/sort';
 import { MatPaginatorModule } from '@angular/material/paginator';
@@ -76,6 +76,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      public readonly viewContainerRef = inject(ViewContainerRef);
      public readonly overlay = inject(Overlay);
      public readonly cdr = inject(ChangeDetectorRef);
+     private readonly walletManager = inject(WalletManagerService);
 
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>('');
@@ -83,20 +84,20 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      activeTab = signal<'getAccountDetails'>('getAccountDetails');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
+     infoPanelExpanded = signal<boolean>(false);
      amountField = signal<string>('');
      destinationField = signal<string>('');
      destinationTagField = signal<string>('');
      sourceTagField = signal<string>('');
      invoiceIdField = signal<string>('');
      memoField = signal<string>('');
-     isMemoEnabled = signal(false);
-     useMultiSign = signal(false);
-     isRegularKeyAddress = signal(false);
-     isTicket = signal(false);
+     isMemoEnabled = signal<boolean>(false);
+     useMultiSign = signal<boolean>(false);
+     isRegularKeyAddress = signal<boolean>(false);
+     isTicket = signal<boolean>(false);
      selectedSingleTicket = signal<string>('');
      selectedTickets = signal<string[]>([]);
-     multiSelectMode = signal(false);
+     multiSelectMode = signal<boolean>(false);
      selectedTicket = signal<string>('');
      txJson = '';
      outputField = signal<string>('');
@@ -114,6 +115,34 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
           signed: false,
           submit: false,
           multiSign: false,
+     });
+
+     // Effect 1: Has wallets → warning handling
+     private readonly hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Effect 2: Wallets list sync
+     private readonly walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
+     private readonly selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearInputFields();
+
+          // Fire-and-forget refresh
+          void this.getAccountDetails(true);
      });
 
      selectedDestinationItem = computed(() => {
@@ -257,7 +286,6 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
 
      ngOnInit() {
           this.loadCustomDestinations();
-          this.setupWalletSubscriptions();
           this.selectedTransaction.set('sendXrp');
           this.clearMessages();
           // this.enableTransaction();
@@ -268,37 +296,6 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
           if (stored) this.customDestinations.set(JSON.parse(stored));
-     }
-
-     private async setupWalletSubscriptions() {
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.txUiService.setError('');
-               }
-          });
-
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-               if (this.hasWallets() && !this.currentWallet().address) {
-                    const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    const wallet = wallets[idx];
-                    if (wallet) this.selectWallet(wallet);
-               }
-          });
-
-          this.walletManagerService.selectedIndex$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async index => {
-               const wallet = this.wallets()[index];
-               if (wallet) {
-                    this.selectWallet(wallet);
-                    this.xrplCache.invalidateAccountCache(wallet.address);
-                    this.txUiService.clearAllOptionsAndMessages();
-                    this.clearInputFields();
-                    await this.getAccountDetails(false);
-               }
-          });
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -806,10 +803,20 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-               this.currentWallet.set({ ...newCurrent });
-          });
+          await this.walletDataService.refreshWallets(
+               client,
+               addresses, // only the addresses to target
+               (updatedList, newCurrent) => {
+                    this.currentWallet.set({ ...newCurrent });
+               }
+          );
      }
+
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+     //           this.currentWallet.set({ ...newCurrent });
+     //      });
+     // }
 
      private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
           // Update multi-sign & regular key flags

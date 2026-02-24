@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, Signal, WritableSignal, effect } from '@angular/core';
+import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, Signal, WritableSignal, effect, ChangeDetectorRef } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -21,12 +21,10 @@ import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { EMPTY, from, switchMap } from 'rxjs';
 import { EscrowObject } from '../../models/interface-items.model';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
@@ -65,16 +63,18 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      public readonly mptUtilService = inject(MptUtilService);
      public readonly escrowUtilService = inject(EscrowUtilService);
      public readonly timeBasedEscrowOrchestrator = inject(TimeBasedEscrowOrchestrator);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
 
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
+     infoPanelExpanded = signal<boolean>(false);
      activeTab = signal<'create' | 'finish' | 'cancel'>('create');
      currencyFieldDropDownValue = signal<string>('XRP');
-     isMptEnabled = signal(false);
+     isMptEnabled = signal<boolean>(false);
      escrowFinishTimeField = signal<string>('');
      escrowCancelTimeField = signal<string>('');
      escrowOwnerField = signal<string>('');
@@ -100,7 +100,35 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      readonly currentAddress = computed(() => this.currentWallet().address);
      private readonly hasWallets = computed(() => this.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-     readonly hasWalletsSignal = toSignal(this.walletManagerService.hasWallets$, { initialValue: false });
+     readonly hasWalletsSignal = this.walletManagerService.hasWallets;
+
+     // Effect 1: Has wallets → warning handling
+     private readonly hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Effect 2: Wallets list sync
+     private readonly walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
+     private readonly selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearFields();
+
+          // Fire-and-forget refresh
+          void this.getEscrows(false);
+     });
 
      escrowItems = computed(() => this.escrowUtilService.escrowItems(this.allEscrowsRaw(), this.currentWallet().address, this.activeTab() === 'cancel'));
 
@@ -254,7 +282,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           this.trustlineCurrencyService.setAddMptInDropdown(true);
 
           this.transactionDropdownService.loadCustomDestinations();
-          this.setupWalletSubscriptions();
           this.setExpirationToNow();
 
           if (this.trustlineCurrencyService.currencies().length > 0) {
@@ -274,42 +301,6 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      onIssuerSelected(item: SelectItem | null) {
           const address = item?.id || '';
           this.trustlineCurrencyService.selectIssuer(address);
-     }
-
-     private async setupWalletSubscriptions() {
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.();
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.txUiService.setError('');
-                    this.txUiService.setInfoMessage('');
-               }
-          });
-
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-               if (this.hasWallets() && !this.currentAddress()) {
-                    const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    const wallet = wallets[idx];
-                    if (wallet) this.selectWallet(wallet);
-               }
-          });
-
-          this.walletManagerService.selectedIndex$
-               .pipe(
-                    takeUntilDestroyed(this.destroyRef),
-                    switchMap(index => {
-                         const wallet = this.wallets()[index];
-                         if (!wallet) return EMPTY;
-
-                         this.selectWallet(wallet);
-                         this.txUiService.clearAllOptions();
-                         this.clearFields();
-                         return from(this.getEscrows(false));
-                    })
-               )
-               .subscribe();
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -377,9 +368,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                this.txUiService.clearAllOptionsAndMessages();
                this.txUiService.resetCurrentStepToIdle();
 
-               if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
-                    return this.toastService.error('Please select a wallet.');
-               }
+               if (!this.ensureWalletSelected()) return;
 
                try {
                     const { wallet, accountInfo, accountObjects } = await this.measure('getEscrows:prepareTxEnvironment', false, async () =>
@@ -675,10 +664,20 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-               this.currentWallet.set({ ...newCurrent });
-          });
+          await this.walletDataService.refreshWallets(
+               client,
+               addresses, // only the addresses to target
+               (updatedList, newCurrent) => {
+                    this.currentWallet.set({ ...newCurrent });
+               }
+          );
      }
+
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+     //           this.currentWallet.set({ ...newCurrent });
+     //      });
+     // }
 
      private addCustomDestination(addDest: boolean, destination: string | null) {
           if (addDest && destination) {
@@ -690,6 +689,14 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
                     }
                }
           }
+     }
+
+     private ensureWalletSelected(): boolean {
+          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
+               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
+               return false;
+          }
+          return true;
      }
 
      onCurrencyChange(currency: string) {

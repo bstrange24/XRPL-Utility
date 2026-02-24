@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, effect } from '@angular/core';
+import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -63,13 +63,15 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      public readonly acccountDataService = inject(AcccountDataService);
      public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
      public readonly paymentChannelOrchestratorService = inject(PaymentChannelOrchestratorService);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
 
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
+     infoPanelExpanded = signal<boolean>(false);
      activeTab = signal<'create' | 'fund' | 'claim' | 'renew' | 'close'>('create');
      isCreatorMode = signal<boolean>(false);
 
@@ -83,8 +85,36 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      readonly currentAddress = computed(() => this.currentWallet().address);
      private readonly hasWallets = computed(() => this.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-     readonly hasWalletsSignal = toSignal(this.walletManagerService.hasWallets$, { initialValue: false });
+     readonly hasWalletsSignal = this.walletManagerService.hasWallets;
      private readonly selectedChannelId = computed(() => this.txUiService.channelIDField()?.toString() ?? '');
+
+     // Effect 1: Has wallets → warning handling
+     private readonly hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Effect 2: Wallets list sync
+     private readonly walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
+     private readonly selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearInputFields();
+
+          // Fire-and-forget refresh
+          void this.getPaymentChannels(true);
+     });
 
      selectedChannelForClaim = computed(() => {
           const id = this.txUiService.channelIDField();
@@ -227,46 +257,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
 
      ngOnInit(): void {
           this.transactionDropdownService.loadCustomDestinations();
-          this.setupWalletSubscriptions();
           this.txUiService.clearAllOptions();
-     }
-
-     private async setupWalletSubscriptions() {
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.();
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.txUiService.setError('');
-                    this.txUiService.setInfoMessage('');
-               }
-          });
-
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-               if (this.hasWallets() && !this.currentAddress()) {
-                    const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    const wallet = wallets[idx];
-                    if (wallet) this.selectWallet(wallet);
-               }
-          });
-
-          this.walletManagerService.selectedIndex$
-               .pipe(
-                    takeUntilDestroyed(this.destroyRef),
-                    switchMap(index => {
-                         const wallet = this.wallets()[index];
-                         if (!wallet) return EMPTY;
-
-                         this.isCreatorMode.set(false); // reset when switching wallets
-                         this.selectWallet(wallet);
-                         this.txUiService.clearAllOptionsAndMessages();
-                         this.clearInputFields();
-                         this.populateDefaultDateTime();
-                         return from(this.getPaymentChannels(false));
-                    })
-               )
-               .subscribe();
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -626,10 +617,20 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-               this.currentWallet.set({ ...newCurrent });
-          });
+          await this.walletDataService.refreshWallets(
+               client,
+               addresses, // only the addresses to target
+               (updatedList, newCurrent) => {
+                    this.currentWallet.set({ ...newCurrent });
+               }
+          );
      }
+
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+     //           this.currentWallet.set({ ...newCurrent });
+     //      });
+     // }
 
      private addCustomDestination(addDest: boolean, destination: string | null) {
           if (addDest && destination) {

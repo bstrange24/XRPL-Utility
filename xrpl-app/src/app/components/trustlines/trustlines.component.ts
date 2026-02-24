@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -20,12 +20,10 @@ import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { from, switchMap } from 'rxjs';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
@@ -60,14 +58,15 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      public readonly acccountDataService = inject(AcccountDataService);
      public readonly mptUtilService = inject(MptUtilService);
      public readonly trustlineOrchestratorService = inject(TrustlineOrchestratorService);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
-     trustlineAlreadyExist = signal(false);
-     removeTrustlineAviable = signal(true);
+     trustlineAlreadyExist = signal<boolean>(false);
+     removeTrustlineAviable = signal<boolean>(true);
      removeTrustlineMessage = signal<string[]>([]);
      activeTab = signal<'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'clawbackTokens' | 'addNewIssuers'>('setTrustline');
 
@@ -95,6 +94,34 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
+
+     // Effect 1: Has wallets → warning handling
+     private readonly hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Effect 2: Wallets list sync
+     private readonly walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
+     private readonly selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearInputFields();
+
+          // Fire-and-forget refresh
+          void this.getTrustlinesForAccount(false);
+     });
 
      selectedIssuerAddress = computed(() => this.trustlineCurrencyService.getSelectedIssuer());
 
@@ -169,7 +196,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           const links = count > 0 ? `<a href="${explorerBase}account/${address}/tokens" target="_blank" class="xrpl-win-link">View on explorer</a>` : '';
 
           // Only show items when expanded
-          const trustlinesToShow = this.infoPanelExpanded()
+          const trustlinesToShow = this.txUiService.infoPanelExpanded()
                ? relevantTrustlines.map(tl => ({
                       currency: tl.currency,
                       issuer: tl.issuer,
@@ -206,7 +233,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           const links = count > 0 ? `<a href="${explorerBase}account/${address}/tokens" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View tokens</a>` : '';
 
           // Only build list when panel is expanded — this is the key!
-          const trustlinesToShow = this.infoPanelExpanded()
+          const trustlinesToShow = this.txUiService.infoPanelExpanded()
                ? allTrustlines.map(tl => {
                       const balance = tl.Balance.value;
                       const limit = tl.HighLimit?.issuer === address ? tl.HighLimit.value : tl.LowLimit?.value;
@@ -307,7 +334,6 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           this.trustlineCurrencyService.setXrpInDropdown(false);
           this.trustlineCurrencyService.setAddMptInDropdown(false);
           this.transactionDropdownService.loadCustomDestinations();
-          this.setupWalletSubscriptions();
      }
 
      onCurrencySelected(item: SelectItem | null) {
@@ -319,36 +345,6 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      onIssuerSelected(item: SelectItem | null) {
           const address = item?.id || '';
           this.trustlineCurrencyService.selectIssuer(address);
-     }
-
-     private setupWalletSubscriptions(): void {
-          // Has wallets → clear warning
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.();
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.txUiService.setError('');
-                    this.txUiService.setInfoMessage('');
-               }
-          });
-
-          // Wallets list changes
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-          });
-
-          // Selected wallet index changes
-          this.walletManagerService.selectedIndex$
-               .pipe(
-                    takeUntilDestroyed(this.destroyRef),
-                    switchMap(() => {
-                         this.txUiService.clearAllOptionsAndMessages();
-                         this.clearInputFields();
-                         return from(this.getTrustlinesForAccount(false));
-                    })
-               )
-               .subscribe();
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -391,7 +387,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      toggleInfoPanel() {
-          this.infoPanelExpanded.update(expanded => !expanded);
+          this.txUiService.infoPanelExpanded.update(expanded => !expanded);
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -772,9 +768,19 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           this.existingIOUs.set(this.trustlineCurrencyService.getExistingIOUs(accountObjects, address));
      }
 
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]): Promise<void> {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (_, newCurrent) => this.currentWallet.set({ ...newCurrent }));
+     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+          await this.walletDataService.refreshWallets(
+               client,
+               addresses, // only the addresses to target
+               (updatedList, newCurrent) => {
+                    this.currentWallet.set({ ...newCurrent });
+               }
+          );
      }
+
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]): Promise<void> {
+     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (_, newCurrent) => this.currentWallet.set({ ...newCurrent }));
+     // }
 
      private addCustomDestination(destination: string | null): void {
           if (!destination) return;

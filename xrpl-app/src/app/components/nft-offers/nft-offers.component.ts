@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, Signal, WritableSignal } from '@angular/core';
+import { OnInit, Component, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, Signal, WritableSignal, effect, ChangeDetectorRef } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -94,6 +94,8 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly cdr = inject(ChangeDetectorRef);
 
      // Destination Dropdown
      customDestinations = signal<{ name?: string; address: string }[]>([]);
@@ -105,7 +107,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      activeTab = signal<'buy' | 'sell' | 'buyOffer' | 'sellOffer' | 'cancelOffer'>('sell');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
+     infoPanelExpanded = signal<boolean>(false);
      amountField = signal<string>('');
      destinationField = signal<string>('');
      destinationTagField = signal<string>('');
@@ -119,7 +121,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      checkIdField = signal<string>('');
      outstandingChecks = signal<string>('');
      mptIssuanceIdField = signal<string>('');
-     isMptEnabled = signal(false);
+     isMptEnabled = signal<boolean>(false);
      selectedWalletIndex = signal<number>(0);
      isTicketEnabled = signal<boolean>(false);
      existingMpts = signal<any[]>([]);
@@ -232,6 +234,34 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      existingSellOffers = signal<any[]>([]);
      existingBuyOffers = signal<any[]>([]);
      existingSellOffersCollapsed = signal<boolean>(true);
+
+     // Effect 1: Has wallets → warning handling
+     private readonly hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Effect 2: Wallets list sync
+     private readonly walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
+     private readonly selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearFields(true);
+
+          // Fire-and-forget refresh
+          void this.getNFTOffers(false);
+     });
 
      selectedDestinationItem = computed(() => {
           const addr = this.selectedDestinationAddress();
@@ -450,29 +480,28 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
           this.loadKnownIssuers();
           this.refreshStoredIssuers();
           this.loadCustomDestinations();
-          this.setupWalletSubscriptions();
           this.currencyFieldDropDownValue.set('XRP');
 
           // Subscribe once
-          this.trustlineCurrency.currencies$.subscribe(currencies => {
-               this.currencies.set(currencies);
-               if (currencies.length > 0 && !this.currencyFieldDropDownValue()) {
-                    this.currencyFieldDropDownValue.set(currencies[0]);
-                    this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
-               }
-          });
+          // this.trustlineCurrency.currencies$.subscribe(currencies => {
+          //      this.currencies.set(currencies);
+          //      if (currencies.length > 0 && !this.currencyFieldDropDownValue()) {
+          //           this.currencyFieldDropDownValue.set(currencies[0]);
+          //           this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
+          //      }
+          // });
 
-          this.trustlineCurrency.issuers$.subscribe(issuers => {
-               this.issuers.set(issuers);
-          });
+          // this.trustlineCurrency.issuers$.subscribe(issuers => {
+          //      this.issuers.set(issuers);
+          // });
 
-          this.trustlineCurrency.selectedIssuer$.subscribe(issuer => {
-               this.issuerFields.set(issuer);
-          });
+          // this.trustlineCurrency.selectedIssuer$.subscribe(issuer => {
+          //      this.issuerFields.set(issuer);
+          // });
 
-          this.trustlineCurrency.balance$.subscribe(balance => {
-               this.currencyBalanceField.set(balance); // ← This is your live balance!
-          });
+          // this.trustlineCurrency.balance$.subscribe(balance => {
+          //      this.currencyBalanceField.set(balance); // ← This is your live balance!
+          // });
 
           this.txUiService.clearAllOptions();
      }
@@ -480,40 +509,6 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
           if (stored) this.customDestinations.set(JSON.parse(stored));
-     }
-
-     private async setupWalletSubscriptions() {
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.txUiService.setError('');
-               }
-          });
-
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-               if (this.hasWallets() && !this.currentWallet().address) {
-                    const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    const wallet = wallets[idx];
-                    if (wallet) {
-                         this.clearFields(true);
-                         this.selectWallet(wallet);
-                         this.populateDefaultDateTime();
-                    }
-               }
-          });
-
-          this.walletManagerService.selectedIndex$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async index => {
-               const wallet = this.wallets()[index];
-               if (wallet) {
-                    this.selectWallet(wallet);
-                    this.clearFields(true);
-                    this.populateDefaultDateTime();
-                    await this.getNFTOffers(true);
-               }
-          });
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -1289,10 +1284,20 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-               this.currentWallet.set({ ...newCurrent });
-          });
+          await this.walletDataService.refreshWallets(
+               client,
+               addresses, // only the addresses to target
+               (updatedList, newCurrent) => {
+                    this.currentWallet.set({ ...newCurrent });
+               }
+          );
      }
+
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+     //           this.currentWallet.set({ ...newCurrent });
+     //      });
+     // }
 
      private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
           // Update multi-sign & regular key flags

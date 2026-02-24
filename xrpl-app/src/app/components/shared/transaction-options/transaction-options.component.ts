@@ -19,14 +19,14 @@ export class TransactionOptionsComponent {
 
      @Input() activeTab?: () => string;
      @Input() showWhenTab: string | string[] = '*'; // '*' = always show
-     @Input() multiSigningEnabled = signal(false);
-     @Input() regularKeySigningEnabled = signal(false);
+     @Input() multiSigningEnabled = signal<boolean>(false);
+     @Input() regularKeySigningEnabled = signal<boolean>(false);
      @Input() showMemo = true;
      @Input() showMultiSign = true;
      @Input() showRegularKey = true;
      @Input() showTicket = true;
      @Input() showSimulate = true;
-     @Input() showEnableTrustline = signal(false);
+     @Input() showEnableTrustline = signal<boolean>(false);
 
      isShowEnableTrustline = this.txUiService.showEnableTrustline;
      // missingTrustlineInfo = this.txUiService.missingTrustlineInfo;

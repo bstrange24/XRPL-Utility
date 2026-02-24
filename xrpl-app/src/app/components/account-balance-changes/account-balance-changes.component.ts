@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, Injector, inject, computed, DestroyRef, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, ChangeDetectorRef, OnDestroy, AfterViewInit, Injector, inject, computed, DestroyRef, signal, effect, OnInit } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { MatSortModule, MatSort } from '@angular/material/sort';
 import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
@@ -63,7 +63,7 @@ interface BalanceChange {
      templateUrl: './account-balance-changes.component.html',
      styleUrl: './account-balance-changes.component.css',
 })
-export class AccountChangesComponent extends PerformanceBaseComponent implements OnDestroy, AfterViewInit {
+export class AccountChangesComponent extends PerformanceBaseComponent implements OnDestroy, AfterViewInit, OnInit {
      private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
@@ -81,6 +81,7 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
      public readonly walletGenerator = inject(WalletGeneratorService);
      public readonly router = inject(Router);
      public readonly cdr = inject(ChangeDetectorRef);
+     private readonly walletManager = inject(WalletManagerService);
 
      typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
@@ -89,7 +90,7 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
      activeTab = signal<'balance'>('balance');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
+     infoPanelExpanded = signal<boolean>(false);
      accountInfo = signal<any>(null);
 
      private destroy$ = new Subject<void>();
@@ -141,6 +142,34 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
      // Track seen tx hashes to avoid duplicates when appending
      private readonly seenHashes = new Set<string>();
      private originalBalanceChanges: BalanceChange[] = []; // Cache full data
+
+     // Effect 1: Has wallets → warning handling
+     private readonly hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Effect 2: Wallets list sync
+     private readonly walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
+     private readonly selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.loadBalanceChanges(true);
+
+          // Fire-and-forget refresh
+          void this.loadBalanceChanges(false);
+     });
 
      onSearchInput(value: string) {
           this.searchSubject.next(value);
@@ -203,7 +232,6 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
 
      ngOnInit() {
           this.loadCustomDestinations();
-          this.setupWalletSubscriptions();
 
           // Debounce search input
           this.searchSubject.pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$)).subscribe(searchText => {
@@ -216,37 +244,6 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
           if (stored) this.customDestinations.set(JSON.parse(stored));
-     }
-
-     private async setupWalletSubscriptions() {
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.txUiService.setError('');
-                    this.txUiService.setInfoMessage('');
-               }
-          });
-
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-               if (this.hasWallets() && !this.currentWallet().address) {
-                    const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    const wallet = wallets[idx];
-                    if (wallet) this.selectWallet(wallet);
-               }
-          });
-
-          this.walletManagerService.selectedIndex$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async index => {
-               const wallet = this.wallets()[index];
-               if (wallet) {
-                    this.selectWallet(wallet);
-                    this.xrplCache.invalidateAccountCache(wallet.address);
-                    this.txUiService.clearAllOptionsAndMessages();
-                    await this.onAccountChange();
-               }
-          });
      }
 
      private selectWallet(wallet: Wallet): void {

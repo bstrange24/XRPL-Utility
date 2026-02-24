@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, signal, computed, DestroyRef, ViewContainerRef, ElementRef, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, signal, computed, DestroyRef, ViewContainerRef, ElementRef, TemplateRef, ViewChild, effect, ChangeDetectorRef } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -61,6 +61,8 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      public readonly ticketsOrchestratorService = inject(TicketsOrchestratorService);
      public readonly acccountDataService = inject(AcccountDataService);
      public readonly ticketsUtilService = inject(TicketsUtilService);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly cdr = inject(ChangeDetectorRef);
 
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
@@ -70,7 +72,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      activeTab = signal<'create' | 'delete'>('create');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      ticketSearchQuery = signal<string>('');
-     isTicketDropdownOpen = signal(false);
+     isTicketDropdownOpen = signal<boolean>(false);
      highlightedTicketIndex = signal<number>(-1);
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
@@ -78,6 +80,34 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
+
+     // Effect 1: Has wallets → warning handling
+     private readonly hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Effect 2: Wallets list sync
+     private readonly walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
+     private readonly selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearFields();
+
+          // Fire-and-forget refresh
+          void this.getTickets(true);
+     });
 
      readonly infoData = computed(() => {
           const wallet = this.currentWallet();
@@ -90,7 +120,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           return `<code>${name}</code> wallet has <strong class="object-count">${count}</strong> ${label}`;
      });
 
-     readonly hasWalletsSignal = toSignal(this.walletManagerService.hasWallets$, { initialValue: false });
+     readonly hasWalletsSignal = this.walletManagerService.hasWallets;
 
      readonly allTicketsSelected = this.ticketsUtilService.getAllTicketsSelected(this.txUiService.ticketArray(), this.txUiService.selectedTicketSequences());
 
@@ -102,44 +132,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      }
 
      ngOnInit(): void {
-          this.setupWalletSubscriptions();
           this.txUiService.clearAllOptions();
-     }
-
-     private async setupWalletSubscriptions() {
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.();
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.txUiService.setError('');
-                    this.txUiService.setInfoMessage('');
-               }
-          });
-
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-               if (this.hasWallets() && !this.currentAddress()) {
-                    const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    const wallet = wallets[idx];
-                    if (wallet) this.selectWallet(wallet);
-               }
-          });
-
-          this.walletManagerService.selectedIndex$
-               .pipe(
-                    takeUntilDestroyed(this.destroyRef),
-                    switchMap(index => {
-                         const wallet = this.wallets()[index];
-                         if (!wallet) return EMPTY;
-
-                         this.selectWallet(wallet);
-                         this.txUiService.clearAllOptions();
-                         this.clearFields();
-                         return from(this.getTickets(false));
-                    })
-               )
-               .subscribe();
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -334,10 +327,20 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-               this.currentWallet.set({ ...newCurrent });
-          });
+          await this.walletDataService.refreshWallets(
+               client,
+               addresses, // only the addresses to target
+               (updatedList, newCurrent) => {
+                    this.currentWallet.set({ ...newCurrent });
+               }
+          );
      }
+
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+     //           this.currentWallet.set({ ...newCurrent });
+     //      });
+     // }
 
      toggleSelectAllTickets(): void {
           if (this.allTicketsSelected()) {

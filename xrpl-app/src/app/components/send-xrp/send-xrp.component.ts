@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, DestroyRef, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, signal, computed, effect, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -18,11 +18,9 @@ import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { from, switchMap } from 'rxjs';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
@@ -39,7 +37,6 @@ import { TrustlineCurrencyService } from '../../services/trustline-currency/trus
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendXrpModernComponent extends PerformanceBaseComponent implements OnInit {
-     private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
@@ -55,12 +52,13 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      public readonly acccountDataService = inject(AcccountDataService);
      public readonly sendXrpTransactionOrchestratorService = inject(SendXrpTransactionOrchestratorService);
      public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
-     wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
+     infoPanelExpanded = signal<boolean>(false);
      accountInfo = signal<any>(null);
 
      allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
@@ -72,17 +70,42 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
 
      private readonly sendXrpSpecificKeys = ['amountField', 'amountField', 'destinationTagField', 'sourceTagField', 'invoiceIdField'] as const;
      readonly currentAddress = computed(() => this.currentWallet().address);
-     readonly hasWallets = computed(() => this.wallets().length > 0);
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
 
+     // Has wallets → warning handling
+     private readonly _hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Selected index change → clear + refresh checks
+     private readonly _selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearInputFields();
+
+          // Fire-and-forget refresh
+          void this.onAccountChange(true);
+     });
+
      readonly infoData = computed(() => {
-          const wallet = this.currentWallet();
+          const currentAddr = this.currentWallet()?.address;
+          if (!currentAddr) return null;
+
+          const wallet = this.walletManager.wallets().find(w => w.address === currentAddr);
           if (!wallet?.address) return null;
 
           const walletName = wallet.name || 'Selected wallet';
-          const acc = this.accountInfo()?.result?.account_data;
 
-          if (!acc?.Balance) {
+          if (!wallet.balance) {
                return `<code>${walletName}</code> wallet is ready to send XRP.`;
           }
 
@@ -109,37 +132,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.trustlineCurrencyService.setPreferXrpAsDefault(false);
           this.trustlineCurrencyService.setAddMptInDropdown(false);
           this.transactionDropdownService.loadCustomDestinations();
-          this.setupWalletSubscriptions();
-     }
-
-     private setupWalletSubscriptions(): void {
-          // Has wallets → clear warning
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.();
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.txUiService.setError('');
-                    this.txUiService.setInfoMessage('');
-               }
-          });
-
-          // Wallets list changes
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-          });
-
-          // Selected wallet index changes
-          this.walletManagerService.selectedIndex$
-               .pipe(
-                    takeUntilDestroyed(this.destroyRef),
-                    switchMap(() => {
-                         this.txUiService.clearAllOptionsAndMessages();
-                         this.clearInputFields();
-                         return from(this.onAccountChange(false));
-                    })
-               )
-               .subscribe();
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -270,6 +262,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           await this.refreshAfterTx(client, wallet, destination);
 
           this.clearInputFields();
+          this.cdr.markForCheck();
           return true;
      }
 
@@ -283,8 +276,14 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
      }
 
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]): Promise<void> {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (_, newCurrent) => this.currentWallet.set({ ...newCurrent }));
+     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+          await this.walletDataService.refreshWallets(
+               client,
+               addresses, // only the addresses to target
+               (updatedList, newCurrent) => {
+                    this.currentWallet.set({ ...newCurrent });
+               }
+          );
      }
 
      private addCustomDestination(destination: string | null): void {

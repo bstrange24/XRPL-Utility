@@ -1,27 +1,30 @@
-import { Injectable } from '@angular/core';
-import { XrplService } from '../../xrpl-services/xrpl.service';
+import { inject, Injectable } from '@angular/core';
 import { UtilsService } from '../../util-service/utils.service';
 import { StorageService } from '../../local-storage/storage.service';
 import { WalletManagerService } from '../manager/wallet-manager.service';
-import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import * as xrpl from 'xrpl';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { Wallet } from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
+import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
+import { ToastService } from '../../toast/toast.service';
 
 @Injectable({
      providedIn: 'root',
 })
-export class WalletGeneratorService {
-     constructor(
-          private xrplService: XrplService,
-          private utilsService: UtilsService,
-          private readonly http: HttpClient,
-          private storageService: StorageService,
-          private walletManager: WalletManagerService,
-          private xrplCache: XrplCacheService
-     ) {}
+export class WalletGeneratorService extends PerformanceBaseComponent {
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly utilsService = inject(UtilsService);
+     private readonly http = inject(HttpClient);
+     private readonly storageService = inject(StorageService);
+     private readonly xrplCache = inject(XrplCacheService);
+     public readonly toastService = inject(ToastService);
+
+     constructor() {
+          super();
+     }
 
      private readonly proxyServer = 'http://localhost:3000';
 
@@ -37,7 +40,7 @@ export class WalletGeneratorService {
       * @param emitChange Callback to emit wallet list changes
       * @returns The newly created wallet
       */
-     async generateNewAccount(wallets: any[], environment: string, encryptionType: string): Promise<any> {
+     async generateNewAccount(environment: string, encryptionType: string): Promise<any> {
           console.log('Entering generateNewAccount');
           const startTime = Date.now();
           try {
@@ -49,11 +52,11 @@ export class WalletGeneratorService {
                     wallet = await this.generateWalletFromFamilySeed(environment, encryptionType);
 
                     // Delay (e.g. for faucet)
-                    await this.utilsService.sleep(6000);
+                    await this.utilsService.sleep(7000);
                     console.log('Generated wallet:', wallet);
 
                     // Get current wallets to calculate next name
-                    const currentWallets = this.walletManager.getWallets();
+                    const currentWallets = this.walletManager.wallets();
                     const nextIndex = currentWallets.length + 1;
 
                     // Initialize or update wallet entry
@@ -66,16 +69,18 @@ export class WalletGeneratorService {
                          encryptionAlgorithm: wallet.keypair.algorithm || '',
                          name: `Wallet ${nextIndex}`, // ← AUTO NAME
                     };
-               } catch (error) {
+               } catch (error: any) {
+                    console.error(`Error generating wallet ${error.message}`);
+                    console.error(`Trying createAndFundWalletWithXrplClient....`);
                     // If local host fails use the xrpl facuet
                     wallet = await this.createAndFundWalletWithXrplClient();
 
                     // Delay (e.g. for faucet)
-                    await this.utilsService.sleep(6000);
+                    await this.utilsService.sleep(7000);
                     console.log('Generated wallet:', wallet.wallet.classicAddress);
 
                     // Get current wallets to calculate next name
-                    const currentWallets = this.walletManager.getWallets();
+                    const currentWallets = this.walletManager.wallets();
                     const nextIndex = currentWallets.length + 1;
 
                     // Initialize or update wallet entry
@@ -130,7 +135,7 @@ export class WalletGeneratorService {
                     }
 
                     // Get current wallets to calculate next name
-                    const currentWallets = this.walletManager.getWallets();
+                    const currentWallets = this.walletManager.wallets();
                     const nextIndex = currentWallets.length + 1;
 
                     // Initialize or update wallet entry
@@ -143,14 +148,17 @@ export class WalletGeneratorService {
                          encryptionAlgorithm: wallet.keypair.algorithm || '',
                          name: `Wallet ${nextIndex}`, // ← AUTO NAME
                     };
-               } catch (error) {
+               } catch (error: any) {
+                    console.error(`Error deriving from family seed with XrplClient ${error.message}`);
+                    console.error(`Trying deriveFromFamilySeedWithXrplClient....`);
+
                     wallet = await this.deriveFromFamilySeedWithXrplClient(seed);
 
                     // Return error if the wallet already exist in the application. We do not want duplicate wallets.
                     customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
                     // Get current wallets to calculate next name
-                    const currentWallets = this.walletManager.getWallets();
+                    const currentWallets = this.walletManager.wallets();
                     const nextIndex = currentWallets.length + 1;
 
                     // Initialize or update wallet entry
@@ -187,7 +195,7 @@ export class WalletGeneratorService {
       * @param emitChange Callback to emit wallet list changes
       * @returns The newly created wallet
       */
-     async generateNewWalletFromMnemonic(wallets: any[], environment: string, encryptionType: string): Promise<any> {
+     async generateNewWalletFromMnemonic(environment: string, encryptionType: string): Promise<any> {
           console.log('Entering generateNewWalletFromMnemonic');
           const startTime = Date.now();
           try {
@@ -195,11 +203,11 @@ export class WalletGeneratorService {
                const wallet = await this.generateWalletFromMnemonic(environment, encryptionType);
 
                // Optional delay (e.g. for faucet)
-               await this.utilsService.sleep(6000);
+               await this.utilsService.sleep(7000);
                console.log('Generated wallet:', wallet);
 
                // Get current wallets to calculate next name
-               const currentWallets = this.walletManager.getWallets();
+               const currentWallets = this.walletManager.wallets();
                const nextIndex = currentWallets.length + 1;
 
                // Initialize or update wallet entry
@@ -244,7 +252,7 @@ export class WalletGeneratorService {
                customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
                // Get current wallets to calculate next name
-               const currentWallets = this.walletManager.getWallets();
+               const currentWallets = this.walletManager.wallets();
                const nextIndex = currentWallets.length + 1;
 
                // Initialize or update wallet entry
@@ -280,7 +288,7 @@ export class WalletGeneratorService {
       * @param emitChange Callback to emit wallet list changes
       * @returns The newly created wallet
       */
-     async generateNewWalletFromSecretNumbers(wallets: any[], environment: string, encryptionType: string): Promise<any> {
+     async generateNewWalletFromSecretNumbers(environment: string, encryptionType: string): Promise<any> {
           console.log('Entering generateNewWalletFromSecretNumbers');
           const startTime = Date.now();
           try {
@@ -288,11 +296,11 @@ export class WalletGeneratorService {
                const wallet = await this.generateWalletFromSecretNumbers(environment, encryptionType);
 
                // Optional delay (e.g. for faucet)
-               await this.utilsService.sleep(6000);
+               await this.utilsService.sleep(7000);
                console.log('Generated wallet:', wallet);
 
                // Get current wallets to calculate next name
-               const currentWallets = this.walletManager.getWallets();
+               const currentWallets = this.walletManager.wallets();
                const nextIndex = currentWallets.length + 1;
 
                // Initialize or update wallet entry
@@ -338,7 +346,7 @@ export class WalletGeneratorService {
                customDestinations = this.checkIfWalletAlreadyExist(destinations, wallet, customDestinations);
 
                // Get current wallets to calculate next name
-               const currentWallets = this.walletManager.getWallets();
+               const currentWallets = this.walletManager.wallets();
                const nextIndex = currentWallets.length + 1;
 
                // Initialize or update wallet entry

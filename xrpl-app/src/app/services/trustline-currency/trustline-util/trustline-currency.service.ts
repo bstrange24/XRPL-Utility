@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, Signal, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, Signal, signal } from '@angular/core';
 import { BehaviorSubject, combineLatest, Subject, takeUntil } from 'rxjs';
 
 import * as xrpl from 'xrpl';
@@ -35,10 +35,10 @@ export class TrustlineCurrencyService {
      private latestWallets: Wallet[] = [];
      private latestSelectedIndex = 0;
 
-     currencies$ = new BehaviorSubject<string[]>([]);
-     issuers$ = new BehaviorSubject<IssuerItem[]>([]);
-     selectedIssuer$ = new BehaviorSubject<string>('');
-     balance$ = new BehaviorSubject<string>('0');
+     // currencies$ = new BehaviorSubject<string[]>([]);
+     // issuers$ = new BehaviorSubject<IssuerItem[]>([]);
+     // selectedIssuer$ = new BehaviorSubject<string>('');
+     // balance$ = new BehaviorSubject<string>('0');
 
      public readonly currencies = signal<string[]>([]);
      public readonly issuers = signal<IssuerItem[]>([]);
@@ -81,41 +81,46 @@ export class TrustlineCurrencyService {
      ) {
           this.loadFromStorage();
 
-          // Subscribe to both streams and derive current wallet
-          combineLatest([this.walletManagerService.wallets$, this.walletManagerService.selectedIndex$])
-               .pipe(takeUntil(this.destroy$))
-               .subscribe(([wallets, selectedIndex]) => {
-                    this.latestWallets = wallets;
-                    this.latestSelectedIndex = selectedIndex;
+          effect(() => {
+               const wallets = this.walletManagerService.wallets();
+               const idx = this.walletManagerService.selectedIndex();
+               // rest of logic
+          });
+          // // Subscribe to both streams and derive current wallet
+          // combineLatest([this.walletManagerService.wallets$, this.walletManagerService.selectedIndex$])
+          //      .pipe(takeUntil(this.destroy$))
+          //      .subscribe(([wallets, selectedIndex]) => {
+          //           this.latestWallets = wallets;
+          //           this.latestSelectedIndex = selectedIndex;
 
-                    if (wallets.length === 0 || selectedIndex < 0 || selectedIndex >= wallets.length) {
-                         this.currentWalletAddress.set('');
-                         this.clearCurrentSelection();
-                         return;
-                    }
+          //           if (wallets.length === 0 || selectedIndex < 0 || selectedIndex >= wallets.length) {
+          //                this.currentWalletAddress.set('');
+          //                this.clearCurrentSelection();
+          //                return;
+          //           }
 
-                    const currentWallet = wallets[selectedIndex];
-                    if (currentWallet.address !== this.currentWalletAddress()) {
-                         this.currentWalletAddress.set(currentWallet.address);
-                         this.clearCurrentSelection();
+          //           const currentWallet = wallets[selectedIndex];
+          //           if (currentWallet.address !== this.currentWalletAddress()) {
+          //                this.currentWalletAddress.set(currentWallet.address);
+          //                this.clearCurrentSelection();
 
-                         // If a currency was already selected, refresh issuers + balance
-                         if (this.currentCurrency()) {
-                              this.loadIssuersForCurrency(this.currentCurrency());
-                              this.updateBalanceForCurrentCombo();
-                         }
-                    }
+          //                // If a currency was already selected, refresh issuers + balance
+          //                if (this.currentCurrency()) {
+          //                     this.loadIssuersForCurrency(this.currentCurrency());
+          //                     this.updateBalanceForCurrentCombo();
+          //                }
+          //           }
 
-                    // Auto-initialize default currency when wallet is ready
-                    if (this.currentWalletAddress()) {
-                         this.initializeDefaultCurrency();
-                    }
-               });
+          //           // Auto-initialize default currency when wallet is ready
+          //           if (this.currentWalletAddress()) {
+          //                this.initializeDefaultCurrency();
+          //           }
+          //      });
 
-          this.currencies$.subscribe(c => this.currencies.set(c));
-          this.issuers$.subscribe(i => this.issuers.set(i));
-          this.selectedIssuer$.subscribe(i => this.selectedIssuer.set(i));
-          this.balance$.subscribe(b => this.balance.set(b));
+          // this.currencies$.subscribe(c => this.currencies.set(c));
+          // this.issuers$.subscribe(i => this.issuers.set(i));
+          // this.selectedIssuer$.subscribe(i => this.selectedIssuer.set(i));
+          // this.balance$.subscribe(b => this.balance.set(b));
      }
 
      private buildTxLabel(defaultText: string) {
@@ -348,8 +353,8 @@ export class TrustlineCurrencyService {
      private clearCurrentSelection() {
           this.currentCurrency.set('');
           this.currentIssuer.set('');
-          this.selectedIssuer$.next('');
-          this.balance$.next('0');
+          this.selectedIssuer.set('');
+          this.balance.set('0');
      }
 
      private initializeDefaultCurrency() {
@@ -612,7 +617,7 @@ export class TrustlineCurrencyService {
           // Add user-added IOUs
           allCurrencies.push(...nonXrpIoUs);
 
-          this.currencies$.next(allCurrencies);
+          this.currencies.set(allCurrencies);
           this.currencies.set(allCurrencies);
 
           // Auto-select logic
@@ -646,10 +651,10 @@ export class TrustlineCurrencyService {
           if (!currency || currency === 'XRP') {
                this.currentCurrency.set('XRP');
                this.currentIssuer.set('');
-               this.issuers$.next([]);
-               this.selectedIssuer$.next('');
-               this.balance$.next('0');
-               this.currencies$.next(this.currencies()); // trigger any UI refresh if needed
+               this.issuers.set([]);
+               this.selectedIssuer.set('');
+               this.balance.set('0');
+               this.currencies.set(this.currencies()); // trigger any UI refresh if needed
                return;
           }
 
@@ -661,7 +666,7 @@ export class TrustlineCurrencyService {
           // Use latest known wallet
           if (this.latestWallets.length === 0 || this.latestSelectedIndex >= this.latestWallets.length) {
                this.currentWalletAddress.set('');
-               this.balance$.next('0');
+               this.balance.set('0');
                return;
           }
 
@@ -675,7 +680,7 @@ export class TrustlineCurrencyService {
      // Called when user picks an issuer
      selectIssuer(issuer: string) {
           this.currentIssuer.set(issuer);
-          this.selectedIssuer$.next(issuer);
+          this.selectedIssuer.set(issuer);
           this.updateBalanceForCurrentCombo();
      }
 
@@ -688,12 +693,12 @@ export class TrustlineCurrencyService {
                }))
                .sort((a, b) => a.name.localeCompare(b.name));
 
-          this.issuers$.next(issuers);
+          this.issuers.set(issuers);
 
           if (issuers.length === 0) {
                this.currentIssuer.set('');
-               this.selectedIssuer$.next('');
-               this.balance$.next('0');
+               this.selectedIssuer.set('');
+               this.balance.set('0');
                return;
           }
 
@@ -707,14 +712,14 @@ export class TrustlineCurrencyService {
           }
 
           // Always emit the current (possibly unchanged) issuer
-          this.selectedIssuer$.next(this.currentIssuer());
+          this.selectedIssuer.set(this.currentIssuer());
 
           // Update balance for the active issuer
           await this.updateBalanceForCurrentCombo();
      }
 
      private getNiceName(address: string, currency: string): string {
-          const wallet = this.walletManagerService.getWallets()?.find(w => w.address === address);
+          const wallet = this.walletManagerService.wallets()?.find(w => w.address === address);
           if (wallet?.name) return wallet.name;
 
           const custom = this.storage.get('customDestinations');
@@ -730,7 +735,7 @@ export class TrustlineCurrencyService {
 
      private async updateBalanceForCurrentCombo() {
           if (!this.currentWalletAddress() || !this.currentCurrency() || !this.currentIssuer()) {
-               this.balance$.next('0');
+               this.balance.set('0');
                return;
           }
 
@@ -738,7 +743,7 @@ export class TrustlineCurrencyService {
           const cached = this.balanceCache.get(cacheKey);
           if (cached && Date.now() - cached.timestamp < 8000) {
                const balance = this.extractBalance(cached.data, this.currentCurrency(), this.currentIssuer());
-               this.balance$.next(balance);
+               this.balance.set(balance);
                return;
           }
 
@@ -749,10 +754,10 @@ export class TrustlineCurrencyService {
                this.balanceCache.set(cacheKey, { data: gatewayBalances, timestamp: Date.now() });
 
                const balance = this.extractBalance(gatewayBalances, this.currentCurrency(), this.currentIssuer());
-               this.balance$.next(balance);
+               this.balance.set(balance);
           } catch (e) {
                console.warn('Failed to load balance for currency+issuer', e);
-               this.balance$.next('0');
+               this.balance.set('0');
           }
      }
 
@@ -781,7 +786,7 @@ export class TrustlineCurrencyService {
      }
 
      getCurrencies(): string[] {
-          return this.currencies$.value;
+          return this.currencies();
      }
 
      getSelectedCurrency(): string {

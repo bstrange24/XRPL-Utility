@@ -234,8 +234,12 @@ export class UtilsService {
           },
      };
 
-     sleep(ms: number) {
-          return new Promise(resolve => setTimeout(resolve, ms));
+     sleep(ms: number): Promise<void> {
+          return new Promise(resolve => {
+               setTimeout(() => {
+                    resolve();
+               }, ms);
+          });
      }
 
      encodeIfNeeded(currency: string): string {
@@ -636,7 +640,7 @@ export class UtilsService {
      }
 
      async getWalletFromAddress(address: string): Promise<xrpl.Wallet> {
-          const walletData = this.walletManagerService.getWallets().find(w => w.address === address || (w.classicAddress && w.classicAddress === address));
+          const walletData = this.walletManagerService.wallets().find(w => w.address === address || (w.classicAddress && w.classicAddress === address));
 
           if (!walletData?.seed) {
                throw new Error(`Wallet seed not found for address: ${address}`);

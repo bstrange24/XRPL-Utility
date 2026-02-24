@@ -17,9 +17,9 @@ export class TransactionDropdownService {
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
 
-     readonly wallets: Signal<Wallet[]> = toSignal(this.walletManager.wallets$, { initialValue: [] });
+     readonly wallets: Signal<Wallet[]> = this.walletManager.wallets;
 
-     readonly selectedIndex: Signal<number> = toSignal(this.walletManager.selectedIndex$, { initialValue: 0 });
+     readonly selectedIndex: Signal<number> = this.walletManager.selectedIndex;
 
      readonly currentWallet = computed(() => {
           const index = this.selectedIndex();

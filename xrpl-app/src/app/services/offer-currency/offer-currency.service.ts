@@ -31,7 +31,12 @@ export class OfferCurrencyService {
      // Cache per wallet+currency (shared across both sides)
      private balanceCache = new Map<string, { data: any; timestamp: number }>();
 
-     constructor(private storage: StorageService, private xrplService: XrplService, private utils: UtilsService, private walletManagerService: WalletManagerService) {
+     constructor(
+          private storage: StorageService,
+          private xrplService: XrplService,
+          private utils: UtilsService,
+          private walletManagerService: WalletManagerService
+     ) {
           this.weWant = this.createSideState();
           this.weSpend = this.createSideState();
           this.loadKnownIssuersFromStorage();
@@ -116,7 +121,7 @@ export class OfferCurrencyService {
      }
 
      private getNiceName(address: string, currency: string): string {
-          const wallet = this.walletManagerService.getWallets()?.find(w => w.address === address);
+          const wallet = this.walletManagerService.wallets()?.find(w => w.address === address);
           if (wallet?.name) return wallet.name;
 
           const custom = this.storage.get('customDestinations');

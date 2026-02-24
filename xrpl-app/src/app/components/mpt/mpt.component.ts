@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, DestroyRef, signal, computed, ChangeDetectionStrategy, ViewChild, effect, AfterViewInit } from '@angular/core';
+import { OnInit, Component, inject, DestroyRef, signal, computed, ChangeDetectionStrategy, ViewChild, effect, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -69,6 +69,8 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
      public readonly checkTransactionOrchestrator = inject(CheckTransactionOrchestrator);
      public readonly mptUtilService = inject(MptUtilService);
      public readonly mptOrchestratorServiceService = inject(MptOrchestratorServiceService);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly cdr = inject(ChangeDetectorRef);
 
      @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
      customDestinations = signal<{ name?: string; address: string }[]>([]);
@@ -78,7 +80,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
      activeTab = signal<'create' | 'authorize' | 'unauthorize' | 'send' | 'lock' | 'unlock' | 'clawback' | 'destroy'>('create');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
+     infoPanelExpanded = signal<boolean>(false);
      selectedWalletIndex = signal<number>(0);
      existingMpts = signal<any[]>([]);
      existingMptsCollapsed = signal<boolean>(false);
@@ -121,6 +123,34 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
           scrollBeyondLastLine: false,
      };
 
+     // Effect 1: Has wallets → warning handling
+     private readonly hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Effect 2: Wallets list sync
+     private readonly walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
+     private readonly selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearFields(true);
+
+          // Fire-and-forget refresh
+          void this.getMptDetails(false);
+     });
+
      allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
      destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
      destinationItems = this.transactionDropdownService.destinationItems(this.allDestinations);
@@ -131,7 +161,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
      readonly currentAddress = computed(() => this.currentWallet().address);
      private readonly hasWallets = computed(() => this.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-     readonly hasWalletsSignal = toSignal(this.walletManagerService.hasWallets$, { initialValue: false });
+     readonly hasWalletsSignal = this.walletManagerService.hasWallets;
 
      infoData = computed(() => {
           const wallet = this.currentWallet();
@@ -275,7 +305,6 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
 
      ngOnInit(): void {
           this.transactionDropdownService.loadCustomDestinations();
-          this.setupWalletSubscriptions();
           this.txUiService.metaDataField.set(this.XLS89_TEMPLATE());
           this.txUiService.clearAllOptions();
      }
@@ -285,33 +314,6 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
           setTimeout(() => {
                this.jsonEditor.format();
           }, 0);
-     }
-
-     private async setupWalletSubscriptions() {
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.();
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.toastService.error('');
-                    this.txUiService.setInfoMessage('');
-               }
-          });
-
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-          });
-
-          this.walletManagerService.selectedIndex$
-               .pipe(
-                    takeUntilDestroyed(this.destroyRef),
-                    switchMap(() => {
-                         this.txUiService.clearAllOptions();
-                         this.clearFields(true);
-                         return from(this.getMptDetails(false));
-                    })
-               )
-               .subscribe();
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -733,10 +735,20 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-               this.currentWallet.set({ ...newCurrent });
-          });
+          await this.walletDataService.refreshWallets(
+               client,
+               addresses, // only the addresses to target
+               (updatedList, newCurrent) => {
+                    this.currentWallet.set({ ...newCurrent });
+               }
+          );
      }
+
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+     //           this.currentWallet.set({ ...newCurrent });
+     //      });
+     // }
 
      private addCustomDestination(addDest: boolean, destination: string | null) {
           if (addDest && destination) {

@@ -126,9 +126,9 @@
                               @if (activeTab() === 'deriveSeed') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Enter Seed</label>
+                                        <label for="enterSeed">Enter Seed</label>
                                         @if (seedInput().length > 0) {
-                                        <label>
+                                        <label for="seed">
                                              <span [ngClass]="{ valid: seedValid(), invalid: !seedValid() }"> {{ seedValid() ? 'Seed Valid ✅' : 'Invalid Seed ❌' }} </span>
                                         </label>
                                         }
@@ -150,9 +150,9 @@
                               @if (activeTab() === 'deriveMnemonic') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Enter Mnemonic</label>
+                                        <label for="enterMnemonic">Enter Mnemonic</label>
                                         @if (mnemonicInput().trim().length > 0) {
-                                        <label>
+                                        <label for="mnemonic">
                                              <span [ngClass]="{ valid: mnemonicValid(), invalid: !mnemonicValid() }"> {{ mnemonicValid() ? 'Mnemonic Valid ✅' : 'Invalid Mnemonic ❌' }} </span>
                                         </label>
                                         }
@@ -175,9 +175,9 @@
                               @if (activeTab() === 'deriveSecretNumbers') {
                               <div class="form-row">
                                    <div class="form-group">
-                                        <label>Enter Secret Numbers</label>
+                                        <label for="enterSecretNumber">Enter Secret Numbers</label>
                                         @if (secretNumberInput().length > 0) {
-                                        <label>
+                                        <label for="secretNumber">
                                              <span [ngClass]="{ valid: secretNumberValid(), invalid: !secretNumberValid() }"> {{ secretNumberValid() ? 'Secret Numbers Valid ✅' : 'Invalid Secret Numbers ❌ ' }} </span>
                                         </label>
                                         }

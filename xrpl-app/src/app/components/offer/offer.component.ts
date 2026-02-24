@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, computed, DestroyRef, signal, ViewContainerRef, ElementRef, TemplateRef, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, computed, DestroyRef, signal, ViewContainerRef, ElementRef, TemplateRef, ViewChild, ChangeDetectorRef, effect } from '@angular/core';
 import { trigger, style, transition, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -159,6 +159,8 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly offerCurrency = inject(OfferCurrencyService);
+     private readonly walletManager = inject(WalletManagerService);
+     private cdr: ChangeDetectorRef;
 
      private offerOverlayRef: OverlayRef | null = null;
      private readonly overlay = inject(Overlay);
@@ -168,20 +170,19 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
      @ViewChild('offerDropdownTemplate', { static: false })
      offerDropdownTemplate!: TemplateRef<any>;
-     private cdr: ChangeDetectorRef;
 
      // With these (for offers, using Sequence as the identifier)
      highlightedOfferIndex = signal<number>(-1);
      offerSearchQuery = signal<string>('');
      selectedOfferSequences = signal<number[]>([]); // Note: number[] because Offer.Sequence is number
-     isOfferDropdownOpen = signal(false);
+     isOfferDropdownOpen = signal<boolean>(false);
 
      public weWantIssuers$!: Observable<IssuerItem[]>;
      public weSpendIssuers$!: Observable<IssuerItem[]>;
      public weWantBalance$!: Observable<string>;
      public weSpendBalance$!: Observable<string>;
-     private destroy$ = new Subject<void>();
-     private ammInfoTrigger = new Subject<void>();
+     private readonly destroy$ = new Subject<void>();
+     private readonly ammInfoTrigger = new Subject<void>();
 
      // Destination Dropdown
      typedDestination = signal<string>('');
@@ -194,7 +195,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      activeTab = signal<'createOffer' | 'getOffers' | 'getOrderBook' | 'cancelOffer'>('createOffer');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
+     infoPanelExpanded = signal<boolean>(false);
      amountField = signal<string>('');
      destinationField = signal<string>('');
      destinationTagField = signal<string>('');
@@ -278,6 +279,34 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                desc: 'The offer never becomes a ledger object: it only tries to match existing offers in the ledger.',
           },
      ] as const;
+
+     // Effect 1: Has wallets → warning handling
+     private readonly hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Effect 2: Wallets list sync
+     private readonly walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
+     private readonly selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearFields();
+
+          // Fire-and-forget refresh
+          void this.getOffers(false);
+     });
 
      // Computed properties
      selectedDestinationItem = computed(() => {
@@ -478,7 +507,6 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
      ngOnInit(): void {
           this.loadCustomDestinations();
-          this.setupWalletSubscriptions();
           this.currencyFieldDropDownValue.set('XRP');
 
           // Auto-select first issuer when issuers list changes
@@ -521,51 +549,6 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
           if (stored) this.customDestinations.set(JSON.parse(stored));
-     }
-
-     private async setupWalletSubscriptions() {
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.(); // or just clear messages when appropriate
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.txUiService.setError('');
-               }
-          });
-
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-               if (this.hasWallets() && !this.currentWallet().address) {
-                    const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    const wallet = wallets[idx];
-                    if (wallet) {
-                         this.clearFields();
-                         this.selectWallet(wallet);
-                         this.offerCurrency.setWalletAddress(wallet.address);
-
-                         const currencies = this.offerCurrency.getAvailableCurrencies(true);
-                         const defaultWant = currencies.includes('BOB') ? 'BOB' : currencies[0] || 'XRP';
-                         this.offerCurrency.selectWeWantCurrency(defaultWant, wallet);
-                         this.offerCurrency.selectWeSpendCurrency('XRP', wallet);
-                    }
-               }
-          });
-
-          this.walletManagerService.selectedIndex$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(async index => {
-               const wallet = this.wallets()[index];
-               if (wallet) {
-                    this.selectWallet(wallet);
-                    this.xrplCache.invalidateAccountCache(wallet.address);
-                    this.clearFields();
-                    this.offerCurrency.setWalletAddress(wallet.address);
-
-                    const currencies = this.offerCurrency.getAvailableCurrencies(true);
-                    const defaultWant = currencies.includes('BOB') ? 'BOB' : currencies[0] || 'XRP';
-                    this.offerCurrency.selectWeWantCurrency(defaultWant, wallet);
-                    this.offerCurrency.selectWeSpendCurrency('XRP', wallet);
-                    await this.getOffers(false, true);
-               }
-          });
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -1995,10 +1978,20 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-               this.currentWallet.set({ ...newCurrent });
-          });
+          await this.walletDataService.refreshWallets(
+               client,
+               addresses, // only the addresses to target
+               (updatedList, newCurrent) => {
+                    this.currentWallet.set({ ...newCurrent });
+               }
+          );
      }
+
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+     //           this.currentWallet.set({ ...newCurrent });
+     //      });
+     // }
 
      private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
           // Update multi-sign & regular key flags

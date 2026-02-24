@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, Signal, WritableSignal, effect } from '@angular/core';
+import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, Signal, WritableSignal, effect, ChangeDetectorRef } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -66,16 +66,18 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      public readonly mptUtilService = inject(MptUtilService);
      public readonly escrowUtilService = inject(EscrowUtilService);
      public readonly timeBasedEscrowOrchestrator = inject(TimeBasedEscrowOrchestrator);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
 
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal(false);
+     infoPanelExpanded = signal<boolean>(false);
      activeTab = signal<'create' | 'finish' | 'cancel'>('create');
      currencyFieldDropDownValue = signal<string>('XRP');
-     isMptEnabled = signal(false);
+     isMptEnabled = signal<boolean>(false);
      escrowFinishTimeField = signal<string>('');
      escrowCancelTimeField = signal<string>('');
      escrowOwnerField = signal<string>('');
@@ -93,6 +95,34 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      escrowConditionField = signal<string>('');
      escrowFulfillmentField = signal<string>('');
 
+     // Effect 1: Has wallets → warning handling
+     private readonly hasWalletsEffect = effect(() => {
+          if (this.walletManager.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Effect 2: Wallets list sync
+     private readonly walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
+     private readonly selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManager.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearFields();
+
+          // Fire-and-forget refresh
+          void this.getEscrows(false);
+     });
+
      allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
      destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
      destinationItems = this.transactionDropdownService.destinationItems(this.allDestinations);
@@ -103,7 +133,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      readonly currentAddress = computed(() => this.currentWallet().address);
      private readonly hasWallets = computed(() => this.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-     readonly hasWalletsSignal = toSignal(this.walletManagerService.hasWallets$, { initialValue: false });
+     readonly hasWalletsSignal = this.walletManagerService.hasWallets;
 
      escrowItems = computed(() => this.escrowUtilService.escrowItems(this.allEscrowsRaw(), this.currentWallet().address, this.activeTab() === 'cancel'));
 
@@ -257,7 +287,6 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           this.trustlineCurrencyService.setAddMptInDropdown(true);
 
           this.transactionDropdownService.loadCustomDestinations();
-          this.setupWalletSubscriptions();
           this.setExpirationToNow();
 
           if (this.trustlineCurrencyService.currencies().length > 0) {
@@ -277,42 +306,6 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      onIssuerSelected(item: SelectItem | null) {
           const address = item?.id || '';
           this.trustlineCurrencyService.selectIssuer(address);
-     }
-
-     private async setupWalletSubscriptions() {
-          this.walletManagerService.hasWalletsFromWallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(hasWallets => {
-               if (hasWallets) {
-                    this.txUiService.clearWarning?.();
-               } else {
-                    this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    this.txUiService.setError('');
-                    this.txUiService.setInfoMessage('');
-               }
-          });
-
-          this.walletManagerService.wallets$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(wallets => {
-               this.wallets.set(wallets);
-               if (this.hasWallets() && !this.currentAddress()) {
-                    const idx = this.walletManagerService.getSelectedIndex?.() ?? 0;
-                    const wallet = wallets[idx];
-                    if (wallet) this.selectWallet(wallet);
-               }
-          });
-
-          this.walletManagerService.selectedIndex$
-               .pipe(
-                    takeUntilDestroyed(this.destroyRef),
-                    switchMap(index => {
-                         const wallet = this.wallets()[index];
-                         if (!wallet) return EMPTY;
-
-                         this.selectWallet(wallet);
-                         this.txUiService.clearAllOptions();
-                         this.clearFields();
-                         return from(this.getEscrows(false));
-                    })
-               )
-               .subscribe();
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -693,10 +686,20 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-               this.currentWallet.set({ ...newCurrent });
-          });
+          await this.walletDataService.refreshWallets(
+               client,
+               addresses, // only the addresses to target
+               (updatedList, newCurrent) => {
+                    this.currentWallet.set({ ...newCurrent });
+               }
+          );
      }
+
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
+     //           this.currentWallet.set({ ...newCurrent });
+     //      });
+     // }
 
      private addCustomDestination(addDest: boolean, destination: string | null) {
           if (addDest && destination) {
