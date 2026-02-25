@@ -40,12 +40,6 @@ export class WalletDataService extends PerformanceBaseComponent {
                     exhaustMap(payload => from(this.performRefreshWallets(payload.client, payload.wallets, payload.selectedWalletIndex, payload.addressesToRefresh, payload.onUpdate, payload.resolve)))
                )
                .subscribe();
-          // this.refreshRequests$
-          //      .pipe(
-          //           debounceTime(250),
-          //           exhaustMap(payload => from(this.performRefreshWallets(payload.client, payload.wallets, payload.selectedWalletIndex, payload.addressesToRefresh, payload.onUpdate)))
-          //      )
-          //      .subscribe();
      }
 
      //  This only queues a refresh request.
@@ -60,23 +54,7 @@ export class WalletDataService extends PerformanceBaseComponent {
                     resolve, // pass resolver forward
                });
           });
-          // return new Promise<void>(resolve => {
-          //      this.refreshRequests$.next({
-          //           client,
-          //           wallets: [], // ignored
-          //           selectedWalletIndex: this.walletManagerService.getSelectedIndex() || 0,
-          //           addressesToRefresh,
-          //           onUpdate: (updated, current) => {
-          //                onUpdate?.(updated, current);
-          //                resolve(); // resolve AFTER updates applied
-          //           },
-          //      });
-          // });
      }
-
-     // async refreshWallets1(client: xrpl.Client, wallets: Wallet[], selectedWalletIndex: number, addressesToRefresh?: string[], onUpdate?: (updatedWallets: Wallet[], newCurrentWallet: Wallet) => void): Promise<void> {
-     //      this.refreshRequests$.next({ client, wallets, selectedWalletIndex, addressesToRefresh, onUpdate });
-     // }
 
      private async performRefreshWallets(client: xrpl.Client, wallets: Wallet[], selectedWalletIndex: number, addressesToRefresh?: string[], onUpdate?: (updatedWallets: Wallet[], newCurrentWallet: Wallet) => void, resolve?: () => void): Promise<void> {
           await this.measure('performRefreshWallets', true, async () => {

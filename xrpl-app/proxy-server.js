@@ -23,8 +23,8 @@ app.get('/api/xpmarket/token/:currencyIssuer', async (req, res) => {
      }
 });
 
-// Create wallet from family-seed and fund it
-app.post('/api/create-wallet/family-seed', async (req, res) => {
+// Create wallet from familySeed and fund it
+app.post('/api/create-wallet/familySeed', async (req, res) => {
      try {
           const { environment, algorithm = 'ed25519' } = req.body;
 
@@ -63,18 +63,20 @@ app.post('/api/create-wallet/family-seed', async (req, res) => {
 });
 
 // Derive wallet created from a family seed
-app.get('/api/derive/family-seed/:familySeed', async (req, res) => {
+app.get('/api/derive/familySeed', async (req, res) => {
      try {
-          const { familySeed } = req.params;
-          const { algorithm } = req.query; // Get algorithm from query params
+          const { familySeed, algorithm } = req.query;
 
-          console.log(`seed ${familySeed}, algorithm ${algorithm} `);
-          const derive_account_with_seed = accountlib.derive.familySeed(familySeed, { algorithm: algorithm });
-          console.log(`account ${derive_account_with_seed}`);
-          res.json(derive_account_with_seed);
+          if (!familySeed) {
+               return res.status(400).json({ error: 'Seed is required' });
+          }
+
+          const account = accountlib.derive.familySeed(familySeed, { algorithm });
+
+          res.json(account);
      } catch (err) {
           console.error(err);
-          res.status(500).json({ error: 'Failed to derive account from family seed' });
+          res.status(500).json({ error: 'Failed to derive account' });
      }
 });
 
@@ -110,7 +112,6 @@ app.post('/api/create-wallet/mnemonic', async (req, res) => {
                const faucetResult = await faucetResponse.json();
                console.log(`faucetResult ${JSON.stringify(faucetResult, null, '\t')}`);
 
-               // return res.json({ wallet: generatedWallet, faucet: faucetResult });
                return res.json(generatedWallet);
           }
 
@@ -123,30 +124,33 @@ app.post('/api/create-wallet/mnemonic', async (req, res) => {
 });
 
 // Get wallet created from a mnemonic
-app.get('/api/derive/mnemonic/:mnemonic', async (req, res) => {
+app.get('/api/derive/mnemonic', async (req, res) => {
      try {
-          const { mnemonic } = req.params;
-          const { algorithm } = req.query; // Get algorithm from query params
+          const { mnemonic, algorithm } = req.query;
 
-          console.log(`seed ${mnemonic}, algorithm ${algorithm} `);
-          const derive_account_with_mnemonic = accountlib.derive.mnemonic(mnemonic, { algorithm: algorithm });
-          console.log(`account ${derive_account_with_mnemonic}`);
-          res.json(derive_account_with_mnemonic);
+          if (!mnemonic) {
+               return res.status(400).json({ error: 'Mnemonic is required' });
+          }
+          console.log(JSON.stringify(mnemonic));
+
+          const account = accountlib.derive.mnemonic(mnemonic, { algorithm });
+
+          res.json(account);
      } catch (err) {
           console.error(err);
-          res.status(500).json({ error: 'Failed to fetch from XPMarket' });
+          res.status(500).json({ error: 'Failed to derive account' });
      }
 });
 
-// Create wallet from secret-numbers
-app.post('/api/create-wallet/secret-numbers', async (req, res) => {
+// Create wallet from secretNumbers
+app.post('/api/create-wallet/secretNumbers', async (req, res) => {
      try {
           const { environment, algorithm = 'ed25519' } = req.body;
 
           console.log(`Generating account from secret numbers`);
           console.log(`environment ${environment}, algorithm ${algorithm}`);
 
-          // Generate secret-numbers wallet
+          // Generate secretNumbers wallet
           const generatedWallet = accountlib.generate.secretNumbers({ algorithm: algorithm });
           console.log(`account ${JSON.stringify(generatedWallet, null, 2)}`);
           let facet = 'https://faucet.devnet.rippletest.net/accounts';
@@ -170,7 +174,6 @@ app.post('/api/create-wallet/secret-numbers', async (req, res) => {
                const faucetResult = await faucetResponse.json();
                console.log(`faucetResult ${JSON.stringify(faucetResult, null, '\t')}`);
 
-               // return res.json({ wallet: generatedWallet, faucet: faucetResult });
                return res.json(generatedWallet);
           }
 

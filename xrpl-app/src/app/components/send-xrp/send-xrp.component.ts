@@ -93,7 +93,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.clearInputFields();
 
           // Fire-and-forget refresh
-          void this.onAccountChange(true);
+          void this.onAccountChange(false);
      });
 
      readonly infoData = computed(() => {

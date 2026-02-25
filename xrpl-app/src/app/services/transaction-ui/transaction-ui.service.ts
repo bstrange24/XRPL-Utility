@@ -184,7 +184,7 @@ export class TransactionUiService {
      mnemonic = signal<string>('');
      secretNumbers = signal<string>('');
      ed25519_encryption_type = signal<boolean>(false);
-     secp256k1_encryption_type = signal<boolean>(false);
+     secp256k1_encryption_type = signal<boolean>(true);
      buttonLoading = signal<ButtonLoadingState>({
           generateNewWalletFromSeed: false,
           generateNewWalletFromMnemonic: false,
@@ -822,9 +822,7 @@ export class TransactionUiService {
           this.showEnableTrustline.set(false);
           this.isMemoEnabled.set(false);
           this.useMultiSign.set(false);
-          // this.multiSigningEnabled.set(false);
           this.isRegularKeyAddress.set(false);
-          // this.regularKeySigningEnabled.set(false);
           this.isTicket.set(false);
           this.isSimulateEnabled.set(false);
           this.memoField.set('');
@@ -833,18 +831,11 @@ export class TransactionUiService {
      }
 
      clearAllOptionsAndMessages() {
-          // this.clearAllOptions();
           this.errorMessage = '';
           this.errorMessageSignal.set(null);
           this.updateSpinnerMessageSignal('');
           this.clearTxResultsHash();
           this.clearMessages();
-
-          // this.isTicket.set(false);
-          // this.selectedSingleTicket.set('');
-          // this.selectedTickets.set([]);
-          // this.isMemoEnabled.set(false);
-          // this.clearWarning();
           this.successMessage = '';
      }
 

@@ -1,6 +1,4 @@
-// src/app/services/dropdown/currency-dropdown.service.ts
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { Injectable, signal } from '@angular/core';
 
 export interface CurrencyItem {
      code: string;
@@ -11,38 +9,59 @@ export interface CurrencyItem {
      providedIn: 'root',
 })
 export class CurrencyDropdownService {
-     private _isOpen = new BehaviorSubject<boolean>(false);
-     isOpen$ = this._isOpen.asObservable();
+     private readonly _isOpen = signal<boolean>(false);
+     readonly isOpen = this._isOpen.asReadonly();
 
-     private _allItems = new BehaviorSubject<CurrencyItem[]>([]);
-     private _filtered = new BehaviorSubject<CurrencyItem[]>([]);
-     filtered$ = this._filtered.asObservable();
+     private readonly _allItems = signal<CurrencyItem[]>([]);
+     private readonly _filtered = signal<CurrencyItem[]>([]);
 
-     setItems(items: CurrencyItem[]): void {
-          this._allItems.next(items || []);
-          this._filtered.next(items || []);
+     // Public readonly access
+     readonly filtered = this._filtered.asReadonly();
+
+     setItems(items: CurrencyItem[] | null | undefined): void {
+          const safeItems = items ?? [];
+          this._allItems.set(safeItems);
+          this._filtered.set(safeItems); // reset filtered to full list
      }
 
      openDropdown(): void {
-          this._isOpen.next(true);
+          this._isOpen.set(true);
      }
 
      closeDropdown(): void {
-          this._isOpen.next(false);
+          this._isOpen.set(false);
      }
 
      toggleDropdown(): void {
-          this._isOpen.next(!this._isOpen.value);
+          this._isOpen.update(open => !open);
      }
 
+     /**
+      * Filters items based on query and updates the filtered signal
+      */
      filter(query: string): void {
-          const items = this._allItems.value;
+          const items = this._allItems();
+
           if (!query?.trim()) {
-               this._filtered.next(items);
+               this._filtered.set(items);
                return;
           }
-          const q = query.toLowerCase();
+
+          const q = query.toLowerCase().trim();
           const results = items.filter(item => item.code.toLowerCase().includes(q));
-          this._filtered.next(results);
+
+          this._filtered.set(results);
+     }
+
+     // Optional: if you want a version that returns the result instead of mutating state
+     getFiltered(query: string): CurrencyItem[] {
+          const items = this._allItems();
+
+          if (!query?.trim()) {
+               return items;
+          }
+
+          const q = query.toLowerCase().trim();
+          return items.filter(item => item.code.toLowerCase().includes(q));
      }
 }

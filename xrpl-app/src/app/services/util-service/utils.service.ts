@@ -11,6 +11,7 @@ import md5 from 'blueimp-md5';
 import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { MPToken, RippleState } from '../../models/interface-items.model';
+import * as bip39 from 'bip39';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -573,15 +574,33 @@ export class UtilsService {
      }
 
      removeCommaFromAmount(field: string): string {
-          return field.replaceAll(/,/g, '');
+          return field.replaceAll(',', '');
      }
 
      normalizeMnemonic(input: string): string {
-          return input
-               .toLowerCase()
-               .replaceAll(/[^a-z\s]/g, '') // remove symbols
-               .replaceAll(/\s+/g, ' ') // collapse spaces
-               .trim();
+          return (
+               input
+                    // .toLowerCase()
+                    // .replaceAll(',', '') // remove commas
+                    .replaceAll(/\s+/g, ' ') // normalize spacing
+                    .trim()
+          );
+     }
+
+     normalizeMnemonic1(input: string): string {
+          const normalized = input.trim().toLowerCase();
+
+          if (!/^[a-z]+( [a-z]+)*$/.test(normalized)) {
+               // throw new Error('Mnemonic must contain lowercase words separated by single spaces only.');
+               return 'Invalid Mnemonic. Must contain lowercase words separated by single spaces only.';
+          }
+
+          if (!bip39.validateMnemonic(normalized)) {
+               // throw new Error('Invalid BIP39 mnemonic.');
+               return 'Invalid BIP39 Mnemonic.';
+          }
+
+          return normalized;
      }
 
      normalizeSecrets(input: string): string[] {

@@ -22,7 +22,7 @@ import { UtilsService } from '../../services/util-service/utils.service';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WalletPanelComponent extends PerformanceBaseComponent {
-     private readonly walletManager = inject(WalletManagerService);
+     private readonly walletManagerService = inject(WalletManagerService);
      private readonly walletGenerator = inject(WalletGeneratorService);
      private readonly walletDataService = inject(WalletDataService);
      public readonly copyUtilService = inject(CopyUtilService);
@@ -30,7 +30,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      public readonly toastService = inject(ToastService);
      private readonly cdr = inject(ChangeDetectorRef);
      private readonly utilsService = inject(UtilsService);
-     readonly editingIndex = this.walletManager.isEditing.bind(this.walletManager);
+     readonly editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
 
      @Output() walletSelected = new EventEmitter<Wallet>();
      @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
@@ -41,10 +41,10 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      hasWallets = false;
      tempName = '';
 
-     readonly isEditing = this.walletManager.isEditing.bind(this.walletManager);
+     readonly isEditing = this.walletManagerService.isEditing.bind(this.walletManagerService);
 
      private readonly _hasWalletsEffect = effect(() => {
-          if (this.walletManager.hasWallets()) {
+          if (this.walletManagerService.hasWallets()) {
                this.txUiService.clearWarning?.();
           } else {
                this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
@@ -56,7 +56,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
 
      private readonly _walletsEffect = effect(() => {
-          const currentWallets = this.walletManager.wallets();
+          const currentWallets = this.walletManagerService.wallets();
 
           this.wallets = currentWallets ?? [];
           this.hasWallets = this.wallets.length > 0;
@@ -69,7 +69,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      });
 
      private readonly _selectedIndexEffect = effect(() => {
-          const index = this.walletManager.selectedIndex();
+          const index = this.walletManagerService.selectedIndex();
 
           if (index < 0 || index >= this.wallets.length) return;
 
@@ -82,11 +82,11 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
 
      // Optional: safety clamp when both change
      private readonly _clampEffect = effect(() => {
-          const list = this.walletManager.wallets();
-          const idx = this.walletManager.selectedIndex();
+          const list = this.walletManagerService.wallets();
+          const idx = this.walletManagerService.selectedIndex();
 
           if (idx >= list.length) {
-               this.walletManager.setSelectedIndex(Math.max(0, list.length - 1));
+               this.walletManagerService.setSelectedIndex(Math.max(0, list.length - 1));
           }
      });
 
@@ -122,24 +122,24 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           this.selectedWalletIndex = index;
           this.updateCurrentWallet();
 
-          this.walletManager.setSelectedIndex(index);
+          this.walletManagerService.setSelectedIndex(index);
           this.walletSelected.emit(this.currentWallet);
      }
 
      editName(index: number) {
-          this.walletManager.startEdit(index);
+          this.walletManagerService.startEdit(index);
           const wallet = this.wallets[index];
           this.tempName = wallet.name || `Wallet ${index + 1}`;
           setTimeout(() => this.nameInput?.nativeElement.focus(), 0);
      }
 
      saveName() {
-          this.walletManager.saveEdit(this.tempName);
+          this.walletManagerService.saveEdit(this.tempName);
           this.tempName = '';
      }
 
      cancelEdit() {
-          this.walletManager.cancelEdit();
+          this.walletManagerService.cancelEdit();
           this.tempName = '';
      }
 
@@ -164,31 +164,32 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
 
      deleteWallet(index: number) {
           if (!confirm('Delete this wallet? This cannot be undone.')) return;
-          this.walletManager.deleteWallet(index);
+          this.walletManagerService.deleteWallet(index);
      }
 
      // Called by the all pages except the Wallet Configurator page
      async generateNewAccount() {
-          await this.measure('generateNewAccount', true, async () => {
+          await this.withPerf('generateNewAccount', async () => {
                this.txUiService.clearTxResultsHash();
                this.txUiService.resetCurrentStepToIdle();
 
                try {
                     this.txUiService.currentStep.set('waiting_for_wallet_creation');
 
-                    const newWallet = await this.walletGenerator.generateNewAccount(this.environment(), AppConstants.ENCRYPTION.ED25519);
+                    const newWallet = await this.walletGenerator.generateWallet('familySeed', this.environment(), this.txUiService.encryptionType());
 
                     const client = await this.xrplService.getClient();
                     await this.walletDataService.refreshWallets(client, [newWallet.address]);
 
-                    // Auto-select
-                    // const freshWallets = this.walletManager.wallets(); // fresh read
-                    // const newIndex = freshWallets.findIndex(w => w.address === newWallet.address);
-                    // console.warn('Hey GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO 3');
-
-                    // if (newIndex !== -1) {
-                    //      this.walletManager.setSelectedIndex(newIndex);
-                    // }
+                    /**
+                     * Uncomment to auto-select the new wallet.
+                     * const freshWallets = this.walletManagerService.wallets(); // fresh read
+                     * const newIndex = freshWallets.findIndex(w => w.address === newWallet.address);
+                     *
+                     * if (newIndex !== -1) {
+                     *   this.walletManagerService.setSelectedIndex(newIndex);
+                     * }
+                     */
 
                     // Success actions – do them synchronously first
                     this.updateCurrentWallet();
@@ -197,9 +198,9 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
                     // Set result signal + toast
                     this.txUiService.setTxResultSignal(newWallet);
                     this.toastService.success(`Generated ${newWallet.address || newWallet.wallet?.classicAddress} wallet successfully!`, AppConstants.TOAST.SUCCESS, false);
-               } catch (err: any) {
-                    console.error('Generate account failed', err);
-                    this.toastService.error(err.message || 'Unknown error', AppConstants.TOAST.ERROR);
+               } catch (error: any) {
+                    console.error('Generate account failed', error);
+                    this.toastService.error(error.message || 'Unknown error', AppConstants.TOAST.ERROR);
                } finally {
                     this.txUiService.resetCurrentStepToIdle();
                }
@@ -218,9 +219,9 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
                this.selectedWalletIndex++;
           }
 
-          this.walletManager.setWallets([...this.wallets]);
+          this.walletManagerService.setWallets([...this.wallets]);
           this.updateCurrentWallet();
           this.walletSelected.emit(this.currentWallet);
-          this.walletManager.setSelectedIndex(this.selectedWalletIndex);
+          this.walletManagerService.setSelectedIndex(this.selectedWalletIndex);
      }
 }

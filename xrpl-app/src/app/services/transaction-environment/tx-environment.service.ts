@@ -2,7 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { XrplCacheService } from '../xrpl-cache/xrpl-cache.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
-import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
+import { Wallet, WalletManagerService } from '../wallets/manager/wallet-manager.service';
+import { UtilsService } from '../util-service/utils.service';
 
 interface PrepareTxEnvironmentOptions {
      includeTickets?: boolean;
@@ -33,6 +34,7 @@ interface PrepareTxEnvironmentResult {
      escrowObjects?: xrpl.AccountObjectsResponse;
      escrowObjectsBySequenceId?: any;
      checkObjects?: xrpl.AccountObjectsResponse;
+     mptObjects?: xrpl.AccountObjectsResponse;
      paymentChannelObjects?: any;
      trustlines?: xrpl.AccountLinesResponse;
      accountInfo?: xrpl.AccountInfoResponse;
@@ -47,7 +49,7 @@ export class TxEnvironmentService {
      private readonly xrplCache = inject(XrplCacheService);
      private readonly xrplService = inject(XrplService);
      private readonly walletManager = inject(WalletManagerService);
-     private readonly walletCache = new Map<string, xrpl.Wallet>();
+     private readonly utilsService = inject(UtilsService);
 
      async prepareTxEnvironment({
           includeTickets = false,
@@ -67,99 +69,120 @@ export class TxEnvironmentService {
           destinationAddress = '',
           escrowSequenceNumberField = '',
      }: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
-          // Client (cached internally)
           const client = await this.xrplCache.getClient(() => this.xrplService.getClient());
 
-          // XRPL Wallet (cached locally)
-          const localWallet = this.walletManager.getSelectedWallet();
-          if (!localWallet?.seed) {
-               throw new Error('Selected wallet is missing a seed.');
-          }
+          const selectedWallet = this.getSelectedWallet();
 
-          const walletKey = `${localWallet.seed}:${localWallet.encryptionAlgorithm}`;
-          let wallet = this.walletCache.get(walletKey);
+          let seed: string = this.getSeed(selectedWallet);
 
-          if (!wallet) {
-               wallet = xrpl.Wallet.fromSeed(localWallet.seed);
-               this.walletCache.set(walletKey, wallet);
-          }
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(seed, selectedWallet.encryptionAlgorithm as 'ed25519' | 'secp256k1');
 
           // Parallel network calls
-          const networkCalls: Promise<any>[] = [];
-          const networkKeys: string[] = [];
+          const xrplNetworkCalls: Promise<any>[] = [];
+          const keys: string[] = [];
 
           if (includeFee) {
-               networkCalls.push(this.xrplCache.getFee(this.xrplService, forceRefresh));
-               networkKeys.push('fee');
+               xrplNetworkCalls.push(this.xrplCache.getFee(this.xrplService, forceRefresh));
+               keys.push('fee');
           }
 
           if (includeLedgerIndex) {
-               networkCalls.push(this.xrplCache.getLedgerIndex(client));
-               networkKeys.push('currentLedger');
+               xrplNetworkCalls.push(this.xrplCache.getLedgerIndex(client));
+               keys.push('currentLedger');
           }
 
           if (includeAccountInfo) {
-               networkCalls.push(this.xrplCache.getAccountInfo(wallet.classicAddress, forceRefresh));
-               networkKeys.push('accountInfo');
+               xrplNetworkCalls.push(this.xrplCache.getAccountInfo(wallet.classicAddress, forceRefresh));
+               keys.push('accountInfo');
           }
 
           if (includeDestinationAccountInfo && destinationAddress) {
-               networkCalls.push(this.xrplCache.getAccountInfo(destinationAddress, forceRefresh));
-               networkKeys.push('destinationAccountInfo');
+               xrplNetworkCalls.push(this.xrplCache.getAccountInfo(destinationAddress, forceRefresh));
+               keys.push('destinationAccountInfo');
           }
 
           if (includeDestinationAccountObject && destinationAddress) {
-               networkCalls.push(this.xrplCache.getAccountObjects(client, destinationAddress, forceRefresh));
-               networkKeys.push('destinationAccountObject');
+               xrplNetworkCalls.push(this.xrplCache.getAccountObjects(client, destinationAddress, forceRefresh));
+               keys.push('destinationAccountObject');
           }
 
           if (includeAccountObject) {
-               networkCalls.push(this.xrplCache.getAccountObjects(client, wallet.classicAddress, forceRefresh));
-               networkKeys.push('accountObjects');
+               xrplNetworkCalls.push(this.xrplCache.getAccountObjects(client, wallet.classicAddress, forceRefresh));
+               keys.push('accountObjects');
           }
 
           if (includeTrustlines) {
-               networkCalls.push(this.xrplCache.getAccountLines(client, wallet.classicAddress, forceRefresh));
-               networkKeys.push('trustlines');
+               xrplNetworkCalls.push(this.xrplCache.getAccountLines(client, wallet.classicAddress, forceRefresh));
+               keys.push('trustlines');
           }
 
           if (includeTickets) {
-               networkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'ticket'));
-               networkKeys.push('ticketObjects');
+               xrplNetworkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'ticket'));
+               keys.push('ticketObjects');
           }
 
           if (includeEscrows) {
-               networkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'escrow'));
-               networkKeys.push('escrowObjects');
+               xrplNetworkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'escrow'));
+               keys.push('escrowObjects');
           }
 
           if (includeEscrowBySequenceId) {
-               networkCalls.push(this.xrplService.getEscrowBySequence(client, wallet.classicAddress, Number(escrowSequenceNumberField)));
-               networkKeys.push('escrowObjectsBySequenceId');
+               xrplNetworkCalls.push(this.xrplService.getEscrowBySequence(client, wallet.classicAddress, Number(escrowSequenceNumberField)));
+               keys.push('escrowObjectsBySequenceId');
           }
 
           if (includeChecks) {
-               networkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'check'));
-               networkKeys.push('checkObjects');
+               xrplNetworkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'check'));
+               keys.push('checkObjects');
           }
 
           if (includeMptObjects) {
-               networkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'check'));
-               networkKeys.push('mptObjects');
+               xrplNetworkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'mpt'));
+               keys.push('mptObjects');
           }
 
           if (includePaymentChannelObjects) {
-               networkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'payment_channel'));
-               networkKeys.push('paymentChannelObjects');
+               xrplNetworkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'payment_channel'));
+               keys.push('paymentChannelObjects');
           }
 
-          const networkResults = networkCalls.length ? await Promise.all(networkCalls) : [];
+          const networkResults = xrplNetworkCalls.length ? await Promise.all(xrplNetworkCalls) : [];
 
           // Build result
+          const result: PrepareTxEnvironmentResult = this.buildResults(client, wallet, keys, networkResults);
+          return result;
+     }
+
+     private getSeed(selectedWallet: Wallet) {
+          let input: string;
+
+          if (selectedWallet.seed) {
+               input = selectedWallet.seed;
+          } else if (selectedWallet.mnemonic) {
+               input = selectedWallet.mnemonic;
+          } else if (selectedWallet.secretNumbers) {
+               input = selectedWallet.secretNumbers;
+          } else {
+               throw new Error('Selected wallet has no valid seed, mnemonic or secret numbers');
+          }
+          return input;
+     }
+
+     private buildResults(client: xrpl.Client, wallet: xrpl.Wallet, keys: string[], networkResults: any[]) {
           const result: PrepareTxEnvironmentResult = { client, wallet };
-          networkKeys.forEach((key, index) => {
+          keys.forEach((key, index) => {
                (result as any)[key] = networkResults[index];
           });
           return result;
+     }
+
+     private getSelectedWallet() {
+          const localWallet = this.walletManager.getSelectedWallet();
+          if (!localWallet?.seed) {
+               if (!localWallet?.mnemonic) {
+                    throw new Error('Selected wallet is missing a mnemonic.');
+               }
+          }
+          return localWallet;
      }
 }

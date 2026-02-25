@@ -103,19 +103,11 @@
                </div>
                }
 
-               <!-- Dynamic info panel -->
-               @if (infoMessage) {
-               <div class="info-panel">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-red-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="infoMessage"></div>
-               </div>
-               }
-
                <!-- Dynamic warning panel  -->
                @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage }}</div>
+                    <div class="warning-text">{{ safeWarningMessage() }}</div>
                </div>
                }
 
@@ -127,9 +119,9 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="enterSeed">Enter Seed</label>
-                                        @if (seedInput().length > 0) {
+                                        @if (txUiService.seedInput().length > 0) {
                                         <label for="seed">
-                                             <span [ngClass]="{ valid: seedValid(), invalid: !seedValid() }"> {{ seedValid() ? 'Seed Valid ✅' : 'Invalid Seed ❌' }} </span>
+                                             <span [ngClass]="{ valid: txUiService.seedValid(), invalid: !txUiService.seedValid() }"> {{ txUiService.seedValid() ? 'Seed Valid ✅' : 'Invalid Seed ❌' }} </span>
                                         </label>
                                         }
                                    </div>
@@ -137,7 +129,7 @@
 
                               <div class="form-row">
                                    <div class="form-group">
-                                        <input type="text" [(ngModel)]="seed" name="seed" (input)="onSeedInput()" placeholder="Paste your family seed here..." />
+                                        <input type="text" [value]="txUiService.seed()" (input)="txUiService.seed.set($event.target.value); onSeedInput()" name="seed" placeholder="Paste your family seed here..." />
                                         <small class="helper-text">
                                              Example format:
                                              <code>sEddddddddddddddddddddddddda</code>
@@ -151,9 +143,9 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="enterMnemonic">Enter Mnemonic</label>
-                                        @if (mnemonicInput().trim().length > 0) {
+                                        @if (txUiService.mnemonicInput().trim().length > 0) {
                                         <label for="mnemonic">
-                                             <span [ngClass]="{ valid: mnemonicValid(), invalid: !mnemonicValid() }"> {{ mnemonicValid() ? 'Mnemonic Valid ✅' : 'Invalid Mnemonic ❌' }} </span>
+                                             <span [ngClass]="{ valid: txUiService.mnemonicValid(), invalid: !txUiService.mnemonicValid() }"> {{ statusMessage() }}</span>
                                         </label>
                                         }
                                    </div>
@@ -161,11 +153,10 @@
 
                               <div class="form-row">
                                    <div class="form-group">
-                                        <textarea [(ngModel)]="mnemonic" name="mnemonic" (input)="onMnemonicInput()" placeholder="Paste your 24-word mnemonic here..." rows="3" class="mnemonic-textarea"> </textarea>
-
+                                        <input type="text" [value]="txUiService.mnemonic()" (input)="txUiService.mnemonic.set($event.target.value); onMnemonicInput()" name="mnemonic" placeholder="Paste your 24-word mnemonic here..." rows="3" class="mnemonic-textarea" />
                                         <small class="helper-text">
                                              Example format:
-                                             <code>joe, bill, john, joe, john, bill, bill, joe, john, bill, john, joe, john, joe, bill, john, bill, joe, joe, bill, john, joe, john, bill</code>
+                                             <code>joe bill john joe john bill bill joe john bill john joe john joe bill john bill joe joe bill john joe john bill</code>
                                         </small>
                                    </div>
                               </div>
@@ -176,9 +167,9 @@
                               <div class="form-row">
                                    <div class="form-group">
                                         <label for="enterSecretNumber">Enter Secret Numbers</label>
-                                        @if (secretNumberInput().length > 0) {
+                                        @if (txUiService.secretNumberInput().length > 0) {
                                         <label for="secretNumber">
-                                             <span [ngClass]="{ valid: secretNumberValid(), invalid: !secretNumberValid() }"> {{ secretNumberValid() ? 'Secret Numbers Valid ✅' : 'Invalid Secret Numbers ❌ ' }} </span>
+                                             <span [ngClass]="{ valid: txUiService.secretNumberValid(), invalid: !txUiService.secretNumberValid() }"> {{ txUiService.secretNumberValid() ? 'Secret Numbers Valid ✅' : 'Invalid Secret Numbers ❌ ' }} </span>
                                         </label>
                                         }
                                    </div>
@@ -186,8 +177,7 @@
 
                               <div class="form-row">
                                    <div class="form-group">
-                                        <input type="text" [(ngModel)]="secretNumbers" name="secretNumbers" (input)="onSecretNumberInput()" placeholder="Paste your secret numbers here..." />
-
+                                        <input type="text" [value]="txUiService.secretNumbers()" (input)="txUiService.secretNumbers.set($event.target.value); onSecretNumberInput()" name="secretNumbers" placeholder="Paste your secret numbers here..." />
                                         <small class="helper-text">
                                              Example format:
                                              <code>123456, 456789, 123456, 456789, 123456, 456789, 123456, 456789</code>
@@ -211,16 +201,16 @@
                               <!-- Generate buttons -->
                               @if (activeTab() === 'generate') {
                               <div class="button-row" style="margin-top: 0em">
-                                   <button type="button" class="btn-primary-blue" (click)="generateNewAccount()" [disabled]="buttonLoading.generateNewWalletFromSeed || isAnyButtonLoading">{{ buttonLoading.generateNewWalletFromSeed ? 'Processing...' : 'Generate Wallet from Family Seed' }}</button>
-                                   <button type="button" class="btn-primary-blue" (click)="generateNewWalletFromMnemonic()" [disabled]="buttonLoading.generateNewWalletFromMnemonic || isAnyButtonLoading">{{ buttonLoading.generateNewWalletFromMnemonic ? 'Processing...' : 'Generate Wallet from Mnemonic' }}</button>
-                                   <button type="button" class="btn-primary-blue" (click)="generateNewWalletFromSecretNumbers()" [disabled]="buttonLoading.generateNewWalletFromSecretNumbers || isAnyButtonLoading">{{ buttonLoading.generateNewWalletFromSecretNumbers ? 'Processing...' : 'Generate Wallet from Secret Numbers' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="generateNewAccount()" [disabled]="txUiService.buttonLoading().generateNewWalletFromSeed || isAnyButtonLoading">{{ txUiService.buttonLoading().generateNewWalletFromSeed ? 'Processing...' : 'Generate Wallet from Family Seed' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="generateNewWalletFromMnemonic()" [disabled]="txUiService.buttonLoading().generateNewWalletFromMnemonic || isAnyButtonLoading">{{ txUiService.buttonLoading().generateNewWalletFromMnemonic ? 'Processing...' : 'Generate Wallet from Mnemonic' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="generateNewWalletFromSecretNumbers()" [disabled]="txUiService.buttonLoading().generateNewWalletFromSecretNumbers || isAnyButtonLoading">{{ txUiService.buttonLoading().generateNewWalletFromSecretNumbers ? 'Processing...' : 'Generate Wallet from Secret Numbers' }}</button>
                               </div>
                               }
 
                               <!-- Derive Seed button -->
                               @if (activeTab() === 'deriveSeed') {
                               <div class="button-row" style="margin-top: 0em">
-                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromFamilySeed()" [disabled]="buttonLoading.deriveWalletFromFamilySeed || isAnyButtonLoading">{{ buttonLoading.deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromFamilySeed()" [disabled]="txUiService.buttonLoading().deriveWalletFromFamilySeed || isAnyButtonLoading">{{ txUiService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
                                    <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                               </div>
                               }
@@ -228,7 +218,7 @@
                               <!-- Derive Mnemonic button -->
                               @if (activeTab() === 'deriveMnemonic') {
                               <div class="button-row" style="margin-top: 0em">
-                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromMnemonic()" [disabled]="buttonLoading.deriveWalletFromMnemonic || isAnyButtonLoading">{{ buttonLoading.deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromMnemonic()" [disabled]="txUiService.buttonLoading().deriveWalletFromMnemonic || isAnyButtonLoading">{{ txUiService.buttonLoading().deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
                                    <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                               </div>
                               }
@@ -236,7 +226,7 @@
                               <!-- Derive Secret Numbers button -->
                               @if (activeTab() === 'deriveSecretNumbers') {
                               <div class="button-row" style="margin-top: 0em">
-                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromSecretNumbers()" [disabled]="buttonLoading.deriveWalletFromSecretNumbers || isAnyButtonLoading">{{ buttonLoading.deriveWalletFromSecretNumbers ? 'Processing...' : 'Derive Wallet from Secret Numbers' }}</button>
+                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromSecretNumbers()" [disabled]="txUiService.buttonLoading().deriveWalletFromSecretNumbers || isAnyButtonLoading">{{ txUiService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Derive Wallet from Secret Numbers' }}</button>
                                    <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
                               </div>
                               }
@@ -244,7 +234,7 @@
                               <!-- Remove custom wallets button -->
                               @if (activeTab() === 'removeCustomWallets') {
                               <div class="button-row" style="margin-top: 0em">
-                                   <button type="button" class="btn-primary-red" (click)="removeCustomWallet()" [disabled]="buttonLoading.deriveWalletFromSecretNumbers || isAnyButtonLoading">{{ buttonLoading.deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="removeCustomWallet()" [disabled]="txUiService.buttonLoading().deriveWalletFromSecretNumbers || isAnyButtonLoading">{{ txUiService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
                               </div>
                               }
                          </div>
@@ -254,18 +244,16 @@
                <!-- Switches -->
                @if (activeTab() === 'generate' || activeTab() === 'deriveSeed') {
                <div class="switch-group">
-                    <!-- ED25519 group -->
                     <label class="switch">
-                         <input type="checkbox" [(ngModel)]="ed25519_encryption_type" name="ed25519_encryption_type" (change)="onEd25519Change()" />
+                         <input type="radio" [checked]="txUiService.ed25519_encryption_type()" name="encryptionType" (change)="setEncryption('ed25519')" />
                          <span class="slider"></span>
-                         ED25519 Encryption
+                         ED25519
                     </label>
 
-                    <!-- SECP256K1 group -->
                     <label class="switch">
-                         <input type="checkbox" [(ngModel)]="secp256k1_encryption_type" name="secp256k1_encryption_type" (change)="onSecp256k1Change()" />
+                         <input type="radio" [checked]="txUiService.secp256k1_encryption_type()" name="encryptionType" (change)="setEncryption('secp256k1')" />
                          <span class="slider"></span>
-                         SECP256K1 Encryption
+                         SECP256K1
                     </label>
                </div>
                }

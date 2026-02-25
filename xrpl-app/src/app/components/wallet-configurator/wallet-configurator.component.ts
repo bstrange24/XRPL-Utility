@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, DestroyRef, signal, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, computed, signal, effect, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +12,6 @@ import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
-import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
@@ -26,6 +25,7 @@ import { TransactionPreviewComponent } from '../transaction-preview/transaction-
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
+import * as bip39 from 'bip39';
 
 @Component({
      selector: 'app-wallet-configurator',
@@ -37,13 +37,11 @@ import { TxEnvironmentService } from '../../services/transaction-environment/tx-
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WalletConfiguratorComponent extends PerformanceBaseComponent implements OnInit {
-     private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
-     private readonly validationService = inject(ValidationService);
      private readonly dropdownService = inject(DestinationDropdownService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
@@ -52,37 +50,25 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly walletGenerator = inject(WalletGeneratorService);
      public readonly txEnvironmentService = inject(TxEnvironmentService);
+     private readonly cdr = inject(ChangeDetectorRef);
 
      typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
-     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
-     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
-     wallets = signal<Wallet[]>([]);
+     selectedDestinationAddress = signal<string>('');
+     destinationSearchQuery = signal<string>('');
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal<boolean>(false);
+     errorMessage = signal<string>('');
      activeTab = signal<'generate' | 'deriveSeed' | 'deriveMnemonic' | 'deriveSecretNumbers' | 'removeCustomWallets'>('generate');
-     encryptionType: string = '';
-     seed = signal<string>('');
-     mnemonic = signal<string>('');
-     secretNumbers = signal<string>('');
-     ed25519_encryption_type = signal<boolean>(false);
-     secp256k1_encryption_type = signal<boolean>(false);
 
-     buttonLoading = {
-          generateNewWalletFromSeed: false,
-          generateNewWalletFromMnemonic: false,
-          generateNewWalletFromSecretNumbers: false,
-          deriveWalletFromFamilySeed: false,
-          deriveWalletFromMnemonic: false,
-          deriveWalletFromSecretNumbers: false,
-     };
+     statusMessage = computed(() => {
+          if (this.txUiService.mnemonicValid()) {
+               return '✅ Mnemonic Valid';
+          }
 
-     mnemonicInput = signal<string>('');
-     mnemonicValid = signal<boolean>(false);
-     secretNumberInput = signal<string[]>([]);
-     secretNumberValid = signal<boolean>(false);
-     seedInput = signal<string>('');
-     seedValid = signal<boolean>(false);
+          const error = this.errorMessage();
+          return error ? `❌ ${error}` : '❌ Invalid Mnemonic';
+     });
 
      selectedDestinationItem = computed(() => {
           const addr = this.selectedDestinationAddress();
@@ -105,7 +91,7 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
 
      destinationDisplay = computed(() => {
           const addr = this.selectedDestinationAddress();
-          if (!addr) return this.destinationSearchQuery(); // while typing → show typed text
+          if (!addr) return this.destinationSearchQuery();
 
           const dest = this.destinations().find(d => d.address === addr);
           if (!dest) return addr;
@@ -117,16 +103,32 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
           const q = this.destinationSearchQuery().trim().toLowerCase();
           const list = this.destinations();
 
-          if (q === '') {
-               return list;
-          }
+          if (q === '') return list;
 
           return this.destinations()
                .filter(d => d.address !== this.currentWallet().address)
                .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
      });
 
-     hasWallets = computed(() => this.wallets().length > 0);
+     hasWallets = computed(() => this.walletManagerService.hasWallets());
+
+     private readonly _hasWalletsEffect = effect(() => {
+          if (this.walletManagerService.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+          }
+     });
+
+     private readonly _selectedIndexEffect = effect(() => {
+          // Trigger on selection change
+          this.walletManagerService.selectedIndex();
+
+          this.txUiService.clearAllOptionsAndMessages();
+          this.clearFields();
+     });
+
+     readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
 
      constructor() {
           super();
@@ -135,8 +137,6 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
 
      ngOnInit(): void {
           this.loadCustomDestinations();
-          this.setupWalletSubscriptions();
-          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {
@@ -144,56 +144,18 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
           if (stored) this.customDestinations.set(JSON.parse(stored));
      }
 
-     private setupWalletSubscriptions(): void {
-          const walletManager = inject(WalletManagerService); // or this.walletManagerService if already injected
-          const txUiService = this.txUiService; // already injected probably
-
-          // 1. React to hasWallets change
-          effect(() => {
-               const hasWallets = walletManager.hasWallets(); // ← reads the computed signal
-
-               if (hasWallets) {
-                    txUiService.clearWarning?.();
-               } else {
-                    txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-                    txUiService.setError('');
-                    txUiService.setInfoMessage('');
-               }
-          });
-
-          // 2. React to full wallets list change
-          effect(() => {
-               const wallets = walletManager.wallets(); // ← reads the readonly signal
-               this.wallets.set(wallets);
-          });
-
-          // 3. React to selected index change → side effects + async refresh
-          effect(() => {
-               // This runs every time selectedIndex changes
-               const selectedIndex = walletManager.selectedIndex(); // ← just reading it triggers
-
-               txUiService.clearAllOptionsAndMessages();
-               this.clearFields();
-
-               // Async work (your getTrustlinesForAccount is presumably async / returns Promise)
-               // Effects are allowed to run async code, but be careful with race conditions
-               void this.getAccountDetails(false); // void = we don't await here
-          });
-     }
-
      private selectWallet(wallet: Wallet): void {
           this.currentWallet.set({ ...wallet });
           this.txUiService.currentWallet.set({ ...wallet });
           this.xrplCache.invalidateAccountCache(wallet.address);
 
-          // Prevent self as destination
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
      }
 
      get isAnyButtonLoading(): boolean {
-          return Object.values(this.buttonLoading).includes(true);
+          return Object.values(this.txUiService.buttonLoading).includes(true);
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -206,54 +168,38 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     async getAccountDetails(forceRefresh = false): Promise<void> {
-          await this.measure('getAccountDetails', true, async () => {
-               this.txUiService.resetCurrentStepToIdle();
-
-               if (!this.ensureWalletSelected()) return;
-
-               try {
-                    const { accountInfo } = await this.measure('getAccountDetails:prepareTxEnvironment', false, async () =>
-                         this.txEnvironmentService.prepareTxEnvironment({
-                              includeAccountInfo: true,
-                              forceRefresh: forceRefresh,
-                         })
-                    );
-
-                    if (!accountInfo) {
-                         throw new Error('Failed to fetch account information');
-                    }
-
-                    this.clearFields(false);
-               } catch (error: any) {
-                    console.error('Failed to load account:', error);
-                    this.toastService.error(error.message || 'Unknown error', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
      // Called by the Wallet Configurator page
      async generateNewAccount() {
           await this.withPerf('generateNewAccount', async () => {
-               this.buttonLoading.generateNewWalletFromSeed = true;
+               this.txUiService.clearTxResultsHash();
+               this.txUiService.resetCurrentStepToIdle();
+
+               this.txUiService.buttonLoading.update(s => ({
+                    ...s,
+                    generateNewWalletFromSeed: true,
+               }));
+
                try {
-                    // Default to ed25519
-                    this.encryptionType = AppConstants.ENCRYPTION.ED25519;
-                    console.log('encryptionType: ', this.encryptionType);
-                    const faucetWallet = await this.walletGenerator.generateNewAccount(this.environment(), this.encryptionType);
-                    const client = await this.xrplService.getClient();
-                    await this.refreshWallets(client, [faucetWallet.address]);
-                    // this.txUiService.spinner.set(false);
-                    // this.txUiService.clearWarning();
-                    this.txUiService.setSuccess(`Generated ${faucetWallet.address ? faucetWallet.address : faucetWallet.wallet.classicAddress} wallet from a seed successfully!`);
-                    this.txUiService.setTxResultSignal(faucetWallet);
+                    this.txUiService.currentStep.set('waiting_for_wallet_creation');
+
+                    const encryption = this.getEncryptionType();
+
+                    const wallet = await this.walletGenerator.generateWallet('familySeed', this.environment(), encryption);
+
+                    await this.refreshWallets(await this.xrplService.getClient(), [wallet.address]);
+
+                    this.txUiService.setTxResultSignal(wallet);
+
+                    this.toastService.success(`Generated ${wallet.address || wallet.wallet?.classicAddress} wallet successfully!`, AppConstants.TOAST.SUCCESS, false);
                } catch (error: any) {
-                    console.error('Error in generateNewAccount:', error);
-                    this.toastService.error(error.message || 'Unknown error', AppConstants.TOAST.ERROR);
+                    console.error('Generate account failed', error);
+                    this.toastService.error(error.message, AppConstants.TOAST.ERROR);
                } finally {
-                    this.buttonLoading.generateNewWalletFromSeed = false;
+                    this.txUiService.buttonLoading.update(s => ({
+                         ...s,
+                         generateNewWalletFromSeed: false,
+                    }));
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
@@ -261,68 +207,76 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
      // Called by the Wallet Configurator page
      async deriveWalletFromFamilySeed() {
           await this.withPerf('deriveWalletFromFamilySeed', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
-               this.buttonLoading.deriveWalletFromFamilySeed = true;
-               this.txUiService.updateSpinnerMessage(``);
-               this.txUiService.showSpinnerWithDelay('Derive wallet', 10);
+               this.txUiService.clearTxResultsHash();
+               this.txUiService.resetCurrentStepToIdle();
+
+               this.txUiService.buttonLoading.update(s => ({
+                    ...s,
+                    deriveWalletFromFamilySeed: true,
+               }));
 
                try {
-                    this.encryptionType = this.getEncryptionType();
-                    console.log('encryptionType: ', this.encryptionType);
+                    this.txUiService.currentStep.set('waiting_for_wallet_creation');
 
-                    if (!xrpl.isValidSecret(this.seed())) {
-                         return this.txUiService.setError('Invalid seed value.');
+                    const encryption = this.getEncryptionType();
+
+                    if (!xrpl.isValidSecret(this.txUiService.seed())) {
+                         return this.toastService.error('Invalid seed value.', AppConstants.TOAST.ERROR);
                     }
 
-                    const client = await this.xrplService.getClient();
+                    const wallet = await this.walletGenerator.importWallet('familySeed', this.txUiService.seed(), encryption);
 
-                    const stored = this.storageService.get('destinations');
-                    const dest = stored || [];
-                    const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromFamilySeed(client, this.seed(), dest, dest, this.encryptionType);
-                    // this.destinations = destinations;
-                    this.customDestinations.set(customDestinations);
-                    this.updateDestinations();
+                    await this.refreshWallets(await this.xrplService.getClient(), [wallet.address]);
 
-                    await this.refreshWallets(client, [faucetWallet.address]);
-                    this.txUiService.spinner.set(false);
-                    this.txUiService.clearWarning();
-                    this.txUiService.setSuccess(`Successfully added ${faucetWallet.address}`);
+                    this.txUiService.setTxResultSignal(wallet);
+
+                    this.toastService.success(`Successfully added ${wallet.address}`, AppConstants.TOAST.SUCCESS, false);
                } catch (error: any) {
-                    console.error('Error in deriveWalletFromFamilySeed:', error);
-                    if (error.message === 'Failed to fetch account info: Account not found.') {
+                    if (error.message.includes('Account not found')) {
                          this.toastService.error(`${error.message} Are you using the correct encryption?`, AppConstants.TOAST.ERROR);
                     } else {
-                         this.toastService.error(error.message || 'Unknown error', AppConstants.TOAST.ERROR);
+                         this.toastService.error(error.message, AppConstants.TOAST.ERROR);
                     }
                } finally {
+                    this.txUiService.buttonLoading.update(s => ({
+                         ...s,
+                         deriveWalletFromFamilySeed: false,
+                    }));
                     this.txUiService.resetCurrentStepToIdle();
-                    this.buttonLoading.deriveWalletFromFamilySeed = false;
                }
           });
      }
 
-     // Called by the Wallet Configurator page
      async generateNewWalletFromMnemonic() {
           await this.withPerf('generateNewWalletFromMnemonic', async () => {
-               this.buttonLoading.generateNewWalletFromMnemonic = true;
-               this.txUiService.showSpinnerWithDelay('Generating new wallet', 5000);
+               this.txUiService.clearTxResultsHash();
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.buttonLoading.update(state => ({
+                    ...state,
+                    generateNewWalletFromMnemonic: true,
+               }));
 
                try {
-                    this.encryptionType = this.getEncryptionType();
-                    console.log('encryptionType: ', this.encryptionType);
-                    const faucetWallet = await this.walletGenerator.generateNewWalletFromMnemonic(this.environment(), this.encryptionType);
-                    const client = await this.xrplService.getClient();
-                    await this.refreshWallets(client, [faucetWallet.address]);
-                    this.txUiService.spinner.set(false);
-                    this.txUiService.clearWarning();
-                    this.txUiService.setSuccess(`Generated ${faucetWallet.address} wallet from a Mneomic successfully!`);
+                    this.txUiService.currentStep.set('waiting_for_wallet_creation');
+
+                    this.txUiService.encryptionType.set(this.getEncryptionType());
+                    console.log('encryptionType: ', this.txUiService.encryptionType());
+
+                    const faucetWallet = await this.walletGenerator.generateWallet('mnemonic', this.environment(), this.getEncryptionType());
+
+                    await this.refreshWallets(await this.xrplService.getClient(), [faucetWallet.address]);
+
                     this.txUiService.setTxResultSignal(faucetWallet);
+                    this.toastService.success(`Generated ${faucetWallet.address} wallet from a Mneomic successfully!`, AppConstants.TOAST.SUCCESS, false);
                } catch (error: any) {
                     console.error('Failed to generateNewWalletFromMnemonic:', error);
                     this.toastService.error(error.message || 'Unknown error', AppConstants.TOAST.ERROR);
                } finally {
+                    this.txUiService.buttonLoading.update(state => ({
+                         ...state,
+                         generateNewWalletFromMnemonic: false,
+                    }));
                     this.txUiService.resetCurrentStepToIdle();
-                    this.buttonLoading.generateNewWalletFromMnemonic = false;
                }
           });
      }
@@ -330,32 +284,29 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
      // Called by the Wallet Configurator page
      async deriveWalletFromMnemonic() {
           await this.withPerf('deriveWalletFromMnemonic', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
-               this.buttonLoading.deriveWalletFromMnemonic = true;
-               this.txUiService.updateSpinnerMessage(``);
-               this.txUiService.showSpinnerWithDelay('Derive wallet', 10);
+               this.txUiService.clearTxResultsHash();
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.buttonLoading.update(state => ({
+                    ...state,
+                    deriveWalletFromMnemonic: true,
+               }));
 
                try {
-                    this.encryptionType = this.getEncryptionType();
-                    console.log('encryptionType: ', this.encryptionType);
+                    this.txUiService.currentStep.set('waiting_for_wallet_creation');
 
-                    if (!this.utilsService.isValidMnemonic(this.mnemonic())) {
-                         return this.txUiService.setError('Invalid Mnemonic.');
+                    this.txUiService.encryptionType.set(this.getEncryptionType());
+                    console.log('encryptionType: ', this.txUiService.encryptionType());
+
+                    if (!this.utilsService.isValidMnemonic(this.txUiService.mnemonic())) {
+                         return this.toastService.error(this.errorMessage(), AppConstants.TOAST.ERROR);
                     }
 
-                    const client = await this.xrplService.getClient();
+                    const faucetWallet = await this.walletGenerator.importWallet('mnemonic', this.txUiService.mnemonic(), this.getEncryptionType());
 
-                    const stored = this.storageService.get('destinations');
-                    const dest = stored ? stored : [];
-                    const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromMnemonic(client, this.mnemonic(), dest, dest);
-                    // this.destinations = destinations;
-                    this.customDestinations.set(customDestinations);
-                    this.updateDestinations();
+                    await this.refreshWallets(await this.xrplService.getClient(), [faucetWallet.address]);
 
-                    await this.refreshWallets(client, [faucetWallet.address]);
-                    this.txUiService.spinner.set(false);
-                    this.txUiService.clearWarning();
-                    this.txUiService.setSuccess(`Successfully added ${faucetWallet.address}`);
+                    this.txUiService.setTxResultSignal(faucetWallet);
+                    this.toastService.success(`Successfully added ${faucetWallet.address}`, AppConstants.TOAST.SUCCESS, false);
                } catch (error: any) {
                     console.error('Error in deriveWalletFromMnemonic:', error);
                     if (error.message === 'Failed to fetch account info: Account not found.') {
@@ -364,8 +315,11 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
                          this.toastService.error(error.message || 'Unknown error', AppConstants.TOAST.ERROR);
                     }
                } finally {
+                    this.txUiService.buttonLoading.update(state => ({
+                         ...state,
+                         deriveWalletFromMnemonic: false,
+                    }));
                     this.txUiService.resetCurrentStepToIdle();
-                    this.buttonLoading.deriveWalletFromMnemonic = false;
                }
           });
      }
@@ -373,26 +327,34 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
      // Called by the Wallet Configurator page
      async generateNewWalletFromSecretNumbers() {
           await this.withPerf('generateNewWalletFromSecretNumbers', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
-               this.buttonLoading.generateNewWalletFromSecretNumbers = true;
-               this.txUiService.showSpinnerWithDelay('Generating new wallet', 5000);
+               this.txUiService.clearTxResultsHash();
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.buttonLoading.update(state => ({
+                    ...state,
+                    generateNewWalletFromSecretNumbers: true,
+               }));
 
                try {
-                    this.encryptionType = this.getEncryptionType();
-                    console.log('encryptionType ............................................................', this.encryptionType);
-                    const faucetWallet = await this.walletGenerator.generateNewWalletFromSecretNumbers(this.environment(), this.encryptionType);
-                    const client = await this.xrplService.getClient();
-                    await this.refreshWallets(client, [faucetWallet.address]);
-                    this.txUiService.spinner.set(false);
-                    this.txUiService.clearWarning();
-                    this.txUiService.setSuccess(`Generated ${faucetWallet.address} wallet from secret numbers successfully!`);
+                    this.txUiService.currentStep.set('waiting_for_wallet_creation');
+
+                    this.txUiService.encryptionType.set(this.getEncryptionType());
+                    console.log('encryptionType: ', this.txUiService.encryptionType());
+
+                    const faucetWallet = await this.walletGenerator.generateWallet('secretNumbers', this.environment(), this.getEncryptionType());
+
+                    await this.refreshWallets(await this.xrplService.getClient(), [faucetWallet.address]);
+
                     this.txUiService.setTxResultSignal(faucetWallet);
+                    this.toastService.success(`Generated ${faucetWallet.address} wallet from secret numbers successfully!`, AppConstants.TOAST.SUCCESS, false);
                } catch (error: any) {
                     console.error('Error in generateNewWalletFromSecretNumbers:', error);
                     this.toastService.error(error.message || 'Unknown error', AppConstants.TOAST.ERROR);
                } finally {
+                    this.txUiService.buttonLoading.update(state => ({
+                         ...state,
+                         generateNewWalletFromSecretNumbers: false,
+                    }));
                     this.txUiService.resetCurrentStepToIdle();
-                    this.buttonLoading.generateNewWalletFromSecretNumbers = false;
                }
           });
      }
@@ -400,32 +362,29 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
      // Called by the Wallet Configurator page
      async deriveWalletFromSecretNumbers() {
           await this.withPerf('deriveWalletFromSecretNumbers', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
-               this.buttonLoading.deriveWalletFromSecretNumbers = true;
-               this.txUiService.updateSpinnerMessage(``);
-               this.txUiService.showSpinnerWithDelay('Derive wallet', 10);
+               this.txUiService.clearTxResultsHash();
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.buttonLoading.update(state => ({
+                    ...state,
+                    deriveWalletFromSecretNumbers: true,
+               }));
 
                try {
-                    this.encryptionType = this.getEncryptionType();
-                    console.log('encryptionType: ', this.encryptionType);
+                    this.txUiService.currentStep.set('waiting_for_wallet_creation');
 
-                    if (!this.utilsService.isValidSecret(this.utilsService.convertSecretNumberStringToArray(this.secretNumbers()))) {
-                         return this.txUiService.setError('Invalid Secret Number.');
+                    this.txUiService.encryptionType.set(this.getEncryptionType());
+                    console.log('encryptionType: ', this.txUiService.encryptionType());
+
+                    if (!this.utilsService.isValidSecret(this.utilsService.convertSecretNumberStringToArray(this.txUiService.secretNumbers()))) {
+                         return this.toastService.error('Invalid Secret Number.', AppConstants.TOAST.ERROR);
                     }
 
-                    const client = await this.xrplService.getClient();
+                    const faucetWallet = await this.walletGenerator.importWallet('secretNumbers', this.txUiService.secretNumbers(), this.getEncryptionType());
 
-                    const stored = this.storageService.get('destinations');
-                    const dest = stored ? stored : [];
-                    const { wallet: faucetWallet, destinations, customDestinations } = await this.walletGenerator.deriveWalletFromSecretNumbers(client, this.secretNumbers(), dest, dest);
-                    // this.destinations = destinations;
-                    this.customDestinations.set(customDestinations);
-                    this.updateDestinations();
+                    await this.refreshWallets(await this.xrplService.getClient(), [faucetWallet.address]);
 
-                    await this.refreshWallets(client, [faucetWallet.address]);
-                    this.txUiService.spinner.set(false);
-                    this.txUiService.clearWarning();
-                    this.txUiService.setSuccess(`Successfully added ${faucetWallet.address}`);
+                    this.txUiService.setTxResultSignal(faucetWallet);
+                    this.toastService.success(`Successfully added ${faucetWallet.address}`, AppConstants.TOAST.SUCCESS, false);
                } catch (error: any) {
                     console.error('Error in deriveWalletFromSecretNumbers:', error);
                     if (error.message === 'Failed to fetch account info: Account not found.') {
@@ -434,8 +393,11 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
                          this.toastService.error(error.message || 'Unknown error', AppConstants.TOAST.ERROR);
                     }
                } finally {
+                    this.txUiService.buttonLoading.update(state => ({
+                         ...state,
+                         deriveWalletFromSecretNumbers: false,
+                    }));
                     this.txUiService.resetCurrentStepToIdle();
-                    this.buttonLoading.deriveWalletFromSecretNumbers = false;
                }
           });
      }
@@ -461,42 +423,81 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
      }
 
      getEncryptionType(): string {
-          if (this.secp256k1_encryption_type()) {
+          if (this.txUiService.secp256k1_encryption_type()) {
                return AppConstants.ENCRYPTION.SECP256K1;
           }
           return AppConstants.ENCRYPTION.ED25519; // Default if neither or only ed25519 checked
      }
 
      onEncryptionChange() {
-          this.storageService.setInputValue('encryptionType', this.encryptionType.toString());
+          this.storageService.setInputValue('encryptionType', this.txUiService.encryptionType.toString());
      }
 
      onMnemonicInput() {
-          this.mnemonicInput.set(this.utilsService.normalizeMnemonic(this.mnemonic()));
-          this.mnemonicValid.set(this.utilsService.isValidMnemonic(this.mnemonic()));
+          this.txUiService.mnemonicInput.set(this.utilsService.normalizeMnemonic(this.txUiService.mnemonic()));
+
+          if (!/^[a-z]+( [a-z]+)*$/.test(this.txUiService.mnemonic())) {
+               this.errorMessage.set('Invalid Mnemonic. Must contain lowercase words separated by single spaces only.');
+          }
+
+          if (!bip39.validateMnemonic(this.txUiService.mnemonic())) {
+               this.errorMessage.set('Invalid BIP39 Mnemonic.');
+          }
+
+          this.txUiService.mnemonicValid.set(this.utilsService.isValidMnemonic(this.txUiService.mnemonic()));
      }
 
      onSecretNumberInput() {
-          this.secretNumberInput.set(this.utilsService.normalizeSecrets(this.secretNumbers()));
-          this.secretNumberValid.set(this.utilsService.isValidSecret(this.utilsService.convertSecretNumberStringToArray(this.secretNumbers())));
+          this.txUiService.secretNumberInput.set(this.utilsService.normalizeSecrets(this.txUiService.secretNumbers()));
+          this.txUiService.secretNumberValid.set(this.utilsService.isValidSecret(this.utilsService.convertSecretNumberStringToArray(this.txUiService.secretNumbers())));
      }
 
      onSeedInput() {
-          this.seedInput.set(this.utilsService.normalizeFamilySeed(this.seed()));
-          this.seedValid.set(xrpl.isValidSecret(this.seed()));
+          this.txUiService.seedInput.set(this.utilsService.normalizeFamilySeed(this.txUiService.seed()));
+          this.txUiService.seedValid.set(xrpl.isValidSecret(this.txUiService.seed()));
+     }
+
+     setEncryption(type: 'ed25519' | 'secp256k1') {
+          if (type === 'ed25519') {
+               this.txUiService.ed25519_encryption_type.set(true);
+               this.txUiService.secp256k1_encryption_type.set(false);
+          } else {
+               this.txUiService.ed25519_encryption_type.set(false);
+               this.txUiService.secp256k1_encryption_type.set(true);
+          }
+
+          this.saveEncryptionPreference();
      }
 
      onEd25519Change() {
-          if (this.ed25519_encryption_type()) {
-               this.secp256k1_encryption_type.set(false);
+          const isEd25519 = this.txUiService.ed25519_encryption_type();
+
+          if (isEd25519) {
+               // Turning ED25519 ON → force SECP off
+               this.txUiService.secp256k1_encryption_type.set(false);
+          } else if (!this.txUiService.secp256k1_encryption_type()) {
+               // Trying to turn ED25519 OFF → don't allow it unless SECP is already on
+               this.txUiService.ed25519_encryption_type.set(true);
+               this.toastService.info('At least one encryption type must be selected', AppConstants.TOAST.INFO);
+               return;
           }
+
           this.saveEncryptionPreference();
      }
 
      onSecp256k1Change() {
-          if (this.secp256k1_encryption_type()) {
-               this.ed25519_encryption_type.set(false);
+          const isSecp = this.txUiService.secp256k1_encryption_type();
+
+          if (isSecp) {
+               // Turning SECP ON → force ED25519 off
+               this.txUiService.ed25519_encryption_type.set(false);
+          } else if (!this.txUiService.ed25519_encryption_type()) {
+               // Trying to turn SECP OFF → don't allow it unless ED25519 is on
+               this.txUiService.secp256k1_encryption_type.set(true);
+               this.toastService.info('At least one encryption type must be selected', AppConstants.TOAST.INFO);
+               return;
           }
+
           this.saveEncryptionPreference();
      }
 
@@ -506,32 +507,38 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(
-               client,
-               addresses, // only the addresses to target
-               (updatedList, newCurrent) => {
-                    this.currentWallet.set({ ...newCurrent });
-               }
-          );
-     }
-
-     private ensureWalletSelected(): boolean {
-          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
-               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
-               return false;
-          }
-          return true;
+          await this.walletDataService.refreshWallets(client, addresses, (updatedList, newCurrent) => {
+               this.currentWallet.set({ ...newCurrent });
+               this.cdr.markForCheck();
+          });
      }
 
      updateDestinations() {
-          // Optional: persist destinations
           const allItems = [
-               ...this.wallets().map(wallet => ({
+               ...this.walletManagerService.wallets().map(wallet => ({
                     name: wallet.name ?? this.truncateAddress(wallet.address),
                     address: wallet.address,
                })),
                ...this.customDestinations(),
           ];
+
+          // Deduplicate by address
+          const deduped = Array.from(new Map(allItems.map(item => [item.address, item])).values());
+
+          console.log('deduped: ', deduped);
+
+          this.storageService.set('destinations', deduped);
+     }
+
+     updateDestinations1() {
+          const allItems = [
+               ...this.walletManagerService.wallets().map(wallet => ({
+                    name: wallet.name ?? this.truncateAddress(wallet.address),
+                    address: wallet.address,
+               })),
+               ...this.customDestinations(),
+          ];
+          console.log('allItems: ', allItems);
           this.storageService.set('destinations', allItems);
      }
 
@@ -539,44 +546,19 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
           return `${address.slice(0, 8)}...${address.slice(-6)}`;
      }
 
-     public get infoMessage(): string | null {
-          const tabConfig = {
-               send: {
-                    message: '',
-                    dynamicText: '', // Empty for no additional text
-                    showLink: false,
-               },
-          };
-
-          const config = tabConfig[this.activeTab() as keyof typeof tabConfig];
-          if (!config) return null;
-
-          const walletName = this.currentWallet.name || 'selected';
-
-          // Build the dynamic text part (with space if text exists)
-          const dynamicText = config.dynamicText ? `${config.dynamicText} ` : '';
-
-          // return `<code>${walletName}</code> wallet has ${dynamicText} ${config.message}`;
-          return null;
-     }
-
-     get safeWarningMessage() {
-          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-     }
-
      clearFields(all = true) {
           if (all) {
                this.txUiService.clearMessages();
                this.txUiService.clearWarning();
           }
-          this.seed.set('');
-          this.mnemonic.set('');
-          this.secretNumbers.set('');
-          this.mnemonicInput.set('');
-          this.mnemonicValid.set(false);
-          this.secretNumberInput.set([]);
-          this.secretNumberValid.set(false);
-          this.seedInput.set('');
-          this.seedValid.set(false);
+          this.txUiService.seed.set('');
+          this.txUiService.mnemonic.set('');
+          this.txUiService.secretNumbers.set('');
+          this.txUiService.mnemonicInput.set('');
+          this.txUiService.mnemonicValid.set(false);
+          this.txUiService.secretNumberInput.set([]);
+          this.txUiService.secretNumberValid.set(false);
+          this.txUiService.seedInput.set('');
+          this.txUiService.seedValid.set(false);
      }
 }

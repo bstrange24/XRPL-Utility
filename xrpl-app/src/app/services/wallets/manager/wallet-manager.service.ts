@@ -124,13 +124,25 @@ export class WalletManagerService {
      }
 
      deleteWallet(index: number): void {
+          const wallet = this._wallets()[index];
           this._wallets.update(current => current.filter((_, i) => i !== index));
           this.saveToStorage(this._wallets());
+
+          this.removeAddressFromDestinations(wallet.address);
 
           // Optional: adjust selected index if needed
           if (this._selectedIndex() >= this._wallets().length) {
                this.setSelectedIndex(Math.max(0, this._wallets().length - 1));
           }
+     }
+
+     private removeAddressFromDestinations(address: string): void {
+          const destinations = this.storageService.get('destinations') || [];
+          const updated = destinations.filter((d: { address: string }) => d.address !== address);
+          this.storageService.set('destinations', updated);
+
+          // Optional: refresh any dependent services / signals
+          // this.updateDestinations?.();
      }
 
      clearWallets(): void {
