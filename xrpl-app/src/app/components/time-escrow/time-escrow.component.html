@@ -322,7 +322,7 @@
                               }
                               <!-- Cancel button -->
                               @else if (activeTab() === 'cancel') {
-                              <button type="button" class="btn-primary-red" (click)="cancelEscrow()" [disabled]="!isIdle() || !hasWalletsSignal()">{{ escrowUtilService.cancelEscrowButtonLabel() }}</button>
+                              <button type="button" class="btn-primary-red" (click)="cancelEscrow()" [disabled]="!isIdle() || !hasWallets()">{{ escrowUtilService.cancelEscrowButtonLabel() }}</button>
                               }
                               <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="!isIdle() || !hasWalletsSignal()">Clear Fields</button>
                          </div>
