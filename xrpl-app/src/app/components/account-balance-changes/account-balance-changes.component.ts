@@ -129,7 +129,6 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
      showSecret: boolean = false;
      // environment: string = '';
      successMessage: string = '';
-     encryptionType: string = '';
      showToast: boolean = false;
      toastMessage: string = '';
      editingIndex!: (index: number) => boolean;

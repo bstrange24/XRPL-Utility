@@ -173,7 +173,6 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
      selectedWalletIndex: number = 0;
      showManageTokens: boolean = false;
      showSecret: boolean = false;
-     encryptionType: string = '';
      existingFirewalls: any = [];
      existingFirewallsCollapsed: boolean = true;
      url: string = '';
