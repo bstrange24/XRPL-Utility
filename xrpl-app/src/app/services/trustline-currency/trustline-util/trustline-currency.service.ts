@@ -180,7 +180,6 @@ export class TrustlineCurrencyService {
                     const peerLimitObj = isHighSide ? obj.LowLimit : obj.HighLimit;
 
                     const myLimitValue = myLimitObj.value;
-                    const peerLimitValue = peerLimitObj.value;
 
                     // The issuer is the one whose limit is typically non-zero while the holder's is set
                     // But more reliably: the issuer sees negative balance when tokens are issued
@@ -256,7 +255,6 @@ export class TrustlineCurrencyService {
                // Sort alphabetically by issuer or currency if available
                .sort((a, b) => a.HighLimit.issuer.localeCompare(b.HighLimit.issuer));
 
-          // this.existingIOUs.set(mapped);
           this.utilsService.logObjects('existingIOUs', mapped);
           return mapped;
      }
@@ -430,7 +428,8 @@ export class TrustlineCurrencyService {
                     } else {
                          displayName = curr;
                          const count = this.getIssuersForCurrency(curr).length;
-                         secondaryText = count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
+                         const pluralSuffix = count === 1 ? '' : 's';
+                         secondaryText = count === 0 ? 'No issuers' : `${count} issuer${pluralSuffix}`;
                     }
 
                     return {
@@ -442,59 +441,6 @@ export class TrustlineCurrencyService {
                          isCurrentToken: false,
                     };
                });
-          });
-     }
-
-     getCurrencyItems12(): Signal<SelectItem[]> {
-          return computed(() => {
-               const currentCode = this.currentCurrency();
-
-               return this.currencies().map(curr => {
-                    let displayName: string;
-                    let secondaryText: string;
-
-                    if (curr === 'XRP' && this.addXrpInCurrencyDropdown()) {
-                         displayName = 'XRP';
-                         secondaryText = 'Native currency';
-                    } else if (curr === 'MPT' && this.addMptInCurrencyDropdown()) {
-                         displayName = 'MPT';
-                         secondaryText = 'Multi-Purpose Token';
-                    } else {
-                         displayName = curr;
-                         const count = this.getIssuersForCurrency(curr).length;
-                         secondaryText = count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
-                    }
-
-                    return {
-                         id: curr,
-                         display: displayName,
-                         secondary: secondaryText,
-                         isCurrentAccount: false,
-                         isCurrentCode: curr === currentCode,
-                         isCurrentToken: false,
-                    };
-               });
-          });
-     }
-
-     getCurrencyItems1(): Signal<SelectItem[]> {
-          return computed(() => {
-               const currentCode = this.currentCurrency();
-
-               return this.currencies().map(curr => ({
-                    id: curr,
-                    display: curr === 'XRP' ? 'XRP' : curr,
-                    secondary:
-                         curr === 'XRP'
-                              ? 'Native currency'
-                              : (() => {
-                                     const count = this.getIssuersForCurrency(curr).length;
-                                     return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
-                                })(),
-                    isCurrentAccount: false,
-                    isCurrentCode: curr === currentCode,
-                    isCurrentToken: false,
-               }));
           });
      }
 
@@ -565,6 +511,48 @@ export class TrustlineCurrencyService {
      }
 
      updateCurrencies() {
+          const known = this.knownTrustLinesIssuers();
+
+          // Get sorted IOU currencies (exclude XRP and MPT)
+          const nonXrpIoUs = Object.keys(known)
+               .filter(c => c !== 'XRP' && c.trim() !== '' && c !== 'MPT')
+               .sort((a, b) => a.localeCompare(b)); // alphabetical
+
+          // Build the final ordered list
+          const allCurrencies: string[] = [];
+
+          // 1. XRP always first (if enabled)
+          if (this.addXrpInCurrencyDropdown()) {
+               allCurrencies.push('XRP');
+          }
+
+          // 2. MPT second (if enabled)
+          if (this.addMptInCurrencyDropdown()) {
+               allCurrencies.push('MPT');
+          }
+
+          // 3. All other IOUs in alphabetical order
+          allCurrencies.push(...nonXrpIoUs);
+
+          this.currencies.set(allCurrencies);
+
+          // ────────────────────────────────────────────────
+          // Auto-select logic (unchanged, but now safer)
+          // ────────────────────────────────────────────────
+          if (this.preferXrpAsDefault()) {
+               if (allCurrencies.includes('XRP')) {
+                    this.selectCurrency('XRP', '');
+               } else if (allCurrencies.length > 0) {
+                    this.selectCurrency(allCurrencies[0], ''); // now always the first real one
+               }
+          } else if (allCurrencies.length > 0) {
+               // Prefer MPT if present, otherwise first IOU
+               const fallback = allCurrencies.includes('MPT') ? 'MPT' : allCurrencies.find(c => c !== 'XRP') || allCurrencies[0];
+               this.selectCurrency(fallback, '');
+          }
+     }
+
+     updateCurrencies1() {
           const known = this.knownTrustLinesIssuers();
 
           // Standard IOU currencies (excluding XRP and MPT)
@@ -755,6 +743,10 @@ export class TrustlineCurrencyService {
 
      getCurrencies(): string[] {
           return this.currencies();
+     }
+
+     setSelectedCurrency(currency: string): void {
+          return this.currentCurrency.set(currency);
      }
 
      getSelectedCurrency(): string {

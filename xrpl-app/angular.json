@@ -26,7 +26,7 @@
                               ],
                               "styles": ["src/custom-theme.scss", "src/styles.css"],
                               "scripts": [],
-                              "allowedCommonJsDependencies": ["xrpl", "ripple-keypairs", "five-bells-condition", "buffer", "process", "flagnames", "js-sha256", "ajv", "ajv-formats"]
+                              "allowedCommonJsDependencies": ["xrpl", "ripple-keypairs", "five-bells-condition", "buffer", "process", "flagnames", "js-sha256", "ajv", "ajv-formats", "bip39", "blueimp-md5"]
                          },
                          "configurations": {
                               "production": {
@@ -34,7 +34,7 @@
                                         {
                                              "type": "initial",
                                              "maximumWarning": "4MB",
-                                             "maximumError": "4MB"
+                                             "maximumError": "4.5MB"
                                         },
                                         {
                                              "type": "anyComponentStyle",

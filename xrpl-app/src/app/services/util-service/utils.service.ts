@@ -322,7 +322,8 @@ export class UtilsService {
           }
 
           if (typeof value === 'object' && value.currency && value.value) {
-               return `${value.value} ${value.currency}${value.issuer ? ` (Issuer: ${value.issuer})` : ''}`;
+               const issuerSuffix = value.issuer ? ` (Issuer: ${value.issuer})` : '';
+               return `${value.value} ${value.currency}${issuerSuffix}`;
           }
           return `${(Number.parseInt(value) / 1000000).toFixed(6)} XRP`;
      };

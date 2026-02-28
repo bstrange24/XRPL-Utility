@@ -180,7 +180,6 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                     relevantTrustlines = allTrustlines;
                     countText = 'saved trustlines';
                     emptyMessage = 'has no trustlines configured yet.';
-                    helpHint = null;
                     break;
 
                default:
@@ -321,6 +320,95 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           return 'paired';
      });
 
+     // New computed — only used for issue/clawback tabs
+     readonly transactionAmount = computed(() => {
+          const tab = this.activeTab();
+
+          // Only apply special logic for send/issue and clawback tabs
+          if (tab === 'issueCurrency' || tab === 'clawbackTokens') {
+               // Always editable, start empty or with a sensible default
+               // You can also read from txUiService.amountField() if you want to preserve user input
+               return this.txUiService.amountField() || '0'; // or '' if you prefer blank
+          }
+
+          // For set/remove trustline tabs → fall back to trustline limit logic
+          return this.displayedTrustLimit();
+     });
+
+     readonly displayedTrustLimit = computed(() => {
+          const tab = this.activeTab();
+
+          const existing = this.foundTrustline();
+
+          if (tab === 'removeTrustline') {
+               // Show real limit if trustline exists, else 0
+               return existing ? existing.limit : '0';
+          }
+
+          // Set tab
+          if (existing) {
+               return existing.limit;
+          }
+          return ''; // new trustline → empty
+     });
+
+     readonly displayedBalance = computed(() => {
+          const tab = this.activeTab();
+
+          // Remove tab: always show real balance (should be 0 anyway)
+          if (tab === 'removeTrustline') {
+               return this.foundTrustline()?.balance ?? '0';
+          }
+
+          // Set tab: show real balance if exists, else 0
+          const existing = this.foundTrustline();
+          return existing ? existing.balance : '0';
+     });
+
+     // Helper to find current selected trustline (null if none)
+     private readonly foundTrustline = computed(() => {
+          const currency = this.trustlineCurrencyService.currentCurrency();
+          const issuer = this.trustlineCurrencyService.selectedIssuer();
+          if (!currency || !issuer) return null;
+
+          return this.existingIOUs().find(tl => tl.currency === currency && tl.issuer === issuer) ?? null;
+     });
+
+     // Amount displayed/used in the form field
+     // ─────────────────────────────────────────────────────────────
+     readonly formAmount = computed(() => {
+          const tab = this.activeTab();
+
+          if (tab === 'issueCurrency' || tab === 'clawbackTokens') {
+               // Transaction tabs: use persistent user input (or default to empty/'0')
+               // const userEntered = this.txUiService.amountField();
+               // return userEntered ?? '';
+               return '';
+               // Alternative: always start fresh → return '';
+          }
+
+          if (tab === 'removeTrustline') {
+               // Remove tab: show 0 (as you requested), or real limit if preferred
+               return '0';
+               // If you want real current limit instead: return this.foundTrustline()?.limit ?? '0';
+          }
+
+          // Set Trustline tab
+          const existing = this.foundTrustline();
+          if (existing) {
+               // Existing trustline → pre-fill current limit (read-only)
+               return existing.limit;
+          }
+          // New trustline → empty/editable
+          return '';
+     });
+
+     // Optional: separate read-only flag for clarity
+     readonly isAmountReadOnly = computed(() => {
+          const tab = this.activeTab();
+          return tab === 'removeTrustline' || (tab === 'setTrustline' && this.trustlineAlreadyExist());
+     });
+
      constructor() {
           super();
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
@@ -334,11 +422,17 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           this.transactionDropdownService.loadCustomDestinations();
      }
 
-     onCurrencySelected(item: SelectItem | null) {
+     async onCurrencySelected(item: SelectItem | null) {
           const currency = item?.id ?? 'XRP';
           this.trustlineCurrencyService.currentWalletAddress.set(this.currentAddress());
           this.trustlineCurrencyService.selectCurrency(currency, '');
-          this.txUiService.clearAllOptionsAndMessages();
+
+          const env = await this.txEnvironmentService.prepareTxEnvironment({
+               includeTrustlines: true,
+          });
+
+          this.checkForExistingTrustline(env); // ← this now sets amountField correctly
+          this.cdr.markForCheck(); // force UI update
      }
 
      onIssuerSelected(item: SelectItem | null) {
@@ -459,29 +553,15 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
 
                     this.updateLocalAccountState(env.accountObjects, env.wallet.classicAddress);
 
-                    const currency = this.trustlineCurrencyService.currentCurrency();
-                    const issuer = this.trustlineCurrencyService.selectedIssuer();
-                    this.trustlineCurrencyService.selectCurrency(currency, '');
-
                     const activeTab = this.activeTab();
                     if (activeTab === 'removeTrustline') {
                          this.txUiService.amountField.set('0');
-                    } else if (activeTab === 'setTrustline') {
-                         this.txUiService.amountField.set('1000000');
                     }
 
-                    this.trustlineAlreadyExist.set(false);
-                    this.removeTrustlineAviable.set(true);
-                    const trustLine = env.trustlines?.result.lines.find((line: any) => {
-                         const lineCurrency = this.utilsService.decodeIfNeeded(line.currency);
-                         return line.account === issuer && lineCurrency === currency && line.balance > 0;
-                    });
-
-                    if (activeTab === 'setTrustline') {
-                         if (trustLine) {
-                              this.trustlineAlreadyExist.set(true);
-                              return;
-                         }
+                    const trustLine = this.checkForExistingTrustline(env);
+                    if (trustLine) {
+                         this.trustlineAlreadyExist.set(true);
+                         return;
                     }
 
                     this.updateTrustLineFlagsInUI(env.accountObjects, env.wallet);
@@ -493,6 +573,64 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
+     }
+
+     private checkForExistingTrustline(env: any): boolean {
+          const currency = this.trustlineCurrencyService.currentCurrency();
+          const issuer = this.trustlineCurrencyService.selectedIssuer();
+
+          if (!currency || !issuer) {
+               this.trustlineAlreadyExist.set(false);
+               this.txUiService.amountField.set('');
+               return false;
+          }
+
+          const trustLine = env.trustlines?.result.lines.find((line: any) => {
+               const lineCurrency = this.utilsService.decodeIfNeeded(line.currency);
+               return line.account === issuer && lineCurrency === currency;
+          });
+
+          if (trustLine) {
+               this.trustlineAlreadyExist.set(true);
+
+               // For Set tab: pre-fill limit
+               if (this.activeTab() === 'setTrustline') {
+                    this.txUiService.amountField.set(trustLine.limit);
+               } else if (this.activeTab() === 'removeTrustline') {
+                    this.txUiService.amountField.set('0');
+               }
+
+               // Balance is handled via displayedBalance() computed signal
+               return true;
+          } else {
+               this.trustlineAlreadyExist.set(false);
+
+               if (this.activeTab() === 'setTrustline') {
+                    this.txUiService.amountField.set(''); // or '1000000' if you want default
+               } else if (this.activeTab() === 'removeTrustline') {
+                    this.txUiService.amountField.set('0');
+               }
+
+               return false;
+          }
+     }
+
+     private checkForExistingTrustline1(env: any) {
+          const currency = this.trustlineCurrencyService.currentCurrency();
+          const issuer = this.trustlineCurrencyService.selectedIssuer();
+          this.trustlineCurrencyService.selectCurrency(currency, '');
+
+          this.trustlineAlreadyExist.set(false);
+          this.removeTrustlineAviable.set(true);
+          const trustLine = env.trustlines?.result.lines.find((line: any) => {
+               const lineCurrency = this.utilsService.decodeIfNeeded(line.currency);
+               const trustline = line.account === issuer && lineCurrency === currency && line.balance > 0;
+               if (trustline) {
+                    this.txUiService.amountField.set(line.limit);
+               }
+               return trustline;
+          });
+          return trustLine;
      }
 
      async setTrustLine() {
@@ -792,8 +930,20 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           }
      }
 
-     onCurrencyChange(currency: string) {
+     async onCurrencyChange(currency: string) {
           this.trustlineCurrencyService.selectCurrency(currency, '');
+
+          const env = await this.txEnvironmentService.prepareTxEnvironment({
+               includeTrustlines: true,
+          });
+
+          this.checkForExistingTrustline(env); // ← this now sets amountField correctly
+          // this.cdr.markForCheck(); // force UI update
+          // if (this.checkForExistingTrustline(env)) {
+          //      this.trustlineAlreadyExist.set(true);
+          // } else {
+          //      this.txUiService.amountField.set('');
+          // }
      }
 
      onIssuerChange(issuer: string) {
