@@ -8,9 +8,10 @@ import { WalletManagerService } from '../../wallets/manager/wallet-manager.servi
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import * as xrpl from 'xrpl';
-import { EscrowDataForUI, EscrowDisplayItem, EscrowObject } from '../../../models/interface-items.model';
+import { EscrowDataForUI, EscrowDropdownItem, EscrowObject, EscrowValidationInput, EscrowValidationResult } from '../../../models/interface-items.model';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
+import { AppConstants } from '../../../core/app.constants';
 
 type EscrowTxType = 'create' | 'finish' | 'cancel';
 
@@ -57,7 +58,55 @@ export class EscrowUtilService {
           return this.txUiService.stepMessage();
      });
 
-     getExistingEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+     async getExistingEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string): Promise<EscrowDataForUI[]> {
+          const filtered = (escrowObjects.result.account_objects ?? []).filter((obj: any) => obj.LedgerEntryType === 'Escrow' && obj.Account === classicAddress && (obj.FinishAfter || obj.CancelAfter) && !obj.Condition);
+
+          const mapped = await Promise.all(
+               filtered.map(async (obj: any): Promise<EscrowDataForUI> => {
+                    const sendMax = obj.Amount;
+                    let amount = '0';
+                    let currency = '';
+
+                    if (typeof sendMax === 'string') {
+                         amount = String(xrpl.dropsToXrp(sendMax));
+                    } else if (sendMax?.value) {
+                         amount = sendMax.value;
+                         currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
+                    }
+
+                    let EscrowSequence: number | null = null;
+
+                    if (obj.PreviousTxnID) {
+                         try {
+                              const sequenceTx = await this.xrplCache.getTxCached(obj.PreviousTxnID, 90);
+
+                              EscrowSequence = sequenceTx?.result?.tx_json?.Sequence ?? sequenceTx?.result?.tx_json?.TicketSequence ?? null;
+                         } catch (error: any) {
+                              console.warn(`Failed to fetch escrow sequence for ${obj.PreviousTxnID}:`, error.message);
+                         }
+                    }
+
+                    return {
+                         Account: obj.Account,
+                         Amount: `${amount} ${currency}`,
+                         Destination: obj.Destination,
+                         DestinationTag: obj.DestinationTag,
+                         CancelAfter: obj.CancelAfter,
+                         FinishAfter: obj.FinishAfter,
+                         TxHash: obj.PreviousTxnID,
+                         Sequence: EscrowSequence,
+                    };
+               })
+          );
+
+          mapped.sort((a, b) => a.Destination.localeCompare(b.Destination));
+
+          this.utilsService.logObjects('existingEscrow', mapped);
+
+          return mapped;
+     }
+
+     getExistingEscrows1(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const mapped = (escrowObjects.result.account_objects ?? [])
                .filter(
                     (obj: any) =>
@@ -170,7 +219,7 @@ export class EscrowUtilService {
           return Promise.all(rawEscrows);
      }
 
-     escrowItems(escrows: any[], address: string, isCancel: boolean): EscrowDisplayItem[] {
+     escrowItems(escrows: any[], address: string, isCancel: boolean): EscrowDropdownItem[] {
           return escrows
                .filter(e => (isCancel ? e.Sender === address : e.Destination === address))
                .map(e => {
@@ -184,7 +233,7 @@ export class EscrowUtilService {
                });
      }
 
-     selectedEscrowItem(escrowItems: EscrowDisplayItem[], sequenceNumber: string | number | null | undefined): EscrowDisplayItem | null {
+     selectedEscrowItem(escrowItems: EscrowDropdownItem[], sequenceNumber: string | number | null | undefined): EscrowDropdownItem | null {
           if (!sequenceNumber) return null;
 
           const seqStr = sequenceNumber.toString();
@@ -302,8 +351,66 @@ export class EscrowUtilService {
           return { canFinish: true, reason: '' };
      }
 
+     validateEscrowCreate(input: EscrowValidationInput): EscrowValidationResult {
+          const { finishAfter, cancelAfter, condition, currentRippleTime } = input;
+          const errors: string[] = [];
+          console.log('input: ', input);
+
+          const hasFinish = finishAfter !== null && finishAfter !== undefined;
+          const hasCancel = cancelAfter !== null && cancelAfter !== undefined;
+          const hasCondition = condition !== null && condition !== undefined;
+
+          // Rule 1: Must include FinishAfter OR Condition
+          if (!hasFinish && !hasCondition) {
+               errors.push('Escrow must include either FinishAfter or Condition.');
+          }
+
+          // Rule 2: CancelAfter cannot exist alone
+          if (hasCancel && !hasFinish && !hasCondition) {
+               errors.push('CancelAfter cannot exist without FinishAfter or Condition.');
+          }
+
+          // Rule 3: FinishAfter must be < CancelAfter
+          if (hasFinish && hasCancel && finishAfter >= cancelAfter) {
+               errors.push('FinishAfter must be earlier than CancelAfter.');
+          }
+
+          // Rule 4: Condition format validation
+          if (hasCondition) {
+               if (condition === '') {
+                    errors.push('Condition must be a 64-character uppercase hex SHA256 hash.');
+               }
+          }
+
+          if (hasFinish && finishAfter <= currentRippleTime!) {
+               errors.push('FinishAfter must be in the future.');
+          }
+
+          return {
+               valid: errors.length === 0,
+               errors,
+          };
+     }
+
+     validateTimeEscrowUI(input: { finishAfter: number | null; cancelAfter: number | null }): string[] {
+          const errors: string[] = [];
+
+          if (!input.finishAfter) {
+               errors.push('FinishAfter is required for time-based escrows.');
+          }
+
+          return errors;
+     }
+
+     validateConditionalEscrowUI(input: { finishAfter: number | null; cancelAfter: number | null; condition: string | null }): string {
+          if (!input.condition) {
+               return 'Condition is required for conditional escrows.';
+          }
+          return '';
+     }
+
      formatEscrowAmount(amount: any): string {
-          if (typeof amount === 'string') return `${xrpl.dropsToXrp(amount)} XRP`;
+          if (typeof amount === 'string') return `${xrpl.dropsToXrp(amount.trim())} XRP`;
 
           if (amount?.mpt_issuance_id) return `${amount.value} MPT`;
 
@@ -313,12 +420,29 @@ export class EscrowUtilService {
      buildSuccessMessage(type: EscrowTxType, formValues: any): string {
           if (type === 'create') {
                const prefix = formValues.condition ? 'Conditional ' : 'Time-Based ';
-               return `Successfully Created ${prefix}Escrow of ${formValues.amount} ${formValues.currencyValue || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
+               return `Successfully Created ${prefix}Escrow of ${formValues.amountField} ${formValues.currencyValue || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
           }
           if (type === 'finish') {
                return `Successfully Finished Time Based Escrow ${formValues.escrowSequenceNumberField}`;
           }
           return `Successfully Cancelled Time Based Escrow ${formValues.escrowSequenceNumberField}`;
+     }
+
+     handleSimulationSuccess(type: EscrowTxType, formValues: any, hash?: string) {
+          let msg: string;
+
+          if (type === 'create') {
+               msg = `Simulated Creating Time Based Escrow of ${formValues.amountField} ${formValues.currencyValue || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
+          } else if (type === 'finish') {
+               msg = `Simulated Finishing Time Based Escrow with Sequence ID ${formValues.escrowSequenceNumberField}`;
+          } else {
+               msg = `Simulated Cancelling Time Based Escrow with Sequence ID ${formValues.escrowSequenceNumberField}`;
+          }
+
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+
+          return { success: true, hash };
      }
 
      isEscrowExpired(cancelAfter?: number, finishAfter?: number, activeTab?: string): boolean {

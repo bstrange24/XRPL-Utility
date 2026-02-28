@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, computed, signal, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -20,12 +21,9 @@ import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { from, switchMap } from 'rxjs';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { CheckUtilService } from '../../services/checks/check-util/check-util.service';
@@ -35,17 +33,24 @@ import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.ser
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { TrustlineOrchestratorService } from '../../services/trustline-currency/trustline-orchestrator/trustline-orchestrator.service';
 import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
+import { CheckListItem } from '../../models/interface-items.model';
+import { CheckCancelItemComponent } from './ui-components/check-cancel-item/check-cancel-item.component';
+import { CheckCreateItemComponent } from './ui-components/check-create-item/check-create-item.component';
+import { CheckCashItemComponent } from './ui-components/check-cash-item/check-cash-item.component';
 
 @Component({
      selector: 'app-checks',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, TransactionOptionsSectionComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, CheckCreateItemComponent, CheckCancelItemComponent, CheckCashItemComponent],
+     animations: [
+          trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])]),
+          trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-20px)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(100%)' }))])]),
+     ],
      templateUrl: './checks.component.html',
      styleUrl: './checks.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendChecksComponent extends PerformanceBaseComponent implements OnInit {
-     private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
@@ -102,11 +107,11 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      private readonly setTrustlineSpecificKeys = ['trustlineLimitField', 'currencyCode', 'currencyIssuer', 'submitAndWait', 'suppressIndividualFeedback'] as const;
      private readonly cancelCheckSpecificKeys = ['checkIdField'] as const;
      readonly currentAddress = computed(() => this.currentWallet().address);
-     readonly hasWallets = computed(() => this.wallets().length > 0);
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
 
-     // Effect 1: Has wallets → warning handling
-     private readonly hasWalletsEffect = effect(() => {
+     // Has wallets → warning handling
+     private readonly _hasWalletsEffect = effect(() => {
           if (this.walletManager.hasWallets()) {
                this.txUiService.clearWarning?.();
           } else {
@@ -117,17 +122,16 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      });
 
      // Effect 2: Wallets list sync
-     private readonly walletsSyncEffect = effect(() => {
+     private readonly _walletsSyncEffect = effect(() => {
           this.wallets.set(this.walletManager.wallets());
      });
 
      // Effect 3: Selected index change → clear + refresh checks
-     private readonly selectedIndexEffect = effect(() => {
+     private readonly _selectedIndexEffect = effect(() => {
           // Reading the signal is enough to trigger the effect
           this.walletManager.selectedIndex();
 
           this.txUiService.clearAllOptionsAndMessages();
-          this.clearInputFields();
 
           // Fire-and-forget refresh
           void this.getChecks(false);
@@ -175,83 +179,113 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      selectedIssuerItem = computed(() => this.issuerItems().find(i => i.id === this.trustlineCurrencyService.selectedIssuer()) ?? null);
 
-     readonly infoData = computed(() => {
-          const wallet = this.currentWallet();
+     readonly currentWalletData = computed(() => {
+          const currentAddr = this.currentWallet()?.address;
+          if (!currentAddr) return null;
+
+          const wallet = this.walletManager.wallets().find(w => w.address === currentAddr);
           if (!wallet?.address) return null;
 
-          const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
-          const explorerBase = this.txUiService.explorerUrl();
-          const address = wallet.address;
-          let checkCount = 0;
-          let checksToShow: any[] = [];
+          return {
+               address: wallet.address,
+               name: wallet.name || wallet.address.slice(0, 10) + '...',
+          };
+     });
+
+     readonly checkCount = computed(() => {
           const tab = this.activeTab();
-          const existingChecks = this.existingChecks();
-          const existingIOUs = this.existingIOUs();
+          if (tab === 'create') return this.existingChecks().length;
+          if (tab === 'cash') return this.cashableChecks().length;
+          if (tab === 'cancel') return this.cancellableChecks().length;
+          return 0;
+     });
+
+     readonly checksToShow = computed<CheckListItem[]>(() => {
+          const tab = this.activeTab();
+          const address = this.currentWallet()?.address;
+
+          if (!address) return [];
+
+          if (tab === 'create') {
+               // Outgoing checks created by you
+               return this.existingChecks().map(c => ({
+                    tab: 'create',
+                    id: c.id,
+                    index: c.id,
+                    amount: this.utilsService.formatIOUXrpAmountOutstanding(c.sendMax),
+                    destination: c.destination,
+                    destinationTag: c.destinationTag,
+                    expiration: c.expiration,
+                    invoiceId: c.invoiceId,
+                    isExpired: this.checkUtilService.isCheckExpired(c.expiration),
+               }));
+          }
+
+          if (tab === 'cash') {
+               // Incoming escrows you can cash
+               return this.cashableChecks().map(c => ({
+                    tab: 'cash',
+                    id: c.id,
+                    index: c.id,
+                    amount: c.amount,
+                    sender: c.sender,
+                    expiration: c.expiration,
+                    isExpired: c.isExpired,
+               }));
+          }
+
+          if (tab === 'cancel') {
+               return this.cancellableChecks().map(c => ({
+                    tab: 'cancel',
+                    id: c.id,
+                    index: c.id,
+                    amount: c.amount,
+                    destination: c.destination,
+                    expiration: c.expiration,
+                    isExpired: this.checkUtilService.isCheckExpired(c.expiration),
+               }));
+          }
+
+          return [];
+     });
+
+     readonly explorerLinks = computed(() => {
+          const tab = this.activeTab();
+          if (tab !== 'create') return null;
+
+          const wallet = this.currentWalletData();
+          if (!wallet) return null;
+
+          const base = this.txUiService.explorerUrl();
+          const addr = wallet.address;
+
+          const links: string[] = [];
+
+          if (this.existingChecks().length > 0) {
+               links.push(`<a href="${base}account/${addr}/checks" target="_blank" rel="noopener" class="xrpl-win-link">View Checks</a>`);
+          }
+          if (this.existingIOUs().length > 0) {
+               links.push(`<a href="${base}account/${addr}/tokens" target="_blank" rel="noopener" class="xrpl-win-link">View IOUs</a>`);
+          }
           /**
-           * const existingMpts = this.existingMpts();
+           * Added this for MPT checks if they are ever an option on the XRPL
+           * if (this.existingMpts().length > 0) {
+           *   links.push(`<a href="${base}account/${addr}/mpts/owned" target="_blank" rel="noopener" class="xrpl-win-link">View MPTs</a>`);
+           * }
            */
 
-          switch (tab) {
-               case 'create':
-                    checkCount = existingChecks.length;
-                    checksToShow = existingChecks.map(c => ({
-                         id: c.id, // ← add this
-                         index: c.id, // or c.index if different
-                         amount: this.utilsService.formatIOUXrpAmountOutstanding(c.sendMax),
-                         destination: c.destination,
-                         destinationTag: c.destinationTag,
-                         expiration: c.expiration,
-                         invoiceId: c.invoiceId,
-                         isExpired: this.checkUtilService.isCheckExpired(c.expiration),
-                    }));
-                    break;
+          return links.length > 0 ? links.join(' | ') : null;
+     });
 
-               case 'cash':
-                    checkCount = this.cashableChecks().length;
-                    checksToShow = this.cashableChecks().map(c => ({
-                         id: c.id, // ← add this
-                         index: c.id,
-                         amount: c.amount,
-                         sender: c.sender,
-                         expiration: c.expiration,
-                         isExpired: c.isExpired,
-                    }));
-                    break;
-
-               case 'cancel':
-                    checkCount = this.cancellableChecks().length;
-                    checksToShow = this.cancellableChecks().map(c => ({
-                         id: c.id, // ← add this
-                         index: c.id,
-                         amount: c.amount,
-                         destination: c.destination,
-                         expiration: c.expiration,
-                         isExpired: this.checkUtilService.isCheckExpired(c.expiration),
-                    }));
-                    break;
-          }
-
-          // Build the links (only on create tab we show all 3)
-          const links: string[] = [];
-          if (tab === 'create') {
-               const hasChecks = existingChecks.length > 0;
-               const hasIOUs = existingIOUs.length > 0;
-               /**
-                * const hasMPTs = existingMpts.length > 0;
-                */
-
-               if (hasChecks) links.push(`<a href="${explorerBase}account/${address}/checks" target="_blank" rel="noopener" class="xrpl-win-link">View Checks</a>`);
-               if (hasIOUs) links.push(`<a href="${explorerBase}account/${address}/tokens" target="_blank" rel="noopener" class="xrpl-win-link">View IOUs</a>`);
-               /**
-                * if (hasMPTs) links.push(`<a href="${explorerBase}account/${address}/mpts/owned" target="_blank" rel="noopener" class="xrpl-win-link">View MPTs</a>`);
-                */
-          }
+     readonly infoData = computed(() => {
+          const wallet = this.currentWalletData();
+          if (!wallet) return null;
 
           return {
-               walletName,
-               checkCount,
-               checksToShow,
-               links: links.length > 0 ? links.join(' | ') : null,
+               walletName: wallet.name,
+               checkCount: this.checkCount(),
+               checksToShow: this.checksToShow(),
+               links: this.explorerLinks(),
           };
      });
 
@@ -259,14 +293,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      constructor() {
           super();
-          effect(() => {
-               const item = this.selectedCheckItem();
-               if (item) {
-                    const [amount] = item.display.split(' ');
-                    this.txUiService.amountField.set(amount);
-               }
-          });
-
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
@@ -277,16 +303,20 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.trustlineCurrencyService.setAddMptInDropdown(false);
           this.transactionDropdownService.loadCustomDestinations();
           this.setExpirationToNow();
-          // Force initial default + balance refresh
           this.trustlineCurrencyService.resetToDefault();
      }
 
      onCheckSelected(item: SelectItem | null) {
+          if (item) {
+               const [amount] = item.display.split(' ');
+               this.txUiService.amountField.set(amount);
+          }
           this.checkUtilService.onCheckSelected(item);
      }
 
      onCurrencySelected(item: SelectItem | null) {
           const currency = item?.id ?? 'XRP';
+          this.trustlineCurrencyService.currentWalletAddress.set(this.currentAddress());
           this.trustlineCurrencyService.selectCurrency(currency, '');
           this.txUiService.clearAllOptionsAndMessages();
      }
@@ -300,6 +330,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
+          this.trustlineCurrencyService.currentWalletAddress.set(wallet.address);
           this.txUiService.currentWallet.set(wallet);
           this.txUiService.showEnableTrustline.set(false);
 
@@ -314,9 +345,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
           // Only change currency if needed — avoid re-triggering selectCurrency('XRP')
           const current = this.trustlineCurrencyService.currentCurrency() ?? 'XRP';
-          if (current !== 'XRP') {
-               this.onCurrencyChange(current);
-          }
+          if (current !== 'XRP') this.onCurrencyChange(current);
      }
 
      private ensureWalletSelected(): boolean {
@@ -355,9 +384,10 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           return [...this.cashableChecks(), ...this.cancellableChecks()].find(c => c.id === id);
      }
 
-     getIssuerForCheck(checks: any[], checkIndex: string): string | null {
+     getIssuerForCheck(checks: any[], checkIndex: string, currencyType: string): string | null {
           const check = checks.find(c => c.index === checkIndex);
-          return check?.SendMax?.issuer || null;
+          if (currencyType === 'Token') return check?.SendMax?.issuer || null;
+          else return check?.Account || null;
      }
 
      async setTab(tab: 'create' | 'cash' | 'cancel'): Promise<void> {
@@ -366,9 +396,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.checkIdSearchQuery.set('');
           this.clearInputFields();
 
-          if (tab === 'create') {
-               this.trustlineCurrencyService.resetToDefault();
-          }
+          if (tab === 'create') this.trustlineCurrencyService.resetToDefault();
 
           if (this.hasWallets()) {
                await this.getChecks(false);
@@ -379,6 +407,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      async getChecks(forceRefresh = false): Promise<void> {
           await this.measure('getChecks', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
                if (!this.ensureWalletSelected()) return;
 
@@ -414,6 +443,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      async createCheck(): Promise<void> {
           await this.withPerf('createCheck', async () => {
                this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
                if (!this.ensureWalletSelected()) return;
 
@@ -466,6 +496,8 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                } catch (error: any) {
                     console.error('Error creating check:', error);
                     this.toastService.error(error.message || 'Error creating check', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
@@ -473,6 +505,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      async cashCheck(): Promise<void> {
           await this.withPerf('cashCheck', async () => {
                this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
                if (!this.ensureWalletSelected()) return;
 
@@ -507,13 +540,16 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     }
 
                     // Issuer validation (only for IOU checks)
+                    let checkIssuer;
                     const currencyCode = this.txUiService.currencyCode();
-                    if (currencyCode !== AppConstants.XRP_CURRENCY) {
-                         const accountObjects = env.checkObjects?.result.account_objects;
-                         if (accountObjects) {
-                              const issuer = this.getIssuerForCheck(accountObjects, checkId);
-                              if (issuer && this.txUiService.currencyIssuer() !== issuer) {
-                                   return this.toastService.error(`Invalid issuer ${issuer} for this check`, AppConstants.TOAST.ERROR);
+                    const accountObjects = env.checkObjects?.result.account_objects;
+                    if (accountObjects) {
+                         if (currencyCode === AppConstants.XRP_CURRENCY) {
+                              checkIssuer = this.getIssuerForCheck(accountObjects, checkId, 'XRP');
+                         } else {
+                              checkIssuer = this.getIssuerForCheck(accountObjects, checkId, 'Token');
+                              if (checkIssuer && this.txUiService.currencyIssuer() !== checkIssuer) {
+                                   return this.toastService.error(`Invalid issuer ${checkIssuer} for this check`, AppConstants.TOAST.ERROR);
                               }
                          }
                     }
@@ -572,6 +608,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
                               this.txUiService.missingTrustlineInfo.currencyCode.set(currencyCode);
                               this.txUiService.missingTrustlineInfo.issuer.set(issuer);
+                              this.txUiService.trustlineLimitField.set(10000000);
 
                               // Optional: better user message
                               this.toastService.error(`No trustline found for ${currencyCode} (${issuer}).\nCashing this check will create a trustline to ${issuer}.`, AppConstants.TOAST.ERROR);
@@ -595,10 +632,12 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          },
                     });
 
-                    await this.handleTxResult(result, env.client, env.wallet, '', 'Failed to cash check');
+                    await this.handleTxResult(result, env.client, env.wallet, checkIssuer || '', 'Failed to cash check');
                } catch (error: any) {
                     console.error('Error cashing check:', error);
                     this.toastService.error(error.message || 'Error cashing check', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
@@ -606,6 +645,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      async cancelCheck() {
           await this.withPerf('cancelCheck', async () => {
                this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
                if (!this.ensureWalletSelected()) return;
 
@@ -640,10 +680,12 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          },
                     });
 
-                    await this.handleTxResult(result, env.client, env.wallet, '', 'Failed to cancel check');
+                    await this.handleTxResult(result, env.client, env.wallet, null, 'Failed to cancel check');
                } catch (error: any) {
                     console.error('Error cancelling check:', error);
                     this.toastService.error(error.message || 'Error cancelling check', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
@@ -659,6 +701,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.trustlineCurrencyService.refreshNonNativeCurrency();
 
           this.clearInputFields();
+          this.cdr.markForCheck();
           return true;
      }
 
@@ -693,10 +736,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           );
      }
 
-     // private async refreshWallets(client: xrpl.Client, addresses?: string[]): Promise<void> {
-     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (_, newCurrent) => this.currentWallet.set({ ...newCurrent }));
-     // }
-
      private addCustomDestination(destination: string | null): void {
           if (!destination) return;
           const addr = destination.trim();
@@ -715,7 +754,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      toggleOptions(enabled: boolean): void {
           this.txUiService.wantsOptions.set(enabled);
-          if (!enabled) this.clearInputFields();
+          if (!enabled) this.txUiService.clearOptionalInputFields();
      }
 
      addCheckToExpiration(seconds: number): void {
@@ -724,12 +763,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      setExpirationToNow(): void {
           this.txUiService.expirationTimeField.set(this.utilsService.formatDateTimeLocal(new Date()));
-     }
-
-     copyCheckId(checkId: string) {
-          navigator.clipboard.writeText(checkId).then(() => {
-               this.txUiService.showToastMessage('Check ID copied!');
-          });
      }
 
      toggleExpiration(enabled: boolean): void {
@@ -743,7 +776,6 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      clearExpiration(): void {
           this.txUiService.expirationTimeField.set('');
-          this.txUiService.enableExpirationDate.set(false);
      }
 
      isValidExpiration(): boolean {
@@ -764,13 +796,8 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           if (this.txUiService.isSimulateEnabled()) return;
 
           this.checkIdSearchQuery.set('');
-          this.selectedDestinationAddress.set('');
-
-          this.transactionDropdownService.resetDestinationInputs(this.destinationSearchQuery, this.selectedDestinationAddress);
           this.txUiService.clearAllFields();
           this.txUiService.clearAllOptions();
-
-          // Reset service to XRP (safe default)
-          this.trustlineCurrencyService.resetToDefault();
+          this.setExpirationToNow();
      }
 }

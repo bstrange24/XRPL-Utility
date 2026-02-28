@@ -56,7 +56,7 @@
                          <div class="form-group">
                               <label for="amountField">XRP Amount</label>
                               <p class="form-hint">Amount, in XRP, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                              <input type="number" id="amountField" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                              <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
                          </div>
                     </div>
 
@@ -68,47 +68,51 @@
                     </div>
 
                     @if (txUiService.wantsOptions()) {
+                    <app-transaction-options-section></app-transaction-options-section>
+                    }
+
+                    <!-- @if (txUiService.wantsOptions()) { -->
                     <!-- Destination Tag and Source Tag -->
-                    <div class="form-row">
+                    <!-- <div class="form-row">
                          <div class="form-group">
                               <label for="destinationTagField">Destination Tag </label>
                               <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
-                              <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
+                              <input type="text" name="destinationTagField" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" />
                          </div>
 
                          <div class="form-group">
                               <label for="sourceTagField">Source Tag</label>
                               <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
-                              <input type="text" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" name="sourceTagField" />
+                              <input type="text" name="sourceTagField" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" />
                          </div>
-                    </div>
+                    </div> -->
 
                     <!-- Invoice ID and Credential ID -->
-                    <div class="form-row">
+                    <!-- <div class="form-row">
                          <div class="form-group">
                               <label for="invoiceIdField">Invoice ID</label>
                               <p class="form-hint">
                                    64-character hexadecimal string (e.g. sha256 hash).
                                    <a href="https://xrpl.org/docs/references/protocol/transactions/types/payment#invoiceid" target="_blank" class="external-link">Learn more</a>
                               </p>
-                              <input type="text" id="invoiceIdField" placeholder="64 hex chars (optional)" [ngModel]="txUiService.invoiceIdField()" maxlength="64" pattern="[0-9a-fA-F]{0,64}" />
+                              <input type="text" name="invoiceIdField" placeholder="64 hex chars (optional)" [ngModel]="txUiService.invoiceIdField()" maxlength="64" pattern="[0-9a-fA-F]{0,64}" />
                          </div>
-                    </div>
+                    </div> -->
 
                     <!-- Domain ID and Credential ID -->
-                    <div class="form-row">
+                    <!-- <div class="form-row">
                          <div class="form-group">
                               <label for="domainIdField">Domain ID</label>
                               <p class="form-hint">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
-                              <textarea class="memo-input auto-expand-textarea" rows="2" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="txUiService.domainId()" (ngModelChange)="txUiService.domainId.set($event)" name="domainId"></textarea>
+                              <textarea name="domainId" class="memo-input auto-expand-textarea" rows="2" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="txUiService.domainId()" (ngModelChange)="txUiService.domainId.set($event)"></textarea>
                          </div>
                          <div class="form-group">
                               <label for="credentialIDsField">Credential IDs</label>
                               <p class="form-hint">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
-                              <textarea class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="txUiService.credentialIDs()" (ngModelChange)="txUiService.credentialIDs.set($event)" name="credentialIDs"></textarea>
+                              <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="txUiService.credentialIDs()" (ngModelChange)="txUiService.credentialIDs.set($event)"></textarea>
                          </div>
-                    </div>
-                    }
+                    </div> -->
+                    <!-- } -->
 
                     <app-transaction-options [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 

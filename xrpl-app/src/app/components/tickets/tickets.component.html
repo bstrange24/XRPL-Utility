@@ -130,7 +130,7 @@
                               <!-- Header: Select All + Clear -->
                               <div class="dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid #e5e7eb; background: #f9fafb">
                                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #374151; cursor: pointer">
-                                        <input type="checkbox" [checked]="allTicketsSelected()" (change)="toggleSelectAll()" style="width: 16px; height: 16px" />
+                                        <input type="checkbox" [checked]="allTicketsSelected()" (change)="toggleSelectAllTickets()" style="width: 16px; height: 16px" />
                                         <span>Select All</span>
                                    </label>
                                    <button class="clear-btn" (click)="clearAllSelections()" [disabled]="txUiService.selectedTicketSequences().length === 0" style="color: #dc2626; font-size: 0.875rem; font-weight: 500; background: none; border: none; cursor: pointer; opacity: 0.8" [style.opacity]="txUiService.selectedTicketSequences().length === 0 ? 0.5 : 1">Clear</button>

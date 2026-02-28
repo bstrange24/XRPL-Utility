@@ -66,7 +66,7 @@
                     }
                </div>
 
-               <!-- Dynamic info panel -->
+               <!-- Info Message -->
                @if (infoData(); as info) {
                <div class="info-and-checks-card" [class.has-checks]="info.checkCount > 0">
                     <!-- Always-visible summary row -->
@@ -81,6 +81,8 @@
                               <span> has <strong class="object-count">{{ info.checkCount }}</strong> check{{ info.checkCount === 1 ? '' : 's' }} @switch (activeTab()) { @case ('create') { created. } @case ('cash') { that can be cashed. } @case ('cancel') { that can be cancelled. } } </span>
                               }
                          </div>
+
+                         <!-- Centered links row -->
                          @if (info.links) {
                          <div class="xrpl-win-link-small"><span [innerHTML]="info.links"></span> on XRPL Win</div>
                          }
@@ -100,43 +102,13 @@
                     @if (info.checkCount > 0) {
                     <div class="checks-list-container" [style.max-height]="infoPanelExpanded() ? '380px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
                          <ul class="checks-list">
-                              @for (check of info.checksToShow; track check.index ?? $index) {
-                              <li class="check-item" [class.expired]="check.isExpired">
-                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + check.index" tooltipText="View Check on XRPL Explorer">
-                                        <div class="check-main-line">
-                                             <span class="check-amount" [class.expired]="check.isExpired"> {{ check.amount }} </span>
-
-                                             @if (activeTab() === 'create' || activeTab() === 'cancel') {
-                                             <span class="check-arrow"> → </span>
-                                             <span class="check-address">{{ check.destination.slice(0,7) + '...' + check.destination.slice(-7) }}</span>
-                                             } @if (activeTab() === 'cash') {
-                                             <span class="check-arrow"> ← </span>
-                                             <span class="check-address">{{ check.sender.slice(0,7) + '...' + check.sender.slice(-7) }}</span>
-                                             } @if (check.isExpired) {
-                                             <span class="expired-badge">Expired</span>
-                                             }
-                                        </div>
-
-                                        <div class="check-meta" [class.expired]="check.isExpired">
-                                             <div>Check ID: <code>{{ check.index }}</code></div>
-                                             @if (check.destinationTag) {
-                                             <div>Destination Tag: <code>{{ check.destinationTag }}</code></div>
-                                             } @if (check.expiration) {
-                                             <div>Expires: <code [class.expired]="check.isExpired"> {{ utilsService.convertXRPLTime(check.expiration) }} </code></div>
-                                             } @if (check.invoiceId) {
-                                             <div>Invoice ID: <code>{{ utilsService.formatInvoiceId(check.invoiceId || '') }}</code></div>
-                                             }
-                                        </div>
-                                   </app-tooltip-link>
-
-                                   <button (click)="copyAndToast(check.index, 'Check ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Check ID">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                        </svg>
-                                   </button>
-                              </li>
-                              }
+                              @for (check of info.checksToShow; track check.index) { @switch (check.tab) { @case ('create') {
+                              <app-check-create-item [check]="check" />
+                              } @case ('cash') {
+                              <app-check-cash-item [check]="check" />
+                              } @case ('cancel') {
+                              <app-check-cancel-item [check]="check" />
+                              } } }
                          </ul>
                     </div>
                     }
@@ -185,7 +157,7 @@
                          <div class="form-group">
                               <label for="issuer">Issuer</label>
                               <p class="form-hint">The XRPL account that issues and controls this currency.</p>
-                              <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." />
+                              <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                          </div>
                          <div class="form-group">
                               <label for="currencyBalance">Currency Balance</label>
@@ -216,11 +188,15 @@
                     }
 
                     <!-- Expiration (create only) -->
-                    <div class="switch-group">
-                         <label class="switch">
-                              <input type="checkbox" id="setExpiration" [checked]="txUiService.enableExpirationDate()" (change)="toggleExpiration($event.target.checked)" />
-                              <span class="slider"></span> Set Check expiration date
-                         </label>
+                    <div class="form-row">
+                         <div class="form-group">
+                              <div class="switch-group">
+                                   <label class="switch">
+                                        <input type="checkbox" id="setExpiration" [checked]="txUiService.enableExpirationDate()" (change)="toggleExpiration($event.target.checked)" />
+                                        <span class="slider"></span> Set Check expiration date
+                                   </label>
+                              </div>
+                         </div>
                     </div>
 
                     <div class="form-row">
@@ -235,8 +211,8 @@
                                         <button type="button" (click)="setExpirationToNow()" class="btn-small btn-primary-blue">Now</button>
                                         <button type="button" (click)="addCheckToExpiration(10)" class="btn-small btn-primary-blue">+10s</button>
                                         <button type="button" (click)="addCheckToExpiration(30)" class="btn-small btn-primary-blue">+30s</button>
-                                        <button type="button" (click)="addCheckToExpiration(60)" class="btn-small btn-primary-blue">+1 min</button>
-                                        <button type="button" (click)="addCheckToExpiration(300)" class="btn-small btn-primary-blue">+5 min</button>
+                                        <button type="button" (click)="addCheckToExpiration(60)" class="btn-small btn-primary-blue">+1min</button>
+                                        <button type="button" (click)="addCheckToExpiration(300)" class="btn-small btn-primary-blue">+5min</button>
                                         <button type="button" (click)="clearExpiration()" class="btn-small btn-primary-red">Clear</button>
                                    </div>
                               </div>
@@ -292,29 +268,7 @@
 
                     <!-- Optional: small note -->
                     <p class="form-hint trustline-note">Enabling this trustline will add a <strong>TrustSet</strong> transaction before cashing the check.</p>
-                    }
-                    <!-- @if (txUiService.showEnableTrustline()) {
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label for="currencyCodeCreate">Currency Code</label>
-                              <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
-                              <input type="text" id="trustlineCurrencyCode" name="trustlineCurrencyCode" [ngModel]="txUiService.missingTrustlineInfo.currencyCode()" />
-                         </div>
-                         <div class="form-group">
-                              <label for="issuerCreate">Issuer</label>
-                              <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
-                              <input type="text" id="trustlineIssuer" name="trustlineIssuer" [ngModel]="txUiService.missingTrustlineInfo.issuer()" />
-                         </div>
-                    </div>
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label for="trustlineLimitField">Trustline Limit</label>
-                              <p class="form-hint">Maximum amount of currency to hold. Use arrows for ±0.00000001 precision.</p>
-                              <input type="number" id="trustlineLimitField" name="trustlineLimitField" placeholder="e.g. 10.5" step="0.00000001" min="0" [ngModel]="txUiService.trustlineLimitField()" (ngModelChange)="utilsService.updateTrustlineLimitAmount($event)" (focus)="onFocus($event)" class="amount-input" />
-                         </div>
-                    </div>
-                    }  -->
-                    }
+                    } }
 
                     <!-- Unified Check ID Dropdown - Works for cash & cancel -->
                     @if (activeTab() === 'cancel') {

@@ -1756,13 +1756,20 @@ export class ValidationService {
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.positiveAmount('createTimeBasedEscrow'),
+
+                    // if (this.txUiService.enableEscrowFinishAfterExpirationDate() {
                     this.validateDate('createTimeBasedEscrow', 'finishAfter'),
-                    this.validateDate('createTimeBasedEscrow', 'cancelAfter'),
+                    // },
+                    // if (this.txUiService.enableEscrowCancelAfterExpirationDate() ) {
+                    // this.validateDate('createTimeBasedEscrow', 'cancelAfter'),
+                    // },
                     ctx => {
-                         const finishAfter = new Date(ctx.inputs['createTimeBasedEscrow'].finishAfter).getTime();
-                         const cancelAfter = new Date(ctx.inputs['createTimeBasedEscrow'].cancelAfter).getTime();
-                         if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {
-                              return 'Finish After must be before Cancel After';
+                         if (this.txUiService.enableEscrowCancelAfterExpirationDate() && this.txUiService.enableEscrowFinishAfterExpirationDate()) {
+                              const finishAfter = new Date(ctx.inputs['createTimeBasedEscrow'].finishAfter).getTime();
+                              const cancelAfter = new Date(ctx.inputs['createTimeBasedEscrow'].cancelAfter).getTime();
+                              if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {
+                                   return 'Finish After must be before Cancel After';
+                              }
                          }
                          return null;
                     },
@@ -1870,16 +1877,16 @@ export class ValidationService {
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.positiveAmount('createConditionalEscrow'),
-                    this.validateDate('createConditionalEscrow', 'finishAfter'),
-                    this.validateDate('createConditionalEscrow', 'cancelAfter'),
-                    ctx => {
-                         const finishAfter = new Date(ctx.inputs['createConditionalEscrow'].finishAfter).getTime();
-                         const cancelAfter = new Date(ctx.inputs['createConditionalEscrow'].cancelAfter).getTime();
-                         if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {
-                              return 'Finish After must be before Cancel After';
-                         }
-                         return null;
-                    },
+                    // this.validateDate('createConditionalEscrow', 'finishAfter'),
+                    // this.validateDate('createConditionalEscrow', 'cancelAfter'),
+                    // ctx => {
+                    //      const finishAfter = new Date(ctx.inputs['createConditionalEscrow'].finishAfter).getTime();
+                    //      const cancelAfter = new Date(ctx.inputs['createConditionalEscrow'].cancelAfter).getTime();
+                    //      if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {
+                    //           return 'Finish After must be before Cancel After';
+                    //      }
+                    //      return null;
+                    // },
                     this.isValidAddress('createConditionalEscrow.destination'),
                     this.requireDestinationTagIfNeeded('createConditionalEscrow'),
 

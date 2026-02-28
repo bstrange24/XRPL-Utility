@@ -5,14 +5,12 @@ import { TxEnvironmentService } from '../../transaction-environment/tx-environme
 import { ValidationService } from '../../validation/transaction-validation-rule.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
-import { ToastService } from '../../toast/toast.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
-import { AppConstants } from '../../../core/app.constants';
 import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
-
-type CheckTxType = 'create' | 'cash' | 'cancel';
+import { CheckUtilService } from '../check-util/check-util.service';
+import { CheckTxType } from '../../../models/interface-items.model';
 
 interface CheckTxConfig {
      wallet: Wallet;
@@ -58,9 +56,9 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
      private readonly xrplTransactionService = inject(XrplTransactionService);
-     private readonly toast = inject(ToastService);
      private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
+     private readonly checkUtilService = inject(CheckUtilService);
      private readonly optionalFields = inject(TransactionOptionalFieldsService);
 
      async executeCheckTx(type: CheckTxType, config: CheckTxConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
@@ -75,7 +73,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // 1. Use pre-fetched env if available, otherwise fetch ──
+               // 1. Use pre-fetched env if available, otherwise fetch
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                     client = preFetchedEnv.client;
@@ -98,16 +96,19 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                          envFlags.includeDestinationAccountInfo = true;
                          envFlags.destinationAddress = formValues.destinationAddress;
                     }
+
                     const env = await this.TxEnvironmentService.prepareTxEnvironment(envFlags);
                     client = env.client;
+
                     if (!env.accountInfo || !env.fee || !env.currentLedger) {
                          throw new Error('Failed to fetch required network data');
                     }
                }
 
                // 2. Validation
+               const validationRule = this.getValidationRuleName(type);
                const validationInputs = this.buildValidationInputs(type, wallet, env, formValues, extra);
-               const errors = await this.validator.validate(this.getValidationRuleName(type), {
+               const errors = await this.validator.validate(validationRule, {
                     inputs: validationInputs,
                     client,
                     accountInfo: env.accountInfo,
@@ -133,14 +134,16 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                txHash = execResult.hash;
 
                if (isSimulateEnabled) {
-                    return this.handleSimulationSuccess(type, formValues, txHash);
+                    return this.checkUtilService.handleSimulationSuccess(type, formValues, txHash);
                }
 
                // 6. Wait for final outcome
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
 
                this.txUiService.setTxResultSignal(finalResult);
-               this.xrplTransactionService.processTxFinalResult(finalResult, this.buildSuccessMessage(type, formValues), {
+
+               const message = this.checkUtilService.buildSuccessMessage(type, formValues);
+               this.xrplTransactionService.processTxFinalResult(finalResult, message, {
                     success: true,
                     hash: txHash,
                });
@@ -153,7 +156,6 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                return { success: false, error: msg };
           } finally {
                this.txUiService.resetCurrentStepToIdle();
-               // Note: Do **not** refresh here — let the component decide when/how
           }
      }
 
@@ -163,7 +165,6 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                cash: 'CashCheck',
                cancel: 'CancelCheck',
           };
-
           return ruleMap[type];
      }
 
@@ -313,32 +314,5 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                multiSignAddress: formValues.multiSignAddress,
                multiSignSeeds: formValues.multiSignSeeds,
           });
-     }
-
-     private handleSimulationSuccess(type: CheckTxType, formValues: any, hash?: string) {
-          let msg: string;
-
-          if (type === 'create') {
-               msg = `Simulated Sending Check of ${formValues.amountField} ${formValues.currency || 'XRP'}`;
-          } else if (type === 'cash') {
-               msg = `Simulated Cashing Check of ${formValues.amountField} ${formValues.currencyCode || 'XRP'}`;
-          } else {
-               msg = `Simulated Cancelling Check ${formValues.checkIdField}`;
-          }
-
-          this.txUiService.resetCurrentStepToIdle();
-          this.toast.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
-
-          return { success: true, hash };
-     }
-
-     private buildSuccessMessage(type: CheckTxType, formValues: any): string {
-          if (type === 'create') {
-               return `Successfully Sent Check of ${formValues.amountField} ${formValues.currency || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
-          }
-          if (type === 'cash') {
-               return `Successfully Cashed Check of ${formValues.amountField} ${formValues.currencyCode || 'XRP'}`;
-          }
-          return `Successfully Cancelled Check ${formValues.checkIdField}`;
      }
 }

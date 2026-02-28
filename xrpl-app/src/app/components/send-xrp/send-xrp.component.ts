@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy, signal, computed, effect, ChangeDetectorRef } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -27,11 +28,16 @@ import { AcccountDataService } from '../../services/account-data/acccount-data.s
 import { SendXrpTransactionOrchestratorService } from '../../services/send-xrp/send-xrp-orchestrator/send-xrp-transaction-orchestrator.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
 
 @Component({
      selector: 'app-send-xrp',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, TransactionOptionsSectionComponent],
+     animations: [
+          trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])]),
+          trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-20px)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(100%)' }))])]),
+     ],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +66,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal<boolean>(false);
      accountInfo = signal<any>(null);
+     wallets = signal<Wallet[]>([]);
 
      allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
      destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
@@ -84,13 +91,17 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           }
      });
 
-     // Selected index change → clear + refresh checks
+     // Effect 2: Wallets list sync
+     private readonly _walletsSyncEffect = effect(() => {
+          this.wallets.set(this.walletManager.wallets());
+     });
+
+     // Effect 3: Selected index change → clear + refresh checks
      private readonly _selectedIndexEffect = effect(() => {
           // Reading the signal is enough to trigger the effect
           this.walletManager.selectedIndex();
 
           this.txUiService.clearAllOptionsAndMessages();
-          this.clearInputFields();
 
           // Fire-and-forget refresh
           void this.onAccountChange(false);
@@ -123,7 +134,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
 
      constructor() {
           super();
-          this.trustlineCurrencyService.setPreferXrpAsDefault(false);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
@@ -164,7 +174,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      toggleOptions(enabled: boolean): void {
           this.txUiService.wantsOptions.set(enabled);
           if (!enabled) {
-               this.clearInputFields();
+               this.txUiService.clearOptionalInputFields();
           }
      }
 
@@ -179,25 +189,24 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      async onAccountChange(forceRefresh = false): Promise<void> {
           await this.measure('onAccountChange', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
                if (!this.ensureWalletSelected()) return;
 
                try {
-                    const { wallet, accountInfo, accountObjects } = await this.measure('onAccountChange:prepareTxEnvironment', true, async () =>
-                         this.txEnvironmentService.prepareTxEnvironment({
-                              includeAccountInfo: true,
-                              includeAccountObject: true,
-                              forceRefresh: forceRefresh,
-                         })
-                    );
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         forceRefresh: forceRefresh,
+                    });
 
-                    if (!accountInfo || !accountObjects) {
+                    if (!env.accountInfo || !env.accountObjects) {
                          this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
                          return;
                     }
 
-                    this.accountInfo.set(accountInfo);
-                    this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
+                    this.accountInfo.set(env.accountInfo);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Failed to load account:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
@@ -210,6 +219,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      async sendXrp(): Promise<void> {
           await this.withPerf('sendXrp', async () => {
                this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
                if (!this.ensureWalletSelected()) return;
 
@@ -249,6 +259,8 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                } catch (error: any) {
                     console.error('Error sending XRP:', error);
                     this.toastService.error(error.message || 'Error sending XRP', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
@@ -269,11 +281,16 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null): Promise<void> {
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
 
-          this.accountInfo.set(accountInfo);
+          this.updateLocalAccountState(accountInfo);
+
           await this.refreshWallets(client, destination ? [wallet.classicAddress, destination] : [wallet.classicAddress]);
 
           this.addCustomDestination(destination);
           this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
+     }
+
+     private updateLocalAccountState(accountInfo: any): void {
+          this.accountInfo.set(accountInfo);
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -304,8 +321,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
 
      clearInputFields(): void {
           if (this.txUiService.isSimulateEnabled()) return;
-
-          this.transactionDropdownService.resetDestinationInputs(this.destinationSearchQuery, this.selectedDestinationAddress);
           this.txUiService.clearAllFields();
           this.txUiService.clearAllOptions();
           this.txUiService.credentialIDs.set([]);

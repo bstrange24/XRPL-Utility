@@ -1572,7 +1572,11 @@ export class UtilsService {
           if (typeof amount === 'object') {
                // Issued currency
                const { currency, value } = amount;
-               return `${value} ${this.decodeIfNeeded(currency)}`;
+               if (currency) {
+                    return `${value} ${this.decodeIfNeeded(currency)}`;
+               } else {
+                    return `${value} MPT ${amount.mpt_issuance_id}`;
+               }
           }
 
           return `${amount} XRP`;

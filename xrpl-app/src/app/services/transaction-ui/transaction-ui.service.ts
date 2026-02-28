@@ -3,6 +3,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { Signer, Toast, ValidationInputs, Wallet } from '../../models/interface-items.model';
+import { UtilsService } from '../util-service/utils.service';
 
 export type TxStep = 'idle' | 'preparing' | 'signing' | 'submitting' | 'waiting_validation' | 'waiting_for_wallet_creation' | 'finalizing' | 'success' | 'failed';
 
@@ -28,6 +29,7 @@ export class TransactionUiService {
      constructor(
           private readonly sanitizer: DomSanitizer,
           private readonly xrplService: XrplService
+          // private readonly utilsService: UtilsService
      ) {}
 
      readonly baseTxKeys = ['isSimulateEnabled', 'useMultiSign', 'isRegularKeyAddress', 'regularKeyAddress', 'regularKeySeed', 'multiSignAddress', 'multiSignSeeds'] as const;
@@ -38,8 +40,8 @@ export class TransactionUiService {
      suppressSuccessMessage = signal<boolean>(false);
      suppressIndividualFeedback = signal<boolean>(false);
      submitAndWait = signal<boolean>(false);
-     result = signal('');
-     spinnerMessage = signal('');
+     result = signal<string>('');
+     spinnerMessage = signal<string>('');
      toastId = 0;
      errorMessageSignal = signal<string | null>(null);
      spinner = signal<boolean>(false);
@@ -56,18 +58,18 @@ export class TransactionUiService {
      infoPanelExpanded = signal<boolean>(false);
 
      // Payment
-     amountField = signal('');
-     destinationTagField = signal('');
-     invoiceIdField = signal('');
-     sourceTagField = signal('');
-     domainId = signal('');
+     amountField = signal<string>('');
+     destinationTagField = signal<string>('');
+     invoiceIdField = signal<string>('');
+     sourceTagField = signal<string>('');
+     domainId = signal<string>('');
 
      // Checks
-     checkIdField = signal('');
+     checkIdField = signal<string>('');
      checkCreator = signal<string>('');
 
      // Tokens + Trustlines
-     trustlineLimitField = signal(0);
+     trustlineLimitField = signal<number>(0);
      currencyCode = signal<string>('XRP');
      currencyIssuer = signal<string>('');
      tokenToRemove = signal<string>('');
@@ -80,17 +82,17 @@ export class TransactionUiService {
      trustlineFlags = signal<number>(0);
      showEnableTrustline = signal<boolean>(false);
      missingTrustlineInfo = {
-          currencyCode: signal(''),
-          issuer: signal(''),
+          currencyCode: signal<string>(''),
+          issuer: signal<string>(''),
      };
-     currency = signal('');
-     issuer = signal('');
+     currency = signal<string>('');
+     issuer = signal<string>('');
 
      // Tickets
-     ticketCountField = signal('');
+     ticketCountField = signal<string>('');
      selectedTicketSequences = signal<string[]>([]);
      isTicket = signal<boolean>(false);
-     selectedSingleTicket = signal('');
+     selectedSingleTicket = signal<string>('');
      selectedTickets = signal<string[]>([]);
      multiSelectMode = signal<boolean>(false);
      ticketArray = signal<string[]>([]);
@@ -98,19 +100,19 @@ export class TransactionUiService {
      // Expiration Dates
      expirationTimeField = signal<string>('');
      enableExpirationDate = signal<boolean>(false);
-     finishAfter = signal(0);
-     cancelAfter = signal(0);
+     enableEscrowFinishAfterExpirationDate = signal<boolean>(false);
+     enableEscrowCancelAfterExpirationDate = signal<boolean>(false);
 
      // Credentials
      credentialIDs = signal<string[]>([]);
 
      // Account config
-     memoField = signal('');
-     multiSignAddress = signal('');
-     multiSignSeeds = signal('');
-     signerQuorum = signal(0);
-     regularKeyAddress = signal('');
-     regularKeySeed = signal('');
+     memoField = signal<string>('');
+     multiSignAddress = signal<string>('');
+     multiSignSeeds = signal<string>('');
+     signerQuorum = signal<number>(0);
+     regularKeyAddress = signal<string>('');
+     regularKeySeed = signal<string>('');
      isMemoEnabled = signal<boolean>(false);
      useMultiSign = signal<boolean>(false);
      isRegularKeyAddress = signal<boolean>(false);
@@ -136,7 +138,7 @@ export class TransactionUiService {
      isMessageKey = signal<boolean>(false);
      domain = signal<string>('');
      avatarUrl = signal<string>('');
-     userEmail = signal('');
+     userEmail = signal<string>('');
      url = signal<string>('');
 
      // Escrows
@@ -146,6 +148,8 @@ export class TransactionUiService {
      escrowSequenceNumberField = signal<string>('');
      escrowConditionField = signal<string>('');
      escrowFulfillmentField = signal<string>('');
+     finishAfter = signal<number>(0);
+     cancelAfter = signal<number>(0);
 
      // Payment Channel
      channelIDField = signal<string>('');
@@ -815,7 +819,10 @@ export class TransactionUiService {
           this.holderAccount.set('');
           this.expirationTimeField.set('');
           this.enableExpirationDate.set(false);
+          this.enableEscrowFinishAfterExpirationDate.set(false);
+          this.enableEscrowCancelAfterExpirationDate.set(false);
           this.showEnableTrustline.set(false);
+          this.domainId.set('');
      }
 
      clearAllOptions() {
@@ -843,5 +850,13 @@ export class TransactionUiService {
           this.clearTxResultSignal();
           this.clearTxHashSignal();
           this.clearTxSignal();
+     }
+
+     clearOptionalInputFields() {
+          this.destinationTagField.set('');
+          this.sourceTagField.set('');
+          this.invoiceIdField.set('');
+          this.domainId.set('');
+          this.credentialIDs.set([]);
      }
 }

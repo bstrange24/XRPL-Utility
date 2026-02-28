@@ -247,14 +247,12 @@ export class XrplTransactionService {
           };
      }
 
-     buildCreateTimeBasedEscrowTransaction(wallet: xrpl.Wallet, amountToCash: any, destinationAddress: string, finishAfterTime: number, cancelAfterTime: number, fee: string | undefined, currentLedger: number | undefined): xrpl.EscrowCreate {
+     buildCreateTimeBasedEscrowTransaction(wallet: xrpl.Wallet, amountToCash: any, destinationAddress: string, fee: string | undefined, currentLedger: number | undefined): xrpl.EscrowCreate {
           return {
                TransactionType: 'EscrowCreate',
                Account: wallet.address,
                Amount: amountToCash,
                Destination: destinationAddress,
-               FinishAfter: finishAfterTime,
-               CancelAfter: cancelAfterTime,
                Fee: fee,
                LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
           };

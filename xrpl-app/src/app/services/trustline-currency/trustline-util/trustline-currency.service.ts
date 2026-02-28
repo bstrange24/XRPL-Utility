@@ -1,6 +1,4 @@
 import { computed, effect, inject, Injectable, Signal, signal } from '@angular/core';
-import { BehaviorSubject, combineLatest, Subject, takeUntil } from 'rxjs';
-
 import * as xrpl from 'xrpl';
 import { Wallet, WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { SelectItem } from '../../destination-dropdown/destination-dropdown.service';
@@ -10,6 +8,7 @@ import { XrplService } from '../../xrpl-services/xrpl.service';
 import { RippleState } from '../../../models/interface-items.model';
 import { AppConstants } from '../../../core/app.constants';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 
 interface IssuerItem {
      name: string;
@@ -19,12 +18,12 @@ interface IssuerItem {
 @Injectable({ providedIn: 'root' })
 export class TrustlineCurrencyService {
      public readonly txUiService = inject(TransactionUiService);
+     private readonly xrplCache = inject(XrplCacheService);
 
      private readonly knownTrustLinesIssuers = signal<Record<string, string[]>>({ XRP: [] });
      public readonly knownTrustLinesIssuers$ = this.knownTrustLinesIssuers.asReadonly();
      public readonly preferXrpAsDefault = signal<boolean>(true); // default = true (most pages)
-     private readonly destroy$ = new Subject<void>();
-     private readonly currentWalletAddress = signal<string>('');
+     public readonly currentWalletAddress = signal<string>('');
      public readonly currentCurrency = signal<string>('XRP');
      private readonly currentIssuer = signal<string>('');
      private readonly balanceCache = new Map<string, { data: any; timestamp: number }>();
@@ -32,13 +31,8 @@ export class TrustlineCurrencyService {
      public addXrpInCurrencyDropdown = signal<boolean>(false);
 
      // Keep track of current wallet from streams
-     private latestWallets: Wallet[] = [];
-     private latestSelectedIndex = 0;
-
-     // currencies$ = new BehaviorSubject<string[]>([]);
-     // issuers$ = new BehaviorSubject<IssuerItem[]>([]);
-     // selectedIssuer$ = new BehaviorSubject<string>('');
-     // balance$ = new BehaviorSubject<string>('0');
+     private readonly latestWallets: Wallet[] = [];
+     private readonly latestSelectedIndex = 0;
 
      public readonly currencies = signal<string[]>([]);
      public readonly issuers = signal<IssuerItem[]>([]);
@@ -80,48 +74,24 @@ export class TrustlineCurrencyService {
           private readonly utilsService: UtilsService
      ) {
           this.loadFromStorage();
-
-          effect(() => {
-               const wallets = this.walletManagerService.wallets();
-               const idx = this.walletManagerService.selectedIndex();
-               // rest of logic
-          });
-          // // Subscribe to both streams and derive current wallet
-          // combineLatest([this.walletManagerService.wallets$, this.walletManagerService.selectedIndex$])
-          //      .pipe(takeUntil(this.destroy$))
-          //      .subscribe(([wallets, selectedIndex]) => {
-          //           this.latestWallets = wallets;
-          //           this.latestSelectedIndex = selectedIndex;
-
-          //           if (wallets.length === 0 || selectedIndex < 0 || selectedIndex >= wallets.length) {
-          //                this.currentWalletAddress.set('');
-          //                this.clearCurrentSelection();
-          //                return;
-          //           }
-
-          //           const currentWallet = wallets[selectedIndex];
-          //           if (currentWallet.address !== this.currentWalletAddress()) {
-          //                this.currentWalletAddress.set(currentWallet.address);
-          //                this.clearCurrentSelection();
-
-          //                // If a currency was already selected, refresh issuers + balance
-          //                if (this.currentCurrency()) {
-          //                     this.loadIssuersForCurrency(this.currentCurrency());
-          //                     this.updateBalanceForCurrentCombo();
-          //                }
-          //           }
-
-          //           // Auto-initialize default currency when wallet is ready
-          //           if (this.currentWalletAddress()) {
-          //                this.initializeDefaultCurrency();
-          //           }
-          //      });
-
-          // this.currencies$.subscribe(c => this.currencies.set(c));
-          // this.issuers$.subscribe(i => this.issuers.set(i));
-          // this.selectedIssuer$.subscribe(i => this.selectedIssuer.set(i));
-          // this.balance$.subscribe(b => this.balance.set(b));
      }
+
+     // Has wallets → warning handling
+     private readonly _hasWalletsEffect = effect(() => {
+          if (this.walletManagerService.hasWallets()) {
+               this.txUiService.clearWarning?.();
+          } else {
+               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+               this.txUiService.setError('');
+               this.txUiService.setInfoMessage('');
+          }
+     });
+
+     // Selected index change → clear + refresh checks
+     private readonly _selectedIndexEffect = effect(() => {
+          // Reading the signal is enough to trigger the effect
+          this.walletManagerService.selectedIndex();
+     });
 
      private buildTxLabel(defaultText: string) {
           return computed(() => {
@@ -389,6 +359,8 @@ export class TrustlineCurrencyService {
           });
      }
 
+     readonly currencyBalance = computed<string>(() => this.balance());
+
      public async refreshCurrentBalance(): Promise<void> {
           await this.updateBalanceForCurrentCombo();
      }
@@ -425,8 +397,6 @@ export class TrustlineCurrencyService {
                isCurrentToken: false,
           }));
      });
-
-     readonly currencyBalance = computed<string>(() => this.balance());
 
      public resetToDefault(): void {
           this.selectCurrency('XRP', '');
@@ -647,8 +617,11 @@ export class TrustlineCurrencyService {
           return currencies.sort((a, b) => a.localeCompare(b));
      }
 
-     async selectCurrency(currency: string, nothing: string) {
-          if (!currency || currency === 'XRP') {
+     async selectCurrency(currency: string, _nothing: string) {
+          console.log('selectCurrency .................................');
+          const normalized = (currency || 'XRP').trim().toUpperCase();
+
+          if (normalized === 'XRP') {
                this.currentCurrency.set('XRP');
                this.currentIssuer.set('');
                this.issuers.set([]);
@@ -661,20 +634,6 @@ export class TrustlineCurrencyService {
           this.currentCurrency.set(currency);
           this.loadIssuersForCurrency(currency); // your existing method
           this.updateBalanceForCurrentCombo(); // your existing method
-
-          // Get current wallet address from the combined stream above
-          // Use latest known wallet
-          if (this.latestWallets.length === 0 || this.latestSelectedIndex >= this.latestWallets.length) {
-               this.currentWalletAddress.set('');
-               this.balance.set('0');
-               return;
-          }
-
-          const currentWallet = this.latestWallets[this.latestSelectedIndex];
-          this.currentWalletAddress.set(currentWallet.address);
-
-          await this.loadIssuersForCurrency(currency);
-          await this.updateBalanceForCurrentCombo();
      }
 
      // Called when user picks an issuer
@@ -715,7 +674,7 @@ export class TrustlineCurrencyService {
           this.selectedIssuer.set(this.currentIssuer());
 
           // Update balance for the active issuer
-          await this.updateBalanceForCurrentCombo();
+          // await this.updateBalanceForCurrentCombo();
      }
 
      private getNiceName(address: string, currency: string): string {
@@ -734,26 +693,31 @@ export class TrustlineCurrencyService {
      }
 
      private async updateBalanceForCurrentCombo() {
-          if (!this.currentWalletAddress() || !this.currentCurrency() || !this.currentIssuer()) {
+          console.log('updateBalanceForCurrentCombo ................................. updateBalanceForCurrentCombo');
+          const walletAddress = this.currentWalletAddress();
+          const currency = this.getSelectedCurrency();
+          const issuer = this.getSelectedIssuer();
+
+          if (!walletAddress || !currency || !issuer) {
                this.balance.set('0');
                return;
           }
 
-          const cacheKey = `${this.currentWalletAddress()}_${this.currentCurrency()}`;
+          const cacheKey = `${walletAddress}_${currency}`;
           const cached = this.balanceCache.get(cacheKey);
           if (cached && Date.now() - cached.timestamp < 8000) {
-               const balance = this.extractBalance(cached.data, this.currentCurrency(), this.currentIssuer());
+               const balance = this.extractBalance(cached.data, currency, issuer);
                this.balance.set(balance);
                return;
           }
 
           try {
-               const client = await this.xrplService.getClient();
-               const gatewayBalances = await this.xrplService.getTokenBalance(client, this.currentWalletAddress(), 'validated', '');
+               const client = await this.getClient();
+               const gatewayBalances = await this.xrplService.getTokenBalance(client, walletAddress, 'validated', '');
 
                this.balanceCache.set(cacheKey, { data: gatewayBalances, timestamp: Date.now() });
 
-               const balance = this.extractBalance(gatewayBalances, this.currentCurrency(), this.currentIssuer());
+               const balance = this.extractBalance(gatewayBalances, currency, issuer);
                this.balance.set(balance);
           } catch (e) {
                console.warn('Failed to load balance for currency+issuer', e);
@@ -783,6 +747,10 @@ export class TrustlineCurrencyService {
           }
 
           return '0';
+     }
+
+     private async getClient(): Promise<xrpl.Client> {
+          return this.xrplCache.getClient(() => this.xrplService.getClient());
      }
 
      getCurrencies(): string[] {

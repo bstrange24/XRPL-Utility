@@ -2484,6 +2484,7 @@ app-root {
      max-height: 300px;
      overflow-y: auto;
      padding-right: 4px;
+     padding-left: 30px;
 }
 
 .check-card {
@@ -2625,10 +2626,6 @@ app-root {
      display: flex;
      flex-direction: column;
      gap: 0.25rem;
-}
-
-.checks-list {
-     padding: 0.5rem 0;
 }
 
 .panel-header:hover {
@@ -3604,7 +3601,7 @@ ticket-fields .form-group {
 }
 
 .expiration-buttons {
-     display: flex;
+     /* display: flex; */
      gap: 6px;
 }
 
@@ -4531,14 +4528,19 @@ button:disabled,
 }
 
 .escrow-list-container {
-     transition: all 0.35s ease;
      overflow: hidden;
+     transition: max-height 0.3s ease;
+     max-height: 0;
 }
 
 .escrow-list {
-     list-style: none;
-     margin: 0;
-     padding: 0 16px;
+     display: flex;
+     flex-direction: column;
+     gap: 0.5rem;
+     max-height: 300px;
+     overflow-y: auto;
+     padding-right: 4px;
+     padding-left: 30px;
 }
 
 .escrow-item {
@@ -4548,6 +4550,11 @@ button:disabled,
      padding: 10px 0;
      border-top: 1px solid #e0f2fe;
      gap: 12px;
+}
+
+.info-data-dropdown {
+     padding-right: 30px;
+     padding-left: 0px
 }
 
 .dark .escrow-item {
@@ -4622,17 +4629,6 @@ button:disabled,
      background: #0f172a;
      border-color: #334155;
      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-}
-
-.checks-list-container {
-     transition: all 0.35s ease;
-     overflow: hidden;
-}
-
-.checks-list {
-     list-style: none;
-     margin: 0;
-     padding: 0 16px;
 }
 
 .check-item {

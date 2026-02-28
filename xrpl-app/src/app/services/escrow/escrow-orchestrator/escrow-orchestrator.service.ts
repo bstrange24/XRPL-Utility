@@ -17,18 +17,18 @@ type EscrowTxType = 'create' | 'finish' | 'cancel';
 interface EscrowConfig {
      wallet: Wallet;
      formValues: {
-          amount?: string;
+          amountField?: string;
           destinationAddress?: string;
-          finishAfter?: string;
-          cancelAfter?: string;
+          escrowFinishTimeField?: any;
+          escrowCancelTimeField?: any;
           currencyValue?: string;
           issuer?: string;
           escrowSequenceNumberField?: string;
-          escrowOwner?: string;
-          condition?: string; // hex string for EscrowCreate
-          fulfillment?: string; // hex string for EscrowFinish
-          isConditional?: boolean; // optional flag to indicate conditional flow
-          isSimulate?: boolean;
+          escrowOwnerField?: string;
+          condition?: string;
+          fulfillment?: string;
+          isConditional?: boolean;
+          isSimulateEnabled?: boolean;
           useMultiSign?: boolean;
           isRegularKeyAddress?: boolean;
           regularKeyAddress?: string;
@@ -57,14 +57,13 @@ export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
      private readonly xrplTransactionService = inject(XrplTransactionService);
-     private readonly toast = inject(ToastService);
      private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly escrowUtilService = inject(EscrowUtilService);
 
      async executeEscrowTx(type: EscrowTxType, config: EscrowConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
           const { wallet, formValues, extra = {}, preFetchedEnv } = config;
-          const { isSimulate = false } = formValues;
+          const { isSimulateEnabled = false } = formValues;
 
           let client: xrpl.Client;
           let env: any;
@@ -83,24 +82,25 @@ export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
                          throw new Error('Pre-fetched environment missing required fields');
                     }
                } else {
-                    const flags: any = {
+                    // Normal fetch fallback
+                    const envFlags: any = {
                          includeAccountInfo: true,
                          includeFee: true,
                          includeLedgerIndex: true,
                     };
 
                     if (type === 'create') {
-                         flags.includeAccountObject = true;
-                         flags.includeDestinationAccountInfo = true;
-                         flags.destinationAddress = formValues.destinationAddress;
+                         envFlags.includeAccountObject = true;
+                         envFlags.includeDestinationAccountInfo = true;
+                         envFlags.destinationAddress = formValues.destinationAddress;
                     } else if (type === 'finish') {
-                         flags.includeEscrowBySequenceId = true;
-                         flags.escrowSequenceNumberField = formValues.escrowSequenceNumberField;
+                         envFlags.includeEscrowBySequenceId = true;
+                         envFlags.escrowSequenceNumberField = formValues.escrowSequenceNumberField;
                     } else if (type === 'cancel') {
-                         flags.includeEscrows = true;
+                         envFlags.includeEscrows = true;
                     }
 
-                    env = await this.TxEnvironmentService.prepareTxEnvironment(flags);
+                    const env = await this.TxEnvironmentService.prepareTxEnvironment(envFlags);
                     client = env.client;
 
                     if (!env.accountInfo || !env.fee || !env.currentLedger) {
@@ -124,10 +124,10 @@ export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
                // 3. Build transaction
                const tx = this.buildEscrowTransaction(type, env.wallet, env, formValues, extra);
 
-               // 4. Optional fields
+               // 4. Apply optional fields
                await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues);
 
-               // 5. Execute
+               // 5. Execute transaction
                const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
 
                if (!execResult.success) {
@@ -136,8 +136,8 @@ export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
 
                txHash = execResult.hash;
 
-               if (isSimulate) {
-                    return this.handleSimulationSuccess(type, formValues, txHash);
+               if (isSimulateEnabled) {
+                    return this.escrowUtilService.handleSimulationSuccess(type, formValues, txHash);
                }
 
                // 6. Wait for final outcome
@@ -186,10 +186,10 @@ export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
                return {
                     ...base,
                     createTimeBasedEscrow: {
-                         amount: formValues.amount,
+                         amount: formValues.amountField,
                          destination: formValues.destinationAddress,
-                         finishAfter: this.utilsService.toRippleTime(formValues.finishAfter),
-                         cancelAfter: this.utilsService.toRippleTime(formValues.cancelAfter),
+                         finishAfter: this.utilsService.toRippleTime(formValues.escrowFinishTimeField),
+                         cancelAfter: this.utilsService.toRippleTime(formValues.escrowCancelTimeField),
                          issuer: formValues.issuer,
                          currencyValue: formValues.currencyValue,
                          condition: formValues.condition,
@@ -201,10 +201,10 @@ export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
                return {
                     ...base,
                     finishTimeBasedEscrow: {
-                         escrowOwner: formValues.escrowOwner,
+                         escrowOwner: formValues.escrowOwnerField,
                          escrowSequenceNumberField: formValues.escrowSequenceNumberField,
-                         condition: formValues.condition, // ← for validation
-                         fulfillment: formValues.fulfillment, // ← for validation
+                         condition: formValues.condition,
+                         fulfillment: formValues.fulfillment,
                     },
                };
           }
@@ -225,27 +225,35 @@ export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
                if (formValues.currencyValue === 'MPT') {
                     amountToCash = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyValue, formValues.currencyIssuer ?? '', '', true).sendMax;
                } else {
-                    amountToCash = this.xrplTransactionService.buildAmount(formValues.currencyValue, formValues.amount, formValues.issuer);
+                    amountToCash = this.xrplTransactionService.buildAmount(formValues.currencyValue, formValues.amountField, formValues.issuer);
                }
 
-               const finishAfterTime = formValues.finishAfter ? this.utilsService.toRippleTime(formValues.finishAfter) : 0;
-               const cancelAfterTime = formValues.cancelAfter ? this.utilsService.toRippleTime(formValues.cancelAfter) : 0;
+               const tx = this.xrplTransactionService.buildCreateTimeBasedEscrowTransaction(wallet, amountToCash, formValues.destinationAddress, fee, currentLedger);
 
-               return this.xrplTransactionService.buildCreateTimeBasedEscrowTransaction(wallet, amountToCash, formValues.destinationAddress, finishAfterTime, cancelAfterTime, fee, currentLedger);
+               if (formValues.condition) {
+                    tx.Condition = formValues.condition;
+               }
+
+               if (this.txUiService.enableEscrowFinishAfterExpirationDate()) {
+                    tx.FinishAfter = formValues.escrowFinishTimeField ? this.utilsService.toRippleTime(formValues.escrowFinishTimeField) : 0;
+               }
+
+               if (this.txUiService.enableEscrowCancelAfterExpirationDate()) {
+                    tx.CancelAfter = formValues.escrowCancelTimeField ? this.utilsService.toRippleTime(formValues.escrowCancelTimeField) : 0;
+               }
+
+               return tx;
           }
 
           if (type === 'finish') {
-               return this.xrplTransactionService.buildFinishTimeBasedEscrowTransaction(wallet, fee, currentLedger, formValues.escrowOwner, Number.parseInt(formValues.escrowSequenceNumberField));
+               const tx = this.xrplTransactionService.buildFinishTimeBasedEscrowTransaction(wallet, fee, currentLedger, formValues.escrowOwnerField, Number.parseInt(formValues.escrowSequenceNumberField));
+               if (formValues.fulfillment) tx.Fulfillment = formValues.fulfillment;
+               if (formValues.condition) tx.Condition = formValues.condition;
+               return tx;
           }
 
           // cancel
-          return this.xrplTransactionService.buildCancelTimeBasedEscrowTransaction(
-               wallet,
-               formValues.escrowOwner || wallet.classicAddress, // fallback to self if missing
-               fee,
-               currentLedger,
-               Number.parseInt(formValues.escrowSequenceNumberField)
-          );
+          return this.xrplTransactionService.buildCancelTimeBasedEscrowTransaction(wallet, formValues.escrowOwnerField || wallet.classicAddress, fee, currentLedger, Number.parseInt(formValues.escrowSequenceNumberField));
      }
 
      private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: EscrowTxType, formValues: any) {
@@ -278,27 +286,6 @@ export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
           }
      }
 
-     // private setAmount(type: string, formValues: any, tx: xrpl.Transaction) {
-     //      if (type === 'create') {
-     //           if (formValues.currencyValue === 'MPT') {
-     //                const curr: xrpl.MPTAmount = {
-     //                     mpt_issuance_id: this.txUiService.mptIssuanceIdField(),
-     //                     value: this.txUiService.amountField(),
-     //                };
-     //                tx.Amount = curr;
-     //           } else if (formValues.currencyValue !== 'XRP' && formValues.currencyValue !== 'MPT') {
-     //                const curr: xrpl.IssuedCurrencyAmount = {
-     //                     currency: formValues.currencyValue.length > 3 ? this.utilsService.encodeCurrencyCode(formValues.currencyValue) : formValues.currencyValue,
-     //                     issuer: formValues.issuer,
-     //                     value: this.txUiService.amountField(),
-     //                };
-     //                tx.Amount = curr;
-     //           } else {
-     //                tx.Amount = xrpl.xrpToDrops(this.txUiService.amountField());
-     //           }
-     //      }
-     // }
-
      private async executeSpecificTx(type: EscrowTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, formValues: any) {
           const opts = {
                useMultiSign: formValues.useMultiSign,
@@ -320,20 +307,20 @@ export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
           return this.executor.cancelEscrow?.(tx as xrpl.EscrowCancel, wallet, client, opts);
      }
 
-     private handleSimulationSuccess(type: EscrowTxType, formValues: any, hash?: string) {
-          let msg: string;
+     // private handleSimulationSuccess(type: EscrowTxType, formValues: any, hash?: string) {
+     //      let msg: string;
 
-          if (type === 'create') {
-               msg = `Simulated Creating Time Based Escrow of ${formValues.amount} ${formValues.currencyValue || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
-          } else if (type === 'finish') {
-               msg = `Simulated Finishing Time Based Escrow with Sequence ID ${formValues.escrowSequenceNumberField}`;
-          } else {
-               msg = `Simulated Cancelling Time Based Escrow with Sequence ID ${formValues.escrowSequenceNumberField}`;
-          }
+     //      if (type === 'create') {
+     //           msg = `Simulated Creating Time Based Escrow of ${formValues.amountField} ${formValues.currencyValue || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
+     //      } else if (type === 'finish') {
+     //           msg = `Simulated Finishing Time Based Escrow with Sequence ID ${formValues.escrowSequenceNumberField}`;
+     //      } else {
+     //           msg = `Simulated Cancelling Time Based Escrow with Sequence ID ${formValues.escrowSequenceNumberField}`;
+     //      }
 
-          this.txUiService.resetCurrentStepToIdle();
-          this.toast.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+     //      this.txUiService.resetCurrentStepToIdle();
+     //      this.toast.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
 
-          return { success: true, hash };
-     }
+     //      return { success: true, hash };
+     // }
 }

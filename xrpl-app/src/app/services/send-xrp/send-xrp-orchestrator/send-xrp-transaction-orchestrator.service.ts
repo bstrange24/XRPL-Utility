@@ -194,7 +194,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
           if (domainId) this.utilsService.setDomainId(tx, domainId);
 
           // Credential IDs (array)
-          if (formValues.credentialIDs?.length > 0) {
+          if (this.txUiService.credentialIDs()?.length > 0) {
                const jsonArray: string[] = formValues.credentialIDs
                     .split(',')
                     .map((id: string) => id.trim())

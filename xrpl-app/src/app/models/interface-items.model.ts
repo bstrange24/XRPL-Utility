@@ -1,3 +1,39 @@
+export type CheckTxType = 'create' | 'cash' | 'cancel';
+
+export type CreateCheckItem = {
+     tab: 'create';
+     id: string;
+     index: string;
+     amount: string;
+     destination: string;
+     destinationTag?: number;
+     expiration?: number;
+     invoiceId?: string;
+     isExpired: boolean;
+};
+
+export type CashCheckItem = {
+     tab: 'cash';
+     id: string;
+     index: string;
+     amount: string;
+     sender: string;
+     expiration?: number;
+     isExpired: boolean;
+};
+
+export type CancelCheckItem = {
+     tab: 'cancel';
+     id: string;
+     index: string;
+     amount: string;
+     destination: string;
+     expiration?: number;
+     isExpired: boolean;
+};
+
+export type CheckListItem = CreateCheckItem | CashCheckItem | CancelCheckItem;
+
 export interface Toast {
      id: number;
      message: string;
@@ -65,11 +101,38 @@ export interface MPTAmount {
      value: string;
 }
 
-export interface EscrowDisplayItem {
+export type EscrowDisplayItem =
+     | {
+            tab: 'create' | 'cancel';
+            EscrowSequence: string; // sequence as string
+            amount: string;
+            destination: string;
+            finishAfter?: number;
+            cancelAfter?: number;
+            isExpired: boolean;
+            display: string;
+            secondary: string;
+            id: string;
+       }
+     | {
+            tab: 'finish';
+            EscrowSequence: string;
+            amount: string;
+            sender: string;
+            finishAfter?: number;
+            cancelAfter?: number;
+            isExpired: boolean;
+            display: string;
+            secondary: string;
+            id: string;
+       };
+
+export type EscrowDropdownItem = {
      id: string;
      display: string;
      secondary: string;
-}
+     // optional: rawEscrow?: any;  // if you need to look up later
+};
 
 // interface MPToken {
 //      LedgerEntryType?: string;
@@ -152,6 +215,18 @@ export interface EscrowWithTxData {
      Sequence?: number | null;
      TicketSequence?: string | number;
      Memo?: string | null;
+}
+
+export interface EscrowValidationInput {
+     finishAfter?: number | null;
+     cancelAfter?: number | null;
+     condition?: string | null;
+     currentRippleTime?: number | null;
+}
+
+export interface EscrowValidationResult {
+     valid: boolean;
+     errors: string[];
 }
 
 export interface Destination {

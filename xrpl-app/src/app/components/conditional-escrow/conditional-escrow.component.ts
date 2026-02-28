@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, Signal, WritableSignal, effect, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, computed, signal, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -21,13 +21,10 @@ import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { EMPTY, from, switchMap } from 'rxjs';
-import { EscrowObject } from '../../models/interface-items.model';
+import { EscrowDisplayItem, EscrowObject } from '../../models/interface-items.model';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { CheckUtilService } from '../../services/checks/check-util/check-util.service';
@@ -37,17 +34,23 @@ import { EscrowUtilService } from '../../services/escrow/escrow-util/escrow-util
 import { TimeBasedEscrowOrchestrator } from '../../services/escrow/escrow-orchestrator/escrow-orchestrator.service';
 import * as cc from 'five-bells-condition';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { EscrowCancelItemComponent } from '../time-escrow/ui-components/escrow-cancel-item/escrow-cancel-item.component';
+import { EscrowCreateItemComponent } from '../time-escrow/ui-components/escrow-create-item/escrow-create-item.component';
+import { EscrowFinishItemComponent } from '../time-escrow/ui-components/escrow-finish-item/escrow-finish-item.component';
 
 @Component({
      selector: 'app-conditional-escrow',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, EscrowCreateItemComponent, EscrowFinishItemComponent, EscrowCancelItemComponent],
+     animations: [
+          trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])]),
+          trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-20px)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(100%)' }))])]),
+     ],
      templateUrl: './conditional-escrow.component.html',
      styleUrl: './conditional-escrow.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateConditionalEscrowComponent extends PerformanceBaseComponent implements OnInit {
-     private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
@@ -76,27 +79,36 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal<boolean>(false);
      activeTab = signal<'create' | 'finish' | 'cancel'>('create');
-     currencyFieldDropDownValue = signal<string>('XRP');
+
+     currencyItems = this.trustlineCurrencyService.currencyItems;
+     issuerItems = this.trustlineCurrencyService.issuerItems;
+     currencyBalanceField = this.trustlineCurrencyService.currencyBalance;
+
      isMptEnabled = signal<boolean>(false);
-     escrowFinishTimeField = signal<string>('');
-     escrowCancelTimeField = signal<string>('');
-     escrowOwnerField = signal<string>('');
-     escrowSequenceNumberField = signal<string>('');
-     selectedEscrow = signal<any>(null);
+
      expiredOrFulfilledEscrows = signal<any[]>([]);
      allEscrowsRaw = signal<any[]>([]); // holds raw escrow objects from ledger
      finishEscrow = signal<any[]>([]);
      existingEscrow = signal<any[]>([]);
      existingIOUs = signal<any[]>([]);
      existingMpts = signal<any[]>([]);
-     outstandingEscrowCollapsed = signal<boolean>(true);
-     outstandingMptCollapsed = signal<boolean>(true);
-     outstandingIOUCollapsed = signal<boolean>(true);
-     escrowConditionField = signal<string>('');
-     escrowFulfillmentField = signal<string>('');
 
-     // Effect 1: Has wallets → warning handling
-     private readonly hasWalletsEffect = effect(() => {
+     allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
+     destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
+     destinationItems = this.transactionDropdownService.destinationItems(this.allDestinations);
+     selectedDestinationItem = this.transactionDropdownService.selectedDestinationItem(this.selectedDestinationAddress, this.destinationMap, this.destinationItems);
+     filteredDestinations = this.transactionDropdownService.filteredDestinations(this.allDestinations, this.destinationSearchQuery);
+     destinationDisplay = this.transactionDropdownService.destinationDisplay(this.selectedDestinationAddress, this.destinationSearchQuery, this.destinationMap);
+
+     private readonly createEscrowSpecificKeys = ['amountField', 'escrowFinishTimeField', 'escrowCancelTimeField', 'finishAfter', 'cancelAfter'] as const;
+     private readonly finishEscrowSpecificKeys = ['escrowSequenceNumberField', 'escrowOwnerField'] as const;
+     private readonly cancelEscrowSpecificKeys = ['escrowSequenceNumberField'] as const;
+     readonly currentAddress = computed(() => this.currentWallet().address);
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
+     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
+
+     // Has wallets → warning handling
+     private readonly _hasWalletsEffect = effect(() => {
           if (this.walletManager.hasWallets()) {
                this.txUiService.clearWarning?.();
           } else {
@@ -107,52 +119,33 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      });
 
      // Effect 2: Wallets list sync
-     private readonly walletsSyncEffect = effect(() => {
+     private readonly _walletsSyncEffect = effect(() => {
           this.wallets.set(this.walletManager.wallets());
      });
 
      // Effect 3: Selected index change → clear + refresh checks
-     private readonly selectedIndexEffect = effect(() => {
+     private readonly _selectedIndexEffect = effect(() => {
           // Reading the signal is enough to trigger the effect
           this.walletManager.selectedIndex();
 
           this.txUiService.clearAllOptionsAndMessages();
-          this.clearFields();
 
           // Fire-and-forget refresh
           void this.getEscrows(false);
      });
 
-     allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
-     destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
-     destinationItems = this.transactionDropdownService.destinationItems(this.allDestinations);
-     selectedDestinationItem = this.transactionDropdownService.selectedDestinationItem(this.selectedDestinationAddress, this.destinationMap, this.destinationItems);
-     filteredDestinations = this.transactionDropdownService.filteredDestinations(this.allDestinations, this.destinationSearchQuery);
-     destinationDisplay = this.transactionDropdownService.destinationDisplay(this.selectedDestinationAddress, this.destinationSearchQuery, this.destinationMap);
-
-     readonly currentAddress = computed(() => this.currentWallet().address);
-     private readonly hasWallets = computed(() => this.wallets().length > 0);
-     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-     readonly hasWalletsSignal = this.walletManagerService.hasWallets;
-
      escrowItems = computed(() => this.escrowUtilService.escrowItems(this.allEscrowsRaw(), this.currentWallet().address, this.activeTab() === 'cancel'));
 
-     selectedEscrowItem = computed(() => this.escrowUtilService.selectedEscrowItem(this.escrowItems(), this.escrowSequenceNumberField()));
+     selectedEscrowItem = computed(() => this.escrowUtilService.selectedEscrowItem(this.escrowItems(), this.txUiService.escrowSequenceNumberField()));
 
      selectedIssuerAddress = computed(() => this.trustlineCurrencyService.getSelectedIssuer());
 
-     // Currency dropdown → use service
-     currencyItems = this.trustlineCurrencyService.getCurrencyItems();
-
      // Selected currency
      selectedCurrencyItem = computed(() => {
-          const code = this.currencyFieldDropDownValue();
+          const code = this.trustlineCurrencyService.currentCurrency();
           if (!code) return null;
           return this.currencyItems().find(item => item.id === code) || null;
      });
-
-     // Issuer dropdown → use service
-     issuerItems = this.trustlineCurrencyService.getIssuerItems();
 
      // Selected issuer
      selectedIssuerItem = computed(() => {
@@ -161,80 +154,132 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           return this.issuerItems().find(item => item.id === addr) || null;
      });
 
-     infoData = computed(() => {
-          const wallet = this.currentWallet();
+     readonly currentWalletData = computed(() => {
+          const currentAddr = this.currentWallet()?.address;
+          if (!currentAddr) return null;
+
+          const wallet = this.walletManager.wallets().find(w => w.address === currentAddr);
           if (!wallet?.address) return null;
 
-          const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
-          const explorerBase = this.txUiService.explorerUrl();
-          const address = wallet.address;
-
-          let escrowCount = 0;
-          let escrowsToShow: any[] = [];
-
-          switch (this.activeTab()) {
-               case 'create': {
-                    // On create tab → show escrows YOU created (outgoing)
-                    const outgoing = this.allEscrowsRaw().filter(e => e.Sender === address);
-                    escrowCount = outgoing.length;
-                    escrowsToShow = outgoing.map(e => ({
-                         index: e.EscrowSequence?.toString() || 'Unknown',
-                         amount: this.escrowUtilService.formatEscrowAmount(e.Amount),
-                         destination: e.Destination,
-                         finishAfter: e.FinishAfter,
-                         cancelAfter: e.CancelAfter,
-                         isExpired: this.escrowUtilService.isEscrowExpired(e.CancelAfter, e.FinishAfter, this.activeTab()),
-                    }));
-                    break;
-               }
-               case 'finish': {
-                    // On finish tab → show escrows sent TO you that are finishable
-                    const incoming = this.allEscrowsRaw().filter(e => e.Destination === address);
-                    escrowCount = incoming.length;
-                    escrowsToShow = incoming.map(e => ({
-                         index: e.EscrowSequence?.toString() || 'Unknown',
-                         amount: this.escrowUtilService.formatEscrowAmount(e.Amount),
-                         sender: e.Sender,
-                         finishAfter: e.FinishAfter,
-                         isExpired: this.escrowUtilService.isEscrowExpired(e.CancelAfter, e.FinishAfter),
-                    }));
-                    break;
-               }
-               case 'cancel': {
-                    // On cancel tab → show escrows YOU created that are cancellable (past CancelAfter)
-                    const cancellable = this.allEscrowsRaw().filter(e => e.Sender === address);
-                    escrowCount = cancellable.length;
-                    escrowsToShow = cancellable.map(e => ({
-                         index: e.EscrowSequence?.toString() || 'Unknown',
-                         amount: this.escrowUtilService.formatEscrowAmount(e.Amount),
-                         destination: e.Destination,
-                         cancelAfter: e.CancelAfter,
-                         isExpired: this.escrowUtilService.isEscrowExpired(e.CancelAfter, e.FinishAfter),
-                    }));
-                    break;
-               }
-          }
-
-          // Build the links (only on create tab we show all 3)
-          const links: string[] = [];
-          if (this.activeTab() === 'create') {
-               const hasEscrows = this.existingEscrow().length > 0;
-               const hasIOUs = this.existingIOUs().length > 0;
-               const hasMPTs = this.existingMpts().length > 0;
-
-               if (hasEscrows) links.push(`<a href="${explorerBase}account/${address}/escrows" target="_blank" rel="noopener" class="xrpl-win-link">View Escrows</a>`);
-               if (hasIOUs) links.push(`<a href="${explorerBase}account/${address}/tokens" target="_blank" rel="noopener" class="xrpl-win-link">View IOUs</a>`);
-               if (hasMPTs) links.push(`<a href="${explorerBase}account/${address}/mpts/owned" target="_blank" rel="noopener" class="xrpl-win-link">View MPTs</a>`);
-          }
-
           return {
-               walletName,
-               escrowCount,
-               escrowsToShow,
-               links: links.length > 0 ? links.join(' | ') : null,
-               activeTab: this.activeTab(),
+               address: wallet.address,
+               name: wallet.name || wallet.address.slice(0, 10) + '...',
           };
      });
+
+     readonly escrowCount = computed(() => {
+          const tab = this.activeTab();
+          const address = this.currentWallet()?.address ?? '';
+
+          if (tab === 'create') return this.existingEscrow().length;
+          if (tab === 'finish') return this.allEscrowsRaw().filter(e => e.Destination === address).length;
+          if (tab === 'cancel') return this.expiredOrFulfilledEscrows().length;
+          return 0;
+     });
+
+     readonly escrowsToShow = computed<EscrowDisplayItem[]>(() => {
+          const tab = this.activeTab();
+          const address = this.currentWallet()?.address;
+
+          if (!address) return [];
+
+          if (tab === 'create') {
+               // Outgoing escrows created by you
+               return this.existingEscrow().map(e => ({
+                    tab: 'create',
+                    EscrowSequence: e.Sequence?.toString() || 'Unknown',
+                    amount: this.utilsService.formatIOUXrpAmountOutstanding(e.Amount),
+                    destination: e.Destination,
+                    finishAfter: e.FinishAfter ? Number(e.FinishAfter) : undefined,
+                    cancelAfter: e.CancelAfter ? Number(e.CancelAfter) : undefined,
+                    isExpired: this.escrowUtilService.isEscrowExpired(e.CancelAfter, e.FinishAfter, tab),
+                    id: e.Sequence?.toString() || 'Unknown',
+                    display: `${this.utilsService.formatIOUXrpAmountOutstanding(e.Amount)} → ${e.Destination.slice(0, 8)}...`,
+                    secondary: `Seq: ${e.Sequence?.toString() || 'Unknown'} • You created • ${e.Destination.slice(0, 8)}...`,
+               }));
+          }
+
+          if (tab === 'finish') {
+               // Incoming – sent TO you (this is what was working)
+               const incoming = this.allEscrowsRaw().filter(e => e.Destination === address);
+
+               return incoming.map(e => {
+                    const sequence = e.EscrowSequence?.toString() || 'Unknown';
+                    const amtStr = this.utilsService.formatIOUXrpAmountOutstanding(e.Amount);
+                    return {
+                         tab: 'finish',
+                         EscrowSequence: sequence,
+                         amount: amtStr,
+                         sender: e.Sender,
+                         finishAfter: e.FinishAfter ? Number(e.FinishAfter) : undefined,
+                         // cancelAfter usually irrelevant for finish, but include if needed
+                         cancelAfter: e.CancelAfter ? Number(e.CancelAfter) : undefined,
+                         isExpired: this.escrowUtilService.isEscrowExpired(e.CancelAfter, e.FinishAfter, tab),
+
+                         id: sequence,
+                         display: `${amtStr} ← ${e.Sender.slice(0, 8)}...`,
+                         secondary: `Seq: ${sequence} • Sent to you`,
+                    } satisfies EscrowDisplayItem;
+               });
+          }
+
+          if (tab === 'cancel') {
+               return this.expiredOrFulfilledEscrows().map(e => ({
+                    tab: 'cancel',
+                    EscrowSequence: e.EscrowSequence?.toString() || 'Unknown',
+                    amount: this.utilsService.formatIOUXrpAmountOutstanding(e.Amount),
+                    destination: e.Destination,
+                    finishAfter: e.FinishAfter ? Number(e.FinishAfter) : undefined,
+                    cancelAfter: e.CancelAfter ? Number(e.CancelAfter) : undefined,
+                    isExpired: this.escrowUtilService.isEscrowExpired(e.CancelAfter, e.FinishAfter, tab),
+                    id: e.Sequence?.toString() || 'Unknown',
+                    display: `${this.utilsService.formatIOUXrpAmountOutstanding(e.Amount)} → ${e.Destination.slice(0, 8)}...`,
+                    secondary: `Seq: ${e.Sequence?.toString() || 'Unknown'} • You created • ${e.Destination.slice(0, 8)}...`,
+               }));
+          }
+
+          return [];
+     });
+
+     readonly explorerLinks = computed(() => {
+          const tab = this.activeTab();
+          if (tab !== 'create') return null;
+
+          const wallet = this.currentWalletData();
+          if (!wallet) return null;
+
+          const base = this.txUiService.explorerUrl();
+          const addr = wallet.address;
+
+          const links: string[] = [];
+
+          if (this.existingEscrow().length > 0) {
+               links.push(`<a href="${base}account/${addr}/escrows" target="_blank" rel="noopener" class="xrpl-win-link">View Escrows</a>`);
+          }
+          if (this.existingIOUs().length > 0) {
+               links.push(`<a href="${base}account/${addr}/tokens" target="_blank" rel="noopener" class="xrpl-win-link">View IOUs</a>`);
+          }
+          if (this.existingMpts().length > 0) {
+               links.push(`<a href="${base}account/${addr}/mpts/owned" target="_blank" rel="noopener" class="xrpl-win-link">View MPTs</a>`);
+          }
+
+          return links.length > 0 ? links.join(' | ') : null;
+     });
+
+     readonly infoData = computed(() => {
+          const wallet = this.currentWalletData();
+          if (!wallet) return null;
+
+          return {
+               walletName: wallet.name,
+               escrowCount: this.escrowCount(),
+               escrowsToShow: this.escrowsToShow(),
+               links: this.explorerLinks(),
+               activeTab: this.activeTab(), // keep for template switch if needed
+          };
+     });
+
+     readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
 
      selectedEscrowIsExpired = computed(() => {
           const selected = this.selectedEscrowItem();
@@ -255,29 +300,9 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           this.txUiService.mptIssuanceIdField.set(item?.id || '');
      }
 
-     currencyBalanceField = this.trustlineCurrencyService.balance;
-
      constructor() {
           super();
-          // Auto-select typed address if it's valid and not already selected
-          effect(() => {
-               if (this.trustlineCurrencyService.currencies().length > 0 && !this.currencyFieldDropDownValue()) {
-                    this.currencyFieldDropDownValue.set(this.trustlineCurrencyService.currencies()[0]);
-                    this.trustlineCurrencyService.selectCurrency(this.trustlineCurrencyService.currencies()[0], '');
-               }
-          });
-
-          effect(() => {
-               const typed = this.destinationSearchQuery().trim();
-               const current = this.selectedDestinationAddress();
-
-               if (typed && typed !== current && xrpl.isValidAddress(typed)) {
-                    if (!this.allDestinations().some(d => d.address === typed)) {
-                         this.selectedDestinationAddress.set(typed);
-                    }
-               }
-          });
-
+          this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
@@ -287,18 +312,16 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           this.trustlineCurrencyService.setAddMptInDropdown(true);
 
           this.transactionDropdownService.loadCustomDestinations();
-          this.setExpirationToNow();
-
-          if (this.trustlineCurrencyService.currencies().length > 0) {
-               this.trustlineCurrencyService.selectCurrency(this.trustlineCurrencyService.currencies()[0], '');
-          }
-
+          this.setEscrowFinishAfterExpirationToNow();
+          this.setEscrowCancelAfterExpirationToNow();
+          this.trustlineCurrencyService.resetToDefault();
           this.txUiService.clearAllOptions();
+          this.txUiService.enableEscrowFinishAfterExpirationDate.set(false);
      }
 
      onCurrencySelected(item: SelectItem | null) {
-          const currency = item?.id || 'XRP';
-          this.currencyFieldDropDownValue.set(currency);
+          const currency = item?.id ?? 'XRP';
+          this.trustlineCurrencyService.currentWalletAddress.set(this.currentAddress());
           this.trustlineCurrencyService.selectCurrency(currency, '');
           this.txUiService.clearAllOptionsAndMessages();
      }
@@ -310,18 +333,33 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
 
      private selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
+
           this.currentWallet.set(wallet);
+          this.trustlineCurrencyService.currentWalletAddress.set(wallet.address);
           this.txUiService.currentWallet.set(wallet);
+          this.txUiService.showEnableTrustline.set(false);
+
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
-          this.setExpirationToNow();
 
-          this.escrowConditionField.set('');
-          this.escrowFulfillmentField.set('');
-          const currencyValue = this.currencyFieldDropDownValue();
-          this.currencyFieldDropDownValue.set(currencyValue || 'XRP');
-          this.onCurrencyChange(currencyValue); // triggers issuer reload + balance update
+          // Reset currency to XRP when wallet changes
+          this.trustlineCurrencyService.resetToDefault();
+
+          this.setEscrowFinishAfterExpirationToNow();
+          this.setEscrowCancelAfterExpirationToNow();
+
+          // Only change currency if needed — avoid re-triggering selectCurrency('XRP')
+          const current = this.trustlineCurrencyService.currentCurrency() ?? 'XRP';
+          if (current !== 'XRP') this.onCurrencyChange(current);
+     }
+
+     private ensureWalletSelected(): boolean {
+          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
+               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
+               return false;
+          }
+          return true;
      }
 
      trackByAddress(index: number, item: DropdownItem): string {
@@ -346,87 +384,87 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
 
      onEscrowSelected(item: SelectItem | null) {
           if (!item?.id) {
-               this.escrowSequenceNumberField.set('');
-               this.escrowOwnerField.set('');
+               this.txUiService.escrowSequenceNumberField.set('');
+               this.txUiService.escrowOwnerField.set('');
                return;
           }
 
           const escrow = this.expiredOrFulfilledEscrows().find((e: any) => e.EscrowSequence?.toString() === item.id);
 
           if (escrow) {
-               this.escrowSequenceNumberField.set(escrow.EscrowSequence);
-               this.escrowOwnerField.set(escrow.Sender); // owner is the sender
+               this.txUiService.escrowSequenceNumberField.set(escrow.EscrowSequence);
+               this.txUiService.escrowOwnerField.set(escrow.Sender); // owner is the sender
           }
      }
 
      async setTab(tab: 'create' | 'finish' | 'cancel'): Promise<void> {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
-          this.escrowConditionField.set('');
-          this.escrowFulfillmentField.set('');
 
-          this.clearFields();
+          this.clearInputFields();
+
+          if (tab === 'create') this.trustlineCurrencyService.resetToDefault();
+
           if (this.hasWallets()) {
                await this.getEscrows(false);
-               this.setExpirationToNow();
+               this.setEscrowFinishAfterExpirationToNow();
+               this.setEscrowCancelAfterExpirationToNow();
           }
      }
 
      async getEscrows(forceRefresh = false): Promise<void> {
           await this.measure('getEscrows', true, async () => {
-               this.txUiService.clearAllOptionsAndMessages();
                this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
-               if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
-                    return this.toastService.error('Please select a wallet.');
-               }
+               if (!this.ensureWalletSelected()) return;
 
                try {
-                    const { wallet, accountInfo, accountObjects } = await this.measure('getEscrows:prepareTxEnvironment', false, async () =>
-                         this.txEnvironmentService.prepareTxEnvironment({
-                              includeAccountInfo: true,
-                              includeAccountObject: true,
-                              forceRefresh: forceRefresh,
-                         })
-                    );
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         forceRefresh: forceRefresh,
+                    });
 
-                    if (!accountInfo || !accountObjects) {
-                         throw new Error('Failed to fetch account information');
+                    if (!env.accountInfo || !env.accountObjects) {
+                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+                         return;
                     }
 
-                    await this.measure('getEscrows:processAndUpdate', false, async () => {
-                         this.existingEscrow.set(this.escrowUtilService.getExistingEscrows(accountObjects, wallet.classicAddress));
-                         this.expiredOrFulfilledEscrows.set(await this.escrowUtilService.getExpiredOrFulfilledEscrows(accountObjects, wallet.classicAddress, this.activeTab()));
-                         this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, wallet.classicAddress));
-                         this.existingIOUs.set(this.trustlineCurrencyService.getExistingIOUs(accountObjects, wallet.classicAddress));
-                         const escrows = await this.escrowUtilService.loadAllEscrows(accountObjects);
-                         this.allEscrowsRaw.set(escrows);
+                    this.updateLocalAccountState(env.accountObjects, env.wallet.classicAddress);
 
-                         const currencyValue = this.currencyFieldDropDownValue();
-                         if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.trustlineCurrencyService.selectedIssuer()) {
-                              this.trustlineCurrencyService.selectCurrency(currencyValue, '');
-                         }
+                    const currencyValue = this.trustlineCurrencyService.currentCurrency() ?? 'XRP';
+                    if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.trustlineCurrencyService.selectedIssuer()) {
+                         this.trustlineCurrencyService.selectCurrency(currencyValue, '');
+                    }
 
-                         this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
-                    });
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
-                    console.error('Failed to load account:', error);
-                    this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
+                    console.error('Failed to get escrows:', error);
+                    this.toastService.error(error.message || 'Failed to get escrows', AppConstants.TOAST.ERROR);
                } finally {
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
 
-     async createConditionalEscrow() {
+     async createConditionalEscrow(): Promise<void> {
           await this.withPerf('createConditionalEscrow', async () => {
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
+
+               if (!this.ensureWalletSelected()) return;
+
+               const destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+
+               if (!destinationAddress) {
+                    this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
+                    return;
+               }
+
                try {
-                    const destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-
-                    if (!destinationAddress) {
-                         return this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
-                    }
-
+                    this.txUiService.currencyCode.set(this.trustlineCurrencyService.getSelectedCurrency());
+                    this.txUiService.currencyIssuer.set(this.trustlineCurrencyService.selectedIssuer());
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
@@ -437,19 +475,43 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                     });
 
                     if (!env.accountInfo || !env.accountObjects || !env.destinationAccountInfo) {
-                         throw new Error('Failed to fetch account information');
+                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+                         return;
+                    }
+
+                    const condition = this.txUiService.escrowConditionField()?.trim()?.toUpperCase() || null;
+                    let finishInput = null;
+                    if (this.txUiService.enableEscrowFinishAfterExpirationDate()) {
+                         finishInput = this.txUiService.escrowFinishTimeField();
+                    }
+                    let cancelInput = null;
+                    if (this.txUiService.enableEscrowCancelAfterExpirationDate()) {
+                         cancelInput = this.txUiService.escrowCancelTimeField();
+                    }
+                    const finishAfter = finishInput ? Math.floor(new Date(finishInput).getTime() / 1000) - AppConstants.RIPPLE_EPOCH_START : null;
+                    const cancelAfter = cancelInput ? Math.floor(new Date(cancelInput).getTime() / 1000) - AppConstants.RIPPLE_EPOCH_START : null;
+                    const currentRippleTime = await this.xrplService.getCurrentRippleTime(env.client);
+                    const validation = this.escrowUtilService.validateEscrowCreate({ finishAfter, cancelAfter, condition, currentRippleTime });
+                    if (!validation.valid) {
+                         this.toastService.error(validation.errors.join(' '), AppConstants.TOAST.ERROR);
+                         return;
+                    }
+
+                    const uiErrors = this.escrowUtilService.validateConditionalEscrowUI({ finishAfter, cancelAfter, condition });
+                    if (uiErrors.length) {
+                         this.toastService.error(uiErrors, AppConstants.TOAST.ERROR);
+                         return;
                     }
 
                     const result = await this.timeBasedEscrowOrchestrator.executeEscrowTx('create', {
                          wallet: this.currentWallet(),
                          formValues: {
-                              ...this.getTransactionValues(),
+                              ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.createEscrowSpecificKeys)),
                               destinationAddress,
-                              currencyValue: this.currencyFieldDropDownValue?.() || 'XRP',
+                              currencyValue: this.trustlineCurrencyService.currentCurrency() || 'XRP',
                               issuer: this.trustlineCurrencyService?.selectedIssuer?.() || '',
-                              condition: this.escrowConditionField(), // ← conditional
-                              finishAfter: this.escrowFinishTimeField(),
-                              cancelAfter: this.escrowCancelTimeField(),
+                              condition: this.txUiService.escrowConditionField()?.trim()?.toUpperCase(),
+                              cancelAfter: this.txUiService.escrowCancelTimeField(),
                          },
                          extra: {},
                          preFetchedEnv: {
@@ -463,35 +525,199 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                          },
                     });
 
-                    if (!result.success) {
-                         this.toastService.error(result.error || 'Failed to create conditional escrow');
-                         return;
-                    }
-
-                    await this.refreshAfterTx(env.client, env.wallet, destinationAddress, true);
-
-                    const currency = this.currencyFieldDropDownValue?.() || 'XRP';
-                    if (currency !== 'XRP' && currency !== 'MPT') {
-                         this.onCurrencyChange?.(currency);
-                    }
-
-                    this.clearFields();
+                    await this.handleTxResult(result, env.client, env.wallet, destinationAddress, 'Failed to create escrow');
                } catch (error: any) {
-                    console.error(`Error creating escrow: ${error.message}`);
-                    this.toastService.error(`Error creating escrow: ${error.message}`);
+                    console.error('Error creating escrow:', error);
+                    this.toastService.error(error.message || 'Error creating escrow', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
 
-     async finishConditionalEscrow() {
-          await this.withPerf('finishConditionalEscrow', async () => {
-               try {
-                    const { escrowSequenceNumberField, escrowOwner, condition, fulfillment } = this.getTransactionValues();
+     async createConditionalEscrow1(): Promise<void> {
+          await this.withPerf('createConditionalEscrow', async () => {
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
-                    if (!escrowSequenceNumberField || !fulfillment || !condition) {
-                         return this.toastService.error('Sequence ID, Condition and Fulfillment required.', AppConstants.TOAST.ERROR);
+               if (!this.ensureWalletSelected()) return;
+
+               const destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+
+               if (!destinationAddress) {
+                    this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
+                    return;
+               }
+
+               try {
+                    this.txUiService.currencyCode.set(this.trustlineCurrencyService.getSelectedCurrency());
+                    this.txUiService.currencyIssuer.set(this.trustlineCurrencyService.selectedIssuer());
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeFee: true,
+                         includeLedgerIndex: true,
+                         includeDestinationAccountInfo: true,
+                         destinationAddress,
+                    });
+
+                    if (!env.accountInfo || !env.accountObjects || !env.destinationAccountInfo) {
+                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+                         return;
                     }
 
+                    const result = await this.timeBasedEscrowOrchestrator.executeEscrowTx('create', {
+                         wallet: this.currentWallet(),
+                         formValues: {
+                              ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.createEscrowSpecificKeys)),
+                              destinationAddress,
+                              currencyValue: this.trustlineCurrencyService.currentCurrency() || 'XRP',
+                              issuer: this.trustlineCurrencyService?.selectedIssuer?.() || '',
+                              condition: this.txUiService.escrowConditionField(),
+                              finishAfter: this.txUiService.escrowFinishTimeField(),
+                              cancelAfter: this.txUiService.escrowCancelTimeField(),
+                         },
+                         extra: {},
+                         preFetchedEnv: {
+                              client: env.client,
+                              accountInfo: env.accountInfo,
+                              accountObjects: env.accountObjects,
+                              fee: env.fee!,
+                              currentLedger: env.currentLedger!,
+                              destinationAccountInfo: env.destinationAccountInfo,
+                              wallet: env.wallet,
+                         },
+                    });
+
+                    await this.handleTxResult(result, env.client, env.wallet, destinationAddress, 'Failed to create escrow');
+               } catch (error: any) {
+                    console.error('Error creating escrow:', error);
+                    this.toastService.error(error.message || 'Error creating escrow', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
+               }
+          });
+     }
+
+     async finishConditionalEscrow(): Promise<void> {
+          await this.withPerf('finishConditionalEscrow', async () => {
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
+
+               if (!this.ensureWalletSelected()) return;
+
+               const escrowSequenceNumberField = this.txUiService.escrowSequenceNumberField();
+               if (!escrowSequenceNumberField) {
+                    this.toastService.error('Sequence ID is required.', AppConstants.TOAST.ERROR);
+                    return;
+               }
+
+               // Fulfillment is required for conditional escrows
+               const fulfillment = this.txUiService.escrowFulfillmentField();
+               if (!fulfillment) {
+                    this.toastService.error('Fulfillment is required to finish a conditional escrow', AppConstants.TOAST.ERROR);
+                    return;
+               }
+
+               try {
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeFee: true,
+                         includeLedgerIndex: true,
+                         includeEscrowBySequenceId: true,
+                         escrowSequenceNumberField: escrowSequenceNumberField,
+                    });
+
+                    const currentRippleTime = await this.xrplService.getCurrentRippleTime(env.client);
+
+                    // Get escrow timing fields
+                    const finishAfterNum = env.escrowObjectsBySequenceId.FinishAfter ? Number(env.escrowObjectsBySequenceId.FinishAfter) : undefined;
+                    const cancelAfterNum = env.escrowObjectsBySequenceId.CancelAfter ? Number(env.escrowObjectsBySequenceId.CancelAfter) : undefined;
+                    const condition = env.escrowObjectsBySequenceId.Condition;
+
+                    // Validate this is a conditional escrow
+                    if (!condition) {
+                         this.toastService.error('This is not a conditional escrow (missing Condition)', AppConstants.TOAST.ERROR);
+                         return;
+                    }
+
+                    // Conditional escrow MUST have CancelAfter
+                    if (!cancelAfterNum) {
+                         this.toastService.error('Invalid conditional escrow: Missing CancelAfter time', AppConstants.TOAST.ERROR);
+                         return;
+                    }
+
+                    // Conditional escrow should NOT have FinishAfter
+                    if (finishAfterNum) {
+                         console.warn('Conditional escrow has FinishAfter - this is unusual but may be valid');
+                    }
+
+                    const escrowStatus = this.escrowUtilService.checkEscrowStatus(
+                         {
+                              FinishAfter: finishAfterNum, // Optional for conditional
+                              CancelAfter: cancelAfterNum, // Required for conditional
+                              owner: this.txUiService.escrowOwnerField(),
+                         },
+                         currentRippleTime,
+                         env.wallet.classicAddress
+                    );
+
+                    if (!escrowStatus.canFinish && !escrowStatus.canCancel) {
+                         return this.toastService.error(`${escrowStatus.reasonCancel} ${escrowStatus.reasonFinish}`);
+                    }
+
+                    if (!escrowStatus.canFinish) {
+                         return this.toastService.error(escrowStatus.reasonFinish || 'Cannot finish escrow yet');
+                    }
+
+                    // For conditional escrows, we need to verify the condition hasn't expired
+                    if (cancelAfterNum <= currentRippleTime) {
+                         return this.toastService.error('This escrow has expired and can no longer be finished', AppConstants.TOAST.ERROR);
+                    }
+
+                    const result = await this.timeBasedEscrowOrchestrator.executeEscrowTx('finish', {
+                         wallet: this.currentWallet(),
+                         formValues: {
+                              ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.finishEscrowSpecificKeys)),
+                              escrowSequenceNumberField,
+                              escrowStatus: this.txUiService.escrowOwnerField(),
+                              condition: this.txUiService.escrowConditionField(),
+                              fulfillment: fulfillment,
+                         },
+                         extra: {},
+                         preFetchedEnv: {
+                              client: env.client,
+                              accountInfo: env.accountInfo,
+                              fee: String(4 * Number(env.fee!)),
+                              currentLedger: env.currentLedger!,
+                              wallet: env.wallet,
+                         },
+                    });
+
+                    await this.handleTxResult(result, env.client, env.wallet, null, 'Failed to finish escrow');
+               } catch (error: any) {
+                    console.error('Error finishing escrow:', error);
+                    this.toastService.error(error.message || 'Error finishing escrow', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
+               }
+          });
+     }
+
+     async finishConditionalEscrow1(): Promise<void> {
+          await this.withPerf('finishConditionalEscrow', async () => {
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
+
+               if (!this.ensureWalletSelected()) return;
+
+               const escrowSequenceNumberField = this.txUiService.escrowSequenceNumberField();
+               if (!escrowSequenceNumberField) {
+                    this.toastService.error('Sequence ID is required.', AppConstants.TOAST.ERROR);
+                    return;
+               }
+
+               try {
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeFee: true,
@@ -504,13 +730,15 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                     const finishAfterNum = env.escrowObjectsBySequenceId.FinishAfter ? Number(env.escrowObjectsBySequenceId.FinishAfter) : undefined;
                     const cancelAfterNum = env.escrowObjectsBySequenceId.CancelAfter ? Number(env.escrowObjectsBySequenceId.CancelAfter) : undefined;
                     if (!finishAfterNum || !cancelAfterNum) {
-                         throw new Error('Invalid escrow cancel after or finish after time');
+                         this.toastService.error('Invalid escrow cancel after or finish after time', AppConstants.TOAST.ERROR);
+                         return;
                     }
+
                     const escrowStatus = this.escrowUtilService.checkEscrowStatus(
                          {
                               FinishAfter: Number(finishAfterNum),
                               CancelAfter: Number(cancelAfterNum),
-                              owner: escrowOwner,
+                              owner: this.txUiService.escrowOwnerField(),
                          },
                          currentRippleTime,
                          env.wallet.classicAddress
@@ -531,11 +759,11 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                     const result = await this.timeBasedEscrowOrchestrator.executeEscrowTx('finish', {
                          wallet: this.currentWallet(),
                          formValues: {
-                              ...this.getTransactionValues(),
+                              ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.finishEscrowSpecificKeys)),
                               escrowSequenceNumberField,
-                              escrowOwner,
-                              condition,
-                              fulfillment,
+                              escrowStatus: this.txUiService.escrowOwnerField(),
+                              condition: this.txUiService.escrowConditionField(),
+                              fulfillment: this.txUiService.escrowFulfillmentField(),
                          },
                          extra: {},
                          preFetchedEnv: {
@@ -547,35 +775,113 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                          },
                     });
 
-                    if (!result.success) {
-                         this.toastService.error(result.error || 'Failed to finish escrow');
-                         return;
-                    }
-
-                    await this.refreshAfterTx(env.client, env.wallet, null, true);
-
-                    const currency = this.currencyFieldDropDownValue?.() || 'XRP';
-                    if (currency !== 'XRP' && currency !== 'MPT') {
-                         this.onCurrencyChange?.(currency);
-                    }
-
-                    this.clearFields();
+                    await this.handleTxResult(result, env.client, env.wallet, null, 'Failed to finish escrow');
                } catch (error: any) {
-                    console.error(`Error finishing escrow: ${error.message}`);
-                    this.toastService.error(`Error finishing escrow: ${error.message}`);
+                    console.error('Error finishing escrow:', error);
+                    this.toastService.error(error.message || 'Error finishing escrow', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
 
-     async cancelEscrow() {
+     async cancelEscrow(): Promise<void> {
           await this.withPerf('cancelEscrow', async () => {
-               try {
-                    const { isSimulate, currencyValue, escrowSequenceNumberField } = this.getTransactionValues();
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
-                    if (!escrowSequenceNumberField) {
-                         return this.toastService.error('Escrow Sequence ID is required', AppConstants.TOAST.ERROR);
+               if (!this.ensureWalletSelected()) return;
+
+               const escrowSequenceNumberField = this.txUiService.escrowSequenceNumberField();
+               if (!escrowSequenceNumberField) {
+                    this.toastService.error('Sequence ID is required.', AppConstants.TOAST.ERROR);
+                    return;
+               }
+
+               try {
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeFee: true,
+                         includeLedgerIndex: true,
+                         includeEscrows: true,
+                    });
+
+                    if (!env.accountInfo || !env.escrowObjects) {
+                         throw new Error('Failed to fetch account information or escrows');
                     }
 
+                    let { escrow, escrowOwner }: { escrow: EscrowObject | undefined; escrowOwner: string } = await this.escrowUtilService.findEscrowAndOwner(env.escrowObjects, escrowSequenceNumberField);
+
+                    if (!escrow) {
+                         return this.toastService.error(`No escrow found for sequence ${escrowSequenceNumberField}`, AppConstants.TOAST.ERROR);
+                    }
+
+                    const currentRippleTime = await this.xrplService.getCurrentRippleTime(env.client);
+
+                    // Get escrow timing fields
+                    const finishAfterNum = escrow.FinishAfter ? Number(escrow.FinishAfter) : undefined;
+                    const cancelAfterNum = escrow.CancelAfter ? Number(escrow.CancelAfter) : undefined;
+                    const hasCondition = !!escrow.Condition;
+
+                    // For conditional escrows, CancelAfter is mandatory
+                    if (hasCondition && !cancelAfterNum) {
+                         throw new Error('Invalid conditional escrow: Missing CancelAfter time');
+                    }
+
+                    const escrowStatus = this.escrowUtilService.checkEscrowStatus(
+                         {
+                              FinishAfter: finishAfterNum,
+                              CancelAfter: cancelAfterNum,
+                              owner: escrowOwner,
+                         },
+                         currentRippleTime,
+                         env.wallet.classicAddress
+                    );
+
+                    if (!escrowStatus.canCancel) {
+                         return this.toastService.error(escrowStatus.reasonCancel || 'Cannot cancel this escrow yet', AppConstants.TOAST.ERROR);
+                    }
+
+                    const result = await this.timeBasedEscrowOrchestrator.executeEscrowTx('cancel', {
+                         wallet: this.currentWallet(),
+                         formValues: {
+                              ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.cancelEscrowSpecificKeys)),
+                         },
+                         extra: {},
+                         preFetchedEnv: {
+                              client: env.client,
+                              accountInfo: env.accountInfo,
+                              accountObjects: env.accountObjects,
+                              fee: env.fee!,
+                              currentLedger: env.currentLedger!,
+                              wallet: env.wallet,
+                         },
+                    });
+
+                    await this.handleTxResult(result, env.client, env.wallet, null, 'Failed to cancel escrow');
+               } catch (error: any) {
+                    console.error('Error cancelling escrow:', error);
+                    this.toastService.error(error.message || 'Error cancelling escrow', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
+               }
+          });
+     }
+
+     async cancelEscrow1(): Promise<void> {
+          await this.withPerf('cancelEscrow', async () => {
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
+
+               if (!this.ensureWalletSelected()) return;
+
+               const escrowSequenceNumberField = this.txUiService.escrowSequenceNumberField();
+               if (!escrowSequenceNumberField) {
+                    this.toastService.error('Sequence ID is required.', AppConstants.TOAST.ERROR);
+                    return;
+               }
+
+               try {
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeFee: true,
@@ -615,9 +921,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                     const result = await this.timeBasedEscrowOrchestrator.executeEscrowTx('cancel', {
                          wallet: this.currentWallet(),
                          formValues: {
-                              ...this.getTransactionValues(),
-                              escrowSequenceNumberField,
-                              escrowOwner, // pass the resolved owner
+                              ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.cancelEscrowSpecificKeys)),
                          },
                          extra: {},
                          preFetchedEnv: {
@@ -630,59 +934,49 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                          },
                     });
 
-                    if (!result.success) {
-                         this.toastService.error(result.error || 'Failed to cancel escrow');
-                         return;
-                    }
-
-                    await this.refreshAfterTx(env.client, env.wallet, null, true);
-
-                    if (currencyValue !== 'XRP' && currencyValue !== 'MPT') {
-                         this.onCurrencyChange(currencyValue);
-                    }
-
-                    if (!isSimulate) this.resetEscrowSelection();
-                    this.clearFields();
+                    await this.handleTxResult(result, env.client, env.wallet, null, 'Failed to cancel escrow');
                } catch (error: any) {
-                    console.error(`Error cancelling escrow: ${error.message}`);
-                    this.toastService.error(`Error cancelling escrow: ${error.message}`);
+                    console.error('Error cancelling escrow:', error);
+                    this.toastService.error(error.message || 'Error cancelling escrow', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
 
-     private getTransactionValues() {
-          const amount = this.txUiService.amountField();
-          const isSimulate = this.txUiService.isSimulateEnabled();
-          const useMultiSign = this.txUiService.useMultiSign();
-          const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
-          const regularKeyAddress = this.txUiService.regularKeyAddress();
-          const regularKeySeed = this.txUiService.regularKeySeed();
-          const multiSignAddress = this.txUiService.multiSignAddress();
-          const multiSignSeeds = this.txUiService.multiSignSeeds();
-          const currencyValue = this.utilsService.encodeIfNeeded(this.trustlineCurrencyService.currentCurrency());
-          const escrowSequenceNumberField = this.escrowSequenceNumberField();
-          let escrowOwner = this.escrowOwnerField();
-          const issuer = this.trustlineCurrencyService.selectedIssuer();
-          const finishAfter = this.escrowFinishTimeField();
-          const cancelAfter = this.escrowCancelTimeField();
-          const condition = this.escrowConditionField();
-          const fulfillment = this.escrowFulfillmentField();
-          return { amount, isSimulate, useMultiSign, isRegularKeyAddress, regularKeyAddress, regularKeySeed, multiSignAddress, multiSignSeeds, currencyValue, escrowSequenceNumberField, escrowOwner, issuer, finishAfter, cancelAfter, condition, fulfillment };
+     private async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, errorMessage: string): Promise<boolean> {
+          if (!result.success) {
+               this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
+               return false;
+          }
+
+          await this.refreshAfterTx(client, wallet, destination);
+
+          this.trustlineCurrencyService.refreshNonNativeCurrency();
+
+          this.clearInputFields();
+          this.cdr.markForCheck();
+          return true;
      }
 
-     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
+     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null): Promise<void> {
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-          this.existingEscrow.set(this.escrowUtilService.getExistingEscrows(accountObjects, wallet.classicAddress));
-          this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, wallet.classicAddress));
-          this.existingIOUs.set(this.trustlineCurrencyService.getExistingIOUs(accountObjects, wallet.classicAddress));
-          this.expiredOrFulfilledEscrows.set(await this.escrowUtilService.getExpiredOrFulfilledEscrows(accountObjects, wallet.classicAddress, this.activeTab()));
-          const escrows = await this.escrowUtilService.loadAllEscrows(accountObjects);
-          this.allEscrowsRaw.set(escrows);
+
+          this.updateLocalAccountState(accountObjects, wallet.classicAddress);
 
           await this.refreshWallets(client, destination ? [wallet.classicAddress, destination] : [wallet.classicAddress]);
-          this.addCustomDestination(addDest, destination);
+
+          this.addCustomDestination(destination);
           this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
-          this.txUiService.clearAllOptions();
+     }
+
+     private async updateLocalAccountState(accountObjects: any, address: string) {
+          this.existingEscrow.set(await this.escrowUtilService.getExistingEscrows(accountObjects, address));
+          this.expiredOrFulfilledEscrows.set(await this.escrowUtilService.getExpiredOrFulfilledEscrows(accountObjects, address, this.activeTab()));
+          this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, address));
+          this.existingIOUs.set(this.trustlineCurrencyService.getExistingIOUs(accountObjects, address));
+          const escrows = await this.escrowUtilService.loadAllEscrows(accountObjects);
+          this.allEscrowsRaw.set(escrows);
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -695,28 +989,18 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           );
      }
 
-     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-     //           this.currentWallet.set({ ...newCurrent });
-     //      });
-     // }
-
-     private addCustomDestination(addDest: boolean, destination: string | null) {
-          if (addDest && destination) {
-               const addr = destination.trim();
-               if (xrpl.isValidAddress(addr)) {
-                    const added = this.transactionDropdownService.addCustomIfNewAndSelect(destination, this.destinationMap, this.selectedDestinationAddress, this.destinationSearchQuery);
-                    if (added) {
-                         console.log('Custom added via service');
-                    }
-               }
+     private addCustomDestination(destination: string | null): void {
+          if (!destination) return;
+          const addr = destination.trim();
+          if (xrpl.isValidAddress(addr) && !this.destinationMap().has(addr)) {
+               this.transactionDropdownService.addCustomIfNewAndSelect(destination, this.destinationMap, this.selectedDestinationAddress, this.destinationSearchQuery);
           }
      }
 
      getCondition() {
           const { condition, fulfillment } = this.generateCondition();
-          this.escrowConditionField.set(condition);
-          this.escrowFulfillmentField.set(fulfillment);
+          this.txUiService.escrowConditionField.set(condition);
+          this.txUiService.escrowFulfillmentField.set(fulfillment);
      }
 
      generateCondition(): { condition: string; fulfillment: string } {
@@ -750,44 +1034,64 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           this.trustlineCurrencyService.selectIssuer(issuer);
      }
 
-     setExpirationToNow() {
-          this.escrowCancelTimeField.set(this.utilsService.formatDateTimeLocal(new Date()));
-          this.escrowFinishTimeField.set(this.utilsService.formatDateTimeLocal(new Date()));
+     setEscrowFinishAfterExpirationToNow(): void {
+          this.txUiService.escrowFinishTimeField.set(this.utilsService.formatDateTimeLocal(new Date()));
+     }
+
+     setEscrowCancelAfterExpirationToNow(): void {
+          this.txUiService.escrowCancelTimeField.set(this.utilsService.formatDateTimeLocal(new Date()));
      }
 
      addEscrowFinishToExpiration(seconds: number): void {
-          this.escrowUtilService.addToDateTimeField(this.escrowFinishTimeField, this.escrowFinishTimeField, seconds);
+          this.escrowUtilService.addToDateTimeField(this.txUiService.escrowFinishTimeField, this.txUiService.escrowFinishTimeField, seconds);
      }
 
      addEscrowCancelToExpiration(seconds: number): void {
-          this.escrowUtilService.addToDateTimeField(this.escrowCancelTimeField, this.escrowCancelTimeField, seconds);
+          this.escrowUtilService.addToDateTimeField(this.txUiService.escrowCancelTimeField, this.txUiService.escrowCancelTimeField, seconds);
      }
 
-     get safeWarningMessage() {
-          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-     }
-
-     onFocus(event: FocusEvent) {
-          const input = event.target as HTMLInputElement;
-          if (input.value) {
-               const num = Number.parseFloat(input.value);
-               if (!Number.isNaN(num)) {
-                    input.value = num.toFixed(6); // show full precision on focus
-               }
+     toggleEscrowFinishAfteExpiration(enabled: boolean): void {
+          this.txUiService.enableEscrowFinishAfterExpirationDate.set(enabled);
+          if (enabled && !this.txUiService.escrowFinishTimeField()) {
+               this.setEscrowFinishAfterExpirationToNow();
+          } else if (!enabled) {
+               this.txUiService.escrowFinishTimeField.set('');
           }
      }
 
-     clearFields() {
-          this.escrowFinishTimeField.set('');
-          this.escrowCancelTimeField.set('');
-          this.escrowSequenceNumberField.set('');
-          this.escrowOwnerField.set('');
-          this.selectedDestinationAddress.set('');
+     toggleEscrowCancelAfterExpiration(enabled: boolean): void {
+          this.txUiService.enableEscrowCancelAfterExpirationDate.set(enabled);
+          if (enabled && !this.txUiService.escrowCancelTimeField()) {
+               this.setEscrowCancelAfterExpirationToNow();
+          } else if (!enabled) {
+               this.txUiService.escrowCancelTimeField.set('');
+          }
      }
 
-     private resetEscrowSelection() {
-          this.selectedEscrow.set(null);
-          this.escrowSequenceNumberField.set('');
-          this.escrowOwnerField.set('');
+     clearEscrowFinishAfterExpiration(): void {
+          this.txUiService.escrowFinishTimeField.set('');
+          // this.txUiService.enableEscrowFinishAfterExpirationDate.set(false);
+     }
+
+     clearEscrowCancelAfterExpiration(): void {
+          this.txUiService.escrowCancelTimeField.set('');
+          this.txUiService.enableEscrowCancelAfterExpirationDate.set(false);
+     }
+
+     onFocus(event: FocusEvent): void {
+          const input = event.target as HTMLInputElement;
+          if (input.value) {
+               const num = Number.parseFloat(input.value);
+               if (!Number.isNaN(num)) input.value = num.toFixed(6);
+          }
+     }
+
+     clearInputFields(): void {
+          if (this.txUiService.isSimulateEnabled()) return;
+
+          this.txUiService.clearAllFields();
+          this.txUiService.clearAllOptions();
+          this.setEscrowFinishAfterExpirationToNow();
+          this.setEscrowCancelAfterExpirationToNow();
      }
 }

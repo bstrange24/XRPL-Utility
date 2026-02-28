@@ -16,14 +16,13 @@ import { WalletManagerService, Wallet } from '../../services/wallets/manager/wal
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
-import { EMPTY, from, switchMap } from 'rxjs';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TicketsOrchestratorService } from '../../services/tickets/tickets-orchestrator/tickets-orchestrator.service';
 import { TemplatePortal } from '@angular/cdk/portal';
@@ -78,11 +77,11 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      currentWallet = signal<Wallet>({} as Wallet);
 
      readonly currentAddress = computed(() => this.currentWallet().address);
-     readonly hasWallets = computed(() => this.wallets().length > 0);
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
 
-     // Effect 1: Has wallets → warning handling
-     private readonly hasWalletsEffect = effect(() => {
+     // Has wallets → warning handling
+     private readonly _hasWalletsEffect = effect(() => {
           if (this.walletManager.hasWallets()) {
                this.txUiService.clearWarning?.();
           } else {
@@ -93,24 +92,26 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      });
 
      // Effect 2: Wallets list sync
-     private readonly walletsSyncEffect = effect(() => {
+     private readonly _walletsSyncEffect = effect(() => {
           this.wallets.set(this.walletManager.wallets());
      });
 
      // Effect 3: Selected index change → clear + refresh checks
-     private readonly selectedIndexEffect = effect(() => {
+     private readonly _selectedIndexEffect = effect(() => {
           // Reading the signal is enough to trigger the effect
           this.walletManager.selectedIndex();
 
           this.txUiService.clearAllOptionsAndMessages();
-          this.clearFields();
 
           // Fire-and-forget refresh
           void this.getTickets(true);
      });
 
      readonly infoData = computed(() => {
-          const wallet = this.currentWallet();
+          const currentAddr = this.currentWallet()?.address;
+          if (!currentAddr) return null;
+
+          const wallet = this.walletManager.wallets().find(w => w.address === currentAddr);
           if (!wallet?.address) return null;
 
           const name = wallet.name || 'Selected wallet';
@@ -136,8 +137,18 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      }
 
      private selectWallet(wallet: Wallet): void {
+          if (wallet?.address === this.currentWallet()?.address) return;
+
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
+     }
+
+     private ensureWalletSelected(): boolean {
+          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
+               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
+               return false;
+          }
+          return true;
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -153,31 +164,32 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           }
      }
 
-     async getTickets(force = false): Promise<void> {
+     async getTickets(forceRefresh = false): Promise<void> {
           await this.measure('getTickets', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
-                    return this.toastService.error('Please select a wallet.');
-               }
+               if (!this.ensureWalletSelected()) return;
 
                try {
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
-                         forceRefresh: force,
+                         forceRefresh: forceRefresh,
                     });
 
-                    const { wallet, accountInfo, accountObjects } = env;
+                    if (!env.accountInfo || !env.accountObjects) {
+                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+                         return;
+                    }
 
-                    const ticketObjects = accountObjects ? this.xrplService.filterAccountObjectsByTypes(accountObjects, ['Ticket']) : { result: { account_objects: [] } };
+                    const ticketObjects = env.accountObjects ? this.xrplService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
                     this.txUiService.walletTicketCount.set(ticketObjects?.result?.account_objects?.length ?? 0);
 
-                    this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Error in getTickets:', error);
-                    this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
+                    this.toastService.error(error.message || 'Failed to get tickets account', AppConstants.TOAST.ERROR);
                } finally {
                     this.txUiService.resetCurrentStepToIdle();
                }
@@ -189,9 +201,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
-                    return this.toastService.error('Please select a wallet.');
-               }
+               if (!this.ensureWalletSelected()) return;
 
                try {
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
@@ -201,9 +211,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                          includeLedgerIndex: true,
                     });
 
-                    const { client, accountInfo, accountObjects, wallet } = env;
-
-                    if (!accountInfo || !accountObjects) {
+                    if (!env.accountInfo || !env.accountObjects) {
                          throw new Error('Failed to fetch account information');
                     }
 
@@ -219,25 +227,19 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                               ticketCountField: ticketCount,
                          },
                          preFetchedEnv: {
-                              client,
-                              accountInfo,
-                              accountObjects,
+                              client: env.client,
+                              accountInfo: env.accountInfo,
+                              accountObjects: env.accountObjects,
                               fee: env.fee!,
                               currentLedger: env.currentLedger!,
                               wallet: env.wallet,
                          },
                     });
 
-                    if (!result.success) {
-                         this.toastService.error(result.error || 'Failed to send XRP');
-                         return;
-                    }
-
-                    await this.refreshAfterTx(client, wallet);
-                    this.txUiService.ticketCountField.set('');
+                    await this.handleTxResult(result, env.client, env.wallet, '', 'Failed to create tickets');
                } catch (error: any) {
                     console.error('Error in createTicket:', error);
-                    this.toastService.error(error.message || 'Unexpected error occurred', AppConstants.TOAST.ERROR);
+                    this.toastService.error(error.message || 'Error creating tickets', AppConstants.TOAST.ERROR);
                } finally {
                     this.txUiService.resetCurrentStepToIdle();
                }
@@ -268,9 +270,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                          includeTickets: true,
                     });
 
-                    const { client, accountInfo, accountObjects, ticketObjects, wallet } = env;
-
-                    if (!accountInfo || !accountObjects) {
+                    if (!env.accountInfo || !env.accountObjects) {
                          throw new Error('Failed to fetch account information');
                     }
 
@@ -279,7 +279,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                          return this.toastService.error('No tickets selected to delete.', AppConstants.TOAST.ERROR);
                     }
 
-                    if (!ticketObjects) {
+                    if (!env.ticketObjects) {
                          return this.toastService.error('Failed to fetch ticket data.', AppConstants.TOAST.ERROR);
                     }
 
@@ -290,22 +290,16 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                               ticketSequences: this.txUiService.selectedTicketSequences(),
                          },
                          preFetchedEnv: {
-                              client,
-                              accountInfo,
-                              accountObjects,
+                              client: env.client,
+                              accountInfo: env.accountInfo,
+                              accountObjects: env.accountObjects,
                               fee: env.fee!,
                               currentLedger: env.currentLedger!,
                               wallet: env.wallet,
                          },
                     });
 
-                    if (!result.success) {
-                         this.toastService.error(result.error || 'Failed to delete tickets');
-                         return;
-                    }
-
-                    await this.refreshAfterTx(client, wallet);
-                    this.clearFields();
+                    await this.handleTxResult(result, env.client, env.wallet, '', 'Failed to delete tickets');
                } catch (err: any) {
                     console.error('Erorr deleting tickets failed', err);
                     this.toastService.error(err.message || 'Failed to delete tickets', AppConstants.TOAST.ERROR);
@@ -313,6 +307,19 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
+     }
+
+     private async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, errorMessage: string): Promise<boolean> {
+          if (!result.success) {
+               this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
+               return false;
+          }
+
+          await this.refreshAfterTx(client, wallet);
+
+          this.clearFields();
+          this.cdr.markForCheck();
+          return true;
      }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet): Promise<void> {
@@ -335,12 +342,6 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                }
           );
      }
-
-     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-     //           this.currentWallet.set({ ...newCurrent });
-     //      });
-     // }
 
      toggleSelectAllTickets(): void {
           if (this.allTicketsSelected()) {
@@ -419,14 +420,6 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
 
      toggleTicketDropdown(): void {
           this.ticketOverlayRef?.hasAttached() ? this.closeTicketDropdown() : this.openTicketDropdown();
-     }
-
-     toggleSelectAll(): void {
-          if (this.allTicketsSelected()) {
-               this.txUiService.selectedTicketSequences.set([]);
-          } else {
-               this.txUiService.selectedTicketSequences.set([...this.txUiService.ticketArray()]); // already strings
-          }
      }
 
      onTicketSearchInput(event: Event): void {

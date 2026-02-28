@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, Signal, WritableSignal } from '@angular/core';
-import { CheckItem } from '../../../models/interface-items.model';
+import { CheckItem, CheckTxType } from '../../../models/interface-items.model';
 import { CopyUtilService } from '../../copy-util/copy-util.service';
 import { DownloadUtilService } from '../../download-util/download-util.service';
 import { ToastService } from '../../toast/toast.service';
@@ -223,6 +223,9 @@ export class CheckUtilService extends PerformanceBaseComponent {
                this.txUiService.checkCreator.set(parts[3] || '');
                this.txUiService.currencyCode.set(parts[1] || '');
                this.txUiService.currencyIssuer.set(item.issuer || '');
+               if (parts[1] === AppConstants.XRP_CURRENCY) {
+                    this.txUiService.showEnableTrustline.set(false);
+               }
           }
      }
 
@@ -249,5 +252,32 @@ export class CheckUtilService extends PerformanceBaseComponent {
           const newDateTime = this.utilsService.formatDateTimeLocal(date);
 
           writableSignal.set(newDateTime);
+     }
+
+     handleSimulationSuccess(type: CheckTxType, formValues: any, hash?: string) {
+          let msg: string;
+
+          if (type === 'create') {
+               msg = `Simulated Sending Check of ${formValues.amountField} ${formValues.currency || 'XRP'}`;
+          } else if (type === 'cash') {
+               msg = `Simulated Cashing Check of ${formValues.amountField} ${formValues.currencyCode || 'XRP'}`;
+          } else {
+               msg = `Simulated Cancelling Check ${formValues.checkIdField}`;
+          }
+
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+
+          return { success: true, hash };
+     }
+
+     buildSuccessMessage(type: CheckTxType, formValues: any): string {
+          if (type === 'create') {
+               return `Successfully Sent Check of ${formValues.amountField} ${formValues.currency || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
+          }
+          if (type === 'cash') {
+               return `Successfully Cashed Check of ${formValues.amountField} ${formValues.currencyCode || 'XRP'}`;
+          }
+          return `Successfully Cancelled Check ${formValues.checkIdField}`;
      }
 }

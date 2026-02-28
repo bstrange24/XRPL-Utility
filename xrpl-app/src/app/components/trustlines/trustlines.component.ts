@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
+import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -36,6 +37,10 @@ import { CurrencyFormSectionComponent } from '../shared/currency-form-section/cu
      selector: 'app-trustlines',
      standalone: true,
      imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, CurrencyFormSectionComponent],
+     animations: [
+          trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])]),
+          trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-20px)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(100%)' }))])]),
+     ],
      templateUrl: './trustlines.component.html',
      styleUrl: './trustlines.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,6 +70,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      destinationSearchQuery = signal<string>('');
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
+     selectedWalletIndex = signal<number>(0);
      trustlineAlreadyExist = signal<boolean>(false);
      removeTrustlineAviable = signal<boolean>(true);
      removeTrustlineMessage = signal<string[]>([]);
@@ -73,9 +79,6 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      currencyItems = this.trustlineCurrencyService.currencyItems;
      issuerItems = this.trustlineCurrencyService.issuerItems;
      currencyBalanceField = this.trustlineCurrencyService.currencyBalance;
-
-     userAddedCurrencyFieldDropDownValue = signal<string[]>([]);
-     selectedWalletIndex = signal<number>(0);
 
      showTrustlineOptions = signal<boolean>(false);
      outstandingIOUCollapsed = signal<boolean>(true);
@@ -92,11 +95,11 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      private readonly removeTrustlineSpecificKeys = ['amountField', 'currencyCode', 'currencyIssuer', 'trustlineFlags'] as const;
      private readonly issueClawbackCurrencySpecificKeys = ['amountField', 'destinationTagField', 'sourceTagField', 'invoiceIdField', 'currencyCode', 'currencyIssuer'] as const;
      readonly currentAddress = computed(() => this.currentWallet().address);
-     readonly hasWallets = computed(() => this.wallets().length > 0);
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
 
-     // Effect 1: Has wallets → warning handling
-     private readonly hasWalletsEffect = effect(() => {
+     // Has wallets → warning handling
+     private readonly _hasWalletsEffect = effect(() => {
           if (this.walletManager.hasWallets()) {
                this.txUiService.clearWarning?.();
           } else {
@@ -106,13 +109,8 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           }
      });
 
-     // Effect 2: Wallets list sync
-     private readonly walletsSyncEffect = effect(() => {
-          this.wallets.set(this.walletManager.wallets());
-     });
-
-     // Effect 3: Selected index change → clear + refresh checks
-     private readonly selectedIndexEffect = effect(() => {
+     // Selected index change → clear + refresh checks
+     private readonly _selectedIndexEffect = effect(() => {
           // Reading the signal is enough to trigger the effect
           this.walletManager.selectedIndex();
 
@@ -338,6 +336,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
 
      onCurrencySelected(item: SelectItem | null) {
           const currency = item?.id ?? 'XRP';
+          this.trustlineCurrencyService.currentWalletAddress.set(this.currentAddress());
           this.trustlineCurrencyService.selectCurrency(currency, '');
           this.txUiService.clearAllOptionsAndMessages();
      }
@@ -351,6 +350,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
+          this.trustlineCurrencyService.currentWalletAddress.set(wallet.address);
           this.txUiService.currentWallet.set(wallet);
 
           if (this.selectedDestinationAddress() === wallet.address) {
@@ -438,8 +438,9 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      async getTrustlinesForAccount(forceRefresh = false): Promise<void> {
-          await this.measure('getChecks', true, async () => {
+          await this.withPerf('getTrustlinesForAccount', async () => {
                this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
                if (!this.ensureWalletSelected()) return;
 
@@ -497,6 +498,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      async setTrustLine() {
           await this.withPerf('setTrustLine', async () => {
                this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
                if (!this.ensureWalletSelected()) return;
 
@@ -553,6 +555,8 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                } catch (error: any) {
                     console.error('Error in setTrustLine:', error);
                     this.toastService.error(error.message || 'Error setting trustline', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
@@ -560,6 +564,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      async removeTrustline() {
           await this.withPerf('removeTrustline', async () => {
                this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
                if (!this.ensureWalletSelected()) return;
 
@@ -750,6 +755,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           this.trustlineCurrencyService.refreshNonNativeCurrency();
 
           this.clearInputFields();
+          this.cdr.markForCheck();
           return true;
      }
 
@@ -777,10 +783,6 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
                }
           );
      }
-
-     // private async refreshWallets(client: xrpl.Client, addresses?: string[]): Promise<void> {
-     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (_, newCurrent) => this.currentWallet.set({ ...newCurrent }));
-     // }
 
      private addCustomDestination(destination: string | null): void {
           if (!destination) return;
