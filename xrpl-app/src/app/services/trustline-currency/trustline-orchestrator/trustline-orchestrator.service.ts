@@ -196,7 +196,7 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
                return {
                     ...base,
                     removeTrustline: {
-                         trustlineLimitField: formValues.amountField,
+                         trustlineLimitField: formValues.trustlineLimitField,
                          currencyCode: formValues.currencyCode,
                          currencyIssuer: formValues.currencyIssuer,
                     },
@@ -207,7 +207,7 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
                return {
                     ...base,
                     issueCurrency: {
-                         trustlineLimitField: formValues.amountField,
+                         trustlineLimitField: formValues.trustlineLimitField,
                          currencyCode: formValues.currencyCode,
                          currencyIssuer: formValues.currencyIssuer,
                          destination: formValues.destinationAddress,
@@ -219,7 +219,7 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
           return {
                ...base,
                clawbackTokens: {
-                    trustlineLimitField: formValues.amountField,
+                    trustlineLimitField: formValues.trustlineLimitField,
                     currencyCode: formValues.currencyCode,
                     currencyIssuer: formValues.currencyIssuer,
                     destination: formValues.destinationAddress,
@@ -253,12 +253,13 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
           }
 
           if (type === 'issueCurrency') {
-               let sendMax = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyCode, formValues.currencyIssuer ?? '', formValues.amountField, false).sendMax;
+               let sendMax = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyCode, formValues.currencyIssuer ?? '', formValues.trustlineLimitField.toString(), false).sendMax;
                return this.xrplTransactionService.buildIssueCurrencyTransaction(wallet, sendMax, formValues.destinationAddress, fee, currentLedger);
           }
 
           // clawbackTokens
-          return this.xrplTransactionService.buildClawbackTransaction(wallet, formValues, fee, currentLedger);
+          let sendMax = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyCode, formValues.currencyIssuer ?? '', formValues.trustlineLimitField.toString(), false).sendMax;
+          return this.xrplTransactionService.buildClawbackTransaction(wallet, sendMax, fee, currentLedger);
      }
 
      private async applyOptionalFields(client: xrpl.Client, trustlineTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string, extra: any) {

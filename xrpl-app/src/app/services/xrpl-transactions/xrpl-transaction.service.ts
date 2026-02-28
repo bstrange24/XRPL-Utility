@@ -201,15 +201,11 @@ export class XrplTransactionService {
           };
      }
 
-     buildClawbackTransaction(wallet: xrpl.Wallet, formValues: any, fee: string | undefined, currentLedger: number | undefined): xrpl.Clawback {
+     buildClawbackTransaction(wallet: xrpl.Wallet, sendMax: any, fee: string | undefined, currentLedger: number | undefined): xrpl.Clawback {
           return {
                TransactionType: 'Clawback',
                Account: wallet.classicAddress,
-               Amount: {
-                    currency: formValues.currencyCode,
-                    issuer: formValues.destinationAddress,
-                    value: formValues.amountField,
-               },
+               Amount: sendMax,
                Fee: fee,
                LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
           };

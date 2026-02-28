@@ -92,8 +92,8 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      destinationDisplay = this.transactionDropdownService.destinationDisplay(this.selectedDestinationAddress, this.destinationSearchQuery, this.destinationMap);
 
      private readonly setTrustlineSpecificKeys = ['trustlineLimitField', 'currencyCode', 'currencyIssuer', 'trustlineFlags', 'suppressIndividualFeedback'] as const;
-     private readonly removeTrustlineSpecificKeys = ['amountField', 'currencyCode', 'currencyIssuer', 'trustlineFlags'] as const;
-     private readonly issueClawbackCurrencySpecificKeys = ['amountField', 'destinationTagField', 'sourceTagField', 'invoiceIdField', 'currencyCode', 'currencyIssuer'] as const;
+     private readonly removeTrustlineSpecificKeys = ['trustlineLimitField', 'currencyCode', 'currencyIssuer', 'trustlineFlags'] as const;
+     private readonly issueClawbackCurrencySpecificKeys = ['trustlineLimitField', 'destinationTagField', 'sourceTagField', 'invoiceIdField', 'currencyCode', 'currencyIssuer'] as const;
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
