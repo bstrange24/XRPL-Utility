@@ -584,8 +584,9 @@ export class ValidationService {
           // AccountDelete
           this.registerRule({
                transactionType: 'AccountDelete',
-               requiredFields: ['wallet.seed', 'destination.address'],
+               requiredFields: ['destination.address'],
                validators: [
+                    this.walletCredentialRequired(),
                     this.isValidAddress('destination.address'),
                     this.requireDestinationTagIfNeeded('destination'),
 

@@ -52,8 +52,8 @@
 
                          @if (wallet.showSecret) {
                          <div class="secret-seed-container">
-                              <div class="secret-seed">{{ wallet.seed ? wallet.seed: wallet.mnemonic }}</div>
-                              <button class="copy-btn" (click)="copyUtilService.copySeed(wallet.seed); $event.stopPropagation()" title="Copy seed">
+                              <div class="secret-seed">{{ wallet.seed ? wallet.seed : wallet.mnemonic }}</div>
+                              <button class="copy-btn" (click)="wallet.seed ? copyUtilService.copySeed(wallet.seed) : (wallet.mnemonic ? copyUtilService.copySeed(wallet.mnemonic) : null); $event.stopPropagation()" title="Copy seed">
                                    <lucide-icon name="copy" size="20"></lucide-icon>
                               </button>
                          </div>

@@ -4,7 +4,10 @@ import { ToastService } from '../toast/toast.service';
 
 @Injectable({ providedIn: 'root' })
 export class CopyUtilService {
-     constructor(public ui: TransactionUiService, private readonly toast: ToastService) {}
+     constructor(
+          public ui: TransactionUiService,
+          private readonly toast: ToastService
+     ) {}
 
      copyAndToast(value: any, label: string) {
           const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
@@ -45,9 +48,11 @@ export class CopyUtilService {
      }
 
      copySeed(seed: string) {
+          console.log('seed1: ', seed);
           navigator.clipboard
                .writeText(seed)
                .then(() => {
+                    console.log('seed2: ', seed);
                     this.toast.success('Seed copied to clipboard!');
                })
                .catch(err => {
