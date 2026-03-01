@@ -740,7 +740,7 @@ export class TrustlineCurrencyService {
                key: 'tfSetfAuth',
                title: 'SetfAuth',
                hex: '0x00010000',
-               desc: 'Authorize the other party to hold currency issued by this account. (No effect unless using the <code>asfRequireAuth</code> AccountSet flag.) Cannot be unset.',
+               desc: 'Authorize the other party to hold currency issued by this account. (No effect unless using the asfRequireAuth AccountSet flag.) Cannot be unset.',
           },
           {
                key: 'tfSetNoRipple',
@@ -754,7 +754,6 @@ export class TrustlineCurrencyService {
                hex: '0x00100000',
                desc: 'Freeze the trustline (prevent transfers).',
           },
-          //
           {
                key: 'tfSetDeepFreeze',
                title: 'SetDeepFreeze',

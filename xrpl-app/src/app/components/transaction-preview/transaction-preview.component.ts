@@ -6,7 +6,7 @@ import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { AppConstants } from '../../core/app.constants';
-import { XrplService } from '../../services/xrpl-services/xrpl.service';
+import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 declare var Prism: any;
 
 @Component({
@@ -17,7 +17,7 @@ declare var Prism: any;
      templateUrl: './transaction-preview.component.html',
      styleUrl: './transaction-preview.component.css',
 })
-export class TransactionPreviewComponent {
+export class TransactionPreviewComponent extends PerformanceBaseComponent {
      @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
      @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
      url = signal<string>('');
@@ -25,9 +25,9 @@ export class TransactionPreviewComponent {
      constructor(
           public txUiService: TransactionUiService,
           public copyUtilService: CopyUtilService,
-          public downloadUtilService: DownloadUtilService,
-          private xrplService: XrplService
+          public downloadUtilService: DownloadUtilService
      ) {
+          super();
           effect(() => {
                const tx = this.txUiService.txSignal();
                const result = this.txUiService.txResultSignal();

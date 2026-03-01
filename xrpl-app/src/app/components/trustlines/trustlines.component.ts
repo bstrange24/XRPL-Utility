@@ -431,15 +431,31 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
 
           const env = await this.txEnvironmentService.prepareTxEnvironment({
                includeTrustlines: true,
+               includeAccountObject: true,
           });
 
           this.checkForExistingTrustline(env); // ← this now sets amountField correctly
+          this.updateTrustLineFlagsInUI(env.accountObjects!, env.wallet);
           this.cdr.markForCheck(); // force UI update
      }
 
      onIssuerSelected(item: SelectItem | null) {
           const address = item?.id || '';
           this.trustlineCurrencyService.selectIssuer(address);
+
+          // Add this: If both currency and issuer are set, fetch env and update flags
+          if (this.trustlineCurrencyService.currentCurrency() && address) {
+               // Fire-and-forget to avoid blocking UI
+               this.txEnvironmentService
+                    .prepareTxEnvironment({
+                         includeAccountObject: true, // We need accountObjects for flags
+                    })
+                    .then(env => {
+                         this.updateTrustLineFlagsInUI(env.accountObjects!, env.wallet);
+                         this.cdr.markForCheck();
+                    })
+                    .catch(err => console.warn('Failed to update flags on issuer select:', err));
+          }
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -954,6 +970,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      private updateTrustLineFlagsInUI(accountObjects: xrpl.AccountObjectsResponse, wallet: xrpl.Wallet) {
+          console.log('updateTrustLineFlagsInUI............');
           const currency = this.trustlineCurrencyService.getSelectedCurrency();
           const issuer = this.trustlineCurrencyService.selectedIssuer();
           const activeTab = this.activeTab();
@@ -991,6 +1008,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      private setRemoveFlagsBasedOnExistingTrustline(accountObjects: xrpl.AccountObjectsResponse) {
+          console.log('setRemoveFlagsBasedOnExistingTrustline............');
           const currency = this.trustlineCurrencyService.getSelectedCurrency();
           const issuer = this.trustlineCurrencyService.selectedIssuer();
 
