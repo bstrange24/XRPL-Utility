@@ -1,5 +1,3 @@
-// src/app/services/validation/validation.service.ts
-
 import { inject, Injectable } from '@angular/core';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { UtilsService } from '../util-service/utils.service';
@@ -394,8 +392,6 @@ export class ValidationService {
           };
      }
 
-     // Add these new validator helpers near the top with your other private methods
-
      private validCurrency(field: string): ValidatorFn {
           return ctx => {
                const value = ctx.inputs[field];
@@ -719,15 +715,9 @@ export class ValidationService {
           // DeleteTicket
           this.registerRule({
                transactionType: 'DeleteTicket',
-               requiredFields: ['wallet.seed'],
+               requiredFields: [],
                validators: [
-                    ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                              if (value === 'unknown') return 'Account seed is invalid';
-                         }
-                         return null;
-                    },
+                    this.walletCredentialRequired(),
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1086,20 +1076,21 @@ export class ValidationService {
           // CashCheck
           this.registerRule({
                transactionType: 'CashCheck',
-               requiredFields: ['wallet.seed', 'cashCheck.amount', 'cashCheck.checkIdField'],
+               requiredFields: ['cashCheck.amount', 'cashCheck.checkIdField'],
                validators: [
-                    this.positiveAmount('cashCheck'),
+                    this.walletCredentialRequired(),
 
-                    ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                              if (value === 'unknown') return 'Account seed is invalid';
-                         }
-                         return null;
-                    },
+                    // ctx => {
+                    //      if (ctx.inputs['seed']) {
+                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                    //           if (value === 'unknown') return 'Account seed is invalid';
+                    //      }
+                    //      return null;
+                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
+                    this.positiveAmount('cashCheck'),
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
 
@@ -1117,15 +1108,16 @@ export class ValidationService {
           // CancelCheck
           this.registerRule({
                transactionType: 'CancelCheck',
-               requiredFields: ['wallet.seed', 'cancelCheck.checkIdField'],
+               requiredFields: ['cancelCheck.checkIdField'],
                validators: [
-                    ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                              if (value === 'unknown') return 'Account seed is invalid';
-                         }
-                         return null;
-                    },
+                    this.walletCredentialRequired(),
+                    // ctx => {
+                    //      if (ctx.inputs['seed']) {
+                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                    //           if (value === 'unknown') return 'Account seed is invalid';
+                    //      }
+                    //      return null;
+                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1149,17 +1141,18 @@ export class ValidationService {
           // PaymentChannelCreate
           this.registerRule({
                transactionType: 'PaymentChannelCreate',
-               requiredFields: ['wallet.seed', 'paymentChannelCreate.amount', 'paymentChannelCreate.destination', 'paymentChannelCreate.settleDelay'],
+               requiredFields: ['paymentChannelCreate.amount', 'paymentChannelCreate.destination', 'paymentChannelCreate.settleDelay'],
                validators: [
+                    this.walletCredentialRequired(),
                     this.positiveAmount('paymentChannelCreate'),
 
-                    ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                              if (value === 'unknown') return 'Account seed is invalid';
-                         }
-                         return null;
-                    },
+                    // ctx => {
+                    //      if (ctx.inputs['seed']) {
+                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                    //           if (value === 'unknown') return 'Account seed is invalid';
+                    //      }
+                    //      return null;
+                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1186,17 +1179,18 @@ export class ValidationService {
           // PaymentChannelFund
           this.registerRule({
                transactionType: 'PaymentChannelFund',
-               requiredFields: ['wallet.seed', 'paymentChannelFund.amount', 'paymentChannelFund.channelIDField'],
+               requiredFields: ['paymentChannelFund.amount', 'paymentChannelFund.channelIDField'],
                validators: [
+                    this.walletCredentialRequired(),
                     this.positiveAmount('paymentChannelFund'),
 
-                    ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                              if (value === 'unknown') return 'Account seed is invalid';
-                         }
-                         return null;
-                    },
+                    // ctx => {
+                    //      if (ctx.inputs['seed']) {
+                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                    //           if (value === 'unknown') return 'Account seed is invalid';
+                    //      }
+                    //      return null;
+                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1221,15 +1215,16 @@ export class ValidationService {
           // PaymentChannelRenew
           this.registerRule({
                transactionType: 'PaymentChannelRenew',
-               requiredFields: ['wallet.seed', 'paymentChannelRenew.channelIDField'],
+               requiredFields: ['paymentChannelRenew.channelIDField'],
                validators: [
-                    ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                              if (value === 'unknown') return 'Account seed is invalid';
-                         }
-                         return null;
-                    },
+                    this.walletCredentialRequired(),
+                    // ctx => {
+                    //      if (ctx.inputs['seed']) {
+                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                    //           if (value === 'unknown') return 'Account seed is invalid';
+                    //      }
+                    //      return null;
+                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1257,17 +1252,18 @@ export class ValidationService {
           // PaymentChannelClaim
           this.registerRule({
                transactionType: 'PaymentChannelClaim',
-               requiredFields: ['wallet.seed', 'paymentChannelClaim.amount', 'paymentChannelClaim.channelIDField', 'paymentChannelClaim.claimSignature'],
+               requiredFields: ['paymentChannelClaim.amount', 'paymentChannelClaim.channelIDField', 'paymentChannelClaim.claimSignature'],
                validators: [
+                    this.walletCredentialRequired(),
                     this.positiveAmount('paymentChannelClaim'),
 
-                    ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                              if (value === 'unknown') return 'Account seed is invalid';
-                         }
-                         return null;
-                    },
+                    // ctx => {
+                    //      if (ctx.inputs['seed']) {
+                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                    //           if (value === 'unknown') return 'Account seed is invalid';
+                    //      }
+                    //      return null;
+                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1290,15 +1286,16 @@ export class ValidationService {
           // PaymentChannelClose
           this.registerRule({
                transactionType: 'PaymentChannelClose',
-               requiredFields: ['wallet.seed', 'paymentChannelClose.channelIDField'],
+               requiredFields: ['paymentChannelClose.channelIDField'],
                validators: [
-                    ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                              if (value === 'unknown') return 'Account seed is invalid';
-                         }
-                         return null;
-                    },
+                    this.walletCredentialRequired(),
+                    // ctx => {
+                    //      if (ctx.inputs['seed']) {
+                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                    //           if (value === 'unknown') return 'Account seed is invalid';
+                    //      }
+                    //      return null;
+                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1321,17 +1318,18 @@ export class ValidationService {
           // PaymentChannelGenerateCreatorClaimSignature
           this.registerRule({
                transactionType: 'PaymentChannelGenerateCreatorClaimSignature',
-               requiredFields: ['seed', 'amount', 'channelIDField', 'destination'],
+               requiredFields: ['amount', 'channelIDField', 'destination'],
                validators: [
+                    this.walletCredentialRequired(),
                     this.positiveAmount('amount'),
 
-                    ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                              if (value === 'unknown') return 'Account seed is invalid';
-                         }
-                         return null;
-                    },
+                    // ctx => {
+                    //      if (ctx.inputs['seed']) {
+                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                    //           if (value === 'unknown') return 'Account seed is invalid';
+                    //      }
+                    //      return null;
+                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1857,17 +1855,17 @@ export class ValidationService {
           // FinishTimeBasedEscrow
           this.registerRule({
                transactionType: 'FinishTimeBasedEscrow',
-               requiredFields: ['wallet.seed', 'finishTimeBasedEscrow.escrowSequenceNumberField', 'finishTimeBasedEscrow.escrowSequenceNumberField'],
+               requiredFields: ['finishTimeBasedEscrow.escrowSequenceNumberField', 'finishTimeBasedEscrow.escrowSequenceNumberField'],
                validators: [
                     // this.positiveAmount(),
-
-                    ctx => {
-                         if (ctx.inputs['seed']) {
-                              const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                              if (value === 'unknown') return 'Account seed is invalid';
-                         }
-                         return null;
-                    },
+                    this.walletCredentialRequired(),
+                    // ctx => {
+                    //      if (ctx.inputs['seed']) {
+                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
+                    //           if (value === 'unknown') return 'Account seed is invalid';
+                    //      }
+                    //      return null;
+                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 

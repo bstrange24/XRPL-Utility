@@ -674,7 +674,7 @@ export class TrustlineCurrencyService {
 
           // Holder perspective
           this.isIssuer.set(false);
-          const balances = result.balances?.[issuer] || [];
+          const balances = result.balances?.[issuer] ? result.balances?.[issuer] : result.assets?.[issuer] || [];
           const balEntry = balances.find((b: any) => this.utils.normalizeCurrencyCode(b.currency) === normCurrency);
 
           if (balEntry) {
