@@ -258,7 +258,7 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
           }
 
           // clawbackTokens
-          let sendMax = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyCode, formValues.currencyIssuer ?? '', formValues.trustlineLimitField.toString(), false).sendMax;
+          let sendMax = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyCode, formValues.destinationAddress ?? '', formValues.trustlineLimitField.toString(), false).sendMax;
           return this.xrplTransactionService.buildClawbackTransaction(wallet, sendMax, fee, currentLedger);
      }
 

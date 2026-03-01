@@ -49,11 +49,9 @@
                @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. }
                <!-- Set Trustline -->
                @else if (activeTab === 'setTrustline') {
-               <!-- Issue Currency -->
-               @if (trustlineAlreadyExist) { Current trustline limit (read-only here). Edit to update or set to 0. }
-               <!-- Issue Currency -->
-               @else { Maximum amount you're willing to hold. Use arrows for precision. } }
-               <!-- Issue Currency -->
+               <!-- Trustline Already Exist -->
+               @if (trustlineAlreadyExist) { Current trustline limit (read-only here). Edit to update or set to 0. } @else { Maximum amount you're willing to hold. Use arrows for precision. } }
+               <!-- Remove Trustline -->
                @else if (activeTab === 'removeTrustline') { Current trustline limit (view only). Balance must be 0 to remove. }
           </p>
 
@@ -64,7 +62,11 @@
 <ng-template #balanceTpl>
      <div class="form-group">
           <label for="currencyBalance">Currency Balance</label>
+          @if (trustlinesComponent.isIssuerForSelected()) {
+          <p class="form-hint">Total currency balance issued by this account for the selected currency code and issuer.</p>
+          } @else {
           <p class="form-hint">Total currency balance held by this account for the selected currency code and issuer.</p>
+          }
           <input type="text" [value]="currencyBalance" readonly />
      </div>
 </ng-template>

@@ -566,7 +566,6 @@ export class UtilsService {
      }
 
      formatTokenBalance(field: string, roundTo: number): string {
-          Number(field).toLocaleString();
           return Number(field).toLocaleString(undefined, {
                minimumFractionDigits: 0,
                maximumFractionDigits: roundTo, // enough to preserve precision
@@ -592,12 +591,10 @@ export class UtilsService {
           const normalized = input.trim().toLowerCase();
 
           if (!/^[a-z]+( [a-z]+)*$/.test(normalized)) {
-               // throw new Error('Mnemonic must contain lowercase words separated by single spaces only.');
                return 'Invalid Mnemonic. Must contain lowercase words separated by single spaces only.';
           }
 
           if (!bip39.validateMnemonic(normalized)) {
-               // throw new Error('Invalid BIP39 mnemonic.');
                return 'Invalid BIP39 Mnemonic.';
           }
 
@@ -830,11 +827,11 @@ export class UtilsService {
      }
 
      isRippleState(obj: any): obj is RippleState {
-          return obj && obj.LedgerEntryType === 'RippleState';
+          return obj?.LedgerEntryType === 'RippleState';
      }
 
      isMPT(obj: any): obj is MPToken {
-          return obj && obj.LedgerEntryType === 'MPToken';
+          return obj?.LedgerEntryType === 'MPToken';
      }
 
      decodeNFTFlags(flags: any) {

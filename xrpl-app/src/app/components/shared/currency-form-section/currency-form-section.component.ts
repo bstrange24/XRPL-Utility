@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, SimpleChanges, OnChanges, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { TrustlinesComponent } from '../../trustlines/trustlines.component';
 
 @Component({
      selector: 'app-currency-form-section',
@@ -8,7 +9,7 @@ import { SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-
      imports: [CommonModule, SelectSearchDropdownComponent],
      templateUrl: './currency-form-section.component.html',
      styleUrl: './currency-form-section.component.css',
-     changeDetection: ChangeDetectionStrategy.OnPush,
+     changeDetection: ChangeDetectionStrategy.Default,
 })
 export class CurrencyFormSectionComponent implements OnChanges {
      @Input() layout: 'split' | 'paired' = 'paired';
@@ -18,7 +19,7 @@ export class CurrencyFormSectionComponent implements OnChanges {
      @Input() selectedIssuer: any;
      @Input() amount!: number | string;
      @Input() currencyBalance!: string;
-     @Input() activeTab: 'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'clawbackTokens' | 'addNewIssuers' = 'setTrustline';
+     @Input() activeTab: 'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'clawbackTokens' | 'addNewIssuers' | 'create' | 'cash' | 'cancel' = 'setTrustline';
      @Input() trustlineAlreadyExist: boolean = false;
      @Input() isReadOnly: boolean = false;
 
@@ -26,7 +27,10 @@ export class CurrencyFormSectionComponent implements OnChanges {
      @Output() issuerChange = new EventEmitter<any>();
      @Output() amountChange = new EventEmitter<number>();
 
-     constructor(private readonly cdr: ChangeDetectorRef) {}
+     constructor(
+          private readonly cdr: ChangeDetectorRef,
+          public readonly trustlinesComponent: TrustlinesComponent
+     ) {}
 
      get limitLabel(): string {
           const tab = this.activeTab ?? 'setTrustline';
@@ -44,12 +48,6 @@ export class CurrencyFormSectionComponent implements OnChanges {
      }
 
      ngOnChanges(changes: SimpleChanges) {
-          console.log('[CurrencyFormSection] Inputs changed:', {
-               activeTab: this.activeTab,
-               trustlineAlreadyExist: this.trustlineAlreadyExist,
-               amount: this.amount,
-          });
-
           // Always mark when any tracked input changes
           this.cdr.markForCheck();
      }

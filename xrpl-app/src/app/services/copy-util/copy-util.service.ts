@@ -48,11 +48,9 @@ export class CopyUtilService {
      }
 
      copySeed(seed: string) {
-          console.log('seed1: ', seed);
           navigator.clipboard
                .writeText(seed)
                .then(() => {
-                    console.log('seed2: ', seed);
                     this.toast.success('Seed copied to clipboard!');
                })
                .catch(err => {

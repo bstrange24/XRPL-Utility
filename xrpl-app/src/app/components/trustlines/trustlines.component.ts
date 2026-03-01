@@ -127,6 +127,8 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
 
      selectedIssuerItem = computed(() => this.issuerItems().find(i => i.id === this.trustlineCurrencyService.selectedIssuer()) ?? null);
 
+     readonly canSubmit = computed(() => this.isIdle() && this.hasWallets());
+
      readonly infoData = computed(() => {
           const wallet = this.currentWallet();
           if (!wallet?.address) return null;
@@ -375,7 +377,6 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      });
 
      // Amount displayed/used in the form field
-     // ─────────────────────────────────────────────────────────────
      readonly formAmount = computed(() => {
           const tab = this.activeTab();
 
@@ -450,6 +451,8 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
+
+          this.trustlineCurrencyService.refreshCurrentBalance();
      }
 
      private ensureWalletSelected(): boolean {

@@ -18,6 +18,7 @@ interface PrepareTxEnvironmentOptions {
      includeLedgerIndex?: boolean;
      includePaymentChannelObjects?: boolean;
      includeMptObjects?: boolean;
+     includeGatewayBalance?: boolean;
      includeFee?: boolean;
      forceRefresh?: boolean;
      destinationAddress?: string;
@@ -40,6 +41,7 @@ interface PrepareTxEnvironmentResult {
      accountInfo?: xrpl.AccountInfoResponse;
      destinationAccountInfo?: xrpl.AccountInfoResponse;
      destinationAccountObject?: xrpl.AccountObjectsResponse;
+     gatewayBalanceObject?: any;
 }
 
 @Injectable({
@@ -64,6 +66,7 @@ export class TxEnvironmentService {
           includeLedgerIndex = false,
           includePaymentChannelObjects = false,
           includeMptObjects = false,
+          includeGatewayBalance = false,
           includeFee = false,
           forceRefresh = false,
           destinationAddress = '',
@@ -144,6 +147,11 @@ export class TxEnvironmentService {
           if (includePaymentChannelObjects) {
                xrplNetworkCalls.push(this.xrplCache.getAccountObjectsWithType(client, wallet.classicAddress, forceRefresh, 'payment_channel'));
                keys.push('paymentChannelObjects');
+          }
+
+          if (includeGatewayBalance) {
+               xrplNetworkCalls.push(this.xrplCache.getGatewayBalance(client, wallet.classicAddress, forceRefresh, 'gatewayBalance'));
+               keys.push('gatewayBalanceObject');
           }
 
           const networkResults = xrplNetworkCalls.length ? await Promise.all(xrplNetworkCalls) : [];
