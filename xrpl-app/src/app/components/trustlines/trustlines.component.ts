@@ -417,9 +417,10 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      ngOnInit(): void {
-          this.trustlineCurrencyService.setPreferXrpAsDefault(false);
-          this.trustlineCurrencyService.setXrpInDropdown(false);
-          this.trustlineCurrencyService.setAddMptInDropdown(false);
+          this.trustlineCurrencyService.preferXrpAsDefault.set(false);
+          this.trustlineCurrencyService.addXrpInCurrencyDropdown.set(false);
+          this.trustlineCurrencyService.addMptInCurrencyDropdown.set(false);
+          this.trustlineCurrencyService.updateCurrencies();
           this.transactionDropdownService.loadCustomDestinations();
      }
 
@@ -616,24 +617,6 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
 
                return false;
           }
-     }
-
-     private checkForExistingTrustline1(env: any) {
-          const currency = this.trustlineCurrencyService.currentCurrency();
-          const issuer = this.trustlineCurrencyService.selectedIssuer();
-          this.trustlineCurrencyService.selectCurrency(currency, '');
-
-          this.trustlineAlreadyExist.set(false);
-          this.removeTrustlineAviable.set(true);
-          const trustLine = env.trustlines?.result.lines.find((line: any) => {
-               const lineCurrency = this.utilsService.decodeIfNeeded(line.currency);
-               const trustline = line.account === issuer && lineCurrency === currency && line.balance > 0;
-               if (trustline) {
-                    this.txUiService.amountField.set(line.limit);
-               }
-               return trustline;
-          });
-          return trustLine;
      }
 
      async setTrustLine() {

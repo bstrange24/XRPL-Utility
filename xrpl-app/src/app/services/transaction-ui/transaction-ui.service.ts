@@ -3,7 +3,6 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { Signer, Toast, ValidationInputs, Wallet } from '../../models/interface-items.model';
-import { UtilsService } from '../util-service/utils.service';
 
 export type TxStep = 'idle' | 'preparing' | 'signing' | 'submitting' | 'waiting_validation' | 'waiting_for_wallet_creation' | 'finalizing' | 'success' | 'failed';
 
@@ -210,7 +209,8 @@ export class TransactionUiService {
                case 'submitting':
                     return 'Broadcasting to the XRP Ledger...';
                case 'waiting_validation':
-                    return 'Waiting for ledger validation (usually 4–10 seconds)... The transaction will still process even if you leave this page.';
+                    // return 'Waiting for ledger validation (usually 4–10 seconds)... The transaction will still process even if you leave this page.';
+                    return 'Waiting for ledger validation (usually 4–10 seconds)...';
                case 'waiting_for_wallet_creation':
                     return 'Waiting for wallet creation and funding.';
                case 'finalizing':

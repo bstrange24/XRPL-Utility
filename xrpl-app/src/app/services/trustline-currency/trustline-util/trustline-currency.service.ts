@@ -1,13 +1,11 @@
 import { computed, effect, inject, Injectable, Signal, signal } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { Wallet, WalletManagerService } from '../../wallets/manager/wallet-manager.service';
+import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { SelectItem } from '../../destination-dropdown/destination-dropdown.service';
 import { StorageService } from '../../local-storage/storage.service';
 import { UtilsService } from '../../util-service/utils.service';
-import { XrplService } from '../../xrpl-services/xrpl.service';
 import { AppConstants } from '../../../core/app.constants';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 
 interface IssuerItem {
@@ -21,7 +19,6 @@ type TrustlineTab = 'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'claw
 @Injectable({ providedIn: 'root' })
 export class TrustlineCurrencyService {
      public readonly txUiService = inject(TransactionUiService);
-     private readonly xrplCache = inject(XrplCacheService);
      public readonly txEnvironmentService = inject(TxEnvironmentService);
 
      private readonly knownTrustLinesIssuers = signal<Record<string, string[]>>({ XRP: [] });
@@ -33,10 +30,6 @@ export class TrustlineCurrencyService {
      private readonly balanceCache = new Map<string, { data: any; timestamp: number }>();
      public addMptInCurrencyDropdown = signal<boolean>(false);
      public addXrpInCurrencyDropdown = signal<boolean>(false);
-
-     // Keep track of current wallet from streams
-     private readonly latestWallets: Wallet[] = [];
-     private readonly latestSelectedIndex = 0;
 
      public readonly currencies = signal<string[]>([]);
      public readonly issuers = signal<IssuerItem[]>([]);
@@ -73,7 +66,6 @@ export class TrustlineCurrencyService {
 
      constructor(
           private readonly storage: StorageService,
-          private readonly xrplService: XrplService,
           private readonly utils: UtilsService,
           private readonly walletManagerService: WalletManagerService,
           private readonly utilsService: UtilsService
@@ -249,13 +241,6 @@ export class TrustlineCurrencyService {
           this.preferXrpAsDefault.set(prefer);
           // Optionally re-apply default immediately
           this.initializeDefaultCurrency();
-     }
-
-     private clearCurrentSelection() {
-          this.currentCurrency.set('');
-          this.currentIssuer.set('');
-          this.selectedIssuer.set('');
-          this.balance.set('0');
      }
 
      private initializeDefaultCurrency() {
@@ -469,9 +454,6 @@ export class TrustlineCurrencyService {
 
           this.currencies.set(allCurrencies);
 
-          // ────────────────────────────────────────────────
-          // Auto-select logic (unchanged, but now safer)
-          // ────────────────────────────────────────────────
           if (this.preferXrpAsDefault()) {
                if (allCurrencies.includes('XRP')) {
                     this.selectCurrency('XRP', '');
@@ -481,49 +463,6 @@ export class TrustlineCurrencyService {
           } else if (allCurrencies.length > 0) {
                // Prefer MPT if present, otherwise first IOU
                const fallback = allCurrencies.includes('MPT') ? 'MPT' : allCurrencies.find(c => c !== 'XRP') || allCurrencies[0];
-               this.selectCurrency(fallback, '');
-          }
-     }
-
-     updateCurrencies1() {
-          const known = this.knownTrustLinesIssuers();
-
-          // Standard IOU currencies (excluding XRP and MPT)
-          const nonXrpIoUs = Object.keys(known)
-               .filter(c => c !== 'XRP' && c.trim() !== '' && c !== 'MPT')
-               .sort((a, b) => a.localeCompare(b));
-
-          // Build final list - conditionally include XRP
-          const allCurrencies: string[] = [];
-
-          if (this.addXrpInCurrencyDropdown()) {
-               allCurrencies.push('XRP');
-          }
-
-          // Add MPT conditionally
-          if (this.addMptInCurrencyDropdown()) {
-               allCurrencies.push('MPT');
-          }
-
-          // Add user-added IOUs
-          allCurrencies.push(...nonXrpIoUs);
-
-          this.currencies.set(allCurrencies);
-          this.currencies.set(allCurrencies);
-
-          // Auto-select logic
-          if (this.preferXrpAsDefault()) {
-               // Only select XRP if it exists in the array
-               if (allCurrencies.includes('XRP')) {
-                    this.selectCurrency('XRP', '');
-               } else if (allCurrencies.length > 0) {
-                    // Fallback to first available currency if XRP not present
-                    const fallback = allCurrencies.find(c => c === 'MPT') || allCurrencies[0];
-                    this.selectCurrency(fallback, '');
-               }
-          } else if (allCurrencies.length > 1) {
-               // Fallback to MPT if present, then first IOU
-               const fallback = allCurrencies.find(c => c === 'MPT') || allCurrencies[1] || allCurrencies[0];
                this.selectCurrency(fallback, '');
           }
      }
