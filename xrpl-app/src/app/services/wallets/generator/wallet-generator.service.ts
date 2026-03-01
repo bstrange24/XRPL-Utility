@@ -90,7 +90,7 @@ export class WalletGeneratorService {
      private async deriveViaApi(type: WalletImportType, value: string | string[], algorithm: string) {
           switch (type) {
                case 'familySeed':
-                    return this.httpGet<any>(`/api/derive/familyseed?familySeed=${encodeURIComponent(value as string)}&algorithm=${algorithm}`);
+                    return this.httpGet<any>(`/api/derive/familySeed?familySeed=${encodeURIComponent(value as string)}&algorithm=${algorithm}`);
 
                case 'mnemonic':
                     return this.httpGet<any>(`/api/derive/mnemonic?mnemonic=${encodeURIComponent(value as string)}&algorithm=${algorithm}`);

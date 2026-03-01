@@ -11,7 +11,7 @@ export default async function handler(req: any, res: any) {
           const { secretNumbers, algorithm = 'ed25519' } = req.body || {};
 
           if (!secretNumbers) {
-               return res.status(400).json({ error: 'Missing secretNumbers in body' });
+               return res.status(400).json({ error: 'secretNumbers is required' });
           }
 
           if (!Array.isArray(secretNumbers) || secretNumbers.length !== 8) {

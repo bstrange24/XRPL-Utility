@@ -5,6 +5,8 @@ export default async function handler(req: any, res: any) {
           return res.status(405).json({ error: 'Method not allowed' });
      }
 
+     console.log('Received body:', req.body); // Add this for Vercel logs
+
      try {
           const familySeed = req.query.familySeed as string;
           const algorithm = (req.query.algorithm as string) || 'ed25519';
