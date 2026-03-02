@@ -239,15 +239,25 @@
                                    <!-- Header -->
                                    <div class="token-flags-header">
                                         <lucide-icon name="flag" size="20"></lucide-icon>
-                                        <span class="token-flags-title">Trustline Flags </span>
+                                        <span class="token-flags-title">Trustline Flags</span>
                                    </div>
 
-                                   @for (flag of tab === 'setTrustline' ? trustlineCurrencyService.setFlags : trustlineCurrencyService.clearFlags; track flag.key) {
-                                   <button class="flag-item-account-flags" [class.enabled]="trustlineCurrencyService.flags[flag.key]" (click)="trustlineCurrencyService.toggleFlag(flag.key)">
+                                   @for ( flag of (tab === 'setTrustline' ? trustlineCurrencyService.setFlags : trustlineCurrencyService.clearFlags); track flag.key ) {
+                                   <!-- Set let variable  -->
+                                   @let isEnabled = trustlineCurrencyService.flags[flag.key]; @let isRequired = tab === 'removeTrustline' && flag.isClearFlag && isEnabled;
+
+                                   <button type="button" class="flag-item-account-flags" [class.enabled]="isEnabled" [class.required]="isRequired" (click)="!isRequired && trustlineCurrencyService.toggleFlag(flag.key)">
                                         <div class="flag-header-account">
-                                             <input type="checkbox" [checked]="trustlineCurrencyService.flags[flag.key]" class="flag-checkbox" />
+                                             <input type="checkbox" class="flag-checkbox" [checked]="isEnabled" [disabled]="isRequired" (click)="$event.stopPropagation()" />
+
+                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                  <path d="M9 12l2 2 4-4" />
+                                                  <circle cx="12" cy="12" r="10" />
+                                             </svg>
+
                                              <span class="flag-title">{{ flag.title }}</span>
-                                             @if (trustlineCurrencyService.flags[flag.key] === trustlineCurrencyService.flags.tfClearNoRipple && tab === 'removeTrustline') {
+
+                                             @if (isRequired) {
                                              <span class="required-hint">(Required)</span>
                                              }
                                         </div>
@@ -255,6 +265,8 @@
                                         <div class="flag-value">{{ flag.hex }}</div>
                                         <div class="flag-desc">{{ flag.desc }}</div>
                                    </button>
+                                   } @if (tab === 'removeTrustline') {
+                                   <div class="info-box" style="margin-top: 16px; font-size: 0.9em; opacity: 0.9"><strong>Note:</strong> Setting limit to 0 removes ability to hold balance. The trustline remains in the ledger (normal XRPL behavior). This app hides zero-limit lines.</div>
                                    }
 
                                    <div class="flags-total" style="margin-top: 20px; padding: 12px; background: rgba(0, 0, 0, 0.05); border-radius: 8px">

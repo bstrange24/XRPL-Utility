@@ -377,13 +377,53 @@ export const AppConstants = {
                tfClearFreeze: TrustSetFlags.tfClearFreeze,
                tfSetDeepFreeze: TrustSetFlags.tfSetDeepFreeze,
           },
+          // LEDGER_FLAG_MAP: {
+          //      lsfLowAuth: 0x00010000,
+          //      lsfNoRipple: 0x00020000, // ← shared flag
+          //      lsfLowFreeze: 0x00100000,
+          //      lsfHighFreeze: 0x00200000,
+          //      lsfHighAuth: 0x00080000,
+          // },
+          // LEDGER_FLAG_MAP: {
+          //      lsfLowReserve: 0x00010000, // Bit 16: Internal (low account reserve)
+          //      lsfHighReserve: 0x00020000, // Bit 17: Internal (high account reserve)
+          //      lsfLowAuth: 0x00040000, // Bit 18: Low side authorized high to hold its issuances
+          //      lsfHighAuth: 0x00080000, // Bit 19: High side authorized low to hold its issuances
+          //      lsfLowNoRipple: 0x00100000, // Bit 20: NoRipple enabled on low side
+          //      lsfHighNoRipple: 0x00200000, // Bit 21: NoRipple enabled on high side
+          //      lsfLowFreeze: 0x00400000, // Bit 22: Freeze enabled on low side
+          //      lsfLowDeepFreeze: 0x00400000,
+          //      lsfNoRipple: 0x00020000,
+          //      lsfHighFreeze: 0x00800000, // Bit 23: Freeze enabled on high side
+          //      lsfHighDeepFreeze: 0x00800000,
+          // },
           LEDGER_FLAG_MAP: {
-               lsfLowAuth: 0x00010000,
-               lsfNoRipple: 0x00020000, // ← shared flag
-               lsfLowFreeze: 0x00100000,
-               lsfHighFreeze: 0x00200000,
+               lsfLowReserve: 0x00010000,
+               lsfHighReserve: 0x00020000,
+
+               lsfLowAuth: 0x00040000,
                lsfHighAuth: 0x00080000,
+
+               lsfLowNoRipple: 0x00100000,
+               lsfHighNoRipple: 0x00200000,
+
+               lsfLowFreeze: 0x00400000,
+               lsfHighFreeze: 0x00800000,
+
+               lsfLowDeepFreeze: 0x01000000,
+               lsfHighDeepFreeze: 0x02000000,
           },
+          // LEDGER_FLAG_MAP: {
+          //      lsfLowAuth: 0x00010000,
+          //      lsfHighAuth: 0x00020000,
+          //      lsfLowNoRipple: 0x00040000,
+          //      lsfHighNoRipple: 0x00080000,
+          //      lsfLowFreeze: 0x00100000,
+          //      lsfHighFreeze: 0x00200000,
+          //      lsfLowDeepFreeze: 0x00400000,
+          //      lsfHighDeepFreeze: 0x00800000,
+          //      lsfNoRipple: 0x00020000,
+          // },
           // LEDGER_FLAG_MAP: {
           //      lsfLowAuth: 0x00010000,
           //      lsfHighAuth: 0x00040000,

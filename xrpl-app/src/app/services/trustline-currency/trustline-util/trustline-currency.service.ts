@@ -159,6 +159,10 @@ export class TrustlineCurrencyService {
           }
      }
 
+     getTrustlineState(accountObjects: xrpl.AccountObjectsResponse, walletAddr: string, issuer: string, encodedCurrency: string): xrpl.LedgerEntry.RippleState | undefined {
+          return accountObjects.result.account_objects.find((obj): obj is xrpl.LedgerEntry.RippleState => obj.LedgerEntryType === 'RippleState' && obj.Balance?.currency === encodedCurrency && ((obj.LowLimit?.issuer === walletAddr && obj.HighLimit?.issuer === issuer) || (obj.HighLimit?.issuer === walletAddr && obj.LowLimit?.issuer === issuer)));
+     }
+
      getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const mapped = (accountObjects.result.account_objects ?? [])
                .filter((obj): obj is xrpl.LedgerEntry.RippleState => obj.LedgerEntryType === 'RippleState')
@@ -735,30 +739,35 @@ export class TrustlineCurrencyService {
           title: string;
           hex: string;
           desc: string;
+          isClearFlag: boolean;
      }[] = [
           {
                key: 'tfSetfAuth',
                title: 'SetfAuth',
                hex: '0x00010000',
                desc: 'Authorize the other party to hold currency issued by this account. (No effect unless using the asfRequireAuth AccountSet flag.) Cannot be unset.',
+               isClearFlag: true,
           },
           {
                key: 'tfSetNoRipple',
                title: 'SetNoRipple',
                hex: '0x00020000',
                desc: 'Enable the No Ripple flag, which blocks rippling between two trust lines of the same currency if this flag is enabled on both.',
+               isClearFlag: true,
           },
           {
                key: 'tfSetFreeze',
                title: 'SetFreeze',
                hex: '0x00100000',
                desc: 'Freeze the trustline (prevent transfers).',
+               isClearFlag: true,
           },
           {
                key: 'tfSetDeepFreeze',
                title: 'SetDeepFreeze',
                hex: '0x00400000',
                desc: 'Deep-Freeze (block sending & receiving). Requires freeze first.',
+               isClearFlag: true,
           },
      ];
 
@@ -767,24 +776,28 @@ export class TrustlineCurrencyService {
           title: string;
           hex: string;
           desc: string;
+          isClearFlag: boolean;
      }[] = [
           {
                key: 'tfClearNoRipple',
                title: 'ClearNoRipple',
                hex: '0x00040000',
                desc: 'Required to remove trustline...',
+               isClearFlag: true,
           },
           {
                key: 'tfClearFreeze',
                title: 'ClearFreeze',
                hex: '0x00200000',
                desc: 'Required to remove a frozen trustline.',
+               isClearFlag: true,
           },
           {
                key: 'tfClearDeepFreeze',
                title: 'ClearDeepFreeze',
                hex: '0x00200000',
                desc: 'Required to remove a deep-frozen trustline.',
+               isClearFlag: true,
           },
      ];
 }
