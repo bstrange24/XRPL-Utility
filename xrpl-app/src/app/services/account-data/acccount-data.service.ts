@@ -9,8 +9,8 @@ import { WalletManagerService } from '../../services/wallets/manager/wallet-mana
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import * as xrpl from 'xrpl';
-import { PerformanceBaseComponent } from '../../components/base/performance-base/performance-base.component';
 import { TrustlineCurrencyService } from '../trustline-currency/trustline-util/trustline-currency.service';
+import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
 
 @Injectable({
      providedIn: 'root',
@@ -30,16 +30,12 @@ export class AcccountDataService extends PerformanceBaseComponent {
      hasSignerList = signal<boolean>(false);
 
      refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
-          // Update multi-sign & regular key flags
-          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
-
-          // Update service state
           this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
 
           const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
           const hasSignerList = signerAccounts?.length > 0;
           this.txUiService.signerQuorum.set(signerQuorum);
+
           const checkForMultiSigner = signerAccounts?.length > 0;
           checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
 
@@ -49,47 +45,53 @@ export class AcccountDataService extends PerformanceBaseComponent {
                this.txUiService.signers.set(entries);
           }
 
-          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
-
-          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
-          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
+          this.setRegularKeyProperties(accountInfo);
      }
 
-     public refreshUiState1(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
-          // Update multi-sign & regular key flags
-          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
-          const nftTokenMinter = accountInfo?.result?.account_data.NFTokenMinter;
+     public refreshUiStateAccountConfigure(wallet: xrpl.Wallet, env: any): void {
+          // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(env.accountObjects));
 
-          // Update service state
-          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
+          // const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(env.accountObjects);
+          // const hasSignerList = signerAccounts?.length > 0;
+          // this.hasSignerList.set(hasSignerList);
+          // this.txUiService.signerQuorum.set(signerQuorum);
 
-          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
-          const hasSignerList = signerAccounts?.length > 0;
-          this.hasSignerList.set(hasSignerList);
-          this.txUiService.signerQuorum.set(signerQuorum);
-          const checkForMultiSigner = signerAccounts?.length > 0;
-          checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
+          // const checkForMultiSigner = signerAccounts?.length > 0;
+          // checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
 
-          this.txUiService.multiSigningEnabled.set(hasSignerList);
-          if (hasSignerList) {
-               const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.txUiService.signers.set(entries);
-          }
+          // this.txUiService.multiSigningEnabled.set(hasSignerList);
 
-          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
+          // if (hasSignerList) {
+          //      const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+          //      this.txUiService.signers.set(entries);
+          // }
 
-          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
-          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
+          this.setRegularKeyProperties(env.accountInfo);
 
-          const preAuthAccounts = this.utilsService.findDepositPreauthObjects(accountObjects);
+          this.setDepositAuth(env);
+
+          this.setNfTokenMinter(env);
+
+          this.refreshUiAccountMetaData(env.accountInfo?.result?.account_data);
+     }
+
+     private setNfTokenMinter(env: any) {
+          const nftTokenMinter = env.accountInfo?.result?.account_data.NFTokenMinter;
+          this.setNfTokenMinterProperties(nftTokenMinter);
+     }
+
+     private setDepositAuth(env: any) {
+          const preAuthAccounts = this.utilsService.findDepositPreauthObjects(env.accountObjects);
           const hasPreAuthAccounts = preAuthAccounts?.length > 0;
           this.setDepositAuthProperties(hasPreAuthAccounts, preAuthAccounts);
+     }
 
-          // === NFT Minter ===
-          this.setNfTokenMinterProperties(nftTokenMinter);
-
-          this.refreshUiAccountMetaData(accountInfo?.result?.account_data);
+     setRegularKeyProperties(accountInfo: any) {
+          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
+          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
+          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
+          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
+          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
      }
 
      public setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
@@ -101,25 +103,26 @@ export class AcccountDataService extends PerformanceBaseComponent {
 
      public clearMultiSignersConfiguration(): void {
           this.txUiService.signerQuorum.set(0);
+          this.txUiService.signers.set([{ Account: '', seed: '', SignerWeight: 1 }]);
           this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
           this.txUiService.multiSignSeeds.set('');
           this.storageService.removeValue('signerEntries');
      }
 
-     private setDepositAuthProperties(hasPreAuthAccounts: boolean, preAuthAccounts: string[]): void {
+     setDepositAuthProperties(hasPreAuthAccounts: boolean, preAuthAccounts: string[]): void {
           if (hasPreAuthAccounts) {
-               console.debug('preAuthAccounts:', preAuthAccounts);
                this.txUiService.depositAuthAddresses.set(preAuthAccounts.map(a => ({ account: a })));
                this.txUiService.isdepositAuthAddress.set(true);
                this.txUiService.depositAuthEnabled.set(true);
-          } else {
-               this.txUiService.depositAuthAddresses.set([{ account: '' }]);
-               this.txUiService.isdepositAuthAddress.set(false);
-               this.txUiService.depositAuthEnabled.set(false);
+               return;
           }
+          this.txUiService.depositAuthAddresses.set([{ account: '' }]);
+          this.txUiService.isdepositAuthAddress.set(false);
+          this.txUiService.depositAuthEnabled.set(false);
+          this.storageService.removeValue('depositAuthEntries');
      }
 
-     private setNfTokenMinterProperties(nftTokenMinter: string | undefined): void {
+     setNfTokenMinterProperties(nftTokenMinter: string | undefined): void {
           if (nftTokenMinter) {
                this.txUiService.isAuthorizedNFTokenMinter.set(false); // stays false until verified externally
                this.txUiService.isNFTokenMinterEnabled.set(true);
@@ -131,30 +134,25 @@ export class AcccountDataService extends PerformanceBaseComponent {
           }
      }
 
-     private refreshUiAccountMetaData(accountData: any): void {
+     refreshUiAccountMetaData(accountData: any): void {
           this.clearUiIAccountMetaData();
-          const { TickSize, TransferRate, Domain, MessageKey, EmailHash } = accountData;
+          const { TickSize, TransferRate, Domain, MessageKey } = accountData;
 
-          const hasMetaData = TickSize || TransferRate || Domain || MessageKey || EmailHash;
+          const hasMetaData = TickSize || TransferRate || Domain || MessageKey;
           if (hasMetaData) {
                this.txUiService.isUpdateMetaData.set(true);
                this.refreshUiIAccountMetaData(accountData);
           } else {
                this.txUiService.isUpdateMetaData.set(false);
-               if (!EmailHash) {
-                    this.txUiService.userEmail.set('');
-                    this.txUiService.avatarUrl.set('');
-               }
           }
      }
 
      async refreshUiIAccountMetaData(accountInfo: any) {
-          const { TickSize, TransferRate, Domain, MessageKey, EmailHash } = accountInfo;
+          const { TickSize, TransferRate, Domain, MessageKey } = accountInfo;
           this.txUiService.tickSize.set(TickSize || '');
           this.txUiService.transferRate.set(TransferRate ? ((TransferRate / 1_000_000_000 - 1) * 100).toFixed(3) : '');
           this.txUiService.domain.set(Domain ? this.utilsService.decodeHex(Domain) : '');
           this.txUiService.isMessageKey.set(!!MessageKey);
-          this.txUiService.userEmail.set(EmailHash || '');
      }
 
      clearUiIAccountMetaData() {

@@ -241,5 +241,82 @@
                     </div>
                </form>
           </div>
+
+          <div class="requirements-info">
+               <div class="info-header">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+                    <h3>Decentralized Identifiers (DID)</h3>
+               </div>
+
+               <p class="info-subtitle">Decentralized Identifiers (DIDs) on XRPL let accounts create and manage self-sovereign identity documents compliant with the W3C DID specification. Use DIDSet to create or update your DID document (e.g., public keys, service endpoints, verification methods), and DIDDelete to remove it when no longer needed.</p>
+
+               <div class="combinations-grid">
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">🆔 Create / Update DID</span>
+                              <span class="badge required-badge">DIDSet</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">Data</span>
+                                   <span class="field-status required">✅ Required (JSON DID document or URI)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">URI</span>
+                                   <span class="field-status optional">➕ Optional (external DID document location)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Flags</span>
+                                   <span class="field-status optional">➕ Optional (e.g., master key control flags)</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">🗑️ Delete DID</span>
+                              <span class="badge optional-badge">DIDDelete</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">DID ID / Data</span>
+                                   <span class="field-status required">✅ Required (to identify which DID to remove)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Signer</span>
+                                   <span class="field-status required">✅ Must be authorized (account key or delegate)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Conditions</span>
+                                   <span class="field-status required">✅ No dependent objects blocking deletion</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="important-notes">
+                         <h5>📝 Important Notes:</h5>
+                         <ul>
+                              <li>Requires the <strong>DID</strong> amendment to be enabled on the network.</li>
+                              <li>The DID is anchored to your XRPL account address — the DID document is stored in a <strong>DID</strong> ledger object owned by the account.</li>
+                              <li><strong>Data</strong> field typically contains a compact JSON DID document (verificationMethod, authentication, service endpoints, etc.) — max size is limited (~1 KB compressed).</li>
+                              <li>Alternatively, use <strong>URI</strong> to point to an external DID document (IPFS, HTTPS, etc.) for larger or mutable content.</li>
+                              <li>Each DID object counts toward your account’s <strong>owner reserve</strong> (~0.2 XRP) until deleted.</li>
+                              <li>DID documents are public once set — anyone can read them from the ledger.</li>
+                              <li>Only the controlling account (or authorized delegate if set up) can update or delete the DID.</li>
+                         </ul>
+                         <p></p>
+                         <h5 class="warning-title">⚠️ Irreversibility & Control Risks</h5>
+                         <p style="color: #92400e">DID documents are tied to account control — losing key access can make your DID unusable or orphaned.</p>
+                         <ul>
+                              <li>Once set, DID document data is **immutable until updated** — incorrect or outdated info requires another DIDSet transaction to fix.</li>
+                              <li>If you lose control of the account (lost keys, no regular key/multi-sign backup), you **permanently lose the ability** to update or delete the DID — it remains on the ledger forever.</li>
+                              <li>Deletion is only possible if no dependent objects (e.g., credentials or permissions referencing the DID) block it — check current amendment rules.</li>
+                              <li>Public exposure of DID documents means sensitive endpoints or keys should not be included unless encrypted or hashed.</li>
+                              <li>Reserve cost remains until deletion — deleting frees the reserve, but test deletion carefully to avoid accidental lockup.</li>
+                              <li>Always test DID creation/update/deletion on devnet or Testnet first — wrong formats or oversized data cause tx failure and fee burn.</li>
+                         </ul>
+                    </div>
+               </div>
+          </div>
      </div>
 </div>

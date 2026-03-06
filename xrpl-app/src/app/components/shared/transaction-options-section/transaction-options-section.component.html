@@ -1,3 +1,6 @@
+@switch (activeTab()) {
+<!-- SendXrpComponent -->
+@case ('sendXrp') {
 <!-- Destination Tag & Source Tag -->
 <div class="form-row">
      <div class="form-group">
@@ -26,3 +29,18 @@
           <input type="text" placeholder="64 hex chars (optional)" [ngModel]="txUiService.invoiceIdField()" (ngModelChange)="txUiService.invoiceIdField.set($event)" maxlength="64" pattern="[0-9a-fA-F]{0,64}" />
      </div>
 </div>
+
+<!-- Domain ID and Credential ID -->
+<div class="form-row">
+     <div class="form-group">
+          <label for="domainIdField">Domain ID</label>
+          <p class="form-hint">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
+          <textarea name="domainId" class="memo-input auto-expand-textarea" rows="2" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="txUiService.domainId()" (ngModelChange)="txUiService.domainId.set($event)"></textarea>
+     </div>
+     <div class="form-group">
+          <label for="credentialIDsField">Credential IDs</label>
+          <p class="form-hint">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
+          <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="txUiService.credentialIDs()" (ngModelChange)="txUiService.credentialIDs.set($event)"></textarea>
+     </div>
+</div>
+}}

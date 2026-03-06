@@ -673,31 +673,43 @@ export class TrustlineCurrencyService {
           key: TrustlineTab;
           label: string;
           icon: string;
+          color: string;
+          iconSize: string;
      }[] = [
           {
                key: 'setTrustline',
                label: 'Set',
                icon: 'heroAdjustmentsVertical',
+               color: 'blue',
+               iconSize: AppConstants.TAB_ICON_SIZE,
           },
           {
                key: 'removeTrustline',
                label: 'Remove',
                icon: 'heroTrash',
+               color: 'red',
+               iconSize: AppConstants.TAB_ICON_SIZE,
           },
           {
                key: 'issueCurrency',
                label: 'Send / Issue Currency',
                icon: 'heroCurrencyDollar',
+               color: 'green',
+               iconSize: AppConstants.TAB_ICON_SIZE,
           },
           {
                key: 'clawbackTokens',
                label: 'Clawback',
                icon: 'heroTrash',
+               color: 'red',
+               iconSize: AppConstants.TAB_ICON_SIZE,
           },
           {
                key: 'addNewIssuers',
                label: 'Modify Issuers',
                icon: 'heroPlusCircle',
+               color: 'blue',
+               iconSize: AppConstants.TAB_ICON_SIZE,
           },
      ];
 
@@ -707,30 +719,40 @@ export class TrustlineCurrencyService {
                colorClass: 'blue-button-submenu',
                title: 'Set Trustline',
                desc: 'Set a trustline to another XRPL address',
+               color: '',
+               iconSize: AppConstants.TAB_ICON_SIZE,
           },
           removeTrustline: {
                icon: 'heroTrash',
                colorClass: 'red-button-submenu',
                title: 'Remove Trustline',
                desc: 'Remove trustline to another XRPL address',
+               color: '',
+               iconSize: AppConstants.TAB_ICON_SIZE,
           },
           issueCurrency: {
                icon: 'heroCurrencyDollar',
                colorClass: 'green-button-submenu',
                title: 'Send / Issue Currency',
                desc: 'Send / Issue currency to another XRPL address',
+               color: '',
+               iconSize: AppConstants.TAB_ICON_SIZE,
           },
           clawbackTokens: {
                icon: 'heroTrash',
                colorClass: 'red-button-submenu',
                title: 'Clawback Tokens',
                desc: 'Clawback tokens from another XRPL address',
+               color: '',
+               iconSize: AppConstants.TAB_ICON_SIZE,
           },
           addNewIssuers: {
                icon: 'heroPlusCircle',
                colorClass: 'blue-button-submenu',
                title: 'Add/Remove Issuers',
                desc: 'Add issuers and tokens from external sources.',
+               color: '',
+               iconSize: AppConstants.TAB_ICON_SIZE,
           },
      };
 

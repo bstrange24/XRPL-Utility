@@ -197,80 +197,12 @@
                          </div>
                     </div>
 
-                    <!-- Escrow Requirements Info Box -->
-                    <div class="escrow-requirements-info">
-                         <div class="info-header">
-                              <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                   <circle cx="12" cy="12" r="10" />
-                                   <line x1="12" y1="12" x2="12" y2="16" />
-                                   <line x1="12" y1="8" x2="12.01" y2="8" />
-                              </svg>
-                              <h4>Escrow Requirements</h4>
-                         </div>
-
-                         <p class="info-subtitle">You must specify one of these combinations:</p>
-
-                         <div class="combinations-grid">
-                              <div class="combination-card">
-                                   <div class="combination-header">
-                                        <span class="badge time-badge">⏱️ Time-based</span>
-                                        <span class="badge optional-badge">No Expiration</span>
-                                   </div>
-                                   <div class="combination-fields">
-                                        <div class="field-row">
-                                             <span class="field-name">FinishAfter</span>
-                                             <span class="field-status required">✅ Required</span>
-                                        </div>
-                                        <div class="field-row">
-                                             <span class="field-name">Condition</span>
-                                             <span class="field-status omitted">❌ Omitted</span>
-                                        </div>
-                                        <div class="field-row">
-                                             <span class="field-name">CancelAfter</span>
-                                             <span class="field-status omitted">❌ Omitted</span>
-                                        </div>
-                                   </div>
-                              </div>
-
-                              <div class="combination-card">
-                                   <div class="combination-header">
-                                        <span class="badge time-badge">⏱️ Time-based</span>
-                                        <span class="badge required-badge">With Expiration</span>
-                                   </div>
-                                   <div class="combination-fields">
-                                        <div class="field-row">
-                                             <span class="field-name">FinishAfter</span>
-                                             <span class="field-status required">✅ Required</span>
-                                        </div>
-                                        <div class="field-row">
-                                             <span class="field-name">Condition</span>
-                                             <span class="field-status omitted">❌ Omitted</span>
-                                        </div>
-                                        <div class="field-row">
-                                             <span class="field-name">CancelAfter</span>
-                                             <span class="field-status required">✅ Required</span>
-                                        </div>
-                                   </div>
-                              </div>
-                         </div>
-
-                         <div class="important-notes">
-                              <h5>📝 Important Notes:</h5>
-                              <ul>
-                                   <li><strong>FinishAfter</strong> must be <strong>before</strong> CancelAfter if both are present</li>
-                                   <li><strong>CancelAfter</strong> is mandatory for token escrows and conditional escrows</li>
-                                   <li>All times are in <strong>seconds since the Ripple Epoch</strong> (2017-01-01T00:00:00Z)</li>
-                                   <li class="warning">❌ Escrows with neither FinishAfter nor Condition are <strong>not allowed</strong> (invalid since June 2018)</li>
-                              </ul>
-                         </div>
-                    </div>
-
                     <!-- Finish Time -->
                     <div class="form-row">
                          <div class="form-group">
                               <div class="switch-group">
                                    <label class="switch">
-                                        <input type="checkbox" id="setFinishAfterExpiration" [checked]="txUiService.enableEscrowFinishAfterExpirationDate()" (change)="toggleEscrowFinishAfteExpiration($event.target.checked)" />
+                                        <input type="checkbox" id="setFinishAfterExpiration" [disabled]="true" [checked]="txUiService.enableEscrowFinishAfterExpirationDate()" />
                                         <span class="slider"></span> Set Escrow Finish After Time
                                    </label>
                               </div>
@@ -289,7 +221,7 @@
                          <div class="form-group">
                               <!-- Date picker + buttons appear only when checked -->
                               @if (txUiService.enableEscrowFinishAfterExpirationDate()) {
-                              <p class="form-hint" style="padding-left: 0.08rem">The time, in seconds since the Ripple Epoch, when the escrowed value can be released to the recipient. <span class="flag-desc">(Required for Time based escrow)</span></p>
+                              <p class="form-hint" style="padding-left: 0.08rem">The time, in seconds since the Ripple Epoch, when the escrowed value can be released to the recipient.</p>
                               <div class="expiration-input-group">
                                    <input type="datetime-local" [ngModel]="txUiService.escrowFinishTimeField()" name="escrowFinishExpirationDate" step="1" (focus)="setEscrowFinishAfterExpirationToNow()" class="expiration-input" />
 
@@ -392,6 +324,72 @@
                     </div>
                     <app-transaction-preview></app-transaction-preview>
                </form>
+          </div>
+
+          <!-- New: Right panel for info/tips -->
+          <div class="requirements-info">
+               <div class="info-header">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                    <h3>Time-Based Escrow Requirements</h3>
+               </div>
+
+               <p class="info-subtitle">Time based Escrows lock XRP, or an IOU, until a specified time.</p>
+
+               <div class="combinations-grid">
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">⏱️ Unlock Only</span>
+                              <span class="badge optional-badge">No Expiration</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">FinishAfter</span>
+                                   <span class="field-status required">✅ Required</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">CancelAfter</span>
+                                   <span class="field-status omitted">❌ Optional</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">⏱️ Unlock + Expiration</span>
+                              <span class="badge required-badge">With Cancel Time</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">FinishAfter</span>
+                                   <span class="field-status required">✅ Required</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">CancelAfter</span>
+                                   <span class="field-status optional">➕ Optional</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="important-notes">
+                         <h5>📝 Important Notes:</h5>
+                         <ul>
+                              <li><strong>FinishAfter is required</strong> for time-based escrows.</li>
+                              <li>If CancelAfter is provided, <strong>FinishAfter must be earlier than CancelAfter</strong>.</li>
+                              <li>Each escrow increases your account’s <strong>owner reserve</strong> until it is finished or canceled.</li>
+                         </ul>
+                         <p></p>
+                         <h5 class="warning-title">⚠️ No Cancel Option (Irreversible Escrow)</h5>
+                         <p style="color: #92400e">If the escrow does <strong>not</strong> include a CancelAfter time.</p>
+                         <ul>
+                              <li>The escrow <strong>can never be canceled</strong> by the sender.</li>
+                              <li>Funds will remain locked until the escrow is finished.</li>
+                              <li>
+                                   If the destination cannot or does not finish the escrow, <br />
+                                   the XRP may remain locked permanently.
+                              </li>
+                         </ul>
+                    </div>
+               </div>
           </div>
      </div>
 </div>

@@ -184,7 +184,7 @@
                     </div>
 
                     @if (txUiService.wantsOptions()) {
-                    <app-transaction-options-section></app-transaction-options-section>
+                    <app-transaction-options-section [activeTab]="activeTab()"></app-transaction-options-section>
                     }
 
                     <!-- Expiration (create only) -->
@@ -306,6 +306,90 @@
                     </div>
                     <app-transaction-preview></app-transaction-preview>
                </form>
+          </div>
+
+          <div class="requirements-info">
+               <div class="info-header">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                    <h3>Check Requirements</h3>
+               </div>
+
+               <p class="info-subtitle">
+                    XRPL Checks allow a sender to authorize a future payment that the recipient must actively<br />
+                    claim.
+               </p>
+
+               <div class="combinations-grid">
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge primary-badge">📝 Create Check</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">Destination</span>
+                                   <span class="field-status required">✅ Required</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">SendMax</span>
+                                   <span class="field-status required">✅ Required</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Expiration</span>
+                                   <span class="field-status optional">➕ Optional</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge success-badge">💰 Cash Check</span>
+                         </div>
+
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">CheckID</span>
+                                   <span class="field-status required">✅ Required</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Amount OR DeliverMin</span>
+                                   <span class="field-status required">✅ One Required</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge danger-badge">❌ Cancel Check</span>
+                         </div>
+
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">CheckID</span>
+                                   <span class="field-status required">✅ Required</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="important-notes">
+                         <h5>📝 Important Notes:</h5>
+                         <ul>
+                              <li>A Check does <strong>not</strong> move funds until it is cashed.</li>
+                              <li>Funds remain in the sender’s account until<br />the Check is cashed.</li>
+                              <li>
+                                   The sender must have sufficient balance<br />
+                                   at the time of cashing.
+                              </li>
+                              <li>
+                                   If Expiration is set, the Check cannot<br />
+                                   be cashed after that time.
+                              </li>
+                              <li>
+                                   Each Check object increases the sender’s<br />
+                                   <strong>owner reserve</strong> until it is cashed or canceled.
+                              </li>
+                         </ul>
+                    </div>
+               </div>
           </div>
      </div>
 </div>

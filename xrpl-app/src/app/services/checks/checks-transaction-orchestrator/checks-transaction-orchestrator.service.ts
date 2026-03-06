@@ -8,9 +8,9 @@ import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction
 import { UtilsService } from '../../util-service/utils.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
-import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
 import { CheckUtilService } from '../check-util/check-util.service';
 import { CheckTxType } from '../../../models/interface-items.model';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
 interface CheckTxConfig {
      wallet: Wallet;

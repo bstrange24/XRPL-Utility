@@ -3,8 +3,52 @@
      <router-outlet></router-outlet>
 </div>
 
+<!-- <div class="toast-container">
+     <div class="toast-stack">
+          @for (toast of toastService.toasts(); track toast.id) {
+          <div class="toast" [ngClass]="toast.type" [@toastAnimation] (click)="toastService.removeToast(toast.id)">
+               @if(toast.type === 'success') {
+               <ng-icon name="heroCheckCircle" size="20" class="text-red-600"></ng-icon>
+               } @else if(toast.type === 'error') {
+               <ng-icon name="heroXCircle" size="20" class="text-red-600"></ng-icon>
+               }
+
+               <div class="message" [innerHTML]="toast.message"></div>
+
+               <button class="close" (click)=" $event.stopPropagation(); toastService.removeToast(toast.id);">×</button>
+          </div>
+          }
+     </div>
+</div> -->
+
+<div class="toast-container">
+     <div class="toast-stack">
+          @for (toast of toastService.toasts(); track toast.id) {
+
+          <div class="toast" [ngClass]="toast.type" [@toastAnimation] (click)="toastService.removeToast(toast.id)">
+               <div class="toast-icon">
+                    @if(toast.type === 'success') {
+                    <ng-icon name="heroCheckCircle"></ng-icon>
+                    } @if(toast.type === 'error') {
+                    <ng-icon name="heroXCircle"></ng-icon>
+                    } @if(toast.type === 'info') {
+                    <ng-icon name="heroInformationCircle"></ng-icon>
+                    } @if(toast.type === 'warn') {
+                    <ng-icon name="heroExclamationTriangle"></ng-icon>
+                    }
+               </div>
+
+               <div class="toast-message" [innerHTML]="toast.message"></div>
+
+               <button class="toast-close" (click)="$event.stopPropagation(); toastService.removeToast(toast.id)">×</button>
+          </div>
+
+          }
+     </div>
+</div>
+
 <!-- TOAST CONTAINER – put this as the VERY LAST thing in app.component.html -->
-<div class="fixed inset-0 pointer-events-none z-[9999]">
+<!-- <div class="fixed inset-0 pointer-events-none z-[9999]">
      <div class="toast-wrap">
           <div class="toast-stack">
                @for (toast of toastService.toasts(); track toast.id) {
@@ -22,4 +66,4 @@
                }
           </div>
      </div>
-</div>
+</div> -->

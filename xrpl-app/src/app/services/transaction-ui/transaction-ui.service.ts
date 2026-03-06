@@ -136,9 +136,9 @@ export class TransactionUiService {
      transferRate = signal<string>('');
      isMessageKey = signal<boolean>(false);
      domain = signal<string>('');
-     avatarUrl = signal<string>('');
-     userEmail = signal<string>('');
      url = signal<string>('');
+     totalFlagsValue = signal<number>(0);
+     totalFlagsHex = signal<string>('0x0');
 
      // Escrows
      escrowFinishTimeField = signal<string>('');
@@ -327,8 +327,10 @@ export class TransactionUiService {
 
      private _safeInfo: SafeHtml = '';
      private _safeWarning: SafeHtml = '';
+     private _safeError: SafeHtml = '';
      private _infoMessage: string | null = null;
-     private _warningMessage: string | null = null;
+     public _warningMessage: string | null = null;
+     private _errorMessage: string | null = null;
      successMessage: string | null = null;
 
      errorMessage: string | null = null;
@@ -413,9 +415,15 @@ export class TransactionUiService {
           this._safeWarning = msg ? this.allowOnly(['code', 'strong', 'b', 'em', 'br', 'a', 'ul', 'li'], msg) : '';
      }
 
+     setSafeError(msg: string | null) {
+          this._errorMessage = msg;
+          this._safeError = msg ? this.allowOnly(['code', 'strong', 'b', 'em', 'br', 'a', 'ul', 'li'], msg) : '';
+     }
+
      get safeInfo(): SafeHtml {
           return this._safeInfo;
      }
+
      get safeWarning(): SafeHtml {
           return this._safeWarning;
      }
@@ -793,11 +801,9 @@ export class TransactionUiService {
           this.transferRate.set('');
           this.isMessageKey.set(false);
           this.domain.set('');
-          this.avatarUrl.set('');
-          this.userEmail.set('');
           this.memoField.set('');
-          this.regularKeyAddress.set('');
-          this.regularKeySeed.set('');
+          // this.regularKeyAddress.set('');
+          // this.regularKeySeed.set('');
           this.selectedSingleTicket.set('');
           this.wantsOptions.set(false);
           this.escrowFinishTimeField.set('');

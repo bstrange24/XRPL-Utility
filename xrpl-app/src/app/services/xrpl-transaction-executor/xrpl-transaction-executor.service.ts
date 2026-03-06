@@ -24,7 +24,12 @@ export class XrplTransactionExecutorService {
           private readonly xrplService: XrplService
      ) {}
 
-     async execute<T extends xrpl.Transaction>(client: xrpl.Client, wallet: xrpl.Wallet, tx: T, options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; regularKeyAddress?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean; paymentType?: string; amount?: any; destination?: string; submitAndWait?: boolean }): Promise<{ success: true; hash: string } | { success: false; error: string }> {
+     async execute<T extends xrpl.Transaction>(
+          client: xrpl.Client,
+          wallet: xrpl.Wallet,
+          tx: T,
+          options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; regularKeyAddress?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean; paymentType?: string; amount?: any; destination?: string; submitAndWait?: boolean }
+     ): Promise<{ success: true; hash: string } | { success: false; hash: string; error: string }> {
           const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', regularKeyAddress = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false, paymentType = 'XRP', amount = '0', destination = '', submitAndWait = false } = options;
 
           if (!this.txUiService.isSimulateEnabled()) this.txUiService.currentStep.set('preparing');
@@ -35,12 +40,12 @@ export class XrplTransactionExecutorService {
           // 2. Balance check
           if (paymentType === 'XRP') {
                if (this.utilsService.isInsufficientXrpBalance1(serverInfo, accountInfo, amount, wallet.classicAddress, tx, fee)) {
-                    return { success: false, error: insufficientXrpMessage };
+                    return { success: false, hash: '', error: insufficientXrpMessage };
                }
           } else if (paymentType === 'IOU') {
                const accountLines = await this.xrplCache.getAccountLines(client, wallet.classicAddress, false);
                if (this.utilsService.isInsufficientIouTrustlineBalance(accountLines, tx, destination)) {
-                    return { success: false, error: 'Insufficent IOU balance for this transaction' };
+                    return { success: false, hash: '', error: 'Insufficent IOU balance for this transaction' };
                }
           }
 
@@ -62,7 +67,7 @@ export class XrplTransactionExecutorService {
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, tx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, useMultiSign, multiSignAddress, multiSignSeeds);
 
                     if (!signedTx) {
-                         return { success: false, error: 'Failed to sign transaction.' };
+                         return { success: false, hash: '', error: 'Failed to sign transaction.' };
                     }
 
                     if (submitAndWait) {
@@ -82,7 +87,9 @@ export class XrplTransactionExecutorService {
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
-                    const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
+                    // const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
+                    const userMessage = '\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
+                    const hash = response.result.tx_json.hash ?? response.result.tx_json.hash ?? 'unknown';
 
                     console.error(`Transaction ${this.txUiService.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
 
@@ -97,7 +104,7 @@ export class XrplTransactionExecutorService {
                     // Show error panel/toast
                     this.txUiService.setError(userMessage);
 
-                    return { success: false, error: userMessage };
+                    return { success: false, error: userMessage, hash: hash };
                }
 
                // Success for multi-tx: Show multi-tx success message without hash, then add hash signals for each individual tx
@@ -118,7 +125,7 @@ export class XrplTransactionExecutorService {
           } catch (err: any) {
                const msg = err.message || 'Unknown error during transaction';
                this.txUiService.setError(msg);
-               return { success: false, error: msg };
+               return { success: false, hash: '', error: msg };
           } finally {
                // Only hide spinner if not suppressed (let parent control it)
                if (!suppressIndividualFeedback) {
@@ -1018,6 +1025,27 @@ export class XrplTransactionExecutorService {
           return this.execute(client, wallet, tx, {
                simulateMessage: 'Simulating Firewall delete (no changes will be made)...',
                submitMessage: 'Deleteing Firewall on the XRP Ledger...',
+               amount: '0',
+               ...options, // ← Merge in the passed options (useMultiSign, etc.)
+          });
+     }
+
+     async updateAccountFlags(
+          tx: xrpl.AccountSet,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
+               regularKeySeed?: string;
+          } = {} // ← Default empty object (optional)
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.execute(client, wallet, tx, {
+               simulateMessage: 'Simulating setting account flag (no changes will be made)...',
+               submitMessage: 'Setting account flag on the XRP Ledger...',
                amount: '0',
                ...options, // ← Merge in the passed options (useMultiSign, etc.)
           });

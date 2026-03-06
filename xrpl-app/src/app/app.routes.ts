@@ -19,7 +19,7 @@ import { AccountDelegateComponent } from './components/delegate/delegate.compone
 import { FirewallComponent } from './components/firewall/firewall.component';
 import { NftOffersComponent } from './components/nft-offers/nft-offers.component';
 import { SignTransactionsComponent } from './components/sign-transactions/sign-transactions.component';
-import { SendXrpModernComponent } from './components/send-xrp/send-xrp.component';
+import { SendXrpComponent } from './components/send-xrp/send-xrp.component';
 import { WalletConfiguratorComponent } from './components/wallet-configurator/wallet-configurator.component';
 import { SetHookComponent } from './components/set-hook/set-hook.component';
 
@@ -37,7 +37,7 @@ export const routes: Routes = [
      { path: 'firewall', component: FirewallComponent, data: { title: 'Firewall' } },
      { path: 'sign-transactions', component: SignTransactionsComponent, data: { title: 'Sign Transactions' } },
 
-     { path: 'send-xrp', component: SendXrpModernComponent, data: { title: 'Send XRP' } },
+     { path: 'send-xrp', component: SendXrpComponent, data: { title: 'Send XRP' } },
      { path: 'payment-channel', component: CreatePaymentChannelComponent, data: { title: 'Payment Channel' } },
      { path: 'time-escrow', component: CreateTimeEscrowComponent, data: { title: 'Time Escrow' } },
      { path: 'conditional-escrow', component: CreateConditionalEscrowComponent, data: { title: 'Conditional Escrow' } },

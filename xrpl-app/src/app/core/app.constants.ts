@@ -1,14 +1,5 @@
-// src/app/core/constants/app.constants.ts
-import { ECDSA } from 'xrpl';
+import { ECDSA, TrustSetFlags } from 'xrpl';
 import * as xrpl from 'xrpl';
-import { TrustSetFlags } from 'xrpl';
-
-interface DelegateAction {
-     id: number;
-     key: string;
-     txType: string;
-     description: string;
-}
 
 export const AppConstants = {
      // XRPL Network Settings
@@ -71,41 +62,9 @@ export const AppConstants = {
           SECP256K1: 'secp256k1' as ECDSA,
      },
 
-     // Transaction Results
      TRANSACTION: {
           TES_SUCCESS: 'tesSUCCESS',
      },
-
-     // ACCOUNT_SET_FLAGS: {
-     //      1: 'asfRequireDest',
-     //      2: 'asfRequireAuth',
-     //      3: 'asfDisallowXRP',
-     //      4: 'asfDisableMaster',
-     //      5: 'asfAccountTxnID',
-     //      6: 'asfNoFreeze',
-     //      7: 'asfGlobalFreeze',
-     //      8: 'asfDefaultRipple',
-     //      9: 'asfDepositAuth',
-     //      10: 'asfAuthorizedNFTokenMinter',
-     //      12: 'asfDisallowIncomingNFTokenOffer',
-     //      13: 'asfDisallowIncomingCheck',
-     //      14: 'asfDisallowIncomingPayChan',
-     //      15: 'asfDisallowIncomingTrustline',
-     //      16: 'asfAllowTrustLineClawback',
-     //      17: 'asfAllowTrustLineLocking',
-     // },
-
-     // ACCOUNT_ROOT_FLAGS: {
-     //      0x00010000: 'Regular Key Set',
-     //      0x00020000: 'Require Destination Tag',
-     //      0x00040000: 'Require Authorization',
-     //      0x00080000: 'Disallow Incoming XRP',
-     //      0x00100000: 'DisableMaster Key',
-     //      0x00200000: 'No Freeze',
-     //      0x00400000: 'Global Freeze',
-     //      0x00800000: 'Default Ripple',
-     //      0x01000000: 'Deposit Auth',
-     // },
 
      // Payment tx flags
      PAYMENT_FLAGS: {
@@ -113,15 +72,12 @@ export const AppConstants = {
           0x00020000: 'tfPartialPayment',
           0x00040000: 'tfLimitQuality',
      },
-
      OFFER_CREATE_FLAGS: {
           0x00010000: 'tfPassive',
           0x00020000: 'tfImmediateOrCancel',
           0x00040000: 'tfFillOrKill',
           0x00080000: 'tfSell',
      },
-
-     // OfferCancel has no flags (just included for structure)
 
      // TrustSet tx flags
      TRUST_SET_FLAGS: {
@@ -131,7 +87,6 @@ export const AppConstants = {
           0x00080000: 'tfSetFreeze',
           0x00100000: 'tfClearFreeze',
      },
-
      RIPPLE_STATE_FLAGS: {
           0x00010000: 'lsfLowReserve',
           0x00020000: 'lsfHighReserve',
@@ -146,7 +101,6 @@ export const AppConstants = {
           0x00020000: 'tfFinishAfter',
           0x00040000: 'tfCancelAfter',
      },
-
      NFT_FLAGS: {
           Burnable: 1,
           OnlyXRP: 2,
@@ -154,20 +108,15 @@ export const AppConstants = {
           Transferable: 8,
           Mutable: 16,
      },
-
      TF_INNER_BATCH_TXN: {
           BATCH_TXN: 1073741824, // 262144 in decimal
      },
-
      BATCH_FLAGS: {
           ALL_OR_NOTHING: 65536,
           ONLY_ONE: 131072,
           UNTIL_FAILURE: 262144,
           INDEPENDENT: 524288,
      },
-
-     // You can extend with CheckCash, AMM, etc.
-
      ACCOUNT_FLAGS_CONFIG: [
           {
                key: 'asfRequireDest',
@@ -301,8 +250,6 @@ export const AppConstants = {
           { id: 65548, key: 'MPTokenIssuanceUnlock', txType: 'MPToken Issuance Unlock', description: 'Can unlock balances of a particular MPT.' },
      ],
 
-     // NESTED_FIELDS: ['SetFlag', 'ClearFlag'],
-
      BLACK_LISTED_MEMES: ['USD', 'EUR', 'GBP', 'JPY', 'BTC', 'ETH', 'XRP', 'CNY', 'USDT', 'USDC', 'DAI', '666', 'GRD', 'coreum905c098732', 'RLUSD', 'ETH', 'USDC.axl'],
 
      INPUT_IDS: [
@@ -340,15 +287,18 @@ export const AppConstants = {
           'knownIssuers',
      ],
 
+     TAB_ICON_SIZE: '20',
+     TAB_META_INFO_ICON_SIZE: '27',
      XRP_CURRENCY: 'XRP',
      EMPTY_STRING: '',
      LAST_LEDGER_ADD_TIME: 20,
+     SIGN_TX_LAST_LEDGER_ADD_TIME: 1000,
      MAX_FEE: '12',
      MIN_FEE: '10',
      MAX_ESCROW_FEE: '24',
      TOAST: {
-          SUCCESS: 4000,
-          ERROR: 4000,
+          SUCCESS: 400000,
+          ERROR: 400000,
           INFO: 4000,
      },
 

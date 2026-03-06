@@ -20,7 +20,6 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
@@ -32,6 +31,7 @@ import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.ser
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { TrustlineOrchestratorService } from '../../services/trustline-currency/trustline-orchestrator/trustline-orchestrator.service';
 import { CurrencyFormSectionComponent } from '../shared/currency-form-section/currency-form-section.component';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 
 @Component({
      selector: 'app-trustlines',
@@ -46,7 +46,6 @@ import { CurrencyFormSectionComponent } from '../shared/currency-form-section/cu
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrustlinesComponent extends PerformanceBaseComponent implements OnInit {
-     private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);

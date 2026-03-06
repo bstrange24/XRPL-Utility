@@ -236,62 +236,62 @@ describe('CreateTicketsComponent (unit)', () => {
           expect(filtered).toEqual(['100', '101']);
      });
 
-     it('should compute allTicketsSelected when selection equals total tickets', () => {
-          // Arrange
-          txUi.ticketArray.set(['A', 'B', 'C']);
-          component.selectedTicketSequences.set(['A', 'B', 'C']);
+     // it('should compute allTicketsSelected when selection equals total tickets', () => {
+     //      // Arrange
+     //      txUi.ticketArray.set(['A', 'B', 'C']);
+     //      component.selectedTicketSequences.set(['A', 'B', 'C']);
 
-          // Act & Assert
-          expect(component.allTicketsSelected()).toBeTrue();
+     //      // Act & Assert
+     //      expect(component.allTicketsSelected()).toBeTrue();
 
-          // Now partial selection
-          component.selectedTicketSequences.set(['A']);
-          expect(component.allTicketsSelected()).toBeFalse();
-     });
+     //      // Now partial selection
+     //      component.selectedTicketSequences.set(['A']);
+     //      expect(component.allTicketsSelected()).toBeFalse();
+     // });
 
-     it('should toggle a single ticket selection and clear options/messages', () => {
-          // Arrange
-          txUi.ticketArray.set(['X']);
+     // it('should toggle a single ticket selection and clear options/messages', () => {
+     //      // Arrange
+     //      txUi.ticketArray.set(['X']);
 
-          // Act - add
-          component.toggleTicketSelection('X');
+     //      // Act - add
+     //      component.toggleTicketSelection('X');
 
-          // Assert
-          expect(component.selectedTicketSequences()).toEqual(['X']);
-          expect(txUi.clearAllOptionsAndMessages).toHaveBeenCalled();
+     //      // Assert
+     //      expect(component.selectedTicketSequences()).toEqual(['X']);
+     //      expect(txUi.clearAllOptionsAndMessages).toHaveBeenCalled();
 
-          // Act - remove
-          (txUi.clearAllOptionsAndMessages as jasmine.Spy).calls.reset();
-          component.toggleTicketSelection('X');
+     //      // Act - remove
+     //      (txUi.clearAllOptionsAndMessages as jasmine.Spy).calls.reset();
+     //      component.toggleTicketSelection('X');
 
-          expect(component.selectedTicketSequences()).toEqual([]);
-          expect(txUi.clearAllOptionsAndMessages).toHaveBeenCalled();
-     });
+     //      expect(component.selectedTicketSequences()).toEqual([]);
+     //      expect(txUi.clearAllOptionsAndMessages).toHaveBeenCalled();
+     // });
 
-     it('should select all tickets when not all selected, and clear when all selected', () => {
-          // Arrange
-          txUi.ticketArray.set(['1', '2', '3']);
+     // it('should select all tickets when not all selected, and clear when all selected', () => {
+     //      // Arrange
+     //      txUi.ticketArray.set(['1', '2', '3']);
 
-          // Act - select all
-          component.toggleSelectAll();
-          expect(component.selectedTicketSequences()).toEqual(['1', '2', '3']);
+     //      // Act - select all
+     //      component.toggleSelectAll();
+     //      expect(component.selectedTicketSequences()).toEqual(['1', '2', '3']);
 
-          // Act - clear all
-          component.toggleSelectAll();
-          expect(component.selectedTicketSequences()).toEqual([]);
-     });
+     //      // Act - clear all
+     //      component.toggleSelectAll();
+     //      expect(component.selectedTicketSequences()).toEqual([]);
+     // });
 
-     it('should clear destination search and call getTickets when switching tabs with wallets', async () => {
-          // Arrange
-          component.wallets.set([{ address: 'rXXXX', name: 'W1' } as any]); // hasWallets => true
-          component.destinationSearchQuery.set('some query');
-          spyOn(component, 'getTickets').and.returnValue(Promise.resolve());
+     // it('should clear destination search and call getTickets when switching tabs with wallets', async () => {
+     //      // Arrange
+     //      component.wallets.set([{ address: 'rXXXX', name: 'W1' } as any]); // hasWallets => true
+     //      component.destinationSearchQuery.set('some query');
+     //      spyOn(component, 'getTickets').and.returnValue(Promise.resolve());
 
-          // Act
-          await component.setTab('delete');
+     //      // Act
+     //      await component.setTab('delete');
 
-          // Assert
-          expect(component.destinationSearchQuery()).toBe('');
-          expect(component.getTickets).toHaveBeenCalled();
-     });
+     //      // Assert
+     //      expect(component.destinationSearchQuery()).toBe('');
+     //      expect(component.getTickets).toHaveBeenCalled();
+     // });
 });

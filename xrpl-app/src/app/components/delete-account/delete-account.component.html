@@ -174,5 +174,81 @@
                     </div>
                </form>
           </div>
+
+          <div class="requirements-info">
+               <div class="info-header">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+                    <h3>Account Deletion (AccountDelete)</h3>
+               </div>
+
+               <p class="info-subtitle">AccountDelete permanently removes an XRPL account and all its owned objects from the ledger, returning any remaining XRP (after burning fees and reserves) to a specified destination address. Use this to clean up unused or test accounts and reclaim reserve XRP — but only when you're certain the account is no longer needed.</p>
+
+               <div class="combinations-grid">
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">🗑️ Delete Account</span>
+                              <span class="badge required-badge">AccountDelete Tx</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">Destination</span>
+                                   <span class="field-status required">✅ Required (funded r... address)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Amount</span>
+                                   <span class="field-status omitted">❌ Not specified (all remaining XRP sent)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Fee</span>
+                                   <span class="field-status required">✅ Must cover burn of at least owner reserve</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">🔒 Preconditions for Deletion</span>
+                              <span class="badge required-badge">Strict Requirements</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">No owned objects</span>
+                                   <span class="field-status required">✅ No trust lines, offers, escrows, checks, etc.</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Destination funded</span>
+                                   <span class="field-status required">✅ Must already exist and meet base reserve</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">XRP balance ≥ owner reserve + fee</span>
+                                   <span class="field-status required">✅ Enough to burn reserve + tx fee</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="important-notes">
+                         <h5>📝 Important Notes:</h5>
+                         <ul>
+                              <li>Requires the <strong>AccountDelete</strong> amendment (also known as fixRemoveAccountObjects or similar) to be enabled on the network.</li>
+                              <li>The transaction **burns** at least the account's owner reserve (~0.2 XRP per object + base) as part of the fee — this XRP is permanently destroyed, not sent to destination.</li>
+                              <li>All remaining XRP (after burning fee/reserve) is sent to the <strong>Destination</strong> address — no partial amounts; it's all or nothing.</li>
+                              <li>Before deletion succeeds, **all owned ledger objects** must be removed (trust lines, offers, payment channels, escrows, checks, signer lists, DID, credentials, MPT issuances/holds, etc.).</li>
+                              <li>The destination must be a funded account (already activated with base reserve) — many exchanges do **not** accept XRP from AccountDelete transactions.</li>
+                              <li>Once successful, the account address is **permanently removed** from the ledger — it can never be reused or recovered.</li>
+                         </ul>
+                         <p></p>
+                         <h5 class="warning-title">⚠️ Permanent & Irreversible Action</h5>
+                         <p style="color: #92400e">Account deletion is final — the account and all history tied to it are gone forever. Use extreme caution.</p>
+                         <ul>
+                              <li>There is **no undo** — once the transaction is included in a validated ledger, the account ceases to exist and cannot be recreated at the same address.</li>
+                              <li>If the destination is incorrect or unfunded/incompatible (e.g., exchange deposit address), your remaining XRP will be **permanently lost**.</li>
+                              <li>Many centralized services (exchanges, wallets) **do not support** receiving XRP from AccountDelete — confirm with the recipient first.</li>
+                              <li>Deleting an account with valuable objects (trust lines holding IOUs, escrows, etc.) is impossible until those are cleared — attempting without cleanup will fail (tec codes like tecOWNERS).</li>
+                              <li>Burned XRP (fee + reserves) is **permanently removed from circulation** — this contributes to XRP deflation but means you lose that amount forever.</li>
+                              <li>Always test the full cleanup + deletion sequence on devnet or Testnet first — mainnet mistakes are irreversible and costly.</li>
+                         </ul>
+                    </div>
+               </div>
+          </div>
      </div>
 </div>

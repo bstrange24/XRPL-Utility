@@ -1,44 +1,23 @@
-/* @media (min-width: 1000px) {
-     .content-wrapper {
-          grid-template-columns: 310px 1fr;
-     }
-
-     .account-changes-form-panel {
-          min-width: 1100px;
-          width: auto;
-     }
-} */
-
-/* .account-changes-form-panel {
-     flex: 1;
-     min-width: 0;
-     max-width: none;
-     padding: 20px;
-     box-sizing: border-box;
-     display: flex;
-     flex-direction: column;
-} */
-
 .account-changes-form-panel {
      display: flex !important;
      flex-direction: column;
      height: 100%;
-     padding: 20px;
+     /* padding: 20px; */
+     padding-left: 26px;
+     padding-right: 20px;
+     padding-top: 20px;
+     padding-bottom: 20px;
      box-sizing: border-box;
-}
-
-.date-filter-container {
-     display: flex;
-     align-items: center;
-     justify-content: flex-start;
-     gap: 12px;
+     max-width: 100%;
+     background: #fff;
+     border-radius: 10px;
+     box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
 }
 
 .clear-date-btn {
      align-self: flex-end;
      height: 36px;
      align-items: center;
-     justify-content: center;
 }
 
 .button-row-account-changes {
@@ -82,7 +61,6 @@
 
 .loading-more-container {
      display: flex;
-     justify-content: center;
      align-items: center;
      gap: 10px;
      margin: 12px 0;
@@ -220,7 +198,6 @@
      height: 18px;
      display: inline-flex;
      align-items: center;
-     justify-content: center;
      pointer-events: none;
      color: #777;
      font-size: 18px;
@@ -236,7 +213,6 @@
      height: 18px;
      display: inline-flex;
      align-items: center;
-     justify-content: center;
      cursor: pointer;
      color: #777;
      font-size: 18px;
@@ -251,7 +227,6 @@
 .clear-icon {
      display: flex;
      align-items: center;
-     justify-content: center;
      height: 36px;
 }
 
@@ -269,7 +244,7 @@
 
 .virtual-table-container {
      flex: 1;
-     min-height: 500px;
+     min-height: 1000px;
      max-height: 100%;
      border-radius: 12px;
      overflow: hidden;
@@ -282,21 +257,6 @@
      flex: 1;
      overflow-y: auto;
 }
-
-/* .virtual-table-container {
-     height: calc(100vh - 380px);
-     min-height: 500px;
-     border-radius: 12px;
-     overflow: hidden;
-     display: flex;
-     flex-direction: column;
-     background: #fff;
-}
-
-.viewport {
-     flex: 1;
-     overflow-y: auto;
-} */
 
 .row {
      display: flex;
@@ -357,34 +317,17 @@
 
 .col.type {
      flex: 1.5;
-     /* Give it more space than other columns */
      min-width: 140px;
-     /* Prevent it from shrinking too much */
      white-space: normal;
-     /* Allow text wrapping */
      word-break: break-word;
-     /* Break long words if needed */
      line-height: 1.4;
-     /* Better readability when wrapped */
      padding: 8px 12px;
-     /* Extra padding for wrapped text */
      font-weight: 600;
 }
-
-/* .col.type {
-     flex: 1.1;
-     font-weight: 600;
-} */
 
 .col.change {
      flex: 1;
 }
-
-/* .col.change {
-     flex: 1.2;
-     text-align: right;
-     font-weight: 700;
-} */
 
 .col.fees {
      flex: 1.1;
@@ -400,7 +343,6 @@
 
 .table-header .col {
      display: flex;
-     justify-content: normal;
      color: white;
      font-size: 13px;
 }
@@ -467,33 +409,20 @@
      contain: none;
 }
 
-
 .main-container {
      display: flex;
      flex-direction: column;
+     max-width: 1800px;
+     min-width: 1650px;
 }
 
-.info-panel {
-     background-color: #ebf8ff;
-     border: 1px solid #7dd3fc;
-     border-radius: 8px;
-     padding: 12px 16px;
-     margin: 16px 0;
-     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.info-panel-content {
-     display: flex;
-     align-items: flex-start;
-     gap: 12px;
-}
 
 .info-icon {
      flex-shrink: 0;
      margin-top: 2px;
 }
 
-.info-text {
+/* .info-text {
      flex: 1;
      font-size: 14px;
      line-height: 1.5;
@@ -510,4 +439,28 @@
      border-radius: 4px;
      font-family: 'Courier New', monospace;
      font-size: 13px;
+} */
+
+.content-wrapper-balance-change {
+     background-color: #fff;
+     /* color: black; */
+     color: #0c4a6e;
+     border-radius: 6px;
+     font-size: 0.9rem;
+     display: flex;
+     gap: 1.75rem;
+     padding-top: 8px;
+}
+
+@media (min-width: 1650px) {
+     .content-wrapper-balance-change {
+          flex-direction: row;
+          gap: 2rem;
+          justify-content: space-between;
+     }
+
+     .account-changes-form-panel {
+          flex: 1 1 0;
+          min-width: 0;
+     }
 }

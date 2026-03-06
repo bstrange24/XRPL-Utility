@@ -65,9 +65,12 @@ export class ValidationService {
           if (rule.requiredFields) {
                for (const field of rule.requiredFields) {
                     const value = this.getValueByPath(context.inputs, field);
-
                     if (value === undefined || value === null || value === '') {
-                         errors.push(`${this.capitalize(field.split('.')[1])} is required`);
+                         if (this.capitalize(field.split('.')[1]) === 'Nf Token Minter Address') {
+                              errors.push(`NFT Minter Address is required`);
+                         } else {
+                              errors.push(`${this.capitalize(field.split('.')[1])} is required`);
+                         }
                     }
                }
           }
@@ -352,6 +355,9 @@ export class ValidationService {
                } else if (action === 'issueCurrency' || action === 'clawbackTokens' || action === 'setTrustline') {
                     value = ctx.inputs[action]?.trustlineLimitField;
                     field = 'Trustline Limit';
+               } else if (action === 'modifyMultiSigners') {
+                    value = ctx.inputs[action]?.signerQuorum;
+                    field = 'Signer Quorum';
                } else {
                     value = ctx.inputs[action]?.amount;
                     field = 'Amount';
@@ -1323,14 +1329,6 @@ export class ValidationService {
                     this.walletCredentialRequired(),
                     this.positiveAmount('amount'),
 
-                    // ctx => {
-                    //      if (ctx.inputs['seed']) {
-                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
-
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Destination address valid
@@ -1360,16 +1358,9 @@ export class ValidationService {
                requiredFields: [], // adjust as needed
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
 
@@ -1383,8 +1374,8 @@ export class ValidationService {
                     this.multiSign(),
 
                     ctx => {
-                         if (ctx.inputs['setFlags']) {
-                              if (ctx.inputs['setFlags'].includes(6) && ctx.inputs['setFlags'].includes(7)) {
+                         if (ctx.inputs['modifyAccountFlags']['setFlags']) {
+                              if (ctx.inputs['modifyAccountFlags']['setFlags'].includes(6) && ctx.inputs['modifyAccountFlags']['setFlags'].includes(7)) {
                                    return 'NoFreeze and GlobalFreeze cannot be enabled at the same time.';
                               }
                          }
@@ -1392,7 +1383,7 @@ export class ValidationService {
                     },
 
                     ctx => {
-                         if (ctx.inputs['setFlags'].length === 0 && ctx.inputs['clearFlags'].length === 0) {
+                         if (ctx.inputs['modifyAccountFlags']['setFlags'].length === 0 && ctx.inputs['modifyAccountFlags']['clearFlags'].length === 0) {
                               return 'Set Flags and Clear Flags length is 0. No flags selected for update.';
                          }
                          return null;
@@ -1406,14 +1397,6 @@ export class ValidationService {
                requiredFields: [], // adjust as needed
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1451,15 +1434,6 @@ export class ValidationService {
                          return null;
                     },
 
-                    ctx => {
-                         if (this.txUiService.userEmail()) {
-                              if (!this.utilsService.isValidEmail(this.txUiService.userEmail())) {
-                                   return 'Invalid email address.';
-                              }
-                         }
-                         return null;
-                    },
-
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
 
@@ -1477,34 +1451,26 @@ export class ValidationService {
           // SetDepositAuthAccounts Actions
           this.registerRule({
                transactionType: 'SetDepositAuthAccounts',
-               requiredFields: [], // adjust as needed
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    ctx => {
-                         // Validate each address
-                         for (const authorizedAddress of ctx.inputs['formattedDepsositAuthEntries']) {
-                              // Check for existing preauthorization
-                              const alreadyAuthorized = ctx.inputs['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.SignerEntry.Account);
-                              if (ctx.inputs['authorizeFlag'] === 'Y' && alreadyAuthorized) {
-                                   return `Preauthorization already exists for ${authorizedAddress.SignerEntry.Account} (tecDUPLICATE). Use Unauthorize to remove.`;
-                              }
-                              if (ctx.inputs['authorizeFlag'] === 'N' && !alreadyAuthorized) {
-                                   return `No preauthorization exists for ${authorizedAddress.SignerEntry.Account}`;
-                              }
-                         }
-                         return null;
-                    },
+                    // ctx => {
+                    //      // Validate each address
+                    //      for (const authorizedAddress of ctx.inputs['modifyDepositAuth'].depsositAuthEntries) {
+                    //           // Check for existing preauthorization
+                    //           const alreadyAuthorized = ctx.inputs['network']['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.Account);
+                    //           if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'Y' && alreadyAuthorized) {
+                    //                return `Preauthorization already exists for ${authorizedAddress.Account} (tecDUPLICATE).\nUse Unauthorize to remove.`;
+                    //           }
+                    //           if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'N' && !alreadyAuthorized) {
+                    //                return `No preauthorization exists for ${authorizedAddress.Account}`;
+                    //           }
+                    //      }
+                    //      return null;
+                    // },
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1523,19 +1489,30 @@ export class ValidationService {
           // SetMultiSign Actions
           this.registerRule({
                transactionType: 'SetMultiSign',
-               requiredFields: [], // adjust as needed
+               requiredFields: ['modifyMultiSigners.formattedSignerEntries', 'modifyMultiSigners.signerQuorum'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    ctx => {
+                         // Validate each address
+                         if (ctx.inputs['modifyMultiSigners']['formattedSignerEntries'].length < 1) {
+                              return `Multi signers list cannot be empty.`;
+                         }
+
+                         for (const authorizedAddress of ctx.inputs['modifyDepositAuth'].depsositAuthEntries) {
+                              // Check for existing preauthorization
+                              const alreadyAuthorized = ctx.inputs['network']['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.Account);
+                              if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'Y' && alreadyAuthorized) {
+                                   return `Preauthorization already exists for ${authorizedAddress.Account} (tecDUPLICATE).\nUse Unauthorize to remove.`;
+                              }
+                              if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'N' && !alreadyAuthorized) {
+                                   return `No preauthorization exists for ${authorizedAddress.Account}`;
+                              }
+                         }
+                         return null;
+                    },
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1557,14 +1534,6 @@ export class ValidationService {
                requiredFields: [], // adjust as needed
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1592,17 +1561,9 @@ export class ValidationService {
           // SetNftMinterAddress Actions
           this.registerRule({
                transactionType: 'SetNftMinterAddress',
-               requiredFields: [], // adjust as needed
+               requiredFields: ['modifyMetaData.nfTokenMinterAddress'], // adjust as needed
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1626,14 +1587,6 @@ export class ValidationService {
                requiredFields: ['setTrustline.trustlineLimitField', 'setTrustline.currencyCode', 'setTrustline.currencyIssuer'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1659,14 +1612,6 @@ export class ValidationService {
                requiredFields: ['removeTrustline.trustlineLimitField', 'removeTrustline.currencyCode', 'removeTrustline.currencyIssuer'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 

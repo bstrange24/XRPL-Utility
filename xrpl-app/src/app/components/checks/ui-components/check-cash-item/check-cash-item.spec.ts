@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { CheckCreateItemComponent } from './check-cash-item.component';
+import { CheckCreateItemComponent } from '../check-create-item/check-create-item.component';
 
 describe('CheckCreateItemComponent', () => {
      let component: CheckCreateItemComponent;

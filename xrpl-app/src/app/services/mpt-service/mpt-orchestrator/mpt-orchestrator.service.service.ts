@@ -1,7 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
-import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
 import { ToastService } from '../../toast/toast.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
@@ -13,6 +12,7 @@ import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction
 import { AppConstants } from '../../../core/app.constants';
 import { MptUtilService } from '../mpt-util/mpt-util.service';
 import { MPTAmount } from '../../../models/interface-items.model';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
 type MptTxType = 'create' | 'authorize' | 'unauthorize' | 'send' | 'lock' | 'unlock' | 'clawback' | 'destroy';
 

@@ -24,9 +24,9 @@ import { AppConstants } from '../../core/app.constants';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 
 interface XRPLPermissionEntry {
      Permission: {

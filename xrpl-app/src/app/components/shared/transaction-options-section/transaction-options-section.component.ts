@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
+import { UtilsService } from '../../../services/util-service/utils.service';
 
 @Component({
      selector: 'app-transaction-options-section',
@@ -12,4 +13,7 @@ import { TransactionUiService } from '../../../services/transaction-ui/transacti
 })
 export class TransactionOptionsSectionComponent {
      public readonly txUiService = inject(TransactionUiService);
+     public readonly utilsService = inject(UtilsService);
+
+     activeTab = input.required<'sendXrp' | 'create' | 'cash' | 'cancel'>();
 }

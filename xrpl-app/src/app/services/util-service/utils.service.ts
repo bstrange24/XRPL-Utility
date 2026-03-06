@@ -1153,6 +1153,7 @@ export class UtilsService {
                const isRegularKeyAddress = true;
                return { regularKeyAddress, regularKeySeed, isRegularKeyAddress };
           }
+          this.storageService.removeValue(`${account}regularKeySeed`);
      }
 
      validateQuorum(signers: any, signerQuorum: any) {
@@ -1170,12 +1171,6 @@ export class UtilsService {
           return null;
      }
 
-     // async toggleUseMultiSign(multiSignAddress: string, multiSignSeeds: string) {
-     //      if (this.multiSignAddress === 'No Multi-Sign address configured for account') {
-     //           this.multiSignSeeds = '';
-     //      }
-     // }
-
      onTicketToggle(event: any, ticket: string, selectedTickets: any) {
           if (event.target.checked) {
                selectedTickets = [...selectedTickets, ticket];
@@ -1187,22 +1182,14 @@ export class UtilsService {
 
      async toggleMultiSign(useMultiSign: boolean, signers: any, walletClassicAddress: string) {
           try {
-               if (!useMultiSign) {
-                    this.clearSignerList(signers);
-               } else {
+               if (useMultiSign) {
                     this.loadSignerList(walletClassicAddress, signers);
+               } else {
+                    this.clearSignerList(signers);
                }
           } catch (error: any) {
                throw new Error(`Error getting wallet in toggleMultiSign' ${error.message}`);
           }
-     }
-
-     cleanUpSingleSelection(selectedSingleTicket: any, ticketArray: any): string {
-          // Check if selected ticket still exists in available tickets
-          if (selectedSingleTicket && !ticketArray.includes(selectedSingleTicket)) {
-               return ''; // Reset to "Select a ticket"
-          }
-          return '';
      }
 
      cleanUpMultiSelection(selectedTickets: any, ticketArray: any) {
@@ -1704,57 +1691,57 @@ export class UtilsService {
           return Number.parseFloat(value.toFixed(8));
      }
 
-     sortByLedgerEntryType(response: any) {
-          if (!response || !response.result || !Array.isArray(response.result.account_objects)) {
-               return response; // nothing to sort
-          }
+     // sortByLedgerEntryType(response: any) {
+     //      if (!response?.result || !Array.isArray(response.result.account_objects)) {
+     //           return response; // nothing to sort
+     //      }
 
-          return {
-               ...response,
-               result: {
-                    ...response.result,
-                    account_objects: [...response.result.account_objects].sort((a, b) => {
-                         const typeA = a.LedgerEntryType || '';
-                         const typeB = b.LedgerEntryType || '';
-                         return typeA.localeCompare(typeB); // alphabetical
-                    }),
-               },
-          };
-     }
+     //      return {
+     //           ...response,
+     //           result: {
+     //                ...response.result,
+     //                account_objects: [...response.result.account_objects].sort((a, b) => {
+     //                     const typeA = a.LedgerEntryType || '';
+     //                     const typeB = b.LedgerEntryType || '';
+     //                     return typeA.localeCompare(typeB); // alphabetical
+     //                }),
+     //           },
+     //      };
+     // }
 
-     isValidEmail(email: string): boolean {
-          // Trim whitespace
-          const trimmedEmail = email.trim();
+     // isValidEmail(email: string): boolean {
+     //      // Trim whitespace
+     //      const trimmedEmail = email.trim();
 
-          // Basic length and empty check
-          if (trimmedEmail.length === 0 || trimmedEmail.length > 254) {
-               return false;
-          }
+     //      // Basic length and empty check
+     //      if (trimmedEmail.length === 0 || trimmedEmail.length > 254) {
+     //           return false;
+     //      }
 
-          // Regular expression for email validation
-          // This follows RFC 5322 closely but avoids overly permissive edge cases
-          const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/i;
+     //      // Regular expression for email validation
+     //      // This follows RFC 5322 closely but avoids overly permissive edge cases
+     //      const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/i;
 
-          if (!emailRegex.test(trimmedEmail)) {
-               return false;
-          }
+     //      if (!emailRegex.test(trimmedEmail)) {
+     //           return false;
+     //      }
 
-          // Additional checks to prevent common invalid patterns
-          const [localPart, domainPart] = trimmedEmail.split('@');
+     //      // Additional checks to prevent common invalid patterns
+     //      const [localPart, domainPart] = trimmedEmail.split('@');
 
-          // Local part should not exceed 64 characters
-          if (localPart.length > 64) {
-               return false;
-          }
+     //      // Local part should not exceed 64 characters
+     //      if (localPart.length > 64) {
+     //           return false;
+     //      }
 
-          // Domain part should have at least one dot and valid TLD
-          const domainLabels = domainPart.split('.');
-          if (domainLabels.some(label => label.length === 0 || label.length > 63)) {
-               return false;
-          }
+     //      // Domain part should have at least one dot and valid TLD
+     //      const domainLabels = domainPart.split('.');
+     //      if (domainLabels.some(label => label.length === 0 || label.length > 63)) {
+     //           return false;
+     //      }
 
-          return true;
-     }
+     //      return true;
+     // }
 
      adjustTextareaHeight(event: Event): void {
           const ta = event.target as HTMLTextAreaElement;
@@ -2175,9 +2162,9 @@ export class UtilsService {
           if (useTicket) {
                tx.TicketSequence = Number(ticketSequence);
                tx.Sequence = 0;
-          } else {
-               tx.Sequence = Number(ticketSequence);
+               return;
           }
+          tx.Sequence = Number(ticketSequence);
      }
 
      setMemoField(tx: any, memoField: string) {
@@ -2212,11 +2199,6 @@ export class UtilsService {
           tx.MessageKey = messageKey;
      }
 
-     setEmailHash(tx: any, email: string) {
-          const emailHash = md5(email.trim().toLowerCase()).toUpperCase();
-          tx.EmailHash = emailHash;
-     }
-
      setDomain(tx: any, domain: string) {
           if (domain === '') {
                tx.Domain = '';
@@ -2234,7 +2216,6 @@ export class UtilsService {
      }
 
      setTransferRate(tx: any, transferRate: number) {
-          // tx.TransferRate = this.getTransferRate(transferRate);
           tx.TransferRate = transferRate;
      }
 

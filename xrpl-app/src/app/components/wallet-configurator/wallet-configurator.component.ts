@@ -20,12 +20,12 @@ import { WalletGeneratorService } from '../../services/wallets/generator/wallet-
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import * as bip39 from 'bip39';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 
 @Component({
      selector: 'app-wallet-configurator',

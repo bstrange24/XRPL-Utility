@@ -4,10 +4,10 @@ import { Subject, from } from 'rxjs';
 import { debounceTime, exhaustMap } from 'rxjs/operators';
 import { UtilsService } from '../../util-service/utils.service';
 import { Wallet, WalletManagerService } from '../manager/wallet-manager.service';
-import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
 import { AppConstants } from '../../../core/app.constants';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { ToastService } from '../../toast/toast.service';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
 interface RefreshPayload {
      client: xrpl.Client;

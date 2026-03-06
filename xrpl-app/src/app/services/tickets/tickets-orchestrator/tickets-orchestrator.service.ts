@@ -9,7 +9,7 @@ import { ToastService } from '../../toast/toast.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { AppConstants } from '../../../core/app.constants';
-import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
 interface TicketConfig {
      wallet: Wallet;
@@ -37,10 +37,10 @@ interface TicketConfig {
 
 @Injectable({ providedIn: 'root' })
 export class TicketsOrchestratorService extends PerformanceBaseComponent {
-     private readonly txEnv = inject(TxEnvironmentService);
+     private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
-     private readonly toast = inject(ToastService);
+     private readonly toastService = inject(ToastService);
      private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
@@ -66,7 +66,7 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                          throw new Error('Pre-fetched environment missing required fields');
                     }
                } else {
-                    const envData = await this.txEnv.prepareTxEnvironment({
+                    const envData = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
                          includeFee: true,
@@ -134,7 +134,7 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
 
                if (isSimulate) {
                     this.txUiService.resetCurrentStepToIdle();
-                    this.toast.success(`Simulated creation of ${ticketCountField} ticket(s)`, AppConstants.TOAST.SUCCESS, false, txHash, this.txUiService.explorerUrl() + 'tx/');
+                    this.toastService.success(`Simulated creation of ${ticketCountField} ticket(s)`, AppConstants.TOAST.SUCCESS, false, txHash, this.txUiService.explorerUrl() + 'tx/');
                     return { success: true, hash: txHash };
                }
 
@@ -155,18 +155,9 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
           }
      }
 
-     async deleteTickets(config: TicketConfig): Promise<{
-          success: boolean;
-          deletedCount?: number;
-          deletedHashes?: { ticketSeq: string; hash: string }[];
-          error?: string;
-     }> {
+     async deleteTickets(config: TicketConfig): Promise<{ success: boolean; deletedCount?: number; deletedHashes?: { ticketSeq: string; hash: string }[]; error?: string }> {
           const { wallet, formValues, preFetchedEnv } = config;
-          const {
-               isSimulate = false,
-               useMultiSign = false,
-               ticketSequences = [], // ← pull it from formValues, with default []
-          } = formValues;
+          const { isSimulate = false, useMultiSign = false, ticketSequences = [] } = formValues;
 
           let client: xrpl.Client;
           let fee: string;
@@ -188,7 +179,7 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                     currentLedger = preFetchedEnv.currentLedger;
                     accountObjects = preFetchedEnv.accountObjects;
                } else {
-                    env = await this.txEnv.prepareTxEnvironment({
+                    env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
                          includeFee: true,
@@ -221,13 +212,13 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
 
                if (invalidTickets.length > 0) {
                     const list = invalidTickets.map((n: any) => `<code>${n}</code>`).join(', ');
-                    this.toast.info(`Some tickets not found and skipped: ${list}`, AppConstants.TOAST.INFO);
+                    this.toastService.info(`Some tickets not found and skipped: ${list}`, AppConstants.TOAST.INFO);
                }
 
                // 3. Show starting feedback
                if (!isSimulate) {
                     this.txUiService.currentStep.set('preparing');
-                    this.toast.info(`Deleting ${validTickets.length} ticket(s)...`, AppConstants.TOAST.INFO);
+                    this.toastService.info(`Deleting ${validTickets.length} ticket(s)...`, AppConstants.TOAST.INFO);
                }
 
                // 4. Execute deletions one by one (XRPL doesn't support batch delete in one tx)
@@ -249,7 +240,7 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                     });
 
                     if (!execResult.success) {
-                         this.toast.error(`Failed to delete ticket ${ticketSeq}: ${execResult.error || 'Unknown error'}`);
+                         this.toastService.error(`Failed to delete ticket ${ticketSeq}: ${execResult.error || 'Unknown error'}`);
                          continue;
                     }
 
@@ -262,7 +253,7 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                // 5. Handle simulation early exit
                if (isSimulate) {
                     const msg = `Simulated deletion of ${successCount} ticket(s) successfully!`;
-                    this.toast.successMultipleHashesWithTickets(msg, AppConstants.TOAST.SUCCESS, deletedResults, this.txUiService.explorerUrl() + 'tx/');
+                    this.toastService.success(msg, AppConstants.TOAST.SUCCESS);
                     return { success: true, deletedCount: successCount, deletedHashes: deletedResults };
                }
 
@@ -281,7 +272,7 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
 
                // 7. Final feedback
                const msg = `${successCount} ticket(s) deleted successfully!`;
-               this.toast.successMultipleHashesWithTickets(msg, AppConstants.TOAST.SUCCESS, deletedResults, this.txUiService.explorerUrl() + 'tx/');
+               this.toastService.successMultipleHashesWithTickets(msg, deletedResults, this.txUiService.explorerUrl() + 'tx/', AppConstants.TOAST.SUCCESS);
                this.txUiService.currentStep.set('success');
 
                return {

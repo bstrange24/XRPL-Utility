@@ -263,7 +263,10 @@
 
                                    <div class="form-group">
                                         <label for="channelId">Channel ID</label>
-                                        <p class="form-hint">The unique Channel ID of the channel as a 64-character hexadecimal string.</p>
+                                        <p class="form-hint">
+                                             The unique Channel ID of the channel as a <br />
+                                             64-character hexadecimal string.
+                                        </p>
                                         <input type="text" [(ngModel)]="txUiService.channelIDField" name="channelIDField" />
                                    </div>
                               </div>
@@ -320,10 +323,12 @@
                               @if (isCreatorMode()) {
                               <div class="creator-section">
                                    <div class="form-row">
-                                        <div class="info-panel" style="background: #f0f9ff; border: 1px solid #bae6fd; width: 100%; margin-top: 0px">
-                                             <div class="info-text">
-                                                  <strong>Channel Creator Mode</strong><br />
-                                                  Select one of your created channels, enter the amount to authorize, and generate a signature for the destination account to use.
+                                        <div class="info-and-channels-card">
+                                             <div class="summary-header">
+                                                  <div class="summary-text" style="display: inline-block">
+                                                       <strong>Channel Creator Mode</strong><br />
+                                                       Select one of your created channels, enter the amount to authorize, and generate a signature for the destination account to use.
+                                                  </div>
                                              </div>
                                         </div>
                                    </div>
@@ -490,8 +495,8 @@
                                    </div>
 
                                    @if (activeTab() === 'claim') {
-                                   <div class="flag-item" [class.enabled]="paymentChannelUtilService.flags.claimAndClose" (click)="paymentChannelUtilService.toggleFlag('claimAndClose')">
-                                        <div class="flag-header">
+                                   <button class="flag-item-account-flags" [class.enabled]="paymentChannelUtilService.flags.claimAndClose" (click)="paymentChannelUtilService.toggleFlag('claimAndClose')" type="button">
+                                        <div class="flag-header-account">
                                              <input type="checkbox" [checked]="paymentChannelUtilService.flags.claimAndClose" class="flag-checkbox" disabled />
                                              <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                   <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
@@ -504,13 +509,13 @@
                                              The channel will be closed after the claim.
                                              <strong>Only available when you are the channel creator/source.</strong>
                                         </div>
-                                   </div>
+                                   </button>
                                    }
 
                                    <!-- Renew flag -->
                                    @if (activeTab() === 'renew') {
-                                   <div class="flag-item" [class.disabled]="true" (click)="paymentChannelUtilService.toggleFlag('renew')">
-                                        <div class="flag-header">
+                                   <button class="flag-item-account-flags" [class.disabled]="true" (click)="paymentChannelUtilService.toggleFlag('renew')" type="button">
+                                        <div class="flag-header-account">
                                              <input type="checkbox" [checked]="true" class="flag-checkbox" disabled />
                                              <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                   <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
@@ -524,13 +529,13 @@
                                              Resets the channel expiration to (current ledger close time + settle delay).
                                              <strong>Only available when you are the channel creator/source.</strong>
                                         </div>
-                                   </div>
+                                   </button>
                                    }
 
                                    <!-- Close flag -->
                                    @if (activeTab() === 'close') {
-                                   <div class="flag-item" [class.disabled]="true" (click)="paymentChannelUtilService.toggleFlag('close')">
-                                        <div class="flag-header">
+                                   <button class="flag-item-account-flags" [class.disabled]="true" (click)="paymentChannelUtilService.toggleFlag('close')" type="button">
+                                        <div class="flag-header-account">
                                              <input type="checkbox" [checked]="true" class="flag-checkbox" disabled />
                                              <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                   <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
@@ -544,7 +549,7 @@
                                              The channel will be closed after the claim.
                                              <strong>Only available when you are the channel creator/source.</strong>
                                         </div>
-                                   </div>
+                                   </button>
                                    } @if (activeTab() !== 'close') {
                                    <div class="flags-total">
                                         <span class="total-label">Total Flags Value:</span>
@@ -580,6 +585,117 @@
                     </div>
                     <app-transaction-preview></app-transaction-preview>
                </form>
+          </div>
+
+          <div class="requirements-info" [class.collapsed]="isCollapsed">
+               <button class="btn-primary-blue" style="max-width: 100%" (click)="isCollapsed = !isCollapsed">
+                    <span [class.rotated]="isCollapsed">▼</span>
+                    Payment Channel Requirements
+               </button>
+
+               <div class="content">
+                    <!-- <div class="info-header">
+                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                         <h3>Payment Channel Requirements</h3>
+                    </div> -->
+
+                    <p class="info-subtitle">Payment Channels enable off-ledger XRP micropayments with on-ledger settlement.</p>
+
+                    <div class="combinations-grid">
+                         <!-- Create Channel -->
+                         <div class="combination-card">
+                              <div class="combination-header">
+                                   <span class="badge primary-badge">🔓 Create Channel</span>
+                              </div>
+
+                              <div class="combination-fields">
+                                   <div class="field-row">
+                                        <span class="field-name">Destination</span>
+                                        <span class="field-status required">✅ Required</span>
+                                   </div>
+                                   <div class="field-row">
+                                        <span class="field-name">Amount (XRP drops)</span>
+                                        <span class="field-status required">✅ Required</span>
+                                   </div>
+                                   <div class="field-row">
+                                        <span class="field-name">SettleDelay (seconds)</span>
+                                        <span class="field-status required">✅ Required</span>
+                                   </div>
+                                   <div class="field-row">
+                                        <span class="field-name">PublicKey</span>
+                                        <span class="field-status required">✅ Required</span>
+                                   </div>
+                                   <div class="field-row">
+                                        <span class="field-name">CancelAfter</span>
+                                        <span class="field-status optional">➕ Optional</span>
+                                   </div>
+                              </div>
+                         </div>
+
+                         <!-- Fund Channel -->
+                         <div class="combination-card">
+                              <div class="combination-header">
+                                   <span class="badge success-badge">➕ Fund Channel</span>
+                              </div>
+
+                              <div class="combination-fields">
+                                   <div class="field-row">
+                                        <span class="field-name">Channel ID</span>
+                                        <span class="field-status required">✅ Required</span>
+                                   </div>
+                                   <div class="field-row">
+                                        <span class="field-name">Amount (additional XRP)</span>
+                                        <span class="field-status required">✅ Required</span>
+                                   </div>
+                                   <div class="field-row">
+                                        <span class="field-name">Expiration</span>
+                                        <span class="field-status optional">➕ Optional</span>
+                                   </div>
+                              </div>
+                         </div>
+
+                         <!-- Claim / Close -->
+                         <div class="combination-card">
+                              <div class="combination-header">
+                                   <span class="badge warning-badge">💰 Claim / Close Channel</span>
+                              </div>
+
+                              <div class="combination-fields">
+                                   <div class="field-row">
+                                        <span class="field-name">Channel ID</span>
+                                        <span class="field-status required">✅ Required</span>
+                                   </div>
+                                   <div class="field-row">
+                                        <span class="field-name"
+                                             >Balance <br />
+                                             (total claimed amount)</span
+                                        >
+                                        <span class="field-status required">✅ Required </span>
+                                   </div>
+                                   <div class="field-row">
+                                        <span class="field-name">Signature + PublicKey</span>
+                                        <span class="field-status required"
+                                             >✅ Required <br />
+                                             (if claiming)</span
+                                        >
+                                   </div>
+                              </div>
+                         </div>
+
+                         <!-- Important Notes -->
+                         <div class="important-notes">
+                              <h5>📝 Important Notes:</h5>
+                              <ul>
+                                   <li>Payment Channels support <strong>XRP only</strong>.</li>
+                                   <li>Claims are cumulative — each claim must specify the <strong>total amount</strong> authorized so far.</li>
+                                   <li>The sender signs off-ledger claims; the destination submits them on-ledger.</li>
+                                   <li>SettleDelay defines how long the sender must wait after requesting closure.</li>
+                                   <li>If CancelAfter is set, the channel can be closed after that time regardless of SettleDelay.</li>
+                                   <li>Each Payment Channel increases the sender’s <strong>owner reserve</strong> while open.</li>
+                              </ul>
+                         </div>
+                    </div>
+               </div>
           </div>
      </div>
 </div>

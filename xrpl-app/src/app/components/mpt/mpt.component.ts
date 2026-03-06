@@ -19,12 +19,10 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { JsonEditorComponent } from '../json-editor/json-editor.component';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { CheckUtilService } from '../../services/checks/check-util/check-util.service';
@@ -33,9 +31,9 @@ import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.ser
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
-import { switchMap, from } from 'rxjs';
 import { MptOrchestratorServiceService } from '../../services/mpt-service/mpt-orchestrator/mpt-orchestrator.service.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 
 @Component({
      selector: 'app-mpt',

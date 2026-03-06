@@ -18,7 +18,6 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
@@ -29,6 +28,7 @@ import { SendXrpTransactionOrchestratorService } from '../../services/send-xrp/s
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 
 @Component({
      selector: 'app-send-xrp',
@@ -42,7 +42,7 @@ import { TransactionOptionsSectionComponent } from '../shared/transaction-option
      styleUrl: './send-xrp.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SendXrpModernComponent extends PerformanceBaseComponent implements OnInit {
+export class SendXrpComponent extends PerformanceBaseComponent implements OnInit {
      public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
@@ -63,6 +63,7 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
+     activeTab = signal<'sendXrp'>('sendXrp');
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal<boolean>(false);
      accountInfo = signal<any>(null);
@@ -167,6 +168,15 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.selectWallet(wallet);
      }
 
+     async setTab(tab: 'sendXrp'): Promise<void> {
+          this.activeTab.set(tab);
+          this.destinationSearchQuery.set('');
+          this.txUiService.clearAllOptionsAndMessages();
+          if (this.hasWallets()) {
+               await this.onAccountChange(true);
+          }
+     }
+
      trackByWalletAddress(_: number, wallet: Wallet): string {
           return wallet.address;
      }
@@ -175,14 +185,6 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
           this.txUiService.wantsOptions.set(enabled);
           if (!enabled) {
                this.txUiService.clearOptionalInputFields();
-          }
-     }
-
-     async setTab(): Promise<void> {
-          this.destinationSearchQuery.set('');
-          this.txUiService.clearAllOptionsAndMessages();
-          if (this.hasWallets()) {
-               await this.onAccountChange(false);
           }
      }
 
@@ -205,8 +207,13 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                          return;
                     }
 
-                    this.accountInfo.set(env.accountInfo);
+                    console.log('env.accountInfo: ', env.accountInfo);
+                    console.log('env.accountObjects: ', env.accountObjects);
+
+                    // this.accountInfo.set(env.accountInfo);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+                    this.clearFields();
+                    // this.txUiService.clearAllOptions();
                } catch (error: any) {
                     console.error('Failed to load account:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
@@ -317,6 +324,13 @@ export class SendXrpModernComponent extends PerformanceBaseComponent implements 
                const num = Number.parseFloat(input.value);
                if (!Number.isNaN(num)) input.value = num.toFixed(6);
           }
+     }
+
+     clearFields(): void {
+          this.txUiService.clearAllOptions();
+          this.txUiService.clearOptionalInputFields();
+          this.txUiService.wantsOptions.set(false);
+          this.txUiService.amountField.set('');
      }
 
      clearInputFields(): void {

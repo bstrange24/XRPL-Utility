@@ -148,6 +148,44 @@ export class XrplTransactionService {
           // this.toastService.error(msg, 7000);
      }
 
+     buildModifyAccountSetTransaction(wallet: xrpl.Wallet, fee: string, currentLedger: number): xrpl.AccountSet {
+          return {
+               TransactionType: 'AccountSet',
+               Account: wallet.classicAddress,
+               Fee: fee,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildModifyMultiSignTransaction(wallet: xrpl.Wallet, fee: string, currentLedger: number): xrpl.SignerListSet {
+          return {
+               TransactionType: 'SignerListSet',
+               Account: wallet.classicAddress,
+               SignerQuorum: 0,
+               Fee: fee,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildModifySetRegularKeyTransaction(wallet: xrpl.Wallet, fee: string, currentLedger: number): xrpl.SetRegularKey {
+          return {
+               TransactionType: 'SetRegularKey',
+               Account: wallet.classicAddress,
+               Fee: fee,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildModifyDepositAuthTransaction(wallet: xrpl.Wallet, authorizeFlag: string, depositAuthAddress: any, fee: string, currentLedger: number): xrpl.DepositPreauth {
+          return {
+               TransactionType: 'DepositPreauth',
+               Account: wallet.classicAddress,
+               [authorizeFlag === 'Y' ? 'Authorize' : 'Unauthorize']: depositAuthAddress,
+               Fee: fee,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
      buildSendXrpTransaction(wallet: xrpl.Wallet, destinationAddress: string, amount: number, fee: string, currentLedger: number): xrpl.Payment {
           return {
                TransactionType: 'Payment',

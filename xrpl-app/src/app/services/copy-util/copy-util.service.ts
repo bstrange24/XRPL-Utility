@@ -55,7 +55,7 @@ export class CopyUtilService {
                })
                .catch(err => {
                     console.error('Failed to copy seed:', err);
-                    this.toast.error('Failed to copy. Please select and copy manually.');
+                    this.toast.error('Failed to copy seed. Please select and copy manually.');
                });
      }
 
@@ -68,7 +68,7 @@ export class CopyUtilService {
                })
                .catch(err => {
                     console.error('Failed to copy JSON:', err);
-                    this.toast.error('Failed to JSON. Please select and copy manually.');
+                    this.toast.error('Failed to copy JSON. Please select and copy manually.');
                });
      }
 
@@ -81,7 +81,7 @@ export class CopyUtilService {
                })
                .catch(err => {
                     console.error('Failed to copy JSON:', err);
-                    this.toast.error('Failed to JSON. Please select and copy manually.');
+                    this.toast.error('Failed to copy JSON. Please select and copy manually.');
                });
      }
 
@@ -93,7 +93,7 @@ export class CopyUtilService {
                })
                .catch(err => {
                     console.error('Failed to copy JSON:', err);
-                    this.toast.error('Failed to JSON. Please select and copy manually.');
+                    this.toast.error('Failed to copy JSON. Please select and copy manually.');
                });
      }
 
@@ -106,7 +106,7 @@ export class CopyUtilService {
                })
                .catch(err => {
                     console.error('Failed to copy JSON:', err);
-                    this.toast.error('Failed to JSON. Please select and copy manually.');
+                    this.toast.error('Failed to copy JSON. Please select and copy manually.');
                });
      }
 
@@ -119,7 +119,7 @@ export class CopyUtilService {
                })
                .catch(err => {
                     console.error('Failed to copy JSON:', err);
-                    this.toast.error('Failed to JSON. Please select and copy manually.');
+                    this.toast.error('Failed to copy JSON. Please select and copy manually.');
                });
      }
 
@@ -130,8 +130,20 @@ export class CopyUtilService {
                     this.toast.success('Copied Signed Tx to clipboard!');
                })
                .catch(err => {
-                    console.error('Failed to copy JSON:', err);
-                    this.toast.error('Failed to JSON. Please select and copy manually.');
+                    console.error('Failed to copy signed Tx:', err);
+                    this.toast.error('Failed to copy Signed Tx. Please select and copy manually.');
+               });
+     }
+
+     copyTxHash(text: string) {
+          navigator.clipboard
+               .writeText(text)
+               .then(() => {
+                    this.toast.success('Copied Tx Hash to clipboard!');
+               })
+               .catch(err => {
+                    console.error('Failed to copy Tx Hash:', err);
+                    this.toast.error('Failed to copy Tx Hash. Please select and copy manually.');
                });
      }
 }

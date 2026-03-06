@@ -1,11 +1,9 @@
-import { Component, Input, Output, EventEmitter, ElementRef, ViewChild, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ElementRef, ViewChild, signal, AfterViewInit, OnDestroy, SimpleChanges, OnChanges } from '@angular/core';
 import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, ViewUpdate } from '@codemirror/view';
 import { defaultKeymap, indentWithTab } from '@codemirror/commands';
 import { json, jsonParseLinter } from '@codemirror/lang-json';
 import { vscodeLight } from '@uiw/codemirror-theme-vscode';
-// import { oneDark } from '@codemirror/theme-one-dark';
-import { basicSetup } from '@codemirror/basic-setup'; // optional, but recommended
 import { linter, lintGutter } from '@codemirror/lint';
 
 @Component({
@@ -14,16 +12,30 @@ import { linter, lintGutter } from '@codemirror/lint';
      templateUrl: './json-editor.component.html',
      styleUrl: './json-editor.component.css',
 })
-export class JsonEditorComponent {
+export class JsonEditorComponent implements AfterViewInit, OnDestroy, OnChanges {
      @Input() value = '';
      @Output() valueChange = new EventEmitter<string>();
 
      @ViewChild('editor') editorRef!: ElementRef;
 
      private view!: EditorView;
-     private languageConf = new Compartment(); // For dynamic language/theme if needed
+     private readonly languageConf = new Compartment(); // For dynamic language/theme if needed
 
      jsonError = signal<string>('');
+
+     ngOnChanges(changes: SimpleChanges) {
+          if (!this.view) return; // not yet initialized
+          if (changes['value']) {
+               const newValue = changes['value'].currentValue ?? '';
+               const current = this.view.state.doc.toString();
+               if (newValue !== current) {
+                    this.view.dispatch({
+                         changes: { from: 0, to: current.length, insert: newValue },
+                    });
+                    this.validateJson(newValue);
+               }
+          }
+     }
 
      ngAfterViewInit() {
           setTimeout(() => {
@@ -93,7 +105,8 @@ export class JsonEditorComponent {
                     changes: { from: 0, to: current.length, insert: formatted },
                });
                this.jsonError.set('');
-          } catch (e) {
+          } catch (error: any) {
+               console.error(`Error formatting JSON ${error.message}`);
                this.jsonError.set('Invalid JSON – cannot format');
           }
      }

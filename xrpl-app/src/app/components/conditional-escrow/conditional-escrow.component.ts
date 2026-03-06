@@ -20,7 +20,6 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
@@ -37,6 +36,7 @@ import { TrustlineCurrencyService } from '../../services/trustline-currency/trus
 import { EscrowCancelItemComponent } from '../time-escrow/ui-components/escrow-cancel-item/escrow-cancel-item.component';
 import { EscrowCreateItemComponent } from '../time-escrow/ui-components/escrow-create-item/escrow-create-item.component';
 import { EscrowFinishItemComponent } from '../time-escrow/ui-components/escrow-finish-item/escrow-finish-item.component';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 
 @Component({
      selector: 'app-conditional-escrow',
@@ -535,70 +535,6 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           });
      }
 
-     async createConditionalEscrow1(): Promise<void> {
-          await this.withPerf('createConditionalEscrow', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
-
-               if (!this.ensureWalletSelected()) return;
-
-               const destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-
-               if (!destinationAddress) {
-                    this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
-                    return;
-               }
-
-               try {
-                    this.txUiService.currencyCode.set(this.trustlineCurrencyService.getSelectedCurrency());
-                    this.txUiService.currencyIssuer.set(this.trustlineCurrencyService.selectedIssuer());
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                         includeDestinationAccountInfo: true,
-                         destinationAddress,
-                    });
-
-                    if (!env.accountInfo || !env.accountObjects || !env.destinationAccountInfo) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-
-                    const result = await this.timeBasedEscrowOrchestrator.executeEscrowTx('create', {
-                         wallet: this.currentWallet(),
-                         formValues: {
-                              ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.createEscrowSpecificKeys)),
-                              destinationAddress,
-                              currencyValue: this.trustlineCurrencyService.currentCurrency() || 'XRP',
-                              issuer: this.trustlineCurrencyService?.selectedIssuer?.() || '',
-                              condition: this.txUiService.escrowConditionField(),
-                              finishAfter: this.txUiService.escrowFinishTimeField(),
-                              cancelAfter: this.txUiService.escrowCancelTimeField(),
-                         },
-                         extra: {},
-                         preFetchedEnv: {
-                              client: env.client,
-                              accountInfo: env.accountInfo,
-                              accountObjects: env.accountObjects,
-                              fee: env.fee!,
-                              currentLedger: env.currentLedger!,
-                              destinationAccountInfo: env.destinationAccountInfo,
-                              wallet: env.wallet,
-                         },
-                    });
-
-                    await this.handleTxResult(result, env.client, env.wallet, destinationAddress, 'Failed to create escrow');
-               } catch (error: any) {
-                    console.error('Error creating escrow:', error);
-                    this.toastService.error(error.message || 'Error creating escrow', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
      async finishConditionalEscrow(): Promise<void> {
           await this.withPerf('finishConditionalEscrow', async () => {
                this.txUiService.resetCurrentStepToIdle();
@@ -657,6 +593,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                               FinishAfter: finishAfterNum, // Optional for conditional
                               CancelAfter: cancelAfterNum, // Required for conditional
                               owner: this.txUiService.escrowOwnerField(),
+                              escrowType: 'condition',
                          },
                          currentRippleTime,
                          env.wallet.classicAddress
@@ -683,87 +620,6 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                               escrowStatus: this.txUiService.escrowOwnerField(),
                               condition: this.txUiService.escrowConditionField(),
                               fulfillment: fulfillment,
-                         },
-                         extra: {},
-                         preFetchedEnv: {
-                              client: env.client,
-                              accountInfo: env.accountInfo,
-                              fee: String(4 * Number(env.fee!)),
-                              currentLedger: env.currentLedger!,
-                              wallet: env.wallet,
-                         },
-                    });
-
-                    await this.handleTxResult(result, env.client, env.wallet, null, 'Failed to finish escrow');
-               } catch (error: any) {
-                    console.error('Error finishing escrow:', error);
-                    this.toastService.error(error.message || 'Error finishing escrow', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
-     async finishConditionalEscrow1(): Promise<void> {
-          await this.withPerf('finishConditionalEscrow', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
-
-               if (!this.ensureWalletSelected()) return;
-
-               const escrowSequenceNumberField = this.txUiService.escrowSequenceNumberField();
-               if (!escrowSequenceNumberField) {
-                    this.toastService.error('Sequence ID is required.', AppConstants.TOAST.ERROR);
-                    return;
-               }
-
-               try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                         includeEscrowBySequenceId: true,
-                         escrowSequenceNumberField: escrowSequenceNumberField,
-                    });
-
-                    const currentRippleTime = await this.xrplService.getCurrentRippleTime(env.client);
-                    const finishAfterNum = env.escrowObjectsBySequenceId.FinishAfter ? Number(env.escrowObjectsBySequenceId.FinishAfter) : undefined;
-                    const cancelAfterNum = env.escrowObjectsBySequenceId.CancelAfter ? Number(env.escrowObjectsBySequenceId.CancelAfter) : undefined;
-                    if (!finishAfterNum || !cancelAfterNum) {
-                         this.toastService.error('Invalid escrow cancel after or finish after time', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-
-                    const escrowStatus = this.escrowUtilService.checkEscrowStatus(
-                         {
-                              FinishAfter: Number(finishAfterNum),
-                              CancelAfter: Number(cancelAfterNum),
-                              owner: this.txUiService.escrowOwnerField(),
-                         },
-                         currentRippleTime,
-                         env.wallet.classicAddress
-                    );
-
-                    if (!escrowStatus.canFinish && !escrowStatus.canCancel) {
-                         return this.toastService.error(`${escrowStatus.reasonCancel} ${escrowStatus.reasonFinish}`);
-                    }
-
-                    if (!escrowStatus.canFinish) {
-                         return this.toastService.error(`${escrowStatus.reasonFinish}`);
-                    }
-
-                    if (!escrowStatus.canFinish) {
-                         return this.toastService.error(escrowStatus.reasonFinish || 'Cannot finish escrow yet');
-                    }
-
-                    const result = await this.timeBasedEscrowOrchestrator.executeEscrowTx('finish', {
-                         wallet: this.currentWallet(),
-                         formValues: {
-                              ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.finishEscrowSpecificKeys)),
-                              escrowSequenceNumberField,
-                              escrowStatus: this.txUiService.escrowOwnerField(),
-                              condition: this.txUiService.escrowConditionField(),
-                              fulfillment: this.txUiService.escrowFulfillmentField(),
                          },
                          extra: {},
                          preFetchedEnv: {
@@ -833,82 +689,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                               FinishAfter: finishAfterNum,
                               CancelAfter: cancelAfterNum,
                               owner: escrowOwner,
-                         },
-                         currentRippleTime,
-                         env.wallet.classicAddress
-                    );
-
-                    if (!escrowStatus.canCancel) {
-                         return this.toastService.error(escrowStatus.reasonCancel || 'Cannot cancel this escrow yet', AppConstants.TOAST.ERROR);
-                    }
-
-                    const result = await this.timeBasedEscrowOrchestrator.executeEscrowTx('cancel', {
-                         wallet: this.currentWallet(),
-                         formValues: {
-                              ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.cancelEscrowSpecificKeys)),
-                         },
-                         extra: {},
-                         preFetchedEnv: {
-                              client: env.client,
-                              accountInfo: env.accountInfo,
-                              accountObjects: env.accountObjects,
-                              fee: env.fee!,
-                              currentLedger: env.currentLedger!,
-                              wallet: env.wallet,
-                         },
-                    });
-
-                    await this.handleTxResult(result, env.client, env.wallet, null, 'Failed to cancel escrow');
-               } catch (error: any) {
-                    console.error('Error cancelling escrow:', error);
-                    this.toastService.error(error.message || 'Error cancelling escrow', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
-     async cancelEscrow1(): Promise<void> {
-          await this.withPerf('cancelEscrow', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
-
-               if (!this.ensureWalletSelected()) return;
-
-               const escrowSequenceNumberField = this.txUiService.escrowSequenceNumberField();
-               if (!escrowSequenceNumberField) {
-                    this.toastService.error('Sequence ID is required.', AppConstants.TOAST.ERROR);
-                    return;
-               }
-
-               try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                         includeEscrows: true,
-                    });
-
-                    if (!env.accountInfo || !env.escrowObjects) {
-                         throw new Error('Failed to fetch account information or escrows');
-                    }
-
-                    let { escrow, escrowOwner }: { escrow: EscrowObject | undefined; escrowOwner: string } = await this.escrowUtilService.findEscrowAndOwner(env.escrowObjects, escrowSequenceNumberField);
-                    if (!escrow) {
-                         return this.toastService.error(`No escrow found for sequence ${escrowSequenceNumberField}`, AppConstants.TOAST.ERROR);
-                    }
-
-                    const currentRippleTime = await this.xrplService.getCurrentRippleTime(env.client);
-                    const finishAfterNum = escrow.FinishAfter ? Number(escrow.FinishAfter) : undefined;
-                    const cancelAfterNum = escrow.CancelAfter ? Number(escrow.CancelAfter) : undefined;
-                    if (!finishAfterNum || !cancelAfterNum) {
-                         throw new Error('Invalid escrow cancel after or finish after time');
-                    }
-                    const escrowStatus = this.escrowUtilService.checkEscrowStatus(
-                         {
-                              FinishAfter: Number(finishAfterNum),
-                              CancelAfter: Number(cancelAfterNum),
-                              owner: escrowOwner,
+                              escrowType: 'condition',
                          },
                          currentRippleTime,
                          env.wallet.classicAddress

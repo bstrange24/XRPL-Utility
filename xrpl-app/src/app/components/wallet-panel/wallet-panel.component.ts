@@ -9,9 +9,9 @@ import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { AppConstants } from '../../core/app.constants';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { UtilsService } from '../../services/util-service/utils.service';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 
 @Component({
      selector: 'app-wallet-panel',

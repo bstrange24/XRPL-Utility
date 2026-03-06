@@ -257,7 +257,7 @@ export class EscrowUtilService {
      }
 
      checkEscrowStatus(
-          escrow: { FinishAfter?: number; CancelAfter?: number; Condition?: string; owner: string },
+          escrow: { FinishAfter?: number; CancelAfter?: number; Condition?: string; owner: string; escrowType: string },
           currentRippleTime: number,
           callerAddress: string,
           fulfillment?: string
@@ -279,17 +279,17 @@ export class EscrowUtilService {
           };
      }
 
-     private validateCancel(escrow: { CancelAfter?: number; owner: string }, now: number, callerAddress: string): { canCancel: boolean; reason: string } {
-          const { CancelAfter, owner } = escrow;
+     private validateCancel(escrow: { CancelAfter?: number; owner: string; escrowType: string }, now: number, callerAddress: string): { canCancel: boolean; reason: string } {
+          const { CancelAfter, owner, escrowType } = escrow;
 
-          if (!CancelAfter) {
+          if (escrowType !== 'finish' && !CancelAfter) {
                return {
                     canCancel: false,
                     reason: 'No CancelAfter time defined.',
                };
           }
 
-          if (now < CancelAfter) {
+          if (now < CancelAfter!) {
                return {
                     canCancel: false,
                     reason: `Escrow can only be canceled after ${this.utilsService.convertXRPLTime(CancelAfter)}, current time is ${this.utilsService.convertXRPLTime(now)}.`,

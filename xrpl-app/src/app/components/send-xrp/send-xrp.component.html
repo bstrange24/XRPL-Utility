@@ -6,7 +6,7 @@
      </div>
 </div>
 
-<!-- Main content. Centered with 2 columns -->
+<!-- Main content -->
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel -->
@@ -14,6 +14,7 @@
 
           <!-- Right form -->
           <div class="form-panel">
+               @if (activeTab() === 'sendXrp') {
                <!-- Menu bar -->
                <div class="submenu-container">
                     <div class="submenu-info-text">
@@ -26,12 +27,13 @@
                          </div>
                     </div>
                </div>
+               }
 
                <!-- Dynamic info panel -->
                @if (infoData()) {
-               <div class="info-panel">
+               <div class="info-only-card">
                     <div class="info-panel-content">
-                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
                          <div class="info-text" [innerHTML]="infoData()"></div>
                     </div>
                </div>
@@ -45,89 +47,119 @@
                </div>
                }
 
-               <form #theForm="ngForm" class="main-form">
-                    <!-- Amount and Destination -->
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label for="destination">Destination</label>
-                              <p class="form-hint">The unique address of the account receiving the XRP payment. Select destination from the dropdown or manually enter a new destination.</p>
-                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+               <!-- Amount and Destination -->
+               <div class="form-row">
+                    <div class="form-group">
+                         <label for="destination">Destination</label>
+                         <p class="form-hint">The unique address of the account receiving the XRP payment. Select destination from the dropdown or manually enter a new destination.</p>
+                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                    </div>
+                    <div class="form-group">
+                         <label for="amountField">XRP Amount</label>
+                         <p class="form-hint">Amount, in XRP, to send to the destination. Use arrows for ±0.000001 precision.</p>
+                         <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                    </div>
+               </div>
+
+               <div class="switch-group">
+                    <label class="switch">
+                         <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="toggleOptions($event.target.checked)" name="showOptionalXrp" />
+                         <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
+                    </label>
+               </div>
+
+               @if (txUiService.wantsOptions()) {
+               <app-transaction-options-section [activeTab]="activeTab()"></app-transaction-options-section>
+               }
+
+               <app-transaction-options [showWhenTab]="['sendXrp']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+               <!-- Action buttons -->
+               <div class="button-row">
+                    <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="!isIdle() || !hasWallets()">{{ sendButtonLabel() }}</button>
+                    <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
+               </div>
+
+               <!-- Execution time -->
+               <div class="executionTimeDisplay">
+                    <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
+               </div>
+
+               <app-transaction-preview></app-transaction-preview>
+          </div>
+
+          <div class="requirements-info">
+               <div class="info-header">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+                    <h3>Sending XRP (Direct Payment)</h3>
+               </div>
+
+               <p class="info-subtitle">A direct XRP Payment transfers XRP from one account to another quickly and cheaply. It can also fund a new account if sending enough XRP to meet the base reserve requirement.</p>
+
+               <div class="combinations-grid">
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">💸 Basic XRP Send</span>
+                              <span class="badge required-badge">Most Common</span>
                          </div>
-                         <div class="form-group">
-                              <label for="amountField">XRP Amount</label>
-                              <p class="form-hint">Amount, in XRP, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                              <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">Destination</span>
+                                   <span class="field-status required">✅ Required</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Amount</span>
+                                   <span class="field-status required">✅ Required</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">DestinationTag</span>
+                                   <span class="field-status omitted">❌ Optional</span>
+                              </div>
                          </div>
                     </div>
 
-                    <div class="switch-group">
-                         <label class="switch">
-                              <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="toggleOptions($event.target.checked)" name="showOptionalXrp" />
-                              <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
-                         </label>
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">💸 With Extras</span>
+                              <span class="badge optional-badge">Advanced Options</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">SendMax</span>
+                                   <span class="field-status omitted">❌ Not needed for pure XRP</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Paths</span>
+                                   <span class="field-status omitted">❌ Not needed for direct XRP</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">LastLedgerSequence</span>
+                                   <span class="field-status optional">➕ Recommended (expire safely)</span>
+                              </div>
+                         </div>
                     </div>
 
-                    @if (txUiService.wantsOptions()) {
-                    <app-transaction-options-section></app-transaction-options-section>
-                    }
-
-                    <!-- @if (txUiService.wantsOptions()) { -->
-                    <!-- Destination Tag and Source Tag -->
-                    <!-- <div class="form-row">
-                         <div class="form-group">
-                              <label for="destinationTagField">Destination Tag </label>
-                              <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
-                              <input type="text" name="destinationTagField" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" />
-                         </div>
-
-                         <div class="form-group">
-                              <label for="sourceTagField">Source Tag</label>
-                              <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
-                              <input type="text" name="sourceTagField" placeholder="e.g. 456789" [ngModel]="txUiService.sourceTagField()" (ngModelChange)="txUiService.sourceTagField.set($event)" />
-                         </div>
-                    </div> -->
-
-                    <!-- Invoice ID and Credential ID -->
-                    <!-- <div class="form-row">
-                         <div class="form-group">
-                              <label for="invoiceIdField">Invoice ID</label>
-                              <p class="form-hint">
-                                   64-character hexadecimal string (e.g. sha256 hash).
-                                   <a href="https://xrpl.org/docs/references/protocol/transactions/types/payment#invoiceid" target="_blank" class="external-link">Learn more</a>
-                              </p>
-                              <input type="text" name="invoiceIdField" placeholder="64 hex chars (optional)" [ngModel]="txUiService.invoiceIdField()" maxlength="64" pattern="[0-9a-fA-F]{0,64}" />
-                         </div>
-                    </div> -->
-
-                    <!-- Domain ID and Credential ID -->
-                    <!-- <div class="form-row">
-                         <div class="form-group">
-                              <label for="domainIdField">Domain ID</label>
-                              <p class="form-hint">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
-                              <textarea name="domainId" class="memo-input auto-expand-textarea" rows="2" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="txUiService.domainId()" (ngModelChange)="txUiService.domainId.set($event)"></textarea>
-                         </div>
-                         <div class="form-group">
-                              <label for="credentialIDsField">Credential IDs</label>
-                              <p class="form-hint">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
-                              <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="txUiService.credentialIDs()" (ngModelChange)="txUiService.credentialIDs.set($event)"></textarea>
-                         </div>
-                    </div> -->
-                    <!-- } -->
-
-                    <app-transaction-options [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                    <!-- Action buttons -->
-                    <div class="button-row">
-                         <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="!isIdle() || !hasWallets()">{{ sendButtonLabel() }}</button>
-                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
+                    <div class="important-notes">
+                         <h5>📝 Important Notes:</h5>
+                         <ul>
+                              <li><strong>Destination</strong> and <strong>Amount</strong> (in drops; 1 XRP = 1,000,000 drops) are required for a basic XRP send.</li>
+                              <li>Use <strong>DestinationTag</strong> when sending to exchanges or hosted wallets (e.g., required by Binance) to identify the recipient.</li>
+                              <li>Common fields like <strong>Fee</strong> and <strong>Sequence</strong> are usually auto-filled by clients/libraries.</li>
+                              <li>Transactions are irreversible — double-check the address and tag before signing.</li>
+                              <li>Sending at least the base reserve (~10 XRP, check current via server_info) to an unfunded address creates a new account.</li>
+                              <li>Fees are very low (typically <0.00002 XRP) and burned — no refunds.</li>
+                         </ul>
+                         <p></p>
+                         <h5 class="warning-title">⚠️ Irreversible & Safety Tips</h5>
+                         <p style="color: #92400e">XRP Payments cannot be reversed or canceled once submitted.</p>
+                         <ul>
+                              <li>Wrong <strong>Destination</strong> or missing <strong>DestinationTag</strong> can result in permanent loss of funds.</li>
+                              <li>Always verify the recipient address carefully — XRPL addresses are case-sensitive and checksummed.</li>
+                              <li>For time-sensitive sends, include <strong>LastLedgerSequence</strong> to prevent hanging in the queue indefinitely.</li>
+                              <li>If sending to an exchange, confirm their exact tag requirements to avoid crediting issues.</li>
+                         </ul>
                     </div>
-
-                    <!-- Execution time -->
-                    <div class="executionTimeDisplay">
-                         <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
-                    </div>
-                    <app-transaction-preview></app-transaction-preview>
-               </form>
+               </div>
           </div>
      </div>
 </div>

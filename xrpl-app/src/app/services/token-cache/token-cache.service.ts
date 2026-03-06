@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
 })
 export class TokenCacheService {
      private readonly STORAGE_KEY = 'tokenCreationDates';
-     private cache: Map<string, string>;
+     private readonly cache: Map<string, string>;
 
      constructor() {
           const stored = localStorage.getItem(this.STORAGE_KEY);

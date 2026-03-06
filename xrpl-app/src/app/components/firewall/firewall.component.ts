@@ -27,7 +27,6 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
@@ -37,6 +36,7 @@ import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 
 interface AccountFlags {
      isClawback: boolean;

@@ -19,7 +19,6 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
@@ -33,6 +32,7 @@ import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-tr
 import { PaymentChannelUtilService } from '../../services/payment-channel/payment-channel-util/payment-channel-util.service';
 import { PaymentChannelOrchestratorService } from '../../services/payment-channel/payment-channel-orchestrator/payment-channel-orchestrator.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 
 @Component({
      selector: 'app-account',
@@ -68,6 +68,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
+     isCollapsed = false;
 
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
@@ -324,13 +325,13 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                          })
                     );
 
-                    if (!accountInfo || !accountObjects) {
+                    if (!accountInfo || !accountObjects || !paymentChannelObjects) {
                          throw new Error('Failed to fetch account information');
                     }
 
                     await this.measure('getPaymentChannels:processAndUpdate', true, async () => {
-                         this.paymentChannelUtilService.processPaymentChannels(paymentChannelObjects.result.account_objects as PaymentChannelObject[], wallet.classicAddress);
-                         this.paymentChannelUtilService.walletPaymentChannelCount.set(paymentChannelObjects.result.account_objects.length);
+                         this.paymentChannelUtilService.processPaymentChannels(paymentChannelObjects!.result.account_objects as PaymentChannelObject[], wallet.classicAddress);
+                         this.paymentChannelUtilService.walletPaymentChannelCount.set(paymentChannelObjects!.result.account_objects.length);
                          this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
                     });
                } catch (error: any) {

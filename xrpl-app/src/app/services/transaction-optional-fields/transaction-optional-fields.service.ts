@@ -7,7 +7,7 @@ import { ValidationService } from '../../services/validation/transaction-validat
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
-import { PerformanceBaseComponent } from '../../components/base/performance-base/performance-base.component';
+import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
 
 @Injectable({
      providedIn: 'root',

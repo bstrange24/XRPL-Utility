@@ -6,100 +6,42 @@
      </div>
 </div>
 
+<!-- Get active tab -->
+@let tab = activeTab();
+<!-- Get tab data -->
+@let tabs = accountConfiguratorUtilService.tabs;
+<!-- Get tab meta data -->
+@let meta = accountConfiguratorUtilService.tabMeta[tab];
+
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
      <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
+          <!-- Left Wallet panel -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
+          <!-- Center form -->
           <div class="form-panel">
-               <!-- Menu bar -->
+               <!-- Menu / Tabs -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'modifyAccountFlags'" (click)="setTab('modifyAccountFlags')">
-                         <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
-                         Account Flags
+                    @for (item of tabs; track item.key) {
+                    <button class="menu-btn" [class.active]="tab === item.key" (click)="setTab(item.key)">
+                         <ng-icon [name]="item.icon" [size]="item.iconSize" class="text-red-600"></ng-icon>
+                         {{ item.label }}
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'modifyMetaData'" (click)="setTab('modifyMetaData')">
-                         <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
-                         Meta Data
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'modifyDepositAuth'" (click)="setTab('modifyDepositAuth')">
-                         <ng-icon name="heroArrowPath" size="20" class="text-red-600"></ng-icon>
-                         Deposit Auth
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'modifyMultiSigners'" (click)="setTab('modifyMultiSigners')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Multi Sign
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'modifyRegularKey'" (click)="setTab('modifyRegularKey')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Regular Key
-                    </button>
+                    }
                </div>
 
                <div class="submenu-info-text">
-                    <!-- Modify Flag Menu -->
-                    @if (activeTab() === 'modifyAccountFlags') {
-                    <div class="white-button-submenu">
-                         <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
+                    <div [class]="meta.colorClass">
+                         <ng-icon [name]="meta.icon" [size]="meta.iconSize" [color]="meta.color"></ng-icon>
                     </div>
                     <div>
-                         <h2 class="submenu-info-main-text">Modify Account Flags</h2>
-                         <p class="submenu-info-secondary-text">Set or Clear account level flags.</p>
+                         <h2 class="submenu-info-main-text">{{ meta.title }}</h2>
+                         <p class="submenu-info-secondary-text">{{ meta.desc }}</p>
                     </div>
-                    }
-
-                    <!-- Modify Meta Data Menu -->
-                    @if (activeTab() === 'modifyMetaData') {
-                    <div class="white-button-submenu">
-                         <!-- <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon> -->
-                         <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Modify Account Meta Data</h2>
-                         <p class="submenu-info-secondary-text">Modify the account meta data.</p>
-                    </div>
-                    }
-
-                    <!-- Modify Deposti Auth Menu -->
-                    @if (activeTab() === 'modifyDepositAuth') {
-                    <div class="white-button-submenu">
-                         <!-- <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon> -->
-                         <ng-icon name="heroArrowPath" size="20" class="text-red-600" color="green"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Modify Account Deposit Auth</h2>
-                         <p class="submenu-info-secondary-text">Modify the account Deposit Authorization Addresses</p>
-                    </div>
-                    }
-
-                    <!-- Add Multi Signer Menu -->
-                    @if (activeTab() === 'modifyMultiSigners') {
-                    <div class="green-button-submenu">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Modify Multi Sign</h2>
-                         <p class="submenu-info-secondary-text">Modify Multi Signers for signing transactions.</p>
-                    </div>
-                    }
-
-                    <!-- Add Regular Key signer Menu -->
-                    @if (activeTab() === 'modifyRegularKey') {
-                    <div class="green-button-submenu">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Modify Regular Key Address</h2>
-                         <p class="submenu-info-secondary-text">Modify Regular Key address for signing transactions.</p>
-                    </div>
-                    }
                </div>
 
                <!-- Dynamic info panel -->
-               <!-- Structured, collapsible Account Configuration Info Panel -->
-               <!-- Info Message + Account Configuration Card -->
                @if (infoData(); as info) {
                <div class="info-and-config-card" [class.has-config]="info.hasSpecialConfig">
                     <!-- Always-visible summary row -->
@@ -144,327 +86,294 @@
                     }
                </div>
                }
-               <!-- @if (txUiService.infoMessage) {
-               <div class="info-panel">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                    <div class="info-text" [innerHTML]="txUiService.safeInfo"></div>
-               </div>
-               } -->
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                    <div class="warning-text">{{ safeWarningMessage() }}</div>
                </div>
                }
 
                <form #theForm="ngForm" class="main-form">
-                    <div [@tabTransition]="activeTab()">
-                         <div class="tab-content-columns">
-                              <!-- Left Form Fields -->
-                              <div class="tab-content-container form-fields-container">
-                                   <!-- Right Account Flags-->
-                                   @if (activeTab() === 'modifyAccountFlags') {
-                                   <div class="flags-wrapper">
-                                        <!-- Configuration template -->
-                                        <div style="padding-bottom: 0.3em">
-                                             <span class="token-flags-title">
-                                                  <label for="isHolderConfiguration">Configuration Templates:</label>
-                                             </span>
-                                             <span class="token-flags-title">
-                                                  <input type="radio" id="isHolderConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="holder" />
-                                                  <label for="isHolderConfiguration">Holder</label>
-                                                  <input type="radio" id="isExchangerConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="exchanger" />
-                                                  <label for="isExchangerConfiguration">Exchanger</label>
-                                                  <input type="radio" id="isIssuerConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="issuer" />
-                                                  <label for="isIssuerConfiguration">Issuer</label>
-                                             </span>
-                                        </div>
+                    <div class="tab-content-columns">
+                         <div class="tab-content-container form-fields-container">
+                              <!-- Right Account Flags-->
+                              @if (tab === 'modifyAccountFlags') {
+                              <div class="flags-wrapper">
+                                   <!-- Configuration template -->
+                                   <div style="padding-bottom: 0.3em">
+                                        <span class="token-flags-title">
+                                             <label for="isHolderConfiguration">Configuration Templates:</label>
+                                        </span>
+                                        <span class="token-flags-title">
+                                             <input type="radio" id="isHolderConfiguration" [ngModel]="configurationType()" (ngModelChange)="onConfigurationChange()" name="configurationType" value="holder" />
+                                             <label for="isHolderConfiguration">Holder</label>
+                                             <input type="radio" id="isExchangerConfiguration" [ngModel]="configurationType()" (ngModelChange)="onConfigurationChange()" name="configurationType" value="exchanger" />
+                                             <label for="isExchangerConfiguration">Exchanger</label>
+                                             <input type="radio" id="isIssuerConfiguration" [ngModel]="configurationType()" (ngModelChange)="onConfigurationChange()" name="configurationType" value="issuer" />
+                                             <label for="isIssuerConfiguration">Issuer</label>
+                                        </span>
+                                   </div>
 
-                                        <!-- Flags header -->
-                                        <div class="token-flags-header">
-                                             <lucide-icon name="flag" size="20"></lucide-icon>
-                                             <span class="token-flags-title">Account Flags</span>
-                                        </div>
+                                   <!-- Flags header -->
+                                   <div class="token-flags-header">
+                                        <lucide-icon name="flag" size="20"></lucide-icon>
+                                        <span class="token-flags-title">Account Flags</span>
+                                   </div>
 
-                                        <div class="form-row-account-flags">
-                                             @for (flag of accountFlagsConfig; track flag.key) {
-                                             <div class="flag-item-account-flags" [class.enabled]="flags[flag.key]" (click)="toggleFlag(flag.key)">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" [id]="flag.key" [name]="flag.key" [checked]="flags[flag.key]" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title-account-flags">{{ flag.title }}</span>
-                                                  </div>
-
-                                                  <div class="flag-value">{{ FLAG_VALUES[flag.key] }} {{ flag.key }}</div>
-                                                  <div class="flag-desc">{{ flag.desc }}</div>
+                                   <div class="form-row-account-flags">
+                                        @for (flag of accountConfiguratorUtilService.accountFlagsConfig; track flag.key) {
+                                        <button type="button" class="flag-item-account-flags" [class.enabled]="accountConfiguratorUtilService.flags[flag.key]" (click)="accountConfiguratorUtilService.toggleFlag(flag.key)">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" [id]="flag.key" [name]="flag.key" [checked]="accountConfiguratorUtilService.flags[flag.key]" class="flag-checkbox" />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M9 12l2 2 4-4" />
+                                                       <circle cx="12" cy="12" r="10" />
+                                                  </svg>
+                                                  <span class="flag-title-account-flags">{{ flag.title }}</span>
                                              </div>
-                                             }
-                                             <div class="flag-item-account-flags">
-                                                  <!-- Total Flag value -->
-                                                  <div class="flags-total">
-                                                       <span class="total-label">Total Flags Value:</span>
-                                                       <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
-                                                  </div>
+
+                                             <div class="flag-value">{{ accountConfiguratorUtilService.FLAG_VALUES[flag.key] }} {{ flag.key }}</div>
+                                             <div class="flag-desc">{{ flag.desc }}</div>
+                                        </button>
+                                        }
+                                        <div class="flag-item-account-flags">
+                                             <!-- Total Flag value -->
+                                             <div class="flags-total">
+                                                  <span class="total-label">Total Flags Value:</span>
+                                                  <span class="total-value">{{ txUiService.totalFlagsValue() }} ({{ txUiService.totalFlagsHex() }})</span>
                                              </div>
                                         </div>
                                    </div>
-                                   }
+                              </div>
+                              }
 
-                                   <!-- Modify Meta Data -->
-                                   @if (activeTab() === 'modifyDepositAuth') {
-                                   <!-- Deposit Auth Address -->
-                                   <div class="multisign-section">
-                                        <div class="section-header">
-                                             <ng-icon name="heroUserGroup" size="20" class="text-red-600"></ng-icon>
-                                             <span class="section-title">Deposit Authorization Configuration</span>
-                                        </div>
-
-                                        <!-- Signers list -->
-                                        <div class="signers-list">
-                                             @for (depositAuthAddress of txUiService.depositAuthAddresses(); track depositAuthAddress.account; let i = $index) {
-                                             <fieldset class="signer-fieldset-dep-auth">
-                                                  <legend class="signer-legend">Deposit Auth Address {{ i + 1 }}</legend>
-
-                                                  <div class="form-row">
-                                                       <div class="form-group">
-                                                            <label for="depositAuthField{{ i }}">Account</label>
-                                                            <p class="form-hint">Addresses used for deposit authorization.</p>
-                                                            <input type="text" id="depositAuthField{{ i }}" [(ngModel)]="depositAuthAddress.account" name="depositAuthField{{ i }}" placeholder="r..." class="input-monospace" />
-                                                       </div>
-
-                                                       <div class="form-group remove-group-dep-auth">
-                                                            @if (txUiService.depositAuthAddresses().length > 1) {
-                                                            <button type="button" (click)="removeDepositAuthAddresses(i)" class="btn-danger btn-sm" title="Remove this deposit auth address">
-                                                                 <lucide-icon name="trash-2" size="16"></lucide-icon>
-                                                            </button>
-                                                            }
-                                                       </div>
-                                                  </div>
-                                             </fieldset>
-                                             }
-                                        </div>
-
-                                        <!-- Add Signer -->
-                                        <div class="form-row actions-row">
-                                             <div class="form-group">
-                                                  <button type="button" (click)="addDepositAuthAddresses()" class="btn-primary-blue">Add Signer</button>
-                                             </div>
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Modify Meta Data -->
-                                   @if (activeTab() === 'modifyMetaData') {
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Set NFT Minter Address</label>
-                                             <p class="form-hint">Authorizes another account to mint NFTs for this account.</p>
-                                             <input type="text" [(ngModel)]="txUiService.nfTokenMinterAddress" name="nfTokenMinterAddress" />
-                                        </div>
+                              <!-- Modify Meta Data -->
+                              @if (tab === 'modifyDepositAuth') {
+                              <!-- Deposit Auth Address -->
+                              <div class="multisign-section">
+                                   <div class="section-header">
+                                        <ng-icon name="heroUserGroup" size="20" class="text-red-600"></ng-icon>
+                                        <span class="section-title">Deposit Authorization Configuration</span>
                                    </div>
 
-                                   <div class="button-row">
-                                        <button type="button" (click)="setNftMinterAddress('Y')" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Set NFT Minter' }}</button>
-                                        <button type="button" (click)="setNftMinterAddress('N')" class="btn-primary-red" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove NFT Minter' }}</button>
-                                   </div>
+                                   <!-- Signers list -->
+                                   <div class="signers-list">
+                                        @for (depositAuthAddress of txUiService.depositAuthAddresses(); track i + ':' + (depositAuthAddress.account ?? i); let i = $index) {
+                                        <fieldset class="signer-fieldset-dep-auth">
+                                             <legend class="signer-legend">Deposit Auth Address {{ i + 1 }}</legend>
 
-                                   <!-- Transfer Rate, tick -->
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Transfer Rate</label>
-                                             <p class="form-hint">Transfer fee for issued currencies (0% = no fee).</p>
-
-                                             <div class="input-group">
-                                                  <input type="text" class="form-control" [(ngModel)]="txUiService.transferRate" name="transferRate" placeholder="e.g. 1.5" />
-                                             </div>
-                                        </div>
-
-                                        <div class="form-group">
-                                             <label>Tick Size</label>
-                                             <p class="form-hint">Decimal precision used when trading issued currencies (3–15).</p>
-                                             <input type="text" class="form-control" [(ngModel)]="txUiService.tickSize" name="tickSize" />
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Email</label>
-                                             <p class="form-hint">Email hash used for avatar services.</p>
-                                             <input type="email" [(ngModel)]="txUiService.userEmail" name="userEmail" (ngModelChange)="updateAvatarUrlFromEmail($event)" placeholder="Enter email" />
-                                        </div>
-
-                                        <div class="form-group">
-                                             <label>Avatar URL</label>
-                                             <p class="form-hint">URL to avatar location.</p>
-                                             <input type="text" [(ngModel)]="txUiService.avatarUrl" name="avatarUrl" readonly />
-                                        </div>
-                                   </div>
-
-                                   @if (avatarUrl()) {
-                                   <div class="avatar-preview">
-                                        <img [src]="avatarUrl()" alt="Avatar Preview" />
-                                   </div>
-                                   }
-
-                                   <div class="form-row">
-                                        <div class="form-group">
-                                             <label>Domain</label>
-                                             <p class="form-hint">Domain name for this account.</p>
-                                             <input type="text" [(ngModel)]="txUiService.domain" name="domain" />
-                                        </div>
-                                   </div>
-
-                                   <div>
-                                        <div class="form-row-account-flags" style="margin-top: 0.5em; margin-bottom: 1em">
-                                             <!-- isMessageKey -->
-                                             <div class="flag-item-account-flags" [class.enabled]="txUiService.isMessageKey()" (click)="toggleMessageKey()">
-                                                  <div class="flag-header-account">
-                                                       <input type="checkbox" id="isMessageKey" name="isMessageKey" [checked]="txUiService.isMessageKey()" class="flag-checkbox" />
-                                                       <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                       </svg>
-                                                       <span class="flag-title-account-flags">Save Message Key</span>
-                                                  </div>
-                                                  <div class="flag-desc">Public key for sending encrypted messages to this account.</div>
-                                             </div>
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Multi Sign -->
-                                   @if (activeTab() === 'modifyMultiSigners') {
-                                   <div class="multisign-section">
-                                        <div class="section-header">
-                                             <ng-icon name="heroUserGroup" size="20" class="text-red-600"></ng-icon>
-                                             <span class="section-title">Multi-Sign Configuration</span>
-                                        </div>
-
-                                        <!-- Signers list -->
-                                        <div class="signers-list">
-                                             @for (signer of txUiService.signers(); track $index; let i = $index) {
-                                             <fieldset class="signer-fieldset">
-                                                  <legend class="signer-legend">Signer {{ i + 1 }}</legend>
-
-                                                  <div class="form-row">
-                                                       <div class="form-group">
-                                                            <label for="signerAccountField{{ i }}">Account</label>
-                                                            <p class="form-hint">Addresses used for multi signing.</p>
-                                                            <input type="text" id="signerAccountField{{ i }}" [(ngModel)]="signer.Account" name="signerAccountField{{ i }}" placeholder="r..." class="input-monospace" />
-                                                       </div>
-
-                                                       <div class="form-group">
-                                                            <label for="signerSeedField{{ i }}">Seed</label>
-                                                            <p class="form-hint">Seed of the correspinging addresses.</p>
-                                                            <input type="text" id="signerSeedField{{ i }}" [(ngModel)]="signer.seed" name="signerSeedField{{ i }}" placeholder="s..." class="input-monospace" />
-                                                       </div>
-
-                                                       <div class="form-group weight-group">
-                                                            <label for="signerWeightField{{ i }}">Weight</label>
-                                                            <p class="form-hint">Sign Wgt.</p>
-                                                            <input type="number" id="signerWeightField{{ i }}" [(ngModel)]="signer.SignerWeight" name="signerWeightField{{ i }}" min="1" class="input-number" />
-                                                       </div>
-
-                                                       <div class="form-group remove-group">
-                                                            @if (txUiService.signers().length > 1) {
-                                                            <button type="button" (click)="removeSigner(i)" class="btn-danger btn-sm" title="Remove this signer">
-                                                                 <lucide-icon name="trash-2" size="16"></lucide-icon>
-                                                            </button>
-                                                            }
-                                                       </div>
-                                                  </div>
-                                             </fieldset>
-                                             }
-                                        </div>
-
-                                        <!-- Add / Quorum -->
-                                        <div class="form-row actions-row">
-                                             <div class="form-group">
-                                                  <!-- <button type="button" (click)="addSigner()" class="btn-primary"><ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon> Add Signer</button> -->
-                                                  <button type="button" (click)="addSigner()" class="btn-primary-blue">Add Signer</button>
-                                             </div>
-
-                                             <div class="form-group">
-                                                  <label for="signerQuorumField">Signer Quorum</label>
-                                                  <p class="form-hint">A target number for the signer weights.</p>
-
-                                                  <input type="number" id="signerQuorumField" [(ngModel)]="txUiService.signerQuorum" (ngModelChange)="validateQuorum()" name="signerQuorumField" min="1" class="input-number" />
-                                             </div>
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Regular Key -->
-                                   @if(activeTab() === 'modifyRegularKey') {
-                                   <div class="multisign-section">
-                                        <div class="section-header">
-                                             <ng-icon name="heroKey" size="20" class="text-red-600"></ng-icon>
-                                             <span class="section-title">Regular Key Configuration</span>
-                                        </div>
-
-                                        <div class="signers-list">
                                              <div class="form-row">
                                                   <div class="form-group">
-                                                       <label for="regularKeyAddress">Account</label>
-                                                       <p class="form-hint">The regular key pair to be assigned to the account.</p>
-                                                       <input type="text" [(ngModel)]="txUiService.regularKeyAddress" name="regularKeyAddress" placeholder="No Regular Key configured for account" />
+                                                       <label for="depositAuthField{{ i }}">Account</label>
+                                                       <p class="form-hint">Addresses used for deposit authorization.</p>
+                                                       <input type="text" id="depositAuthField{{ i }}" [(ngModel)]="depositAuthAddress.account" name="depositAuthField{{ i }}" placeholder="r..." class="input-monospace" />
+                                                  </div>
+
+                                                  <div class="form-group remove-group-dep-auth">
+                                                       @if (txUiService.depositAuthAddresses().length > 1) {
+                                                       <button type="button" (click)="accountConfiguratorUtilService.removeDepositAuthAddresses(i)" class="btn-danger btn-sm" title="Remove this deposit auth address">
+                                                            <lucide-icon name="trash-2" size="16"></lucide-icon>
+                                                       </button>
+                                                       }
+                                                  </div>
+                                             </div>
+                                        </fieldset>
+                                        }
+                                   </div>
+
+                                   <!-- Add Signer -->
+                                   <div class="form-row actions-row">
+                                        <div class="form-group">
+                                             <button type="button" (click)="accountConfiguratorUtilService.addDepositAuthAddresses()" class="btn-primary-blue">Add Signer</button>
+                                        </div>
+                                   </div>
+                              </div>
+                              }
+
+                              <!-- Modify Meta Data -->
+                              @if (tab === 'modifyMetaData') {
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label for="setNftMinterAddress">Set NFT Minter Address</label>
+                                        <p class="form-hint">Authorizes another account to mint NFTs for this account.</p>
+                                        <input type="text" [(ngModel)]="txUiService.nfTokenMinterAddress" name="nfTokenMinterAddress" />
+                                   </div>
+                              </div>
+
+                              <div class="button-row">
+                                   <button type="button" class="btn-primary-blue" (click)="setNftMinterAddress('Y')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setNftMinterButtonLabel() }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="setNftMinterAddress('N')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeNftMinterButtonLabel() }}</button>
+                              </div>
+
+                              <!-- Transfer Rate, tick -->
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label for="tranferRate">Transfer Rate</label>
+                                        <p class="form-hint">Transfer fee for issued currencies (0% = no fee).</p>
+
+                                        <div class="input-group">
+                                             <input type="text" class="form-control" [(ngModel)]="txUiService.transferRate" name="transferRate" placeholder="e.g. 1.5" />
+                                        </div>
+                                   </div>
+
+                                   <div class="form-group">
+                                        <label for="tickSize">Tick Size</label>
+                                        <p class="form-hint">Decimal precision used when trading issued currencies (3–15).</p>
+                                        <input type="text" class="form-control" [(ngModel)]="txUiService.tickSize" name="tickSize" />
+                                   </div>
+                              </div>
+
+                              <div class="form-row">
+                                   <div class="form-group">
+                                        <label for="domain">Domain</label>
+                                        <p class="form-hint">Domain name for this account.</p>
+                                        <input type="text" [(ngModel)]="txUiService.domain" name="domain" />
+                                   </div>
+
+                                   <div class="form-group-account-flags">
+                                        <!-- isMessageKey -->
+                                        <button type="button" class="flag-item-account-flags" [class.enabled]="txUiService.isMessageKey()" (click)="accountConfiguratorUtilService.toggleMessageKey()">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" id="isMessageKey" name="isMessageKey" [checked]="txUiService.isMessageKey()" class="flag-checkbox" style="padding: 0px" />
+                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                       <path d="M9 12l2 2 4-4" />
+                                                       <circle cx="12" cy="12" r="10" />
+                                                  </svg>
+                                                  <span class="flag-title-account-flags">Save Message Key</span>
+                                             </div>
+                                             <div class="flag-desc">Public key for sending encrypted messages to this account.</div>
+                                        </button>
+                                   </div>
+                              </div>
+                              }
+
+                              <!-- Multi Sign -->
+                              @if (tab === 'modifyMultiSigners') {
+                              <div class="multisign-section">
+                                   <div class="section-header">
+                                        <ng-icon name="heroUserGroup" size="20" class="text-red-600"></ng-icon>
+                                        <span class="section-title">Multi-Sign Configuration</span>
+                                   </div>
+
+                                   <!-- Signers list -->
+                                   <div class="signers-list">
+                                        @for (signer of txUiService.signers(); track $index; let i = $index) {
+                                        <fieldset class="signer-fieldset">
+                                             <legend class="signer-legend">Signer {{ i + 1 }}</legend>
+
+                                             <div class="form-row">
+                                                  <div class="form-group">
+                                                       <label for="signerAccountField{{ i }}">Account</label>
+                                                       <p class="form-hint">Addresses used for multi signing.</p>
+                                                       <input type="text" id="signerAccountField{{ i }}" [(ngModel)]="signer.Account" name="signerAccountField{{ i }}" placeholder="r..." class="input-monospace" />
                                                   </div>
 
                                                   <div class="form-group">
-                                                       <label>Seed</label>
-                                                       <p class="form-hint">The seed for the regular key account.</p>
-                                                       <input type="text" [(ngModel)]="txUiService.regularKeySeed" name="regularKeySeed" />
+                                                       <label for="signerSeedField{{ i }}">Seed</label>
+                                                       <p class="form-hint">Seed of the correspinging addresses.</p>
+                                                       <input type="text" id="signerSeedField{{ i }}" [(ngModel)]="signer.seed" name="signerSeedField{{ i }}" placeholder="s..." class="input-monospace" />
                                                   </div>
+
+                                                  <div class="form-group weight-group">
+                                                       <label for="signerWeightField{{ i }}">Weight</label>
+                                                       <p class="form-hint">Sign Wgt.</p>
+                                                       <input type="number" id="signerWeightField{{ i }}" [(ngModel)]="signer.SignerWeight" name="signerWeightField{{ i }}" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" class="input-number" />
+                                                  </div>
+
+                                                  <div class="form-group remove-group">
+                                                       @if (txUiService.signers().length > 1) {
+                                                       <button type="button" (click)="accountConfiguratorUtilService.removeSigner(i)" class="btn-danger btn-sm" title="Remove this signer">
+                                                            <lucide-icon name="trash-2" size="16"></lucide-icon>
+                                                       </button>
+                                                       }
+                                                  </div>
+                                             </div>
+                                        </fieldset>
+                                        }
+                                   </div>
+
+                                   <!-- Add / Quorum -->
+                                   <div class="form-row actions-row">
+                                        <div class="form-group">
+                                             <button type="button" (click)="accountConfiguratorUtilService.addSigner()" class="btn-primary-blue">Add Signer</button>
+                                        </div>
+
+                                        <div class="form-group">
+                                             <label for="signerQuorumField">Signer Quorum</label>
+                                             <p class="form-hint">A target number for the signer weights.</p>
+
+                                             <input type="number" id="signerQuorumField" [(ngModel)]="txUiService.signerQuorum" (ngModelChange)="accountConfiguratorUtilService.validateQuorum()" (keydown)="accountConfiguratorUtilService.preventNegative($event)" name="signerQuorumField" min="1" class="input-number" />
+                                        </div>
+                                   </div>
+                              </div>
+                              }
+
+                              <!-- Regular Key -->
+                              @if(tab === 'modifyRegularKey') {
+                              <div class="multisign-section">
+                                   <div class="section-header">
+                                        <ng-icon name="heroKey" size="20" class="text-red-600"></ng-icon>
+                                        <span class="section-title">Regular Key Configuration</span>
+                                   </div>
+
+                                   <div class="signers-list">
+                                        <div class="form-row">
+                                             <div class="form-group">
+                                                  <label for="regularKeyAddress">Account</label>
+                                                  <p class="form-hint">The regular key pair to be assigned to the account.</p>
+                                                  <input type="text" class="input-monospace" [(ngModel)]="txUiService.regularKeyAddress" name="regularKeyAddress" placeholder="No Regular Key configured for account" />
+                                             </div>
+
+                                             <div class="form-group">
+                                                  <label for="regularKeySeed">Seed</label>
+                                                  <p class="form-hint">The seed for the regular key account.</p>
+                                                  <input type="text" class="input-monospace" [(ngModel)]="txUiService.regularKeySeed" name="regularKeySeed" />
                                              </div>
                                         </div>
                                    </div>
-                                   }
-
-                                   <app-transaction-options [showWhenTab]="['modifyMultiSigners', 'modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                                   <!-- Action buttons -->
-                                   @if(activeTab() === 'modifyMultiSigners') {
-                                   <div class="button-row" style="margin-top: 0">
-                                        <button type="button" (click)="setMultiSign('Y')" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Set Multi-Sign' }}</button>
-                                        <button type="button" (click)="setMultiSign('N')" class="btn-primary-red" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove Multi-Sign' }}</button>
-                                        <!-- <button type="button" class="btn-secondary-clear-fields" (click)="txUiService.clearAllFields()">Clear Fields</button> -->
-                                   </div>
-                                   } @else if(activeTab() === 'modifyRegularKey') {
-                                   <div class="button-row">
-                                        <button type="button" (click)="setRegularKey('Y')" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Set Regular Key' }}</button>
-                                        <button type="button" (click)="setRegularKey('N')" class="btn-primary-red" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove Regular Key' }}</button>
-                                        <!-- <button type="button" class="btn-secondary-clear-fields" (click)="txUiService.clearAllFields()">Clear Fields</button> -->
-                                   </div>
-                                   } @else if(activeTab() === 'modifyMetaData') {
-                                   <div class="button-row">
-                                        <button type="button" (click)="updateMetaData()" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Modify Account Meta Data' }}</button>
-                                        <!-- <button type="button" class="btn-secondary-clear-fields" (click)="txUiService.clearAllFields()">Clear Fields</button> -->
-                                   </div>
-                                   } @else if(activeTab() === 'modifyDepositAuth') {
-                                   <div class="button-row">
-                                        <button type="button" (click)="setDepositAuthAccounts('Y')" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Set Deposit Authorization' }}</button>
-                                        <button type="button" (click)="setDepositAuthAccounts('N')" class="btn-primary-red" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Remove Deposit Authorization' }}</button>
-                                        <!-- <button type="button" class="btn-secondary-clear-fields" (click)="txUiService.clearAllFields()">Clear Fields</button> -->
-                                   </div>
-                                   } @else if(activeTab() === 'modifyAccountFlags') {
-                                   <div class="button-row">
-                                        <button type="button" (click)="updateFlags()" class="btn-primary-blue" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Modify Account Flags' }}</button>
-                                        <!-- <button type="button" class="btn-secondary-clear-fields" (click)="txUiService.clearAllFields()">Clear Fields</button> -->
-                                   </div>
-                                   }
-
-                                   <!-- Execution time -->
-                                   <div class="executionTimeDisplay">
-                                        <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
-                                   </div>
-                                   <app-transaction-preview></app-transaction-preview>
                               </div>
+                              }
+
+                              <app-transaction-options [showWhenTab]="['modifyMultiSigners', 'modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                              <!-- Action buttons -->
+                              @if(tab === 'modifyMultiSigners') {
+                              <div class="button-row" style="margin-top: 0">
+                                   <button type="button" class="btn-primary-blue" (click)="setMultiSign('Y')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
+                                   <button type="button" class="btn-primary-red" (click)="setMultiSign('N')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
+                              </div>
+                              } @else if(tab === 'modifyRegularKey') {
+                              <div class="button-row">
+                                   <button type="button" (click)="setRegularKey('Y')" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setRegularKeyButtonLabel() }}</button>
+                                   <button type="button" (click)="setRegularKey('N')" class="btn-primary-red" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeRegularKeyButtonLabel() }}</button>
+                              </div>
+                              } @else if(tab === 'modifyMetaData') {
+                              <div class="button-row">
+                                   <button type="button" (click)="updateMetaData()" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.modifyAccountMetaDataButtonLabel() }}</button>
+                              </div>
+                              } @else if(tab === 'modifyDepositAuth') {
+                              <div class="button-row">
+                                   <button type="button" (click)="setDepositAuthAccounts('Y')" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
+                                   <button type="button" (click)="setDepositAuthAccounts('N')" class="btn-primary-red" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
+                              </div>
+                              } @else if(tab === 'modifyAccountFlags') {
+                              <div class="button-row">
+                                   <button type="button" (click)="modifyAccountFlags()" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.modifyAccountFlagsButtonLabel() }}</button>
+                              </div>
+                              }
+
+                              <!-- Execution time -->
+                              <div class="executionTimeDisplay">
+                                   <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
+                              </div>
+                              <app-transaction-preview></app-transaction-preview>
                          </div>
                     </div>
                </form>
           </div>
+
+          <app-requirements [activeTab]="activeTab()"></app-requirements>
      </div>
 </div>

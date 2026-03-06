@@ -8,10 +8,10 @@ import { UtilsService } from '../../util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
-import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
 import * as xrpl from 'xrpl';
 import { MPTokenIssuanceCreate, MPTokenIssuanceCreateFlags } from 'xrpl';
 import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
 @Injectable({
      providedIn: 'root',

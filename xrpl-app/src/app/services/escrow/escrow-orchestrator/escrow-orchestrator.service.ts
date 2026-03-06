@@ -9,8 +9,8 @@ import { ToastService } from '../../toast/toast.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { AppConstants } from '../../../core/app.constants';
-import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
 import { EscrowUtilService } from '../escrow-util/escrow-util.service';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
 type EscrowTxType = 'create' | 'finish' | 'cancel';
 

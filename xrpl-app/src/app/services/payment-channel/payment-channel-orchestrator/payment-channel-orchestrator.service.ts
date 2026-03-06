@@ -1,5 +1,4 @@
 import { inject, Injectable } from '@angular/core';
-import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { ToastService } from '../../toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
@@ -11,6 +10,7 @@ import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction
 import { PaymentChannelUtilService } from '../payment-channel-util/payment-channel-util.service';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
 type PaymentChannelTxType = 'create' | 'fund' | 'claim' | 'renew' | 'close';
 

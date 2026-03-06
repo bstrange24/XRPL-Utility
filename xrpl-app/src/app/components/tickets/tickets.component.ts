@@ -17,7 +17,6 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
@@ -28,6 +27,7 @@ import { TicketsOrchestratorService } from '../../services/tickets/tickets-orche
 import { TemplatePortal } from '@angular/cdk/portal';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { TicketsUtilService } from '../../services/tickets/tickets-util/tickets-util.service';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 
 @Component({
      selector: 'app-tickets',
@@ -196,7 +196,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           });
      }
 
-     async createTickets() {
+     async createTickets(): Promise<void> {
           await this.withPerf('createTickets', async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -251,15 +251,12 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
-                    return this.toastService.error('Please select a wallet.');
-               }
+               if (!this.ensureWalletSelected()) return;
 
                try {
-                    const tickets = this.txUiService.selectedTicketSequences();
-                    if (tickets.length === 0) {
-                         this.toastService.error('No tickets selected.', AppConstants.TOAST.ERROR);
-                         return;
+                    const ticketsToDelete = this.txUiService.selectedTicketSequences();
+                    if (ticketsToDelete.length === 0) {
+                         return this.toastService.error('No tickets selected to delete.', AppConstants.TOAST.ERROR);
                     }
 
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
@@ -272,11 +269,6 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
 
                     if (!env.accountInfo || !env.accountObjects) {
                          throw new Error('Failed to fetch account information');
-                    }
-
-                    const ticketsToDelete = this.txUiService.selectedTicketSequences();
-                    if (ticketsToDelete.length === 0) {
-                         return this.toastService.error('No tickets selected to delete.', AppConstants.TOAST.ERROR);
                     }
 
                     if (!env.ticketObjects) {

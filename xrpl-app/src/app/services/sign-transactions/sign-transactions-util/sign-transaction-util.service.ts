@@ -1,13 +1,17 @@
 import { Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { XrplService } from '../xrpl-services/xrpl.service';
-import { UtilsService } from '../../services/util-service/utils.service';
+import { XrplService } from '../../xrpl-services/xrpl.service';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { UtilsService } from '../../util-service/utils.service';
 
 type TxBuilder = (ctx: { wallet: xrpl.Wallet; accountInfo: any; currentLedger: number; fee: any; selectedTransaction?: string }) => any;
 
 interface SignTransactionOptions {
      client: xrpl.Client;
      wallet: xrpl.Wallet;
+     accountInfo: xrpl.AccountInfoResponse;
+     fee: any;
+     currentLedger: any;
      selectedTransaction?:
           | 'sendXrp'
           | 'accountFlagSet'
@@ -50,10 +54,14 @@ interface SignTransactionOptions {
      providedIn: 'root',
 })
 export class SignTransactionUtilService {
-     constructor(private readonly xrplService: XrplService, private readonly utilsService: UtilsService) {}
+     constructor(
+          private readonly xrplService: XrplService,
+          public readonly txUiService: TransactionUiService,
+          public readonly utilsService: UtilsService
+     ) {}
 
-     async createBatchpRequestText({ client, wallet }: SignTransactionOptions): Promise<string> {
-          const [accountInfo, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.getLastLedgerIndex(client)]);
+     async createBatchpRequestText(options: SignTransactionOptions): Promise<string> {
+          const { wallet, accountInfo } = options;
 
           let batchRequest: any = {
                TransactionType: 'Batch',
@@ -110,13 +118,11 @@ export class SignTransactionUtilService {
      }
 
      async buildTransactionText(options: SignTransactionOptions): Promise<string> {
-          const { client, wallet, selectedTransaction, isMemoEnable, isTicketEnabled, ticketSequence } = options;
+          const { client, wallet, accountInfo, currentLedger, fee, selectedTransaction } = options;
 
           if (!selectedTransaction || !this.builders[selectedTransaction]) {
                throw new Error(`Unsupported transaction type: ${selectedTransaction}`);
           }
-
-          const { accountInfo, currentLedger, fee } = await this.baseTx(client, wallet);
 
           const tx = this.builders[selectedTransaction]({
                wallet,
@@ -126,17 +132,17 @@ export class SignTransactionUtilService {
                selectedTransaction,
           });
 
-          await this.applyTicket(tx, client, wallet, isTicketEnabled, ticketSequence);
-          this.applyMemo(tx, isMemoEnable);
+          await this.applyTicket(tx, client, wallet);
+          this.applyMemo(tx);
 
           return JSON.stringify(tx, null, 2);
      }
 
-     private builders: Record<string, TxBuilder> = {
+     private readonly builders: Record<string, TxBuilder> = {
           sendXrp: ({ wallet, accountInfo, currentLedger, fee }) => ({
                TransactionType: 'Payment',
                Account: wallet.classicAddress,
-               Destination: 'rBz1NF3RcLyCk1YwiWNzAhrMngQkXE1tTP',
+               Destination: 'rLPxR96EiM69W2hGMsW5eg9mqYDNo5U7a8',
                Amount: xrpl.xrpToDrops('0.000001'),
                Fee: fee,
                LastLedgerSequence: currentLedger,
@@ -146,7 +152,7 @@ export class SignTransactionUtilService {
           setTrustline: ({ wallet, accountInfo, currentLedger, fee }) => ({
                TransactionType: 'TrustSet',
                Account: wallet.classicAddress,
-               LimitAmount: { currency: 'CTZ', issuer: 'rLBknJdCzFGV15Vyyewd3U8jQmDR3abRJ4', value: '10000000000' },
+               LimitAmount: { currency: 'CTZ', issuer: 'rBRQ1Dt3wg9b4D1vsqL2DP4VgLgXaK2vHV', value: '10000000000' },
                Fee: fee,
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
@@ -155,7 +161,7 @@ export class SignTransactionUtilService {
           removeTrustline: ({ wallet, accountInfo, currentLedger, fee }) => ({
                TransactionType: 'TrustSet',
                Account: wallet.classicAddress,
-               LimitAmount: { currency: 'CTZ', issuer: 'rLBknJdCzFGV15Vyyewd3U8jQmDR3abRJ4', value: '0' },
+               LimitAmount: { currency: 'CTZ', issuer: 'rBRQ1Dt3wg9b4D1vsqL2DP4VgLgXaK2vHV', value: '0' },
                Fee: fee,
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
@@ -166,9 +172,9 @@ export class SignTransactionUtilService {
                Account: wallet.classicAddress,
                Destination: 'rHp1RqKdRSG5cJY5ikZadRA91yE35wTJFf',
                Amount: {
-                    currency: 'CTZ',
-                    issuer: 'rLBknJdCzFGV15Vyyewd3U8jQmDR3abRJ4',
-                    value: '100',
+                    currency: 'BOB',
+                    issuer: 'rBRQ1Dt3wg9b4D1vsqL2DP4VgLgXaK2vHV',
+                    value: '10',
                },
                Fee: fee,
                LastLedgerSequence: currentLedger,
@@ -447,33 +453,41 @@ export class SignTransactionUtilService {
           }),
      };
 
-     private async applyTicket(tx: any, client: xrpl.Client, wallet: xrpl.Wallet, isTicketEnabled?: boolean, ticketSequence?: string): Promise<void> {
-          if (!isTicketEnabled) return;
-
-          if (ticketSequence) {
-               const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticketSequence));
-
-               if (!exists) {
-                    throw new Error(`ERROR: Ticket Sequence ${ticketSequence} not found for account ${wallet.classicAddress}`);
+     private async applyTicket(tx: any, client: xrpl.Client, wallet: xrpl.Wallet): Promise<void> {
+          const isTicket = this.txUiService.isTicket();
+          if (isTicket) {
+               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               if (ticket) {
+                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
+                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
+                    this.utilsService.setTicketSequence(tx, ticket, true);
                }
-
-               tx.TicketSequence = Number(ticketSequence);
           } else {
-               tx.TicketSequence = 'TICKET_SEQUENCE';
+               return;
           }
-
-          tx.Sequence = 0;
      }
 
-     private applyMemo(tx: any, isMemoEnable?: boolean): void {
-          if (!isMemoEnable) return;
-
-          tx.Memos = [{ Memo: { MemoData: '', MemoType: 'text/plain' } }, { Memo: { MemoData: '', MemoType: 'text/plain' } }];
+     private applyMemo(tx: any): void {
+          if (this.txUiService.isMemoEnabled()) {
+               const memo = this.txUiService.memoField();
+               if (this.txUiService.isMemoEnabled() && memo) this.utilsService.setMemoField(tx, memo);
+          } else {
+               return;
+          }
      }
 
-     private async baseTx(client: xrpl.Client, wallet: xrpl.Wallet): Promise<{ accountInfo: any; currentLedger: number; fee: any }> {
-          const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''), this.xrplService.calculateTransactionFee(client), this.xrplService.getLastLedgerIndex(client)]);
+     private applyOptions(tx: any) {
+          // Tags, Memo, InvoiceID, DomainID, CredentialIDs
+          const destinationTag = this.txUiService.destinationTagField();
+          if (destinationTag) this.utilsService.setDestinationTag(tx, destinationTag);
 
-          return { accountInfo, currentLedger, fee };
+          const sourceTag = this.txUiService.sourceTagField();
+          if (sourceTag) this.utilsService.setSourceTagField(tx, sourceTag);
+
+          const invoiceId = this.txUiService.invoiceIdField();
+          if (invoiceId) this.utilsService.setInvoiceIdField(tx, invoiceId);
+
+          const domainId = this.txUiService.domainId();
+          if (domainId) this.utilsService.setDomainId(tx, domainId);
      }
 }

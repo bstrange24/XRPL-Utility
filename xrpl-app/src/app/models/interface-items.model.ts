@@ -290,6 +290,13 @@ export interface WalletEntry {
      name: string;
 }
 
+export interface DelegateAction {
+     id: number;
+     key: string;
+     txType: string;
+     description: string;
+}
+
 export interface ValidationInputs {
      // ---- Wallet / Sender ----
      wallet: {

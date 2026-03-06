@@ -72,6 +72,22 @@ export class TransactionOptionsComponent {
           this.txUiService.toggleShowEnableTrustline(event);
      }
 
+     onMemoToggled(enabled: boolean) {
+          if (enabled) {
+               this.isMemoEnabled.set(enabled);
+          } else {
+               this.txUiService.memoField.set('');
+          }
+     }
+
+     onMemoInput(value: string) {
+          const cleaned = value
+               .split(',')
+               .map(s => s.trim())
+               .filter(Boolean);
+          this.txUiService.memoField.set(cleaned.join(', ')); // or set array if you prefer
+     }
+
      toggleMultiSign() {
           this.utilsService.toggleMultiSign(this.useMultiSign(), this.txUiService.signers(), this.txUiService.currentWallet()?.classicAddress || '');
           this.multiSignAddress.set(

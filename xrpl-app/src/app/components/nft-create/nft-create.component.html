@@ -251,7 +251,7 @@
 
                                         <!-- burnableNft -->
                                         @if (activeTab() === 'create') {
-                                        <div class="flag-item-account-flags" [class.enabled]="nftFlags.burnableNft" (click)="toggleFlag('burnableNft')">
+                                        <button class="flag-item-account-flags" [class.enabled]="nftFlags.burnableNft" (click)="toggleFlag('burnableNft')" type="button">
                                              <div class="flag-header-account">
                                                   <input type="checkbox" id="canLock" name="canLock" [checked]="nftFlags.burnableNft" class="flag-checkbox" />
                                                   <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -261,13 +261,13 @@
                                              </div>
                                              <div class="flag-value">0x00000001 tfBurnable</div>
                                              <div class="flag-desc">The minted token may be burned by the issuer even if the issuer does not currently hold the token. The current holder of the token may always burn it.</div>
-                                        </div>
+                                        </button>
                                         }
 
                                         <!-- onlyXrpNft -->
                                         @if (activeTab() === 'create') {
-                                        <div class="flag-item-account-flags" [class.enabled]="nftFlags.onlyXrpNft" (click)="toggleFlag('onlyXrpNft')">
-                                             <div class="flag-header">
+                                        <button class="flag-item-account-flags" [class.enabled]="nftFlags.onlyXrpNft" (click)="toggleFlag('onlyXrpNft')" type="button">
+                                             <div class="flag-header-account">
                                                   <input type="checkbox" [checked]="nftFlags.onlyXrpNft" class="flag-checkbox" disabled />
                                                   <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
@@ -276,13 +276,13 @@
                                              </div>
                                              <div class="flag-value">0x00000002 tfOnlyXRP</div>
                                              <div class="flag-desc">Indicates that the token may only be offered or sold for XRP.</div>
-                                        </div>
+                                        </button>
                                         }
 
                                         <!-- trustLine -->
                                         @if (activeTab() === 'create') {
-                                        <div class="flag-item" [class.enabled]="nftFlags.trustLine" (click)="toggleFlag('trustLine')">
-                                             <div class="flag-header">
+                                        <button class="flag-item-account-flags" [class.enabled]="nftFlags.trustLine" (click)="toggleFlag('trustLine')" type="button">
+                                             <div class="flag-header-account">
                                                   <input type="checkbox" [checked]="nftFlags.trustLine" class="flag-checkbox" disabled />
                                                   <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
@@ -291,13 +291,13 @@
                                              </div>
                                              <div class="flag-value">0x00000004 tfTrustLine</div>
                                              <div class="flag-desc">indicates that the issuer wants a trustline to be automatically created</div>
-                                        </div>
+                                        </button>
                                         }
 
                                         <!-- transferableNft -->
                                         @if (activeTab() === 'create') {
-                                        <div class="flag-item" [class.enabled]="nftFlags.transferableNft" (click)="toggleFlag('transferableNft')">
-                                             <div class="flag-header">
+                                        <button class="flag-item-account-flags" [class.enabled]="nftFlags.transferableNft" (click)="toggleFlag('transferableNft')" type="button">
+                                             <div class="flag-header-account">
                                                   <input type="checkbox" [checked]="nftFlags.transferableNft" class="flag-checkbox" disabled />
                                                   <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
@@ -306,13 +306,13 @@
                                              </div>
                                              <div class="flag-value">0x00000008 tfTransferable</div>
                                              <div class="flag-desc">Indicates that this NFT can be transferred. This flag has no effect if the token is being transferred from the issuer or to the issuer.</div>
-                                        </div>
+                                        </button>
                                         }
 
                                         <!-- mutableNft -->
                                         @if (activeTab() === 'create') {
-                                        <div class="flag-item" [class.enabled]="nftFlags.mutableNft" (click)="toggleFlag('mutableNft')">
-                                             <div class="flag-header">
+                                        <button class="flag-item-account-flags" [class.enabled]="nftFlags.mutableNft" (click)="toggleFlag('mutableNft')" type="button">
+                                             <div class="flag-header-account">
                                                   <input type="checkbox" [checked]="nftFlags.mutableNft" class="flag-checkbox" disabled />
                                                   <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
@@ -321,7 +321,7 @@
                                              </div>
                                              <div class="flag-value">0x00000010 tfMutable</div>
                                              <div class="flag-desc">Indicates that this NFT's URI can be modified.</div>
-                                        </div>
+                                        </button>
                                         }
 
                                         <!-- TOTAL FLAGS VALUE -->
@@ -357,6 +357,102 @@
                     <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
                </div>
                <app-transaction-preview></app-transaction-preview>
+          </div>
+
+          <div class="requirements-info">
+               <div class="info-header">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+                    <h3>XRPL NFTs (Non-Fungible Tokens)</h3>
+               </div>
+
+               <p class="info-subtitle">Create, burn, or modify metadata for NFTs using NFTokenMint, NFTokenBurn, and related transactions. NFTs support unique digital collectibles, art, tickets, credentials, and more with flags for burnability, transferability, mutability, and transfer fees.</p>
+
+               <div class="combinations-grid">
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">🎨 Mint NFT</span>
+                              <span class="badge required-badge">NFTokenMint</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">URI</span>
+                                   <span class="field-status required">✅ Required (hex-encoded, max 256 bytes)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Taxon</span>
+                                   <span class="field-status required">✅ Required (grouping/category number)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">TransferFee</span>
+                                   <span class="field-status optional">➕ Optional (0–50000 = 0–50% in 0.001% steps)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Flags</span>
+                                   <span class="field-status optional">➕ Optional (burnable, mutable, transferable, onlyXRP, trustLine)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">NFTokenMinter</span>
+                                   <span class="field-status optional">➕ Optional (authorized minter address)</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">🔥 Burn / Modify NFT</span>
+                              <span class="badge optional-badge">NFTokenBurn or Metadata Update</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">NFTokenID</span>
+                                   <span class="field-status required">✅ Required (32-byte hex ID)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Owner (for burn)</span>
+                                   <span class="field-status required">✅ Must be current holder or issuer (if burnable)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">URI (for modify)</span>
+                                   <span class="field-status optional">➕ New URI (only if tfMutable set at mint)</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="important-notes">
+                         <h5>📝 Important Notes:</h5>
+                         <ul>
+                              <li>Requires the <strong>NonFungibleTokensV1_1</strong> (or later) amendment to be enabled on the network.</li>
+                              <li>Each minted NFT consumes **owner reserve** (~0.2 XRP) from the minter/issuer until burned or transferred (reserve follows current owner).</li>
+                              <li><strong>URI</strong>: Hex-encoded string (usually pointing to IPFS, Arweave, or HTTPS metadata JSON). Max 256 bytes after encoding. Not validated for content.</li>
+                              <li><strong>Taxon</strong>: Arbitrary number for grouping NFTs (e.g., collection ID). No uniqueness enforced — same taxon can be used across many NFTs.</li>
+                              <li><strong>TransferFee</strong>: Royalty-like fee on secondary transfers (0–50%). Only applies if tfTransferable is set and token is sold via NFTokenOffer.</li>
+                              <li>
+                                   Common flags:
+                                   <ul>
+                                        <li><strong>tfBurnable</strong> — Issuer or current holder can burn it</li>
+                                        <li><strong>tfMutable</strong> — URI can be updated post-mint</li>
+                                        <li><strong>tfTransferable</strong> — Can be transferred (default true; disable for soulbound-like)</li>
+                                        <li><strong>tfOnlyXRP</strong> — Can only be offered/sold for XRP</li>
+                                        <li><strong>tfTrustLine</strong> — Auto-create trust line if needed (rarely used)</li>
+                                   </ul>
+                              </li>
+                              <li>Burning requires the current owner (or issuer if burnable) — burns the NFT and frees reserve.</li>
+                              <li>Metadata modification (URI change) only possible if tfMutable was set at mint — requires owner to submit NFTokenCreateOffer or similar update mechanism.</li>
+                         </ul>
+                         <p></p>
+                         <h5 class="warning-title">⚠️ Irreversibility & Flag Considerations</h5>
+                         <p style="color: #92400e">Many NFT properties are permanent after mint — choose flags and URI carefully.</p>
+                         <ul>
+                              <li>Once minted, most flags (burnable, transferable, onlyXRP, etc.) <strong>cannot be changed</strong> — they are fixed forever.</li>
+                              <li>If tfMutable is **not** set at mint, the URI is **immutable** — you cannot update metadata later.</li>
+                              <li>Burning is **permanent** — the NFT ID is destroyed and cannot be recovered or reused.</li>
+                              <li>Wrong URI (e.g., broken link, invalid hex) makes the NFT effectively unusable — always test with valid IPFS/Arweave links.</li>
+                              <li>Reserve follows the current holder — transferring an NFT moves the reserve cost to the new owner.</li>
+                              <li>High TransferFee can discourage trading — values >10% often reduce liquidity.</li>
+                              <li>Test mint/burn/update flows on devnet or Testnet first — incorrect flags, URI encoding, or taxon values cause transaction failure and fee burn.</li>
+                         </ul>
+                    </div>
+               </div>
           </div>
      </div>
 </div>

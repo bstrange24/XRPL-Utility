@@ -5,14 +5,14 @@ import { BehaviorSubject } from 'rxjs';
      providedIn: 'root',
 })
 export class ThemeService {
-     private darkMode = new BehaviorSubject<boolean>(this.getInitialTheme());
+     private readonly darkMode = new BehaviorSubject<boolean>(this.getInitialTheme());
      darkMode$ = this.darkMode.asObservable();
 
      constructor() {
           this.applyTheme();
           this.darkMode.subscribe(() => this.applyTheme());
 
-          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+          globalThis.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
                if (localStorage.getItem('darkMode') === null) {
                     this.darkMode.next(e.matches);
                }
@@ -25,7 +25,7 @@ export class ThemeService {
                return saved === 'true';
           }
           // System preference as fallback
-          return window.matchMedia('(prefers-color-scheme: dark)').matches;
+          return globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
      }
 
      toggle(): void {

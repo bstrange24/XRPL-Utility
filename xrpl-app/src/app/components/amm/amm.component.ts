@@ -31,9 +31,9 @@ import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/selec
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 
 interface XRPLCurrency {
      currency: string;

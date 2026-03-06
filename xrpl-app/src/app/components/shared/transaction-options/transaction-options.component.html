@@ -2,7 +2,7 @@
 <div class="switch-group">
      @if (showMemo) {
      <label class="switch">
-          <input type="checkbox" [(ngModel)]="isMemoEnabled" name="isMemoEnabled" />
+          <input type="checkbox" [(ngModel)]="isMemoEnabled" (ngModelChange)="onMemoToggled($event)" name="isMemoEnabled" />
           <span class="slider"></span> Add Memo
      </label>
      } @if (showMultiSign && multiSigningEnabled()) {
@@ -27,7 +27,7 @@
      </label>
      }@if (showEnableTrustline()) {
      <label class="switch">
-          <input type="checkbox" [ngModel]="isShowEnableTrustline" (ngModelChange)="toggleShowEnableTrustline($event)" name="showEnableTrustline" />
+          <input type="checkbox" [ngModel]="isShowEnableTrustline()" (ngModelChange)="toggleShowEnableTrustline($event)" name="showEnableTrustline" />
           <span class="slider"></span> Enable Trustline
      </label>
      }
@@ -35,7 +35,7 @@
 
 <!-- Check if memo slider is enabled -->
 @if (isMemoEnabled()) {
-<textarea class="memo-input auto-expand-textarea" [ngModel]="memoField()" name="memoField" placeholder="Separate multiple memos with commas" (input)="utilsService.adjustTextareaHeight($event)"></textarea>
+<textarea class="memo-input auto-expand-textarea" [(ngModel)]="memoField" name="memoField" (ngModelChange)="onMemoInput($event)" placeholder="Separate multiple memos with commas" (input)="utilsService.adjustTextareaHeight($event)"></textarea>
 }
 
 <!-- Check if Multi sign slider is enabled -->

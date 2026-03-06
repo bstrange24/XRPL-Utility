@@ -4,9 +4,9 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { PaymentChannelObject, UnifiedPaymentChannel } from '../../../models/interface-items.model';
 import * as xrpl from 'xrpl';
 import { sign, verify } from 'ripple-keypairs';
-import { PerformanceBaseComponent } from '../../../components/base/performance-base/performance-base.component';
 import { UtilsService } from '../../util-service/utils.service';
 import BigNumber from 'bignumber.js';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
 type PaymentChannelTxType = 'create' | 'fund' | 'claim' | 'renew' | 'close';
 

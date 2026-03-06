@@ -200,5 +200,86 @@
                     </div>
                </form>
           </div>
+
+          <div class="requirements-info">
+               <div class="info-header">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+                    <h3>Delegate (Permission Delegation)</h3>
+               </div>
+
+               <p class="info-subtitle">Delegate lets you grant specific, granular permissions to another XRPL account without giving them your private keys. Useful for shared control, delegated operations (e.g., signing certain tx types, managing sub-accounts), or institutional workflows. Revoke or update permissions at any time with another DelegateSet transaction.</p>
+
+               <div class="combinations-grid">
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">🔐 Grant / Update Permissions</span>
+                              <span class="badge required-badge">DelegateSet</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">Delegate</span>
+                                   <span class="field-status required">✅ Required (target account address)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Permissions</span>
+                                   <span class="field-status required">✅ Required (array of permission flags/strings)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Max 10 permissions per delegate</span>
+                                   <span class="field-status omitted">Limit per entry</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Flags / Metadata</span>
+                                   <span class="field-status optional">➕ Optional (description, expiration, etc.)</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">🚫 Revoke / Remove Delegate</span>
+                              <span class="badge optional-badge">DelegateSet (clear)</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">Delegate</span>
+                                   <span class="field-status required">✅ Required (address to revoke)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Permissions</span>
+                                   <span class="field-status omitted">❌ Empty array or omit to remove all</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Signer</span>
+                                   <span class="field-status required">✅ Must be the delegating account (owner)</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="important-notes">
+                         <h5>📝 Important Notes:</h5>
+                         <ul>
+                              <li>Requires the **Delegate** amendment (or related permission delegation amendment) to be enabled on the network.</li>
+                              <li>Each delegate entry creates a **Delegate** ledger object owned by your account, consuming **owner reserve** (~0.2 XRP per delegate) until removed.</li>
+                              <li><strong>Permissions</strong> is an array of specific rights (e.g., "Payment", "TrustSet", "OfferCreate", "EscrowFinish", custom strings) — only listed permissions are granted.</li>
+                              <li>Delegates cannot sign for you in general (unlike regular key or multi-sign) — they can only perform the explicitly allowed actions on your behalf.</li>
+                              <li>Only the delegating account (owner) can add, update, or remove delegates — delegates cannot delegate further unless explicitly permitted.</li>
+                              <li>Changes take effect immediately upon ledger inclusion; no approval needed from the delegate account.</li>
+                              <li>Use cases: allow a hot wallet to pay bills, let a custodian manage offers, grant limited access to a service without full control.</li>
+                         </ul>
+                         <p></p>
+                         <h5 class="warning-title">⚠️ Security & Revocation Risks</h5>
+                         <p style="color: #92400e">Delegating permissions gives real control — a compromised delegate can misuse allowed actions until revoked.</p>
+                         <ul>
+                              <li>Once granted, permissions are **active immediately** — if the delegate account is hacked, they can perform allowed txs until you submit a revocation DelegateSet.</li>
+                              <li>Revocation is **not retroactive** — any transactions the delegate already signed and submitted before revocation are irreversible.</li>
+                              <li>Keep delegate lists small and trusted — too many delegates increase reserve cost and attack surface.</li>
+                              <li>Reserve remains locked per delegate entry — forgetting to revoke unused delegates keeps paying owner reserve indefinitely.</li>
+                              <li>Delegate permissions are **public on the ledger** — anyone can see who has what access to your account.</li>
+                              <li>Always test delegation flows (grant → use → revoke) on devnet or Testnet first — incorrect permission strings or formats cause tx failure and fee burn.</li>
+                         </ul>
+                    </div>
+               </div>
+          </div>
      </div>
 </div>

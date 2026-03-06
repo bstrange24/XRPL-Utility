@@ -6,7 +6,7 @@ import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { AppConstants } from '../../core/app.constants';
-import { PerformanceBaseComponent } from '../base/performance-base/performance-base.component';
+import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 declare var Prism: any;
 
 @Component({
