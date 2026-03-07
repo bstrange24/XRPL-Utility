@@ -21,11 +21,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
 
      buildSuccessMessage(type: CredentialTxType, formValues: any, extra: any): string {
           if (type === 'createCredential') {
-               if (extra?.enableNftMinter === 'Y') {
-                    return `Successfully Set NFT Minter ${formValues.nfTokenMinterAddress ? formValues.nfTokenMinterAddress : ''}`;
-               } else {
-                    return `Successfully Remove NFT Minter`;
-               }
+                    return `Successfully Create Credential`;
           }
           // if (type === 'modifyRegularKey') {
           //      if (extra?.enableRegularKeyFlag === 'Y') {
@@ -45,8 +41,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           let msg: string;
 
           // if (type === 'createCredential') {
-          const address = formValues.nfTokenMinterAddress ?? '';
-          msg = extra?.enableNftMinter === 'Y' ? `Simulated Setting NFT Minter ${address}` : `Simulated Removing NFT Minter ${address}`;
+          msg = `Simulated Credential create`;
           // }
           // else if (type === 'modifyRegularKey') {
           //      if (extra?.enableRegularKeyFlag === 'Y') {

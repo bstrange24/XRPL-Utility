@@ -913,17 +913,9 @@ export class ValidationService {
           // CredentialCreate Actions
           this.registerRule({
                transactionType: 'CredentialCreate',
-               requiredFields: ['credentials.credentialType', 'credentials.subject', 'credentials.date'], // adjust as needed
+               requiredFields: ['createCredential.credentialType', 'createCredential.subject', 'createCredential.expirationRipple'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -947,7 +939,7 @@ export class ValidationService {
           // CredentialDelete Actions
           this.registerRule({
                transactionType: 'CredentialDelete',
-               requiredFields: ['credentials.credentialId'], // adjust as needed
+               requiredFields: ['credentials.credentialId'],
                validators: [
                     this.walletCredentialRequired(),
                     // ctx => {
@@ -978,7 +970,7 @@ export class ValidationService {
           // CredentialAccept Actions
           this.registerRule({
                transactionType: 'CredentialAccept',
-               requiredFields: ['credentials.credentialId'], // adjust as needed
+               requiredFields: ['credentials.credentialId'],
                validators: [
                     this.walletCredentialRequired(),
                     // ctx => {
@@ -1009,7 +1001,7 @@ export class ValidationService {
           // CredentialVerify Actions
           this.registerRule({
                transactionType: 'CredentialVerify',
-               requiredFields: ['credentials.credentialId'], // adjust as needed
+               requiredFields: ['credentials.credentialId'],
                validators: [
                     // ctx => {
                     //      const seed = this.getSeed(ctx);
@@ -1355,7 +1347,7 @@ export class ValidationService {
           // UpdateAccountFlags Actions
           this.registerRule({
                transactionType: 'UpdateAccountFlags',
-               requiredFields: [], // adjust as needed
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
 
@@ -1394,7 +1386,7 @@ export class ValidationService {
           // UpdateMetaData Actions
           this.registerRule({
                transactionType: 'UpdateMetaData',
-               requiredFields: [], // adjust as needed
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
 
@@ -1531,7 +1523,7 @@ export class ValidationService {
           // SetRegularKey Actions
           this.registerRule({
                transactionType: 'SetRegularKey',
-               requiredFields: [], // adjust as needed
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
 
@@ -1561,7 +1553,7 @@ export class ValidationService {
           // SetNftMinterAddress Actions
           this.registerRule({
                transactionType: 'SetNftMinterAddress',
-               requiredFields: ['modifyMetaData.nfTokenMinterAddress'], // adjust as needed
+               requiredFields: ['modifyMetaData.nfTokenMinterAddress'],
                validators: [
                     this.walletCredentialRequired(),
 

@@ -118,7 +118,7 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                const tx = this.buildModifyAccountTransaction(type, env.wallet, env, formValues, extra);
 
                // 4. Apply optional fields
-               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues, env);
+               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues, env, extra);
 
                // 5. Execute transaction
                const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
@@ -157,14 +157,9 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
 
      private getValidationRuleName(type: CredentialTxType): string {
           const map: Record<CredentialTxType, string> = {
-               createCredential: 'CreateTimeBasedEscrow',
-               deleteCredentials: '',
+               createCredential: 'CredentialCreate',
+               deleteCredentials: 'CredentialDelete',
                // modifyDepositAuth: 'SetDepositAuthAccounts',
-               // modifyMultiSigners: 'SetMultiSign',
-               // modifyRegularKey: 'SetRegularKey',
-               // modifyMetaData: 'SetNftMinterAddress',
-               // updateMetaData: 'UpdateMetaData',
-               // modifyAccountSetFlags: 'UpdateAccountFlags',
           };
           return map[type];
      }
@@ -180,16 +175,24 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                },
           };
 
-          // if (type === 'createCredential') {
+          if (type === 'createCredential') {
           return {
                ...base,
-               modifyAccountFlags: {
-                    // if you later want to validate something about flags
-                    setFlags: extra?.setFlags || [],
-                    clearFlags: extra?.clearFlags || [],
+               createCredential: {
+                    credentialType: extra?.credentialType|| '',
+                    expirationRipple: extra?.expirationRipple || '',
+                    subject: extra.subject || ''
                },
           };
-          // }
+          }
+
+           return {
+               ...base,
+               deleteCredentials: {
+                    credentialType: extra?.credentialType|| '',
+                    subject: extra.subject || ''
+               },
+          };
 
           // if (type === 'modifyAccountFlags') {
           //      return {
@@ -202,45 +205,6 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
           //                issuer: formValues.issuer,
           //                currencyValue: formValues.currencyValue,
           //                condition: formValues.condition,
-          //           },
-          //      };
-          // }
-
-          // if (type === 'modifyDepositAuth') {
-          //      return {
-          //           ...base,
-          //           modifyDepositAuth: {
-          //                depsositAuthEntries: extra.depsositAuthEntries,
-          //                authorizeFlag: extra.authorizeFlag,
-          //           },
-          //      };
-          // }
-
-          // if (type === 'modifyMultiSigners') {
-          //      return {
-          //           ...base,
-          //           modifyMultiSigners: {
-          //                formattedSignerEntries: extra.formattedSignerEntries,
-          //                signerQuorum: formValues.signerQuorum,
-          //           },
-          //      };
-          // }
-
-          // if (type === 'modifyRegularKey') {
-          //      return {
-          //           ...base,
-          //           modifyRegularKey: {
-          //                regularKeyAddress: formValues.regularKeyAddress,
-          //                regularKeySeed: formValues.regularKeySeed,
-          //           },
-          //      };
-          // }
-
-          // if (type === 'modifyMetaData') {
-          //      return {
-          //           ...base,
-          //           modifyMetaData: {
-          //                nfTokenMinterAddress: formValues.nfTokenMinterAddress,
           //           },
           //      };
           // }
@@ -261,7 +225,11 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
           const { fee, currentLedger } = env;
 
           if (type === 'createCredential') {
-               return this.xrplTransactionService.buildCreateCredentialTransaction(wallet, env.destinationAddress, extra.credentialType, extra.expirationRipple, env.fee, env.currentLedger);
+               return this.xrplTransactionService.buildCreateCredentialTransaction(wallet, extra.subject, extra.credentialType, extra.expirationRipple, env.fee, env.currentLedger);
+          }
+
+          if(type === 'deleteCredentials') {
+return this.xrplTransactionService.buildDeleteCredentialTransaction(wallet, extra.subject, extra.credentialType, extra.expirationRipple, env.fee, env.currentLedger);
           }
 
           // if (type === 'modifyAccountFlags') {
@@ -325,7 +293,11 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
           return this.xrplTransactionService.buildModifyAccountSetTransaction(wallet, fee, currentLedger);
      }
 
-     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: CredentialTxType, formValues: any, env: any) {
+     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: CredentialTxType, formValues: any, env: any, extra:any) {
+           if (type === 'createCredential') {
+               if (extra.uri) this.utilsService.setURI(tx, extra.uri);
+          }
+
           const isTicket = this.txUiService.isTicket();
           if (isTicket) {
                const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
@@ -351,7 +323,7 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
           };
 
           if (type === 'createCredential') {
-               return this.executor.updateAccountFlags?.(tx as xrpl.AccountSet, wallet, client, opts);
+               return this.executor.createCredential?.(tx as xrpl.CredentialCreate, wallet, client, opts);
           }
 
           // if (type === 'modifyAccountFlags') {

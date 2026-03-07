@@ -99,6 +99,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      subject = signal<string>('');
 
      private readonly createCredentialKeySpecificKeys = [] as const;
+     private readonly deleteCredentialKeySpecificKeys = [] as const;
 
      allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
      destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
@@ -380,10 +381,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                }
 
                try {
-                    // const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    // const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
-                    // const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
@@ -403,7 +400,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                     const result = await this.credentialTransactionOrchestratorService.executeCredentialTx('createCredential', {
                          wallet: this.currentWallet(),
                          formValues,
-                         extra: { credentialType: this.credential().credential_type, expirationRipple: expirationRipple },
+                         extra: { credentialType: this.credential().credential_type, expirationRipple: expirationRipple, subject:destination, uri: this.credential().uri ? this.credential().uri : ''},
                          preFetchedEnv: {
                               client: env.client,
                               accountInfo: env.accountInfo,
@@ -417,44 +414,9 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                     if (!this.txUiService.isSimulateEnabled()) {
                          await this.handleTxResult(result, env.client, env.wallet, destination, 'Failed to create credentials');
                     }
-
-                    // const inputs = this.txUiService.getValidationInputs({
-                    //      wallet: this.currentWallet(),
-                    //      network: { accountInfo, fee, currentLedger },
-                    //      credentials: { credentialType: this.credential().credential_type, subject: destinationAddress, date: expirationRipple },
-                    // });
-
-                    // const errors = await this.validationService.validate('CredentialCreate', { inputs, client, accountInfo });
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.join('\n• '));
-                    // }
-
-                    // const credentialCreateTx: CredentialCreate = {
-                    //      TransactionType: 'CredentialCreate',
-                    //      Account: wallet.classicAddress,
-                    //      CredentialType: Buffer.from(this.credential().credential_type || 'defaultCredentialType', 'utf8').toString('hex'),
-                    //      Subject: destinationAddress,
-                    //      Expiration: expirationRipple,
-                    //      Fee: fee,
-                    //      LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-                    // };
-
-                    // await this.setTxOptionalFields(client, credentialCreateTx, wallet, accountInfo, 'createCredential');
-
-                    // const result = await this.txExecutor.createCredential(credentialCreateTx, wallet, client, {
-                    //      useMultiSign: this.txUiService.useMultiSign(),
-                    //      isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                    //      regularKeySeed: this.txUiService.regularKeySeed(),
-                    //      multiSignAddress: this.txUiService.multiSignAddress(),
-                    //      multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    // });
-                    // if (!result.success) return this.txUiService.setError(`${result.error}`);
-
-                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Setting Credential successfully!' : 'Created credential successfully!';
-                    // await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in createCredential:', error);
-                    this.toastService.error(error.message || 'Error create vredential', AppConstants.TOAST.ERROR);
+                    this.toastService.error(error.message || 'Error create credential', AppConstants.TOAST.ERROR);
                } finally {
                     this.txUiService.resetCurrentStepToIdle();
                }
@@ -463,23 +425,34 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
      async deleteCredentials() {
           await this.withPerf('deleteCredentials', async () => {
+               this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
-               try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-                    const inputs = this.txUiService.getValidationInputs({
-                         wallet: this.currentWallet(),
-                         network: { accountInfo, accountObjects, fee, currentLedger },
-                         credentials: { credentialId: this.credentialID() },
+               if (!this.ensureWalletSelected()) return;
+
+               try {
+                     const env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeFee: true,
+                         includeLedgerIndex: true,
                     });
 
-                    const errors = await this.validationService.validate('CredentialDelete', { inputs, client, accountInfo });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.join('\n• '));
-                    }
+                    // const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
+                    // const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-                    const credentialFound = accountObjects.result.account_objects.find((line: any) => {
+                    // const inputs = this.txUiService.getValidationInputs({
+                    //      wallet: this.currentWallet(),
+                    //      network: { accountInfo, accountObjects, fee, currentLedger },
+                    //      credentials: { credentialId: this.credentialID() },
+                    // });
+
+                    // const errors = await this.validationService.validate('CredentialDelete', { inputs, client, accountInfo });
+                    // if (errors.length > 0) {
+                    //      return this.txUiService.setError(errors.join('\n• '));
+                    // }
+
+                    const credentialFound = env.accountObjects?.result.account_objects.find((line: any) => {
                          return line.LedgerEntryType === 'Credential' && line.index === this.credentialID();
                     });
 
@@ -488,29 +461,51 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                          return;
                     }
 
-                    const credentialDeleteTx: CredentialDelete = {
-                         TransactionType: 'CredentialDelete',
-                         Account: wallet.classicAddress,
-                         CredentialType: (credentialFound as any)?.CredentialType,
-                         Subject: (credentialFound as any)?.Subject,
-                         Fee: fee,
-                         LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                     const formValues = {
+                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.deleteCredentialKeySpecificKeys)),
                     };
 
-                    await this.setTxOptionalFields(client, credentialDeleteTx, wallet, accountInfo, 'deleteCredentials');
-
-                    const result = await this.txExecutor.deleteCredential(credentialDeleteTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    const result = await this.credentialTransactionOrchestratorService.executeCredentialTx('deleteCredentials', {
+                         wallet: this.currentWallet(),
+                         formValues,
+                         extra: { credentialType: (credentialFound as any)?.CredentialType, subject:(credentialFound as any)?.Subject},
+                         preFetchedEnv: {
+                              client: env.client,
+                              accountInfo: env.accountInfo,
+                              accountObjects: env.accountObjects,
+                              fee: env.fee!,
+                              currentLedger: env.currentLedger!,
+                              wallet: env.wallet,
+                         },
                     });
-                    if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Credential delete successfully!' : 'Credential removed successfully!';
-                    // await this.refreshAfterTx(client, wallet, null, false);
-                    this.resetCredentialIdDropDown();
+                    if (!this.txUiService.isSimulateEnabled()) {
+                         await this.handleTxResult(result, env.client, env.wallet, null, 'Failed to delete credentials');
+                    }
+
+                    // const credentialDeleteTx: CredentialDelete = {
+                    //      TransactionType: 'CredentialDelete',
+                    //      Account: wallet.classicAddress,
+                    //      CredentialType: (credentialFound as any)?.CredentialType,
+                    //      Subject: (credentialFound as any)?.Subject,
+                    //      Fee: fee,
+                    //      LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                    // };
+
+                    // await this.setTxOptionalFields(client, credentialDeleteTx, wallet, accountInfo, 'deleteCredentials');
+
+                    // const result = await this.txExecutor.deleteCredential(credentialDeleteTx, wallet, client, {
+                    //      useMultiSign: this.txUiService.useMultiSign(),
+                    //      isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                    //      regularKeySeed: this.txUiService.regularKeySeed(),
+                    //      multiSignAddress: this.txUiService.multiSignAddress(),
+                    //      multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    // });
+                    // if (!result.success) return this.txUiService.setError(`${result.error}`);
+
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Credential delete successfully!' : 'Credential removed successfully!';
+                    // // await this.refreshAfterTx(client, wallet, null, false);
+                    // this.resetCredentialIdDropDown();
                } catch (error: any) {
                     console.error('Error in deleteCredentials:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
