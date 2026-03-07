@@ -415,8 +415,7 @@ export class UtilsService {
      }
 
      convertXRPLTime(rippleTime: any) {
-          const rippleEpochOffset = 946684800;
-          const cancelAfterUnix = rippleTime + rippleEpochOffset; // 1757804253
+          const cancelAfterUnix = rippleTime + AppConstants.RIPPLE_EPOCH_OFFSET; // 1757804253
 
           const cancelAfterDate = new Date(cancelAfterUnix * 1000);
           const formatter1 = this.dateFormatter();
@@ -427,6 +426,11 @@ export class UtilsService {
           const [month, day, year] = dateString.split('/').map(Number);
           const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
           return Math.floor(date.getTime() / 1000);
+     }
+
+     isRippleExpired(rippleTime?: number): boolean {
+          if (!rippleTime) return false;
+          return Date.now() > (rippleTime + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000;
      }
 
      toRippleTime(isoDate: string): number {
@@ -476,7 +480,7 @@ export class UtilsService {
                const m = v.getMonth() + 1;
                const d = v.getDate();
                const unixSeconds = Math.floor(Date.UTC(y, m - 1, d, 0, 0, 0) / 1000);
-               return unixSeconds - 946684800;
+               return unixSeconds - AppConstants.RIPPLE_EPOCH_OFFSET;
           }
 
           // If it's a string (YYYY-MM-DD) — the normal case for <input type="date">
@@ -487,7 +491,7 @@ export class UtilsService {
                }
                const [year, month, day] = parts;
                const unixSeconds = Math.floor(Date.UTC(year, month - 1, day, 0, 0, 0) / 1000);
-               return unixSeconds - 946684800;
+               return unixSeconds - AppConstants.RIPPLE_EPOCH_OFFSET;
           }
 
           throw new Error('Unsupported expirationDate type: ' + typeof v);
@@ -893,10 +897,9 @@ export class UtilsService {
      }
 
      convertDateTimeToRippleTime(dateTimeField: string) {
-          const rippleEpochOffset = 946684800; // Seconds between 1970-01-01 and 2000-01-01 UTC
           const date = new Date(dateTimeField); // parses as local time
           const unixTimestamp = Math.floor(date.getTime() / 1000); // milliseconds ➜ seconds
-          const afterDate = unixTimestamp - rippleEpochOffset;
+          const afterDate = unixTimestamp - AppConstants.RIPPLE_EPOCH_OFFSET;
           console.log('XRPL CancelAfter:', afterDate);
           return afterDate;
      }
@@ -918,7 +921,7 @@ export class UtilsService {
           const unixTimestamp = Math.floor(date.getTime() / 1000) + addedSeconds;
 
           // Convert from Unix Epoch (1970) to Ripple Epoch (2000)
-          const rippleEpoch = unixTimestamp - 946684800;
+          const rippleEpoch = unixTimestamp - AppConstants.RIPPLE_EPOCH_OFFSET;
           return rippleEpoch;
      }
 

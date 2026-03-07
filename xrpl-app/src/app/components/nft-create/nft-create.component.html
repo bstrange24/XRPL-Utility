@@ -97,7 +97,7 @@
 
                     <!-- Collapsible detailed list with internal scroll -->
                     @if (info.nftCount > 0) {
-                    <div class="nfts-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                    <div class="nfts-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
                          <ul class="nfts-list">
                               @for (nft of info.nftsToShow; track nft.id) {
                               <li class="nft-item">

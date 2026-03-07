@@ -45,8 +45,8 @@ import {
 } from '@ng-icons/heroicons/outline';
 
 // Make Buffer and process available globally
-(window as any).Buffer = Buffer;
-(window as any).process = process;
+(globalThis as any).Buffer = Buffer;
+(globalThis as any).process = process;
 
 bootstrapApplication(AppComponent, {
      providers: [

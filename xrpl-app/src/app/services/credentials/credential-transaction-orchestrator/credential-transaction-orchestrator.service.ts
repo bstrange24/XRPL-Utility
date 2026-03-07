@@ -11,7 +11,7 @@ import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { CredentialUtilService } from '../credential-util/credential-util.service';
 
-export type CredentialTxType = 'createCredential' | 'deleteCredentials';
+export type CredentialTxType = 'createCredential' | 'deleteCredentials' | 'acceptCredentials';
 
 interface CredentialConfig {
      wallet: Wallet;
@@ -159,7 +159,7 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
           const map: Record<CredentialTxType, string> = {
                createCredential: 'CredentialCreate',
                deleteCredentials: 'CredentialDelete',
-               // modifyDepositAuth: 'SetDepositAuthAccounts',
+               acceptCredentials: 'CredentialAccept',
           };
           return map[type];
      }
@@ -176,125 +176,63 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
           };
 
           if (type === 'createCredential') {
-          return {
-               ...base,
-               createCredential: {
-                    credentialType: extra?.credentialType|| '',
-                    expirationRipple: extra?.expirationRipple || '',
-                    subject: extra.subject || ''
-               },
-          };
+               return {
+                    ...base,
+                    createCredential: {
+                         credentialType: extra.credentialType || '',
+                         expirationRipple: extra.expirationRipple || '',
+                         subject: extra.subject || '',
+                    },
+               };
           }
 
-           return {
+          if (type === 'deleteCredentials') {
+               return {
+                    ...base,
+                    deleteCredentials: {
+                         credentialType: extra.credentialType || '',
+                         subject: extra.subject || '',
+                         credentialID: formValues.credentialID,
+                    },
+               };
+          }
+
+          // acceptCredentials
+          return {
                ...base,
-               deleteCredentials: {
-                    credentialType: extra?.credentialType|| '',
-                    subject: extra.subject || ''
+               acceptCredentials: {
+                    credentialType: formValues.credentialType || '',
+                    Issuer: formValues.credentialIssuer || '',
                },
           };
-
-          // if (type === 'modifyAccountFlags') {
-          //      return {
-          //           ...base,
-          //           createTimeBasedEscrow: {
-          //                amount: formValues.amountField,
-          //                destination: formValues.destinationAddress,
-          //                finishAfter: this.utilsService.toRippleTime(formValues.escrowFinishTimeField),
-          //                cancelAfter: this.utilsService.toRippleTime(formValues.escrowCancelTimeField),
-          //                issuer: formValues.issuer,
-          //                currencyValue: formValues.currencyValue,
-          //                condition: formValues.condition,
-          //           },
-          //      };
-          // }
-
-          // // updateMetaData
-          // return {
-          //      ...base,
-          //      updateMetaData: {
-          //           tickSize: formValues.tickSize,
-          //           transferRate: formValues.transferRate,
-          //           userEmail: formValues.userEmail,
-          //           domain: formValues.domain,
-          //      },
-          // };
      }
 
      private buildModifyAccountTransaction(type: CredentialTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
           const { fee, currentLedger } = env;
 
           if (type === 'createCredential') {
-               return this.xrplTransactionService.buildCreateCredentialTransaction(wallet, extra.subject, extra.credentialType, extra.expirationRipple, env.fee, env.currentLedger);
+               const tx = this.xrplTransactionService.buildCreateCredentialTransaction(wallet, extra.subject, extra.credentialType, fee, currentLedger);
+               if (extra.expirationRipple) {
+                    tx.Expiration = extra.expirationRipple;
+               }
+
+               return tx;
           }
 
-          if(type === 'deleteCredentials') {
-return this.xrplTransactionService.buildDeleteCredentialTransaction(wallet, extra.subject, extra.credentialType, extra.expirationRipple, env.fee, env.currentLedger);
+          if (type === 'deleteCredentials') {
+               const tx = this.xrplTransactionService.buildDeleteCredentialTransaction(wallet, extra.subject, extra.credentialType, fee, currentLedger);
+               if (formValues.credentialIssuer) {
+                    tx.Issuer = formValues.credentialIssuer;
+               }
+               return tx;
           }
 
-          // if (type === 'modifyAccountFlags') {
-          //      let amountToCash;
-          //      if (formValues.currencyValue === 'MPT') {
-          //           amountToCash = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyValue, formValues.currencyIssuer ?? '', '', true).sendMax;
-          //      } else {
-          //           amountToCash = this.xrplTransactionService.buildAmount(formValues.currencyValue, formValues.amountField, formValues.issuer);
-          //      }
-
-          //      const tx = this.xrplTransactionService.buildCreateTimeBasedEscrowTransaction(wallet, amountToCash, formValues.destinationAddress, fee, currentLedger);
-
-          //      if (formValues.condition) {
-          //           tx.Condition = formValues.condition;
-          //      }
-
-          //      if (this.txUiService.enableEscrowFinishAfterExpirationDate()) {
-          //           tx.FinishAfter = formValues.escrowFinishTimeField ? this.utilsService.toRippleTime(formValues.escrowFinishTimeField) : 0;
-          //      }
-
-          //      if (this.txUiService.enableEscrowCancelAfterExpirationDate()) {
-          //           tx.CancelAfter = formValues.escrowCancelTimeField ? this.utilsService.toRippleTime(formValues.escrowCancelTimeField) : 0;
-          //      }
-
-          //      return tx;
-          // }
-
-          // if (type === 'modifyDepositAuth') {
-          //      return this.xrplTransactionService.buildModifyDepositAuthTransaction(wallet, extra.authorizeFlag, depostiAuthAddress, fee, currentLedger);
-          // }
-
-          // if (type === 'modifyMultiSigners') {
-          //      const tx = this.xrplTransactionService.buildModifyMultiSignTransaction(wallet, fee, currentLedger);
-          //      if (extra.enableMultiSignFlag === 'Y') {
-          //           tx.SignerEntries = extra.formattedSignerEntries;
-          //           tx.SignerQuorum = Number(this.txUiService.signerQuorum());
-          //      }
-          //      return tx;
-          // }
-
-          // if (type === 'modifyRegularKey') {
-          //      const tx = this.xrplTransactionService.buildModifySetRegularKeyTransaction(wallet, fee, currentLedger);
-          //      if (extra.enableRegularKeyFlag === 'Y') {
-          //           tx.RegularKey = this.txUiService.regularKeyAddress();
-          //      }
-          //      return tx;
-          // }
-
-          // if (type === 'modifyMetaData') {
-          //      const tx = this.xrplTransactionService.buildModifyAccountSetTransaction(wallet, fee, currentLedger);
-          //      if (extra.enableNftMinter === 'Y') {
-          //           tx.NFTokenMinter = this.txUiService.nfTokenMinterAddress();
-          //           tx.SetFlag = xrpl.AccountSetAsfFlags.asfAuthorizedNFTokenMinter;
-          //      } else {
-          //           tx.ClearFlag = xrpl.AccountSetAsfFlags.asfAuthorizedNFTokenMinter;
-          //      }
-          //      return tx;
-          // }
-
-          // updateMetaData;
-          return this.xrplTransactionService.buildModifyAccountSetTransaction(wallet, fee, currentLedger);
+          // acceptCredentials;
+          return this.xrplTransactionService.buildAcceptCredentialTransaction(wallet, formValues.credentialIssuer, formValues.credentialType, fee, currentLedger);
      }
 
-     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: CredentialTxType, formValues: any, env: any, extra:any) {
-           if (type === 'createCredential') {
+     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: CredentialTxType, formValues: any, env: any, extra: any) {
+          if (type === 'createCredential') {
                if (extra.uri) this.utilsService.setURI(tx, extra.uri);
           }
 
@@ -326,27 +264,11 @@ return this.xrplTransactionService.buildDeleteCredentialTransaction(wallet, extr
                return this.executor.createCredential?.(tx as xrpl.CredentialCreate, wallet, client, opts);
           }
 
-          // if (type === 'modifyAccountFlags') {
-          //      return this.executor.createEscrow?.(tx as xrpl.EscrowCreate, wallet, client, opts);
-          // }
+          if (type === 'deleteCredentials') {
+               return this.executor.deleteCredential?.(tx as xrpl.CredentialDelete, wallet, client, opts);
+          }
 
-          // if (type === 'modifyDepositAuth') {
-          //      return this.executor.setDepositAuth?.(tx as xrpl.DepositPreauth, wallet, client, opts);
-          // }
-
-          // if (type === 'modifyMultiSigners') {
-          //      return this.executor.setMultiSign?.(tx as xrpl.SignerListSet, wallet, client, opts);
-          // }
-
-          // if (type === 'modifyRegularKey') {
-          //      return this.executor.setRegularKey?.(tx as xrpl.SetRegularKey, wallet, client, opts);
-          // }
-
-          // if (type === 'modifyMetaData') {
-          //      return this.executor.setNftMinterAddress?.(tx as xrpl.AccountSet, wallet, client, opts);
-          // }
-
-          // updateMetaData
-          return this.executor.updateMetaData?.(tx as xrpl.AccountSet, wallet, client, opts);
+          // acceptCredentials
+          return this.executor.acceptCredential?.(tx as xrpl.CredentialAccept, wallet, client, opts);
      }
 }

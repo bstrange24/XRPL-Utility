@@ -28,6 +28,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { AppConstants } from '../../core/app.constants';
 
 interface BalanceChange {
      date: Date;
@@ -223,8 +224,7 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
                if (!meta?.AffectedNodes) continue;
 
                // Create date in UTC to avoid timezone issues
-               const rippleEpoch = 946684800; // January 1, 2000 00:00:00 UTC
-               const timestamp = (tx.date + rippleEpoch) * 1000;
+               const timestamp = (tx.date + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000;
                const date = new Date(timestamp);
 
                // Store as UTC midnight for consistent comparison
@@ -276,7 +276,7 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
                const meta = txWrapper.meta;
                if (!meta?.AffectedNodes) continue;
 
-               const date = new Date((tx.date + 946684800) * 1000);
+               const date = new Date((tx.date + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000);
                const hash = txWrapper.hash;
 
                const feeXrp = xrpl.dropsToXrp(tx.Fee);

@@ -90,7 +90,7 @@
 
                     <!-- Collapsible DID details with internal scroll -->
                     @if (info.existingDid.length === 1) {
-                    <div class="did-details-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                    <div class="did-details-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
                          <div class="did-entry">
                               <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + info.existingDid[0].index" tooltipText="View DID entry on XRPL Explorer">
                                    <div class="did-index"><strong>Index:</strong> <code>{{ info.existingDid[0].index }}</code></div>

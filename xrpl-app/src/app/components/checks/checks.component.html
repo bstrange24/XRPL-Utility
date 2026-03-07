@@ -6,6 +6,13 @@
      </div>
 </div>
 
+<!-- Get active tab -->
+@let tab = activeTab();
+<!-- Get tab data -->
+@let tabs = checkUtilService.tabs;
+<!-- Get tab meta data -->
+@let meta = checkUtilService.tabMeta[tab];
+
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
      <div class="content-wrapper">
@@ -16,54 +23,25 @@
           <div class="form-panel">
                <!-- Menu / Tabs -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Create
+                    @for (item of tabs; track item.key) {
+                    <button class="menu-btn" [class.active]="tab === item.key" (click)="setTab(item.key)">
+                         @if (item.iconType === 'ng-icon') {
+                         <ng-icon [name]="item.icon" [size]="item.iconSize" class="text-red-600"></ng-icon>
+                         } @if (item.iconType === 'lucide-icon') {
+                         <lucide-icon [name]="item.icon" [size]="item.iconSize" style="padding-top: 5px"></lucide-icon>
+                         } {{ item.label }}
                     </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'cash'" (click)="setTab('cash')">
-                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Cash
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'cancel'" (click)="setTab('cancel')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Cancel
-                    </button>
+                    }
                </div>
 
                <div class="submenu-info-text">
-                    <!-- Create Menu -->
-                    @if (activeTab() === 'create') {
-
-                    <div class="blue-button-submenu">
-                         <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
+                    <div [class]="meta.colorClass">
+                         <ng-icon [name]="meta.icon" [size]="meta.iconSize" [color]="meta.color"></ng-icon>
                     </div>
                     <div>
-                         <h2 class="submenu-info-main-text">Create Check</h2>
-                         <p class="submenu-info-secondary-text">Create a check to another XRPL address</p>
+                         <h2 class="submenu-info-main-text">{{ meta.title }}</h2>
+                         <p class="submenu-info-secondary-text">{{ meta.desc }}</p>
                     </div>
-                    }
-
-                    <!-- Cash Menu -->
-                    @if (activeTab() === 'cash') {
-                    <div class="green-button-submenu">
-                         <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Cash Check</h2>
-                         <p class="submenu-info-secondary-text">Cash check sent from another XRPL address</p>
-                    </div>
-                    }
-
-                    <!-- Cancel Menu -->
-                    @if (activeTab() === 'cancel') {
-                    <div class="red-button-submenu">
-                         <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Cancel Check</h2>
-                         <p class="submenu-info-secondary-text">Cancel check create from the selected account</p>
-                    </div>
-                    }
                </div>
 
                <!-- Info Message -->
@@ -78,7 +56,7 @@
                               @if (info.checkCount === 0) {
                               <span> has no outstanding checks.</span>
                               } @else {
-                              <span> has <strong class="object-count">{{ info.checkCount }}</strong> check{{ info.checkCount === 1 ? '' : 's' }} @switch (activeTab()) { @case ('create') { created. } @case ('cash') { that can be cashed. } @case ('cancel') { that can be cancelled. } } </span>
+                              <span> has <strong class="object-count">{{ info.checkCount }}</strong> check{{ info.checkCount === 1 ? '' : 's' }} @switch (tab) { @case ('create') { created. } @case ('cash') { that can be cashed. } @case ('cancel') { that can be cancelled. } } </span>
                               }
                          </div>
 
@@ -100,13 +78,21 @@
 
                     <!-- Collapsible detailed list with internal scroll -->
                     @if (info.checkCount > 0) {
-                    <div class="checks-list-container" [style.max-height]="infoPanelExpanded() ? '380px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                    <div class="checks-list-container" [style.max-height]="infoPanelExpanded() ? '380px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
                          <ul class="checks-list">
-                              @for (check of info.checksToShow; track check.index) { @switch (check.tab) { @case ('create') {
+                              @for (check of info.checksToShow; track check.index) {
+                              <!-- Switch to determine what tab data to show -->
+                              @switch (check.tab) {
+                              <!-- Show create tab data -->
+                              @case ('create') {
                               <app-check-create-item [check]="check" />
-                              } @case ('cash') {
+                              }
+                              <!-- Show cash tab data -->
+                              @case ('cash') {
                               <app-check-cash-item [check]="check" />
-                              } @case ('cancel') {
+                              }
+                              <!-- Show cancel tab data -->
+                              @case ('cancel') {
                               <app-check-cancel-item [check]="check" />
                               } } }
                          </ul>
@@ -125,7 +111,7 @@
 
                <form #theForm="ngForm" class="main-form">
                     <!-- Create -->
-                    @if(activeTab() === 'create') {
+                    @if(tab === 'create') {
                     <!-- Currency + Amount -->
                     <div class="form-row">
                          <div class="form-group">
@@ -184,7 +170,7 @@
                     </div>
 
                     @if (txUiService.wantsOptions()) {
-                    <app-transaction-options-section [activeTab]="activeTab()"></app-transaction-options-section>
+                    <app-transaction-options-section [activeTab]="tab"></app-transaction-options-section>
                     }
 
                     <!-- Expiration (create only) -->
@@ -223,7 +209,7 @@
                     }
 
                     <!-- Currency + Amount (shared with create) -->
-                    @if (activeTab() === 'cash') {
+                    @if (tab === 'cash') {
                     <div class="form-row">
                          <div class="form-group">
                               <label for="selectCheck">Select Check to cash</label>
@@ -271,7 +257,7 @@
                     } }
 
                     <!-- Unified Check ID Dropdown - Works for cash & cancel -->
-                    @if (activeTab() === 'cancel') {
+                    @if (tab === 'cancel') {
                     <div class="form-row">
                          <div class="form-group">
                               <label for="selectCheck">Select Check to cancel</label>
@@ -286,15 +272,15 @@
                     <!-- Action buttons -->
                     <div class="button-row">
                          <!-- Create -->
-                         @if (activeTab() === 'create') {
+                         @if (tab === 'create') {
                          <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="!isIdle() || !hasWallets()">{{ checkUtilService.createCheckButtonLabel() }}</button>
                          }
                          <!-- Cash -->
-                         @else if (activeTab() === 'cash') {
+                         @else if (tab === 'cash') {
                          <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="!isIdle() || !hasWallets() || selectedCheckIsExpired()">{{ checkUtilService.cashCheckButtonLabel() }}</button>
                          }
                          <!-- Cancel -->
-                         @else if (activeTab() === 'cancel') {
+                         @else if (tab === 'cancel') {
                          <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="!isIdle() || !hasWallets()">{{ checkUtilService.cancelCheckButtonLabel() }}</button>
                          }
                          <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
@@ -310,7 +296,7 @@
 
           <div class="requirements-info">
                <div class="info-header">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
                     <h3>Check Requirements</h3>
                </div>
 

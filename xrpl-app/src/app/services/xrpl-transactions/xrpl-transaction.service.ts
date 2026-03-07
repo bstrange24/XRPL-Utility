@@ -249,24 +249,34 @@ export class XrplTransactionService {
           };
      }
 
-     buildCreateCredentialTransaction(wallet: xrpl.Wallet, destinationAddress: string, credentialType: string, expirationRipple: number, fee: string, currentLedger: number): xrpl.CredentialCreate {
+     buildCreateCredentialTransaction(wallet: xrpl.Wallet, destinationAddress: string, credentialType: string, fee: string, currentLedger: number): xrpl.CredentialCreate {
           return {
                TransactionType: 'CredentialCreate',
                Account: wallet.classicAddress,
                CredentialType: Buffer.from(credentialType || 'defaultCredentialType', 'utf8').toString('hex'),
                Subject: destinationAddress,
-               Expiration: expirationRipple,
                Fee: fee,
                LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
           };
      }
 
-     buildDeleteCredentialTransaction(wallet: xrpl.Wallet, destinationAddress: string, credentialType: string, expirationRipple: number, fee: string, currentLedger: number): xrpl.CredentialDelete {
+     buildDeleteCredentialTransaction(wallet: xrpl.Wallet, subject: string, credentialType: string, fee: string, currentLedger: number): xrpl.CredentialDelete {
           return {
                TransactionType: 'CredentialDelete',
                Account: wallet.classicAddress,
-               CredentialType: Buffer.from(credentialType || 'defaultCredentialType', 'utf8').toString('hex'),
-               Subject: destinationAddress,
+               CredentialType: credentialType,
+               Subject: subject,
+               Fee: fee,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildAcceptCredentialTransaction(wallet: xrpl.Wallet, issuer: string, credentialType: string, fee: string, currentLedger: number): xrpl.CredentialAccept {
+          return {
+               TransactionType: 'CredentialAccept',
+               Account: wallet.classicAddress,
+               Issuer: issuer,
+               CredentialType: credentialType,
                Fee: fee,
                LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
           };

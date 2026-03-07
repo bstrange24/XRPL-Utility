@@ -110,7 +110,7 @@
 
                     <!-- Collapsible content area with scroll -->
                     @if (info.offerCount > 0 || info.isOrderBookTab) {
-                    <div class="offers-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                    <div class="offers-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
                          <!-- Order Book Stats (when in getOrderBook tab) -->
                          @if (info.isOrderBookTab) {
                          <div class="orderbook-stats">

@@ -130,7 +130,7 @@
 
                     <!-- Collapsible detailed list with internal scroll -->
                     @if (info.channelCount > 0) {
-                    <div class="channels-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                    <div class="channels-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
                          <ul class="channels-list">
                               @for (channel of info.channelsToShow; track channel.id) {
                               <li class="channel-item" [class.expired]="channel.isExpired">

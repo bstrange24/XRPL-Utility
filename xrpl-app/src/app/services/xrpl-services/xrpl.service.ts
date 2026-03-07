@@ -257,7 +257,7 @@ export class XrplService {
                     const isRelevant = (tx.TransactionType === 'TrustSet' && tx.LimitAmount?.currency === currency) || (tx.TransactionType === 'Payment' && typeof tx.Amount === 'object' && tx.Amount?.currency === currency) || (tx.TransactionType === 'OfferCreate' && ((typeof tx.TakerGets === 'object' && tx.TakerGets.currency === currency) || (typeof tx.TakerPays === 'object' && tx.TakerPays.currency === currency)));
 
                     if (isRelevant && tx.date) {
-                         const date = new Date((tx.date + 946684800) * 1000);
+                         const date = new Date((tx.date + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000);
                          this.tokenCacheService.setDate(key, date);
                          return date;
                     }

@@ -7,6 +7,7 @@ import { sign, verify } from 'ripple-keypairs';
 import { UtilsService } from '../../util-service/utils.service';
 import BigNumber from 'bignumber.js';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { AppConstants } from '../../../core/app.constants';
 
 type PaymentChannelTxType = 'create' | 'fund' | 'claim' | 'renew' | 'close';
 
@@ -117,7 +118,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
 
      checkChannelExpired(channel: any) {
           if (channel.CancelAfter) {
-               const unixExpiration = channel.CancelAfter + 946684800;
+               const unixExpiration = channel.CancelAfter + AppConstants.RIPPLE_EPOCH_OFFSET;
                console.log('Expiration (UTC):', new Date(unixExpiration * 1000).toISOString());
                let isExpired = Date.now() / 1000 > unixExpiration;
                console.log('Expired?', isExpired);
@@ -241,7 +242,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
 
      private getProcessPaymentChannelExpiration(obj: PaymentChannelObject, nowUnix: number) {
           const expirationRipple = obj.Expiration ?? obj.CancelAfter;
-          const expirationUnix = expirationRipple ? Number(expirationRipple) + 946684800 : null;
+          const expirationUnix = expirationRipple ? Number(expirationRipple) + AppConstants.RIPPLE_EPOCH_OFFSET : null;
           const isExpired = expirationUnix ? nowUnix >= expirationUnix : false;
           return { expirationUnix, isExpired };
      }

@@ -1533,7 +1533,7 @@ input:focus+.slider {
      gap: 0.5rem;
      justify-content: flex-start;
      border-radius: 10px;
-     margin-bottom: 0.5rem;
+     margin-bottom: 0.1rem;
      padding: 0.25rem;
      overflow-x: hidden;
      -ms-overflow-style: none;
@@ -2548,7 +2548,7 @@ app-root {
 .submenu-info-text {
      background-color: white;
      padding: 5px;
-     margin-bottom: 1em;
+     margin-bottom: 0.25em;
      border-radius: 12px;
      display: flex;
      align-items: center;
@@ -4214,7 +4214,7 @@ button:disabled,
 
 .info-only-card {
      padding: 10px;
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -4230,7 +4230,7 @@ button:disabled,
 
 /* Escrow Card List */
 .info-and-escrow-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -4374,7 +4374,7 @@ button:disabled,
 
 /* Checks Card List */
 .info-and-checks-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -4464,7 +4464,7 @@ button:disabled,
 
 /* Trustline List */
 .info-and-trustlines-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -4546,7 +4546,7 @@ button:disabled,
 
 /* Payment Channel List */
 .info-and-channels-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -4629,7 +4629,7 @@ button:disabled,
 
 /* Offer List */
 .info-and-offers-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -4723,7 +4723,7 @@ button:disabled,
 
 /* NFT Create List  */
 .info-and-nfts-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -4801,7 +4801,7 @@ button:disabled,
 
 /* NFT Offer List  */
 .info-and-nftoffers-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -4881,7 +4881,7 @@ button:disabled,
 
 /* MPT List  */
 .info-and-mpts-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -4959,7 +4959,7 @@ button:disabled,
 
 /* Account Configuration List  */
 .info-and-config-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -5041,7 +5041,7 @@ button:disabled,
 
 /* Credentials List */
 .info-and-credentials-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -5137,7 +5137,7 @@ button:disabled,
 
 /* DID List  */
 .info-and-did-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -5222,7 +5222,7 @@ button:disabled,
 
 /* Delete List  */
 .info-and-deletion-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -5365,7 +5365,7 @@ button:disabled,
 
 /* Permissioned Domain List  */
 .info-and-permissioned-domains-card {
-     margin: 1.25rem 0 2rem 0;
+     margin: 0.9rem 0 0.9rem 0;
      background: #f0f9ff;
      border: 1px solid #bae6fd;
      border-radius: 12px;
@@ -5392,6 +5392,9 @@ button:disabled,
      color: #0369a1;
      cursor: pointer;
      transition: all 0.2s;
+     margin-top: 0.2rem;
+     margin-bottom: 0.3rem;
+     margin-left: 0px;
 }
 
 .permissioned-domains-list-container {

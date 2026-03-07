@@ -142,7 +142,7 @@
 
                     <!-- Collapsible detailed list with internal scroll -->
                     @if (info.mptCount > 0) {
-                    <div class="mpts-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                    <div class="mpts-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
                          <ul class="mpts-list">
                               @for (mpt of info.mptsToShow; track mpt.id) {
                               <li class="mpt-item">

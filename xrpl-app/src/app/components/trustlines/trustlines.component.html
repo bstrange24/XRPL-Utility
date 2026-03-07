@@ -77,7 +77,7 @@
 
                     <!-- Collapsible detailed list with internal scroll -->
                     @if (info.trustlineCount > 0) {
-                    <div class="trustlines-list-container" [style.max-height]="txUiService.infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="txUiService.infoPanelExpanded() ? '1' : '0'" [style.padding]="txUiService.infoPanelExpanded() ? '12px 0' : '0'">
+                    <div class="trustlines-list-container" [style.max-height]="txUiService.infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="txUiService.infoPanelExpanded() ? '1' : '0'" [style.padding]="txUiService.infoPanelExpanded() ? '1px 0' : '0'">
                          <ul class="trustlines-list">
                               @for (tl of info.trustlinesToShow; track tl.currency + tl.issuer) {
                               <li class="trustline-item">

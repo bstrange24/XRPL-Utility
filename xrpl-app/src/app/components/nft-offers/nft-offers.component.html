@@ -130,7 +130,7 @@
 
                     <!-- Collapsible detailed list with internal scroll -->
                     @if (info.offerCount > 0) {
-                    <div class="nftoffers-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                    <div class="nftoffers-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
                          <ul class="nftoffers-list">
                               @for (offer of info.offersToShow; track offer.index) {
                               <li class="nftoffer-item">

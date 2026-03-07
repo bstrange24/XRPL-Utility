@@ -61,7 +61,7 @@
 
                     <!-- Collapsible detailed content -->
                     @if (info.blockers.length > 0 || !info.canDelete || info.balanceWarning) {
-                    <div class="deletion-details-container" [style.max-height]="infoPanelExpanded() ? '400px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '12px 0' : '0'">
+                    <div class="deletion-details-container" [style.max-height]="infoPanelExpanded() ? '400px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
                          <div class="deletion-content">
                               <!-- Blockers list -->
                               @if (info.blockers.length > 0) {

@@ -2,7 +2,7 @@ import { computed, Injectable, signal, WritableSignal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
-import { Signer, Toast, ValidationInputs, Wallet } from '../../models/interface-items.model';
+import { CredentialData, Signer, Toast, ValidationInputs, Wallet } from '../../models/interface-items.model';
 
 export type TxStep = 'idle' | 'preparing' | 'signing' | 'submitting' | 'waiting_validation' | 'waiting_for_wallet_creation' | 'finalizing' | 'success' | 'failed';
 
@@ -104,6 +104,27 @@ export class TransactionUiService {
 
      // Credentials
      credentialIDs = signal<string[]>([]);
+     credentialID = signal<string>('');
+     credentialType = signal<string>('');
+     subject = signal<string>('');
+     credential = signal<CredentialData>({
+          version: '1.0',
+          credential_type: 'KYCCredential',
+          issuer: '',
+          subject: {
+               full_name: '',
+               destinationAddress: '',
+               dob: '',
+               country: '',
+               id_type: '',
+               id_number: '',
+               expirationDate: '',
+          },
+          verification: { method: '', verified_at: '', verifier: '' },
+          hash: '',
+          uri: 'ipfs://bafybeiexamplehash',
+     });
+     credentialIssuer = signal<string>('');
 
      // Account config
      memoField = signal<string>('');
@@ -864,5 +885,9 @@ export class TransactionUiService {
           this.invoiceIdField.set('');
           this.domainId.set('');
           this.credentialIDs.set([]);
+     }
+
+     clearOptionalExpirationDate() {
+          this.credential().subject.expirationDate = '';
      }
 }

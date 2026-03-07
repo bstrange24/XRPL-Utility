@@ -913,7 +913,7 @@ export class ValidationService {
           // CredentialCreate Actions
           this.registerRule({
                transactionType: 'CredentialCreate',
-               requiredFields: ['createCredential.credentialType', 'createCredential.subject', 'createCredential.expirationRipple'],
+               requiredFields: ['createCredential.credentialType', 'createCredential.subject'],
                validators: [
                     this.walletCredentialRequired(),
 
@@ -939,17 +939,9 @@ export class ValidationService {
           // CredentialDelete Actions
           this.registerRule({
                transactionType: 'CredentialDelete',
-               requiredFields: ['credentials.credentialId'],
+               requiredFields: ['deleteCredentials.credentialID', 'deleteCredentials.credentialType', 'deleteCredentials.subject'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -964,24 +956,17 @@ export class ValidationService {
 
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
+
+                    this.isValidAddress('deleteCredentials.subject'),
                ],
           });
 
           // CredentialAccept Actions
           this.registerRule({
                transactionType: 'CredentialAccept',
-               requiredFields: ['credentials.credentialId'],
+               requiredFields: ['acceptCredentials.Issuer', 'acceptCredentials.credentialType'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
-
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
@@ -995,23 +980,16 @@ export class ValidationService {
 
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
+
+                    this.isValidAddress('acceptCredentials.Issuer'),
                ],
           });
 
           // CredentialVerify Actions
           this.registerRule({
                transactionType: 'CredentialVerify',
-               requiredFields: ['credentials.credentialId'],
+               requiredFields: ['credentials.credentialId', 'credentials.credentialType'],
                validators: [
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
-
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign

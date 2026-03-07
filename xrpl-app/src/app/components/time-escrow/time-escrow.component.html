@@ -100,7 +100,7 @@
 
                     <!-- Collapsible detailed list with internal scroll -->
                     @if (info.escrowCount > 0) {
-                    <div class="escrow-list-container" [style.max-height]="infoPanelExpanded() ? '380px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '2px 0' : '0'">
+                    <div class="escrow-list-container" [style.max-height]="infoPanelExpanded() ? '380px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
                          <ul class="escrow-list">
                               @for (escrow of info.escrowsToShow; track escrow.EscrowSequence + escrow.finishAfter) { @switch (escrow.tab) { @case ('create') {
                               <app-escrow-create-item [escrow]="escrow" />

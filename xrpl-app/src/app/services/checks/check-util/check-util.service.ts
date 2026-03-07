@@ -14,6 +14,9 @@ import { AppConstants } from '../../../core/app.constants';
 import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
+type CheckConfigTxDisplayType = 'create' | 'cash' | 'cancel';
+type IconType = 'ng-icon' | 'lucide-icon';
+
 @Injectable({
      providedIn: 'root',
 })
@@ -28,26 +31,79 @@ export class CheckUtilService extends PerformanceBaseComponent {
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactions = inject(XrplTransactionService);
 
-     readonly createCheckButtonLabel = computed(() => {
-          const step = this.txUiService.currentStep();
-          if (step === 'idle') return 'Create Check';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
-          return this.txUiService.stepMessage();
-     });
+     readonly tabs: {
+          key: CheckConfigTxDisplayType;
+          label: string;
+          icon: string;
+          iconType: IconType;
+          color: string;
+          iconSize: string;
+     }[] = [
+          {
+               key: 'create',
+               label: 'Create',
+               icon: 'heroPlusCircle',
+               iconType: 'ng-icon',
+               color: '',
+               iconSize: AppConstants.TAB_ICON_SIZE,
+          },
+          {
+               key: 'cash',
+               label: 'Cash',
+               icon: 'heroCurrencyDollar',
+               iconType: 'ng-icon',
+               color: '',
+               iconSize: AppConstants.TAB_ICON_SIZE,
+          },
+          {
+               key: 'cancel',
+               label: 'Cancel',
+               icon: 'heroTrash',
+               iconType: 'ng-icon',
+               color: '',
+               iconSize: AppConstants.TAB_ICON_SIZE,
+          },
+     ];
 
-     readonly cashCheckButtonLabel = computed(() => {
-          const step = this.txUiService.currentStep();
-          if (step === 'idle') return 'Cash Check';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
-          return this.txUiService.stepMessage();
-     });
+     readonly tabMeta = {
+          create: {
+               icon: 'heroPlusCircle',
+               colorClass: 'blue-button-submenu',
+               title: 'Create Check',
+               desc: 'Create a check to another XRPL address.',
+               color: '',
+               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
+          },
+          cash: {
+               icon: 'heroArrowPath',
+               colorClass: 'green-button-submenu',
+               title: 'Cash Check',
+               desc: 'Cash check sent from another XRPL address.',
+               color: '',
+               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
+          },
+          cancel: {
+               icon: 'shield-ellipsis',
+               colorClass: 'red-button-submenu',
+               title: 'Cancel Check',
+               desc: 'Cancel check create from the selected account.',
+               color: '',
+               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
+          },
+     };
 
-     readonly cancelCheckButtonLabel = computed(() => {
-          const step = this.txUiService.currentStep();
-          if (step === 'idle') return 'Cancel Check';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
-          return this.txUiService.stepMessage();
-     });
+     private buildTxLabel(defaultText: string) {
+          return computed(() => {
+               const step = this.txUiService.currentStep();
+               if (step === 'idle') return defaultText;
+               if (step === 'waiting_validation') return 'Waiting for confirmation...';
+               return this.txUiService.stepMessage();
+          });
+     }
+
+     readonly createCheckButtonLabel = this.buildTxLabel('Create Check');
+     readonly cashCheckButtonLabel = this.buildTxLabel('Cash Check');
+     readonly cancelCheckButtonLabel = this.buildTxLabel('Cancel Check');
 
      getExistingChecks(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const mapped = (checkObjects.result.account_objects ?? [])
