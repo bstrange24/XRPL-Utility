@@ -249,6 +249,18 @@ export class XrplTransactionService {
           };
      }
 
+     buildCreateCredentialTransaction(wallet: xrpl.Wallet, destinationAddress: string, credentialType: string, expirationRipple: number, fee: string, currentLedger: number): xrpl.CredentialCreate {
+          return {
+               TransactionType: 'CredentialCreate',
+               Account: wallet.classicAddress,
+               CredentialType: Buffer.from(credentialType || 'defaultCredentialType', 'utf8').toString('hex'),
+               Subject: destinationAddress,
+               Expiration: expirationRipple,
+               Fee: fee,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
      buildCreateCheckTransaction(wallet: xrpl.Wallet, sendMax: string | { currency: string; value: string; issuer: string }, destinationAddress: string, fee: string | undefined, currentLedger: number | undefined): xrpl.CheckCreate {
           return {
                TransactionType: 'CheckCreate',

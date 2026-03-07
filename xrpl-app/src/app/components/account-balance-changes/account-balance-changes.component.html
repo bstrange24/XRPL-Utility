@@ -58,7 +58,9 @@
                                              <mat-icon class="search-icon">search</mat-icon>
                                              <input type="text" [ngModel]="filterValue()" (ngModelChange)="onSearchInput($event)" placeholder="Search transactions..." />
                                              @if (filterValue()) {
-                                             <mat-icon class="clear-icon" (click)="clearFilter()">close</mat-icon>
+                                             <button mat-icon-button class="clear-icon" (click)="clearFilter()" aria-label="Clear filter">
+                                                  <mat-icon>close</mat-icon>
+                                             </button>
                                              }
                                         </div>
                                    </div>

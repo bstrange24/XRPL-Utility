@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit, inject, computed, signal, effect } from '@angular/core';
+import { Component, ViewChild, OnInit, inject, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CdkVirtualScrollViewport, ScrollingModule } from '@angular/cdk/scrolling';
@@ -414,36 +414,6 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
           // Create UTC date at end of day
           const [year, month, day] = value.split('-').map(Number);
           const end = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
-
-          this.dateRange.set({
-               ...this.dateRange(),
-               end,
-          });
-     }
-
-     setStartDate1(value: string | null) {
-          if (!value) {
-               this.dateRange.set({ ...this.dateRange(), start: null });
-               return;
-          }
-
-          const start = new Date(value);
-          start.setHours(0, 0, 0, 0);
-
-          this.dateRange.set({
-               ...this.dateRange(),
-               start,
-          });
-     }
-
-     setEndDate1(value: string | null) {
-          if (!value) {
-               this.dateRange.set({ ...this.dateRange(), end: null });
-               return;
-          }
-
-          const end = new Date(value);
-          end.setHours(23, 59, 59, 999);
 
           this.dateRange.set({
                ...this.dateRange(),

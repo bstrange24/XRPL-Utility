@@ -1,5 +1,4 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy, signal, computed, effect, ChangeDetectorRef } from '@angular/core';
-import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -23,6 +22,7 @@ import { TransactionPreviewComponent } from '../transaction-preview/transaction-
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
+import { animation, toastAnimation } from '../../services/animations/animations.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { SendXrpTransactionOrchestratorService } from '../../services/send-xrp/send-xrp-orchestrator/send-xrp-transaction-orchestrator.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
@@ -34,10 +34,7 @@ import { PerformanceBaseComponent } from '../shared/performance-base/performance
      selector: 'app-send-xrp',
      standalone: true,
      imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, TransactionOptionsSectionComponent],
-     animations: [
-          trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])]),
-          trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-20px)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(100%)' }))])]),
-     ],
+     animations: [animation, toastAnimation],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,9 +77,11 @@ export class SendXrpComponent extends PerformanceBaseComponent implements OnInit
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
+     readonly canSubmit = computed(() => this.isIdle() && this.hasWallets());
 
      // Has wallets → warning handling
      private readonly _hasWalletsEffect = effect(() => {
+          console.log('_hasWalletsEffect');
           if (this.walletManager.hasWallets()) {
                this.txUiService.clearWarning?.();
           } else {
@@ -94,11 +93,13 @@ export class SendXrpComponent extends PerformanceBaseComponent implements OnInit
 
      // Effect 2: Wallets list sync
      private readonly _walletsSyncEffect = effect(() => {
+          console.log('_walletsSyncEffect');
           this.wallets.set(this.walletManager.wallets());
      });
 
      // Effect 3: Selected index change → clear + refresh checks
      private readonly _selectedIndexEffect = effect(() => {
+          console.log('_selectedIndexEffect');
           // Reading the signal is enough to trigger the effect
           this.walletManager.selectedIndex();
 
@@ -207,13 +208,8 @@ export class SendXrpComponent extends PerformanceBaseComponent implements OnInit
                          return;
                     }
 
-                    console.log('env.accountInfo: ', env.accountInfo);
-                    console.log('env.accountObjects: ', env.accountObjects);
-
-                    // this.accountInfo.set(env.accountInfo);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                     this.clearFields();
-                    // this.txUiService.clearAllOptions();
                } catch (error: any) {
                     console.error('Failed to load account:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
