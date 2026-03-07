@@ -257,11 +257,11 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
           // };
      }
 
-     private buildModifyAccountTransaction(type: CredentialTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any, depostiAuthAddress?: string): xrpl.Transaction {
+     private buildModifyAccountTransaction(type: CredentialTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
           const { fee, currentLedger } = env;
 
           if (type === 'createCredential') {
-               return this.xrplTransactionService.buildCreateCredentialTransaction(wallet, extra.credentialType, extra.expirationRipple, env.fee, env.currentLedger);
+               return this.xrplTransactionService.buildCreateCredentialTransaction(wallet, env.destinationAddress, extra.credentialType, extra.expirationRipple, env.fee, env.currentLedger);
           }
 
           // if (type === 'modifyAccountFlags') {
