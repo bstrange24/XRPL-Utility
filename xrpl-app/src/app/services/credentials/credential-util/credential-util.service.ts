@@ -23,6 +23,9 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           super();
      }
 
+     readonly createCredentialKeySpecificKeys = [] as const;
+     readonly deleteCredentialKeySpecificKeys = ['credentialID', 'credentialIssuer'] as const;
+     readonly acceptCredentialKeySpecificKeys = ['credentialType', 'credentialIssuer'] as const;
      private readonly decodeCache = new Map<string, string>();
 
      readonly tabs: {
@@ -116,19 +119,17 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      readonly deleteCredentialsButtonLabel = this.buildTxLabel('Delete Credential');
      readonly verifyCredentialLabel = this.buildTxLabel('Verify Credential');
 
-     private decodeutf8Hex(hex: string | undefined): string {
-          if (!hex) return 'N/A';
-          if (this.decodeCache.has(hex)) return this.decodeCache.get(hex)!;
+     readonly issuedByMe = computed(() => this.txUiService.existingCredentials());
+     readonly issuedToMe = computed(() => this.txUiService.subjectCredentials());
+     readonly pendingIssued = computed(() => this.issuedByMe().filter(c => !this.isCredentialAccepted(c)));
+     readonly acceptedIssued = computed(() => this.issuedByMe().filter(c => this.isCredentialAccepted(c)));
+     readonly pendingToAccept = computed(() => this.issuedToMe().filter(c => !this.isCredentialAccepted(c)));
+     readonly acceptedByMe = computed(() => this.issuedToMe().filter(c => this.isCredentialAccepted(c)));
 
-          try {
-               const result = Buffer.from(hex, 'hex').toString('utf8') || 'N/A';
-               this.decodeCache.set(hex, result);
-               return result;
-          } catch {
-               this.decodeCache.set(hex, 'Invalid Hex');
-               return 'Invalid Hex';
-          }
-     }
+     // Filtered credentials — derived state, fully reactive
+     filteredExisting = computed(() => this.filterCredentials(this.txUiService.existingCredentials(), this.txUiService.credentialIdSearchTerm()));
+     filteredSubject = computed(() => this.filterCredentials(this.txUiService.subjectCredentials(), this.txUiService.credentialIdSearchTerm()));
+     selectedCredentialIndex = computed(() => this.txUiService.credentialID());
 
      getExistingCredentials(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
           const mapped = (checkObjects.result.account_objects ?? [])
@@ -181,21 +182,126 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      }
 
      parseIssuedCredentials(accountObjects: xrpl.AccountObjectsResponse, address: string) {
-          const objs = accountObjects.result.account_objects ?? [];
-
-          return objs
+          const mapped = (accountObjects.result.account_objects ?? [])
                .filter(o => o.LedgerEntryType === 'Credential' && o.Issuer === address)
                .map(o => this.mapCredential(o))
-               .sort((a, b) => (a.Expiration || '').localeCompare(b.Expiration || ''));
+               .sort((a, b) => {
+                    // Check if Expiration is 'N/A' or has a value
+                    const aHasExpiration = a.Expiration && a.Expiration !== 'N/A';
+                    const bHasExpiration = b.Expiration && b.Expiration !== 'N/A';
+
+                    // If one has expiration and the other doesn't, put the one with expiration first
+                    if (aHasExpiration && !bHasExpiration) return -1;
+                    if (!aHasExpiration && bHasExpiration) return 1;
+
+                    // If both have expiration or both don't have expiration, sort by index
+                    // Convert index to number for numeric sorting (assuming index is numeric or can be converted)
+                    const aIndex = typeof a.index === 'number' ? a.index : Number.parseInt(a.index, 10) || 0;
+                    const bIndex = typeof b.index === 'number' ? b.index : Number.parseInt(b.index, 10) || 0;
+
+                    return aIndex - bIndex;
+               });
+
+          this.utilsService.logObjects('parseIssuedCredentials', mapped);
+          return mapped;
      }
 
      parseSubjectCredentials(accountObjects: xrpl.AccountObjectsResponse, address: string) {
-          const objs = accountObjects.result.account_objects ?? [];
-
-          return objs
+          const mapped = (accountObjects.result.account_objects ?? [])
                .filter(o => o.LedgerEntryType === 'Credential' && o.Subject === address)
                .map(o => this.mapCredential(o))
-               .sort((a, b) => (a.Expiration || '').localeCompare(b.Expiration || ''));
+               .sort((a, b) => {
+                    // Check if Expiration is 'N/A' or has a value
+                    const aHasExpiration = a.Expiration && a.Expiration !== 'N/A';
+                    const bHasExpiration = b.Expiration && b.Expiration !== 'N/A';
+
+                    // Items with expiration come first
+                    if (aHasExpiration && !bHasExpiration) return -1;
+                    if (!aHasExpiration && bHasExpiration) return 1;
+
+                    // If both have expiration, compare them as dates/timestamps
+                    if (aHasExpiration && bHasExpiration) {
+                         // Parse as numbers if they're timestamps
+                         const aExp = Number.parseInt(a.Expiration!, 10) || 0;
+                         const bExp = Number.parseInt(b.Expiration!, 10) || 0;
+                         return aExp - bExp; // Earlier expiration first
+                    }
+
+                    // If neither has expiration, sort by index
+                    const aIndex = typeof a.index === 'number' ? a.index : Number.parseInt(a.index, 10) || 0;
+                    const bIndex = typeof b.index === 'number' ? b.index : Number.parseInt(b.index, 10) || 0;
+
+                    return aIndex - bIndex;
+               });
+
+          this.utilsService.logObjects('parseSubjectCredentials', mapped);
+          return mapped;
+     }
+
+     applySelectedCredential(cred: CredentialItem | null) {
+          if (!cred) {
+               this.txUiService.credentialID.set('');
+               this.txUiService.credentialType.set('');
+               this.txUiService.credentialIssuer.set('');
+               this.txUiService.selectedCredentials.set(null);
+               return;
+          }
+
+          this.txUiService.selectedCredentials.set(cred);
+          this.txUiService.credentialID.set(cred.index);
+          this.txUiService.credentialIssuer.set(cred.Issuer);
+          this.txUiService.credentialType.set(cred.CredentialType || '');
+     }
+
+     filterCredentials(list: CredentialItem[], term: string): CredentialItem[] {
+          if (!term) return list;
+          const lower = term.toLowerCase();
+          return list.filter(c => [c.CredentialType, c.Issuer, c.Subject, c.index].some(f => f?.toLowerCase().includes(lower)));
+     }
+
+     private formatDateTimeLocal(date: Date): string {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const hours = String(date.getHours()).padStart(2, '0');
+          const minutes = String(date.getMinutes()).padStart(2, '0');
+          const secs = String(date.getSeconds()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}:${secs}`;
+     }
+
+     addCredentialToExpiration(seconds: number): void {
+          // Get current value (or use now if empty)
+          let currentDateStr = this.txUiService.credential().subject.expirationDate;
+          if (!currentDateStr) {
+               currentDateStr = this.formatDateTimeLocal(new Date());
+          }
+
+          const date = new Date(currentDateStr);
+          date.setSeconds(date.getSeconds() + seconds);
+
+          const newDateTime = this.formatDateTimeLocal(date);
+
+          // Update nested signal immutably
+          this.txUiService.credential.update(cred => ({
+               ...cred,
+               subject: {
+                    ...cred.subject,
+                    expirationDate: newDateTime,
+               },
+          }));
+     }
+
+     setCredentialExpirationToNow(): void {
+          const now = new Date();
+          const formatted = this.formatDateTimeLocal(now);
+
+          this.txUiService.credential.update(cred => ({
+               ...cred,
+               subject: {
+                    ...cred.subject,
+                    expirationDate: formatted,
+               },
+          }));
      }
 
      isCredentialAccepted(cred: CredentialItem): boolean {
@@ -211,6 +317,20 @@ export class CredentialUtilService extends PerformanceBaseComponent {
                return true;
           }
           return false;
+     }
+
+     private decodeutf8Hex(hex: string | undefined): string {
+          if (!hex) return 'N/A';
+          if (this.decodeCache.has(hex)) return this.decodeCache.get(hex)!;
+
+          try {
+               const result = Buffer.from(hex, 'hex').toString('utf8') || 'N/A';
+               this.decodeCache.set(hex, result);
+               return result;
+          } catch {
+               this.decodeCache.set(hex, 'Invalid Hex');
+               return 'Invalid Hex';
+          }
      }
 
      buildSuccessMessage(type: CredentialTxType, formValues: any, extra: any): string {

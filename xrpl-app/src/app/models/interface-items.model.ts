@@ -30,6 +30,25 @@ export interface CredentialData {
      uri: string;
 }
 
+export interface DidItem {
+     index: string;
+     DIDDocument: string;
+     Data: string;
+     URI: string;
+}
+
+export interface DidData {
+     id: string;
+     verificationMethod: any;
+     authentication: any;
+     service: any;
+     hash: string;
+     uri: string;
+     document: string;
+     data: string;
+     destinationAddress: string;
+}
+
 export type CheckTxType = 'create' | 'cash' | 'cancel';
 
 export type CreateCheckItem = {

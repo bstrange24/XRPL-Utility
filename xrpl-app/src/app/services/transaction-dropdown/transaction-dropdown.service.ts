@@ -1,17 +1,14 @@
 import { Injectable, computed, inject, Signal, signal, effect, WritableSignal } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { StorageService } from '../local-storage/storage.service';
-import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { Wallet, WalletManagerService } from '../wallets/manager/wallet-manager.service';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { Destination, DestinationItem } from '../../models/interface-items.model';
 
 @Injectable({ providedIn: 'root' })
 export class TransactionDropdownService {
      private readonly walletManager = inject(WalletManagerService);
      private readonly destinationDropdownService = inject(DestinationDropdownService);
-     private readonly txUiService = inject(TransactionUiService);
      private readonly storageService = inject(StorageService);
      public readonly customDestinations = signal<Destination[]>([]);
      selectedDestinationAddress = signal<string>('');
@@ -87,8 +84,6 @@ export class TransactionDropdownService {
                }
 
                const currentAddr = this.currentAddress(); // now returns null-safe
-
-               console.log('destinationItems recomputed — currentAddr:', currentAddr);
 
                return dests.map(d => ({
                     id: d.address,

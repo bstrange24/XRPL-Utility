@@ -2,7 +2,7 @@ import { computed, Injectable, signal, WritableSignal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
-import { CredentialData, Signer, Toast, ValidationInputs, Wallet } from '../../models/interface-items.model';
+import { CredentialData, CredentialItem, DidData, DidItem, Signer, Toast, ValidationInputs, Wallet } from '../../models/interface-items.model';
 
 export type TxStep = 'idle' | 'preparing' | 'signing' | 'submitting' | 'waiting_validation' | 'waiting_for_wallet_creation' | 'finalizing' | 'success' | 'failed';
 
@@ -125,6 +125,47 @@ export class TransactionUiService {
           uri: 'ipfs://bafybeiexamplehash',
      });
      credentialIssuer = signal<string>('');
+     credentialIdSearchQuery = signal<string>('');
+     credentialIdSearchTerm = signal<string>('');
+     existingCredentials = signal<CredentialItem[]>([]);
+     selectedCredentials = signal<CredentialItem | null>(null);
+     subjectCredentials = signal<CredentialItem[]>([]);
+
+     // DID
+     didDetails = signal<DidData>({
+          id: '',
+          verificationMethod: {
+               id: '',
+               type: '',
+               controller: '',
+               publicKeyBase58: '',
+          },
+          authentication: {
+               auth: '',
+          },
+          service: {
+               serviceId: '',
+               serviceType: '',
+               serviceEndpoint: '',
+          },
+          hash: '',
+          uri: JSON.stringify('ipfs://bafybeiexamplehash', null, '/t'),
+          document: JSON.stringify('did:example:123#public-key-0', null, '/t'),
+          // data: ``,
+          data: `{
+  "@context": "https://www.w3.org/ns/did/v1",
+  "id": "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc",
+  "authentication": [
+    "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc#keys-1"
+  ]
+}`,
+          destinationAddress: '',
+     });
+     didData = signal<string>('');
+     uriData = signal<string>('');
+     didDocumentData = signal<string>('');
+     createdDids = signal<boolean>(false);
+     existingDid = signal<DidItem[]>([]);
 
      // Account config
      memoField = signal<string>('');

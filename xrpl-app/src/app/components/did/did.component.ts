@@ -1,8 +1,6 @@
-import { animate, style, transition, trigger } from '@angular/animations';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, DestroyRef, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
@@ -28,31 +26,17 @@ import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-
 import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { JsonEditorComponent } from '../json-editor/json-editor.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
-
-interface DidItem {
-     index: string;
-     DIDDocument: string;
-     Data: string;
-     URI: string;
-}
-
-interface DidData {
-     id: string;
-     verificationMethod: any;
-     authentication: any;
-     service: any;
-     hash: string;
-     uri: string;
-     document: string;
-     data: string;
-     destinationAddress: string;
-}
+import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
+import { DidUtilService } from '../../services/did/did-util/did-util.service';
+import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
+import { AcccountDataService } from '../../services/account-data/acccount-data.service';
+import { DidTransactionOrchestratorService } from '../../services/did/did-transaction-orchestrator/did-transaction-orchestrator.service';
+import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 
 @Component({
      selector: 'app-did',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, JsonEditorComponent],
-     animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, JsonEditorComponent, RequirementsInfoComponent],
      templateUrl: './did.component.html',
      styleUrl: './did.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,54 +58,28 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
+     public readonly xrplTransactionService = inject(XrplTransactionService);
+     public readonly txEnvironmentService = inject(TxEnvironmentService);
+     public readonly acccountDataService = inject(AcccountDataService);
      private readonly walletManager = inject(WalletManagerService);
-     private readonly cdr = inject(ChangeDetectorRef);
+     private readonly didTransactionOrchestratorService = inject(DidTransactionOrchestratorService);
+     public readonly didUtilService = inject(DidUtilService);
 
-     // Reactive State (Signals)
      activeTab = signal<'set' | 'delete'>('set');
-     wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
      credentialSearchTerm = signal<string>('');
      infoPanelExpanded = signal<boolean>(false);
-     createdDids = signal<boolean>(false);
-     existingDid = signal<DidItem[]>([]);
+     wallets = signal<Wallet[]>([]);
 
-     // DID  Form Data
-     didDetails = signal<DidData>({
-          id: '',
-          verificationMethod: {
-               id: '',
-               type: '',
-               controller: '',
-               publicKeyBase58: '',
-          },
-          authentication: {
-               auth: '',
-          },
-          service: {
-               serviceId: '',
-               serviceType: '',
-               serviceEndpoint: '',
-          },
-          hash: '',
-          uri: JSON.stringify('ipfs://bafybeiexamplehash', null, '/t'),
-          document: JSON.stringify('did:example:123#public-key-0', null, '/t'),
-          // data: ``,
-          data: `{
-  "@context": "https://www.w3.org/ns/did/v1",
-  "id": "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc",
-  "authentication": [
-    "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc#keys-1"
-  ]
-}`,
-          destinationAddress: '',
-     });
-     didData = signal<string>('');
-     uriData = signal<string>('');
-     didDocumentData = signal<string>('');
+     readonly currentAddress = computed(() => this.currentWallet().address);
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
+     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
+     readonly canSubmit = computed(() => this.isIdle() && this.hasWallets());
+     readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
 
-     // Effect 1: Has wallets → warning handling
-     private readonly hasWalletsEffect = effect(() => {
+     // Has wallets → warning handling
+     private readonly _hasWalletsEffect = effect(() => {
+          console.log('_hasWalletsEffect');
           if (this.walletManager.hasWallets()) {
                this.txUiService.clearWarning?.();
           } else {
@@ -132,17 +90,18 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      });
 
      // Effect 2: Wallets list sync
-     private readonly walletsSyncEffect = effect(() => {
+     private readonly _walletsSyncEffect = effect(() => {
+          console.log('_walletsSyncEffect');
           this.wallets.set(this.walletManager.wallets());
      });
 
      // Effect 3: Selected index change → clear + refresh checks
-     private readonly selectedIndexEffect = effect(() => {
+     private readonly _selectedIndexEffect = effect(() => {
+          console.log('_selectedIndexEffect');
           // Reading the signal is enough to trigger the effect
           this.walletManager.selectedIndex();
 
           this.txUiService.clearAllOptionsAndMessages();
-          this.clearFields();
 
           // Fire-and-forget refresh
           void this.getDidForAccount(false);
@@ -155,7 +114,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           }
 
           const walletName = wallet.name || 'Selected wallet';
-          const dids = this.existingDid();
+          const dids = this.txUiService.existingDid();
           const didCount = dids.length;
           const mode = this.activeTab();
 
@@ -167,83 +126,12 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           };
      });
 
-     hasWallets = computed(() => this.wallets().length > 0);
-
      hasJsonSyntaxError = computed(() => {
-          this.didData(); // trigger recompute
+          this.txUiService.didData(); // trigger recompute
 
           const error = this.didDataEditor?.jsonError()?.trim();
           return !!error;
      });
-
-     didDataByteLength = computed(() => {
-          const meta = this.didData().trim();
-          if (!meta) return 0;
-
-          try {
-               const hex = xrpl.convertStringToHex(meta);
-               console.log('DID JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
-               return hex.length / 2;
-          } catch (e) {
-               console.error('Failed to convert DID JSON to hex:', e);
-               return 0;
-          }
-     });
-
-     uriDataByteLength = computed(() => {
-          const meta = this.uriData().trim();
-          if (!meta) return 0;
-
-          try {
-               const hex = xrpl.convertStringToHex(meta);
-               console.log('URI JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
-               return hex.length / 2;
-          } catch (e) {
-               console.error('Failed to convert URI JSON to hex:', e);
-               return 0;
-          }
-     });
-
-     didDocumentDataByteLength = computed(() => {
-          const meta = this.didDocumentData().trim();
-          if (!meta) return 0;
-
-          try {
-               const hex = xrpl.convertStringToHex(meta);
-               console.log('DID Document JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
-               return hex.length / 2;
-          } catch (e) {
-               console.error('Failed to convert DID Document JSON to hex:', e);
-               return 0;
-          }
-     });
-
-     didDataIsValid = computed(() => {
-          return this.didDataByteLength() <= 256;
-     });
-
-     uriDataIsValid = computed(() => {
-          return this.uriDataByteLength() <= 256;
-     });
-
-     didDocumentDataIsValid = computed(() => {
-          return this.didDocumentDataByteLength() <= 256;
-     });
-
-     onDidDataChange(newValue: string) {
-          this.didData.set(newValue);
-          this.didDetails.update(d => ({ ...d, data: newValue }));
-     }
-
-     onUriDataChange(newValue: string) {
-          this.uriData.set(newValue);
-          this.didDetails.update(d => ({ ...d, uri: newValue }));
-     }
-
-     onDidDocumentDataChange(newValue: string) {
-          this.didDocumentData.set(newValue);
-          this.didDetails.update(d => ({ ...d, document: newValue }));
-     }
 
      getCreateButtonTooltip(): string {
           if (this.txUiService.spinner()) {
@@ -252,14 +140,14 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           if (!this.allFieldsValid()) {
                const issues: string[] = [];
 
-               if (!this.didDocumentDataIsValid()) {
-                    issues.push(`DID Document too large: ${this.didDocumentDataByteLength()} bytes (>256)`);
+               if (!this.didUtilService.didDocumentDataIsValid()) {
+                    issues.push(`DID Document too large: ${this.didUtilService.didDocumentDataByteLength()} bytes (>256)`);
                }
-               if (!this.uriDataIsValid()) {
-                    issues.push(`URI too large: ${this.uriDataByteLength()} bytes (>256)`);
+               if (!this.didUtilService.uriDataIsValid()) {
+                    issues.push(`URI too large: ${this.didUtilService.uriDataByteLength()} bytes (>256)`);
                }
-               if (!this.didDataIsValid()) {
-                    issues.push(`DID Data too large: ${this.didDataByteLength()} bytes (>256)`);
+               if (!this.didUtilService.didDataIsValid()) {
+                    issues.push(`DID Data too large: ${this.didUtilService.didDataByteLength()} bytes (>256)`);
                }
                if (this.hasJsonSyntaxError()) {
                     const errorMsg = this.didDataEditor?.jsonError()?.trim() || 'Syntax error';
@@ -280,16 +168,16 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      allFieldsValid = computed(() => {
           return (
-               this.didDocumentDataIsValid() && this.uriDataIsValid() && this.didDataIsValid() && !this.hasJsonSyntaxError() && this.validDidSchema() // optional: keep schema check if you want stricter
+               this.didUtilService.didDocumentDataIsValid() && this.didUtilService.uriDataIsValid() && this.didUtilService.didDataIsValid() && !this.hasJsonSyntaxError() && this.validDidSchema() // optional: keep schema check if you want stricter
           );
      });
 
      validDidSchema = computed(() => {
           // Assume your utilsService.validateAndConvertDidJson can be called without throwing
           // Or separate syntax check from schema check if needed
-          if (this.didData().trim() === '' || this.hasJsonSyntaxError()) return false;
+          if (this.txUiService.didData().trim() === '' || this.hasJsonSyntaxError()) return false;
 
-          const result = this.utilsService.validateAndConvertDidJson(this.didData(), didSchema);
+          const result = this.utilsService.validateAndConvertDidJson(this.txUiService.didData(), didSchema);
           return result.success;
      });
 
@@ -300,20 +188,29 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      ngOnInit(): void {
           // Sync initial value
-          this.didData.set(this.didDetails().data);
-          this.uriData.set(this.didDetails().uri);
-          this.didDocumentData.set(this.didDetails().document);
+          this.txUiService.didData.set(this.txUiService.didDetails().data);
+          this.txUiService.uriData.set(this.txUiService.didDetails().uri);
+          this.txUiService.didDocumentData.set(this.txUiService.didDetails().document);
           this.txUiService.clearAllOptions();
      }
 
      private selectWallet(wallet: Wallet): void {
-          this.currentWallet.set({ ...wallet });
-          this.txUiService.currentWallet.set({ ...wallet });
-          this.xrplCache.invalidateAccountCache(wallet.address);
+          if (wallet?.address === this.currentWallet()?.address) return;
+
+          this.currentWallet.set(wallet);
+          this.txUiService.currentWallet.set(wallet);
+     }
+
+     private ensureWalletSelected(): boolean {
+          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
+               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
+               return false;
+          }
+          return true;
      }
 
      toggleCreatedDids() {
-          this.createdDids.update(val => !val);
+          this.txUiService.createdDids.update(val => !val);
      }
 
      copyDidIndex(didIndex: string) {
@@ -347,32 +244,169 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      }
 
      async getDidForAccount(forceRefresh = false): Promise<void> {
-          this.txUiService.clearAllOptionsAndMessages();
-          await this.withPerf('getDidForAccount', async () => {
-               try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
+          await this.measure('getDidForAccount', true, async () => {
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
-                    const errors = await this.validationService.validate('AccountInfo', {
-                         inputs: { seed: this.currentWallet().seed, accountInfo },
-                         client,
-                         accountInfo,
+               if (!this.ensureWalletSelected()) return;
+
+               try {
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         forceRefresh: forceRefresh,
                     });
 
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.join('\n• '));
+                    if (!env.accountInfo || !env.accountObjects) {
+                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+                         return;
                     }
 
-                    this.getExistingDid(accountObjects, wallet.classicAddress);
-                    this.refreshUiState(wallet, accountInfo, accountObjects);
+                    this.didUtilService.getExistingDid(env.accountObjects, env.wallet.classicAddress);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Error in getDidForAccount:', error);
-                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+                    this.toastService.error(error.message || 'Error getting did detail', AppConstants.TOAST.ERROR);
                } finally {
-                    this.txUiService.spinner.set(false);
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
+
+     async performAction(): Promise<void> {
+          // Declare variables we need after the timed block
+          let txResult: { success: boolean; error?: string } | null = null;
+          let envRef: any = null; // we'll store env here
+          let destination: string | null = null;
+          let currentTab = this.activeTab();
+
+          // 1. Common reset & guard clauses (not timed)
+          this.txUiService.resetCurrentStepToIdle();
+          this.txUiService.clearAllOptionsAndMessages();
+
+          if (!this.ensureWalletSelected()) return;
+
+          // Only time the real work (validation → execution)
+          await this.withPerf('performAction', async () => {
+               let action: 'setDid' | 'deleteDid';
+               let extra: any = {};
+               let errorPrefix = '';
+
+               // Map tab → action config
+               switch (currentTab) {
+                    case 'set':
+                         action = 'setDid';
+                         extra = {
+                              credentialType: this.txUiService.credential().credential_type,
+                              expirationRipple: this.utilsService.toRippleTime(this.txUiService.credential().subject.expirationDate || ''),
+                              subject: destination,
+                              uri: this.txUiService.credential().uri || '',
+                         };
+                         break;
+                    case 'delete':
+                         action = 'deleteDid';
+                         extra = {
+                              credentialType: this.txUiService.credentialType(),
+                              subject: this.txUiService.credential().subject,
+                         };
+                         break;
+                    default:
+                         this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
+                         return;
+               }
+
+               // Early validation / guard
+               if (currentTab === 'set') {
+               }
+
+               if (currentTab === 'delete' && !this.txUiService.credentialID()) {
+                    this.toastService.error('No DID selected.', AppConstants.TOAST.ERROR);
+                    return;
+               }
+
+               // Prepare environment
+               let env;
+               try {
+                    env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeFee: true,
+                         includeLedgerIndex: true,
+                    });
+
+                    envRef = env; // save reference for later
+               } catch (err: any) {
+                    this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+                    console.error(err);
+                    return;
+               }
+
+               // Execute via orchestrator
+               try {
+                    const formValues = {
+                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...(currentTab === 'set' ? this.didUtilService.setDidKeySpecificKeys : []), ...(currentTab === 'delete' ? this.didUtilService.deleteSpecificKeys : []))),
+                    };
+
+                    txResult = await this.didTransactionOrchestratorService.executeDidTx(action, {
+                         wallet: this.currentWallet(),
+                         formValues,
+                         extra,
+                         preFetchedEnv: {
+                              client: env.client,
+                              accountInfo: env.accountInfo,
+                              accountObjects: env.accountObjects,
+                              fee: env.fee!,
+                              currentLedger: env.currentLedger!,
+                              wallet: env.wallet,
+                         },
+                    });
+               } catch (error: any) {
+                    console.error(`Error in ${action}:`, error);
+                    this.toastService.error(error.message || errorPrefix, AppConstants.TOAST.ERROR);
+               }
+          });
+
+          // UI refresh & side-effects — after timing ends
+          if (!this.txUiService.isSimulateEnabled() && txResult) {
+               // await this.handleTxResult(txResult, envRef.client, envRef.wallet, destination, credentialIssuer, '');
+          }
+          this.txUiService.resetCurrentStepToIdle();
+     }
+
+     // private async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, credentialIssuer: string | null, errorMessage: string): Promise<boolean> {
+     //           if (!result.success) {
+     //                this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
+     //                return false;
+     //           }
+
+     //           await this.refreshAfterTx(client, wallet, destination, credentialIssuer);
+
+     //           return true;
+     //      }
+
+     //      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, credentialIssuer: string | null): Promise<void> {
+     //                const env = await this.txEnvironmentService.prepareTxEnvironment({
+     //                     includeAccountInfo: true,
+     //                     includeAccountObject: true,
+     //                     forceRefresh: true,
+     //                });
+
+     //                this.updateLocalAccountState(env);
+
+     //                const addresses = [wallet.classicAddress];
+     //                if (destination) addresses.push(destination);
+     //                if (credentialIssuer) addresses.push(credentialIssuer);
+
+     //                await this.refreshWallets(client, addresses);
+
+     //                this.addCustomDestination(destination);
+     //                this.acccountDataService.refreshUiState(wallet, env.accountInfo!, env.accountObjects);
+     //           }
+
+     //           private updateLocalAccountState(env: any): void {
+     //                this.txUiService.existingCredentials.set(this.credentialUtilService.getExistingCredentials(env.accountObjects, env.wallet.classicAddress));
+     //                this.txUiService.subjectCredentials.set(this.credentialUtilService.getSubjectCredentials(env.accountObjects, env.wallet.classicAddress));
+     //           }
 
      async setDid() {
           await this.withPerf('setDid', async () => {
@@ -389,9 +423,9 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                               currentLedger,
                          },
                          did: {
-                              document: this.didDetails().document || undefined,
-                              uri: this.didDetails().uri || undefined,
-                              data: this.didDetails().data || undefined,
+                              document: this.txUiService.didDetails().document || undefined,
+                              uri: this.txUiService.didDetails().uri || undefined,
+                              data: this.txUiService.didDetails().data || undefined,
                          },
                     });
 
@@ -490,22 +524,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           });
      }
 
-     private getExistingDid(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
-          const mapped = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'DID')
-               .map((obj: any) => {
-                    return {
-                         index: obj.index,
-                         DIDDocument: obj.DIDDocument ? JSON.stringify(JSON.parse(Buffer.from(obj.DIDDocument, 'hex').toString('utf8')), null, 2) : 'N/A',
-                         Data: obj.Data ? JSON.stringify(JSON.parse(Buffer.from(obj.Data, 'hex').toString('utf8')), null, 2) : 'N/A',
-                         URI: obj.URI ? JSON.stringify(JSON.parse(Buffer.from(obj.URI, 'hex').toString('utf8')), null, 2) : 'N/A',
-                    };
-               })
-               .sort((a, b) => a.index.localeCompare(b.index));
-          this.existingDid.set(mapped);
-          this.utilsService.logObjects('existingDid', mapped);
-     }
-
      private async getWallet(): Promise<xrpl.Wallet> {
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) throw new Error('Wallet could not be created');
@@ -514,16 +532,16 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      private async setTxOptionalFields(client: xrpl.Client, didTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string): Promise<void> {
           if (txType === 'DIDSet') {
-               if (this.didDetails().document) {
-                    const hex = this.utilsService.jsonToHex({ didData: this.didDetails().document });
+               if (this.txUiService.didDetails().document) {
+                    const hex = this.utilsService.jsonToHex({ didData: this.txUiService.didDetails().document });
                     didTx.DIDDocument = hex;
                }
-               if (this.didDetails().uri) {
-                    const hex = this.utilsService.jsonToHex({ uri: this.didDetails().uri });
+               if (this.txUiService.didDetails().uri) {
+                    const hex = this.utilsService.jsonToHex({ uri: this.txUiService.didDetails().uri });
                     didTx.URI = hex;
                }
-               if (this.didDetails().data) {
-                    const result = this.utilsService.validateAndConvertDidJson(this.didDetails().data, didSchema);
+               if (this.txUiService.didDetails().data) {
+                    const result = this.utilsService.validateAndConvertDidJson(this.txUiService.didDetails().data, didSchema);
                     if (!result.success) throw new Error(result.errors ?? 'Invalid DID data');
                     didTx.Data = result.hexData;
                }
@@ -545,7 +563,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet): Promise<void> {
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-          this.getExistingDid(accountObjects, wallet.classicAddress);
+          this.didUtilService.getExistingDid(accountObjects, wallet.classicAddress);
           await this.refreshWallets(client, [wallet.classicAddress]);
           this.refreshUiState(wallet, accountInfo, accountObjects);
           this.txUiService.clearAllOptions();
@@ -560,12 +578,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                }
           );
      }
-
-     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-     //           this.currentWallet.set({ ...newCurrent });
-     //      });
-     // }
 
      private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
           // Update multi-sign & regular key flags
@@ -611,27 +623,23 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           return this.utilsService.convertXRPLTime(timestamp);
      }
 
-     get safeWarningMessage() {
-          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-     }
-
      validateDidData() {
-          if (this.didDetails().data) {
-               const result = this.utilsService.validateAndConvertDidJson(this.didDetails().data, didSchema);
-               if (!result.success) {
-                    return this.txUiService.setError(`${result.errors}`);
-               } else {
+          if (this.txUiService.didDetails().data) {
+               const result = this.utilsService.validateAndConvertDidJson(this.txUiService.didDetails().data, didSchema);
+               if (result.success) {
                     this.txUiService.clearAllOptionsAndMessages();
+               } else {
+                    return this.txUiService.setError(`${result.errors}`);
                }
           }
      }
 
      clearFields() {
-          this.onDidDataChange('');
-          this.didData();
-          this.onUriDataChange('');
-          this.uriData();
-          this.onDidDocumentDataChange('');
-          this.didDocumentData();
+          this.didUtilService.onDidDataChange('');
+          this.txUiService.didData();
+          this.didUtilService.onUriDataChange('');
+          this.txUiService.uriData();
+          this.didUtilService.onDidDocumentDataChange('');
+          this.txUiService.didDocumentData();
      }
 }

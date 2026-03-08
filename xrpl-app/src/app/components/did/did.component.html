@@ -6,58 +6,45 @@
      </div>
 </div>
 
+<!-- Get active tab -->
+@let tab = activeTab();
+<!-- Get tab data -->
+@let tabs = didUtilService.tabs;
+<!-- Get tab meta data -->
+@let meta = didUtilService.tabMeta[tab];
+
 <!-- Main content. Centered with 2 columns -->
 <div class="main-container">
      <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
+          <!-- Left Wallet panel -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
           <!-- Right form -->
           <div class="form-panel">
-               <!-- Menu bar -->
+               <!-- Menu / Tabs -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'set'" (click)="setTab('set')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Set
+                    @for (item of tabs; track item.key) {
+                    <button class="menu-btn" [class.active]="tab === item.key" (click)="setTab(item.key)">
+                         @if (item.iconType === 'ng-icon') {
+                         <ng-icon [name]="item.icon" [size]="item.iconSize" class="text-red-600"></ng-icon>
+                         } @if (item.iconType === 'lucide-icon') {
+                         <lucide-icon [name]="item.icon" [size]="item.iconSize" style="padding-top: 5px"></lucide-icon>
+                         } {{ item.label }}
                     </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'delete'" (click)="setTab('delete')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Delete
-                    </button>
+                    }
                </div>
 
-               <!-- Create Menu -->
-               @if (activeTab() === 'set') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Set DID</h2>
-                              <p class="submenu-info-secondary-text">Set DID for the selected account.</p>
-                         </div>
+               <div class="submenu-info-text">
+                    <div [class]="meta.colorClass">
+                         <ng-icon [name]="meta.icon" [size]="meta.iconSize" [color]="meta.color"></ng-icon>
+                    </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">{{ meta.title }}</h2>
+                         <p class="submenu-info-secondary-text">{{ meta.desc }}</p>
                     </div>
                </div>
-               }
-
-               <!-- Delete Menu -->
-               @if (activeTab() === 'delete') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Delete DID</h2>
-                              <p class="submenu-info-secondary-text">Delete DID for the selected account.</p>
-                         </div>
-                    </div>
-               </div>
-               }
 
                <!-- Info Message -->
-               <!-- Info Message + DID Entry Card -->
                @if (infoData(); as info) {
                <div class="info-and-did-card" [class.has-did]="info.existingDid.length === 1">
                     <!-- Always-visible summary row -->
@@ -121,202 +108,125 @@
                @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                    <div class="warning-text">{{ safeWarningMessage() }}</div>
                </div>
                }
 
                <form #theForm="ngForm" class="main-form">
                     <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab()">
-                              @if (activeTab() === 'set' && existingDid().length <= 0) {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label class="label-with-link">
-                                             DID Document
-                                             <button type="button" class="format-did-data" (click)="didDocumentEditor.format()">Format DID Document</button>
-                                             <div>
-                                                  <small class="text-muted"> Metadata size: {{ didDocumentDataByteLength() }} / 256 bytes </small>
-                                                  @if (didDocumentDataByteLength() > 256) {
-                                                  <small class="text-danger d-block">
-                                                       <strong>Exceeded limit – transaction will fail</strong>
-                                                  </small>
-                                                  } @else if (didDocumentDataByteLength() > 200) {
-                                                  <small class="text-warning d-block"> Approaching limit ({{ didDocumentDataByteLength() }} bytes) </small>
-                                                  }
-                                             </div>
-                                        </label>
-                                        <app-json-editor [value]="didDocumentData()" (valueChange)="onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
-                                   </div>
-                              </div>
-
-                              <!-- URI -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label class="label-with-link">
-                                             URI Data
-                                             <button type="button" class="format-did-data" (click)="uriEditor.format()">Format URI Data</button>
-                                             <div>
-                                                  <small class="text-muted"> Metadata size: {{ uriDataByteLength() }} / 256 bytes </small>
-                                                  @if (uriDataByteLength() > 256) {
-                                                  <small class="text-danger d-block">
-                                                       <strong>Exceeded limit – transaction will fail</strong>
-                                                  </small>
-                                                  } @else if (uriDataByteLength() > 200) {
-                                                  <small class="text-warning d-block"> Approaching limit ({{ uriDataByteLength() }} bytes) </small>
-                                                  }
-                                             </div>
-                                        </label>
-                                        <app-json-editor [value]="uriData()" (valueChange)="onUriDataChange($event)" #uriEditor> </app-json-editor>
-                                   </div>
-                              </div>
-
-                              <!-- Did Data -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label class="label-with-link" style="margin-top: 1rem"
-                                             >DID Data
-                                             <button type="button" class="format-did-data" (click)="didDataEditor.format()">Format DID Data</button>
-                                             <span class="label-meta" style="padding-left: 20px"> DID Schema<a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer"> W3C</a></span>
-
-                                             <!-- Warning: Schema valid BUT has JSON syntax errors -->
-                                             @if (validDidSchema() && hasJsonSyntaxError()) {
-                                             <div class="json-schema-warning mt-2">
-                                                  <small class="text-warning"> <strong>⚠ Schema valid, but JSON has syntax errors:</strong><br /> </small>
-                                             </div>
-                                             }
-
-                                             <div>
-                                                  <small class="text-muted"> Metadata size: {{ didDataByteLength() }} / 256 bytes </small>
-                                                  @if (didDataByteLength() > 256) {
-                                                  <small class="text-danger d-block">
-                                                       <strong>Exceeded limit – transaction will fail</strong>
-                                                  </small>
-                                                  } @else if (didDataByteLength() > 200) {
-                                                  <small class="text-warning d-block"> Approaching limit ({{ didDataByteLength() }} bytes) </small>
-                                                  }
-                                             </div>
-                                        </label>
-                                        <app-json-editor [value]="didData()" (valueChange)="onDidDataChange($event)" #didDataEditor> </app-json-editor>
-
-                                        <!-- Success: Schema valid AND no syntax errors -->
-                                        @if (validDidSchema() && !hasJsonSyntaxError()) {
-                                        <div class="json-schema-success mt-2">
-                                             <small class="text-success">
-                                                  <strong>✓ DID JSON is valid and well-formed</strong>
+                         @if (activeTab() === 'set' && txUiService.existingDid().length <= 0) {
+                         <div class="form-row">
+                              <div class="form-group">
+                                   <label for="didDocument" class="label-with-link">
+                                        DID Document
+                                        <button type="button" class="format-did-data" (click)="didDocumentEditor.format()">Format DID Document</button>
+                                        <div>
+                                             <small class="text-muted"> Metadata size: {{ didUtilService.didDocumentDataByteLength() }} / 256 bytes </small>
+                                             @if (didUtilService.didDocumentDataByteLength() > 256) {
+                                             <small class="text-danger d-block">
+                                                  <strong>Exceeded limit – transaction will fail</strong>
                                              </small>
+                                             } @else if (didUtilService.didDocumentDataByteLength() > 200) {
+                                             <small class="text-warning d-block"> Approaching limit ({{ didUtilService.didDocumentDataByteLength() }} bytes) </small>
+                                             }
                                         </div>
-                                        }
-                                   </div>
+                                   </label>
+                                   <app-json-editor [value]="txUiService.didDocumentData()" (valueChange)="didUtilService.onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
                               </div>
-                              }
-
-                              <!-- Only show buttons and sliders if there is no DID set or we are on the delete DID tab -->
-                              @if ((activeTab() === 'set' && existingDid().length <= 0) || activeTab() === 'delete') {
-                              <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                              <!-- Action buttons -->
-                              <div class="button-row">
-                                   @if (activeTab() === 'set') {
-                                   <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
-                                        <button type="button" class="btn-primary-blue" (click)="setDid()" [disabled]="txUiService.spinner() ||  !(walletManagerService.hasWallets()) ||  !allFieldsValid()">{{ txUiService.spinner() ? 'Processing transaction...' : 'Set DID' }}</button>
-                                   </app-tooltip-link>
-                                   }
-
-                                   <!-- Delete DID -->
-                                   @if (activeTab() === 'delete') {
-                                   <app-tooltip-link href="#" [tooltipText]="getDeleteButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
-                                        <button type="button" class="btn-primary-red" (click)="deleteDid()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets())">{{ txUiService.spinner() ? 'Processing transaction...' : 'Delete DID' }}</button>
-                                   </app-tooltip-link>
-                                   }
-                                   <!-- <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets())" (click)="clearFields()">Clear Fields</button> -->
-                              </div>
-                              }
                          </div>
 
+                         <!-- URI -->
+                         <div class="form-row">
+                              <div class="form-group">
+                                   <label for="uriData" class="label-with-link">
+                                        URI Data
+                                        <button type="button" class="format-did-data" (click)="uriEditor.format()">Format URI Data</button>
+                                        <div>
+                                             <small class="text-muted"> Metadata size: {{ didUtilService.uriDataByteLength() }} / 256 bytes </small>
+                                             @if (didUtilService.uriDataByteLength() > 256) {
+                                             <small class="text-danger d-block">
+                                                  <strong>Exceeded limit – transaction will fail</strong>
+                                             </small>
+                                             } @else if (didUtilService.uriDataByteLength() > 200) {
+                                             <small class="text-warning d-block"> Approaching limit ({{ didUtilService.uriDataByteLength() }} bytes) </small>
+                                             }
+                                        </div>
+                                   </label>
+                                   <app-json-editor [value]="txUiService.uriData()" (valueChange)="didUtilService.onUriDataChange($event)" #uriEditor> </app-json-editor>
+                              </div>
+                         </div>
+
+                         <!-- Did Data -->
+                         <div class="form-row">
+                              <div class="form-group">
+                                   <label for="didData" class="label-with-link" style="margin-top: 1rem"
+                                        >DID Data
+                                        <button type="button" class="format-did-data" (click)="didDataEditor.format()">Format DID Data</button>
+                                        <span class="label-meta" style="padding-left: 20px"> DID Schema<a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer"> W3C</a></span>
+
+                                        <!-- Warning: Schema valid BUT has JSON syntax errors -->
+                                        @if (validDidSchema() && hasJsonSyntaxError()) {
+                                        <div class="json-schema-warning mt-2">
+                                             <small class="text-warning"> <strong>⚠ Schema valid, but JSON has syntax errors:</strong><br /> </small>
+                                        </div>
+                                        }
+
+                                        <div>
+                                             <small class="text-muted"> Metadata size: {{ didUtilService.didDataByteLength() }} / 256 bytes </small>
+                                             @if (didUtilService.didDataByteLength() > 256) {
+                                             <small class="text-danger d-block">
+                                                  <strong>Exceeded limit – transaction will fail</strong>
+                                             </small>
+                                             } @else if (didUtilService.didDataByteLength() > 200) {
+                                             <small class="text-warning d-block"> Approaching limit ({{ didUtilService.didDataByteLength() }} bytes) </small>
+                                             }
+                                        </div>
+                                   </label>
+                                   <app-json-editor [value]="txUiService.didData()" (valueChange)="didUtilService.onDidDataChange($event)" #didDataEditor> </app-json-editor>
+
+                                   <!-- Success: Schema valid AND no syntax errors -->
+                                   @if (validDidSchema() && !hasJsonSyntaxError()) {
+                                   <div class="json-schema-success mt-2">
+                                        <small class="text-success">
+                                             <strong>✓ DID JSON is valid and well-formed</strong>
+                                        </small>
+                                   </div>
+                                   }
+                              </div>
+                         </div>
+                         }
+
+                         <!-- Only show buttons and sliders if there is no DID set or we are on the delete DID tab -->
+                         @if ((activeTab() === 'set' && txUiService.existingDid().length <= 0) || activeTab() === 'delete') {
+                         <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                         <!-- Action buttons -->
+                         <div class="button-row">
+                              @if (activeTab() === 'set') {
+                              <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
+                                   <button type="button" class="btn-primary-blue" (click)="setDid()" [disabled]="txUiService.spinner() ||  !(walletManagerService.hasWallets()) ||  !allFieldsValid()">{{ txUiService.spinner() ? 'Processing transaction...' : 'Set DID' }}</button>
+                              </app-tooltip-link>
+                              }
+
+                              <!-- Delete DID -->
+                              @if (activeTab() === 'delete') {
+                              <app-tooltip-link href="#" [tooltipText]="getDeleteButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
+                                   <button type="button" class="btn-primary-red" (click)="deleteDid()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets())">{{ txUiService.spinner() ? 'Processing transaction...' : 'Delete DID' }}</button>
+                              </app-tooltip-link>
+                              }
+                              <!-- <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets())" (click)="clearFields()">Clear Fields</button> -->
+                         </div>
+                         }
+
                          <!-- Execution time -->
-                         <div class="executionTimeDisplay">
-                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
+                         <div class="executionTimeDisplay" aria-live="polite">
+                              <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
                          </div>
                          <app-transaction-preview></app-transaction-preview>
                     </div>
                </form>
           </div>
 
-          <div class="requirements-info">
-               <div class="info-header">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                    <h3>Decentralized Identifiers (DID)</h3>
-               </div>
-
-               <p class="info-subtitle">Decentralized Identifiers (DIDs) on XRPL let accounts create and manage self-sovereign identity documents compliant with the W3C DID specification. Use DIDSet to create or update your DID document (e.g., public keys, service endpoints, verification methods), and DIDDelete to remove it when no longer needed.</p>
-
-               <div class="combinations-grid">
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🆔 Create / Update DID</span>
-                              <span class="badge required-badge">DIDSet</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">Data</span>
-                                   <span class="field-status required">✅ Required (JSON DID document or URI)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">URI</span>
-                                   <span class="field-status optional">➕ Optional (external DID document location)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Flags</span>
-                                   <span class="field-status optional">➕ Optional (e.g., master key control flags)</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🗑️ Delete DID</span>
-                              <span class="badge optional-badge">DIDDelete</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">DID ID / Data</span>
-                                   <span class="field-status required">✅ Required (to identify which DID to remove)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Signer</span>
-                                   <span class="field-status required">✅ Must be authorized (account key or delegate)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Conditions</span>
-                                   <span class="field-status required">✅ No dependent objects blocking deletion</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="important-notes">
-                         <h5>📝 Important Notes:</h5>
-                         <ul>
-                              <li>Requires the <strong>DID</strong> amendment to be enabled on the network.</li>
-                              <li>The DID is anchored to your XRPL account address — the DID document is stored in a <strong>DID</strong> ledger object owned by the account.</li>
-                              <li><strong>Data</strong> field typically contains a compact JSON DID document (verificationMethod, authentication, service endpoints, etc.) — max size is limited (~1 KB compressed).</li>
-                              <li>Alternatively, use <strong>URI</strong> to point to an external DID document (IPFS, HTTPS, etc.) for larger or mutable content.</li>
-                              <li>Each DID object counts toward your account’s <strong>owner reserve</strong> (~0.2 XRP) until deleted.</li>
-                              <li>DID documents are public once set — anyone can read them from the ledger.</li>
-                              <li>Only the controlling account (or authorized delegate if set up) can update or delete the DID.</li>
-                         </ul>
-                         <p></p>
-                         <h5 class="warning-title">⚠️ Irreversibility & Control Risks</h5>
-                         <p style="color: #92400e">DID documents are tied to account control — losing key access can make your DID unusable or orphaned.</p>
-                         <ul>
-                              <li>Once set, DID document data is **immutable until updated** — incorrect or outdated info requires another DIDSet transaction to fix.</li>
-                              <li>If you lose control of the account (lost keys, no regular key/multi-sign backup), you **permanently lose the ability** to update or delete the DID — it remains on the ledger forever.</li>
-                              <li>Deletion is only possible if no dependent objects (e.g., credentials or permissions referencing the DID) block it — check current amendment rules.</li>
-                              <li>Public exposure of DID documents means sensitive endpoints or keys should not be included unless encrypted or hashed.</li>
-                              <li>Reserve cost remains until deletion — deleting frees the reserve, but test deletion carefully to avoid accidental lockup.</li>
-                              <li>Always test DID creation/update/deletion on devnet or Testnet first — wrong formats or oversized data cause tx failure and fee burn.</li>
-                         </ul>
-                    </div>
-               </div>
-          </div>
+          <app-requirements-info></app-requirements-info>
      </div>
 </div>

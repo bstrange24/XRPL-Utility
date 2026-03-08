@@ -1078,6 +1078,9 @@ export class UtilsService {
 
      detectXrpInputType(input: string): { type: InputType; value: string } {
           let trimmed = '';
+          if (!input) {
+               return { type: 'unknown', value: trimmed };
+          }
           try {
                trimmed = input.trim();
 
