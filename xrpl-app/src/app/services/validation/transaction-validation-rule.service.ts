@@ -850,19 +850,11 @@ export class ValidationService {
                requiredFields: ['did.document', 'did.uri', 'did.data'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    // ctx => this.validateDidData(ctx.inputs['didDocument'], 'DID Document')(ctx),
-                    // ctx => this.validateDidData(ctx.inputs['didUri'], 'DID URI')(ctx),
+                    ctx => this.validateDidData(ctx.inputs['didDocument'], 'DID Document')(ctx),
+                    ctx => this.validateDidData(ctx.inputs['didUri'], 'DID URI')(ctx),
                     ctx => this.validateDidData(ctx.inputs['didData'], 'DID Data')(ctx),
 
                     // Master key disabled → must use alt signing
@@ -885,14 +877,6 @@ export class ValidationService {
                requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1056,14 +1040,6 @@ export class ValidationService {
                validators: [
                     this.walletCredentialRequired(),
 
-                    // ctx => {
-                    //      if (ctx.inputs['seed']) {
-                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
-
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.positiveAmount('cashCheck'),
@@ -1087,13 +1063,6 @@ export class ValidationService {
                requiredFields: ['cancelCheck.checkIdField'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      if (ctx.inputs['seed']) {
-                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -1121,14 +1090,6 @@ export class ValidationService {
                validators: [
                     this.walletCredentialRequired(),
                     this.positiveAmount('paymentChannelCreate'),
-
-                    // ctx => {
-                    //      if (ctx.inputs['seed']) {
-                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 

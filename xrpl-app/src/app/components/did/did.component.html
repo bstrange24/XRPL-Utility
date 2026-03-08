@@ -90,13 +90,13 @@
                               <!-- Copy actions -->
                               <div class="did-copy-actions" (mouseenter)="$event.stopPropagation()" (mouseleave)="$event.stopPropagation()" (mousemove)="$event.stopPropagation()">
                                    @if (info.existingDid[0].DIDDocument && info.existingDid[0].DIDDocument !== 'N/A') {
-                                   <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].DIDDocument, 'DID Document')">Copy full DID Document (JSON)</div>
+                                   <div class="copy-link btn btn-sm" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].DIDDocument, 'DID Document')">Copy full DID Document (JSON)</div>
                                    } @if (info.existingDid[0].Data && info.existingDid[0].Data !== 'N/A') {
-                                   <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].Data, 'DID Data')">Copy Data field (JSON)</div>
+                                   <div class="copy-link btn btn-sm" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].Data, 'DID Data')">Copy Data field (JSON)</div>
                                    } @if (info.existingDid[0].URI && info.existingDid[0].URI !== 'N/A') {
-                                   <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].URI, 'URI Data')">Copy URI Field</div>
+                                   <div class="copy-link btn btn-sm" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].URI, 'URI Data')">Copy URI Field</div>
                                    }
-                                   <div class="copy-link" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].index, 'Index')">Copy Index</div>
+                                   <div class="copy-link btn btn-sm" (click)="$event.stopPropagation(); $event.preventDefault(); copyAndToast(info.existingDid[0].index, 'Index')">Copy Index</div>
                               </div>
                          </div>
                     </div>
@@ -132,6 +132,9 @@
                                         </div>
                                    </label>
                                    <app-json-editor [value]="txUiService.didDocumentData()" (valueChange)="didUtilService.onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
+                                   <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('document')">
+  Clear
+</button>
                               </div>
                          </div>
 
@@ -153,6 +156,9 @@
                                         </div>
                                    </label>
                                    <app-json-editor [value]="txUiService.uriData()" (valueChange)="didUtilService.onUriDataChange($event)" #uriEditor> </app-json-editor>
+                                   <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('uri')">
+  Clear
+</button>
                               </div>
                          </div>
 
@@ -183,6 +189,9 @@
                                         </div>
                                    </label>
                                    <app-json-editor [value]="txUiService.didData()" (valueChange)="didUtilService.onDidDataChange($event)" #didDataEditor> </app-json-editor>
+                                   <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('data')">
+  Clear
+</button>
 
                                    <!-- Success: Schema valid AND no syntax errors -->
                                    @if (validDidSchema() && !hasJsonSyntaxError()) {
@@ -202,19 +211,6 @@
 
                          <!-- Action buttons -->
                            <button type="button" [class]="actionButtonClass()" (click)="performAction()" [disabled]="!canSubmit()">{{ actionButtonLabel() }}</button>
-                         <!-- <div class="button-row">
-                              @if (activeTab() === 'set') {
-                              <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
-                                   <button type="button" class="btn-primary-blue" (click)="setDid()" [disabled]="txUiService.spinner() ||  !(walletManagerService.hasWallets()) ||  !allFieldsValid()">{{ txUiService.spinner() ? 'Processing transaction...' : 'Set DID' }}</button>
-                              </app-tooltip-link>
-                              }
-
-                              @if (activeTab() === 'delete') {
-                              <app-tooltip-link href="#" [tooltipText]="getDeleteButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
-                                   <button type="button" class="btn-primary-red" (click)="deleteDid()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets())">{{ txUiService.spinner() ? 'Processing transaction...' : 'Delete DID' }}</button>
-                              </app-tooltip-link>
-                              }
-                         </div> -->
                          }
 
                          <!-- Execution time -->

@@ -26,11 +26,12 @@ import { TransactionPreviewComponent } from '../transaction-preview/transaction-
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
 
 @Component({
      selector: 'app-permissioned-domain',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent,RequirementsInfoComponent],
      animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
      templateUrl: './permissioned-domain.component.html',
      styleUrl: './permissioned-domain.component.css',

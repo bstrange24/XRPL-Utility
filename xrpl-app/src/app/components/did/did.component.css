@@ -11,6 +11,19 @@
      color: #1d4ed8;
 }
 
+.copy-link.btn {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #7dd3fc;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+.copy-link.btn:hover {
+  background: #bae6fd;
+}
+
 .json-schema-success {
      color: #10b981;
      margin-top: 1rem;

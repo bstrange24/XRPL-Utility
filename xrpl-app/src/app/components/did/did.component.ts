@@ -1,14 +1,11 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, DestroyRef, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { DIDDelete, DIDSet } from 'xrpl';
-import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../services/util-service/utils.service';
-import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import didSchema from './did-schema.json';
@@ -26,17 +23,17 @@ import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-
 import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { JsonEditorComponent } from '../json-editor/json-editor.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
-import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
 import { DidUtilService } from '../../services/did/did-util/did-util.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { DidTransactionOrchestratorService } from '../../services/did/did-transaction-orchestrator/did-transaction-orchestrator.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
+import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
 
 @Component({
      selector: 'app-did',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, JsonEditorComponent, RequirementsInfoComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, JsonEditorComponent,RequirementsInfoComponent],
      templateUrl: './did.component.html',
      styleUrl: './did.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,11 +45,9 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      @ViewChild('didDataEditor') didDataEditor!: JsonEditorComponent;
 
      public readonly utilsService = inject(UtilsService);
-     private readonly storageService = inject(StorageService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
-     private readonly validationService = inject(ValidationService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
@@ -206,9 +201,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
      ngOnInit(): void {
           // Sync initial value
-          this.txUiService.didData.set(this.txUiService.didDetails().data);
-          this.txUiService.uriData.set(this.txUiService.didDetails().uri);
-          this.txUiService.didDocumentData.set(this.txUiService.didDetails().document);
+          this.didUtilService.populateDidDefaultData();
           this.txUiService.clearAllOptions();
      }
 
@@ -217,6 +210,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
+          this.didUtilService.populateDidDefaultData();
      }
 
      private ensureWalletSelected(): boolean {
@@ -255,10 +249,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           if (this.hasWallets()) {
                await this.getDidForAccount();
           }
-     }
-
-     private async getClient(): Promise<xrpl.Client> {
-          return this.xrplCache.getClient(() => this.xrplService.getClient());
      }
 
      async getDidForAccount(forceRefresh = false): Promise<void> {
@@ -322,13 +312,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                          return;
                }
 
-               // Early validation / guard
-               if (currentTab === 'set') {
-                    console.log('Here');
-               }
-
-                 
-
                // Prepare environment
                let env;
                try {
@@ -341,19 +324,16 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
                     envRef = env; // save reference for later
 
-                    const didFound = envRef.accountObjects.result.account_objects.find((line: any) => {
-                         return line.LedgerEntryType === 'DID';
-                    });
+                    if(currentTab === 'delete') {
+                         const didFound = envRef.accountObjects.result.account_objects.find((line: any) => {
+                              return line.LedgerEntryType === 'DID';
+                         });
 
-                    if (!didFound) {
-                         this.txUiService.setError('DID not found.');
-                         return;
+                         if (!didFound) {
+                              this.txUiService.setError('DID not found.');
+                              return;
+                         }
                     }
-
-               if (currentTab === 'delete' && !this.txUiService.credentialID()) {
-                    this.toastService.error('No DID selected.', AppConstants.TOAST.ERROR);
-                    return;
-               }
                } catch (err: any) {
                     this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                     console.error(err);
@@ -362,7 +342,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
                // Execute via orchestrator
                try {
-                    console.log('Here', envRef);
                     const formValues = {
                          ...this.txUiService.getValues(this.txUiService.buildTxKeys(...(currentTab === 'set' ? this.didUtilService.setDidKeySpecificKeys : []), ...(currentTab === 'delete' ? this.didUtilService.deleteSpecificKeys : []))),
                     };
@@ -388,205 +367,37 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
           // UI refresh & side-effects — after timing ends
           if (!this.txUiService.isSimulateEnabled() && txResult) {
-               // await this.handleTxResult(txResult, envRef.client, envRef.wallet, destination, credentialIssuer, '');
+               await this.handleTxResult(txResult, envRef.client, envRef.wallet, '');
           }
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     // private async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, credentialIssuer: string | null, errorMessage: string): Promise<boolean> {
-     //           if (!result.success) {
-     //                this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
-     //                return false;
-     //           }
-
-     //           await this.refreshAfterTx(client, wallet, destination, credentialIssuer);
-
-     //           return true;
-     //      }
-
-     //      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, credentialIssuer: string | null): Promise<void> {
-     //                const env = await this.txEnvironmentService.prepareTxEnvironment({
-     //                     includeAccountInfo: true,
-     //                     includeAccountObject: true,
-     //                     forceRefresh: true,
-     //                });
-
-     //                this.updateLocalAccountState(env);
-
-     //                const addresses = [wallet.classicAddress];
-     //                if (destination) addresses.push(destination);
-     //                if (credentialIssuer) addresses.push(credentialIssuer);
-
-     //                await this.refreshWallets(client, addresses);
-
-     //                this.addCustomDestination(destination);
-     //                this.acccountDataService.refreshUiState(wallet, env.accountInfo!, env.accountObjects);
-     //           }
-
-     //           private updateLocalAccountState(env: any): void {
-     //                this.txUiService.existingCredentials.set(this.credentialUtilService.getExistingCredentials(env.accountObjects, env.wallet.classicAddress));
-     //                this.txUiService.subjectCredentials.set(this.credentialUtilService.getSubjectCredentials(env.accountObjects, env.wallet.classicAddress));
-     //           }
-
-     async setDid() {
-          await this.withPerf('setDid', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
-               try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const [accountInfo, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-
-                    const inputs = this.txUiService.getValidationInputs({
-                         wallet: this.currentWallet(),
-                         network: {
-                              accountInfo,
-                              fee,
-                              currentLedger,
-                         },
-                         did: {
-                              document: this.txUiService.didDetails().document || undefined,
-                              uri: this.txUiService.didDetails().uri || undefined,
-                              data: this.txUiService.didDetails().data || undefined,
-                         },
-                    });
-
-                    const errors = await this.validationService.validate('DIDSet', { inputs, client, accountInfo });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.join('\n• '));
-                    }
-
-                    let didSetTx: DIDSet = {
-                         TransactionType: 'DIDSet',
-                         Account: wallet.classicAddress,
-                         Fee: fee,
-                         LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-                    };
-
-                    await this.setTxOptionalFields(client, didSetTx, wallet, accountInfo, 'DIDSet');
-
-                    const result = await this.txExecutor.setDid(didSetTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeyAddress: this.txUiService.regularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    });
-                    if (!result.success) return this.txUiService.setError(`${result.error}`);
-
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Set DID successfully' : 'Set DID successfully!';
-                    await this.refreshAfterTx(client, wallet);
-               } catch (error: any) {
-                    console.error('Error in setDid:', error);
-                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
-               } finally {
-                    this.txUiService.spinner.set(false);
+     private async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, errorMessage: string): Promise<boolean> {
+               if (!result.success) {
+                    this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
+                    return false;
                }
-          });
-     }
 
-     async deleteDid() {
-          await this.withPerf('deleteDid', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
-               try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const [{ accountInfo, accountObjects }, currentLedger, fee] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getLastLedgerIndex(client), this.xrplCache.getFee(this.xrplService, false)]);
+               await this.refreshAfterTx(client, wallet);
 
-                    const inputs = this.txUiService.getValidationInputs({
-                         wallet: this.currentWallet(),
-                         network: {
-                              accountInfo,
-                              fee,
-                              currentLedger,
-                         },
-                    });
-
-                    const errors = await this.validationService.validate('DIDdelete', { inputs, client, accountInfo });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.join('\n• '));
-                    }
-
-                    const didFound = accountObjects.result.account_objects.find((line: any) => {
-                         return line.LedgerEntryType === 'DID';
-                    });
-
-                    if (!didFound) {
-                         this.txUiService.setError('DID not found.');
-                         return;
-                    }
-
-                    const didDeleteTx: DIDDelete = {
-                         TransactionType: 'DIDDelete',
-                         Account: wallet.classicAddress,
-                         Fee: fee,
-                         LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-                    };
-
-                    await this.setTxOptionalFields(client, didDeleteTx, wallet, accountInfo, 'deleteDID');
-
-                    const result = await this.txExecutor.deleteDid(didDeleteTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeyAddress: this.txUiService.regularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    });
-                    if (!result.success) return this.txUiService.setError(`${result.error}`);
-
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated DID deletion successfully!' : 'DID deleted successfully!';
-                    await this.refreshAfterTx(client, wallet);
-               } catch (error: any) {
-                    console.error('Error in deleteDid:', error);
-                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
-               } finally {
-                    this.txUiService.spinner.set(false);
-               }
-          });
-     }
-
-     private async getWallet(): Promise<xrpl.Wallet> {
-          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
-          if (!wallet) throw new Error('Wallet could not be created');
-          return wallet;
-     }
-
-     private async setTxOptionalFields(client: xrpl.Client, didTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string): Promise<void> {
-          if (txType === 'DIDSet') {
-               if (this.txUiService.didDetails().document) {
-                    const hex = this.utilsService.jsonToHex({ didData: this.txUiService.didDetails().document });
-                    didTx.DIDDocument = hex;
-               }
-               if (this.txUiService.didDetails().uri) {
-                    const hex = this.utilsService.jsonToHex({ uri: this.txUiService.didDetails().uri });
-                    didTx.URI = hex;
-               }
-               if (this.txUiService.didDetails().data) {
-                    const result = this.utilsService.validateAndConvertDidJson(this.txUiService.didDetails().data, didSchema);
-                    if (!result.success) throw new Error(result.errors ?? 'Invalid DID data');
-                    didTx.Data = result.hexData;
-               }
+               return true;
           }
-
-          if (this.txUiService.isTicket()) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
-               if (ticket) {
-                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
-                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
-                    this.utilsService.setTicketSequence(didTx, ticket, true);
-               }
-          }
-
-          if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
-               this.utilsService.setMemoField(didTx, this.txUiService.memoField());
-          }
-     }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet): Promise<void> {
-          const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-          this.didUtilService.getExistingDid(accountObjects, wallet.classicAddress);
+          const env = await this.txEnvironmentService.prepareTxEnvironment({
+               includeAccountInfo: true,
+               includeAccountObject: true,
+               forceRefresh: true,
+          });
+
+          this.updateLocalAccountState(env);
+          
           await this.refreshWallets(client, [wallet.classicAddress]);
-          this.refreshUiState(wallet, accountInfo, accountObjects);
-          this.txUiService.clearAllOptions();
+          this.acccountDataService.refreshUiState(wallet, env.accountInfo!, env.accountObjects);
+     }
+
+          private updateLocalAccountState(env: any): void {
+          this.didUtilService.getExistingDid(env.accountObjects, env.wallet.classicAddress);
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -597,61 +408,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                     this.currentWallet.set({ ...newCurrent });
                }
           );
-     }
-
-     private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
-          // Update multi-sign & regular key flags
-          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
-
-          // Update service state
-          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
-
-          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
-          const hasSignerList = signerAccounts?.length > 0;
-          this.txUiService.signerQuorum.set(signerQuorum);
-          const checkForMultiSigner = signerAccounts?.length > 0;
-          checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
-
-          this.txUiService.multiSigningEnabled.set(hasSignerList);
-          if (hasSignerList) {
-               const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.txUiService.signers.set(entries);
-          }
-
-          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
-
-          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
-          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
-     }
-
-     private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
-          const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-          this.txUiService.signers.set(signerEntries);
-          this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
-          this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
-     }
-
-     private clearMultiSignersConfiguration(): void {
-          this.txUiService.signerQuorum.set(0);
-          this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
-          this.txUiService.multiSignSeeds.set('');
-          this.storageService.removeValue('signerEntries');
-     }
-
-     formatXrplTimestamp(timestamp: number): string {
-          return this.utilsService.convertXRPLTime(timestamp);
-     }
-
-     validateDidData() {
-          if (this.txUiService.didDetails().data) {
-               const result = this.utilsService.validateAndConvertDidJson(this.txUiService.didDetails().data, didSchema);
-               if (result.success) {
-                    this.txUiService.clearAllOptionsAndMessages();
-               } else {
-                    return this.txUiService.setError(`${result.errors}`);
-               }
-          }
      }
 
      clearFields() {

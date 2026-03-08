@@ -1,7 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
-import { ToastService } from '../../toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { ValidationService } from '../../validation/transaction-validation-rule.service';
@@ -59,7 +58,6 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
      private readonly TxEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
-     private readonly toastService = inject(ToastService);
      private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
@@ -102,33 +100,25 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                          }
                     }
      
-                    console.log('AMAZING');
                     // 2. Validation
                     const validationRule = this.getValidationRuleName(type);
-                    console.log('AMAZING AAAAaaAAAA');
                     const validationInputs = this.buildValidationInputs(type, wallet, env, formValues, extra);
-                    console.log('AMAZING BBBBBBBBBBBBBB');
                     const errors = await this.validator.validate(validationRule, {
                          inputs: validationInputs,
                          client,
                          accountInfo: env.accountInfo,
                     });
      
-                    console.log('AMAZING CCCCCCCCCCCCCCCCC');
                     if (errors.length > 0) {
-                      console.log('AMAZING DDDDDDDDDDDDDD');
                          return { success: false, error: errors.join('\n• '), validationError: true };
                     }
      
-                    console.log('AMAZING 1');
                     // 3. Build transaction
                     const tx = this.buildModifyAccountTransaction(type, env.wallet, env, formValues, extra);
      
-                    console.log('AMAZING 2');
                     // 4. Apply optional fields
                     await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues, env, extra);
      
-                    console.log('AMAZING 3');
                     // 5. Execute transaction
                     const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
      
@@ -186,10 +176,10 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                if (type === 'setDid') {
                     return {
                          ...base,
-                         createCredential: {
-                              credentialType: extra.credentialType || '',
-                              expirationRipple: extra.expirationRipple || '',
-                              subject: extra.subject || '',
+                         did: {
+                              document:this.txUiService.didDetails().document || '',
+                              uri: this.txUiService.didDetails().uri || '',
+                              data: this.txUiService.didDetails().data || '',
                          },
                     };
                }
@@ -197,35 +187,27 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                // deleteDid
                return {
                     ...base,
-                    acceptCredentials: {
-                         credentialType: formValues.credentialType || '',
-                         Issuer: formValues.credentialIssuer || '',
-                    },
                };
           }
      
           private buildModifyAccountTransaction(type: DidTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
-            console.log('type:', type);   
-            const { fee, currentLedger } = env;
+               const { fee, currentLedger } = env;
      
-               
-
                if (type === 'setDid') {
                     const tx = this.xrplTransactionService.buildSetDidTransaction(wallet, fee, currentLedger);
                     if (this.txUiService.didDetails().document) {
-                      const hex = this.utilsService.jsonToHex({ didData: this.txUiService.didDetails().document });
-                    tx.DIDDocument = hex;
-               }
-               if (this.txUiService.didDetails().uri) {
-                    const hex = this.utilsService.jsonToHex({ uri: this.txUiService.didDetails().uri });
-                    tx.URI = hex;
-               }
-               if (this.txUiService.didDetails().data) {
-                    const result = this.utilsService.validateAndConvertDidJson(this.txUiService.didDetails().data, didSchema);
-                    if (!result.success) throw new Error(result.errors ?? 'Invalid DID data');
-                    tx.Data = result.hexData;
-          }
-     
+                         const hex = this.utilsService.jsonToHex({ didData: this.txUiService.didDetails().document });
+                         tx.DIDDocument = hex;
+                    }
+                    if (this.txUiService.didDetails().uri) {
+                         const hex = this.utilsService.jsonToHex({ uri: this.txUiService.didDetails().uri });
+                         tx.URI = hex;
+                    }
+                    if (this.txUiService.didDetails().data) {
+                         const result = this.utilsService.validateAndConvertDidJson(this.txUiService.didDetails().data, didSchema);
+                         if (!result.success) throw new Error(result.errors ?? 'Invalid DID data');
+                         tx.Data = result.hexData;
+                    }
                     return tx;
                }
      
