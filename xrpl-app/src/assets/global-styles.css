@@ -5065,16 +5065,41 @@ button:disabled,
 }
 
 .credentials-list-container {
-     transition: all 0.35s ease;
-     overflow-y: auto;
-     overflow-x: hidden;
+     will-change: transform, opacity, height;
+     max-height: 0;
+     opacity: 0;
+     padding: 0;
+     overflow: hidden;
+     transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+          /* opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), */
+          /* padding 0.3s cubic-bezier(0.4, 0, 0.2, 1); */
+}
+
+.credentials-list-container.expanded {
+     max-height: 500px;
+     /* Slightly larger than your content */
+     opacity: 1;
+     padding: 12px 0;
 }
 
 .credentials-list {
+     min-height: 0;
+     overflow-y: auto;
+     max-height: 280px;
+     /* Move max-height here */
+}
+
+/* .credentials-list-container {
+     transition: all 0.35s ease;
+     overflow-y: auto;
+     overflow-x: hidden;
+} */
+
+/* .credentials-list {
      list-style: none;
      margin: 0;
      padding: 0 16px;
-}
+} */
 
 .credential-item {
      display: flex;

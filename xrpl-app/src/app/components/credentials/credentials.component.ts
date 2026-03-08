@@ -25,7 +25,7 @@ import { TransactionPreviewComponent } from '../transaction-preview/transaction-
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
-import { animation, toastAnimation } from '../../services/animations/animations.service';
+import { animation, slideInOutAnimation, toastAnimation } from '../../services/animations/animations.service';
 import { CredentialItem } from '../../models/interface-items.model';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { SendXrpTransactionOrchestratorService } from '../../services/send-xrp/send-xrp-orchestrator/send-xrp-transaction-orchestrator.service';
@@ -40,7 +40,7 @@ import { CredentialUtilService } from '../../services/credentials/credential-uti
      selector: 'app-credentials',
      standalone: true,
      imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent],
-     animations: [animation, toastAnimation],
+     animations: [animation, toastAnimation, slideInOutAnimation],
      templateUrl: './credentials.component.html',
      styleUrl: './credentials.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { trigger, style, animate, transition } from '@angular/animations';
+import { trigger, style, animate, transition, state } from '@angular/animations';
 
 export const animation = trigger('tabTransition', [
      transition('* => *', [
@@ -38,6 +38,28 @@ export const toastAnimation = trigger('toastAnimation', [
                })
           ),
      ]),
+]);
+
+export const slideInOutAnimation = trigger('slideInOut', [
+     state(
+          'collapsed',
+          style({
+               height: '0',
+               opacity: 0,
+               overflow: 'hidden',
+               padding: '0',
+          })
+     ),
+     state(
+          'expanded',
+          style({
+               height: '*',
+               opacity: 1,
+               overflow: 'hidden',
+               padding: '12px 0',
+          })
+     ),
+     transition('collapsed <=> expanded', [animate('300ms ease-in-out')]),
 ]);
 
 @Injectable({
