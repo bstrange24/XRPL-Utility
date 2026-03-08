@@ -174,4 +174,26 @@ export class DidUtilService extends PerformanceBaseComponent {
           this.txUiService.didDocumentData.set(newValue);
           this.txUiService.didDetails.update(d => ({ ...d, document: newValue }));
      }
+
+     buildSuccessMessage(type: DidTxType, formValues: any, extra: any): string {
+               if (type === 'setDid') {
+                    return `Successfully Set DID`;
+               }
+               return `Successfully Deleted DID`;
+          }
+     
+          handleSimulationSuccess(type: DidTxType, formValues: any, hash?: string, extra?: any) {
+               let msg: string;
+     
+               if (type === 'setDid') {
+                    msg = `Simulated Setting DID`;
+               } else {
+                    msg = `Simulated Deleting DID`;
+               }
+     
+               this.txUiService.resetCurrentStepToIdle();
+               this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+     
+               return { success: true, hash };
+          }
 }

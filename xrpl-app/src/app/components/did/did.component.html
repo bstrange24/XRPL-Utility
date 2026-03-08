@@ -201,21 +201,20 @@
                          <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                          <!-- Action buttons -->
-                         <div class="button-row">
+                           <button type="button" [class]="actionButtonClass()" (click)="performAction()" [disabled]="!canSubmit()">{{ actionButtonLabel() }}</button>
+                         <!-- <div class="button-row">
                               @if (activeTab() === 'set') {
                               <app-tooltip-link href="#" [tooltipText]="getCreateButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
                                    <button type="button" class="btn-primary-blue" (click)="setDid()" [disabled]="txUiService.spinner() ||  !(walletManagerService.hasWallets()) ||  !allFieldsValid()">{{ txUiService.spinner() ? 'Processing transaction...' : 'Set DID' }}</button>
                               </app-tooltip-link>
                               }
 
-                              <!-- Delete DID -->
                               @if (activeTab() === 'delete') {
                               <app-tooltip-link href="#" [tooltipText]="getDeleteButtonTooltip()" (click)="$event.preventDefault()" class="button-wrapper">
                                    <button type="button" class="btn-primary-red" (click)="deleteDid()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets())">{{ txUiService.spinner() ? 'Processing transaction...' : 'Delete DID' }}</button>
                               </app-tooltip-link>
                               }
-                              <!-- <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets())" (click)="clearFields()">Clear Fields</button> -->
-                         </div>
+                         </div> -->
                          }
 
                          <!-- Execution time -->

@@ -271,6 +271,24 @@ export class XrplTransactionService {
           };
      }
 
+     buildSetDidTransaction(wallet: xrpl.Wallet, fee: string, currentLedger: number): xrpl.DIDSet {
+          return {
+               TransactionType: 'DIDSet',
+               Account: wallet.classicAddress,
+               Fee: fee,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildDeleteDidTransaction(wallet: xrpl.Wallet, fee: string, currentLedger: number): xrpl.DIDDelete {
+          return {
+               TransactionType: 'DIDDelete',
+               Account: wallet.classicAddress,
+               Fee: fee,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
      buildAcceptCredentialTransaction(wallet: xrpl.Wallet, issuer: string, credentialType: string, fee: string, currentLedger: number): xrpl.CredentialAccept {
           return {
                TransactionType: 'CredentialAccept',

@@ -107,6 +107,24 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           void this.getDidForAccount(false);
      });
 
+          readonly actionButtonLabel = computed(() => {
+          switch (this.activeTab()) {
+               case 'set':
+                    return this.didUtilService.setDidButtonLabel();
+               case 'delete':
+                    return this.didUtilService.deleteDidButtonLabel();
+          }
+     });
+
+     readonly actionButtonClass = computed(() => {
+          switch (this.activeTab()) {
+               case 'set':
+                    return 'btn-primary-blue';
+               case 'delete':
+                    return 'btn-primary-red';
+          }
+     });
+
      infoData = computed(() => {
           const wallet = this.currentWallet();
           if (!wallet?.address) {
@@ -277,7 +295,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           // Declare variables we need after the timed block
           let txResult: { success: boolean; error?: string } | null = null;
           let envRef: any = null; // we'll store env here
-          let destination: string | null = null;
           let currentTab = this.activeTab();
 
           // 1. Common reset & guard clauses (not timed)
@@ -296,19 +313,9 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                switch (currentTab) {
                     case 'set':
                          action = 'setDid';
-                         extra = {
-                              credentialType: this.txUiService.credential().credential_type,
-                              expirationRipple: this.utilsService.toRippleTime(this.txUiService.credential().subject.expirationDate || ''),
-                              subject: destination,
-                              uri: this.txUiService.credential().uri || '',
-                         };
                          break;
                     case 'delete':
                          action = 'deleteDid';
-                         extra = {
-                              credentialType: this.txUiService.credentialType(),
-                              subject: this.txUiService.credential().subject,
-                         };
                          break;
                     default:
                          this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
@@ -317,12 +324,10 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
                // Early validation / guard
                if (currentTab === 'set') {
+                    console.log('Here');
                }
 
-               if (currentTab === 'delete' && !this.txUiService.credentialID()) {
-                    this.toastService.error('No DID selected.', AppConstants.TOAST.ERROR);
-                    return;
-               }
+                 
 
                // Prepare environment
                let env;
@@ -335,6 +340,20 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                     });
 
                     envRef = env; // save reference for later
+
+                    const didFound = envRef.accountObjects.result.account_objects.find((line: any) => {
+                         return line.LedgerEntryType === 'DID';
+                    });
+
+                    if (!didFound) {
+                         this.txUiService.setError('DID not found.');
+                         return;
+                    }
+
+               if (currentTab === 'delete' && !this.txUiService.credentialID()) {
+                    this.toastService.error('No DID selected.', AppConstants.TOAST.ERROR);
+                    return;
+               }
                } catch (err: any) {
                     this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                     console.error(err);
@@ -343,6 +362,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
                // Execute via orchestrator
                try {
+                    console.log('Here', envRef);
                     const formValues = {
                          ...this.txUiService.getValues(this.txUiService.buildTxKeys(...(currentTab === 'set' ? this.didUtilService.setDidKeySpecificKeys : []), ...(currentTab === 'delete' ? this.didUtilService.deleteSpecificKeys : []))),
                     };
