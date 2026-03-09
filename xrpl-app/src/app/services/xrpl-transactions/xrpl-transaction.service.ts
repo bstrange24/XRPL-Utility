@@ -144,8 +144,6 @@ export class XrplTransactionService {
 
      processTxError(waitError: any) {
           this.txUiService.currentStep.set('failed');
-          // const msg = waitError.message?.includes('expired') ? 'Transaction expired (ledger timeout). It was not included in the ledger.' : `Failed to confirm transaction: ${waitError.message}`;
-          // this.toastService.error(msg, 7000);
      }
 
      buildModifyAccountSetTransaction(wallet: xrpl.Wallet, fee: string, currentLedger: number): xrpl.AccountSet {
@@ -295,6 +293,33 @@ export class XrplTransactionService {
                Account: wallet.classicAddress,
                Issuer: issuer,
                CredentialType: credentialType,
+               Fee: fee,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildPermissionedDomainSetTransaction(wallet: xrpl.Wallet, issuer: string, fee: string, currentLedger: number): xrpl.PermissionedDomainSet {
+          return {
+               TransactionType: 'PermissionedDomainSet',
+               Account: wallet.classicAddress,
+               AcceptedCredentials: [
+                    {
+                         Credential: {
+                              Issuer: issuer,
+                              CredentialType: Buffer.from(this.txUiService.credentialType() || 'defaultCredentialType', 'utf8').toString('hex'),
+                         },
+                    },
+               ],
+               Fee: fee,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildPermissionedDomainDeleteTransaction(wallet: xrpl.Wallet, domainId: string, fee: string, currentLedger: number): xrpl.PermissionedDomainDelete {
+          return {
+               TransactionType: 'PermissionedDomainDelete',
+               Account: wallet.classicAddress,
+               DomainID: domainId,
                Fee: fee,
                LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
           };

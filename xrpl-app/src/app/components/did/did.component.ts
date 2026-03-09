@@ -33,7 +33,7 @@ import { RequirementsInfoComponent } from './ui-components/requirements-info/req
 @Component({
      selector: 'app-did',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, JsonEditorComponent,RequirementsInfoComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, JsonEditorComponent, RequirementsInfoComponent],
      templateUrl: './did.component.html',
      styleUrl: './did.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,7 +102,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           void this.getDidForAccount(false);
      });
 
-          readonly actionButtonLabel = computed(() => {
+     readonly actionButtonLabel = computed(() => {
           switch (this.activeTab()) {
                case 'set':
                     return this.didUtilService.setDidButtonLabel();
@@ -324,7 +324,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
                     envRef = env; // save reference for later
 
-                    if(currentTab === 'delete') {
+                    if (currentTab === 'delete') {
                          const didFound = envRef.accountObjects.result.account_objects.find((line: any) => {
                               return line.LedgerEntryType === 'DID';
                          });
@@ -373,15 +373,15 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      }
 
      private async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, errorMessage: string): Promise<boolean> {
-               if (!result.success) {
-                    this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
-                    return false;
-               }
-
-               await this.refreshAfterTx(client, wallet);
-
-               return true;
+          if (!result.success) {
+               this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
+               return false;
           }
+
+          await this.refreshAfterTx(client, wallet);
+
+          return true;
+     }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet): Promise<void> {
           const env = await this.txEnvironmentService.prepareTxEnvironment({
@@ -391,12 +391,12 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           });
 
           this.updateLocalAccountState(env);
-          
+
           await this.refreshWallets(client, [wallet.classicAddress]);
           this.acccountDataService.refreshUiState(wallet, env.accountInfo!, env.accountObjects);
      }
 
-          private updateLocalAccountState(env: any): void {
+     private updateLocalAccountState(env: any): void {
           this.didUtilService.getExistingDid(env.accountObjects, env.wallet.classicAddress);
      }
 

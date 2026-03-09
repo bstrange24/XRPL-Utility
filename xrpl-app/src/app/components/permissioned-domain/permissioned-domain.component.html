@@ -6,58 +6,45 @@
      </div>
 </div>
 
+<!-- Get active tab -->
+@let tab = activeTab();
+<!-- Get tab data -->
+@let tabs = permissionedDomainUtilService.tabs;
+<!-- Get tab meta data -->
+@let meta = permissionedDomainUtilService.tabMeta[tab];
+
 <!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
+          <!-- Left Wallet panel -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
           <!-- Right form -->
           <div class="form-panel">
-               <!-- Menu bar -->
+               <!-- Menu / Tabs -->
                <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'set'" (click)="setTab('set')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Set
+                    @for (item of tabs; track item.key) {
+                    <button class="menu-btn" [class.active]="tab === item.key" (click)="setTab(item.key)">
+                         @if (item.iconType === 'ng-icon') {
+                         <ng-icon [name]="item.icon" [size]="item.iconSize" class="text-red-600"></ng-icon>
+                         } @if (item.iconType === 'lucide-icon') {
+                         <lucide-icon [name]="item.icon" [size]="item.iconSize" style="padding-top: 5px"></lucide-icon>
+                         } {{ item.label }}
                     </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'delete'" (click)="setTab('delete')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Delete
-                    </button>
+                    }
                </div>
 
-               <!-- Create Menu -->
-               @if (activeTab() === 'set') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Set Permissioned Domain</h2>
-                              <p class="submenu-info-secondary-text">Set Permissioned Domain for the selected account.</p>
-                         </div>
+               <div class="submenu-info-text">
+                    <div [class]="meta.colorClass">
+                         <ng-icon [name]="meta.icon" [size]="meta.iconSize" [color]="meta.color"></ng-icon>
+                    </div>
+                    <div>
+                         <h2 class="submenu-info-main-text">{{ meta.title }}</h2>
+                         <p class="submenu-info-secondary-text">{{ meta.desc }}</p>
                     </div>
                </div>
-               }
-
-               <!-- Delete Menu -->
-               @if (activeTab() === 'delete') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Delete Permissioned Domain</h2>
-                              <p class="submenu-info-secondary-text">Delete Permissioned Domain for the selected account.</p>
-                         </div>
-                    </div>
-               </div>
-               }
 
                <!-- Info Message -->
-               <!-- Info Message + Permissioned Domains List Card -->
                @if (infoData(); as info) {
                <div class="info-and-permissioned-domains-card" [class.has-domains]="info.permissionedDomainCount > 0">
                     <!-- Always-visible summary row -->
@@ -65,21 +52,13 @@
                          <div class="summary-text">
                               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
                               <code>{{ info.walletName }}</code>
-
-                              @if (info.permissionedDomainCount === 0) {
-                              <span> has no permissioned domains.</span>
-                              } @else {
-                              <span> has issued <strong class="object-count">{{ info.permissionedDomainCount }}</strong> permissioned domain{{ info.permissionedDomainCount === 1 ? '' : 's' }}.</span>
-                              }
-                              <!-- @if (info.links) {
-                              <div class="xrpl-win-link-small"><span [innerHTML]="info.links"></span> on XRPL Win</div>
-                              } -->
+                              <span [innerHTML]="summaryMessage()"></span>
                          </div>
 
                          <!-- Expand/Collapse toggle (only when there are domains) -->
                          @if (info.permissionedDomainCount > 0) {
                          <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle permissioned domains list">
-                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} list</span>
+                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} Permissioned Domains</span>
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'">
                                    <path d="M6 9l6 6 6-6" />
                               </svg>
@@ -89,7 +68,7 @@
 
                     <!-- Collapsible detailed list with internal scroll -->
                     @if (info.permissionedDomainCount > 0) {
-                    <div class="permissioned-domains-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
+                    <section class="permissioned-domains-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
                          <ul class="permissioned-domains-list">
                               @for (domain of info.permissionedDomainsToShow; track domain.index) {
                               <li class="permissioned-domain-item">
@@ -101,18 +80,13 @@
                                              <div>Credential: <code>{{ domain.AcceptedCredentials }}</code></div>
                                         </div>
                                    </app-tooltip-link>
-
-                                   <!-- Copy button outside the link -->
                                    <button (click)="copyAndToast(domain.index, 'Domain ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Domain ID">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                        </svg>
+                                        <lucide-icon name="copy" size="15"></lucide-icon>
                                    </button>
                               </li>
                               }
                          </ul>
-                    </div>
+                    </section>
                     }
                </div>
                }
@@ -121,70 +95,61 @@
                @if (txUiService.warningMessage) {
                <div class="warning-panel">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
+                    <div class="warning-text">{{ safeWarningMessage() }}</div>
                </div>
                }
 
                <form #theForm="ngForm" class="main-form">
-                    <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab()">
-                              <div class="form-row">
-                                   <!-- Credential Issuer -->
-                                   @if (activeTab() === 'set') {
-                                   <div class="form-group">
-                                        <label for="issuer">Issuer</label>
-                                        <p class="form-hint">The credential issuer.</p>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationSelected($event)" placeholder="Enter or select issuer address" emptyMessage="No wallets available"> </app-select-search-dropdown>
-                                   </div>
-
-                                   <!-- Credential Type-->
-                                   <div class="form-group">
-                                        <label for="credentialType">Credential Type</label>
-                                        <p class="form-hint">A hex-encoded value to identify the type of credential from the issuer.</p>
-                                        <input type="text" [(ngModel)]="credentialType" name="credential_type" />
-                                   </div>
-                                   }
-                              </div>
-
-                              <!-- Permissioned Domain Dropdown -->
-                              @if (activeTab() === 'delete') {
-                              <!-- Dropdown -->
-                              @if (createdPermissionedDomains().length > 0) {
-                              <div class="form-group">
-                                   <label for="selectPDtoDelete">Select Permissioned Domain to delete</label>
-                                   <p class="form-hint">Select an existing permissioined domain attached to the current wallet.</p>
-                                   <app-select-search-dropdown [items]="domainItems()" [value]="selectedDomainItem()" (valueChange)="onDomainSelected($event)" placeholder="Search by Domain ID..." emptyMessage="No domains found"> </app-select-search-dropdown>
-                              </div>
-
-                              <!-- Domain ID Field -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="domainId">Domain ID</label>
-                                        <p class="form-hint">Ledger hash containing the permissioned domain.</p>
-                                        <input type="text" [(ngModel)]="domainId" name="domainId" placeholder="" />
-                                   </div>
-                              </div>
-                              }}
-
-                              <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
-
-                              <!-- Action buttons -->
-                              <div class="button-row">
-                                   @if (activeTab() === 'set') {
-                                   <button type="button" class="btn-primary-blue" (click)="permissionedDomainSet()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets())">{{ txUiService.spinner() ? 'Processing...' : 'Set Permissioned Domain' }}</button>
-                                   } @else if (activeTab() === 'delete') {
-                                   <button type="button" class="btn-primary-red" (click)="permissionedDomainDelete()" [disabled]="txUiService.spinner() || !(walletManagerService.hasWallets())">{{ txUiService.spinner() ? 'Processing...' : 'Delete Permissioned Domain' }}</button>
-                                   }
-                                   <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets())" (click)="clearFields()">Clear Fields</button>
-                              </div>
+                    <div class="form-row">
+                         <!-- Credential Issuer -->
+                         @if (tab === 'set') {
+                         <div class="form-group">
+                              <label for="issuer">Issuer</label>
+                              <p class="form-hint">The credential issuer.</p>
+                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address"> </app-select-search-dropdown>
                          </div>
 
-                         <!-- Execution time -->
-                         <div class="executionTimeDisplay">
-                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
+                         <!-- Credential Type-->
+                         <div class="form-group">
+                              <label for="credentialType">Credential Type</label>
+                              <p class="form-hint">A hex-encoded value to identify the type of credential from the issuer.</p>
+                              <input type="text" [(ngModel)]="txUiService.credentialType" name="credential_type" />
                          </div>
-                         <app-transaction-preview></app-transaction-preview>
+                         }
                     </div>
+
+                    <!-- Permissioned Domain Dropdown -->
+                    @if (tab === 'delete') {
+                    <!-- Dropdown -->
+                    @if (permissionedDomainUtilService.createdPermissionedDomains().length > 0) {
+                    <div class="form-group">
+                         <label for="selectPDtoDelete">Select Permissioned Domain to delete</label>
+                         <p class="form-hint">Select an existing permissioined domain attached to the current wallet.</p>
+                         <app-select-search-dropdown [items]="permissionedDomainUtilService.domainItems()" [value]="permissionedDomainUtilService.selectedDomainItem()" (valueChange)="permissionedDomainUtilService.onDomainSelected($event)" placeholder="Search by Domain ID..." emptyMessage="No domains found"> </app-select-search-dropdown>
+                    </div>
+
+                    <!-- Domain ID Field -->
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="domainId">Domain ID</label>
+                              <p class="form-hint">Ledger hash containing the permissioned domain.</p>
+                              <input type="text" [(ngModel)]="txUiService.domainId" name="domainId" placeholder="" />
+                         </div>
+                    </div>
+                    }}
+
+                    <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+
+                    <!-- Action buttons -->
+                    <div class="button-row">
+                         <button type="button" [class]="actionButtonClass()" (click)="performAction()" [disabled]="!canSubmit()">{{ actionButtonLabel() }}</button>
+                    </div>
+
+                    <!-- Execution time -->
+                    <div class="executionTimeDisplay" aria-live="polite">
+                         <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
+                    </div>
+                    <app-transaction-preview></app-transaction-preview>
                </form>
           </div>
 

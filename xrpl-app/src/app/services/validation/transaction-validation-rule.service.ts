@@ -780,24 +780,16 @@ export class ValidationService {
           // PermissionedDomainSet Actions
           this.registerRule({
                transactionType: 'PermissionedDomainSet',
-               requiredFields: ['subject.subject', 'credentials.credentialType'],
+               requiredFields: ['permissionedDomainSet.subject', 'permissionedDomainSet.credentialType'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Destination address valid
-                    this.isValidAddress('subject.subject'),
+                    this.isValidAddress('permissionedDomainSet.subject'),
                     // this.notSelf('senderAddress', 'subject.address'),
-                    this.requireDestinationTagIfNeeded('destination'),
+                    this.requireDestinationTagIfNeeded('permissionedDomainSet'),
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -813,20 +805,12 @@ export class ValidationService {
                ],
           });
 
-          // PermissionedDomainSet Actions
+          // PermissionedDomainDelete Actions
           this.registerRule({
                transactionType: 'PermissionedDomainDelete',
-               requiredFields: ['domain.domainId'],
+               requiredFields: ['permissonedDomainDelete.domainId'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 

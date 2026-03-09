@@ -176,13 +176,13 @@ export class DidUtilService extends PerformanceBaseComponent {
      }
 
      clearJsonField(field: 'document' | 'uri' | 'data') {
-  if (field === 'document') this.txUiService.didDocumentData.set('');
-  if (field === 'uri')      this.txUiService.uriData.set('');
-  if (field === 'data')     this.txUiService.didData.set('');
-}
+          if (field === 'document') this.txUiService.didDocumentData.set('');
+          if (field === 'uri') this.txUiService.uriData.set('');
+          if (field === 'data') this.txUiService.didData.set('');
+     }
 
-populateDidDefaultData() {
-     this.txUiService.didData.set(`{
+     populateDidDefaultData() {
+          this.txUiService.didData.set(`{
   "@context": "https://www.w3.org/ns/did/v1",
   "id": "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc",
   "authentication": [
@@ -191,27 +191,27 @@ populateDidDefaultData() {
 }`);
           this.txUiService.uriData.set(JSON.stringify('ipfs://bafybeiexamplehash', null, '/t'));
           this.txUiService.didDocumentData.set(JSON.stringify('did:example:123#public-key-0', null, '/t'));
-}
+     }
 
      buildSuccessMessage(type: DidTxType, formValues: any, extra: any): string {
-               if (type === 'setDid') {
-                    return `Successfully Set DID`;
-               }
-               return `Successfully Deleted DID`;
+          if (type === 'setDid') {
+               return `Successfully Set DID`;
           }
-     
-          handleSimulationSuccess(type: DidTxType, formValues: any, hash?: string, extra?: any) {
-               let msg: string;
-     
-               if (type === 'setDid') {
-                    msg = `Simulated Setting DID`;
-               } else {
-                    msg = `Simulated Deleting DID`;
-               }
-     
-               this.txUiService.resetCurrentStepToIdle();
-               this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
-     
-               return { success: true, hash };
+          return `Successfully Deleted DID`;
+     }
+
+     handleSimulationSuccess(type: DidTxType, formValues: any, hash?: string, extra?: any) {
+          let msg: string;
+
+          if (type === 'setDid') {
+               msg = `Simulated Setting DID`;
+          } else {
+               msg = `Simulated Deleting DID`;
           }
+
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+
+          return { success: true, hash };
+     }
 }

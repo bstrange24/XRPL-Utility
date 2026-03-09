@@ -13,7 +13,7 @@
 <!-- Get tab meta data -->
 @let meta = didUtilService.tabMeta[tab];
 
-<!-- Main content. Centered with 2 columns -->
+<!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel -->
@@ -114,7 +114,7 @@
 
                <form #theForm="ngForm" class="main-form">
                     <div class="tab-content-container">
-                         @if (activeTab() === 'set' && txUiService.existingDid().length <= 0) {
+                         @if (tab === 'set' && txUiService.existingDid().length <= 0) {
                          <div class="form-row">
                               <div class="form-group">
                                    <label for="didDocument" class="label-with-link">
@@ -132,9 +132,7 @@
                                         </div>
                                    </label>
                                    <app-json-editor [value]="txUiService.didDocumentData()" (valueChange)="didUtilService.onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
-                                   <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('document')">
-  Clear
-</button>
+                                   <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('document')">Clear</button>
                               </div>
                          </div>
 
@@ -156,9 +154,7 @@
                                         </div>
                                    </label>
                                    <app-json-editor [value]="txUiService.uriData()" (valueChange)="didUtilService.onUriDataChange($event)" #uriEditor> </app-json-editor>
-                                   <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('uri')">
-  Clear
-</button>
+                                   <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('uri')">Clear</button>
                               </div>
                          </div>
 
@@ -189,9 +185,7 @@
                                         </div>
                                    </label>
                                    <app-json-editor [value]="txUiService.didData()" (valueChange)="didUtilService.onDidDataChange($event)" #didDataEditor> </app-json-editor>
-                                   <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('data')">
-  Clear
-</button>
+                                   <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('data')">Clear</button>
 
                                    <!-- Success: Schema valid AND no syntax errors -->
                                    @if (validDidSchema() && !hasJsonSyntaxError()) {
@@ -206,11 +200,13 @@
                          }
 
                          <!-- Only show buttons and sliders if there is no DID set or we are on the delete DID tab -->
-                         @if ((activeTab() === 'set' && txUiService.existingDid().length <= 0) || activeTab() === 'delete') {
+                         @if ((tab === 'set' && txUiService.existingDid().length <= 0) || tab === 'delete') {
                          <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                          <!-- Action buttons -->
-                           <button type="button" [class]="actionButtonClass()" (click)="performAction()" [disabled]="!canSubmit()">{{ actionButtonLabel() }}</button>
+                         <div class="button-row">
+                              <button type="button" [class]="actionButtonClass()" (click)="performAction()" [disabled]="!canSubmit()">{{ actionButtonLabel() }}</button>
+                         </div>
                          }
 
                          <!-- Execution time -->

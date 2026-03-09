@@ -1,13 +1,10 @@
-import { animate, style, transition, trigger } from '@angular/animations';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, DestroyRef, effect, inject, OnInit, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import * as xrpl from 'xrpl';
-import { PermissionedDomainDelete, PermissionedDomainSet } from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -27,18 +24,23 @@ import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/selec
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
+import { PermissionedDomainUtilService } from '../../services/permissioned-domain/permissioned-domain-util/permissioned-domain-util.service';
+import { AcccountDataService } from '../../services/account-data/acccount-data.service';
+import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
+import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
+import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
+import { ToastService } from '../../services/toast/toast.service';
+import { PermissionedDomainOrchestratorService } from '../../services/permissioned-domain/permissioned-domain-orchestrator/permissioned-domain-orchestrator.service';
 
 @Component({
      selector: 'app-permissioned-domain',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent,RequirementsInfoComponent],
-     animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, RequirementsInfoComponent],
      templateUrl: './permissioned-domain.component.html',
      styleUrl: './permissioned-domain.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionedDomainComponent extends PerformanceBaseComponent implements OnInit {
-     private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
      public readonly walletManagerService = inject(WalletManagerService);
@@ -48,35 +50,39 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
+     public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
+     public readonly xrplTransactionService = inject(XrplTransactionService);
+     public readonly txEnvironmentService = inject(TxEnvironmentService);
+     public readonly transactionDropdownService = inject(TransactionDropdownService);
+     public readonly acccountDataService = inject(AcccountDataService);
      private readonly walletManager = inject(WalletManagerService);
-     private readonly cdr = inject(ChangeDetectorRef);
+     public readonly permissionedDomainUtilService = inject(PermissionedDomainUtilService);
+     public readonly permissionedDomainOrchestratorService = inject(PermissionedDomainOrchestratorService);
 
-     // Domain Dropdown State
-     selectedDomainId = signal<string | null>(null);
-     domainSearchQuery = signal<string>('');
-
-     // Destination Dropdown
-     typedDestination = signal<string>('');
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
-
-     // Reactive State (Signals)
      activeTab = signal<'set' | 'delete'>('set');
-     wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal<boolean>(false);
-     subject = signal<string>('');
+     wallets = signal<Wallet[]>([]);
 
-     // Permissioned Domain Specific
-     credentialType = signal<string>('');
-     domainId = signal<string>('');
-     createdDomains = signal<boolean>(false);
-     createdPermissionedDomains = signal<any[]>([]);
+     allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
+     destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
+     destinationItems = this.transactionDropdownService.destinationItems(this.allDestinations);
+     selectedDestinationItem = this.transactionDropdownService.selectedDestinationItem(this.selectedDestinationAddress, this.destinationMap, this.destinationItems);
+     filteredDestinations = this.transactionDropdownService.filteredDestinations(this.allDestinations, this.destinationSearchQuery);
+     destinationDisplay = this.transactionDropdownService.destinationDisplay(this.selectedDestinationAddress, this.destinationSearchQuery, this.destinationMap);
 
-     // Effect 1: Has wallets → warning handling
-     private readonly hasWalletsEffect = effect(() => {
+     readonly currentAddress = computed(() => this.currentWallet().address);
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
+     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
+     readonly canSubmit = computed(() => this.isIdle() && this.hasWallets());
+     readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
+
+     // Has wallets → warning handling
+     private readonly _hasWalletsEffect = effect(() => {
+          console.log('_hasWalletsEffect');
           if (this.walletManager.hasWallets()) {
                this.txUiService.clearWarning?.();
           } else {
@@ -87,82 +93,55 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      });
 
      // Effect 2: Wallets list sync
-     private readonly walletsSyncEffect = effect(() => {
+     private readonly _walletsSyncEffect = effect(() => {
+          console.log('_walletsSyncEffect');
           this.wallets.set(this.walletManager.wallets());
      });
 
      // Effect 3: Selected index change → clear + refresh checks
-     private readonly selectedIndexEffect = effect(() => {
+     private readonly _selectedIndexEffect = effect(() => {
+          console.log('_selectedIndexEffect');
           // Reading the signal is enough to trigger the effect
           this.walletManager.selectedIndex();
 
           this.txUiService.clearAllOptionsAndMessages();
-          this.clearInputFields();
 
           // Fire-and-forget refresh
           void this.getPermissionedDomainForAccount(true);
      });
 
-     destinationItems = computed(() => {
-          const currentAddr = this.currentWallet().address;
-
-          // Build the list directly from wallets + custom destinations
-          const allDestinations = [
-               ...this.wallets().map(w => ({
-                    address: w.address,
-                    name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
-               })),
-               ...this.customDestinations(),
-          ];
-
-          return allDestinations.map(d => ({
-               id: d.address,
-               display: d.name || 'Unknown Wallet',
-               secondary: d.address,
-               isCurrentAccount: d.address === currentAddr,
-               isCurrentCode: false,
-               isCurrentToken: false,
-          }));
+     readonly actionButtonLabel = computed(() => {
+          switch (this.activeTab()) {
+               case 'set':
+                    return this.permissionedDomainUtilService.setPermissionedDomainButtonLabel();
+               case 'delete':
+                    return this.permissionedDomainUtilService.deletePermissionedDomainButtonLabel();
+          }
      });
 
-     selectedDestinationItem = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return null;
-          return this.destinationItems().find(i => i.id === addr) || null;
+     readonly actionButtonClass = computed(() => {
+          switch (this.activeTab()) {
+               case 'set':
+                    return 'btn-primary-blue';
+               case 'delete':
+                    return 'btn-primary-red';
+          }
      });
 
-     onDestinationSelected(item: SelectItem | null) {
-          this.selectedDestinationAddress.set(item?.id || '');
-     }
-
-     // Domain ID dropdown items
-     domainItems = computed(() => {
-          return this.createdPermissionedDomains().map(domain => ({
-               id: domain.index,
-               display: domain.index.slice(0, 10) + '...' + domain.index.slice(-8),
-               secondary: domain.AcceptedCredentials ? `Credentials: ${domain.AcceptedCredentials.length}` : 'No credentials',
-               // secondary: domain.index,
-               isCurrentAccount: false,
-               isCurrentCode: false,
-               isCurrentToken: false,
-          }));
+     readonly summaryMessage = computed(() => {
+          const info = this.infoData();
+          if (!info) return '';
+          const { permissionedDomainCount } = info;
+          if (permissionedDomainCount === 0) return 'has no permissioned domains.';
+          return `has issued <strong class="object-count">${info.permissionedDomainCount}</strong> permissioned domain${info.permissionedDomainCount === 1 ? '' : 's'}. `;
      });
-
-     selectedDomainItem = computed(() => {
-          const id = this.selectedDomainId();
-          if (!id) return null;
-          return this.domainItems().find(i => i.id === id) || null;
-     });
-
-     onDomainSelected(item: SelectItem | null) {
-          const domainId = item?.id || '';
-          this.selectedDomainId.set(domainId);
-          this.domainId.set(domainId); // auto-fill the field
-     }
 
      infoData = computed(() => {
-          if (!this.currentWallet().address) return null;
-          const domains = this.createdPermissionedDomains();
+          const wallet = this.currentWallet();
+          if (!wallet?.address) {
+               return null;
+          }
+          const domains = this.permissionedDomainUtilService.createdPermissionedDomains();
           return {
                walletName: this.currentWallet().name || 'Selected wallet',
                mode: this.activeTab(),
@@ -171,49 +150,47 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           };
      });
 
-     hasWallets = computed(() => this.wallets().length > 0);
-
      constructor() {
           super();
+          this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
-          this.loadCustomDestinations();
           this.txUiService.clearAllOptions();
-     }
-
-     private loadCustomDestinations(): void {
-          const stored = this.storageService.get('customDestinations');
-          if (stored) this.customDestinations.set(JSON.parse(stored));
+          this.transactionDropdownService.loadCustomDestinations();
      }
 
      private selectWallet(wallet: Wallet): void {
-          this.currentWallet.set({ ...wallet });
-          this.txUiService.currentWallet.set({ ...wallet });
-          this.xrplCache.invalidateAccountCache(wallet.address);
+          if (wallet?.address === this.currentWallet()?.address) return;
 
-          // Prevent self as destination
+          this.currentWallet.set(wallet);
+          this.txUiService.currentWallet.set(wallet);
+
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
           }
      }
 
+     private ensureWalletSelected(): boolean {
+          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
+               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
+               return false;
+          }
+          return true;
+     }
+
      resetDomainDropDown() {
-          this.selectedDomainId.set(null);
-          this.domainId.set('');
+          this.permissionedDomainUtilService.selectedDomainId.set(null);
+          this.txUiService.domainId.set('');
      }
 
      toggleCreatedDomains() {
-          this.createdDomains.update(val => !val);
+          this.permissionedDomainUtilService.createdDomains.update(val => !val);
      }
 
      trackByWalletAddress(index: number, wallet: any) {
           return wallet.address;
-     }
-
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
      }
 
      toggleInfoPanel() {
@@ -227,220 +204,184 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      async setTab(tab: 'set' | 'delete'): Promise<void> {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
+          this.resetDomainDropDown();
           this.txUiService.clearAllOptionsAndMessages();
           if (this.hasWallets()) {
                await this.getPermissionedDomainForAccount();
           }
      }
 
-     private async getClient(): Promise<xrpl.Client> {
-          return this.xrplCache.getClient(() => this.xrplService.getClient());
-     }
-
      async getPermissionedDomainForAccount(forceRefresh = false): Promise<void> {
-          await this.withPerf('getPermissionedDomainForAccount', async () => {
+          await this.measure('getPermissionedDomainForAccount', true, async () => {
+               this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
-               try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
 
-                    const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.join('\n• '));
+               if (!this.ensureWalletSelected()) return;
+
+               try {
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         forceRefresh: forceRefresh,
+                    });
+
+                    if (!env.accountInfo || !env.accountObjects) {
+                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+                         return;
                     }
 
-                    this.getCreatedPermissionedDomains(accountObjects, wallet.classicAddress);
-                    this.refreshUiState(wallet, accountInfo, accountObjects);
+                    this.permissionedDomainUtilService.getCreatedPermissionedDomains(env.accountObjects, env.wallet.classicAddress);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+                    this.clearFields();
                } catch (error: any) {
                     console.error('Error in getPermissionedDomainForAccount:', error);
-                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+                    this.toastService.error(error.message || 'Error getting permissioned domain detail', AppConstants.TOAST.ERROR);
                } finally {
-                    this.txUiService.spinner.set(false);
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
 
-     async permissionedDomainSet() {
-          await this.withPerf('permissionedDomainSet', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
-               try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
+     async performAction(): Promise<void> {
+          // Declare variables we need after the timed block
+          let txResult: { success: boolean; error?: string } | null = null;
+          let envRef: any = null; // we'll store env here
+          let credentialIssuer: string | null = null;
+          let currentTab = this.activeTab();
 
-                    const issuerAddress = this.selectedDestinationAddress() || this.typedDestination();
-                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    const inputs = this.txUiService.getValidationInputs({
-                         wallet: this.currentWallet(),
-                         network: { accountInfo, accountObjects, fee, currentLedger },
-                         subject: { subject: issuerAddress },
-                         credentials: { credentialType: this.credentialType() },
+          // 1. Common reset & guard clauses (not timed)
+          this.txUiService.resetCurrentStepToIdle();
+          this.txUiService.clearAllOptionsAndMessages();
+
+          if (!this.ensureWalletSelected()) return;
+
+          // 2. Early credentialIssuer resolution (not timed)
+          credentialIssuer = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+
+          // Only time the real work (validation → execution)
+          await this.withPerf('performAction', async () => {
+               let action: 'set' | 'delete';
+               let extra: any = {};
+               let errorPrefix = '';
+
+               // Map tab → action config
+               switch (currentTab) {
+                    case 'set':
+                         action = 'set';
+                         this.txUiService.subject.set(credentialIssuer);
+                         break;
+                    case 'delete':
+                         action = 'delete';
+                         break;
+                    default:
+                         this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
+                         return;
+               }
+
+               // Early validation / guard
+               if (currentTab === 'set') {
+                    if (!credentialIssuer || !xrpl.isValidAddress(credentialIssuer)) {
+                         this.toastService.error('Please enter a valid issuer address.', AppConstants.TOAST.ERROR);
+                         return;
+                    }
+               }
+
+               // Prepare environment
+               let env;
+               try {
+                    env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeFee: true,
+                         includeLedgerIndex: true,
                     });
 
-                    const errors = await this.validationService.validate('PermissionedDomainSet', { inputs, client, accountInfo });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.join('\n• '));
-                    }
+                    envRef = env; // save reference for later
 
-                    const permissionedDomainTx: PermissionedDomainSet = {
-                         TransactionType: 'PermissionedDomainSet',
-                         Account: wallet.classicAddress,
-                         AcceptedCredentials: [
-                              {
-                                   Credential: {
-                                        Issuer: issuerAddress,
-                                        CredentialType: Buffer.from(this.credentialType() || 'defaultCredentialType', 'utf8').toString('hex'),
-                                   },
-                              },
-                         ],
-                         Fee: fee,
-                         LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                    if (currentTab === 'delete') {
+                         const permissionDomainFound = envRef.accountObjects.result.account_objects.find((line: any) => {
+                              return line.LedgerEntryType === 'PermissionedDomain' && line.index === this.txUiService.domainId();
+                         });
+
+                         // If not found, exit early
+                         if (!permissionDomainFound) {
+                              this.toastService.error(`No Permission Domain found for ${envRef.wallet.classicAddress} with ID ${this.txUiService.domainId()}`, AppConstants.TOAST.ERROR);
+                              return;
+                         }
+                    }
+               } catch (err: any) {
+                    this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+                    console.error(err);
+                    return;
+               }
+
+               // Execute via orchestrator
+               try {
+                    const formValues = {
+                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...(currentTab === 'set' ? this.permissionedDomainUtilService.setPermissionDomainKeySpecificKeys : []), ...(currentTab === 'delete' ? this.permissionedDomainUtilService.deletePermissionDomainSpecificKeys : []))),
                     };
 
-                    await this.setTxOptionalFields(client, permissionedDomainTx, wallet, accountInfo);
-
-                    const result = await this.txExecutor.permissionedDomainSet(permissionedDomainTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeyAddress: this.txUiService.regularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    txResult = await this.permissionedDomainOrchestratorService.executePermissionDomainTx(action, {
+                         wallet: this.currentWallet(),
+                         formValues,
+                         extra,
+                         preFetchedEnv: {
+                              client: env.client,
+                              accountInfo: env.accountInfo,
+                              accountObjects: env.accountObjects,
+                              fee: env.fee!,
+                              currentLedger: env.currentLedger!,
+                              wallet: env.wallet,
+                         },
                     });
-                    if (!result.success) return this.txUiService.setError(`${result.error}`);
-
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Set Permissioned Domain successfully!' : 'Set Permissioned Domain successfully!';
-                    await this.refreshAfterTx(client, wallet, issuerAddress, true);
                } catch (error: any) {
-                    console.error('Error in permissionedDomainSet:', error);
-                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
-               } finally {
-                    this.txUiService.spinner.set(false);
+                    console.error(`Error in ${action}:`, error);
+                    this.toastService.error(error.message || errorPrefix, AppConstants.TOAST.ERROR);
                }
           });
-     }
 
-     async permissionedDomainDelete() {
-          await this.withPerf('permissionedDomainDelete', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
-               try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-
-                    const inputs = this.txUiService.getValidationInputs({
-                         wallet: this.currentWallet(),
-                         network: { accountInfo, accountObjects, fee, currentLedger },
-                         domain: { domainId: this.domainId() },
-                    });
-
-                    const errors = await this.validationService.validate('PermissionedDomainDelete', { inputs, client, accountInfo });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.join('\n• '));
-                    }
-
-                    const permissionDomainFound = accountObjects.result.account_objects.find((line: any) => {
-                         return line.LedgerEntryType === 'PermissionedDomain' && line.index === this.domainId();
-                    });
-
-                    // If not found, exit early
-                    if (!permissionDomainFound) {
-                         return this.txUiService.setError(`No Permission Domain found for ${wallet.classicAddress} with ID ${this.domainId()}`);
-                    }
-
-                    const permissionedDomainDeleteTx: PermissionedDomainDelete = {
-                         TransactionType: 'PermissionedDomainDelete',
-                         Account: wallet.classicAddress,
-                         DomainID: this.domainId(),
-                         Fee: fee,
-                         LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-                    };
-
-                    await this.setTxOptionalFields(client, permissionedDomainDeleteTx, wallet, accountInfo);
-
-                    const result = await this.txExecutor.permissionedDomainDelete(permissionedDomainDeleteTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeyAddress: this.txUiService.regularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    });
-                    if (!result.success) return this.txUiService.setError(`${result.error}`);
-
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Permisioned Domain deletion successfully!' : 'Permissioned Domain deleted successfully!';
-                    await this.refreshAfterTx(client, wallet, null, false);
+          // UI refresh & side-effects — after timing ends
+          if (!this.txUiService.isSimulateEnabled() && txResult) {
+               await this.handleTxResult(txResult, envRef.client, envRef.wallet, credentialIssuer, '');
+               if (currentTab === 'delete') {
                     this.resetDomainDropDown();
-               } catch (error: any) {
-                    console.error('Error in permissionedDomainDelete:', error);
-                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
-               } finally {
-                    this.txUiService.spinner.set(false);
                }
+          }
+
+          this.txUiService.resetCurrentStepToIdle();
+     }
+
+     private async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, credentialIssuer: string | null, errorMessage: string): Promise<boolean> {
+          if (!result.success) {
+               this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
+               return false;
+          }
+
+          await this.refreshAfterTx(client, wallet, credentialIssuer);
+
+          return true;
+     }
+
+     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, credentialIssuer: string | null): Promise<void> {
+          const env = await this.txEnvironmentService.prepareTxEnvironment({
+               includeAccountInfo: true,
+               includeAccountObject: true,
+               forceRefresh: true,
           });
+
+          this.updateLocalAccountState(env);
+
+          const addresses = [wallet.classicAddress];
+          if (credentialIssuer) addresses.push(credentialIssuer);
+
+          await this.refreshWallets(client, addresses);
+
+          this.addCustomDestination(credentialIssuer);
+          this.acccountDataService.refreshUiState(wallet, env.accountInfo!, env.accountObjects);
      }
 
-     private getCreatedPermissionedDomains(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
-          const mapped = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'PermissionedDomain' && obj.Owner === sender)
-               .map((obj: any) => {
-                    return {
-                         index: obj.index,
-                         AcceptedCredentials: obj.AcceptedCredentials
-                              ? JSON.stringify(
-                                     obj.AcceptedCredentials.map(
-                                          (item: {
-                                               Credential: {
-                                                    CredentialType: any;
-                                                    Issuer?: string; // Assuming Issuer exists in the original data
-                                               };
-                                          }) => ({
-                                               ...item,
-                                               Credential: {
-                                                    ...item.Credential,
-                                                    CredentialType: Buffer.from(item.Credential.CredentialType, 'hex').toString('utf8'),
-                                                    Issuer: item.Credential.Issuer, // Adjust based on actual structure
-                                               },
-                                          })
-                                     ),
-                                     null,
-                                     ''
-                                )
-                              : 'N/A',
-                         Owner: obj.Owner,
-                         Sequence: obj.Sequence,
-                    };
-               })
-               .sort((a, b) => a.index.localeCompare(b.index));
-          this.createdPermissionedDomains.set(mapped);
-          this.utilsService.logObjects('createdPermissionedDomains', this.createdPermissionedDomains);
-     }
-
-     private async getWallet(): Promise<xrpl.Wallet> {
-          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
-          if (!wallet) throw new Error('Wallet could not be created');
-          return wallet;
-     }
-
-     private async setTxOptionalFields(client: xrpl.Client, permissionDomainTx: any, wallet: xrpl.Wallet, accountInfo: any): Promise<void> {
-          if (this.txUiService.isTicket()) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
-               if (ticket) {
-                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
-                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
-                    this.utilsService.setTicketSequence(permissionDomainTx, ticket, true);
-               }
-          }
-
-          if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
-               this.utilsService.setMemoField(permissionDomainTx, this.txUiService.memoField());
-          }
-     }
-
-     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
-          const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-          this.getCreatedPermissionedDomains(accountObjects, wallet.classicAddress);
-          destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-          if (addDest) this.addNewDestinationFromUser(destination ?? '');
-          this.refreshUiState(wallet, accountInfo, accountObjects);
-          this.txUiService.clearAllOptions();
+     private updateLocalAccountState(env: any): void {
+          this.permissionedDomainUtilService.getCreatedPermissionedDomains(env.accountObjects, env.wallet.classicAddress);
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -453,62 +394,12 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           );
      }
 
-     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-     //           this.currentWallet.set({ ...newCurrent });
-     //      });
-     // }
-
-     private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
-          // Update multi-sign & regular key flags
-          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
-
-          // Update service state
-          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
-
-          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
-          const hasSignerList = signerAccounts?.length > 0;
-          this.txUiService.signerQuorum.set(signerQuorum);
-          const checkForMultiSigner = signerAccounts?.length > 0;
-          checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
-
-          this.txUiService.multiSigningEnabled.set(hasSignerList);
-          if (hasSignerList) {
-               const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.txUiService.signers.set(entries);
+     private addCustomDestination(destination: string | null): void {
+          if (!destination) return;
+          const addr = destination.trim();
+          if (xrpl.isValidAddress(addr) && !this.destinationMap().has(addr)) {
+               this.transactionDropdownService.addCustomIfNewAndSelect(destination, this.destinationMap, this.selectedDestinationAddress, this.destinationSearchQuery);
           }
-
-          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
-
-          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
-          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
-     }
-
-     private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
-          const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-          this.txUiService.signers.set(signerEntries);
-          this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
-          this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
-     }
-
-     private clearMultiSignersConfiguration(): void {
-          this.txUiService.signerQuorum.set(0);
-          this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
-          this.txUiService.multiSignSeeds.set('');
-          this.storageService.removeValue('signerEntries');
-     }
-
-     private addNewDestinationFromUser(destination: string): void {
-          if (!destination || !xrpl.isValidAddress(destination)) return;
-
-          // Use destinationItems() instead of destinations()
-          const alreadyExists = this.destinationItems().some((item: { id: string }) => item.id === destination);
-          if (alreadyExists) return;
-
-          this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
-
-          this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
      }
 
      copyPermissionedDomainId(checkId: string) {
@@ -517,8 +408,12 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           });
      }
 
-     get safeWarningMessage() {
-          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+     onDestinationSelected(item: SelectItem | null) {
+          this.selectedDestinationAddress.set(item?.id || '');
+     }
+
+     copyAndToast(text: string, label: string = 'Content') {
+          this.copyUtilService.copyAndToast(text, label);
      }
 
      clearFields() {
@@ -527,10 +422,8 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      }
 
      clearInputFields() {
-          this.typedDestination.set('');
-          this.selectedDestinationAddress.set('');
-          this.credentialType.set('');
-          this.domainId.set('');
-          this.selectedDomainId.set(null);
+          this.txUiService.credentialType.set('');
+          this.txUiService.domainId.set('');
+          this.permissionedDomainUtilService.selectedDomainId.set(null);
      }
 }

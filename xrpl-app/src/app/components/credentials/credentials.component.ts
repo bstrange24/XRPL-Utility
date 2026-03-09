@@ -489,6 +489,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                     this.resetCredentialIdDropDown();
                }
           }
+
           this.txUiService.resetCurrentStepToIdle();
      }
 
