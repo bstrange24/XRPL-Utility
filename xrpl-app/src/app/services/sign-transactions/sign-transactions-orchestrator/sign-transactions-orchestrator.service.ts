@@ -64,7 +64,6 @@ export class SignTransactionsOrchestratorService extends PerformanceBaseComponen
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // 1. Use pre-fetched env if provided, otherwise fetch fresh
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                     client = preFetchedEnv.client;
@@ -88,7 +87,6 @@ export class SignTransactionsOrchestratorService extends PerformanceBaseComponen
                     }
                }
 
-               // 2. Validation
                const validationInputs = {
                     wallet,
                     network: {
@@ -121,10 +119,8 @@ export class SignTransactionsOrchestratorService extends PerformanceBaseComponen
                     return { success: false, error: errors.join('\n• ') };
                }
 
-               // 3. Build transaction
                const paymentTx: xrpl.Payment = this.xrplTransactionService.buildSendXrpTransaction(env.wallet, formValues.destinationAddress, Number(formValues.amountField), env.fee, env.currentLedger);
 
-               // 4. Apply optional fields (moved here from component)
                await this.applyOptionalFields(client, paymentTx, wallet, env.accountInfo, formValues);
 
                // 5. Execute
@@ -150,14 +146,12 @@ export class SignTransactionsOrchestratorService extends PerformanceBaseComponen
                     return { success: true, hash: txHash };
                }
 
-               // 6. Wait for final outcome
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, paymentTx.LastLedgerSequence!);
 
                this.txUiService.setTxResultSignal(finalResult);
 
                const shortDest = formValues.destinationAddress.slice(0, 7) + '…' + formValues.destinationAddress.slice(-7);
                this.xrplTransactionService.processTxFinalResult(finalResult, `Successfully Sent ${formValues.amountField} XRP to ${shortDest}`, { success: true, hash: txHash });
-
                return { success: true, hash: txHash };
           } catch (err: any) {
                const msg = err.message || 'Unexpected error during XRP payment';
@@ -170,7 +164,6 @@ export class SignTransactionsOrchestratorService extends PerformanceBaseComponen
      }
 
      private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Payment, wallet: Wallet, accountInfo: any, formValues: any) {
-          // Tickets
           const isTicket = this.txUiService.isTicket();
           if (isTicket) {
                const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];

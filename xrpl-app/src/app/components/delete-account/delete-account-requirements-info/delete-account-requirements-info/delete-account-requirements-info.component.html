@@ -1,0 +1,130 @@
+<div class="requirements-info">
+     <div class="info-header">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+          <h3>Account Deletion (AccountDelete)</h3>
+     </div>
+
+     <p class="info-subtitle">AccountDelete permanently removes an XRPL account from the ledger and transfers any remaining XRP (after burning the required deletion fee) to a destination address. This is typically used to reclaim reserve XRP from unused or test accounts.</p>
+
+     <div class="combinations-grid">
+          <!-- TRANSACTION -->
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">🗑 Delete Account</span>
+                    <span class="badge required-badge">AccountDelete</span>
+               </div>
+
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">Destination</span>
+                         <span class="field-status required"> ✅ Required<br />(funded XRPL address) </span>
+                    </div>
+
+                    <div class="field-row">
+                         <span class="field-name">Amount</span>
+                         <span class="field-status omitted"> ❌ Not specified<br />(remaining XRP automatically transferred) </span>
+                    </div>
+
+                    <div class="field-row">
+                         <span class="field-name">Deletion Fee</span>
+                         <span class="field-status required"> ✅ Required<br />(minimum burn defined by network) </span>
+                    </div>
+               </div>
+          </div>
+
+          <!-- LEDGER REQUIREMENTS -->
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">🔒 Ledger Preconditions</span>
+                    <span class="badge required-badge">Strict Requirements</span>
+               </div>
+
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">No owned objects</span>
+                         <span class="field-status required"> ✅ Trust lines, offers, escrows, checks, NFTs, MPTs, payment channels, etc. must be removed </span>
+                    </div>
+
+                    <div class="field-row">
+                         <span class="field-name">No Tickets</span>
+                         <span class="field-status required"> ✅ TicketCount must be 0 </span>
+                    </div>
+
+                    <div class="field-row">
+                         <span class="field-name">Destination funded</span>
+                         <span class="field-status required"> ✅ Must already exist on the ledger </span>
+                    </div>
+
+                    <div class="field-row">
+                         <span class="field-name">Ledger waiting period</span>
+                         <span class="field-status required"> ✅ Must wait 256 ledgers (~15–20 minutes) after the account's previous transaction </span>
+                    </div>
+               </div>
+          </div>
+
+          <!-- CLEANUP CHECKLIST -->
+          <div class="requirements-section">
+               <h4 class="requirements-title">Recommended cleanup before deletion</h4>
+
+               <ul class="requirements-list" style="margin-bottom: 15px">
+                    <li class="requirement-item">
+                         <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                         Remove trust lines or settle any outstanding IOU balances
+                    </li>
+
+                    <li class="requirement-item">
+                         <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                         Cancel open DEX offers
+                    </li>
+
+                    <li class="requirement-item">
+                         <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                         Finish or cancel escrows, payment channels, and checks
+                    </li>
+
+                    <li class="requirement-item">
+                         <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                         Burn or transfer NFTs and MPT tokens
+                    </li>
+
+                    <li class="requirement-item">
+                         <ng-icon name="heroCheckCircle" size="18" class="requirement-icon"></ng-icon>
+                         Remove signer lists, hooks, DIDs, credentials, and permissioned domains
+                    </li>
+               </ul>
+          </div>
+
+          <!-- IMPORTANT NOTES -->
+          <div class="important-notes">
+               <h5>📝 Important Notes</h5>
+
+               <ul>
+                    <li>The transaction burns a <strong>special deletion fee</strong> (currently much higher than normal fees).</li>
+
+                    <li>After the burn, the <strong>remaining XRP is automatically sent</strong> to the destination account.</li>
+
+                    <li>The destination must already exist and meet the base reserve requirement.</li>
+
+                    <li>Many exchanges <strong>do not accept AccountDelete transfers</strong>, so sending to exchange deposit addresses can result in lost funds.</li>
+
+                    <li>All owned ledger objects must be removed before deletion or the transaction will fail with errors such as <strong>tecOWNERS</strong>.</li>
+               </ul>
+
+               <p></p>
+
+               <h5 class="warning-title">⚠️ Permanent & Irreversible Action</h5>
+
+               <p style="color: #92400e">Account deletion permanently removes the account from the ledger.</p>
+
+               <ul>
+                    <li>Once confirmed, the address <strong>can never be recreated or reused</strong>.</li>
+
+                    <li>If the destination address is incorrect or unsupported, the transferred XRP may be permanently lost.</li>
+
+                    <li>The burned XRP (deletion fee) is <strong>permanently removed from circulation</strong>.</li>
+
+                    <li>Always test the cleanup and deletion sequence on <strong>Testnet or Devnet</strong> before performing it on Mainnet.</li>
+               </ul>
+          </div>
+     </div>
+</div>

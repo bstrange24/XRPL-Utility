@@ -393,9 +393,9 @@ export class TransactionUiService {
      private _infoMessage: string | null = null;
      public _warningMessage: string | null = null;
      private _errorMessage: string | null = null;
-     successMessage: string | null = null;
+     // successMessage: string | null = null;
 
-     errorMessage: string | null = null;
+     // errorMessage: string | null = null;
 
      setPaymentTx(tx: any) {
           this.paymentTx = [...this.paymentTx, tx];
@@ -419,8 +419,8 @@ export class TransactionUiService {
           this.txSignal.set([]);
           this.txResultSignal.set([]);
           this.successMessageSignal.set('');
-          this.successMessage = null;
-          this.errorMessage = null;
+          // this.successMessage = null;
+          // this.errorMessage = null;
           this.errorMessageSignal.set(null);
           this.clearMessages();
      }
@@ -434,7 +434,7 @@ export class TransactionUiService {
           this.txResult = [];
           this.txErrorHashes = [];
           this.paymentTx = [];
-          this.successMessage = '';
+          // this.successMessage = '';
      }
 
      private allowOnly(tags: string[], html: string): SafeHtml {
@@ -538,8 +538,8 @@ export class TransactionUiService {
                isSuccess: this.isSuccess(),
           });
 
-          this.successMessage = message;
-          this.errorMessage = null;
+          // this.successMessage = message;
+          // this.errorMessage = null;
           this.errorMessageSignal.set(null);
 
           // Only set a hash when simulate is OFF
@@ -555,8 +555,8 @@ export class TransactionUiService {
                isSuccess: this.isSuccess(),
           });
 
-          this.successMessage = message;
-          this.errorMessage = null;
+          // this.successMessage = message;
+          // this.errorMessage = null;
           this.errorMessageSignal.set(null);
 
           // Only set a hash when simulate is OFF
@@ -583,9 +583,9 @@ export class TransactionUiService {
                isError: this.isError(),
                isSuccess: this.isSuccess(),
           });
-          this.errorMessage = message;
+          // this.errorMessage = message;
           this.errorMessageSignal.set(message);
-          this.successMessage = null;
+          // this.successMessage = null;
 
           // Only set a hash if not simulated
           this.txHash = this.isSimulateEnabled() ? null : hash || null;
@@ -906,12 +906,12 @@ export class TransactionUiService {
      }
 
      clearAllOptionsAndMessages() {
-          this.errorMessage = '';
+          // this.errorMessage = '';
           this.errorMessageSignal.set(null);
           this.updateSpinnerMessageSignal('');
           this.clearTxResultsHash();
           this.clearMessages();
-          this.successMessage = '';
+          // this.successMessage = '';
      }
 
      clearTxResultsHash() {

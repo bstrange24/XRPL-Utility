@@ -655,7 +655,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                          this.onCurrencyChange(this.currencyFieldDropDownValue());
                     }
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in createFirewall:', error);
@@ -714,7 +714,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                          this.onCurrencyChange(this.currencyFieldDropDownValue());
                     }
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in modifyFirewall:', error);
@@ -799,7 +799,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                          this.onCurrencyChange(this.currencyFieldDropDownValue());
                     }
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in authorizeFirewall:', error);
@@ -856,7 +856,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                          this.onCurrencyChange(this.currencyFieldDropDownValue());
                     }
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in createTimeBasedEscrow:', error);

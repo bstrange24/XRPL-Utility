@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 
 @Component({
@@ -7,4 +7,6 @@ import { NgIcon } from '@ng-icons/core';
      templateUrl: './requirements-info.component.html',
      styleUrl: './requirements-info.component.css',
 })
-export class RequirementsInfoComponent {}
+export class RequirementsInfoComponent {
+     activeTab = input.required<'set' | 'delete'>();
+}

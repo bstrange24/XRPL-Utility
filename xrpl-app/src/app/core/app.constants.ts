@@ -1,6 +1,23 @@
 import { ECDSA, TrustSetFlags } from 'xrpl';
 import * as xrpl from 'xrpl';
 
+// app.constants.ts
+
+export const BLOCKER_MAP: Record<string, { label: string; route: string; tab?: string }> = {
+     RippleState: { label: 'Trust Lines', route: '/trustlines' },
+     Offer: { label: 'DEX Offers', route: '/create-offer' },
+     Escrow: { label: 'Escrows', route: '/time-escrow' },
+     Check: { label: 'Checks', route: '/checks' },
+     PayChannel: { label: 'Payment Channels', route: '/payment-channel' },
+     Ticket: { label: 'Tickets', route: '/tickets' },
+     SignerList: { label: 'Signer Lists', route: '/account-configurator', tab: 'modifySignerList' },
+     RegularKey: { label: 'Regular Key', route: '/account-configurator', tab: 'modifyRegularKey' },
+     NFTokenPage: { label: 'NFTs', route: '/create-nft' },
+     Credential: { label: 'Credentials', route: '/create-credentials' },
+     PermissionedDomain: { label: 'Permissioned Domains', route: '/permissioned-domain' },
+     DID: { label: 'DID', route: '/did' },
+};
+
 export const AppConstants = {
      // XRPL Network Settings
      NETWORKS: {

@@ -40,6 +40,13 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           super();
      }
 
+     readonly modifyAccountFlagsSpecificKeys = [] as const;
+     readonly modifyNftMinterSpecificKeys = ['nfTokenMinterAddress'] as const;
+     readonly updateMetaDataSpecificKeys = ['tickSize', 'transferRate', 'domain', 'isMessageKey'] as const;
+     readonly modifyRegularKeySpecificKeys = ['regularKeyAddress', 'regularKeySeed'] as const;
+     readonly modifyMultiSignSpecificKeys = ['signerQuorum'] as const;
+     readonly modifyDepositAuthSpecificKeys = [] as const;
+
      hasSignerList = signal<boolean>(false);
      readonly FLAG_VALUES = xrpl.AccountSetAsfFlags;
      flags: XrplAccountFlags = {

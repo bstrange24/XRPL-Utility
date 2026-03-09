@@ -335,11 +335,11 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
      }
 
      resetChannelIdSelection() {
-          if (this.txUiService.errorMessage?.length && this.txUiService.errorMessage?.length <= 0) {
-               this.txUiService.channelIDField.set('');
-               this.txUiService.channelClaimSignatureField.set('');
-               this.txUiService.amountField.set('');
-          }
+          // if (this.txUiService.errorMessage?.length && this.txUiService.errorMessage?.length <= 0) {
+          this.txUiService.channelIDField.set('');
+          this.txUiService.channelClaimSignatureField.set('');
+          this.txUiService.amountField.set('');
+          // }
      }
 
      toggleFlag(key: 'renew' | 'close' | 'claimAndClose') {

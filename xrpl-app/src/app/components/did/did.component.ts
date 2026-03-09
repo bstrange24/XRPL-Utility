@@ -48,7 +48,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
-     private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
@@ -120,11 +119,9 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           }
      });
 
-     infoData = computed(() => {
+     readonly infoData = computed(() => {
           const wallet = this.currentWallet();
-          if (!wallet?.address) {
-               return null;
-          }
+          if (!wallet?.address) return null;
 
           const walletName = wallet.name || 'Selected wallet';
           const dids = this.txUiService.existingDid();
@@ -139,7 +136,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           };
      });
 
-     hasJsonSyntaxError = computed(() => {
+     readonly hasJsonSyntaxError = computed(() => {
           this.txUiService.didData(); // trigger recompute
 
           const error = this.didDataEditor?.jsonError()?.trim();
@@ -179,13 +176,13 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           return '';
      }
 
-     allFieldsValid = computed(() => {
+     readonly allFieldsValid = computed(() => {
           return (
                this.didUtilService.didDocumentDataIsValid() && this.didUtilService.uriDataIsValid() && this.didUtilService.didDataIsValid() && !this.hasJsonSyntaxError() && this.validDidSchema() // optional: keep schema check if you want stricter
           );
      });
 
-     validDidSchema = computed(() => {
+     readonly validDidSchema = computed(() => {
           // Assume your utilsService.validateAndConvertDidJson can be called without throwing
           // Or separate syntax check from schema check if needed
           if (this.txUiService.didData().trim() === '' || this.hasJsonSyntaxError()) return false;
@@ -203,6 +200,10 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           // Sync initial value
           this.didUtilService.populateDidDefaultData();
           this.txUiService.clearAllOptions();
+     }
+
+     onWalletSelected(wallet: Wallet): void {
+          this.selectWallet(wallet);
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -239,10 +240,6 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
           this.infoPanelExpanded.update(expanded => !expanded);
      }
 
-     onWalletSelected(wallet: Wallet): void {
-          this.selectWallet(wallet);
-     }
-
      async setTab(tab: 'set' | 'delete'): Promise<void> {
           this.activeTab.set(tab);
           this.txUiService.clearAllOptionsAndMessages();
@@ -259,18 +256,10 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                if (!this.ensureWalletSelected()) return;
 
                try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         forceRefresh: forceRefresh,
-                    });
+                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+                    if (!env) return;
 
-                    if (!env.accountInfo || !env.accountObjects) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-
-                    this.didUtilService.getExistingDid(env.accountObjects, env.wallet.classicAddress);
+                    this.refreshAccountObject(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Error in getDidForAccount:', error);
@@ -380,6 +369,7 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
 
           await this.refreshAfterTx(client, wallet);
 
+          this.clearInputFields();
           return true;
      }
 
@@ -390,13 +380,13 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
                forceRefresh: true,
           });
 
-          this.updateLocalAccountState(env);
+          this.refreshAccountObject(env);
 
           await this.refreshWallets(client, [wallet.classicAddress]);
           this.acccountDataService.refreshUiState(wallet, env.accountInfo!, env.accountObjects);
      }
 
-     private updateLocalAccountState(env: any): void {
+     private refreshAccountObject(env: any): void {
           this.didUtilService.getExistingDid(env.accountObjects, env.wallet.classicAddress);
      }
 
@@ -411,6 +401,18 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      }
 
      clearFields() {
+          this.txUiService.clearAllOptions();
+          this.txUiService.clearAllOptionsAndMessages();
+          this.resetDidData();
+     }
+
+     clearInputFields(): void {
+          if (this.txUiService.isSimulateEnabled()) return;
+          this.txUiService.clearAllFields();
+          this.txUiService.clearAllOptions();
+     }
+
+     resetDidData() {
           this.didUtilService.onDidDataChange('');
           this.txUiService.didData();
           this.didUtilService.onUriDataChange('');

@@ -301,7 +301,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
           this.txJson.set('');
           this.outputField.set('');
           this.txUiService.isError.set(false);
-          this.txUiService.errorMessage = null;
+          // this.txUiService.errorMessage = null;
           this.clearMessages();
           await this.generateTransactionJson();
           this.cdr.detectChanges();
@@ -513,10 +513,10 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                     this.txUiService.setSuccess(this.txUiService.result()); // ← Only for single tx
 
                     if (this.txUiService.isSimulateEnabled()) {
-                         this.txUiService.successMessage = 'Simulated transaction successfully!';
+                         // this.txUiService.successMessage = 'Simulated transaction successfully!';
                     } else {
                          this.txUiService.currentStep.set('success');
-                         this.txUiService.successMessage = 'Transaction completed successfully!';
+                         // this.txUiService.successMessage = 'Transaction completed successfully!';
 
                          await this.refreshAfterTx(env.client, env.wallet, null);
                          // this.resetSigners();
@@ -583,13 +583,13 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                     this.txUiService.addTxHashSignal(response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
                     if (!this.txUiService.isSimulateEnabled()) {
-                         this.txUiService.successMessage = 'Transaction completed successfully!';
+                         // this.txUiService.successMessage = 'Transaction completed successfully!';
 
                          await this.refreshAfterTx(env.client, env.wallet, null);
                          this.clearFields();
                          this.cdr.detectChanges();
                     } else {
-                         this.txUiService.successMessage = 'Simulated transaction successfully!';
+                         // this.txUiService.successMessage = 'Simulated transaction successfully!';
                     }
                } catch (error: any) {
                     console.error('Error in submitMultiSignedTransaction:', error);
@@ -809,8 +809,8 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
           this.txUiService.result.set('');
           this.txUiService.isError.set(false);
           this.txUiService.isSuccess.set(false);
-          this.txUiService.successMessage = '';
-          this.txUiService.errorMessage = '';
+          // this.txUiService.successMessage = '';
+          // this.txUiService.errorMessage = '';
           this.cdr.markForCheck();
      }
 

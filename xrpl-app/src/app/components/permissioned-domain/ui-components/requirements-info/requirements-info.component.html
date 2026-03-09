@@ -1,80 +1,103 @@
+@switch (activeTab()) {
+
+<!-- SET -->
+@case ('set') {
 <div class="requirements-info">
-               <div class="info-header">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                    <h3>Permissioned Domains</h3>
+     <div class="info-header">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+          <h3>Permissioned Domains</h3>
+     </div>
+
+     <p class="info-subtitle">Permissioned Domains allow XRPL accounts to define controlled environments where access can be restricted using credentials or other verification rules. Applications can check these domains before allowing users to interact with specific features such as trading pairs, lending pools, or payment channels.</p>
+
+     <div class="combination-card">
+          <div class="combination-header">
+               <span class="badge time-badge">🌐 Create / Update Domain</span>
+               <span class="badge required-badge">PermissionedDomainSet</span>
+          </div>
+
+          <div class="combination-fields">
+               <div class="field-row">
+                    <span class="field-name">DomainID</span>
+                    <span class="field-status required"> ✅ Required<br />(unique identifier for the domain) </span>
                </div>
 
-               <p class="info-subtitle">Permissioned Domains allow account owners to define controlled access rules for specific XRPL features (e.g., trading on a DEX, participating in lending pools, or using permissioned payment channels). They reference Credentials or other proofs that users must hold to interact with the domain's resources.</p>
+               <div class="field-row">
+                    <span class="field-name">Owner</span>
+                    <span class="field-status required"> ✅ Implicit<br />(your XRPL account) </span>
+               </div>
 
-               <div class="combinations-grid">
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🌐 Create / Update Domain</span>
-                              <span class="badge required-badge">PermissionedDomainSet</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">DomainID</span>
-                                   <span class="field-status required">✅ Required (unique identifier, often hash or short name)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Owner</span>
-                                   <span class="field-status required">✅ Implicit (your account)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">AcceptedCredentials</span>
-                                   <span class="field-status required">✅ Required (array of Credential IDs or types)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Flags / Metadata</span>
-                                   <span class="field-status optional">➕ Optional (description, URI, access level)</span>
-                              </div>
-                         </div>
-                    </div>
+               <div class="field-row">
+                    <span class="field-name">URI</span>
+                    <span class="field-status optional"> ➕ Optional<br />(off-chain rules or documentation) </span>
+               </div>
 
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🗑️ Delete Domain</span>
-                              <span class="badge optional-badge">PermissionedDomainDelete</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">DomainID</span>
-                                   <span class="field-status required">✅ Required (to identify domain to remove)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Signer</span>
-                                   <span class="field-status required">✅ Must be the owner (or authorized delegate)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Conditions</span>
-                                   <span class="field-status required">✅ No active dependencies blocking deletion</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="important-notes">
-                         <h5>📝 Important Notes:</h5>
-                         <ul>
-                              <li>Requires the <strong>PermissionedDomains</strong> and usually <strong>Credentials</strong> amendments to be enabled on the network.</li>
-                              <li>Each Permissioned Domain object counts toward the owner's <strong>owner reserve</strong> (~0.2 XRP) until deleted.</li>
-                              <li><strong>AcceptedCredentials</strong> lists which credentials (by ID or type + issuer) grant access — users must hold and present an accepted credential to interact with the domain's features.</li>
-                              <li>Domains are owned by the creating account; only the owner (or authorized delegate) can update or delete them.</li>
-                              <li>Common use cases: gated DEX trading pairs, permissioned lending markets, restricted payment channels, or private token swaps.</li>
-                              <li>Metadata (URI, description) can point to off-chain rules or documentation explaining the domain's purpose and requirements.</li>
-                              <li>Deleting a domain removes the access rules — any dependent features (e.g., gated offers) may become inaccessible or revert to default behavior.</li>
-                         </ul>
-                         <p></p>
-                         <h5 class="warning-title">⚠️ Irreversibility & Compliance Risks</h5>
-                         <p style="color: #92400e">Permissioned Domains enforce strict access control — misconfiguration can permanently block intended users or expose compliance issues.</p>
-                         <ul>
-                              <li>Once users rely on a domain for access, **deleting or changing it** can immediately revoke permissions — plan revocation strategies carefully.</li>
-                              <li>Incorrect or overly restrictive credential requirements can make the domain unusable — test with sample credentials before going live.</li>
-                              <li>All domain data (including accepted credential lists) is **public on the ledger** — avoid including sensitive rules or personal data in metadata.</li>
-                              <li>Reserve remains locked until deletion — if you forget to delete unused domains, you continue paying owner reserve indefinitely.</li>
-                              <li>Dependent on Credentials amendment — if credentials are revoked or issuers change policies, domain access can break unexpectedly.</li>
-                              <li>Always test creation, updates, credential checks, and deletion on devnet or Testnet first — wrong DomainID formats or missing credentials cause transaction failure and fee burn.</li>
-                         </ul>
-                    </div>
+               <div class="field-row">
+                    <span class="field-name">Flags / Metadata</span>
+                    <span class="field-status optional"> ➕ Optional<br />(application-specific settings) </span>
                </div>
           </div>
+     </div>
+
+     <div class="important-notes">
+          <h5>📝 Important Notes</h5>
+
+          <ul>
+               <li>Requires the <strong>PermissionedDomains amendment</strong>.</li>
+               <li>Each domain object consumes an <strong>owner reserve (~0.2 XRP)</strong>.</li>
+               <li>Domains act as <strong>access control anchors</strong> for applications.</li>
+               <li>Credential requirements are usually enforced <strong>off-ledger</strong> by the application.</li>
+               <li>The <strong>URI</strong> field can point to documentation describing the domain rules.</li>
+          </ul>
+     </div>
+</div>
+}
+
+<!-- DELETE -->
+@case ('delete') {
+<div class="requirements-info">
+     <div class="info-header">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+          <h3>Delete Permissioned Domain</h3>
+     </div>
+
+     <p class="info-subtitle">PermissionedDomainDelete removes the domain object from the ledger and frees the owner reserve associated with it.</p>
+
+     <div class="combination-card">
+          <div class="combination-header">
+               <span class="badge time-badge">🗑 Delete Domain</span>
+               <span class="badge optional-badge">PermissionedDomainDelete</span>
+          </div>
+
+          <div class="combination-fields">
+               <div class="field-row">
+                    <span class="field-name">DomainID</span>
+                    <span class="field-status required"> ✅ Required </span>
+               </div>
+
+               <div class="field-row">
+                    <span class="field-name">Authorization</span>
+                    <span class="field-status required"> ✅ Must be domain owner </span>
+               </div>
+          </div>
+     </div>
+
+     <div class="important-notes">
+          <h5>📝 Important Notes</h5>
+
+          <ul>
+               <li>Only the domain owner can delete it.</li>
+               <li>Deletion releases the <strong>owner reserve</strong>.</li>
+               <li>Applications depending on the domain may lose access control functionality.</li>
+          </ul>
+
+          <h5 class="warning-title">⚠️ Operational Risks</h5>
+
+          <ul>
+               <li>Deleting a domain may immediately revoke access to users relying on it.</li>
+               <li>Applications should handle domain deletion gracefully.</li>
+               <li>Always test domain lifecycle flows on Testnet before deploying to mainnet.</li>
+          </ul>
+     </div>
+</div>
+} }

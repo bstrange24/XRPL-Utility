@@ -288,7 +288,7 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
                     //  });
                     //  if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated hook set successfully!' : 'Hook set successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated hook set successfully!' : 'Hook set successfully!';
                     //  await this.refreshAfterTx(client, wallet);
                } catch (error: any) {
                     this.txUiService.setError(`${error.message || 'Failed to set hook'}`);

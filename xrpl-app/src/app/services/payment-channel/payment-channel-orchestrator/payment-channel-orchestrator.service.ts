@@ -69,7 +69,6 @@ export class PaymentChannelOrchestratorService extends PerformanceBaseComponent 
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // 1. Use pre-fetched env if provided, otherwise fetch fresh
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                     client = preFetchedEnv.client;
@@ -99,7 +98,6 @@ export class PaymentChannelOrchestratorService extends PerformanceBaseComponent 
                     }
                }
 
-               // 2. Validation
                const validationRule = this.getValidationRuleName(type);
                const validationInputs = this.buildValidationInputs(type, wallet, env, formValues);
                const errors = await this.validator.validate(validationRule, {
@@ -112,17 +110,14 @@ export class PaymentChannelOrchestratorService extends PerformanceBaseComponent 
                     return { success: false, error: errors.join('\n• ') };
                }
 
-               // 3. Build transaction
                let currentLedgerTime;
                if (type === 'create') {
                     currentLedgerTime = await this.xrplService.getLedgerCloseTime(client);
                }
                const tx = this.buildPaymentChannelTransaction(type, env.wallet, env, formValues, currentLedgerTime);
 
-               // 4. Optional fields
                await this.applyOptionalFields(client, tx, wallet, formValues);
 
-               // 5. Execute
                const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
 
                if (!execResult.success) {
@@ -135,17 +130,12 @@ export class PaymentChannelOrchestratorService extends PerformanceBaseComponent 
                     return this.handleSimulationSuccess(type, formValues, txHash);
                }
 
-               // 6. Wait for final outcome
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
 
                this.txUiService.setTxResultSignal(finalResult);
 
                const message = this.paymentChannelUtilService.buildSuccessMessage(type, formValues);
-               this.xrplTransactionService.processTxFinalResult(finalResult, message, {
-                    success: true,
-                    hash: txHash,
-               });
-
+               this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
                return { success: true, hash: txHash };
           } catch (err: any) {
                const msg = err.message || 'Unexpected error during payment channel transaction';

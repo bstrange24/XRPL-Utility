@@ -25,15 +25,16 @@ import { TxEnvironmentService } from '../../services/transaction-environment/tx-
 import { AccountConfiguratorUtilService, XrplAccountFlags } from '../../services/account-configurator/account-configurator-util/account-configurator-util.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { AccountConfiguratorOrchestratorService } from '../../services/account-configurator/account-configurator-orchestrator/account-configurator-orchestrator.service';
-import { RequirementsComponent } from '../shared/requirements-section/requirements.component';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { animation, toastAnimation } from '../../services/animations/animations.service';
+import { AccountConfiguratorRequirementsInfoComponent } from './ui-components/account-configurator-requirements-info/account-configurator-requirements-info/account-configurator-requirements-info.component';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 
 @Component({
      selector: 'app-account-configurator',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionOptionsComponent, TransactionPreviewComponent, RequirementsComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionOptionsComponent, TransactionPreviewComponent, AccountConfiguratorRequirementsInfoComponent, RouterModule],
      animations: [animation, toastAnimation],
      templateUrl: './account-configurator.component.html',
      styleUrl: './account-configurator.component.css',
@@ -56,34 +57,20 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
      public readonly accountConfiguratorOrchestratorService = inject(AccountConfiguratorOrchestratorService);
      public readonly acccountDataService = inject(AcccountDataService);
      public readonly storageService = inject(StorageService);
+     public readonly route = inject(ActivatedRoute);
 
-     // Destination Dropdown
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
-     selectedDestinationAddress = signal<string>('');
-     destinationSearchQuery = signal<string>('');
-
-     // Reactive State (Signals)
      activeTab = signal<'modifyAccountFlags' | 'modifyMetaData' | 'modifyDepositAuth' | 'modifyMultiSigners' | 'modifyRegularKey'>('modifyAccountFlags');
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal<boolean>(false);
      accountInfo = signal<any>(null);
      wallets = signal<Wallet[]>([]);
      configurationType = signal<'holder' | 'exchanger' | 'issuer' | null>(null);
-     isHolderConfiguration = signal<boolean>(false);
-     isExchangerConfiguration = signal<boolean>(false);
-     isIssuerConfiguration = signal<boolean>(false);
-
-     private readonly modifyAccountFlagsSpecificKeys = [] as const;
-     private readonly modifyNftMinterSpecificKeys = ['nfTokenMinterAddress'] as const;
-     private readonly updateMetaDataSpecificKeys = ['tickSize', 'transferRate', 'domain', 'isMessageKey'] as const;
-     private readonly modifyRegularKeySpecificKeys = ['regularKeyAddress', 'regularKeySeed'] as const;
-     private readonly modifyMultiSignSpecificKeys = ['signerQuorum'] as const;
-     private readonly modifyDepositAuthSpecificKeys = [] as const;
 
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
      readonly canSubmit = computed(() => this.isIdle() && this.hasWallets());
+     readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
 
      // Has wallets → warning handling
      private readonly _hasWalletsEffect = effect(() => {
@@ -163,16 +150,29 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
           };
      });
 
-     readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
-
      constructor() {
           super();
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
+          // This is from the Delte Account page.
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['modifyAccountFlags', 'modifyMetaData', 'modifyDepositAuth', 'modifyMultiSigners', 'modifyRegularKey'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
+          this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
           this.txUiService.clearAllOptions();
+     }
+
+     onWalletSelected(wallet: Wallet): void {
+          this.selectWallet(wallet);
      }
 
      private selectWallet(wallet: Wallet): void {
@@ -180,10 +180,6 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
 
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
-
-          if (this.selectedDestinationAddress() === wallet.address) {
-               this.selectedDestinationAddress.set('');
-          }
      }
 
      trackByAddress(index: number, item: DropdownItem): string {
@@ -206,17 +202,8 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
           return true;
      }
 
-     onWalletSelected(wallet: Wallet): void {
-          this.selectWallet(wallet);
-     }
-
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
-     }
-
      async setTab(tab: 'modifyAccountFlags' | 'modifyMetaData' | 'modifyDepositAuth' | 'modifyMultiSigners' | 'modifyRegularKey'): Promise<void> {
           this.activeTab.set(tab);
-          this.destinationSearchQuery.set('');
 
           if (this.hasWallets()) {
                await this.getAccountDetails(false);
@@ -248,25 +235,19 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                if (!this.ensureWalletSelected()) return;
 
                try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         forceRefresh: forceRefresh,
-                    });
-
-                    if (!env.accountInfo || !env.accountObjects) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
+                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+                    if (!env) return;
 
                     this.accountInfo.set(env.accountInfo);
                     if (this.activeTab() === 'modifyAccountFlags') {
                          AppConstants.FLAGS.forEach(flag => {
                               const flagKey = AppConstants.FLAGMAP[flag.name as keyof typeof AppConstants.FLAGMAP];
                               if (flagKey) {
-                                   const isEnabled = !!this.accountInfo().result.account_flags?.[flagKey as keyof typeof env.accountInfo.result.account_flags];
-                                   const flagName = flag.name as keyof XrplAccountFlags;
-                                   this.accountConfiguratorUtilService.flags[flagName] = isEnabled;
+                                   if (env && env.accountInfo) {
+                                        const isEnabled = !!this.accountInfo().result.account_flags?.[flagKey as keyof typeof env.accountInfo.result.account_flags];
+                                        const flagName = flag.name as keyof XrplAccountFlags;
+                                        this.accountConfiguratorUtilService.flags[flagName] = isEnabled;
+                                   }
                               }
                          });
                          this.accountConfiguratorUtilService.updateFlagTotal();
@@ -330,7 +311,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     });
 
                     const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.modifyAccountFlagsSpecificKeys)),
+                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyAccountFlagsSpecificKeys)),
                     };
 
                     const result = await this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx('modifyAccountSetFlags', {
@@ -391,7 +372,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     }
 
                     const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.modifyDepositAuthSpecificKeys)),
+                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyDepositAuthSpecificKeys)),
                     };
 
                     const result = await this.accountConfiguratorOrchestratorService.executeDepositAuthTx('modifyDepositAuth', {
@@ -456,7 +437,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     }
 
                     const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.modifyMultiSignSpecificKeys)),
+                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyMultiSignSpecificKeys)),
                     };
 
                     const result = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMultiSigners', {
@@ -513,7 +494,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     }
 
                     const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.modifyRegularKeySpecificKeys)),
+                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyRegularKeySpecificKeys)),
                     };
 
                     const result = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyRegularKey', {
@@ -575,7 +556,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     }
 
                     const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.updateMetaDataSpecificKeys)),
+                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.updateMetaDataSpecificKeys)),
                     };
 
                     if (!this.accountConfiguratorUtilService.hasFieldsToUpdate(env)) {
@@ -630,7 +611,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                     }
 
                     const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.modifyNftMinterSpecificKeys)),
+                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyNftMinterSpecificKeys)),
                          nfTokenMinterAddress: this.txUiService.nfTokenMinterAddress(),
                     };
 
@@ -680,5 +661,9 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
           this.acccountDataService.refreshUiStateAccountConfigure(wallet, env);
           this.txUiService.clearAllOptions();
+     }
+
+     copyAndToast(text: string, label: string = 'Content') {
+          this.copyUtilService.copyAndToast(text, label);
      }
 }

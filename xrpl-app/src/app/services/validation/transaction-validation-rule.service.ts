@@ -176,8 +176,9 @@ export class ValidationService {
                if (!dest || !ctx.client) return null;
 
                try {
-                    const info = await this.xrplService.getAccountInfo(ctx.client, dest as string, 'validated', '');
-                    if (info.result.account_flags?.requireDestinationTag && !ctx.inputs['destinationTag']) {
+                    // const info = await this.xrplService.getAccountInfo(ctx.client, dest as string, 'validated', '');
+                    if (ctx.accountInfo.result.account_flags?.requireDestinationTag && !ctx.inputs['destinationTag']) {
+                         // if (info.result.account_flags?.requireDestinationTag && !ctx.inputs['destinationTag']) {
                          return 'Destination account requires a destination tag';
                     }
                } catch (err: any) {
@@ -586,45 +587,16 @@ export class ValidationService {
           // AccountDelete
           this.registerRule({
                transactionType: 'AccountDelete',
-               requiredFields: ['destination.address'],
+               requiredFields: ['destination'],
                validators: [
                     this.walletCredentialRequired(),
-                    this.isValidAddress('destination.address'),
+                    ctx => {
+                         console.log('ctx: ', ctx['inputs']['destination']);
+                         this.isValidAddress(ctx['inputs']['destination']);
+                         return null;
+                    },
+
                     this.requireDestinationTagIfNeeded('destination'),
-
-                    ctx => {
-                         if (!ctx.accountInfo) return 'Account info not loaded';
-                         const seq = ctx.accountInfo.result.account_data.Sequence;
-                         const ledger = ctx.currentLedger || 0;
-                         if (ledger < seq + 256) {
-                              const minutes = Math.round(((seq + 256 - ledger) * 4) / 60);
-                              return `Account is too new. Must wait ~${minutes} minutes before deletion`;
-                         }
-                         return null;
-                    },
-
-                    ctx => {
-                         const objects = ctx.accountObjects?.result?.account_objects;
-
-                         if (objects && objects.length > 0) {
-                              // Count each LedgerEntryType
-                              const counts: Record<string, number> = {};
-
-                              for (const obj of objects) {
-                                   const type = obj.LedgerEntryType || 'Unknown';
-                                   counts[type] = (counts[type] || 0) + 1;
-                              }
-
-                              // Build readable error message
-                              const breakdown = Object.entries(counts)
-                                   .map(([type, count]) => `${type}: ${count}`)
-                                   .join(', ');
-
-                              return `Cannot delete account — active ledger objects detected (${breakdown})`;
-                         }
-
-                         return null;
-                    },
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),

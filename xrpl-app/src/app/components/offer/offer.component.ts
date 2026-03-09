@@ -1159,7 +1159,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Offer creation successfully!' : 'Offer created successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Offer creation successfully!' : 'Offer created successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in createPffer:', error);
@@ -1246,7 +1246,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                          // Push all collected hashes ONCE
                          deletedHashes.forEach(hash => this.txUiService.addTxHashSignal(hash));
                          this.utilsService.setSuccess(this.utilsService.result);
-                         this.txUiService.successMessage = isSimulate ? `Simulated cancel of ${offersSuccessfullyDeleted} offer(s) successfully!` : `${offersSuccessfullyDeleted} offer(s) cancelled successfully!`;
+                         // this.txUiService.successMessage = isSimulate ? `Simulated cancel of ${offersSuccessfullyDeleted} offer(s) successfully!` : `${offersSuccessfullyDeleted} offer(s) cancelled successfully!`;
                     }
 
                     // Show one warning that contains *all* missing tickets

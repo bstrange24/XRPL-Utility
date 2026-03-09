@@ -696,7 +696,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT buy offer created successfully!' : 'Created NFT buy offer successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT buy offer created successfully!' : 'Created NFT buy offer successfully!';
                     this.onCurrencyChange(this.currencyFieldDropDownValue());
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
@@ -759,7 +759,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT sell offer created successfully!' : 'Created NFT sell offer successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT sell offer created successfully!' : 'Created NFT sell offer successfully!';
                     this.onCurrencyChange(this.currencyFieldDropDownValue());
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
@@ -832,7 +832,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT offer created successfully!' : 'Created NFT offer successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT offer created successfully!' : 'Created NFT offer successfully!';
                     this.onCurrencyChange(this.currencyFieldDropDownValue());
                     await this.refreshAfterTx(client, wallet, null, true);
                } catch (error: any) {
@@ -881,7 +881,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT offer cancel successfully!' : 'Cancelled NFT offer successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT offer cancel successfully!' : 'Cancelled NFT offer successfully!';
 
                     this.onCurrencyChange(this.currencyFieldDropDownValue());
                     await this.refreshAfterTx(client, wallet, null, false);

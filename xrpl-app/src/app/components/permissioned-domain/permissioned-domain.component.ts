@@ -8,13 +8,10 @@ import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
-import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../services/util-service/utils.service';
-import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
@@ -42,12 +39,9 @@ import { PermissionedDomainOrchestratorService } from '../../services/permission
 })
 export class PermissionedDomainComponent extends PerformanceBaseComponent implements OnInit {
      public readonly utilsService = inject(UtilsService);
-     private readonly storageService = inject(StorageService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
      private readonly walletDataService = inject(WalletDataService);
-     private readonly validationService = inject(ValidationService);
-     private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
@@ -136,15 +130,16 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           return `has issued <strong class="object-count">${info.permissionedDomainCount}</strong> permissioned domain${info.permissionedDomainCount === 1 ? '' : 's'}. `;
      });
 
-     infoData = computed(() => {
+     readonly infoData = computed(() => {
           const wallet = this.currentWallet();
-          if (!wallet?.address) {
-               return null;
-          }
+          if (!wallet?.address) return null;
+
+          const tab = this.activeTab();
+
           const domains = this.permissionedDomainUtilService.createdPermissionedDomains();
           return {
                walletName: this.currentWallet().name || 'Selected wallet',
-               mode: this.activeTab(),
+               mode: tab,
                permissionedDomainCount: domains.length,
                permissionedDomainsToShow: domains,
           };
@@ -159,25 +154,6 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      ngOnInit(): void {
           this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
-     }
-
-     private selectWallet(wallet: Wallet): void {
-          if (wallet?.address === this.currentWallet()?.address) return;
-
-          this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
-
-          if (this.selectedDestinationAddress() === wallet.address) {
-               this.selectedDestinationAddress.set('');
-          }
-     }
-
-     private ensureWalletSelected(): boolean {
-          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
-               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
-               return false;
-          }
-          return true;
      }
 
      resetDomainDropDown() {
@@ -201,6 +177,25 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.selectWallet(wallet);
      }
 
+     private selectWallet(wallet: Wallet): void {
+          if (wallet?.address === this.currentWallet()?.address) return;
+
+          this.currentWallet.set(wallet);
+          this.txUiService.currentWallet.set(wallet);
+
+          if (this.selectedDestinationAddress() === wallet.address) {
+               this.selectedDestinationAddress.set('');
+          }
+     }
+
+     private ensureWalletSelected(): boolean {
+          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
+               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
+               return false;
+          }
+          return true;
+     }
+
      async setTab(tab: 'set' | 'delete'): Promise<void> {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
@@ -219,18 +214,10 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                if (!this.ensureWalletSelected()) return;
 
                try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         forceRefresh: forceRefresh,
-                    });
+                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+                    if (!env) return;
 
-                    if (!env.accountInfo || !env.accountObjects) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-
-                    this.permissionedDomainUtilService.getCreatedPermissionedDomains(env.accountObjects, env.wallet.classicAddress);
+                    this.refreshAccountObject(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                     this.clearFields();
                } catch (error: any) {
@@ -359,6 +346,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
 
           await this.refreshAfterTx(client, wallet, credentialIssuer);
 
+          this.clearInputFields();
           return true;
      }
 
@@ -369,7 +357,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
                forceRefresh: true,
           });
 
-          this.updateLocalAccountState(env);
+          this.refreshAccountObject(env);
 
           const addresses = [wallet.classicAddress];
           if (credentialIssuer) addresses.push(credentialIssuer);
@@ -380,7 +368,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           this.acccountDataService.refreshUiState(wallet, env.accountInfo!, env.accountObjects);
      }
 
-     private updateLocalAccountState(env: any): void {
+     private refreshAccountObject(env: any): void {
           this.permissionedDomainUtilService.getCreatedPermissionedDomains(env.accountObjects, env.wallet.classicAddress);
      }
 
@@ -388,7 +376,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           await this.walletDataService.refreshWallets(
                client,
                addresses, // only the addresses to target
-               (updatedList, newCurrent) => {
+               (_updatedList, newCurrent) => {
                     this.currentWallet.set({ ...newCurrent });
                }
           );
@@ -417,11 +405,22 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      }
 
      clearFields() {
-          this.clearInputFields();
+          this.txUiService.clearAllOptions();
+          this.txUiService.clearOptionalInputFields();
           this.txUiService.clearAllOptionsAndMessages();
+          this.resetCredentialIdDropDown();
      }
 
      clearInputFields() {
+          if (this.txUiService.isSimulateEnabled()) return;
+          this.txUiService.clearAllFields();
+          this.txUiService.clearAllOptions();
+          this.txUiService.credentialType.set('');
+          this.txUiService.domainId.set('');
+          this.permissionedDomainUtilService.selectedDomainId.set(null);
+     }
+
+     resetCredentialIdDropDown() {
           this.txUiService.credentialType.set('');
           this.txUiService.domainId.set('');
           this.permissionedDomainUtilService.selectedDomainId.set(null);

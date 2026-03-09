@@ -1,20 +1,20 @@
 import { inject, Injectable } from '@angular/core';
-import * as xrpl from 'xrpl';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { ToastService } from '../../toast/toast.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { UtilsService } from '../../util-service/utils.service';
 import { ValidationService } from '../../validation/transaction-validation-rule.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
-import { ToastService } from '../../toast/toast.service';
-import { UtilsService } from '../../util-service/utils.service';
-import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { Wallet } from '../../wallets/manager/wallet-manager.service';
+import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
-import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
-interface XrpPaymentConfig {
+interface DeleteAccountConfig {
      wallet: Wallet;
      formValues: {
-          amountField: string; // must be present
+          amountField?: string; // must be present
           destinationAddress: string;
           destinationTagField?: any;
           invoiceIdField?: any;
@@ -38,8 +38,10 @@ interface XrpPaymentConfig {
      };
 }
 
-@Injectable({ providedIn: 'root' })
-export class SendXrpTransactionOrchestratorService extends PerformanceBaseComponent {
+@Injectable({
+     providedIn: 'root',
+})
+export class DeleteAccountOrchestratorService extends PerformanceBaseComponent {
      private readonly txEnv = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
@@ -48,7 +50,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
 
-     async executeXrpPayment(config: XrpPaymentConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
+     async executeDeleteAccount(config: DeleteAccountConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
           const { wallet, formValues, preFetchedEnv } = config;
           const { isSimulateEnabled = false, useMultiSign = false } = formValues;
 
@@ -91,12 +93,9 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                          fee: env.fee,
                          currentLedger: env.currentLedger,
                     },
-                    paymentXrp: {
-                         amount: formValues.amountField,
+                    destination: {
                          destination: formValues.destinationAddress,
                          destinationTagField: formValues.destinationTagField,
-                         sourceTagField: formValues.sourceTagField,
-                         invoiceIdField: formValues.invoiceIdField,
                     },
                     regularKey: {
                          isRegularKey: formValues.isRegularKeyAddress,
@@ -105,7 +104,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                     },
                };
 
-               const errors = await this.validator.validate('PaymentXrp', {
+               const errors = await this.validator.validate('AccountDelete', {
                     inputs: validationInputs,
                     client,
                     accountInfo: env.accountInfo,
@@ -115,11 +114,11 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                     return { success: false, error: errors.join('\n• ') };
                }
 
-               const paymentTx: xrpl.Payment = this.xrplTransactionService.buildSendXrpTransaction(env.wallet, formValues.destinationAddress, Number(formValues.amountField), env.fee, env.currentLedger);
+               const accountDeleteTx: xrpl.AccountDelete = this.xrplTransactionService.buildAccountDeleteTransaction(env.wallet, formValues.destinationAddress, env.accountInfo, env.currentLedger);
 
-               await this.applyOptionalFields(client, paymentTx, wallet, env.accountInfo, formValues);
+               await this.applyOptionalFields(client, accountDeleteTx, wallet, env.accountInfo, formValues);
 
-               const execResult = await this.executor.sendXrpPayment(paymentTx, env.wallet, client, {
+               const execResult = await this.executor.accountDelete(accountDeleteTx, env.wallet, client, {
                     useMultiSign: useMultiSign,
                     isRegularKeyAddress: formValues.isRegularKeyAddress,
                     regularKeyAddress: formValues.regularKeyAddress,
@@ -135,21 +134,19 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                txHash = execResult.hash;
 
                if (isSimulateEnabled) {
-                    const shortDest = formValues.destinationAddress.slice(0, 7) + '…' + formValues.destinationAddress.slice(-7);
                     this.txUiService.resetCurrentStepToIdle();
-                    this.toast.success(`Simulated Sending ${formValues.amountField} XRP to ${shortDest}`, AppConstants.TOAST.SUCCESS, false, txHash, this.txUiService.explorerUrl() + 'tx/');
+                    this.toast.success(`Simulated deleting account ${wallet.classicAddress}`, AppConstants.TOAST.SUCCESS, false, txHash, this.txUiService.explorerUrl() + 'tx/');
                     return { success: true, hash: txHash };
                }
 
-               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, paymentTx.LastLedgerSequence!);
+               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, accountDeleteTx.LastLedgerSequence!);
 
                this.txUiService.setTxResultSignal(finalResult);
-               const shortDest = formValues.destinationAddress.slice(0, 7) + '…' + formValues.destinationAddress.slice(-7);
-               this.xrplTransactionService.processTxFinalResult(finalResult, `Successfully Sent ${formValues.amountField} XRP to ${shortDest}`, { success: true, hash: txHash });
+               this.xrplTransactionService.processTxFinalResult(finalResult, `Successfully Deleted Account ${wallet.classicAddress}`, { success: true, hash: txHash });
                return { success: true, hash: txHash };
           } catch (err: any) {
-               const msg = err.message || 'Unexpected error during XRP payment';
-               console.error('[XrpPayment] execute failed:', err);
+               const msg = err.message || 'Unexpected error during account delete';
+               console.error('[executeDeleteAccount] execute failed:', err);
                this.xrplTransactionService.processTxError(err);
                return { success: false, error: msg };
           } finally {
@@ -157,7 +154,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
           }
      }
 
-     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Payment, wallet: Wallet, accountInfo: any, formValues: any) {
+     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.AccountDelete, wallet: Wallet, accountInfo: any, formValues: any) {
           const isTicket = this.txUiService.isTicket();
           if (isTicket) {
                const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
@@ -168,7 +165,6 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                }
           }
 
-          // Tags, Memo, InvoiceID, DomainID, CredentialIDs
           const destinationTag = this.txUiService.destinationTagField();
           if (destinationTag) this.utilsService.setDestinationTag(tx, destinationTag);
 
@@ -180,18 +176,5 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
 
           const invoiceId = this.txUiService.invoiceIdField();
           if (invoiceId) this.utilsService.setInvoiceIdField(tx, invoiceId);
-
-          const domainId = this.txUiService.domainId();
-          if (domainId) this.utilsService.setDomainId(tx, domainId);
-
-          // Credential IDs (array)
-          if (this.txUiService.credentialIDs()?.length > 0) {
-               const jsonArray: string[] = formValues.credentialIDs
-                    .split(',')
-                    .map((id: string) => id.trim())
-                    .filter((id: string | any[]) => id.length > 0);
-               this.txUiService.credentialIDs.set(jsonArray);
-               this.utilsService.setCredentialIDsField(tx, this.txUiService.credentialIDs());
-          }
      }
 }

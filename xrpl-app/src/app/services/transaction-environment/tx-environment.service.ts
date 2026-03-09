@@ -229,6 +229,8 @@ import { XrplCacheService } from '../xrpl-cache/xrpl-cache.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { Wallet, WalletManagerService } from '../wallets/manager/wallet-manager.service';
 import { UtilsService } from '../util-service/utils.service';
+import { AppConstants } from '../../core/app.constants';
+import { ToastService } from '../toast/toast.service';
 
 export interface PrepareTxEnvironmentOptions {
      includeTickets?: boolean;
@@ -246,6 +248,7 @@ export interface PrepareTxEnvironmentOptions {
      includeGatewayBalance?: boolean;
      includeFee?: boolean;
      includeServerInfo?: boolean;
+     includeBlockingObjects?: boolean;
      forceRefresh?: boolean;
      destinationAddress?: string;
      escrowSequenceNumberField?: string;
@@ -269,6 +272,7 @@ export interface PrepareTxEnvironmentResult {
      destinationAccountObject?: xrpl.AccountObjectsResponse;
      gatewayBalanceObject?: any;
      serverInfo?: any;
+     blockingObjects?: any;
 }
 
 @Injectable({
@@ -279,6 +283,8 @@ export class TxEnvironmentService {
      private readonly xrplService = inject(XrplService);
      private readonly walletManager = inject(WalletManagerService);
      private readonly utilsService = inject(UtilsService);
+     public readonly toastService = inject(ToastService);
+     private readonly DEFAULT_ENV_CONFIG = { includeAccountInfo: true, includeAccountObject: true } as const;
 
      async prepareTxEnvironment(options: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
           const {
@@ -296,6 +302,7 @@ export class TxEnvironmentService {
                includeMptObjects = false,
                includeGatewayBalance = false,
                includeServerInfo = false,
+               includeBlockingObjects = false,
                includeFee = false,
                forceRefresh = false,
                destinationAddress = '',
@@ -354,6 +361,10 @@ export class TxEnvironmentService {
                tasks.serverInfo = this.xrplCache.getServerInfo(this.xrplService);
           }
 
+          if (includeBlockingObjects) {
+               tasks.blockingObjects = this.xrplCache.getBlockingObjects(client, address, forceRefresh, 'blocking_objects');
+          }
+
           if (includePaymentChannelObjects) {
                tasks.paymentChannelObjects = this.xrplCache.getAccountObjectsWithType(client, address, forceRefresh, 'payment_channel');
           }
@@ -382,6 +393,27 @@ export class TxEnvironmentService {
                wallet,
                ...resolved,
           };
+     }
+
+     async getValidatedEnvironment(forceRefresh: boolean): Promise<PrepareTxEnvironmentResult | null> {
+          try {
+               const env = await this.prepareTxEnvironment({
+                    ...this.DEFAULT_ENV_CONFIG,
+                    forceRefresh,
+               });
+
+               // Single validation point
+               if (!env?.accountInfo || !env?.accountObjects) {
+                    this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+                    return null;
+               }
+
+               return env as PrepareTxEnvironmentResult;
+          } catch (error) {
+               this.toastService.error('Error preparing transaction environment', AppConstants.TOAST.ERROR);
+               console.error('Environment preparation error:', error);
+               return null;
+          }
      }
 
      private async resolveTasks(tasks: Partial<Record<keyof PrepareTxEnvironmentResult, Promise<any>>>): Promise<Partial<PrepareTxEnvironmentResult>> {

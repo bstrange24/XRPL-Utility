@@ -378,7 +378,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Delegate action successfully!' : 'Delegate action successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Delegate action successfully!' : 'Delegate action successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in delegateAction:', error);

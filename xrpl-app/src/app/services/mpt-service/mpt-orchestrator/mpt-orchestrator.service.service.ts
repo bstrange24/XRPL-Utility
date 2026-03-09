@@ -79,7 +79,6 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // 1. Use pre-fetched env if provided, otherwise fetch fresh
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                     client = preFetchedEnv.client;
@@ -106,7 +105,6 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
                     }
                }
 
-               // 2. Validation
                const validationInputs = this.buildValidationInputs(type, wallet, env, formValues, extra);
                const errors = await this.validator.validate(this.getValidationRuleName(type), {
                     inputs: validationInputs,
@@ -118,13 +116,10 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
                     return { success: false, error: errors.join('\n• ') };
                }
 
-               // 3. Build transaction
                const tx = this.buildCheckTransaction(type, env.wallet, env, formValues, extra);
 
-               // 4. Apply optional fields
                await this.applyOptionalFields(client, tx, env.wallet, env.accountInfo, type, extra);
 
-               // 5. Execute transaction
                const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
 
                if (!execResult.success) {
@@ -137,15 +132,10 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
                     return this.handleSimulationSuccess(type, formValues, txHash);
                }
 
-               // 6. Wait for final outcome
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
 
                this.txUiService.setTxResultSignal(finalResult);
-               this.xrplTransactionService.processTxFinalResult(finalResult, this.buildSuccessMessage(type, formValues), {
-                    success: true,
-                    hash: txHash,
-               });
-
+               this.xrplTransactionService.processTxFinalResult(finalResult, this.buildSuccessMessage(type, formValues), { success: true, hash: txHash });
                return { success: true, hash: txHash };
           } catch (err: any) {
                const msg = err.message || 'Unexpected error during check transaction';

@@ -78,7 +78,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // 1. Use pre-fetched env if available, otherwise fetch
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                     client = preFetchedEnv.client;
@@ -103,7 +102,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     }
                }
 
-               // 2. Validation
                const validationRule = this.getValidationRuleName(type);
                const validationInputs = this.buildValidationInputs(type, wallet, env, formValues, extra);
                const errors = await this.validator.validate(validationRule, {
@@ -116,13 +114,10 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     return { success: false, error: errors.join('\n• '), validationError: true };
                }
 
-               // 3. Build transaction
                const tx = this.buildModifyAccountTransaction(type, env.wallet, env, formValues, extra);
 
-               // 4. Apply optional fields
                await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues, env);
 
-               // 5. Execute transaction
                const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
 
                if (!execResult.success) {
@@ -135,17 +130,12 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     return this.accountConfiguratorUtilService.handleSimulationSuccess(type, formValues, txHash, extra);
                }
 
-               // 6. Wait for final outcome
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
 
                this.txUiService.setTxResultSignal(finalResult);
 
                const message = this.accountConfiguratorUtilService.buildSuccessMessage(type, formValues, extra);
-               this.xrplTransactionService.processTxFinalResult(finalResult, message, {
-                    success: true,
-                    hash: txHash,
-               });
-
+               this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
                return { success: true, hash: txHash };
           } catch (err: any) {
                const msg = err.message || 'Unexpected error during modify account transaction';
@@ -175,14 +165,12 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
           let fee: string;
           let currentLedger: number;
 
-          // We'll collect rich results from the beginning
           const results: Array<{ flagName: string; hash?: string; success: boolean; error?: string }> = [];
 
           try {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // 1. Environment setup
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                     client = preFetchedEnv.client;
@@ -205,7 +193,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     throw new Error('Missing required environment fields');
                }
 
-               // 2. Validation
                const validationRule = this.getValidationRuleName(type);
                const validationInputs = this.buildValidationInputs(type, wallet, env, formValues, extra);
                const errors = await this.validator.validate(validationRule, {
@@ -218,7 +205,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     return { success: false, error: errors.join('\n• '), validationError: true };
                }
 
-               // 3. Execute one transaction per flag operation
                const operations = extra['operations'] as Array<{
                     operation: 'SetFlag' | 'ClearFlag';
                     flagValue: string;
@@ -248,7 +234,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
 
                const successCount = results.filter(r => r.success).length;
 
-               // 4. Simulation mode early return
                if (isSimulateEnabled) {
                     const msg = `Simulated ${successCount} flag update${successCount === 1 ? '' : 's'} successfully!`;
                     this.toastService.success(msg, AppConstants.TOAST.SUCCESS);
@@ -259,7 +244,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     };
                }
 
-               // 5. Wait for final outcomes (non-blocking per tx)
                const lastLedger = currentLedger + AppConstants.LAST_LEDGER_ADD_TIME;
 
                for (const result of results) {
@@ -275,7 +259,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     }
                }
 
-               // 6. Final user feedback
                const succeeded = results.filter(r => r.success);
                const failed = results.filter(r => !r.success);
 
@@ -350,7 +333,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // 1. Use pre-fetched env if available, otherwise fetch
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                     client = preFetchedEnv.client;
@@ -377,7 +359,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     }
                }
 
-               // 2. Validation
                const validationRule = this.getValidationRuleName(type);
                const validationInputs = this.buildValidationInputs(type, wallet, env, formValues, extra);
                const errors = await this.validator.validate(validationRule, {
@@ -392,13 +373,10 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
 
                for (const depostiAuthAddress of extra['formattedDepsositAuthEntries']) {
                     const address = depostiAuthAddress.SignerEntry.Account;
-                    // 3. Build transaction
                     const tx = this.buildModifyAccountTransaction(type, env.wallet, env, formValues, extra, address);
 
-                    // 4. Apply optional fields
                     await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues, env);
 
-                    // 5. Execute transaction
                     const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
 
                     if (!execResult.success) {
@@ -425,7 +403,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     return { success: successCount > 0, modifyCount: successCount, deletedHashes: modifiedResults };
                }
 
-               // 6. Wait for final outcome
                const lastLedger = currentLedger + AppConstants.LAST_LEDGER_ADD_TIME;
 
                for (const { hash, depostiAuthAddress } of modifiedResults) {
@@ -438,7 +415,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     }
                }
 
-               // 7. Final feedback
                if (successCount > 0) {
                     const msg = `${successCount} deposit auth(s) modified successfully!`;
                     this.toastService.successMultipleHashesWithDepositAuth(msg, modifiedResults, this.txUiService.explorerUrl() + 'tx/', AppConstants.TOAST.SUCCESS);

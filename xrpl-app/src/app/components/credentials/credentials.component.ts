@@ -248,6 +248,10 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.transactionDropdownService.loadCustomDestinations();
      }
 
+     onWalletSelected(wallet: Wallet): void {
+          this.selectWallet(wallet);
+     }
+
      private selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
 
@@ -279,10 +283,6 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.infoPanelExpanded.update(expanded => !expanded);
      }
 
-     onWalletSelected(wallet: Wallet): void {
-          this.selectWallet(wallet);
-     }
-
      async setTab(tab: 'create' | 'accept' | 'delete' | 'verify'): Promise<void> {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
@@ -290,24 +290,8 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.txUiService.clearAllOptionsAndMessages();
           this.txUiService.clearOptionalExpirationDate();
           if (this.hasWallets()) {
-               await this.getAllCredentialsForAccount();
+               await this.getCredentialsForAccount();
           }
-     }
-
-     async getAllCredentialsForAccount(): Promise<void> {
-          await this.measure('getAllCredentials', false, async () => {
-               const env = await this.txEnvironmentService.prepareTxEnvironment({
-                    includeAccountInfo: true,
-                    includeAccountObject: true,
-               });
-
-               if (!env.accountInfo || !env.accountObjects) {
-                    this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                    return;
-               }
-               this.txUiService.existingCredentials.set(this.credentialUtilService.parseIssuedCredentials(env.accountObjects, env.wallet.classicAddress));
-               this.txUiService.subjectCredentials.set(this.credentialUtilService.parseSubjectCredentials(env.accountObjects, env.wallet.classicAddress));
-          });
      }
 
      async getCredentialsForAccount(forceRefresh = false): Promise<void> {
@@ -318,19 +302,10 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                if (!this.ensureWalletSelected()) return;
 
                try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         forceRefresh: forceRefresh,
-                    });
+                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+                    if (!env) return;
 
-                    if (!env.accountInfo || !env.accountObjects) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-
-                    this.txUiService.existingCredentials.set(this.credentialUtilService.parseIssuedCredentials(env.accountObjects, env.wallet.classicAddress));
-                    this.txUiService.subjectCredentials.set(this.credentialUtilService.parseSubjectCredentials(env.accountObjects, env.wallet.classicAddress));
+                    this.refreshAccountObject(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                     this.clearFields();
                } catch (error: any) {
@@ -440,6 +415,12 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                          }
 
                          if (currentTab === 'accept') {
+                              if ((credentialFound as any)?.Flags == AppConstants.LSF_ACCEPTED) {
+                                   console.info('Credential has already been accepted.');
+                                   this.toastService.info('Credential has already been accepted.', AppConstants.TOAST.SUCCESS);
+                                   return;
+                              }
+
                               if (this.utilsService.isRippleExpired((credentialFound as any)?.Expiration)) {
                                    this.toastService.error('Credential has expired.', AppConstants.TOAST.ERROR);
                                    return;
@@ -623,7 +604,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                forceRefresh: true,
           });
 
-          this.updateLocalAccountState(env);
+          this.refreshAccountObject(env);
 
           const addresses = [wallet.classicAddress];
           if (destination) addresses.push(destination);
@@ -635,7 +616,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.acccountDataService.refreshUiState(wallet, env.accountInfo!, env.accountObjects);
      }
 
-     private updateLocalAccountState(env: any): void {
+     private refreshAccountObject(env: any): void {
           this.txUiService.existingCredentials.set(this.credentialUtilService.getExistingCredentials(env.accountObjects, env.wallet.classicAddress));
           this.txUiService.subjectCredentials.set(this.credentialUtilService.getSubjectCredentials(env.accountObjects, env.wallet.classicAddress));
      }
@@ -644,7 +625,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           await this.walletDataService.refreshWallets(
                client,
                addresses, // only the addresses to target
-               (updatedList, newCurrent) => {
+               (_updatedList, newCurrent) => {
                     this.currentWallet.set({ ...newCurrent });
                }
           );

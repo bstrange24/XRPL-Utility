@@ -614,7 +614,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Create successfully!' : 'AMM created successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Create successfully!' : 'AMM created successfully!';
                     if (!this.txUiService.isSimulateEnabled()) {
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
@@ -713,7 +713,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Deposit successfully!' : 'AMM Deposit successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Deposit successfully!' : 'AMM Deposit successfully!';
                     if (!this.txUiService.isSimulateEnabled()) {
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
@@ -849,7 +849,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Withdraw successfully!' : 'AMM Withdraw successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Withdraw successfully!' : 'AMM Withdraw successfully!';
                     if (!this.txUiService.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
                          await this.refreshAfterTx(client, wallet, null, false);
@@ -932,7 +932,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Clawback successfully!' : 'AMM Clawback successful!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Clawback successfully!' : 'AMM Clawback successful!';
                     if (!this.txUiService.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
                          await this.refreshAfterTx(client, wallet, null, false);
@@ -983,7 +983,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Swap via AMM successfully!' : 'Swap via AMM successful!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Swap via AMM successfully!' : 'Swap via AMM successful!';
                     if (!this.txUiService.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
                          await this.refreshAfterTx(client, wallet, null, false);
@@ -1030,7 +1030,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM delete successfully!' : 'Deleted AMM successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM delete successfully!' : 'Deleted AMM successfully!';
                     if (!this.txUiService.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
                          // const currencyChangePromise = Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);

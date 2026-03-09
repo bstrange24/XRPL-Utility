@@ -195,6 +195,16 @@ export class XrplTransactionService {
           };
      }
 
+     buildAccountDeleteTransaction(wallet: xrpl.Wallet, destinationAddress: string, accountInfo: any, currentLedger: number): xrpl.AccountDelete {
+          return {
+               TransactionType: 'AccountDelete',
+               Account: wallet.classicAddress,
+               Destination: destinationAddress,
+               Sequence: accountInfo.result.account_data.Sequence,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
      buildTicketCreateTransaction(wallet: xrpl.Wallet, ticketCount: string, fee: string, currentLedger: number): xrpl.TicketCreate {
           return {
                TransactionType: 'TicketCreate',

@@ -5205,10 +5205,10 @@ button:disabled,
 }
 
 .did-details-container {
-       overflow: hidden;
-  transition: max-height 0.32s cubic-bezier(0.25, 0.1, 0.25, 1),
-              opacity 0.28s ease-out;
-  will-change: max-height, opacity;
+     overflow: hidden;
+     transition: max-height 0.32s cubic-bezier(0.25, 0.1, 0.25, 1),
+          opacity 0.28s ease-out;
+     will-change: max-height, opacity;
      /* transition: all 0.35s ease;
      overflow-y: auto;
      overflow-x: hidden; */
@@ -5311,10 +5311,6 @@ button:disabled,
 
 .deletion-content {
      padding: 0 16px 12px;
-}
-
-.blockers-section {
-     margin-bottom: 16px;
 }
 
 .blockers-title {

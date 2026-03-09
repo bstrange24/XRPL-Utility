@@ -57,7 +57,6 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // 1. Use pre-fetched env if provided, otherwise fetch fresh
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                     client = preFetchedEnv.client;
@@ -81,7 +80,6 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                     }
                }
 
-               // 2. Validation
                const validationInputs = {
                     wallet,
                     network: {
@@ -110,13 +108,10 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                     return { success: false, error: errors.join('\n• ') };
                }
 
-               // 3. Build transaction
                const ticketCreateTx: xrpl.TicketCreate = this.xrplTransactionService.buildTicketCreateTransaction(env.wallet, ticketCountField!, env.fee, env.currentLedger);
 
-               // 4. Apply optional fields (moved here from component)
                await this.applyOptionalFields(client, ticketCreateTx, wallet);
 
-               // 5. Execute
                const execResult = await this.executor.ticketCreate(ticketCreateTx, env.wallet, client, {
                     useMultiSign: useMultiSign,
                     isRegularKeyAddress: formValues.isRegularKeyAddress,
@@ -138,12 +133,10 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                     return { success: true, hash: txHash };
                }
 
-               // 6. Wait for final outcome
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, ticketCreateTx.LastLedgerSequence!);
 
                this.txUiService.setTxResultSignal(finalResult);
                this.xrplTransactionService.processTxFinalResult(finalResult, `Created ${ticketCountField} ticket(s)`, { success: true, hash: txHash });
-
                return { success: true, hash: txHash };
           } catch (err: any) {
                const msg = err.message || 'Unexpected error during ticket creation';
@@ -170,7 +163,6 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // 1. Prepare environment (reuse pre-fetched or fetch fresh)
                let env;
                if (preFetchedEnv) {
                     env = preFetchedEnv;
@@ -184,7 +176,7 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                          includeAccountObject: true,
                          includeFee: true,
                          includeLedgerIndex: true,
-                         includeTickets: true, // important for delete
+                         includeTickets: true,
                     });
                     client = env.client;
                     fee = env.fee!;
@@ -196,7 +188,6 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                     throw new Error('No tickets selected or failed to load account objects');
                }
 
-               // 2. Filter valid/existing tickets
                const existingTickets = new Set(accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'Ticket').map((obj: any) => String(obj.TicketSequence)));
 
                const validTickets = ticketSequences.filter((seq: string) => existingTickets.has(seq));
@@ -215,17 +206,14 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                     this.toastService.info(`Some tickets not found and skipped: ${list}`, AppConstants.TOAST.INFO);
                }
 
-               // 3. Show starting feedback
                if (!isSimulate) {
                     this.txUiService.currentStep.set('preparing');
                     this.toastService.info(`Deleting ${validTickets.length} ticket(s)...`, AppConstants.TOAST.INFO);
                }
 
-               // 4. Execute deletions one by one (XRPL doesn't support batch delete in one tx)
                for (const ticketSeq of validTickets) {
                     const tx: xrpl.AccountSet = this.xrplTransactionService.buildTicketDeleteTransaction(env.wallet, ticketSeq, fee, currentLedger);
 
-                    // Apply optional fields (memo, pay with another ticket, etc.)
                     await this.applyOptionalFields(client, tx, wallet);
 
                     const execResult = await this.executor.ticketDelete(tx, env.wallet, client, {
@@ -250,14 +238,12 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                     }
                }
 
-               // 5. Handle simulation early exit
                if (isSimulate) {
                     const msg = `Simulated deletion of ${successCount} ticket(s) successfully!`;
                     this.toastService.success(msg, AppConstants.TOAST.SUCCESS);
                     return { success: true, deletedCount: successCount, deletedHashes: deletedResults };
                }
 
-               // 6. Wait for final outcomes (non-blocking per tx)
                const lastLedger = currentLedger + AppConstants.LAST_LEDGER_ADD_TIME;
 
                for (const { hash, ticketSeq } of deletedResults) {
@@ -270,7 +256,6 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                     }
                }
 
-               // 7. Final feedback
                const msg = `${successCount} ticket(s) deleted successfully!`;
                this.toastService.successMultipleHashesWithTickets(msg, deletedResults, this.txUiService.explorerUrl() + 'tx/', AppConstants.TOAST.SUCCESS);
                this.txUiService.currentStep.set('success');
@@ -292,7 +277,6 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
      }
 
      private async applyOptionalFields(client: xrpl.Client, tx: any, wallet: Wallet) {
-          // Tickets
           const isTicket = this.txUiService.isTicket();
           if (isTicket) {
                const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];

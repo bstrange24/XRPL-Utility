@@ -269,6 +269,18 @@ export class XrplCacheService {
           ); // 10 seconds – server state changes slowly
      }
 
+     async getBlockingObjects(client: xrpl.Client, address: string, forceRefresh = false, type?: string): Promise<any> {
+          const infoKey = `account:${address}:info:${type}`;
+          const objectsKey = `account:${address}:objects:${type}`;
+
+          if (forceRefresh) {
+               this.invalidate(infoKey);
+               this.invalidate(objectsKey);
+          }
+
+          return await this.getOrFetch(objectsKey, () => this.xrplService.checkAccountObjectsForDeletion(client, address), this.defaultTTL);
+     }
+
      /** Get current base fee in drops */
      async getBaseFeeDrops(xrplService: XrplService): Promise<number> {
           const client = await this.getClient(() => xrplService.getClient());

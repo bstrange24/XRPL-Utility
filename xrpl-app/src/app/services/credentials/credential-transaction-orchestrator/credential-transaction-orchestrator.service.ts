@@ -76,7 +76,6 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // 1. Use pre-fetched env if available, otherwise fetch
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                     client = preFetchedEnv.client;
@@ -101,7 +100,6 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                     }
                }
 
-               // 2. Validation
                const validationRule = this.getValidationRuleName(type);
                const validationInputs = this.buildValidationInputs(type, wallet, env, formValues, extra);
                const errors = await this.validator.validate(validationRule, {
@@ -114,13 +112,10 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                     return { success: false, error: errors.join('\n• '), validationError: true };
                }
 
-               // 3. Build transaction
                const tx = this.buildModifyAccountTransaction(type, env.wallet, env, formValues, extra);
 
-               // 4. Apply optional fields
                await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues, env, extra);
 
-               // 5. Execute transaction
                const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
 
                if (!execResult.success) {
@@ -133,7 +128,6 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                     return this.credentialUtilService.handleSimulationSuccess(type, formValues, txHash, extra);
                }
 
-               // 6. Wait for final outcome
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
 
                this.txUiService.setTxResultSignal(finalResult);

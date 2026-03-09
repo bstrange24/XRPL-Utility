@@ -46,7 +46,7 @@
 
                <!-- Info Message -->
                @if (infoData(); as info) {
-               <div class="info-and-permissioned-domains-card" [class.has-domains]="info.permissionedDomainCount > 0">
+               <div class="info-and-credentials-card" [class.has-domains]="info.permissionedDomainCount > 0">
                     <!-- Always-visible summary row -->
                     <div class="summary-header">
                          <div class="summary-text">
@@ -68,16 +68,16 @@
 
                     <!-- Collapsible detailed list with internal scroll -->
                     @if (info.permissionedDomainCount > 0) {
-                    <section class="permissioned-domains-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
-                         <ul class="permissioned-domains-list">
+                    <section class="credentials-list-container" [class.expanded]="infoPanelExpanded()" aria-label="Credential list">
+                         <ul class="credentials-list">
                               @for (domain of info.permissionedDomainsToShow; track domain.index) {
-                              <li class="permissioned-domain-item">
-                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer" style="flex: 1; min-width: 0">
-                                        <div class="domain-main-line">{{ domain.Domain || 'Permissioned Domain' }}</div>
+                              <li class="credential-item">
+                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer">
+                                        <div class="credential-main-line">{{ domain.Domain || 'Permissioned Domain' }}</div>
 
-                                        <div class="domain-meta">
-                                             <div>Domain ID: <code>{{ domain.index.slice(0,10) }}...{{ domain.index.slice(-8) }}</code></div>
-                                             <div>Credential: <code>{{ domain.AcceptedCredentials }}</code></div>
+                                        <div class="credential-meta">
+                                             <div>Domain ID: <code>{{ domain.index }}</code></div>
+                                             <pre>{{ permissionedDomainUtilService.parseCredentials(domain.AcceptedCredentials) | json }}</pre>
                                         </div>
                                    </app-tooltip-link>
                                    <button (click)="copyAndToast(domain.index, 'Domain ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Domain ID">
@@ -100,9 +100,9 @@
                }
 
                <form #theForm="ngForm" class="main-form">
+                    @if (tab === 'set') {
                     <div class="form-row">
                          <!-- Credential Issuer -->
-                         @if (tab === 'set') {
                          <div class="form-group">
                               <label for="issuer">Issuer</label>
                               <p class="form-hint">The credential issuer.</p>
@@ -115,8 +115,8 @@
                               <p class="form-hint">A hex-encoded value to identify the type of credential from the issuer.</p>
                               <input type="text" [(ngModel)]="txUiService.credentialType" name="credential_type" />
                          </div>
-                         }
                     </div>
+                    }
 
                     <!-- Permissioned Domain Dropdown -->
                     @if (tab === 'delete') {
@@ -153,6 +153,6 @@
                </form>
           </div>
 
-          <app-requirements-info></app-requirements-info>
+          <app-requirements-info [activeTab]="tab"></app-requirements-info>
      </div>
 </div>

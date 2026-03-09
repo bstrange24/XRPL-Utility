@@ -517,7 +517,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT mint successfully!' : 'Minted NFT executed successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT mint successfully!' : 'Minted NFT executed successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in mintNFT:', error);
@@ -687,7 +687,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Burned NFT successfully!' : 'Burned NFT executed successfully!';
+                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Burned NFT successfully!' : 'Burned NFT executed successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
                     this.nftIdField.set('');
                } catch (error: any) {
@@ -847,7 +847,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Update NFT Meta Data successfully!' : 'Updated NFT Meta Data successfully!';
+                    // // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Update NFT Meta Data successfully!' : 'Updated NFT Meta Data successfully!';
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in updateNFTMetadata:', error);
