@@ -117,6 +117,24 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
      // Credential dropdown
      readonly credentialItems = computed(() => {
+    let list = this.activeTab() === 'accept'
+        ? this.txUiService.subjectCredentials()
+        : this.txUiService.existingCredentials();
+
+    // Special case for verify tab
+    if (this.activeTab() === 'verify') {
+        list = list.filter(cred => cred.Issuer === this.currentWallet().address);
+    }
+
+    return list.map(cred => ({
+        id: cred.index,
+        display: cred.CredentialType || 'Unknown Type',
+        secondary: `${cred.index.slice(0,12)}...${cred.index.slice(-10)}`,
+        pending: !this.credentialUtilService.isCredentialAccepted(cred) && this.activeTab() === 'accept',
+    }));
+});
+
+     readonly credentialItemsq = computed(() => {
           const list = this.activeTab() === 'accept' ? this.txUiService.subjectCredentials() : this.txUiService.existingCredentials();
 
           return list.map(cred => ({
@@ -652,7 +670,62 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           }
      }
 
-     selectCredentialFromList(cred: CredentialItem) {
+     // in credentials.component.ts
+
+selectCredentialFromList(cred: CredentialItem) {
+    // Always keep the internal selection
+    this.txUiService.selectedCredentials.set(cred);
+
+    const isVerifyTab = this.activeTab() === 'verify';
+    const isSubject   = cred.Subject === this.currentWallet().address;
+
+    // ────────────────────────────────────────────────
+    // Only populate the form fields when it makes sense
+    // ────────────────────────────────────────────────
+    if (!isVerifyTab || !isSubject) {
+        this.txUiService.credentialID.set(cred.index);
+        this.txUiService.credentialType.set(cred.CredentialType || '');
+        this.txUiService.credentialIssuer.set(cred.Issuer);
+    } else {
+        // Optional: explicitly clear (prevents stale values)
+        this.resetCredentialIdDropDown();
+        // or only clear type & id, keep issuer if useful:
+        // this.txUiService.credentialID.set('');
+        // this.txUiService.credentialType.set('');
+    }
+
+    if (this.activeTab() !== 'create') {
+        this.infoPanelExpanded.set(false);
+    }
+}
+
+onCredentialSelected(item: SelectItem | null) {
+    if (!item) {
+        this.credentialUtilService.applySelectedCredential(null);
+        return;
+    }
+
+    const cred = [...this.txUiService.existingCredentials(), ...this.txUiService.subjectCredentials()]
+        .find(c => c.index === item.id);
+
+    if (!cred) return;
+
+    const isVerifyTab = this.activeTab() === 'verify';
+    const isSubject   = cred.Subject === this.currentWallet().address;
+
+    if (!isVerifyTab || !isSubject) {
+        this.credentialUtilService.applySelectedCredential(cred);
+    } else {
+        // Optional: clear selection visually
+        this.credentialUtilService.applySelectedCredential(null);
+        this.toastService.info(
+            "Verification is typically performed by the issuer or a third party.",
+            AppConstants.TOAST.INFO
+        );
+    }
+}
+
+     selectCredentialFromList1(cred: CredentialItem) {
           this.txUiService.selectedCredentials.set(cred);
           this.txUiService.credentialID.set(cred.index);
           this.txUiService.credentialIssuer.set(cred.Issuer);
@@ -666,7 +739,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           }
      }
 
-     onCredentialSelected(item: SelectItem | null) {
+     onCredentialSelected1(item: SelectItem | null) {
           if (!item) {
                this.credentialUtilService.applySelectedCredential(null);
                return;
