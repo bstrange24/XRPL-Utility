@@ -1,4 +1,3 @@
-// src/main.ts
 import { bootstrapApplication } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from './app/app.component';
@@ -43,6 +42,8 @@ import {
      heroMoon,
      heroSun,
 } from '@ng-icons/heroicons/outline';
+import { NgIconsModule } from '@ng-icons/core';
+import { featherCheck, featherX, featherAlertCircle, featherChevronDown, featherCheckCircle } from '@ng-icons/feather-icons';
 
 // Make Buffer and process available globally
 (globalThis as any).Buffer = Buffer;
@@ -87,6 +88,15 @@ bootstrapApplication(AppComponent, {
                     CornerUpLeft,
                     Sun,
                     Moon,
+               })
+          ),
+          importProvidersFrom(
+               NgIconsModule.withIcons({
+                    featherCheck: featherCheck,
+                    featherX: featherX,
+                    featherAlertCircle: featherAlertCircle,
+                    featherChevronDown: featherChevronDown,
+                    featherCheckCircle: featherCheckCircle,
                })
           ),
           provideIcons({

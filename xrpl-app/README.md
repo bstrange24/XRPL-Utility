@@ -59,22 +59,27 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
 
 ## Run Test individually
+
 Run test on Ubuntu
 export CHROME_BIN=$(which chromium)
 npx karma start
 
 npm install xrpl
+
 # npm install @angular/animations@19.2.14
+
 npm install lucide-angular
 
 update node.js
 update angular
+
 # install svg
+
 npm i @ng-icons/core
 npm i @ng-icons/core @ng-icons/heroicons
 npm install --save-dev @types/blueimp-md5
 npm install five-bells-condition@5.0.1
-
+npm install @ng-icons/core @ng-icons/feather-icons
 
 Maybe
 npm install ang-jsoneditor jsoneditor
