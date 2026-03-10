@@ -30,6 +30,7 @@ import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 interface AccountFlags {
      asfRequireDest: boolean;
@@ -95,6 +96,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
      // Destination Dropdown
@@ -382,6 +384,15 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['create', 'burn', 'updateNFTMetadata'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
           this.loadCustomDestinations();
           this.txUiService.clearAllOptions();
      }

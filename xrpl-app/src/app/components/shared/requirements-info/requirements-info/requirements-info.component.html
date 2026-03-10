@@ -1,0 +1,80 @@
+@if(schema(); as s){
+<div class="requirements-panel">
+     <div class="req-header">
+          <h3>{{s.title}}</h3>
+          <span class="tx-badge"> {{s.txType}} </span>
+     </div>
+
+     <!-- Overview -->
+     <div class="req-section">
+          <h4>Overview</h4>
+          <p class="overview-text">{{s.overview}}</p>
+     </div>
+
+     <!-- Requirements -->
+     @if(s.requirements?.length){
+     <div class="req-section">
+          <h4>Requirements</h4>
+          <ul class="req-list">
+               @for(r of s.requirements; track r.label){
+               <li>
+                    <!-- <ng-icon name="heroCheckCircle" size="16" class="text-green-600"></ng-icon> -->
+                    <div>
+                         <strong>{{r.label}}</strong>
+                         <div class="req-desc">{{r.description}}</div>
+                    </div>
+               </li>
+               }
+          </ul>
+     </div>
+     }
+
+     <!-- Warnings -->
+     @if(s.warnings?.length){
+     <div class="req-section warnings">
+          <h4>Warnings</h4>
+          <ul>
+               @for(w of s.warnings; track w.message){
+               <li>
+                    <!-- <ng-icon name="heroExclamationTriangle" size="16" class="text-yellow-600"></ng-icon> -->
+                    {{w.message}}
+               </li>
+               }
+          </ul>
+     </div>
+
+     }
+
+     <!-- Fields -->
+     @if(s.fields.length){
+     <div class="req-section">
+          <h4>Fields</h4>
+          <div class="field-table">
+               @for(f of s.fields; track f.name){
+               <div class="field-row">
+                    <div class="field-name">
+                         {{f.label}} @if(f.required){
+                         <span class="required">Required</span>
+                         } @else {
+                         <span class="optional">Optional</span>
+                         }
+                    </div>
+                    <div class="field-desc">{{f.description}}</div>
+                    @if(f.example){
+                    <code class="field-example"> {{f.example}} </code>
+                    }
+               </div>
+               }
+          </div>
+     </div>
+     }
+
+     <!-- Example Transaction -->
+     @if(s.example){
+     <div class="req-section">
+          <h4>{{s.example.title}}</h4>
+          <pre class="tx-example">{{s.example.code | json}}</pre>
+     </div>
+     }
+</div>
+}

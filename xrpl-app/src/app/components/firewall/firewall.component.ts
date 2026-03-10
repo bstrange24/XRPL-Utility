@@ -37,6 +37,7 @@ import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 interface AccountFlags {
      isClawback: boolean;
@@ -77,6 +78,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
      // Destination Dropdown
@@ -368,6 +370,16 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['create', 'modify', 'authorize', 'unauthorize', 'delete'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
+
           this.loadKnownIssuers();
           this.refreshStoredIssuers();
           this.loadCustomDestinations();

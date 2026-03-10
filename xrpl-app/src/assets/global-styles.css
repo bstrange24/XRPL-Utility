@@ -1868,6 +1868,19 @@ pre[class*='language-'] {
      font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
 }
 
+.json-pretty {
+     background: #f8f9fa;
+     border: 1px solid #e0e0e0;
+     border-radius: 4px;
+     padding: 8px 12px;
+     margin: 4px 0 12px 0;
+     white-space: pre-wrap;
+     font-family: 'Courier New', Courier, monospace;
+     font-size: 13px;
+     line-height: 1.4;
+     overflow-x: auto;
+}
+
 .success-message {
      display: flex;
      background: #e6ffed;
@@ -5250,7 +5263,7 @@ button:disabled,
      margin-top: 12px;
      padding-top: 8px;
      border-top: 1px dashed #bae6fd;
-     display: flex;
+     /* display: flex; */
      flex-direction: column;
      gap: 8px;
 }
@@ -5266,7 +5279,7 @@ button:disabled,
 }
 
 .copy-link:hover {
-     color: #1d4ed8;
+     /* color: #1d4ed8; */
 }
 
 .dark .copy-link {
@@ -5274,7 +5287,7 @@ button:disabled,
 }
 
 .dark .copy-link:hover {
-     color: #3b82f6;
+     /* color: #3b82f6; */
 }
 
 /* Delete List  */
@@ -6733,4 +6746,74 @@ button.flag-item-account-flags {
      margin-top: 8px;
      list-style-type: none;
      margin-left: -20px;
+}
+
+.requirements-panel {
+     padding: 18px;
+     background: #fafafa;
+     border-left: 3px solid #e11d48;
+     font-size: 14px;
+}
+
+.req-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+}
+
+.tx-badge {
+     background: #111;
+     color: white;
+     padding: 3px 8px;
+     font-size: 11px;
+     border-radius: 6px;
+}
+
+.req-section {
+     margin-top: 18px;
+}
+
+.req-section h4 {
+     margin-bottom: 8px;
+}
+
+.req-list li {
+     display: flex;
+     gap: 8px;
+     margin-bottom: 8px;
+}
+
+.field-row {
+     border-top: 1px solid #eee;
+     padding: 8px 8px;
+}
+
+.field-name {
+     font-weight: 600;
+}
+
+.required {
+     color: #dc2626;
+     margin-left: 6px;
+     font-size: 11px;
+}
+
+.optional {
+     color: #6b7280;
+     margin-left: 6px;
+     font-size: 11px;
+}
+
+.field-example {
+     display: block;
+     margin-top: 4px;
+     background: #f4f4f4;
+     padding: 4px 6px;
+}
+
+.tx-example {
+     background: #0f172a;
+     color: #e2e8f0;
+     padding: 12px;
+     border-radius: 6px;
 }

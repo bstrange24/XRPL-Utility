@@ -37,6 +37,7 @@ import { CheckCancelItemComponent } from './ui-components/check-cancel-item/chec
 import { CheckCreateItemComponent } from './ui-components/check-create-item/check-create-item.component';
 import { CheckCashItemComponent } from './ui-components/check-cash-item/check-cash-item.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
      selector: 'app-checks',
@@ -70,6 +71,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      public readonly mptUtilService = inject(MptUtilService);
      public readonly trustlineOrchestratorService = inject(TrustlineOrchestratorService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -298,6 +300,16 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['create', 'cash', 'cancel'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
+
           this.trustlineCurrencyService.setPreferXrpAsDefault(true);
           this.trustlineCurrencyService.setXrpInDropdown(true);
           this.trustlineCurrencyService.setAddMptInDropdown(false);

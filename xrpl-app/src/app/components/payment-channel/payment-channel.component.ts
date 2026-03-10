@@ -33,6 +33,7 @@ import { PaymentChannelUtilService } from '../../services/payment-channel/paymen
 import { PaymentChannelOrchestratorService } from '../../services/payment-channel/payment-channel-orchestrator/payment-channel-orchestrator.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
      selector: 'app-account',
@@ -64,6 +65,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
      public readonly paymentChannelOrchestratorService = inject(PaymentChannelOrchestratorService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -257,6 +259,16 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['create', 'close', 'claim', 'renew', 'fund'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
+
           this.transactionDropdownService.loadCustomDestinations();
           this.txUiService.clearAllOptions();
      }

@@ -1,6 +1,6 @@
 import { Component, OnInit, EventEmitter, Output, Injectable, inject, ElementRef, HostListener, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { DatePipe } from '@angular/common';
@@ -58,7 +58,8 @@ export class NavbarComponent implements OnInit {
           private readonly utilsService: UtilsService,
           private readonly xrplService: XrplService,
           private networkService: NetworkService,
-          private elRef: ElementRef
+          private elRef: ElementRef,
+          private router: Router
      ) {}
 
      ngOnInit() {
@@ -115,6 +116,34 @@ export class NavbarComponent implements OnInit {
 
           this.searchSubject.pipe(debounceTime(300)).subscribe(() => {
                this.getTransaction();
+          });
+
+          // Listen to all route changes and update active states
+          this.router.events.subscribe(event => {
+               if (event instanceof NavigationEnd) {
+                    const url = event.urlAfterRedirects.split('?')[0]; // clean path
+
+                    // Reset all custom active flags first
+                    this.isAccountsDropdownActive = false;
+                    this.isEscrowsDropdownActive = false;
+                    this.isNftDropdownActive = false;
+                    this.isMptDropdownActive = false;
+
+                    // Set correct state based on current URL
+                    if (url.startsWith('/account') || url === '/delete-account' || url === '/permissioned-domain' || url === '/create-credentials' || url === '/create-did') {
+                         this.isAccountsDropdownActive = true;
+                         this.storageService.setActiveAccountsLink(url);
+                    } else if (url.startsWith('/time-escrow') || url.startsWith('/conditional-escrow')) {
+                         this.isEscrowsDropdownActive = true;
+                         this.storageService.setActiveEscrowLink(url);
+                    } else if (url === '/checks') {
+                         this.storageService.setActiveNavLink(url);
+                    }
+                    // Add similar conditions for other dropdowns/sections
+
+                    // Optional: store the main active link too
+                    // this.storageService.setActiveNavLink(url);
+               }
           });
      }
 

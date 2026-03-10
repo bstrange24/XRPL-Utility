@@ -28,6 +28,13 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      readonly acceptCredentialKeySpecificKeys = ['credentialType', 'credentialIssuer'] as const;
      private readonly decodeCache = new Map<string, string>();
 
+     readonly txTypeMap = {
+          create: 'CredentialCreate',
+          accept: 'CredentialAccept',
+          delete: 'CredentialDelete',
+          verify: 'CredentialVerify',
+     } as const;
+
      readonly tabs: {
           key: CredentialConfigTxDisplayType;
           label: string;

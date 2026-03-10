@@ -346,6 +346,21 @@ export class UtilsService {
           return Buffer.from(str, 'hex').toString('utf8');
      }
 
+     parseUiJson(object: string): any {
+          try {
+               if (object === 'N/A' || !object) return null;
+               const parsed = JSON.parse(object);
+               // Check if it's an array and has at least one item
+               if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed[0].Credential; // Return just the Credential object
+               }
+               return parsed;
+          } catch (error: any) {
+               console.error(`Error parsing JSON ${error.message}\n Returning original JSON.`);
+               return object;
+          }
+     }
+
      validateAndConvertDidJson(didJsonString: string, didSchema: object): DidValidationResult {
           const ajv = new Ajv({ allErrors: true });
           addFormats(ajv);

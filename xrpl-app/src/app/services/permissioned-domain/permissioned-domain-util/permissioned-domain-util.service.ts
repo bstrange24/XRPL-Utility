@@ -144,21 +144,6 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
           this.utilsService.logObjects('createdPermissionedDomains', this.createdPermissionedDomains());
      }
 
-     parseCredentials(credentials: string): any {
-          try {
-               if (credentials === 'N/A' || !credentials) return null;
-               const parsed = JSON.parse(credentials);
-               // Check if it's an array and has at least one item
-               if (Array.isArray(parsed) && parsed.length > 0) {
-                    return parsed[0].Credential; // Return just the Credential object
-               }
-               return parsed;
-          } catch (error: any) {
-               console.error(`Error parsing permissioned domain credenttials ${error.message}\n Returning original credentials`);
-               return credentials;
-          }
-     }
-
      domainItems = computed(() => {
           return this.createdPermissionedDomains().map(domain => ({
                id: domain.index,

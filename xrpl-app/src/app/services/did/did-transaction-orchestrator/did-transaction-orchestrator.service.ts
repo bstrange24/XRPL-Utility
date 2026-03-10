@@ -186,12 +186,10 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
           if (type === 'setDid') {
                const tx = this.xrplTransactionService.buildSetDidTransaction(wallet, fee, currentLedger);
                if (this.txUiService.didDetails().document) {
-                    const hex = this.utilsService.jsonToHex({ didData: this.txUiService.didDetails().document });
-                    tx.DIDDocument = hex;
+                    tx.DIDDocument = this.utilsService.jsonToHex(this.txUiService.didDetails().document);
                }
                if (this.txUiService.didDetails().uri) {
-                    const hex = this.utilsService.jsonToHex({ uri: this.txUiService.didDetails().uri });
-                    tx.URI = hex;
+                    tx.URI = this.utilsService.jsonToHex(this.txUiService.didDetails().uri);
                }
                if (this.txUiService.didDetails().data) {
                     const result = this.utilsService.validateAndConvertDidJson(this.txUiService.didDetails().data, didSchema);

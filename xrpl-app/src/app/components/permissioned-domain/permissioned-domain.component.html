@@ -19,7 +19,7 @@
           <!-- Left Wallet panel -->
           <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
 
-          <!-- Right form -->
+          <!-- Center form -->
           <div class="form-panel">
                <!-- Menu / Tabs -->
                <div class="menu-bar">
@@ -71,15 +71,14 @@
                     <section class="credentials-list-container" [class.expanded]="infoPanelExpanded()" aria-label="Credential list">
                          <ul class="credentials-list">
                               @for (domain of info.permissionedDomainsToShow; track domain.index) {
-                              <li class="credential-item">
-                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer">
-                                        <div class="credential-main-line">{{ domain.Domain || 'Permissioned Domain' }}</div>
-
-                                        <div class="credential-meta">
+                              <li class="credential-item" [class.selected-from-list]="tab !== 'set' && domain.index === permissionedDomainUtilService.selectedDomainId()" [attr.cursor]="tab !== 'set' ? 'pointer' : null" (click)="tab !== 'set' ? selectPermissionedDomainFromList(domain) : null">
+                                   <!-- <div class="credential-main-line">{{ domain.Domain || 'Permissioned Domain' }}</div> -->
+                                   <div class="credential-meta">
+                                        <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer">
                                              <div>Domain ID: <code>{{ domain.index }}</code></div>
-                                             <pre>{{ permissionedDomainUtilService.parseCredentials(domain.AcceptedCredentials) | json }}</pre>
-                                        </div>
-                                   </app-tooltip-link>
+                                        </app-tooltip-link>
+                                        <pre class="json-pretty issuer-hint">{{ utilsService.parseUiJson(domain.AcceptedCredentials) | json }}</pre>
+                                   </div>
                                    <button (click)="copyAndToast(domain.index, 'Domain ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Domain ID">
                                         <lucide-icon name="copy" size="15"></lucide-icon>
                                    </button>
@@ -133,7 +132,7 @@
                          <div class="form-group">
                               <label for="domainId">Domain ID</label>
                               <p class="form-hint">Ledger hash containing the permissioned domain.</p>
-                              <input type="text" [(ngModel)]="txUiService.domainId" name="domainId" placeholder="" />
+                              <input type="text" [value]="txUiService.domainId()" readonly name="domainId" placeholder="Select a domain above" />
                          </div>
                     </div>
                     }}

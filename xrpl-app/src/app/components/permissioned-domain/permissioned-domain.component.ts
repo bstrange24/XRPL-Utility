@@ -28,6 +28,7 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { ToastService } from '../../services/toast/toast.service';
 import { PermissionedDomainOrchestratorService } from '../../services/permissioned-domain/permissioned-domain-orchestrator/permissioned-domain-orchestrator.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
      selector: 'app-permissioned-domain',
@@ -53,6 +54,7 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      private readonly walletManager = inject(WalletManagerService);
      public readonly permissionedDomainUtilService = inject(PermissionedDomainUtilService);
      public readonly permissionedDomainOrchestratorService = inject(PermissionedDomainOrchestratorService);
+     public readonly route = inject(ActivatedRoute);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
@@ -152,6 +154,16 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
      }
 
      ngOnInit(): void {
+          // This is from the Delte Account page.
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['set', 'delete'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
           this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
      }
@@ -394,6 +406,21 @@ export class PermissionedDomainComponent extends PerformanceBaseComponent implem
           navigator.clipboard.writeText(checkId).then(() => {
                this.txUiService.showToastMessage('Permissioned Domain ID copied!');
           });
+     }
+
+     selectPermissionedDomainFromList(domain: any) {
+          // Same logic as credentials
+          this.permissionedDomainUtilService.onDomainSelected({
+               id: domain.index,
+               display: domain.index.slice(0, 10) + '...' + domain.index.slice(-8),
+               secondary: domain.AcceptedCredentials ? `Credentials: ${domain.AcceptedCredentials.length}` : 'No credentials',
+               isCurrentAccount: false,
+               isCurrentCode: false,
+               isCurrentToken: false,
+          });
+
+          // Optional: close the expanded panel after selection (good UX)
+          this.infoPanelExpanded.set(false);
      }
 
      onDestinationSelected(item: SelectItem | null) {

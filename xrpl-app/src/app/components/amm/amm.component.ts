@@ -34,6 +34,7 @@ import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 interface XRPLCurrency {
      currency: string;
@@ -108,6 +109,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly offerCurrency = inject(OfferCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
      public weWantIssuers$!: Observable<IssuerItem[]>;
@@ -385,6 +387,16 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['createAMM', 'depositToAMM', 'withdrawlTokenFromAMM', 'clawbackFromAMM', 'swapViaAMM', 'deleteAMM'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
+
           this.loadCustomDestinations();
 
           this.currencyFieldDropDownValue.set('XRP');

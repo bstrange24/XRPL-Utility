@@ -112,7 +112,7 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                     return { success: false, error: errors.join('\n• '), validationError: true };
                }
 
-               const tx = this.buildModifyAccountTransaction(type, env.wallet, env, formValues, extra);
+               const tx = this.buildCredentialTransaction(type, env.wallet, env, formValues, extra);
 
                await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues, env, extra);
 
@@ -201,7 +201,7 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
           };
      }
 
-     private buildModifyAccountTransaction(type: CredentialTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
+     private buildCredentialTransaction(type: CredentialTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
           const { fee, currentLedger } = env;
 
           if (type === 'createCredential') {

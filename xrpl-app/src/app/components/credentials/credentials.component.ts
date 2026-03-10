@@ -32,7 +32,9 @@ import { TrustlineCurrencyService } from '../../services/trustline-currency/trus
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { CredentialTransactionOrchestratorService } from '../../services/credentials/credential-transaction-orchestrator/credential-transaction-orchestrator.service';
 import { CredentialUtilService } from '../../services/credentials/credential-util/credential-util.service';
+// import { RequirementsInfoComponent } from '../../components/shared/requirements-info/requirements-info/requirements-info.component';
 import { RequirementsInfoComponent } from './ui-components/credential-requirements-info/requirements-info/requirements-info.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
      selector: 'app-credentials',
@@ -61,6 +63,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      private readonly walletManager = inject(WalletManagerService);
      private readonly credentialTransactionOrchestratorService = inject(CredentialTransactionOrchestratorService);
      public readonly credentialUtilService = inject(CredentialUtilService);
+     public readonly route = inject(ActivatedRoute);
 
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
@@ -244,6 +247,16 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['create', 'accept', 'delete', 'verify'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
+
           this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
      }

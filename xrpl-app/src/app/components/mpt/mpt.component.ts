@@ -34,6 +34,7 @@ import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-tr
 import { MptOrchestratorServiceService } from '../../services/mpt-service/mpt-orchestrator/mpt-orchestrator.service.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
      selector: 'app-mpt',
@@ -68,6 +69,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
      public readonly mptUtilService = inject(MptUtilService);
      public readonly mptOrchestratorServiceService = inject(MptOrchestratorServiceService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
      @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
@@ -302,6 +304,15 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['create', 'authorize', 'unauthorize', 'send', 'lock', 'unlock', 'clawback', 'destroy'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
           this.transactionDropdownService.loadCustomDestinations();
           this.txUiService.metaDataField.set(this.XLS89_TEMPLATE());
           this.txUiService.clearAllOptions();

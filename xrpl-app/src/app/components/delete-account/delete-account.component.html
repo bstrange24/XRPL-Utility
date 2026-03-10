@@ -67,13 +67,15 @@
                               <div class="blockers-section">
                                    <h2 class="blockers-title">Blocking configurations:</h2>
                                    <ul class="blockers-list">
-                                        <li class="blocker-item" *ngFor="let blocker of infoData().blockers">
+                                        @for (blocker of infoData().blockers; track blocker.route) {
+                                        <li class="blocker-item">
                                              <ng-icon name="heroXCircle" size="18" class="blocker-icon"></ng-icon>
                                              <span>{{ blocker.count }} {{ blocker.label }}</span>
                                              @if(blocker.route && blocker.route !== '#') {
                                              <a class="resolve-link" [routerLink]="blocker.route" [queryParams]="blocker.tab ? { tab: blocker.tab } : {}"> Go to {{ blocker.label }} </a>
                                              }
                                         </li>
+                                        }
                                    </ul>
                               </div>
                               }

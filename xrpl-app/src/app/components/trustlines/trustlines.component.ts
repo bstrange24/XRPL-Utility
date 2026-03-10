@@ -32,6 +32,7 @@ import { TrustlineCurrencyService } from '../../services/trustline-currency/trus
 import { TrustlineOrchestratorService } from '../../services/trustline-currency/trustline-orchestrator/trustline-orchestrator.service';
 import { CurrencyFormSectionComponent } from '../shared/currency-form-section/currency-form-section.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
      selector: 'app-trustlines',
@@ -63,6 +64,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      public readonly mptUtilService = inject(MptUtilService);
      public readonly trustlineOrchestratorService = inject(TrustlineOrchestratorService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -416,6 +418,16 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['setTrustline', 'removeTrustline', 'issueCurrency', 'clawbackTokens', 'addNewIssuers'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
+
           this.trustlineCurrencyService.preferXrpAsDefault.set(false);
           this.trustlineCurrencyService.addXrpInCurrencyDropdown.set(false);
           this.trustlineCurrencyService.addMptInCurrencyDropdown.set(false);

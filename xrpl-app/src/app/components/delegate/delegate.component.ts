@@ -27,6 +27,7 @@ import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 interface XRPLPermissionEntry {
      Permission: {
@@ -76,6 +77,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
      typedDestination = signal<string>('');
@@ -211,6 +213,16 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['clear', 'delegate'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
+
           this.loadCustomDestinations();
           this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
           this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));

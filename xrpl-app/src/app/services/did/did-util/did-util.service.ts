@@ -90,15 +90,15 @@ export class DidUtilService extends PerformanceBaseComponent {
      readonly setDidButtonLabel = this.buildTxLabel('Set DID');
      readonly deleteDidButtonLabel = this.buildTxLabel('Delete DID');
 
-     getExistingDid(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
+     getExistingDid(checkObjects: xrpl.AccountObjectsResponse) {
           const mapped = (checkObjects.result.account_objects ?? [])
                .filter((obj: any) => obj.LedgerEntryType === 'DID')
                .map((obj: any) => {
                     return {
                          index: obj.index,
-                         DIDDocument: obj.DIDDocument ? JSON.stringify(JSON.parse(Buffer.from(obj.DIDDocument, 'hex').toString('utf8')), null, 2) : 'N/A',
-                         Data: obj.Data ? JSON.stringify(JSON.parse(Buffer.from(obj.Data, 'hex').toString('utf8')), null, 2) : 'N/A',
-                         URI: obj.URI ? JSON.stringify(JSON.parse(Buffer.from(obj.URI, 'hex').toString('utf8')), null, 2) : 'N/A',
+                         DIDDocument: obj.DIDDocument ? Buffer.from(obj.DIDDocument, 'hex').toString('utf8') : 'N/A',
+                         Data: obj.Data ? Buffer.from(obj.Data, 'hex').toString('utf8') : 'N/A',
+                         URI: obj.URI ? Buffer.from(obj.URI, 'hex').toString('utf8') : 'N/A',
                     };
                })
                .sort((a, b) => a.index.localeCompare(b.index));
@@ -189,8 +189,8 @@ export class DidUtilService extends PerformanceBaseComponent {
     "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc#keys-1"
   ]
 }`);
-          this.txUiService.uriData.set(JSON.stringify('ipfs://bafybeiexamplehash', null, '/t'));
-          this.txUiService.didDocumentData.set(JSON.stringify('did:example:123#public-key-0', null, '/t'));
+          this.txUiService.uriData.set(`{"ipfs":"//bafybeiexamplehash"}`);
+          this.txUiService.didDocumentData.set(`{"did:example":"123#public-key-0"}`);
      }
 
      buildSuccessMessage(type: DidTxType, formValues: any, extra: any): string {

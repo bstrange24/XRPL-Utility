@@ -27,6 +27,7 @@ import { TransactionOptionsComponent } from '../shared/transaction-options/trans
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
      selector: 'app-set-hook',
@@ -52,6 +53,7 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
      hookWasmHex = signal<string>(''); // User pastes WASM hex here
@@ -179,6 +181,16 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['send'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
+
           this.loadCustomDestinations();
           this.txUiService.clearAllOptions();
      }

@@ -28,6 +28,7 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { TicketsUtilService } from '../../services/tickets/tickets-util/tickets-util.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
      selector: 'app-tickets',
@@ -61,6 +62,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      public readonly acccountDataService = inject(AcccountDataService);
      public readonly ticketsUtilService = inject(TicketsUtilService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
@@ -133,6 +135,16 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['create', 'delete'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
+
           this.txUiService.clearAllOptions();
      }
 

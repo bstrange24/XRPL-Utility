@@ -149,16 +149,15 @@ export class TransactionUiService {
                serviceEndpoint: '',
           },
           hash: '',
-          uri: JSON.stringify('ipfs://bafybeiexamplehash', null, '/t'),
-          document: JSON.stringify('did:example:123#public-key-0', null, '/t'),
-          // data: ``,
+          uri: `{"ipfs":"//bafybeiexamplehash"}`, // ← plain string
+          document: `{"did:example":"123#public-key-0"}`, // ← plain string
           data: `{
-  "@context": "https://www.w3.org/ns/did/v1",
-  "id": "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc",
-  "authentication": [
-    "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc#keys-1"
-  ]
-}`,
+    "@context": "https://www.w3.org/ns/did/v1",
+    "id": "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc",
+    "authentication": [
+      "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc#keys-1"
+    ]
+  }`,
           destinationAddress: '',
      });
      didData = signal<string>('');

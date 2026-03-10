@@ -9,7 +9,6 @@ import { UtilsService } from '../../services/util-service/utils.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import didSchema from './did-schema.json';
-import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
@@ -387,14 +386,14 @@ export class DidComponent extends PerformanceBaseComponent implements OnInit {
      }
 
      private refreshAccountObject(env: any): void {
-          this.didUtilService.getExistingDid(env.accountObjects, env.wallet.classicAddress);
+          this.didUtilService.getExistingDid(env.accountObjects);
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
           await this.walletDataService.refreshWallets(
                client,
                addresses, // only the addresses to target
-               (updatedList, newCurrent) => {
+               (_updatedList, newCurrent) => {
                     this.currentWallet.set({ ...newCurrent });
                }
           );

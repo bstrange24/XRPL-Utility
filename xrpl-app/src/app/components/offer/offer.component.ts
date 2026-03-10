@@ -34,6 +34,7 @@ import { TransactionPreviewComponent } from '../transaction-preview/transaction-
 import { TemplatePortal } from '@angular/cdk/portal';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { ActivatedRoute } from '@angular/router';
 
 interface XRPLCurrency {
      currency: string;
@@ -160,6 +161,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly offerCurrency = inject(OfferCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly route = inject(ActivatedRoute);
      private cdr: ChangeDetectorRef;
 
      private offerOverlayRef: OverlayRef | null = null;
@@ -506,6 +508,16 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      }
 
      ngOnInit(): void {
+          const tab = this.route.snapshot.queryParamMap.get('tab');
+          if (tab) {
+               const allowedTabs = ['createOffer', 'getOffers', 'getOrderBook', 'cancelOffer'] as const;
+               type TabType = (typeof allowedTabs)[number];
+               if (tab && allowedTabs.includes(tab as TabType)) {
+                    // Type assertion is safe because we checked includes
+                    this.setTab(tab as TabType);
+               }
+          }
+
           this.loadCustomDestinations();
           this.currencyFieldDropDownValue.set('XRP');
 
