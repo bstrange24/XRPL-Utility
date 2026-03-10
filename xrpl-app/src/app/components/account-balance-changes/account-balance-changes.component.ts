@@ -10,7 +10,6 @@ import * as xrpl from 'xrpl';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
-import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -29,19 +28,7 @@ import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { AppConstants } from '../../core/app.constants';
-
-interface BalanceChange {
-     date: Date;
-     hash: string;
-     type: string;
-     change: number;
-     fees: number;
-     currency: string;
-     balanceBefore: number;
-     balanceAfter: number;
-     counterparty: string;
-     _searchIndex?: string;
-}
+import { BalanceChange } from '../../models/interface-items.model';
 
 @Component({
      selector: 'app-account-changes',
@@ -54,7 +41,6 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
      private readonly utilsService = inject(UtilsService);
      public readonly walletManager = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
-     private readonly xrplTransactions = inject(XrplTransactionService);
      private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly copyUtilService = inject(CopyUtilService);
@@ -172,7 +158,6 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
           try {
                const env = await this.txEnvironmentService.prepareTxEnvironment({
                     includeAccountInfo: true,
-                    includeTrustlines: false,
                     forceRefresh: true,
                });
 
@@ -251,55 +236,6 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
 
                          processed.push({
                               date: utcDate, // Store UTC-normalized date
-                              hash,
-                              type,
-                              fees: Number(feeXrp),
-                              change: delta,
-                              currency: 'XRP',
-                              balanceBefore: prevXrp,
-                              balanceAfter: finalXrp,
-                              counterparty,
-                              _searchIndex: `${type} ${delta} XRP ${hash}`.toLowerCase(),
-                         });
-                    }
-               }
-          }
-
-          return processed;
-     }
-
-     processTransactionsForBalanceChanges1(transactions: any[], address: string): BalanceChange[] {
-          const processed: BalanceChange[] = [];
-
-          for (const txWrapper of transactions) {
-               const tx = txWrapper.tx_json || txWrapper.transaction;
-               const meta = txWrapper.meta;
-               if (!meta?.AffectedNodes) continue;
-
-               const date = new Date((tx.date + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000);
-               const hash = txWrapper.hash;
-
-               const feeXrp = xrpl.dropsToXrp(tx.Fee);
-               let type = tx.TransactionType;
-               let counterparty = tx.Destination || tx.Account || 'XRPL';
-
-               for (const node of meta.AffectedNodes) {
-                    const modified = node.ModifiedNode || node.CreatedNode || node.DeletedNode;
-
-                    if (!modified) continue;
-
-                    if (modified.LedgerEntryType === 'AccountRoot' && modified.FinalFields?.Account === address) {
-                         const prev = modified.PreviousFields?.Balance ?? modified.FinalFields.Balance;
-
-                         const final = modified.FinalFields.Balance;
-
-                         const prevXrp = xrpl.dropsToXrp(prev);
-                         const finalXrp = xrpl.dropsToXrp(final);
-
-                         const delta = this.utilsService.roundToEightDecimals(finalXrp - prevXrp);
-
-                         processed.push({
-                              date,
                               hash,
                               type,
                               fees: Number(feeXrp),

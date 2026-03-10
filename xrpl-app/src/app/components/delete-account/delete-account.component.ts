@@ -280,7 +280,7 @@ export class DeleteAccountComponent extends PerformanceBaseComponent implements 
                          includeAccountObject: true,
                          includeServerInfo: true,
                          includeBlockingObjects: true,
-                         forceRefresh: false,
+                         forceRefresh: forceRefresh,
                     });
 
                     this.accountInfo.set(env.accountInfo);

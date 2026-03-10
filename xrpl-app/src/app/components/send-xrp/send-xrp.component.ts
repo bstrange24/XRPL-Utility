@@ -197,16 +197,8 @@ export class SendXrpComponent extends PerformanceBaseComponent implements OnInit
                if (!this.ensureWalletSelected()) return;
 
                try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         forceRefresh: forceRefresh,
-                    });
-
-                    if (!env.accountInfo || !env.accountObjects) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
+                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+                    if (!env) return;
 
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                     this.clearFields();
@@ -300,7 +292,7 @@ export class SendXrpComponent extends PerformanceBaseComponent implements OnInit
           await this.walletDataService.refreshWallets(
                client,
                addresses, // only the addresses to target
-               (updatedList, newCurrent) => {
+               (_updatedList, newCurrent) => {
                     this.currentWallet.set({ ...newCurrent });
                }
           );

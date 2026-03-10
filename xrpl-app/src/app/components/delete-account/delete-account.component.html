@@ -70,8 +70,6 @@
                                         <li class="blocker-item" *ngFor="let blocker of infoData().blockers">
                                              <ng-icon name="heroXCircle" size="18" class="blocker-icon"></ng-icon>
                                              <span>{{ blocker.count }} {{ blocker.label }}</span>
-
-                                             <!-- Show link only if route is defined and not '#' -->
                                              @if(blocker.route && blocker.route !== '#') {
                                              <a class="resolve-link" [routerLink]="blocker.route" [queryParams]="blocker.tab ? { tab: blocker.tab } : {}"> Go to {{ blocker.label }} </a>
                                              }
