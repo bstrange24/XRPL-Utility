@@ -216,4 +216,12 @@ export class WalletManagerService {
           }
           return null;
      }
+
+     ensureWalletSelected(): boolean {
+          if (!this.hasWallets() || this.getSelectedIndex() < 0) {
+               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
+               return false;
+          }
+          return true;
+     }
 }

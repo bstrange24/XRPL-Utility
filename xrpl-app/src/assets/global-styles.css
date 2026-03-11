@@ -5167,6 +5167,18 @@ button:disabled,
 }
 
 .credential-meta {
+     display: flex;
+     flex-direction: column;
+     gap: 4px;
+     font-size: 0.82rem;
+     color: #555;
+}
+
+.dark .credential-meta {
+     color: #94a3b8;
+}
+
+/* .credential-meta {
      font-size: 0.82rem;
      color: #555;
      margin-top: 4px;
@@ -5175,11 +5187,15 @@ button:disabled,
 
 .dark .credential-meta {
      color: #94a3b8;
-}
+} */
 
 .credential-item:hover {
      background: #f0f9ff;
      /* Light blue hover */
+}
+
+.dark .credential-item:hover {
+     background: #1e293b;
 }
 
 .credential-item.selected-from-list {

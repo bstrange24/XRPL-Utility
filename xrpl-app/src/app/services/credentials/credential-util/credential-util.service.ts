@@ -138,6 +138,140 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      filteredSubject = computed(() => this.filterCredentials(this.txUiService.subjectCredentials(), this.txUiService.credentialIdSearchTerm()));
      selectedCredentialIndex = computed(() => this.txUiService.credentialID());
 
+     actionButtonLabel(tab: 'create' | 'accept' | 'delete' | 'verify') {
+          switch (tab) {
+               case 'create':
+                    return this.createCredentialButtonLabel();
+               case 'accept':
+                    return this.acceptCredentialsButtonLabel();
+               case 'delete':
+                    return this.deleteCredentialsButtonLabel();
+               case 'verify':
+                    return this.verifyCredentialLabel();
+          }
+     }
+
+     actionButtonClass(tab: 'create' | 'accept' | 'delete' | 'verify') {
+          switch (tab) {
+               case 'create':
+                    return 'btn-primary-blue';
+               case 'accept':
+                    return 'btn-primary-green';
+               case 'delete':
+                    return 'btn-primary-red';
+               case 'verify':
+                    return 'btn-primary-orange';
+          }
+     }
+
+     selectCredentialFromList(cred: CredentialItem, tab: string, walletAddress: string) {
+          this.txUiService.selectedCredentials.set(cred);
+
+          const isVerifyTab = tab === 'verify';
+          const isSubject = cred.Subject === walletAddress;
+
+          if (!isVerifyTab || !isSubject) {
+               this.txUiService.credentialID.set(cred.index);
+               this.txUiService.credentialType.set(cred.CredentialType || '');
+               this.txUiService.credentialIssuer.set(cred.Issuer);
+          } else {
+               this.txUiService.credentialID.set('');
+               this.txUiService.credentialType.set('');
+               this.txUiService.credentialIssuer.set('');
+          }
+     }
+
+     readonly credentialStats = computed(() => {
+          const issuedByMe = this.issuedByMe();
+          const issuedToMe = this.issuedToMe();
+
+          const pendingIssued = this.pendingIssued();
+          const acceptedIssued = this.acceptedIssued();
+
+          const pendingToAccept = this.pendingToAccept();
+          const acceptedByMe = this.acceptedByMe();
+
+          return {
+               issuedByMe,
+               issuedToMe,
+               pendingIssued,
+               acceptedIssued,
+               pendingToAccept,
+               acceptedByMe,
+
+               counts: {
+                    issued: issuedByMe.length,
+                    received: issuedToMe.length,
+                    pendingIssued: pendingIssued.length,
+                    acceptedIssued: acceptedIssued.length,
+                    pendingToAccept: pendingToAccept.length,
+                    acceptedByMe: acceptedByMe.length,
+               },
+          };
+     });
+
+     credentialsToShow(tab: 'create' | 'accept' | 'delete' | 'verify') {
+          const s = this.credentialStats();
+
+          switch (tab) {
+               case 'create':
+                    return [...s.pendingIssued, ...s.acceptedIssued];
+
+               case 'accept':
+                    return s.pendingToAccept.length ? s.pendingToAccept : s.acceptedByMe;
+
+               case 'delete':
+                    return s.issuedByMe;
+
+               case 'verify':
+                    return [...s.pendingToAccept, ...s.acceptedByMe, ...s.pendingIssued, ...s.acceptedIssued];
+          }
+     }
+
+     summaryMessage(tab: 'create' | 'accept' | 'delete' | 'verify') {
+          const s = this.credentialStats();
+
+          switch (tab) {
+               case 'create':
+                    if (s.counts.issued === 0) return 'has not issued any credentials yet.';
+
+                    return `has issued <strong>${s.counts.issued}</strong> credential${s.counts.issued === 1 ? '' : 's'}.`;
+
+               case 'accept':
+                    if (s.counts.pendingToAccept === 0) return 'has no pending credentials to accept.';
+
+                    return `has <strong>${s.counts.pendingToAccept}</strong> credential${s.counts.pendingToAccept === 1 ? '' : 's'} pending acceptance.`;
+
+               case 'delete':
+                    if (s.counts.issued === 0) return 'has no credentials to delete.';
+
+                    return `has <strong>${s.counts.issued}</strong> issued credential${s.counts.issued === 1 ? '' : 's'} that can be deleted.`;
+
+               case 'verify': {
+                    const total = s.counts.issued + s.counts.received;
+
+                    if (total === 0) return 'is not involved in any credentials.';
+
+                    return `is involved in <strong>${total}</strong> credential${total === 1 ? '' : 's'} — Received: ${s.counts.received} • Issued: ${s.counts.issued}`;
+               }
+          }
+     }
+
+     credentialItems(tab: 'create' | 'accept' | 'delete' | 'verify', walletAddress: string) {
+          let list = tab === 'accept' ? this.txUiService.subjectCredentials() : this.txUiService.existingCredentials();
+
+          if (tab === 'verify') {
+               list = list.filter(c => c.Issuer === walletAddress);
+          }
+
+          return list.map(cred => ({
+               id: cred.index,
+               display: cred.CredentialType || 'Unknown Type',
+               secondary: `${cred.index.slice(0, 12)}...${cred.index.slice(-10)}`,
+               pending: !this.isCredentialAccepted(cred) && tab === 'accept',
+          }));
+     }
+
      getExistingCredentials(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
           const mapped = (checkObjects.result.account_objects ?? [])
                .filter((obj: any) => obj.LedgerEntryType === 'Credential' && obj.Issuer === sender)

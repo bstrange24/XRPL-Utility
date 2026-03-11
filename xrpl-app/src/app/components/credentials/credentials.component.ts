@@ -79,11 +79,18 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      filteredDestinations = this.transactionDropdownService.filteredDestinations(this.allDestinations, this.destinationSearchQuery);
      destinationDisplay = this.transactionDropdownService.destinationDisplay(this.selectedDestinationAddress, this.destinationSearchQuery, this.destinationMap);
 
+     readonly walletName = computed(() => this.currentWallet()?.name || 'Selected wallet');
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
      readonly canSubmit = computed(() => this.isIdle() && this.hasWallets());
      readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
+
+     readonly summaryMessage = computed(() => this.credentialUtilService.summaryMessage(this.activeTab()));
+     readonly credentialsToShow = computed(() => this.credentialUtilService.credentialsToShow(this.activeTab()));
+     readonly credentialItems = computed(() => this.credentialUtilService.credentialItems(this.activeTab(), this.currentWallet().address));
+     readonly actionButtonLabel = computed(() => this.credentialUtilService.actionButtonLabel(this.activeTab()));
+     readonly actionButtonClass = computed(() => this.credentialUtilService.actionButtonClass(this.activeTab()));
 
      // Has wallets → warning handling
      private readonly _hasWalletsEffect = effect(() => {
@@ -115,128 +122,10 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           void this.getCredentialsForAccount(false);
      });
 
-     // Credential dropdown
-     readonly credentialItems = computed(() => {
-    let list = this.activeTab() === 'accept'
-        ? this.txUiService.subjectCredentials()
-        : this.txUiService.existingCredentials();
-
-    // Special case for verify tab
-    if (this.activeTab() === 'verify') {
-        list = list.filter(cred => cred.Issuer === this.currentWallet().address);
-    }
-
-    return list.map(cred => ({
-        id: cred.index,
-        display: cred.CredentialType || 'Unknown Type',
-        secondary: `${cred.index.slice(0,12)}...${cred.index.slice(-10)}`,
-        pending: !this.credentialUtilService.isCredentialAccepted(cred) && this.activeTab() === 'accept',
-    }));
-});
-
-     readonly credentialItemsq = computed(() => {
-          const list = this.activeTab() === 'accept' ? this.txUiService.subjectCredentials() : this.txUiService.existingCredentials();
-
-          return list.map(cred => ({
-               id: cred.index,
-               display: cred.CredentialType || 'Unknown Type',
-               secondary: cred.index.slice(0, 12) + '...' + cred.index.slice(-10),
-               isCurrentAccount: false,
-               isCurrentCode: false,
-               isCurrentToken: false,
-               pending: !this.credentialUtilService.isCredentialAccepted(cred) && this.activeTab() === 'accept',
-          }));
-     });
-
      readonly selectedCredentialItem = computed(() => {
           const id = this.txUiService.credentialID();
           if (!id) return null;
-          return this.credentialItems().find(i => i.id === id) || null;
-     });
-
-     readonly actionButtonLabel = computed(() => {
-          switch (this.activeTab()) {
-               case 'create':
-                    return this.credentialUtilService.createCredentialButtonLabel();
-               case 'accept':
-                    return this.credentialUtilService.acceptCredentialsButtonLabel();
-               case 'delete':
-                    return this.credentialUtilService.deleteCredentialsButtonLabel();
-               case 'verify':
-                    return this.credentialUtilService.verifyCredentialLabel();
-          }
-     });
-
-     readonly actionButtonClass = computed(() => {
-          switch (this.activeTab()) {
-               case 'create':
-                    return 'btn-primary-blue';
-               case 'accept':
-                    return 'btn-primary-green';
-               case 'delete':
-                    return 'btn-primary-red';
-               case 'verify':
-                    return 'btn-primary-orange';
-          }
-     });
-
-     readonly summaryMessage = computed(() => {
-          const info = this.infoData();
-          if (!info) return '';
-
-          const { mode, issuedByMe, issuedToMe, pendingIssued, acceptedIssued, pendingToAccept, acceptedByMe } = info;
-
-          switch (mode) {
-               case 'create': {
-                    if (issuedByMe.length === 0) return 'has not issued any credentials yet.';
-                    const total = issuedByMe.length;
-                    const pending = pendingIssued.length;
-                    const accepted = acceptedIssued.length;
-                    let msg = `has issued <strong>${total}</strong> credential${total === 1 ? '' : 's'}. `;
-                    if (pending === 0) {
-                         msg += '— all accepted!';
-                    } else {
-                         msg += `• ${accepted} accepted • <strong>${pending}</strong> pending acceptance`;
-                    }
-                    return msg;
-               }
-
-               case 'accept':
-                    if (issuedToMe.length === 0) return 'has no credentials issued to it.';
-                    if (pendingToAccept.length === 0) return 'has no pending credentials to accept — all accepted!';
-                    return `has <strong>${pendingToAccept.length}</strong> pending credential${pendingToAccept.length === 1 ? '' : 's'} to accept.`;
-
-               case 'delete':
-                    if (issuedByMe.length === 0) return 'has no credentials to delete.';
-                    return `has <strong>${issuedByMe.length}</strong> issued credential${issuedByMe.length === 1 ? '' : 's'} that can be deleted.`;
-
-               case 'verify': {
-                    const totalInvolved = issuedToMe.length + issuedByMe.length;
-                    if (totalInvolved === 0) return 'is not involved in any credentials.';
-                    let parts: string[] = [];
-                    if (issuedToMe.length > 0) {
-                         parts.push(`• ${pendingToAccept.length} pending to accept • ${acceptedByMe.length} accepted`);
-                    }
-                    if (issuedByMe.length > 0) {
-                         parts.push(`• ${pendingIssued.length} issued & pending • ${acceptedIssued.length} accepted`);
-                    }
-                    return `is involved in <strong>${totalInvolved}</strong> credential${totalInvolved === 1 ? '' : 's'}: ${parts.join(' ')}`;
-               }
-          }
-     });
-
-     private readonly credentialsToShow = computed(() => {
-          const tab = this.activeTab();
-          switch (tab) {
-               case 'create':
-                    return [...this.credentialUtilService.pendingIssued(), ...this.credentialUtilService.acceptedIssued()];
-               case 'accept':
-                    return this.credentialUtilService.pendingToAccept().length ? this.credentialUtilService.pendingToAccept() : this.credentialUtilService.acceptedByMe();
-               case 'delete':
-                    return this.credentialUtilService.issuedByMe();
-               case 'verify':
-                    return [...this.credentialUtilService.pendingToAccept(), ...this.credentialUtilService.pendingIssued(), ...this.credentialUtilService.acceptedByMe(), ...this.credentialUtilService.acceptedIssued()];
-          }
+          return this.credentialUtilService.credentialItems(this.activeTab(), this.currentAddress()).find(i => i.id === id) || null;
      });
 
      readonly infoData = computed(() => {
@@ -279,11 +168,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.transactionDropdownService.loadCustomDestinations();
      }
 
-     onWalletSelected(wallet: Wallet): void {
-          this.selectWallet(wallet);
-     }
-
-     private selectWallet(wallet: Wallet): void {
+     selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
@@ -294,19 +179,11 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           }
      }
 
-     private ensureWalletSelected(): boolean {
-          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
-               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
-               return false;
-          }
-          return true;
-     }
-
-     trackByCredentialIndex(index: number, cred: CredentialItem) {
+     trackByCredentialIndex(_index: number, cred: CredentialItem) {
           return cred.index;
      }
 
-     trackByWalletAddress(index: number, wallet: any) {
+     trackByWalletAddress(_index: number, wallet: any) {
           return wallet.address;
      }
 
@@ -330,7 +207,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               if (!this.ensureWalletSelected()) return;
+               if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
@@ -360,7 +237,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           this.txUiService.resetCurrentStepToIdle();
           this.txUiService.clearAllOptionsAndMessages();
 
-          if (!this.ensureWalletSelected()) return;
+          if (!this.walletManagerService.ensureWalletSelected()) return;
 
           // 2. Early destination resolution (not timed)
           destination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
@@ -670,76 +547,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           }
      }
 
-     // in credentials.component.ts
-
-selectCredentialFromList(cred: CredentialItem) {
-    // Always keep the internal selection
-    this.txUiService.selectedCredentials.set(cred);
-
-    const isVerifyTab = this.activeTab() === 'verify';
-    const isSubject   = cred.Subject === this.currentWallet().address;
-
-    // ────────────────────────────────────────────────
-    // Only populate the form fields when it makes sense
-    // ────────────────────────────────────────────────
-    if (!isVerifyTab || !isSubject) {
-        this.txUiService.credentialID.set(cred.index);
-        this.txUiService.credentialType.set(cred.CredentialType || '');
-        this.txUiService.credentialIssuer.set(cred.Issuer);
-    } else {
-        // Optional: explicitly clear (prevents stale values)
-        this.resetCredentialIdDropDown();
-        // or only clear type & id, keep issuer if useful:
-        // this.txUiService.credentialID.set('');
-        // this.txUiService.credentialType.set('');
-    }
-
-    if (this.activeTab() !== 'create') {
-        this.infoPanelExpanded.set(false);
-    }
-}
-
-onCredentialSelected(item: SelectItem | null) {
-    if (!item) {
-        this.credentialUtilService.applySelectedCredential(null);
-        return;
-    }
-
-    const cred = [...this.txUiService.existingCredentials(), ...this.txUiService.subjectCredentials()]
-        .find(c => c.index === item.id);
-
-    if (!cred) return;
-
-    const isVerifyTab = this.activeTab() === 'verify';
-    const isSubject   = cred.Subject === this.currentWallet().address;
-
-    if (!isVerifyTab || !isSubject) {
-        this.credentialUtilService.applySelectedCredential(cred);
-    } else {
-        // Optional: clear selection visually
-        this.credentialUtilService.applySelectedCredential(null);
-        this.toastService.info(
-            "Verification is typically performed by the issuer or a third party.",
-            AppConstants.TOAST.INFO
-        );
-    }
-}
-
-     selectCredentialFromList1(cred: CredentialItem) {
-          this.txUiService.selectedCredentials.set(cred);
-          this.txUiService.credentialID.set(cred.index);
-          this.txUiService.credentialIssuer.set(cred.Issuer);
-          this.txUiService.credentialType.set(cred.CredentialType || '');
-
-          if (this.activeTab() !== 'create') {
-               // Optional: close the expanded list after selection (better UX in some cases)
-               this.infoPanelExpanded.set(false);
-               // Optional: scroll to the form / highlight the dropdown area
-               // document.querySelector('.form-group')?.scrollIntoView({ behavior: 'smooth' });
-          }
-     }
-
-     onCredentialSelected1(item: SelectItem | null) {
+     onCredentialSelected(item: SelectItem | null) {
           if (!item) {
                this.credentialUtilService.applySelectedCredential(null);
                return;
@@ -747,7 +555,25 @@ onCredentialSelected(item: SelectItem | null) {
 
           const cred = [...this.txUiService.existingCredentials(), ...this.txUiService.subjectCredentials()].find(c => c.index === item.id);
 
-          this.credentialUtilService.applySelectedCredential(cred || null);
+          if (!cred) return;
+
+          const isVerifyTab = this.activeTab() === 'verify';
+          const isSubject = cred.Subject === this.currentWallet().address;
+
+          if (!isVerifyTab || !isSubject) {
+               this.credentialUtilService.applySelectedCredential(cred);
+          } else {
+               // Optional: clear selection visually
+               this.credentialUtilService.applySelectedCredential(null);
+               this.toastService.info('Verification is typically performed by the issuer or a third party.', AppConstants.TOAST.INFO);
+          }
+     }
+
+     selectCredentialFromList(cred: CredentialItem) {
+          this.credentialUtilService.selectCredentialFromList(cred, this.activeTab(), this.currentWallet().address);
+
+          if (this.activeTab() !== 'create') this.infoPanelExpanded.set(false);
+          // document.querySelector('.form-group')?.scrollIntoView({ behavior: 'smooth' });
      }
 
      onCredentialIdInput(event: Event): void {
@@ -761,10 +587,6 @@ onCredentialSelected(item: SelectItem | null) {
 
      populateDefaultDateTime(): void {
           this.credentialUtilService.setCredentialExpirationToNow();
-     }
-
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
      }
 
      clearFields() {
