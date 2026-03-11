@@ -251,6 +251,20 @@ export class XrplCacheService {
           );
      }
 
+     async getLedgerInfo(client: xrpl.Client, forceRefresh = false): Promise<{ lastIndex: number; closeTime: number; currentRippleTime: number }> {
+          const key = `server:ledgerInfo:all`;
+
+          if (forceRefresh) this.cache.delete(key);
+
+          return this.getOrFetch(
+               key,
+               async () => {
+                    return await this.xrplService.getLedgerInfo(client);
+               },
+               4000 // 4 sec TTL
+          );
+     }
+
      /** Get server info (load, ledger index, validated ledger, etc.) – cached for 10 seconds */
      async getServerInfo(xrplService: XrplService, ledgerIndex: xrpl.LedgerIndex = 'current', forceRefresh = false): Promise<xrpl.ServerInfoResponse> {
           const network = xrplService.getNet().environment;

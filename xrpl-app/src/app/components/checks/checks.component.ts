@@ -38,6 +38,7 @@ import { CheckCreateItemComponent } from './ui-components/check-create-item/chec
 import { CheckCashItemComponent } from './ui-components/check-cash-item/check-cash-item.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
+import { XrplDateService } from '../../core/xrpl-date.service';
 
 @Component({
      selector: 'app-checks',
@@ -72,6 +73,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      public readonly trustlineOrchestratorService = inject(TrustlineOrchestratorService);
      private readonly walletManager = inject(WalletManagerService);
      public readonly route = inject(ActivatedRoute);
+     public readonly xrplDateService = inject(XrplDateService);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -774,7 +776,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      }
 
      setExpirationToNow(): void {
-          this.txUiService.expirationTimeField.set(this.utilsService.formatDateTimeLocal(new Date()));
+          this.txUiService.expirationTimeField.set(this.xrplDateService.toLocalDateTimeString(new Date()));
      }
 
      toggleExpiration(enabled: boolean): void {

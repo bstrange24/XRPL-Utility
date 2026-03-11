@@ -243,6 +243,7 @@ export interface PrepareTxEnvironmentOptions {
      includeAccountInfo?: boolean;
      includeAccountObject?: boolean;
      includeLedgerIndex?: boolean;
+     includeLedgerInfo?: boolean;
      includePaymentChannelObjects?: boolean;
      includeMptObjects?: boolean;
      includeGatewayBalance?: boolean;
@@ -252,6 +253,13 @@ export interface PrepareTxEnvironmentOptions {
      forceRefresh?: boolean;
      destinationAddress?: string;
      escrowSequenceNumberField?: string;
+     // ledgerInfoType?: 'lastIndex' | 'closeTime' | 'currentRippleTime';
+     ledgerInfo?: {
+          // Change from any to a structured object
+          lastIndex: number;
+          closeTime: number;
+          currentRippleTime: number;
+     };
 }
 
 export interface PrepareTxEnvironmentResult {
@@ -259,6 +267,7 @@ export interface PrepareTxEnvironmentResult {
      wallet: xrpl.Wallet;
      fee?: string;
      currentLedger?: number;
+     ledgerInfo?: any;
      accountObjects?: xrpl.AccountObjectsResponse;
      ticketObjects?: xrpl.AccountObjectsResponse;
      escrowObjects?: xrpl.AccountObjectsResponse;
@@ -298,6 +307,7 @@ export class TxEnvironmentService {
                includeAccountInfo = false,
                includeAccountObject = false,
                includeLedgerIndex = false,
+               includeLedgerInfo = false,
                includePaymentChannelObjects = false,
                includeMptObjects = false,
                includeGatewayBalance = false,
@@ -328,6 +338,14 @@ export class TxEnvironmentService {
           if (includeLedgerIndex) {
                tasks.currentLedger = this.xrplCache.getLedgerIndex(client, forceRefresh);
           }
+
+          if (includeLedgerInfo) {
+               tasks.ledgerInfo = this.xrplCache.getLedgerInfo(client, forceRefresh);
+          }
+
+          // if (includeLedgerInfo) {
+          //      tasks.ledgerInfo = this.xrplCache.getLedgerInfo(client, forceRefresh, ledgerInfoType);
+          // }
 
           if (includeAccountInfo) {
                tasks.accountInfo = this.xrplCache.getAccountInfo(address, forceRefresh);

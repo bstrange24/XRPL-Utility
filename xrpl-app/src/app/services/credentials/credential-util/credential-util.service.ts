@@ -283,7 +283,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
                          Issuer: obj.Issuer,
                          Subject: obj.Subject,
                          URI: this.decodeutf8Hex(obj.URI),
-                         Flags: this.utilsService.getCredentialStatus(obj.Flags),
+                         Flags: this.getCredentialStatus(obj.Flags),
                     };
                })
                .sort((a, b) => a.Expiration.localeCompare(b.Expiration));
@@ -302,7 +302,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
                          Issuer: obj.Issuer,
                          Subject: obj.Subject,
                          URI: this.decodeutf8Hex(obj.URI),
-                         Flags: this.utilsService.getCredentialStatus(obj.Flags),
+                         Flags: this.getCredentialStatus(obj.Flags),
                     };
                })
                .sort((a, b) => a.Expiration.localeCompare(b.Expiration));
@@ -318,7 +318,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
                Issuer: obj.Issuer,
                Subject: obj.Subject,
                URI: this.decodeutf8Hex(obj.URI),
-               Flags: this.utilsService.getCredentialStatus(obj.Flags),
+               Flags: this.getCredentialStatus(obj.Flags),
           };
      }
 
@@ -474,6 +474,10 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           }
      }
 
+     getCredentialStatus(flags: number): string {
+          return flags === 65536 ? 'Credential accepted' : 'Credential not accepted';
+     }
+
      buildSuccessMessage(type: CredentialTxType, formValues: any, extra: any): string {
           if (type === 'createCredential') {
                return `Successfully Create Credential`;
@@ -488,16 +492,60 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           let msg: string;
 
           if (type === 'createCredential') {
-               msg = `Simulated Credential create`;
+               msg = `Successfully simulated creating the Credential.`;
           } else if (type === 'deleteCredentials') {
-               msg = `Simulated Credential delete`;
+               msg = `Successfully simulated deleting the Credential.`;
           } else {
-               msg = `Simulated Credential accept`;
+               msg = `Successfully simulated accepting the Credential.`;
           }
 
           this.txUiService.resetCurrentStepToIdle();
           this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
 
           return { success: true, hash };
+     }
+
+     clearFields() {
+          this.txUiService.clearAllOptions();
+          this.txUiService.clearOptionalInputFields();
+          this.txUiService.clearAllOptionsAndMessages();
+          this.resetCredentialIdDropDown();
+     }
+
+     clearInputFields(): void {
+          if (this.txUiService.isSimulateEnabled()) return;
+          this.txUiService.clearAllFields();
+          this.txUiService.clearAllOptions();
+          this.resetCredentialIdDropDown();
+          // this.clearCredentialObject();
+          this.txUiService.credentialIDs.set([]);
+          this.txUiService.subject.set('');
+          this.txUiService.credentialIdSearchQuery.set('');
+          this.txUiService.credentialIdSearchTerm.set('');
+     }
+
+     clearCredentialObject(): void {
+          this.txUiService.credential().version = '';
+          this.txUiService.credential().credential_type = '';
+          this.txUiService.credential().issuer = '';
+          this.txUiService.credential().subject.full_name = '';
+          this.txUiService.credential().subject.destinationAddress = '';
+          this.txUiService.credential().subject.dob = '';
+          this.txUiService.credential().subject.country = '';
+          this.txUiService.credential().subject.id_type = '';
+          this.txUiService.credential().subject.id_number = '';
+          this.txUiService.credential().subject.expirationDate = '';
+          this.txUiService.credential().verification.method = '';
+          this.txUiService.credential().verification.verified_at = '';
+          this.txUiService.credential().verification.verifier = '';
+          this.txUiService.credential().hash = '';
+          this.txUiService.credential().uri = '';
+     }
+
+     resetCredentialIdDropDown(): void {
+          this.txUiService.selectedCredentials.set(null);
+          this.txUiService.credentialID.set('');
+          this.txUiService.credentialType.set('');
+          this.txUiService.credentialIssuer.set('');
      }
 }

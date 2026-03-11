@@ -12,6 +12,7 @@ import { WalletManagerService } from '../wallets/manager/wallet-manager.service'
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { MPToken, RippleState } from '../../models/interface-items.model';
 import * as bip39 from 'bip39';
+import { XrplDateService } from '../../core/xrpl-date.service';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -37,7 +38,8 @@ export class UtilsService {
           private readonly xrplService: XrplService,
           private readonly storageService: StorageService,
           private readonly walletManagerService: WalletManagerService,
-          public readonly txUiService: TransactionUiService
+          public readonly txUiService: TransactionUiService,
+          public readonly xrplDateService: XrplDateService
      ) {}
 
      MPT_FLAGS: Record<number, string> = {
@@ -50,190 +52,190 @@ export class UtilsService {
           0x00000040: 'CanClawback',
      };
 
-     ledgerEntryTypeFields = {
-          AccountRoot: {
-               fields: [
-                    { key: 'Account', format: (v: any) => v || null },
-                    { key: 'Balance', format: (v: any) => this.formatXRPLAmount(v || '0') },
-                    { key: 'Sequence', format: (v: any) => v || null },
-                    { key: 'OwnerCount', format: (v: any) => v || '0' },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-                    { key: 'Domain', format: (v: any) => v || null },
-                    { key: 'EmailHash', format: (v: any) => v || null },
-                    { key: 'index', format: (v: any) => v || null },
-                    { key: 'FirstNFTokenSequence', format: (v: any) => v || null },
-                    { key: 'MintedNFTokens', format: (v: any) => v || '0' },
-                    { key: 'Flags', format: (v: any) => v || '0' },
-               ],
-               label: 'Account',
-               pluralLabel: 'Accounts',
-          },
-          Escrow: {
-               fields: [
-                    { key: 'Account', format: (v: any) => v || null },
-                    { key: 'Amount', format: (v: any) => this.formatXRPLAmount(v || '0') },
-                    { key: 'Destination', format: (v: any) => v || null },
-                    { key: 'DestinationTag', format: (v: any) => v || null },
-                    { key: 'Sequence', format: (v: any) => v || null },
-                    { key: 'CancelAfter', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
-                    { key: 'FinishAfter', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
-                    { key: 'Condition', format: (v: any) => v || null },
-                    { key: 'memo', format: (v: any) => v || null },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-                    { key: 'index', format: (v: any) => v || null },
-               ],
-               label: 'Escrow',
-               pluralLabel: 'Escrows',
-          },
-          Offer: {
-               fields: [
-                    { key: 'Account', format: (v: any) => v || null },
-                    { key: 'TakerPays', format: (v: any) => (typeof v === 'object' ? `${v.value} ${v.currency}` : this.formatXRPLAmount(v || '0')) },
-                    { key: 'TakerGets', format: (v: any) => (typeof v === 'object' ? `${v.value} ${v.currency}` : this.formatXRPLAmount(v || '0')) },
-                    { key: 'Expiration', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
-                    { key: 'OfferSequence', format: (v: any) => v || null },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-                    { key: 'index', format: (v: any) => v || null },
-               ],
-               label: 'Offer',
-               pluralLabel: 'Offers',
-          },
-          RippleState: {
-               fields: [
-                    { key: 'Balance', format: (v: any) => (typeof v === 'object' ? this.formatXRPLAmount(v) : v || null) },
-                    { key: 'Flags', format: (v: any) => this.getFlagName(v) || '0' },
-                    { key: 'HighLimit', format: (v: any) => (typeof v === 'object' ? this.formatXRPLAmount(v) : v || null) },
-                    { key: 'HighNode', format: (v: any) => v || null },
-                    { key: 'LedgerEntryType', format: (v: any) => v || null },
-                    { key: 'LowLimit', format: (v: any) => (typeof v === 'object' ? this.formatXRPLAmount(v) : v || null) },
-                    { key: 'LowNode', format: (v: any) => v || null },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-                    { key: 'index', format: (v: any) => v || null },
-               ],
-               label: 'RippleState',
-               pluralLabel: 'RippleStates',
-          },
-          PayChannel: {
-               fields: [
-                    { key: 'Account', format: (v: any) => v || null },
-                    { key: 'Destination', format: (v: any) => v || null },
-                    { key: 'Amount', format: (v: any) => this.formatXRPLAmount(v || '0') },
-                    { key: 'Balance', format: (v: any) => this.formatXRPLAmount(v || '0') },
-                    { key: 'SettleDelay', format: (v: any) => v || null },
-                    { key: 'Expiration', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
-                    { key: 'CancelAfter', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-                    { key: 'index', format: (v: any) => v || null },
-               ],
-               label: 'Payment Channel',
-               pluralLabel: 'Payment Channels',
-          },
-          Check: {
-               fields: [
-                    { key: 'Account', format: (v: any) => v || null },
-                    { key: 'Destination', format: (v: any) => v || null },
-                    { key: 'Expiration', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
-                    { key: 'SendMax', format: (v: any) => (typeof v === 'object' ? `${v.value} ${v.currency}` : this.formatXRPLAmount(v || '0')) },
-                    { key: 'Sequence', format: (v: any) => v || null },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-                    { key: 'index', format: (v: any) => v || null },
-               ],
-               label: 'Check',
-               pluralLabel: 'Checks',
-          },
-          DepositPreauth: {
-               fields: [
-                    { key: 'Account', format: (v: any) => v || null },
-                    { key: 'Authorize', format: (v: any) => v || null },
-                    { key: 'Flags', format: (v: any) => v || null },
-                    { key: 'OwnerNode', format: (v: any) => v || null },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-                    { key: 'index', format: (v: any) => v || null },
-               ],
-               label: 'Deposit Preauthorization',
-               pluralLabel: 'Deposit Preauthorizations',
-          },
-          Ticket: {
-               fields: [
-                    { key: 'Account', format: (v: any) => v || null },
-                    { key: 'Flags', format: (v: any) => this.decodeNFTFlags(Number(v)) },
-                    { key: 'TicketSequence', format: (v: any) => v || null },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-                    { key: 'index', format: (v: any) => v || null },
-               ],
-               label: 'Ticket',
-               pluralLabel: 'Tickets',
-          },
-          DirectoryNode: {
-               fields: [
-                    { key: 'Flags', format: (v: any) => v || '0' },
-                    { key: 'Owner', format: (v: any) => v || null },
-                    { key: 'Indexes', format: (v: any) => (Array.isArray(v) ? v.join(', ') : v || null) },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-                    { key: 'index', format: (v: any) => v || null },
-                    { key: 'RootIndex', format: (v: any) => v || null },
-               ],
-               label: 'Directory',
-               pluralLabel: 'Directories',
-          },
-          AMM: {
-               fields: [
-                    { key: 'LPTokenBalance', format: (v: any) => `${v.value} ${v.currency}` },
-                    { key: 'TradingFee', format: (v: any) => v || null },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-                    { key: 'index', format: (v: any) => v || null },
-               ],
-               label: 'Automated Market Maker',
-               pluralLabel: 'Automated Market Makers',
-          },
-          NFTokenPage: {
-               fields: [
-                    { key: 'Flags', format: (v: any) => v || '0' },
-                    { key: 'LedgerEntryType', format: (v: any) => v || null },
-                    { key: 'NFTokens', format: (v: any) => (Array.isArray(v) ? v : null) },
-                    { key: 'index', format: (v: any) => v || null },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-               ],
-               label: 'NFTokenPage',
-               pluralLabel: 'NFTokenPages',
-          },
-          SignerList: {
-               fields: [
-                    { key: 'Flags', format: (v: any) => v || null },
-                    { key: 'SignerQuorum', format: (v: any) => v || null },
-                    { key: 'SignerEntries', format: (v: any) => (Array.isArray(v) ? v.map(e => e.SignerEntry.Account).join(', ') : null) },
-                    { key: 'SignerListID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnID', format: (v: any) => v || null },
-                    { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
-                    { key: 'index', format: (v: any) => v || null },
-               ],
-               label: 'Signer List',
-               pluralLabel: 'Signer Lists',
-          },
-          NFT: {
-               fields: [
-                    { key: 'Flags', format: (v: any) => this.decodeNFTFlags(Number(v)) },
-                    { key: 'Issuer', format: (v: any) => v || null },
-                    { key: 'NFTokenID', format: (v: any) => v || null },
-                    { key: 'NFTokenTaxon', format: (v: any) => (v === 0 ? null : v || null) },
-                    { key: 'URI', format: (v: any) => v || null },
-                    { key: 'nft_serial', format: (v: any) => v || null },
-               ],
-               label: 'NFT',
-               pluralLabel: 'NFTs',
-          },
-     };
+     // ledgerEntryTypeFields = {
+     //      AccountRoot: {
+     //           fields: [
+     //                { key: 'Account', format: (v: any) => v || null },
+     //                { key: 'Balance', format: (v: any) => this.formatXRPLAmount(v || '0') },
+     //                { key: 'Sequence', format: (v: any) => v || null },
+     //                { key: 'OwnerCount', format: (v: any) => v || '0' },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //                { key: 'Domain', format: (v: any) => v || null },
+     //                { key: 'EmailHash', format: (v: any) => v || null },
+     //                { key: 'index', format: (v: any) => v || null },
+     //                { key: 'FirstNFTokenSequence', format: (v: any) => v || null },
+     //                { key: 'MintedNFTokens', format: (v: any) => v || '0' },
+     //                { key: 'Flags', format: (v: any) => v || '0' },
+     //           ],
+     //           label: 'Account',
+     //           pluralLabel: 'Accounts',
+     //      },
+     //      Escrow: {
+     //           fields: [
+     //                { key: 'Account', format: (v: any) => v || null },
+     //                { key: 'Amount', format: (v: any) => this.formatXRPLAmount(v || '0') },
+     //                { key: 'Destination', format: (v: any) => v || null },
+     //                { key: 'DestinationTag', format: (v: any) => v || null },
+     //                { key: 'Sequence', format: (v: any) => v || null },
+     //                { key: 'CancelAfter', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
+     //                { key: 'FinishAfter', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
+     //                { key: 'Condition', format: (v: any) => v || null },
+     //                { key: 'memo', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //                { key: 'index', format: (v: any) => v || null },
+     //           ],
+     //           label: 'Escrow',
+     //           pluralLabel: 'Escrows',
+     //      },
+     //      Offer: {
+     //           fields: [
+     //                { key: 'Account', format: (v: any) => v || null },
+     //                { key: 'TakerPays', format: (v: any) => (typeof v === 'object' ? `${v.value} ${v.currency}` : this.formatXRPLAmount(v || '0')) },
+     //                { key: 'TakerGets', format: (v: any) => (typeof v === 'object' ? `${v.value} ${v.currency}` : this.formatXRPLAmount(v || '0')) },
+     //                { key: 'Expiration', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
+     //                { key: 'OfferSequence', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //                { key: 'index', format: (v: any) => v || null },
+     //           ],
+     //           label: 'Offer',
+     //           pluralLabel: 'Offers',
+     //      },
+     //      RippleState: {
+     //           fields: [
+     //                { key: 'Balance', format: (v: any) => (typeof v === 'object' ? this.formatXRPLAmount(v) : v || null) },
+     //                { key: 'Flags', format: (v: any) => this.getFlagName(v) || '0' },
+     //                { key: 'HighLimit', format: (v: any) => (typeof v === 'object' ? this.formatXRPLAmount(v) : v || null) },
+     //                { key: 'HighNode', format: (v: any) => v || null },
+     //                { key: 'LedgerEntryType', format: (v: any) => v || null },
+     //                { key: 'LowLimit', format: (v: any) => (typeof v === 'object' ? this.formatXRPLAmount(v) : v || null) },
+     //                { key: 'LowNode', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //                { key: 'index', format: (v: any) => v || null },
+     //           ],
+     //           label: 'RippleState',
+     //           pluralLabel: 'RippleStates',
+     //      },
+     //      PayChannel: {
+     //           fields: [
+     //                { key: 'Account', format: (v: any) => v || null },
+     //                { key: 'Destination', format: (v: any) => v || null },
+     //                { key: 'Amount', format: (v: any) => this.formatXRPLAmount(v || '0') },
+     //                { key: 'Balance', format: (v: any) => this.formatXRPLAmount(v || '0') },
+     //                { key: 'SettleDelay', format: (v: any) => v || null },
+     //                { key: 'Expiration', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
+     //                { key: 'CancelAfter', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //                { key: 'index', format: (v: any) => v || null },
+     //           ],
+     //           label: 'Payment Channel',
+     //           pluralLabel: 'Payment Channels',
+     //      },
+     //      Check: {
+     //           fields: [
+     //                { key: 'Account', format: (v: any) => v || null },
+     //                { key: 'Destination', format: (v: any) => v || null },
+     //                { key: 'Expiration', format: (v: any) => (v ? this.convertXRPLTime(v) : null) },
+     //                { key: 'SendMax', format: (v: any) => (typeof v === 'object' ? `${v.value} ${v.currency}` : this.formatXRPLAmount(v || '0')) },
+     //                { key: 'Sequence', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //                { key: 'index', format: (v: any) => v || null },
+     //           ],
+     //           label: 'Check',
+     //           pluralLabel: 'Checks',
+     //      },
+     //      DepositPreauth: {
+     //           fields: [
+     //                { key: 'Account', format: (v: any) => v || null },
+     //                { key: 'Authorize', format: (v: any) => v || null },
+     //                { key: 'Flags', format: (v: any) => v || null },
+     //                { key: 'OwnerNode', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //                { key: 'index', format: (v: any) => v || null },
+     //           ],
+     //           label: 'Deposit Preauthorization',
+     //           pluralLabel: 'Deposit Preauthorizations',
+     //      },
+     //      Ticket: {
+     //           fields: [
+     //                { key: 'Account', format: (v: any) => v || null },
+     //                { key: 'Flags', format: (v: any) => this.decodeNFTFlags(Number(v)) },
+     //                { key: 'TicketSequence', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //                { key: 'index', format: (v: any) => v || null },
+     //           ],
+     //           label: 'Ticket',
+     //           pluralLabel: 'Tickets',
+     //      },
+     //      DirectoryNode: {
+     //           fields: [
+     //                { key: 'Flags', format: (v: any) => v || '0' },
+     //                { key: 'Owner', format: (v: any) => v || null },
+     //                { key: 'Indexes', format: (v: any) => (Array.isArray(v) ? v.join(', ') : v || null) },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //                { key: 'index', format: (v: any) => v || null },
+     //                { key: 'RootIndex', format: (v: any) => v || null },
+     //           ],
+     //           label: 'Directory',
+     //           pluralLabel: 'Directories',
+     //      },
+     //      AMM: {
+     //           fields: [
+     //                { key: 'LPTokenBalance', format: (v: any) => `${v.value} ${v.currency}` },
+     //                { key: 'TradingFee', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //                { key: 'index', format: (v: any) => v || null },
+     //           ],
+     //           label: 'Automated Market Maker',
+     //           pluralLabel: 'Automated Market Makers',
+     //      },
+     //      NFTokenPage: {
+     //           fields: [
+     //                { key: 'Flags', format: (v: any) => v || '0' },
+     //                { key: 'LedgerEntryType', format: (v: any) => v || null },
+     //                { key: 'NFTokens', format: (v: any) => (Array.isArray(v) ? v : null) },
+     //                { key: 'index', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //           ],
+     //           label: 'NFTokenPage',
+     //           pluralLabel: 'NFTokenPages',
+     //      },
+     //      SignerList: {
+     //           fields: [
+     //                { key: 'Flags', format: (v: any) => v || null },
+     //                { key: 'SignerQuorum', format: (v: any) => v || null },
+     //                { key: 'SignerEntries', format: (v: any) => (Array.isArray(v) ? v.map(e => e.SignerEntry.Account).join(', ') : null) },
+     //                { key: 'SignerListID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnID', format: (v: any) => v || null },
+     //                { key: 'PreviousTxnLgrSeq', format: (v: any) => v || null },
+     //                { key: 'index', format: (v: any) => v || null },
+     //           ],
+     //           label: 'Signer List',
+     //           pluralLabel: 'Signer Lists',
+     //      },
+     //      NFT: {
+     //           fields: [
+     //                { key: 'Flags', format: (v: any) => this.decodeNFTFlags(Number(v)) },
+     //                { key: 'Issuer', format: (v: any) => v || null },
+     //                { key: 'NFTokenID', format: (v: any) => v || null },
+     //                { key: 'NFTokenTaxon', format: (v: any) => (v === 0 ? null : v || null) },
+     //                { key: 'URI', format: (v: any) => v || null },
+     //                { key: 'nft_serial', format: (v: any) => v || null },
+     //           ],
+     //           label: 'NFT',
+     //           pluralLabel: 'NFTs',
+     //      },
+     // };
 
      sleep(ms: number): Promise<void> {
           return new Promise(resolve => {
@@ -448,15 +450,29 @@ export class UtilsService {
           return Date.now() > (rippleTime + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000;
      }
 
-     toRippleTime(isoDate: string): number {
-          // Ripple epoch starts 2000-01-01T00:00:00Z
+     // toRippleTime(isoDate: string): number {
+     //      // Ripple epoch starts 2000-01-01T00:00:00Z
+     //      const rippleEpoch = Date.UTC(2000, 0, 1, 0, 0, 0);
+
+     //      // Parse the input date
+     //      const inputDate = new Date(isoDate).getTime();
+
+     //      // Convert ms → seconds and subtract epoch
+     //      return Math.floor((inputDate - rippleEpoch) / 1000);
+     // }
+
+     toRippleTime(dateString: string): number {
+          if (!dateString) throw new Error('Expiration date missing');
+
+          const date = new Date(dateString);
+
+          if (Number.isNaN(date.getTime())) {
+               throw new Error('Invalid expiration date');
+          }
+
           const rippleEpoch = Date.UTC(2000, 0, 1, 0, 0, 0);
 
-          // Parse the input date
-          const inputDate = new Date(isoDate).getTime();
-
-          // Convert ms → seconds and subtract epoch
-          return Math.floor((inputDate - rippleEpoch) / 1000);
+          return Math.floor((date.getTime() - rippleEpoch) / 1000);
      }
 
      fromRippleTime(rippleTime: number): { isoUTC: string; est: string } {
@@ -871,10 +887,6 @@ export class UtilsService {
           return result.length ? result.join(', ') : 'None';
      }
 
-     getCredentialStatus(flags: number): string {
-          return flags === 65536 ? 'Credential accepted' : 'Credential not accepted';
-     }
-
      parseTransferRateToPercentage(transferRate: string) {
           const rate = Number.parseInt(transferRate, 10);
           if (Number.isNaN(rate) || rate < 1000000000) {
@@ -889,11 +901,11 @@ export class UtilsService {
           return formatter.format(utcDate);
      }
 
-     toLocalDateTimeString(date: Date): string {
-          const pad = (n: number) => n.toString().padStart(2, '0');
+     // toLocalDateTimeString(date: Date): string {
+     //      const pad = (n: number) => n.toString().padStart(2, '0');
 
-          return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T` + `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-     }
+     //      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T` + `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+     // }
 
      dateFormatter() {
           // Format the date in EST (America/New_York handles EST/EDT automatically)
@@ -911,13 +923,13 @@ export class UtilsService {
           });
      }
 
-     convertDateTimeToRippleTime(dateTimeField: string) {
-          const date = new Date(dateTimeField); // parses as local time
-          const unixTimestamp = Math.floor(date.getTime() / 1000); // milliseconds ➜ seconds
-          const afterDate = unixTimestamp - AppConstants.RIPPLE_EPOCH_OFFSET;
-          console.log('XRPL CancelAfter:', afterDate);
-          return afterDate;
-     }
+     // convertDateTimeToRippleTime(dateTimeField: string) {
+     //      const date = new Date(dateTimeField); // parses as local time
+     //      const unixTimestamp = Math.floor(date.getTime() / 1000); // milliseconds ➜ seconds
+     //      const afterDate = unixTimestamp - AppConstants.RIPPLE_EPOCH_OFFSET;
+     //      console.log('XRPL CancelAfter:', afterDate);
+     //      return afterDate;
+     // }
 
      addTime(amount: any, unit: 'seconds' | 'minutes' | 'hours' | 'days' = 'seconds', date = new Date()) {
           const multiplierMap = {
@@ -940,33 +952,33 @@ export class UtilsService {
           return rippleEpoch;
      }
 
-     setDateTimeFieldToNow() {
-          const now = new Date();
-          const year = now.getFullYear();
-          const month = String(now.getMonth() + 1).padStart(2, '0');
-          const day = String(now.getDate()).padStart(2, '0');
-          const hours = String(now.getHours()).padStart(2, '0');
-          const minutes = String(now.getMinutes()).padStart(2, '0');
-          const seconds = String(now.getSeconds()).padStart(2, '0');
-          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-     }
+     // setDateTimeFieldToNow() {
+     //      const now = new Date();
+     //      const year = now.getFullYear();
+     //      const month = String(now.getMonth() + 1).padStart(2, '0');
+     //      const day = String(now.getDate()).padStart(2, '0');
+     //      const hours = String(now.getHours()).padStart(2, '0');
+     //      const minutes = String(now.getMinutes()).padStart(2, '0');
+     //      const seconds = String(now.getSeconds()).padStart(2, '0');
+     //      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+     // }
 
-     addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
-          let currentValue = fieldSignal();
+     // addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
+     //      let currentValue = fieldSignal();
 
-          // If field is empty, start from now
-          if (!currentValue) {
-               const now = new Date();
-               currentValue = this.formatDateTimeLocal(now);
-          }
+     //      // If field is empty, start from now
+     //      if (!currentValue) {
+     //           const now = new Date();
+     //           currentValue = this.xrplDateService.formatDateTimeLocal(now);
+     //      }
 
-          const date = new Date(currentValue);
-          date.setSeconds(date.getSeconds() + seconds);
+     //      const date = new Date(currentValue);
+     //      date.setSeconds(date.getSeconds() + seconds);
 
-          const newDateTime = this.formatDateTimeLocal(date);
+     //      const newDateTime = this.formatDateTimeLocal(date);
 
-          writableSignal.set(newDateTime);
-     }
+     //      writableSignal.set(newDateTime);
+     // }
 
      formatDateTimeLocal(date: Date): string {
           const year = date.getFullYear();
@@ -1609,39 +1621,39 @@ export class UtilsService {
           }
      }
 
-     formatValue(key: string, value: any, nestedFields: string[] = []): string {
-          if (key === 'Account' || key.includes('PubKey') || key.includes('Signature') || key.includes('index')) {
-               return `<code>${value}</code>`;
-          }
-          if (key === 'Flags') {
-               return this.getFlagName(String(value));
-          }
-          if (typeof value === 'string' && value.length > 50) {
-               return `<code>${value.slice(0, 50)}...</code>`;
-          }
-          if (key === 'Memos') {
-               const memoData = value[0].Memo.MemoData;
-               const memoType = value[0].Memo.MemoType;
-               return this.decodeHex(memoData) + (memoType ? ` (${this.decodeHex(memoType)})` : '');
-          }
-          if (key === 'Domain' || key === 'EmailHash' || key === 'URI') {
-               return this.decodeHex(value);
-          }
-          if (key === 'Balance' && typeof value === 'object') {
-               return `${value.value} ${value.currency}${value.issuer ? ` (<code>${value.issuer}</code>)` : ''}`;
-          }
-          if (key === 'Balance' || key === 'Fee') {
-               return this.formatXRPLAmount(value);
-          }
-          if (key === 'date' || key === 'CancelAfter' || key === 'FinishAfter' || key === 'Expiration') {
-               return this.convertXRPLTime(value);
-          }
-          if (typeof value === 'object') {
-               return this.formatAmount(value);
-          }
+     // formatValue(key: string, value: any, nestedFields: string[] = []): string {
+     //      if (key === 'Account' || key.includes('PubKey') || key.includes('Signature') || key.includes('index')) {
+     //           return `<code>${value}</code>`;
+     //      }
+     //      if (key === 'Flags') {
+     //           return this.getFlagName(String(value));
+     //      }
+     //      if (typeof value === 'string' && value.length > 50) {
+     //           return `<code>${value.slice(0, 50)}...</code>`;
+     //      }
+     //      if (key === 'Memos') {
+     //           const memoData = value[0].Memo.MemoData;
+     //           const memoType = value[0].Memo.MemoType;
+     //           return this.decodeHex(memoData) + (memoType ? ` (${this.decodeHex(memoType)})` : '');
+     //      }
+     //      if (key === 'Domain' || key === 'EmailHash' || key === 'URI') {
+     //           return this.decodeHex(value);
+     //      }
+     //      if (key === 'Balance' && typeof value === 'object') {
+     //           return `${value.value} ${value.currency}${value.issuer ? ` (<code>${value.issuer}</code>)` : ''}`;
+     //      }
+     //      if (key === 'Balance' || key === 'Fee') {
+     //           return this.formatXRPLAmount(value);
+     //      }
+     //      if (key === 'date' || key === 'CancelAfter' || key === 'FinishAfter' || key === 'Expiration') {
+     //           return this.convertXRPLTime(value);
+     //      }
+     //      if (typeof value === 'object') {
+     //           return this.formatAmount(value);
+     //      }
 
-          return String(value);
-     }
+     //      return String(value);
+     // }
 
      increasesOwnerCount(tx: any): boolean {
           const type = tx.TransactionType;

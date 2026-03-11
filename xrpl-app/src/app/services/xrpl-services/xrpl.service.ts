@@ -475,7 +475,7 @@ export class XrplService {
           try {
                const response = await client.request({
                     command: 'ledger',
-                    ledger_index: 'closed',
+                    ledger_index: 'validated',
                });
                return response.result.ledger_index;
           } catch (error: any) {
@@ -510,6 +510,31 @@ export class XrplService {
           } catch (error: any) {
                console.error('Error fetching Ripple time:', error);
                throw new Error(`Failed to fetch Ripple time: ${error.message || 'Unknown error'}`);
+          }
+     }
+
+     async getLedgerInfo(client: Client): Promise<any> {
+          try {
+               // Make parallel requests for different ledger types
+               const [validatedResponse, currentResponse] = await Promise.all([
+                    client.request({
+                         command: 'ledger',
+                         ledger_index: 'validated',
+                    }),
+                    client.request({
+                         command: 'ledger',
+                         ledger_index: 'current',
+                    }),
+               ]);
+
+               return {
+                    lastIndex: validatedResponse.result.ledger_index,
+                    closeTime: currentResponse.result.ledger.close_time,
+                    currentRippleTime: validatedResponse.result.ledger.close_time,
+               };
+          } catch (error: any) {
+               console.error(`Error fetching LedgerInfo:`, error);
+               throw new Error(`Failed to fetch LedgerInfo: ${error.message || 'Unknown error'}`);
           }
      }
 

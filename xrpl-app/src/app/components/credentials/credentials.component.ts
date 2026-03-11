@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
@@ -10,7 +10,6 @@ import { AppConstants } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { ToastService } from '../../services/toast/toast.service';
-import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
@@ -22,150 +21,87 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { CredentialItem } from '../../models/interface-items.model';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
-import { SendXrpTransactionOrchestratorService } from '../../services/send-xrp/send-xrp-orchestrator/send-xrp-transaction-orchestrator.service';
-import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { CredentialTransactionOrchestratorService } from '../../services/credentials/credential-transaction-orchestrator/credential-transaction-orchestrator.service';
 import { CredentialUtilService } from '../../services/credentials/credential-util/credential-util.service';
 // import { RequirementsInfoComponent } from '../../components/shared/requirements-info/requirements-info/requirements-info.component';
 import { RequirementsInfoComponent } from './ui-components/credential-requirements-info/requirements-info/requirements-info.component';
 import { ActivatedRoute } from '@angular/router';
+import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
+import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
+import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
+import { XrplExpirationInputComponent } from '../shared/xrpl-expiration-input/xrpl-expiration-input.component';
+import { XrplDateService } from '../../core/xrpl-date.service';
 
 @Component({
      selector: 'app-credentials',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, RequirementsInfoComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, XrplExpirationInputComponent, RequirementsInfoComponent],
      templateUrl: './credentials.component.html',
      styleUrl: './credentials.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateCredentialsComponent extends PerformanceBaseComponent implements OnInit {
+export class CreateCredentialsComponent extends WalletDestinationBase implements OnInit {
      public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
-     public readonly txUiService = inject(TransactionUiService);
-     private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly copyUtilService = inject(CopyUtilService);
-     public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
-     public readonly txEnvironmentService = inject(TxEnvironmentService);
-     public readonly transactionDropdownService = inject(TransactionDropdownService);
-     public readonly acccountDataService = inject(AcccountDataService);
-     public readonly sendXrpTransactionOrchestratorService = inject(SendXrpTransactionOrchestratorService);
-     public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
-     private readonly walletManager = inject(WalletManagerService);
      private readonly credentialTransactionOrchestratorService = inject(CredentialTransactionOrchestratorService);
      public readonly credentialUtilService = inject(CredentialUtilService);
-     public readonly route = inject(ActivatedRoute);
+     public readonly transactionUiService = inject(TransactionUiService);
+     public readonly xrplDateService = inject(XrplDateService);
 
-     selectedDestinationAddress = signal<string>('');
-     destinationSearchQuery = signal<string>('');
      activeTab = signal<'create' | 'accept' | 'delete' | 'verify'>('create');
-     currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal<boolean>(false);
-     wallets = signal<Wallet[]>([]);
 
-     allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
-     destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
-     destinationItems = this.transactionDropdownService.destinationItems(this.allDestinations);
-     selectedDestinationItem = this.transactionDropdownService.selectedDestinationItem(this.selectedDestinationAddress, this.destinationMap, this.destinationItems);
-     filteredDestinations = this.transactionDropdownService.filteredDestinations(this.allDestinations, this.destinationSearchQuery);
-     destinationDisplay = this.transactionDropdownService.destinationDisplay(this.selectedDestinationAddress, this.destinationSearchQuery, this.destinationMap);
-
-     readonly walletName = computed(() => this.currentWallet()?.name || 'Selected wallet');
-     readonly currentAddress = computed(() => this.currentWallet().address);
-     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
-     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-     readonly canSubmit = computed(() => this.isIdle() && this.hasWallets());
-     readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
-
-     readonly summaryMessage = computed(() => this.credentialUtilService.summaryMessage(this.activeTab()));
-     readonly credentialsToShow = computed(() => this.credentialUtilService.credentialsToShow(this.activeTab()));
-     readonly credentialItems = computed(() => this.credentialUtilService.credentialItems(this.activeTab(), this.currentWallet().address));
-     readonly actionButtonLabel = computed(() => this.credentialUtilService.actionButtonLabel(this.activeTab()));
-     readonly actionButtonClass = computed(() => this.credentialUtilService.actionButtonClass(this.activeTab()));
-
-     // Has wallets → warning handling
-     private readonly _hasWalletsEffect = effect(() => {
-          console.log('_hasWalletsEffect');
-          if (this.walletManager.hasWallets()) {
-               this.txUiService.clearWarning?.();
-          } else {
-               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-               this.txUiService.setError('');
-               this.txUiService.setInfoMessage('');
-          }
-     });
-
-     // Effect 2: Wallets list sync
-     private readonly _walletsSyncEffect = effect(() => {
-          console.log('_walletsSyncEffect');
-          this.wallets.set(this.walletManager.wallets());
-     });
-
-     // Effect 3: Selected index change → clear + refresh checks
-     private readonly _selectedIndexEffect = effect(() => {
-          console.log('_selectedIndexEffect');
-          // Reading the signal is enough to trigger the effect
-          this.walletManager.selectedIndex();
-
-          this.txUiService.clearAllOptionsAndMessages();
-
-          // Fire-and-forget refresh
-          void this.getCredentialsForAccount(false);
-     });
-
-     readonly selectedCredentialItem = computed(() => {
-          const id = this.txUiService.credentialID();
-          if (!id) return null;
-          return this.credentialUtilService.credentialItems(this.activeTab(), this.currentAddress()).find(i => i.id === id) || null;
-     });
-
-     readonly infoData = computed(() => {
-          const wallet = this.currentWallet();
-          if (!wallet?.address) return null;
-
+     readonly vm = computed(() => {
           const tab = this.activeTab();
+          const wallet = this.currentWallet();
+          const address = wallet?.address ?? '';
+
+          const credentialItems = this.credentialUtilService.credentialItems(tab, address);
+          const credentialsToShow = this.credentialUtilService.credentialsToShow(tab);
+
+          const selectedId = this.txUiService.credentialID();
+          const selectedCredentialItem = selectedId ? (credentialItems.find(i => i.id === selectedId) ?? null) : null;
 
           return {
-               walletName: wallet.name || 'Selected wallet',
-               mode: tab,
-               issuedByMe: this.credentialUtilService.issuedByMe(),
-               issuedToMe: this.credentialUtilService.issuedToMe(),
-               pendingIssued: this.credentialUtilService.pendingIssued(),
-               acceptedIssued: this.credentialUtilService.acceptedIssued(),
-               pendingToAccept: this.credentialUtilService.pendingToAccept(),
-               acceptedByMe: this.credentialUtilService.acceptedByMe(),
-               credentialsToShow: this.credentialsToShow(),
+               tab,
+               wallet,
+               walletName: wallet?.name || 'Selected wallet',
+               address,
+
+               credentialItems,
+               credentialsToShow,
+               selectedCredentialItem,
+
+               summaryMessage: this.credentialUtilService.summaryMessage(tab),
+               actionButtonLabel: this.credentialUtilService.actionButtonLabel(tab),
+               actionButtonClass: this.credentialUtilService.actionButtonClass(tab),
+
+               hasCredentials: credentialsToShow.length > 0,
+               isVerifyEmpty: tab === 'verify' && credentialItems.length === 0,
           };
      });
 
-     constructor() {
-          super();
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
-          const tab = this.route.snapshot.queryParamMap.get('tab');
-          if (tab) {
-               const allowedTabs = ['create', 'accept', 'delete', 'verify'] as const;
-               type TabType = (typeof allowedTabs)[number];
-               if (tab && allowedTabs.includes(tab as TabType)) {
-                    // Type assertion is safe because we checked includes
-                    this.setTab(tab as TabType);
-               }
-          }
-
+          this.applyTabFromQueryParam(this.route, ['create', 'accept', 'delete', 'verify'] as const, tab => this.setTab(tab));
           this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
+     }
+
+     protected async onSelectedWalletIndexChange(): Promise<void> {
+          await this.getCredentialsForAccount(false);
      }
 
      selectWallet(wallet: Wallet): void {
@@ -183,18 +119,10 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           return cred.index;
      }
 
-     trackByWalletAddress(_index: number, wallet: any) {
-          return wallet.address;
-     }
-
-     toggleInfoPanel() {
-          this.infoPanelExpanded.update(expanded => !expanded);
-     }
-
      async setTab(tab: 'create' | 'accept' | 'delete' | 'verify'): Promise<void> {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
-          this.resetCredentialIdDropDown();
+          this.credentialUtilService.resetCredentialIdDropDown();
           this.txUiService.clearAllOptionsAndMessages();
           this.txUiService.clearOptionalExpirationDate();
           if (this.hasWallets()) {
@@ -215,7 +143,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
 
                     this.refreshAccountObject(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-                    this.clearFields();
+                    this.credentialUtilService.clearFields();
                } catch (error: any) {
                     console.error('Error in getCredentialsForAccount:', error);
                     this.toastService.error(error.message || 'Error getting credential detail', AppConstants.TOAST.ERROR);
@@ -254,7 +182,7 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                          action = 'createCredential';
                          extra = {
                               credentialType: this.txUiService.credential().credential_type,
-                              expirationRipple: this.utilsService.toRippleTime(this.txUiService.credential().subject.expirationDate || ''),
+                              expirationRipple: this.xrplDateService.toRippleTime(this.txUiService.credential().subject.expirationDate),
                               subject: destination,
                               uri: this.txUiService.credential().uri || '',
                          };
@@ -372,10 +300,11 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           });
 
           // UI refresh & side-effects — after timing ends
-          if (!this.txUiService.isSimulateEnabled() && txResult) {
+          // if (!this.txUiService.isSimulateEnabled() && txResult) {
+          if (txResult) {
                await this.handleTxResult(txResult, envRef.client, envRef.wallet, destination, credentialIssuer, '');
                if (currentTab === 'delete') {
-                    this.resetCredentialIdDropDown();
+                    this.credentialUtilService.resetCredentialIdDropDown();
                }
           }
 
@@ -383,30 +312,16 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      }
 
      private async handleVerifyCredential(): Promise<boolean> {
-          const env = await this.txEnvironmentService.prepareTxEnvironment({
-               includeAccountInfo: true,
-               includeAccountObject: true,
-               includeFee: true,
-               includeLedgerIndex: true,
-          });
-
-          const { accountInfo, client } = env;
+          const env = await this.txEnvironmentService.prepareTxEnvironment({ includeAccountInfo: true, includeLedgerInfo: true });
+          const { accountInfo, client, ledgerInfo } = env;
 
           const inputs = this.txUiService.getValidationInputs({
                wallet: this.currentWallet(),
                network: { accountInfo },
-               credentials: {
-                    credentialId: this.txUiService.credentialID(),
-                    credentialType: this.txUiService.credentialType(),
-               },
+               credentials: { credentialId: this.txUiService.credentialID(), credentialType: this.txUiService.credentialType() },
           });
 
-          const errors = await this.validationService.validate('CredentialVerify', {
-               inputs,
-               client,
-               accountInfo,
-          });
-
+          const errors = await this.validationService.validate('CredentialVerify', { inputs, client, accountInfo });
           if (errors.length > 0) {
                this.toastService.error(errors.join('\n• '), AppConstants.TOAST.ERROR);
                return false;
@@ -471,18 +386,15 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
                return false;
           }
 
-          // Expiration check (no extra XRPL call)
           if (credential.Expiration) {
-               const currentRippleTime = Math.floor(Date.now() / 1000) - AppConstants.RIPPLE_EPOCH_OFFSET;
-
-               const expirationISO = rippleTimeToISOTime(credential.Expiration);
-               console.info(`Credential expires at: ${expirationISO}`);
-
-               if (currentRippleTime > credential.Expiration) {
-                    console.info('Credential is expired.');
-                    this.toastService.error('Credential is expired.', AppConstants.TOAST.ERROR);
+               if (this.xrplDateService.isExpired(credential.Expiration, ledgerInfo.currentRippleTime)) {
+                    console.info('CCredential is verified but has expired.');
+                    this.toastService.error('Credential is verified but has expired.', AppConstants.TOAST.ERROR);
                     return false;
                }
+
+               const expirationISO = this.xrplDateService.rippleToISO(credential.Expiration);
+               console.info(`Credential expires at: ${expirationISO}`);
           }
 
           console.info('Credential is verified.');
@@ -493,58 +405,13 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
           return true;
      }
 
-     private async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, credentialIssuer: string | null, errorMessage: string): Promise<boolean> {
-          if (!result.success) {
-               this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
-               return false;
-          }
-
-          await this.refreshAfterTx(client, wallet, destination, credentialIssuer);
-
-          this.clearInputFields();
-          return true;
-     }
-
-     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, credentialIssuer: string | null): Promise<void> {
-          const env = await this.txEnvironmentService.prepareTxEnvironment({
-               includeAccountInfo: true,
-               includeAccountObject: true,
-               forceRefresh: true,
-          });
-
-          this.refreshAccountObject(env);
-
-          const addresses = [wallet.classicAddress];
-          if (destination) addresses.push(destination);
-          if (credentialIssuer) addresses.push(credentialIssuer);
-
-          await this.refreshWallets(client, addresses);
-
-          this.addCustomDestination(destination);
-          this.acccountDataService.refreshUiState(wallet, env.accountInfo!, env.accountObjects);
-     }
-
-     private refreshAccountObject(env: any): void {
+     protected refreshAccountObject(env: any): void {
           this.txUiService.existingCredentials.set(this.credentialUtilService.getExistingCredentials(env.accountObjects, env.wallet.classicAddress));
           this.txUiService.subjectCredentials.set(this.credentialUtilService.getSubjectCredentials(env.accountObjects, env.wallet.classicAddress));
      }
 
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(
-               client,
-               addresses, // only the addresses to target
-               (_updatedList, newCurrent) => {
-                    this.currentWallet.set({ ...newCurrent });
-               }
-          );
-     }
-
-     private addCustomDestination(destination: string | null): void {
-          if (!destination) return;
-          const addr = destination.trim();
-          if (xrpl.isValidAddress(addr) && !this.destinationMap().has(addr)) {
-               this.transactionDropdownService.addCustomIfNewAndSelect(destination, this.destinationMap, this.selectedDestinationAddress, this.destinationSearchQuery);
-          }
+     protected clearInputFields(): void {
+          this.credentialUtilService.clearInputFields();
      }
 
      onCredentialSelected(item: SelectItem | null) {
@@ -579,34 +446,5 @@ export class CreateCredentialsComponent extends PerformanceBaseComponent impleme
      onCredentialIdInput(event: Event): void {
           const value = (event.target as HTMLInputElement).value;
           this.txUiService.credentialIdSearchQuery.set(value);
-     }
-
-     onDestinationSelected(item: SelectItem | null) {
-          this.selectedDestinationAddress.set(item?.id || '');
-     }
-
-     populateDefaultDateTime(): void {
-          this.credentialUtilService.setCredentialExpirationToNow();
-     }
-
-     clearFields() {
-          this.txUiService.clearAllOptions();
-          this.txUiService.clearOptionalInputFields();
-          this.txUiService.clearAllOptionsAndMessages();
-          this.resetCredentialIdDropDown();
-     }
-
-     clearInputFields(): void {
-          if (this.txUiService.isSimulateEnabled()) return;
-          this.txUiService.clearAllFields();
-          this.txUiService.clearAllOptions();
-          this.txUiService.credentialIDs.set([]);
-     }
-
-     resetCredentialIdDropDown() {
-          this.txUiService.selectedCredentials.set(null);
-          this.txUiService.credentialID.set('');
-          this.txUiService.credentialType.set('');
-          this.txUiService.credentialIssuer.set('');
      }
 }

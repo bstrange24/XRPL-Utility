@@ -34,6 +34,7 @@ import { PaymentChannelOrchestratorService } from '../../services/payment-channe
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
+import { XrplDateService } from '../../core/xrpl-date.service';
 
 @Component({
      selector: 'app-account',
@@ -66,6 +67,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      public readonly paymentChannelOrchestratorService = inject(PaymentChannelOrchestratorService);
      private readonly walletManager = inject(WalletManagerService);
      public readonly route = inject(ActivatedRoute);
+     public readonly xrplDateService = inject(XrplDateService);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -658,11 +660,11 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      }
 
      addCancelAfterToExpiration(seconds: number): void {
-          this.utilsService.addToDateTimeField(this.txUiService.paymentChannelCancelAfterTimeField, this.txUiService.paymentChannelCancelAfterTimeField, seconds);
+          // this.xrplDateService.addSeconds(this.txUiService.paymentChannelCancelAfterTimeField, this.txUiService.paymentChannelCancelAfterTimeField);
      }
 
      setCancelAfterExpirationToNow() {
-          this.txUiService.paymentChannelCancelAfterTimeField.set(this.utilsService.setDateTimeFieldToNow());
+          // this.txUiService.paymentChannelCancelAfterTimeField.set(this.utilsService.setDateTimeFieldToNow());
      }
 
      populateDefaultDateTime() {

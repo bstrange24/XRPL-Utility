@@ -96,6 +96,29 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
      readonly setPermissionedDomainButtonLabel = this.buildTxLabel('Set Permissioned Domain');
      readonly deletePermissionedDomainButtonLabel = this.buildTxLabel('Delete Permissioned Domain');
 
+     actionButtonLabel(tab: 'set' | 'delete') {
+          switch (tab) {
+               case 'set':
+                    return this.setPermissionedDomainButtonLabel();
+               case 'delete':
+                    return this.deletePermissionedDomainButtonLabel();
+          }
+     }
+
+     actionButtonClass(tab: 'set' | 'delete') {
+          switch (tab) {
+               case 'set':
+                    return 'btn-primary-blue';
+               case 'delete':
+                    return 'btn-primary-red';
+          }
+     }
+
+     resetDomainDropDown() {
+          this.selectedDomainId.set(null);
+          this.txUiService.domainId.set('');
+     }
+
      selectedDomainItem = computed(() => {
           const id = this.selectedDomainId();
           if (!id) return null;
@@ -176,5 +199,27 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
           this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
 
           return { success: true, hash };
+     }
+
+     clearFields() {
+          this.txUiService.clearAllOptions();
+          this.txUiService.clearOptionalInputFields();
+          this.txUiService.clearAllOptionsAndMessages();
+          this.resetCredentialIdDropDown();
+     }
+
+     clearInputFields() {
+          if (this.txUiService.isSimulateEnabled()) return;
+          this.txUiService.clearAllFields();
+          this.txUiService.clearAllOptions();
+          this.txUiService.credentialType.set('');
+          this.txUiService.domainId.set('');
+          this.selectedDomainId.set(null);
+     }
+
+     resetCredentialIdDropDown() {
+          this.txUiService.credentialType.set('');
+          this.txUiService.domainId.set('');
+          this.selectedDomainId.set(null);
      }
 }

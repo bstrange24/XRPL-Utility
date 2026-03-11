@@ -37,6 +37,7 @@ import { EscrowCancelItemComponent } from '../time-escrow/ui-components/escrow-c
 import { EscrowCreateItemComponent } from '../time-escrow/ui-components/escrow-create-item/escrow-create-item.component';
 import { EscrowFinishItemComponent } from '../time-escrow/ui-components/escrow-finish-item/escrow-finish-item.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { XrplDateService } from '../../core/xrpl-date.service';
 
 @Component({
      selector: 'app-conditional-escrow',
@@ -70,6 +71,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      public readonly escrowUtilService = inject(EscrowUtilService);
      public readonly timeBasedEscrowOrchestrator = inject(TimeBasedEscrowOrchestrator);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly xrplDateService = inject(XrplDateService);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -816,11 +818,11 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      }
 
      setEscrowFinishAfterExpirationToNow(): void {
-          this.txUiService.escrowFinishTimeField.set(this.utilsService.formatDateTimeLocal(new Date()));
+          this.txUiService.escrowFinishTimeField.set(this.xrplDateService.toLocalDateTimeString(new Date()));
      }
 
      setEscrowCancelAfterExpirationToNow(): void {
-          this.txUiService.escrowCancelTimeField.set(this.utilsService.formatDateTimeLocal(new Date()));
+          this.txUiService.escrowCancelTimeField.set(this.xrplDateService.toLocalDateTimeString(new Date()));
      }
 
      addEscrowFinishToExpiration(seconds: number): void {

@@ -71,6 +71,7 @@ export const AppConstants = {
      CREDENTIAL_REGEX: /^[0-9A-F]{2,128}$/,
      LSF_ACCEPTED: 0x00010000,
      SKIP_THRESHOLD_MS: 60 * 1000,
+     RIPPLE_EPOCH: Date.UTC(2000, 0, 1, 0, 0, 0),
      RIPPLE_EPOCH_START: new Date('2000-01-01T00:00:00Z').getTime() / 1000,
      RIPPLE_EPOCH_OFFSET: 946684800,
 

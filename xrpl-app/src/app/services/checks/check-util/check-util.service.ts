@@ -13,6 +13,7 @@ import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropd
 import { AppConstants } from '../../../core/app.constants';
 import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { XrplDateService } from '../../../core/xrpl-date.service';
 
 type CheckConfigTxDisplayType = 'create' | 'cash' | 'cancel';
 type IconType = 'ng-icon' | 'lucide-icon';
@@ -30,6 +31,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactions = inject(XrplTransactionService);
+     public readonly xrplDateService = inject(XrplDateService);
 
      readonly tabs: {
           key: CheckConfigTxDisplayType;
@@ -299,13 +301,13 @@ export class CheckUtilService extends PerformanceBaseComponent {
           // If field is empty, start from now
           if (!currentValue) {
                const now = new Date();
-               currentValue = this.utilsService.formatDateTimeLocal(now);
+               currentValue = this.xrplDateService.toLocalDateTimeString(now);
           }
 
           const date = new Date(currentValue);
           date.setSeconds(date.getSeconds() + seconds);
 
-          const newDateTime = this.utilsService.formatDateTimeLocal(date);
+          const newDateTime = this.xrplDateService.toLocalDateTimeString(date);
 
           writableSignal.set(newDateTime);
      }

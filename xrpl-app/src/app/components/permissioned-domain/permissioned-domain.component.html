@@ -6,6 +6,7 @@
      </div>
 </div>
 
+@let info = infoData();
 <!-- Get active tab -->
 @let tab = activeTab();
 <!-- Get tab data -->
@@ -17,7 +18,7 @@
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
 
           <!-- Center form -->
           <div class="form-panel">
@@ -45,7 +46,7 @@
                </div>
 
                <!-- Info Message -->
-               @if (infoData(); as info) {
+               @if (info) {
                <div class="info-and-credentials-card" [class.has-domains]="info.permissionedDomainCount > 0">
                     <!-- Always-visible summary row -->
                     <div class="summary-header">
@@ -77,7 +78,9 @@
                                         </app-tooltip-link>
                                         <pre class="json-pretty issuer-hint">{{ utilsService.parseUiJson(domain.AcceptedCredentials) | json }}</pre>
                                    </div>
-                                   <button (click)="copyAndToast(domain.index, 'Domain ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Domain ID">
+
+                                   <!-- Copy button -->
+                                   <button (click)="copyUtilService.copyAndToast(domain.index, 'Domain ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Domain ID">
                                         <lucide-icon name="copy" size="15"></lucide-icon>
                                    </button>
                               </li>
@@ -139,7 +142,7 @@
 
                     <!-- Action buttons -->
                     <div class="button-row">
-                         <button type="button" [class]="actionButtonClass()" (click)="performAction()" [disabled]="!canSubmit()">{{ actionButtonLabel() }}</button>
+                         <button type="button" [class]="info?.actionButtonClass" (click)="performAction()" [disabled]="!canSubmit()">{{ info?.actionButtonLabel }}</button>
                     </div>
 
                     <!-- Execution time -->

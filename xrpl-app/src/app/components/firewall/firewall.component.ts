@@ -619,7 +619,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     const timePeriod = this.utilsService.addTime(this.finishTimePeriodField(), this.finishTimePeriodField() as 'seconds' | 'minutes' | 'hours' | 'days');
                     const timePeriodStart = this.utilsService.addTime(this.cancelTimePeriodField(), this.cancelTimePeriodField() as 'seconds' | 'minutes' | 'hours' | 'days');
                     console.log(`timePeriodUnit: ${this.finishTimePeriodUnit()} timePeriodStartUnit: ${this.cancelTimePeriodUnit()}`);
-                    console.log(`timePeriod: ${this.utilsService.convertXRPLTime(timePeriod)} timePeriodStart: ${this.utilsService.convertXRPLTime(timePeriodStart)}`);
+                    // console.log(`timePeriod: ${this.utilsService.convertXRPLTime(timePeriod)} timePeriodStart: ${this.utilsService.convertXRPLTime(timePeriodStart)}`);
                     console.log(`Total Out: `, this.totalOutField);
                     console.log(`Amount: `, this.amountField);
                     console.log(`Backup account: `, this.backupAccountField);

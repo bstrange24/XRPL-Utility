@@ -12,6 +12,7 @@ import { EscrowDataForUI, EscrowDropdownItem, EscrowObject, EscrowValidationInpu
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
 import { AppConstants } from '../../../core/app.constants';
+import { XrplDateService } from '../../../core/xrpl-date.service';
 
 type EscrowTxType = 'create' | 'finish' | 'cancel';
 
@@ -29,6 +30,7 @@ export class EscrowUtilService {
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactions = inject(XrplTransactionService);
      private readonly xrplCache = inject(XrplCacheService);
+     public readonly xrplDateService = inject(XrplDateService);
 
      readonly createEscrowButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
@@ -279,77 +281,131 @@ export class EscrowUtilService {
           };
      }
 
-     private validateCancel(escrow: { CancelAfter?: number; owner: string; escrowType: string }, now: number, callerAddress: string): { canCancel: boolean; reason: string } {
+     private validateCancel(escrow: { CancelAfter?: number; owner: string; escrowType: string }, ledgerRippleTime: number, callerAddress: string): { canCancel: boolean; reason: string } {
           const { CancelAfter, owner, escrowType } = escrow;
 
           if (escrowType !== 'finish' && !CancelAfter) {
-               return {
-                    canCancel: false,
-                    reason: 'No CancelAfter time defined.',
-               };
+               return { canCancel: false, reason: 'No CancelAfter time defined.' };
           }
 
-          if (now < CancelAfter!) {
+          if (CancelAfter !== undefined && ledgerRippleTime < CancelAfter) {
                return {
                     canCancel: false,
-                    reason: `Escrow can only be canceled after ${this.utilsService.convertXRPLTime(CancelAfter)}, current time is ${this.utilsService.convertXRPLTime(now)}.`,
+                    reason: `Escrow can only be canceled after ${this.xrplDateService.rippleToISO(CancelAfter)}, current time is ${this.xrplDateService.rippleToISO(ledgerRippleTime)}.`,
                };
           }
 
           if (callerAddress !== owner) {
-               return {
-                    canCancel: false,
-                    reason: `Only the escrow owner (${owner}) can cancel this escrow.`,
-               };
+               return { canCancel: false, reason: `Only the escrow owner (${owner}) can cancel this escrow.` };
           }
 
           return { canCancel: true, reason: '' };
      }
 
-     private validateFinish(escrow: { FinishAfter?: number; CancelAfter?: number; Condition?: string }, now: number, fulfillment?: string): { canFinish: boolean; reason: string } {
+     // private validateCancel(escrow: { CancelAfter?: number; owner: string; escrowType: string }, now: number, callerAddress: string): { canCancel: boolean; reason: string } {
+     //      const { CancelAfter, owner, escrowType } = escrow;
+
+     //      if (escrowType !== 'finish' && !CancelAfter) {
+     //           return {
+     //                canCancel: false,
+     //                reason: 'No CancelAfter time defined.',
+     //           };
+     //      }
+
+     //      if (now < CancelAfter!) {
+     //           return {
+     //                canCancel: false,
+     //                reason: `Escrow can only be canceled after ${this.utilsService.convertXRPLTime(CancelAfter)}, current time is ${this.utilsService.convertXRPLTime(now)}.`,
+     //           };
+     //      }
+
+     //      if (callerAddress !== owner) {
+     //           return {
+     //                canCancel: false,
+     //                reason: `Only the escrow owner (${owner}) can cancel this escrow.`,
+     //           };
+     //      }
+
+     //      return { canCancel: true, reason: '' };
+     // }
+
+     private validateFinish(escrow: { FinishAfter?: number; CancelAfter?: number; Condition?: string }, ledgerRippleTime: number, fulfillment?: string): { canFinish: boolean; reason: string } {
           const { FinishAfter, CancelAfter, Condition } = escrow;
 
           // Expired escrows cannot be finished
-          if (CancelAfter !== undefined && now >= CancelAfter) {
-               return {
-                    canFinish: false,
-                    reason: 'Escrow has expired and can no longer be finished.',
-               };
+          if (CancelAfter !== undefined && this.xrplDateService.isExpired(CancelAfter, ledgerRippleTime)) {
+               return { canFinish: false, reason: 'Escrow has expired and can no longer be finished.' };
           }
 
           // Must have either FinishAfter or Condition
           if (FinishAfter === undefined && !Condition) {
-               return {
-                    canFinish: false,
-                    reason: 'No FinishAfter time or Condition defined.',
-               };
+               return { canFinish: false, reason: 'No FinishAfter time or Condition defined.' };
           }
 
           // Time requirement
-          if (FinishAfter !== undefined && now < FinishAfter) {
+          if (FinishAfter !== undefined && ledgerRippleTime < FinishAfter) {
                return {
                     canFinish: false,
-                    reason: `Escrow can only be finished after ${this.utilsService.convertXRPLTime(FinishAfter)}, current time is ${this.utilsService.convertXRPLTime(now)}.`,
+                    reason: `Escrow can only be finished after ${this.xrplDateService.rippleToISO(FinishAfter)}, current time is ${this.xrplDateService.rippleToISO(ledgerRippleTime)}.`,
                };
           }
 
           // Condition validation
           if (Condition && !fulfillment) {
-               return {
-                    canFinish: false,
-                    reason: 'A fulfillment is required for condition-based escrow.',
-               };
+               return { canFinish: false, reason: 'A fulfillment is required for condition-based escrow.' };
           }
 
           if (!Condition && fulfillment) {
-               return {
-                    canFinish: false,
-                    reason: 'No condition is set, so fulfillment is not applicable.',
-               };
+               return { canFinish: false, reason: 'No condition is set, so fulfillment is not applicable.' };
           }
 
           return { canFinish: true, reason: '' };
      }
+
+     // private validateFinish(escrow: { FinishAfter?: number; CancelAfter?: number; Condition?: string }, now: number, fulfillment?: string): { canFinish: boolean; reason: string } {
+     //      const { FinishAfter, CancelAfter, Condition } = escrow;
+
+     //      // Expired escrows cannot be finished
+     //      if (CancelAfter !== undefined && now >= CancelAfter) {
+     //           return {
+     //                canFinish: false,
+     //                reason: 'Escrow has expired and can no longer be finished.',
+     //           };
+     //      }
+
+     //      // Must have either FinishAfter or Condition
+     //      if (FinishAfter === undefined && !Condition) {
+     //           return {
+     //                canFinish: false,
+     //                reason: 'No FinishAfter time or Condition defined.',
+     //           };
+     //      }
+
+     //      // Time requirement
+     //      if (FinishAfter !== undefined && now < FinishAfter) {
+     //           return {
+     //                canFinish: false,
+     //                reason: `Escrow can only be finished after ${this.utilsService.convertXRPLTime(FinishAfter)}, current time is ${this.utilsService.convertXRPLTime(now)}.`,
+     //           };
+     //      }
+
+     //      // Condition validation
+     //      if (Condition && !fulfillment) {
+     //           return {
+     //                canFinish: false,
+     //                reason: 'A fulfillment is required for condition-based escrow.',
+     //           };
+     //      }
+
+     //      if (!Condition && fulfillment) {
+     //           return {
+     //                canFinish: false,
+     //                reason: 'No condition is set, so fulfillment is not applicable.',
+     //           };
+     //      }
+
+     //      return { canFinish: true, reason: '' };
+     // }
 
      validateEscrowCreate(input: EscrowValidationInput): EscrowValidationResult {
           const { finishAfter, cancelAfter, condition, currentRippleTime } = input;
@@ -467,13 +523,13 @@ export class EscrowUtilService {
           // If field is empty, start from now
           if (!currentValue) {
                const now = new Date();
-               currentValue = this.utilsService.formatDateTimeLocal(now);
+               currentValue = this.xrplDateService.toLocalDateTimeString(now);
           }
 
           const date = new Date(currentValue);
           date.setSeconds(date.getSeconds() + seconds);
 
-          const newDateTime = this.utilsService.formatDateTimeLocal(date);
+          const newDateTime = this.xrplDateService.toLocalDateTimeString(date);
 
           writableSignal.set(newDateTime);
      }

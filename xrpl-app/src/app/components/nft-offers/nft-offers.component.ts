@@ -1494,7 +1494,8 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      }
 
      formatXrplTimestamp(timestamp: number): string {
-          return this.utilsService.convertXRPLTime(timestamp);
+          // return this.utilsService.convertXRPLTime(timestamp);
+          return '';
      }
 
      clearFields(clearAllFields: boolean) {

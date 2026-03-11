@@ -122,7 +122,7 @@ export class TransactionUiService {
           },
           verification: { method: '', verified_at: '', verifier: '' },
           hash: '',
-          uri: 'ipfs://bafybeiexamplehash',
+          uri: '',
      });
      credentialIssuer = signal<string>('');
      credentialIdSearchQuery = signal<string>('');
@@ -130,6 +130,16 @@ export class TransactionUiService {
      existingCredentials = signal<CredentialItem[]>([]);
      selectedCredentials = signal<CredentialItem | null>(null);
      subjectCredentials = signal<CredentialItem[]>([]);
+     credentialSubjectExpirationDate = computed(() => this.credential().subject.expirationDate);
+     setCredentialSubjectExpirationDate(value: string) {
+          this.credential.update(c => ({
+               ...c,
+               subject: {
+                    ...c.subject,
+                    expirationDate: value,
+               },
+          }));
+     }
 
      // DID
      didDetails = signal<DidData>({
