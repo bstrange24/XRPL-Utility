@@ -32,6 +32,7 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { XrplExpirationInputComponent } from '../shared/xrpl-expiration-input/xrpl-expiration-input.component';
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
+import { CredentialViewModelService } from '../../services/credentials/credential-view-model/credential-view-model.service';
 
 @Component({
      selector: 'app-credentials',
@@ -50,132 +51,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      public readonly xrplDateService = inject(XrplDateService);
      public readonly credentialUtilService = inject(CredentialUtilService);
      public readonly credentialStore = inject(CredentialStore);
-
-     activeTab = signal<'create' | 'accept' | 'delete' | 'verify'>('create');
-     private listCache = { create: [] as any[], accept: [] as any[], delete: [] as any[], verify: [] as any[] };
-     private dropdownCache: any[] = [];
-
-     readonly credentialVm = computed(() => {
-          // const wallet = this.currentWallet();
-          const walletVm = this.walletManager.walletVm();
-          const tab = this.activeTab();
-
-          const issued = this.credentialStore.get('existingCredentials');
-          const received = this.credentialStore.get('subjectCredentials');
-
-          if (!walletVm.wallet) {
-               return {
-                    list: [],
-                    dropdown: [],
-                    stats: {},
-                    hasCredentials: false,
-               };
-          }
-
-          const pendingIssued: any[] = [];
-          const acceptedIssued: any[] = [];
-          const pendingReceived: any[] = [];
-          const acceptedReceived: any[] = [];
-
-          const normalize = (c: any, issuedByMe: boolean) => {
-               const accepted = typeof c.Flags === 'number' ? (c.Flags & 65536) !== 0 : c.Flags === 'Credential accepted';
-
-               return {
-                    ...c,
-                    accepted,
-                    issuedByMe,
-                    selectable: tab !== 'create' && (tab !== 'verify' || issuedByMe),
-               };
-          };
-
-          for (const c of issued) {
-               const n = normalize(c, true);
-               (n.accepted ? acceptedIssued : pendingIssued).push(n);
-          }
-
-          for (const c of received) {
-               const n = normalize(c, false);
-               (n.accepted ? acceptedReceived : pendingReceived).push(n);
-          }
-
-          let list: any[] = [];
-
-          switch (tab) {
-               case 'create':
-                    list = this.listCache.create;
-                    list.length = 0;
-                    list.push(...pendingIssued, ...acceptedIssued);
-                    break;
-               case 'delete':
-                    list = this.listCache.delete;
-                    list.length = 0;
-                    list.push(...pendingIssued, ...acceptedIssued);
-                    break;
-               case 'accept':
-                    list = this.listCache.accept;
-                    list.length = 0;
-                    list.push(...(pendingReceived.length ? pendingReceived : acceptedReceived));
-                    break;
-               case 'verify':
-                    list = this.listCache.verify;
-                    list.length = 0;
-                    list.push(...pendingIssued, ...acceptedIssued, ...pendingReceived, ...acceptedReceived);
-                    break;
-          }
-
-          const dropdown = this.dropdownCache;
-          dropdown.length = 0;
-
-          for (const c of list) {
-               dropdown.push({
-                    id: c.index,
-                    display: c.CredentialType || 'Unknown',
-                    secondary: `${c.index.slice(0, 12)}...`,
-               });
-          }
-
-          return {
-               list,
-               dropdown,
-
-               stats: {
-                    issued: issued.length,
-                    received: received.length,
-                    pendingIssued: pendingIssued.length,
-                    acceptedIssued: acceptedIssued.length,
-                    pendingReceived: pendingReceived.length,
-                    acceptedReceived: acceptedReceived.length,
-               },
-
-               hasCredentials: list.length > 0,
-          };
-     });
-
-     readonly vm = computed(() => {
-          const tab = this.activeTab();
-          // const wallet = this.currentWallet();
-          const walletVm = this.walletManager.walletVm();
-          const credentialVm = this.credentialVm();
-
-          const selectedId = this.credentialStore.get('credentialID');
-
-          const selectedCredentialItem = selectedId ? (credentialVm.dropdown.find(i => i.id === selectedId) ?? null) : null;
-
-          return {
-               tab,
-               walletVm,
-               walletName: walletVm.wallet?.name || 'Selected wallet',
-               address: walletVm.wallet?.address ?? '',
-
-               selectedCredentialItem,
-
-               summaryMessage: this.credentialUtilService.summaryMessage(tab),
-               actionButtonLabel: this.credentialUtilService.actionButtonLabel(tab),
-               actionButtonClass: this.credentialUtilService.actionButtonClass(tab),
-
-               hasCredentials: credentialVm.hasCredentials,
-          };
-     });
+     public readonly credentialViewModelService = inject(CredentialViewModelService);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
@@ -194,9 +70,8 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      }
 
      canSelectCredential(cred: any): boolean {
-          // const wallet = this.currentWallet();
           const walletVm = this.walletManager.walletVm();
-          const tab = this.activeTab();
+          const tab = this.credentialViewModelService.activeTab();
           if (!walletVm.wallet) return false;
           if (tab === 'create') return false;
           if (tab === 'verify') return cred.Issuer === walletVm.wallet.address;
@@ -217,7 +92,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      }
 
      async setTab(tab: 'create' | 'accept' | 'delete' | 'verify'): Promise<void> {
-          this.activeTab.set(tab);
+          this.credentialViewModelService.activeTab.set(tab);
           this.destinationSearchQuery.set('');
 
           this.credentialStore.resetCredentialIdDropDown();
@@ -251,7 +126,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      }
 
      async performAction(): Promise<void> {
-          const currentTab = this.activeTab();
+          const currentTab = this.credentialViewModelService.activeTab();
           let txResult: { success: boolean; error?: string } | null = null;
           let envRef: any = null;
 
@@ -318,7 +193,6 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                // 5. Build the orchestrator config
                const config: CredentialTxConfig = {
                     wallet: walletVm.wallet!,
-                    // wallet: this.currentWallet(),
                     simulate: this.txUiService.isSimulateEnabled(),
                     multiSign: this.txUiService.useMultiSign(),
                     subject: this.credentialStore.get('subject'),
@@ -461,36 +335,54 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           this.credentialStore.set('subject', addr);
      }
 
-     onCredentialSelected(item: SelectItem | null) {
+     selectCredential(item: SelectItem | CredentialItem | null, source: 'dropdown' | 'list' = 'list') {
           if (!item) {
                this.credentialUtilService.applySelectedCredential(null);
                return;
           }
 
-          const cred = [...this.credentialStore.get('existingCredentials'), ...this.credentialStore.get('subjectCredentials')].find(c => c.index === item.id);
+          let cred: CredentialItem | undefined;
 
-          if (!cred) return;
+          if (source === 'dropdown') {
+               // Type guard: make sure item is a SelectItem
+               if ('id' in item) {
+                    const allCreds = [...this.credentialStore.get('existingCredentials'), ...this.credentialStore.get('subjectCredentials')];
+                    cred = allCreds.find(c => c.index === item.id);
+                    if (!cred) return; // no match
+               } else {
+                    console.warn('Dropdown emitted a CredentialItem instead of SelectItem');
+                    cred = item as CredentialItem; // fallback
+               }
+          } else {
+               // List click always passes CredentialItem
+               cred = item as CredentialItem;
+          }
 
-          // const isVerifyTab = this.activeTab() === 'verify';
-          // const walletVm = this.walletManager.walletVm();
-          // const isSubject = cred.Subject === this.currentWallet().address;
+          const activeTab = this.credentialViewModelService.activeTab();
+          const walletAddress = this.walletManager.walletVm()?.address;
 
-          // if (!isVerifyTab || !walletVm.address) {
-          this.credentialUtilService.applySelectedCredential(cred);
-          // }
-          // else {
-          //      // Optional: clear selection visually
-          //      this.credentialUtilService.applySelectedCredential(null);
-          //      this.toastService.info('Verification is typically performed by the issuer or a third party.', AppConstants.TOAST.INFO);
-          // }
-     }
+          const isWalletSubject = walletAddress && cred.Subject === walletAddress;
+          const isWalletIssuer = walletAddress && cred.Issuer === walletAddress;
 
-     selectCredentialFromList(cred: CredentialItem) {
-          // this.credentialUtilService.selectCredentialFromList(cred, this.activeTab(), this.currentWallet().address);
-          this.credentialUtilService.applySelectedCredential(cred);
+          // Verify tab rules
+          if (activeTab === 'verify') {
+               if (isWalletIssuer) {
+                    this.credentialUtilService.applySelectedCredential(cred);
+               } else if (isWalletSubject) {
+                    this.credentialUtilService.applySelectedCredential(null);
+                    this.toastService.info('You cannot verify credentials you are the subject of. Verification is typically performed by the issuer or a third party.', AppConstants.TOAST.INFO);
+                    return;
+               } else {
+                    this.credentialUtilService.applySelectedCredential(cred);
+               }
+          } else {
+               this.credentialUtilService.applySelectedCredential(cred);
+          }
 
-          if (this.activeTab() !== 'create') this.infoPanelExpanded.set(false);
-          // document.querySelector('.form-group')?.scrollIntoView({ behavior: 'smooth' });
+          // Collapse panel if clicked from list
+          if (source === 'list' && activeTab !== 'create') {
+               this.infoPanelExpanded.set(false);
+          }
      }
 
      protected clearInputFields(): void {
