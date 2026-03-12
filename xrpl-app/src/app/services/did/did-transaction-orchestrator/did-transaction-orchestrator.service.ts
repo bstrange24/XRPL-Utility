@@ -1,59 +1,39 @@
 import { inject, Injectable } from '@angular/core';
+import * as xrpl from 'xrpl';
+import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
-import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { ValidationService } from '../../validation/transaction-validation-rule.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
-import * as xrpl from 'xrpl';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { DidUtilService } from '../did-util/did-util.service';
 import didSchema from '../../../components/did/did-schema.json';
+import { DidStoreService } from '../did-store/did-store.service';
 
 export type DidTxType = 'setDid' | 'deleteDid';
 
-interface DidConfig {
+export interface DidTxConfig {
      wallet: Wallet;
-     formValues: {
-          amountField?: string;
-          destinationAddress?: string;
-          nfTokenMinterAddress?: string;
-          setFlags?: any;
-          clearFlags?: any;
-          tickSize?: any;
-          transferRate?: any;
-          publicKey?: string;
-          domain?: string;
-          isMessageKey?: boolean;
-          enableNftMinter?: string;
-          isSimulateEnabled?: boolean;
-          useMultiSign?: boolean;
-          isRegularKeyAddress?: boolean;
-          regularKeyAddress?: string;
-          regularKeySeed?: string;
-          multiSignAddress?: string;
-          multiSignSeeds?: string | string[];
-          suppressIndividualFeedback?: string;
-          [key: string]: any;
-     };
-     extra?: Record<string, any>;
+     simulate?: boolean;
+     multiSign?: boolean;
+     didData?: string;
+     uriData?: string;
+     didDocumentData?: string;
      preFetchedEnv?: {
           client: xrpl.Client;
           accountInfo: any;
           accountObjects?: any;
           fee: string;
           currentLedger: number;
-          destinationAccountInfo?: any;
-          escrowObjects?: any;
-          escrowObjectsBySequenceId?: any;
+          ledgerInfo: any;
           wallet?: any;
      };
+     extra?: Record<string, any>;
 }
 
-@Injectable({
-     providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class DidTransactionOrchestratorService extends PerformanceBaseComponent {
      private readonly TxEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
@@ -62,45 +42,50 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly didUtilService = inject(DidUtilService);
+     public readonly didStoreService = inject(DidStoreService);
 
-     async executeDidTx(type: DidTxType, config: DidConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
-          const { wallet, formValues, extra = {}, preFetchedEnv } = config;
-          const { isSimulateEnabled = false } = formValues;
+     async executeDidTx(type: DidTxType, config: DidTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
+          console.log('config: ', config);
+          const { wallet, simulate = false, multiSign = false, didData, uriData, didDocumentData, preFetchedEnv, extra = {} } = config;
 
-          let client: xrpl.Client;
           let env: any;
+          let client: xrpl.Client;
           let txHash: string | undefined;
 
           try {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
+               // Use pre-fetched env if provided, otherwise fetch
                if (preFetchedEnv) {
                     env = preFetchedEnv;
-                    client = preFetchedEnv.client;
-
-                    if (!env.accountInfo || !env.fee || !env.currentLedger) {
-                         throw new Error('Pre-fetched environment missing required fields');
-                    }
                } else {
-                    // Normal fetch fallback
-                    const envFlags: any = {
+                    env = await this.TxEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
                          includeFee: true,
-                         includeLedgerIndex: true,
-                    };
-
-                    const env = await this.TxEnvironmentService.prepareTxEnvironment(envFlags);
-                    client = env.client;
-
-                    if (!env.accountInfo || !env.fee || !env.currentLedger) {
-                         throw new Error('Failed to fetch required network data');
-                    }
+                         includeLedgerInfo: true,
+                    });
                }
 
+               console.log('env: ', env);
+               client = env.client;
+
+               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) {
+                    throw new Error('Required network data missing');
+               }
+
+               // Validation
                const validationRule = this.getValidationRuleName(type);
-               const validationInputs = this.buildValidationInputs(type, wallet, env, formValues, extra);
+               const validationInputs = this.buildValidationInputs(type, wallet, env, {
+                    simulate,
+                    multiSign,
+                    didData,
+                    uriData,
+                    didDocumentData,
+                    extra,
+               });
+
                const errors = await this.validator.validate(validationRule, {
                     inputs: validationInputs,
                     client,
@@ -111,11 +96,14 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                     return { success: false, error: errors.join('\n• '), validationError: true };
                }
 
-               const tx = this.buildModifyAccountTransaction(type, env.wallet, env, formValues, extra);
+               // Build transaction
+               const tx = this.buildDidTransaction(type, env.wallet || wallet, env, config, { simulate, multiSign, didData, uriData, didDocumentData, extra });
 
-               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues, env, extra);
+               // Optional fields
+               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, didData, uriData, didDocumentData, extra }, env);
 
-               const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
+               // Execute
+               const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { simulate, multiSign, didData, uriData, didDocumentData, extra });
 
                if (!execResult.success) {
                     return { success: false, error: execResult.error };
@@ -123,22 +111,21 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
 
                txHash = execResult.hash;
 
-               if (isSimulateEnabled) {
-                    return this.didUtilService.handleSimulationSuccess(type, formValues, txHash, extra);
+               if (simulate) {
+                    return this.didUtilService.handleSimulationSuccess(type, { simulate, multiSign, didData, uriData, didDocumentData, extra }, txHash, extra);
                }
 
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
-
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.didUtilService.buildSuccessMessage(type, formValues, extra);
+               const message = this.didUtilService.buildSuccessMessage(type, { simulate, multiSign, didData, uriData, didDocumentData, extra }, extra);
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
+
                return { success: true, hash: txHash };
           } catch (err: any) {
-               const msg = err.message || 'Unexpected error during modify account transaction';
-               console.error(`[${type}] executeModifyAccountTx failed:`, err);
+               console.error(`[${type}] executeDidTx failed:`, err);
                this.xrplTransactionService.processTxError(err);
-               return { success: false, error: msg };
+               return { success: false, error: err.message || 'Unexpected error', validationError: false };
           } finally {
                this.txUiService.resetCurrentStepToIdle();
           }
@@ -152,58 +139,46 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
           return map[type];
      }
 
-     private buildValidationInputs(type: DidTxType, wallet: Wallet, env: any, formValues: any, extra?: any) {
+     private buildValidationInputs(type: DidTxType, wallet: Wallet, env: any, values: any) {
           const base = {
                wallet,
-               network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.currentLedger },
+               network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.ledgerInfo.lastIndex },
                regularKey: {
-                    isRegularKey: formValues.isRegularKeyAddress,
-                    address: formValues.regularKeyAddress,
-                    seed: formValues.regularKeySeed,
+                    isRegularKey: values.isRegularKeyAddress,
+                    address: values.regularKeyAddress,
+                    seed: values.regularKeySeed,
                },
           };
 
-          if (type === 'setDid') {
-               return {
-                    ...base,
-                    did: {
-                         document: this.txUiService.didDetails().document || '',
-                         uri: this.txUiService.didDetails().uri || '',
-                         data: this.txUiService.didDetails().data || '',
-                    },
-               };
+          switch (type) {
+               case 'setDid':
+                    return { ...base, did: { didDocument: values.didDocumentData, didUri: values.uriData, didData: values.didData } };
+               case 'deleteDid':
+                    return { ...base };
           }
-
-          // deleteDid
-          return {
-               ...base,
-          };
      }
 
-     private buildModifyAccountTransaction(type: DidTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
-          const { fee, currentLedger } = env;
+     private buildDidTransaction(type: DidTxType, wallet: xrpl.Wallet, env: any, config: any, values: any): xrpl.Transaction {
+          const { fee } = env;
 
-          if (type === 'setDid') {
-               const tx = this.xrplTransactionService.buildSetDidTransaction(wallet, fee, currentLedger);
-               if (this.txUiService.didDetails().document) {
-                    tx.DIDDocument = this.utilsService.jsonToHex(this.txUiService.didDetails().document);
-               }
-               if (this.txUiService.didDetails().uri) {
-                    tx.URI = this.utilsService.jsonToHex(this.txUiService.didDetails().uri);
-               }
-               if (this.txUiService.didDetails().data) {
-                    const result = this.utilsService.validateAndConvertDidJson(this.txUiService.didDetails().data, didSchema);
-                    if (!result.success) throw new Error(result.errors ?? 'Invalid DID data');
-                    tx.Data = result.hexData;
-               }
-               return tx;
+          switch (type) {
+               case 'setDid':
+                    const txSetDid = this.xrplTransactionService.buildSetDidTransaction(wallet, fee, env.ledgerInfo.lastIndex);
+                    if (this.didStoreService.get('didDocumentData')) txSetDid.DIDDocument = this.utilsService.jsonToHex(this.didStoreService.get('didDocumentData'));
+                    if (this.didStoreService.get('uriData')) txSetDid.URI = this.utilsService.jsonToHex(this.didStoreService.get('uriData'));
+                    if (this.didStoreService.get('didData')) {
+                         const result = this.utilsService.validateAndConvertDidJson(this.didStoreService.get('didData'), didSchema);
+                         if (!result.success) throw new Error(result.errors ?? 'Invalid DID data');
+                         txSetDid.Data = result.hexData;
+                    }
+                    return txSetDid;
+               case 'deleteDid':
+                    const txDeleteDid = this.xrplTransactionService.buildDeleteDidTransaction(wallet, fee, env.ledgerInfo.lastIndex);
+                    return txDeleteDid;
           }
-
-          // deleteDid;
-          return this.xrplTransactionService.buildDeleteDidTransaction(wallet, fee, currentLedger);
      }
 
-     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: DidTxType, formValues: any, env: any, extra: any) {
+     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: DidTxType, values: any, env: any) {
           const isTicket = this.txUiService.isTicket();
           if (isTicket) {
                const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
@@ -218,21 +193,21 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
           if (this.txUiService.isMemoEnabled() && memo) this.utilsService.setMemoField(tx, memo);
      }
 
-     private async executeSpecificTx(type: DidTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, formValues: any) {
-          let opts = {
-               useMultiSign: formValues.useMultiSign,
-               isRegularKeyAddress: formValues.isRegularKeyAddress,
-               regularKeyAddress: formValues.regularKeyAddress,
-               regularKeySeed: formValues.regularKeySeed,
-               multiSignAddress: formValues.multiSignAddress,
-               multiSignSeeds: formValues.multiSignSeeds,
+     private async executeSpecificTx(type: DidTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, values: any) {
+          const opts = {
+               useMultiSign: values.multiSign,
+               isRegularKeyAddress: values.isRegularKeyAddress,
+               regularKeyAddress: values.regularKeyAddress,
+               regularKeySeed: values.regularKeySeed,
+               multiSignAddress: values.multiSignAddress,
+               multiSignSeeds: values.multiSignSeeds,
           };
 
-          if (type === 'setDid') {
-               return this.executor.setDid?.(tx as xrpl.DIDSet, wallet, client, opts);
+          switch (type) {
+               case 'setDid':
+                    return this.executor.setDid?.(tx as xrpl.DIDSet, wallet, client, opts);
+               case 'deleteDid':
+                    return this.executor.deleteDid?.(tx as xrpl.DIDDelete, wallet, client, opts);
           }
-
-          // deleteDid
-          return this.executor.deleteDid?.(tx as xrpl.DIDDelete, wallet, client, opts);
      }
 }

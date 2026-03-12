@@ -214,39 +214,39 @@ export class TransactionUiService {
      // }
 
      // DID
-     didDetails = signal<DidData>({
-          id: '',
-          verificationMethod: {
-               id: '',
-               type: '',
-               controller: '',
-               publicKeyBase58: '',
-          },
-          authentication: {
-               auth: '',
-          },
-          service: {
-               serviceId: '',
-               serviceType: '',
-               serviceEndpoint: '',
-          },
-          hash: '',
-          uri: `{"ipfs":"//bafybeiexamplehash"}`, // ← plain string
-          document: `{"did:example":"123#public-key-0"}`, // ← plain string
-          data: `{
-    "@context": "https://www.w3.org/ns/did/v1",
-    "id": "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc",
-    "authentication": [
-      "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc#keys-1"
-    ]
-  }`,
-          destinationAddress: '',
-     });
-     didData = signal<string>('');
-     uriData = signal<string>('');
-     didDocumentData = signal<string>('');
-     createdDids = signal<boolean>(false);
-     existingDid = signal<DidItem[]>([]);
+     //      didDetails = signal<DidData>({
+     //           id: '',
+     //           verificationMethod: {
+     //                id: '',
+     //                type: '',
+     //                controller: '',
+     //                publicKeyBase58: '',
+     //           },
+     //           authentication: {
+     //                auth: '',
+     //           },
+     //           service: {
+     //                serviceId: '',
+     //                serviceType: '',
+     //                serviceEndpoint: '',
+     //           },
+     //           hash: '',
+     //           uri: `{"ipfs":"//bafybeiexamplehash"}`,
+     //           document: `{"did:example":"123#public-key-0"}`,
+     //           data: `{
+     //     "@context": "https://www.w3.org/ns/did/v1",
+     //     "id": "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc",
+     //     "authentication": [
+     //       "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc#keys-1"
+     //     ]
+     //   }`,
+     //           destinationAddress: '',
+     //      });
+     //      didData = signal<string>('');
+     //      uriData = signal<string>('');
+     //      didDocumentData = signal<string>('');
+     //      createdDids = signal<boolean>(false);
+     //      existingDid = signal<DidItem[]>([]);
 
      // Account config
      memoField = signal<string>('');

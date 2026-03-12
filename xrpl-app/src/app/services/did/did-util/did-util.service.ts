@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { UtilsService } from '../../util-service/utils.service';
 import { CopyUtilService } from '../../copy-util/copy-util.service';
@@ -9,6 +9,9 @@ import { WalletManagerService } from '../../wallets/manager/wallet-manager.servi
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { AppConstants } from '../../../core/app.constants';
+import { DidStoreService } from '../did-store/did-store.service';
+import didSchema from '../../../components/did/did-schema.json';
+import { JsonEditorComponent } from '../../../components/json-editor/json-editor.component';
 
 export type DidTxType = 'setDid' | 'deleteDid';
 type DidConfigTxDisplayType = 'set' | 'delete';
@@ -25,13 +28,83 @@ export class DidUtilService extends PerformanceBaseComponent {
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
+     public readonly didStoreService = inject(DidStoreService);
 
      constructor() {
           super();
      }
 
-     readonly setDidKeySpecificKeys = [] as const;
-     readonly deleteSpecificKeys = ['credentialID', 'credentialIssuer'] as const;
+     getExistingDid(checkObjects: xrpl.AccountObjectsResponse) {
+          const mapped = (checkObjects.result.account_objects ?? [])
+               .filter((obj: any) => obj.LedgerEntryType === 'DID')
+               .map((obj: any) => {
+                    return {
+                         index: obj.index,
+                         DIDDocument: obj.DIDDocument ? Buffer.from(obj.DIDDocument, 'hex').toString('utf8') : 'N/A',
+                         Data: obj.Data ? Buffer.from(obj.Data, 'hex').toString('utf8') : 'N/A',
+                         URI: obj.URI ? Buffer.from(obj.URI, 'hex').toString('utf8') : 'N/A',
+                    };
+               })
+               .sort((a, b) => a.index.localeCompare(b.index));
+          this.didStoreService.set('existingDid', mapped);
+          this.utilsService.logObjects('existingDid', mapped);
+     }
+
+     onDidDataChange(newValue: string) {
+          this.didStoreService.set('didData', newValue);
+     }
+
+     onUriDataChange(newValue: string) {
+          this.didStoreService.set('uriData', newValue);
+     }
+
+     onDidDocumentDataChange(newValue: string) {
+          this.didStoreService.set('didDocumentData', newValue);
+     }
+
+     clearJsonField(field: 'document' | 'uri' | 'data') {
+          if (field === 'document') this.didStoreService.set('didDocumentData', '');
+          if (field === 'uri') this.didStoreService.set('uriData', '');
+          if (field === 'data') this.didStoreService.set('didData', '');
+     }
+
+     populateDidDefaultData() {
+          this.didStoreService.set(
+               'didData',
+               `{
+  "@context": "https://www.w3.org/ns/did/v1",
+  "id": "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc",
+  "authentication": [
+    "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc#keys-1"
+  ]
+}`
+          );
+          this.didStoreService.set('uriData', `{"ipfs":"//bafybeiexamplehash"}`);
+          this.didStoreService.set('didDocumentData', `{"did:example":"123#public-key-0"}`);
+     }
+
+     buildSuccessMessage(type: DidTxType, formValues: any, extra: any): string {
+          if (type === 'setDid') return `Successfully Set DID`;
+
+          return `Successfully Deleted DID`;
+     }
+
+     handleSimulationSuccess(type: DidTxType, formValues: any, hash?: string, extra?: any) {
+          let msg: string;
+
+          if (type === 'setDid') msg = `Successfully simulated setting the DID`;
+          else msg = `Successfully simulated deleting the DID`;
+
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+
+          return { success: true, hash };
+     }
+
+     readonly txTypeMap = {
+          set: 'SetDID',
+          delete: 'DeleteDID',
+     } as const;
 
      readonly tabs: {
           key: DidConfigTxDisplayType;
@@ -89,129 +162,4 @@ export class DidUtilService extends PerformanceBaseComponent {
 
      readonly setDidButtonLabel = this.buildTxLabel('Set DID');
      readonly deleteDidButtonLabel = this.buildTxLabel('Delete DID');
-
-     getExistingDid(checkObjects: xrpl.AccountObjectsResponse) {
-          const mapped = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'DID')
-               .map((obj: any) => {
-                    return {
-                         index: obj.index,
-                         DIDDocument: obj.DIDDocument ? Buffer.from(obj.DIDDocument, 'hex').toString('utf8') : 'N/A',
-                         Data: obj.Data ? Buffer.from(obj.Data, 'hex').toString('utf8') : 'N/A',
-                         URI: obj.URI ? Buffer.from(obj.URI, 'hex').toString('utf8') : 'N/A',
-                    };
-               })
-               .sort((a, b) => a.index.localeCompare(b.index));
-          this.txUiService.existingDid.set(mapped);
-          this.utilsService.logObjects('existingDid', mapped);
-     }
-
-     didDataByteLength = computed(() => {
-          const meta = this.txUiService.didData().trim();
-          if (!meta) return 0;
-
-          try {
-               const hex = xrpl.convertStringToHex(meta);
-               console.log('DID JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
-               return hex.length / 2;
-          } catch (e) {
-               console.error('Failed to convert DID JSON to hex:', e);
-               return 0;
-          }
-     });
-
-     uriDataByteLength = computed(() => {
-          const meta = this.txUiService.uriData().trim();
-          if (!meta) return 0;
-
-          try {
-               const hex = xrpl.convertStringToHex(meta);
-               console.log('URI JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
-               return hex.length / 2;
-          } catch (e) {
-               console.error('Failed to convert URI JSON to hex:', e);
-               return 0;
-          }
-     });
-
-     didDocumentDataByteLength = computed(() => {
-          const meta = this.txUiService.didDocumentData().trim();
-          if (!meta) return 0;
-
-          try {
-               const hex = xrpl.convertStringToHex(meta);
-               console.log('DID Document JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
-               return hex.length / 2;
-          } catch (e) {
-               console.error('Failed to convert DID Document JSON to hex:', e);
-               return 0;
-          }
-     });
-
-     didDataIsValid = computed(() => {
-          return this.didDataByteLength() <= 256;
-     });
-
-     uriDataIsValid = computed(() => {
-          return this.uriDataByteLength() <= 256;
-     });
-
-     didDocumentDataIsValid = computed(() => {
-          return this.didDocumentDataByteLength() <= 256;
-     });
-
-     onDidDataChange(newValue: string) {
-          this.txUiService.didData.set(newValue);
-          this.txUiService.didDetails.update(d => ({ ...d, data: newValue }));
-     }
-
-     onUriDataChange(newValue: string) {
-          this.txUiService.uriData.set(newValue);
-          this.txUiService.didDetails.update(d => ({ ...d, uri: newValue }));
-     }
-
-     onDidDocumentDataChange(newValue: string) {
-          this.txUiService.didDocumentData.set(newValue);
-          this.txUiService.didDetails.update(d => ({ ...d, document: newValue }));
-     }
-
-     clearJsonField(field: 'document' | 'uri' | 'data') {
-          if (field === 'document') this.txUiService.didDocumentData.set('');
-          if (field === 'uri') this.txUiService.uriData.set('');
-          if (field === 'data') this.txUiService.didData.set('');
-     }
-
-     populateDidDefaultData() {
-          this.txUiService.didData.set(`{
-  "@context": "https://www.w3.org/ns/did/v1",
-  "id": "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc",
-  "authentication": [
-    "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc#keys-1"
-  ]
-}`);
-          this.txUiService.uriData.set(`{"ipfs":"//bafybeiexamplehash"}`);
-          this.txUiService.didDocumentData.set(`{"did:example":"123#public-key-0"}`);
-     }
-
-     buildSuccessMessage(type: DidTxType, formValues: any, extra: any): string {
-          if (type === 'setDid') {
-               return `Successfully Set DID`;
-          }
-          return `Successfully Deleted DID`;
-     }
-
-     handleSimulationSuccess(type: DidTxType, formValues: any, hash?: string, extra?: any) {
-          let msg: string;
-
-          if (type === 'setDid') {
-               msg = `Simulated Setting DID`;
-          } else {
-               msg = `Simulated Deleting DID`;
-          }
-
-          this.txUiService.resetCurrentStepToIdle();
-          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
-
-          return { success: true, hash };
-     }
 }

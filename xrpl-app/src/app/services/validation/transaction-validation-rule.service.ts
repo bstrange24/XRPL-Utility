@@ -803,9 +803,15 @@ export class ValidationService {
           // DIDSet Actions
           this.registerRule({
                transactionType: 'DIDSet',
-               requiredFields: ['did.document', 'did.uri', 'did.data'],
+               requiredFields: ['did.didDocument', 'did.didUri', 'did.didData'],
                validators: [
                     this.walletCredentialRequired(),
+                    // ctx => {
+                    //      console.log('didDocument: ', ctx['inputs']['did']['didDocument']);
+                    //      console.log('didUri: ', ctx['inputs']['did']['didUri']);
+                    //      console.log('didData: ', ctx['inputs']['did']['didData']);
+                    //      return null;
+                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 

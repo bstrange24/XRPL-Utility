@@ -7,17 +7,19 @@
 </div>
 
 <!-- Get active tab -->
-@let tab = activeTab();
+@let tab = didViewModelService.activeTab();
 <!-- Get tab data -->
 @let tabs = didUtilService.tabs;
 <!-- Get tab meta data -->
 @let meta = didUtilService.tabMeta[tab];
+<!-- Info Data -->
+@let info = didViewModelService.infoData();
 
 <!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
 
           <!-- Center form -->
           <div class="form-panel">
@@ -45,7 +47,7 @@
                </div>
 
                <!-- Info Message -->
-               @if (infoData(); as info) {
+               @if (info) {
                <div class="info-and-credentials-card" [class.has-did]="info.existingDid.length === 1">
                     <!-- Always-visible summary row -->
                     <div class="summary-header">
@@ -128,24 +130,26 @@
                }
 
                <form #theForm="ngForm" class="main-form">
-                    @if (tab === 'set' && txUiService.existingDid().length <= 0) {
+                    <!-- @if (tab === 'set' && txUiService.existingDid().length <= 0) { -->
+                    @if (tab === 'set' && didStoreService.get('existingDid').length <= 0) {
                     <div class="form-row">
                          <div class="form-group">
                               <label for="didDocument" class="label-with-link">
                                    DID Document
                                    <button type="button" class="format-did-data" (click)="didDocumentEditor.format()">Format DID Document</button>
                                    <div>
-                                        <small class="text-muted"> Metadata size: {{ didUtilService.didDocumentDataByteLength() }} / 256 bytes </small>
-                                        @if (didUtilService.didDocumentDataByteLength() > 256) {
+                                        <small class="text-muted"> Metadata size: {{ didViewModelService.didDocumentDataByteLength() }} / 256 bytes </small>
+                                        @if (didViewModelService.didDocumentDataByteLength() > 256) {
                                         <small class="text-danger d-block">
                                              <strong>Exceeded limit – transaction will fail</strong>
                                         </small>
-                                        } @else if (didUtilService.didDocumentDataByteLength() > 200) {
-                                        <small class="text-warning d-block"> Approaching limit ({{ didUtilService.didDocumentDataByteLength() }} bytes) </small>
+                                        } @else if (didViewModelService.didDocumentDataByteLength() > 200) {
+                                        <small class="text-warning d-block"> Approaching limit ({{ didViewModelService.didDocumentDataByteLength() }} bytes) </small>
                                         }
                                    </div>
                               </label>
-                              <app-json-editor [value]="txUiService.didDocumentData()" (valueChange)="didUtilService.onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
+
+                              <app-json-editor [value]="didStoreService.get('didDocumentData')" (valueChange)="didUtilService.onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
                               <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('document')">Clear</button>
                          </div>
                     </div>
@@ -157,17 +161,17 @@
                                    URI Data
                                    <button type="button" class="format-did-data" (click)="uriEditor.format()">Format URI Data</button>
                                    <div>
-                                        <small class="text-muted"> Metadata size: {{ didUtilService.uriDataByteLength() }} / 256 bytes </small>
-                                        @if (didUtilService.uriDataByteLength() > 256) {
+                                        <small class="text-muted"> Metadata size: {{ didViewModelService.uriDataByteLength() }} / 256 bytes </small>
+                                        @if (didViewModelService.uriDataByteLength() > 256) {
                                         <small class="text-danger d-block">
                                              <strong>Exceeded limit – transaction will fail</strong>
                                         </small>
-                                        } @else if (didUtilService.uriDataByteLength() > 200) {
-                                        <small class="text-warning d-block"> Approaching limit ({{ didUtilService.uriDataByteLength() }} bytes) </small>
+                                        } @else if (didViewModelService.uriDataByteLength() > 200) {
+                                        <small class="text-warning d-block"> Approaching limit ({{ didViewModelService.uriDataByteLength() }} bytes) </small>
                                         }
                                    </div>
                               </label>
-                              <app-json-editor [value]="txUiService.uriData()" (valueChange)="didUtilService.onUriDataChange($event)" #uriEditor> </app-json-editor>
+                              <app-json-editor [value]="didStoreService.get('uriData')" (valueChange)="didUtilService.onUriDataChange($event)" #uriEditor> </app-json-editor>
                               <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('uri')">Clear</button>
                          </div>
                     </div>
@@ -175,34 +179,34 @@
                     <!-- Did Data -->
                     <div class="form-row">
                          <div class="form-group">
-                              <label for="didData" class="label-with-link" style="margin-top: 1rem"
+                              <label for="didData" class="label-with-link"
                                    >DID Data
                                    <button type="button" class="format-did-data" (click)="didDataEditor.format()">Format DID Data</button>
                                    <span class="label-meta" style="padding-left: 20px"> DID Schema<a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer"> W3C</a></span>
 
                                    <!-- Warning: Schema valid BUT has JSON syntax errors -->
-                                   @if (validDidSchema() && hasJsonSyntaxError()) {
+                                   @if (didViewModelService.validDidSchema() && didViewModelService.hasJsonSyntaxError()) {
                                    <div class="json-schema-warning mt-2">
                                         <small class="text-warning"> <strong>⚠ Schema valid, but JSON has syntax errors:</strong><br /> </small>
                                    </div>
                                    }
 
                                    <div>
-                                        <small class="text-muted"> Metadata size: {{ didUtilService.didDataByteLength() }} / 256 bytes </small>
-                                        @if (didUtilService.didDataByteLength() > 256) {
+                                        <small class="text-muted"> Metadata size: {{ didViewModelService.didDataByteLength() }} / 256 bytes </small>
+                                        @if (didViewModelService.didDataByteLength() > 256) {
                                         <small class="text-danger d-block">
                                              <strong>Exceeded limit – transaction will fail</strong>
                                         </small>
-                                        } @else if (didUtilService.didDataByteLength() > 200) {
-                                        <small class="text-warning d-block"> Approaching limit ({{ didUtilService.didDataByteLength() }} bytes) </small>
+                                        } @else if (didViewModelService.didDataByteLength() > 200) {
+                                        <small class="text-warning d-block"> Approaching limit ({{ didViewModelService.didDataByteLength() }} bytes) </small>
                                         }
                                    </div>
                               </label>
-                              <app-json-editor [value]="txUiService.didData()" (valueChange)="didUtilService.onDidDataChange($event)" #didDataEditor> </app-json-editor>
+                              <app-json-editor [value]="didStoreService.get('didData')" (valueChange)="didUtilService.onDidDataChange($event)" #didDataEditor> </app-json-editor>
                               <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('data')">Clear</button>
 
                               <!-- Success: Schema valid AND no syntax errors -->
-                              @if (validDidSchema() && !hasJsonSyntaxError()) {
+                              @if (didViewModelService.validDidSchema() && !didViewModelService.hasJsonSyntaxError()) {
                               <div class="json-schema-success mt-2">
                                    <small class="text-success">
                                         <strong>✓ DID JSON is valid and well-formed</strong>
@@ -214,12 +218,13 @@
                     }
 
                     <!-- Only show buttons and sliders if there is no DID set or we are on the delete DID tab -->
-                    @if ((tab === 'set' && txUiService.existingDid().length <= 0) || tab === 'delete') {
-                    <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+                    @if ((tab === 'set' && didStoreService.get('existingDid').length <= 0) || tab === 'delete') {
+                    <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="didViewModelService.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                     <!-- Action buttons -->
                     <div class="button-row">
-                         <button type="button" [class]="actionButtonClass()" (click)="performAction()" [disabled]="!canSubmit()">{{ actionButtonLabel() }}</button>
+                         <button type="button" [class]="didViewModelService.actionButtonClass()" (click)="performAction()" [disabled]="!canSubmit()">{{ didViewModelService.actionButtonLabel() }}</button>
+                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit()" (click)="clearInputFields()">Clear Fields</button>
                     </div>
                     }
 
