@@ -52,6 +52,26 @@ export class WalletManagerService {
           });
      }
 
+     readonly walletVm = computed(() => {
+          const wallet = this.getSelectedWallet();
+
+          if (!wallet) {
+               return {
+                    wallet: null,
+                    address: '',
+                    name: '',
+                    hasWallet: false,
+               };
+          }
+
+          return {
+               wallet,
+               address: wallet.address,
+               name: wallet.name,
+               hasWallet: true,
+          };
+     });
+
      private loadFromStorage(): void {
           console.log('loadFromStorage called for network:', this.currentNetwork);
           const key = `wallets_${this.currentNetwork}`;

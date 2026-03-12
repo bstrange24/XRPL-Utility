@@ -52,9 +52,6 @@ export class CredentialUtilService extends PerformanceBaseComponent {
                this.credentialStore.set('credentialIssuer', cred.Issuer);
           } else {
                this.credentialStore.resetCredentialIdDropDown();
-               // this.credentialStore.set('credentialID', '');
-               // this.credentialStore.set('credentialType', '');
-               // this.credentialStore.set('credentialIssuer', '');
           }
      }
 
@@ -90,9 +87,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      credentialItems(tab: 'create' | 'accept' | 'delete' | 'verify', walletAddress: string) {
           let list = tab === 'accept' ? this.credentialStore.get('subjectCredentials') : this.credentialStore.get('existingCredentials');
 
-          if (tab === 'verify') {
-               list = list.filter((c: { Issuer: string }) => c.Issuer === walletAddress);
-          }
+          if (tab === 'verify') list = list.filter((c: { Issuer: string }) => c.Issuer === walletAddress);
 
           return list.map((cred: CredentialItem) => ({
                id: cred.index,
@@ -102,42 +97,45 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           }));
      }
 
-     getExistingCredentials(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
-          const mapped = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'Credential' && obj.Issuer === sender)
-               .map((obj: any) => {
-                    return {
-                         index: obj.index,
-                         CredentialType: obj.CredentialType ? this.decodeutf8Hex(obj.CredentialType) : 'Unknown Type',
-                         Expiration: obj.Expiration ? this.utilsService.fromRippleTime(obj.Expiration).est : 'N/A',
-                         Issuer: obj.Issuer,
-                         Subject: obj.Subject,
-                         URI: this.decodeutf8Hex(obj.URI),
-                         Flags: this.getCredentialStatus(obj.Flags),
-                    };
-               })
-               .sort((a, b) => a.Expiration.localeCompare(b.Expiration));
-          this.utilsService.logObjects('existingCredentials', mapped);
+     private parseCredentials(accountObjects: xrpl.AccountObjectsResponse, address: string, role: 'issuer' | 'subject') {
+          const objects = accountObjects.result.account_objects ?? [];
+
+          const mapped = objects
+               .filter(obj => obj.LedgerEntryType === 'Credential' && (role === 'issuer' ? obj.Issuer === address : obj.Subject === address))
+               .map(obj => this.mapCredential(obj))
+               .sort(this.sortCredentials);
+
+          this.utilsService.logObjects(`credentials-${role}`, mapped);
+
           return mapped;
      }
 
-     getSubjectCredentials(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
-          const mapped = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'Credential' && obj.Subject === sender)
-               .map((obj: any) => {
-                    return {
-                         index: obj.index,
-                         CredentialType: obj.CredentialType ? this.decodeutf8Hex(obj.CredentialType) : 'Unknown Type',
-                         Expiration: obj.Expiration ? this.utilsService.fromRippleTime(obj.Expiration).est : 'N/A',
-                         Issuer: obj.Issuer,
-                         Subject: obj.Subject,
-                         URI: this.decodeutf8Hex(obj.URI),
-                         Flags: this.getCredentialStatus(obj.Flags),
-                    };
-               })
-               .sort((a, b) => a.Expiration.localeCompare(b.Expiration));
-          this.utilsService.logObjects('subjectCredentials', mapped);
-          return mapped;
+     private sortCredentials(a: any, b: any) {
+          const aHasExpiration = a.Expiration && a.Expiration !== 'N/A';
+          const bHasExpiration = b.Expiration && b.Expiration !== 'N/A';
+
+          if (aHasExpiration && !bHasExpiration) return -1;
+          if (!aHasExpiration && bHasExpiration) return 1;
+
+          if (aHasExpiration && bHasExpiration) {
+               const aExp = Number.parseInt(a.Expiration, 10) || 0;
+               const bExp = Number.parseInt(b.Expiration, 10) || 0;
+
+               return aExp - bExp;
+          }
+
+          const aIndex = typeof a.index === 'number' ? a.index : Number.parseInt(a.index, 10) || 0;
+          const bIndex = typeof b.index === 'number' ? b.index : Number.parseInt(b.index, 10) || 0;
+
+          return aIndex - bIndex;
+     }
+
+     parseIssuedCredentials(accountObjects: xrpl.AccountObjectsResponse, address: string) {
+          return this.parseCredentials(accountObjects, address, 'issuer');
+     }
+
+     parseSubjectCredentials(accountObjects: xrpl.AccountObjectsResponse, address: string) {
+          return this.parseCredentials(accountObjects, address, 'subject');
      }
 
      private mapCredential(obj: any): CredentialItem {
@@ -150,63 +148,6 @@ export class CredentialUtilService extends PerformanceBaseComponent {
                URI: this.decodeutf8Hex(obj.URI),
                Flags: this.getCredentialStatus(obj.Flags),
           };
-     }
-
-     parseIssuedCredentials(accountObjects: xrpl.AccountObjectsResponse, address: string) {
-          const mapped = (accountObjects.result.account_objects ?? [])
-               .filter(o => o.LedgerEntryType === 'Credential' && o.Issuer === address)
-               .map(o => this.mapCredential(o))
-               .sort((a, b) => {
-                    // Check if Expiration is 'N/A' or has a value
-                    const aHasExpiration = a.Expiration && a.Expiration !== 'N/A';
-                    const bHasExpiration = b.Expiration && b.Expiration !== 'N/A';
-
-                    // If one has expiration and the other doesn't, put the one with expiration first
-                    if (aHasExpiration && !bHasExpiration) return -1;
-                    if (!aHasExpiration && bHasExpiration) return 1;
-
-                    // If both have expiration or both don't have expiration, sort by index
-                    // Convert index to number for numeric sorting (assuming index is numeric or can be converted)
-                    const aIndex = typeof a.index === 'number' ? a.index : Number.parseInt(a.index, 10) || 0;
-                    const bIndex = typeof b.index === 'number' ? b.index : Number.parseInt(b.index, 10) || 0;
-
-                    return aIndex - bIndex;
-               });
-
-          this.utilsService.logObjects('parseIssuedCredentials', mapped);
-          return mapped;
-     }
-
-     parseSubjectCredentials(accountObjects: xrpl.AccountObjectsResponse, address: string) {
-          const mapped = (accountObjects.result.account_objects ?? [])
-               .filter(o => o.LedgerEntryType === 'Credential' && o.Subject === address)
-               .map(o => this.mapCredential(o))
-               .sort((a, b) => {
-                    // Check if Expiration is 'N/A' or has a value
-                    const aHasExpiration = a.Expiration && a.Expiration !== 'N/A';
-                    const bHasExpiration = b.Expiration && b.Expiration !== 'N/A';
-
-                    // Items with expiration come first
-                    if (aHasExpiration && !bHasExpiration) return -1;
-                    if (!aHasExpiration && bHasExpiration) return 1;
-
-                    // If both have expiration, compare them as dates/timestamps
-                    if (aHasExpiration && bHasExpiration) {
-                         // Parse as numbers if they're timestamps
-                         const aExp = Number.parseInt(a.Expiration!, 10) || 0;
-                         const bExp = Number.parseInt(b.Expiration!, 10) || 0;
-                         return aExp - bExp; // Earlier expiration first
-                    }
-
-                    // If neither has expiration, sort by index
-                    const aIndex = typeof a.index === 'number' ? a.index : Number.parseInt(a.index, 10) || 0;
-                    const bIndex = typeof b.index === 'number' ? b.index : Number.parseInt(b.index, 10) || 0;
-
-                    return aIndex - bIndex;
-               });
-
-          this.utilsService.logObjects('parseSubjectCredentials', mapped);
-          return mapped;
      }
 
      applySelectedCredential(cred: CredentialItem | null) {
@@ -231,15 +172,9 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      isCredentialAccepted(cred: CredentialItem): boolean {
           // Flags come from XRPL as number, but your utilsService.getCredentialStatus() returns object
           // So we check both possibilities
-          if (typeof cred.Flags === 'number') {
-               return (cred.Flags & AppConstants.LSF_ACCEPTED) !== 0;
-          }
-          if (typeof cred.Flags === 'object') {
-               return !!cred.Flags.lsfAccepted;
-          }
-          if (cred.Flags === 'Credential accepted') {
-               return true;
-          }
+          if (typeof cred.Flags === 'number') return (cred.Flags & AppConstants.LSF_ACCEPTED) !== 0;
+          if (typeof cred.Flags === 'object') return !!cred.Flags.lsfAccepted;
+          if (cred.Flags === 'Credential accepted') return true;
           return false;
      }
 
@@ -275,25 +210,17 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      }
 
      buildSuccessMessage(type: CredentialTxType, formValues: any, extra: any): string {
-          if (type === 'createCredential') {
-               return `Successfully Create Credential`;
-          }
-          if (type === 'deleteCredentials') {
-               return `Successfully Deleted Credential`;
-          }
+          if (type === 'createCredential') return `Successfully Create Credential`;
+          if (type === 'deleteCredentials') return `Successfully Deleted Credential`;
           return `Successfully Accepted Credential`;
      }
 
      handleSimulationSuccess(type: CredentialTxType, formValues: any, hash?: string, extra?: any) {
           let msg: string;
 
-          if (type === 'createCredential') {
-               msg = `Successfully simulated creating the Credential.`;
-          } else if (type === 'deleteCredentials') {
-               msg = `Successfully simulated deleting the Credential.`;
-          } else {
-               msg = `Successfully simulated accepting the Credential.`;
-          }
+          if (type === 'createCredential') msg = `Successfully simulated creating the Credential.`;
+          else if (type === 'deleteCredentials') msg = `Successfully simulated deleting the Credential.`;
+          else msg = `Successfully simulated accepting the Credential.`;
 
           this.txUiService.resetCurrentStepToIdle();
           this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
