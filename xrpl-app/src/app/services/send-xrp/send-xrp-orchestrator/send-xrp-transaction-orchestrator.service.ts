@@ -10,6 +10,7 @@ import { UtilsService } from '../../util-service/utils.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { AppConstants } from '../../../core/app.constants';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
 
 interface XrpPaymentConfig {
      wallet: Wallet;
@@ -47,6 +48,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
      private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
+     public readonly credentialStore = inject(CredentialStore);
 
      async executeXrpPayment(config: XrpPaymentConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
           const { wallet, formValues, preFetchedEnv } = config;
@@ -185,13 +187,13 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
           if (domainId) this.utilsService.setDomainId(tx, domainId);
 
           // Credential IDs (array)
-          if (this.txUiService.credentialIDs()?.length > 0) {
-               const jsonArray: string[] = formValues.credentialIDs
-                    .split(',')
-                    .map((id: string) => id.trim())
-                    .filter((id: string | any[]) => id.length > 0);
-               this.txUiService.credentialIDs.set(jsonArray);
-               this.utilsService.setCredentialIDsField(tx, this.txUiService.credentialIDs());
-          }
+          // if (this.credentialStore.credentialIDs()?.length > 0) {
+          //      const jsonArray: string[] = formValues.credentialIDs
+          //           .split(',')
+          //           .map((id: string) => id.trim())
+          //           .filter((id: string | any[]) => id.length > 0);
+          //      this.credentialStore.credentialIDs.set(jsonArray);
+          //      this.utilsService.setCredentialIDsField(tx, this.credentialStore.credentialIDs());
+          // }
      }
 }

@@ -113,7 +113,8 @@
                          <div class="form-group">
                               <label for="credentialType">Credential Type</label>
                               <p class="form-hint">A hex-encoded value to identify the type of credential from the issuer.</p>
-                              <input type="text" [(ngModel)]="txUiService.credentialType" name="credential_type" />
+                              <!-- <input type="text" [(ngModel)]="credentialStore.credentialType" name="credential_type" /> -->
+                              <!-- <input type="text" [value]="credentialStore.get('credential')?.credential_type" (input)="setCredentialType($event.target.value)" name="credential_type" /> -->
                          </div>
                     </div>
                     }

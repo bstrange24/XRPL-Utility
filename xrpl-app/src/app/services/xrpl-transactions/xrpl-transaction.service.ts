@@ -5,6 +5,7 @@ import { AppConstants } from '../../core/app.constants';
 import { ToastService } from '../toast/toast.service';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { PaymentChannelUtilService } from '../payment-channel/payment-channel-util/payment-channel-util.service';
+import { CredentialStore } from '../credentials/credential-store/credential-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -14,7 +15,8 @@ export class XrplTransactionService {
           private readonly utilsService: UtilsService,
           private readonly toastService: ToastService,
           private readonly txUiService: TransactionUiService,
-          private readonly paymentChannelUtilService: PaymentChannelUtilService
+          private readonly paymentChannelUtilService: PaymentChannelUtilService,
+          private readonly credentialStore: CredentialStore
      ) {}
 
      // HELPER: Sign transaction (handles both single and multi-sign)
@@ -257,12 +259,23 @@ export class XrplTransactionService {
           };
      }
 
-     buildCreateCredentialTransaction(wallet: xrpl.Wallet, destinationAddress: string, credentialType: string, fee: string, currentLedger: number): xrpl.CredentialCreate {
+     buildCreateCredentialTransaction(wallet: xrpl.Wallet, subject: string, credentialType: string, fee: string, currentLedger: number): xrpl.CredentialCreate {
           return {
                TransactionType: 'CredentialCreate',
                Account: wallet.classicAddress,
-               CredentialType: Buffer.from(credentialType || 'defaultCredentialType', 'utf8').toString('hex'),
-               Subject: destinationAddress,
+               CredentialType: Buffer.from(credentialType, 'utf8').toString('hex'),
+               Subject: subject,
+               Fee: fee,
+               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+     }
+
+     buildAcceptCredentialTransaction(wallet: xrpl.Wallet, issuer: string, credentialType: string, fee: string, currentLedger: number): xrpl.CredentialAccept {
+          return {
+               TransactionType: 'CredentialAccept',
+               Account: wallet.classicAddress,
+               Issuer: issuer,
+               CredentialType: Buffer.from(credentialType, 'utf8').toString('hex'),
                Fee: fee,
                LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
           };
@@ -272,7 +285,7 @@ export class XrplTransactionService {
           return {
                TransactionType: 'CredentialDelete',
                Account: wallet.classicAddress,
-               CredentialType: credentialType,
+               CredentialType: Buffer.from(credentialType, 'utf8').toString('hex'),
                Subject: subject,
                Fee: fee,
                LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
@@ -297,17 +310,6 @@ export class XrplTransactionService {
           };
      }
 
-     buildAcceptCredentialTransaction(wallet: xrpl.Wallet, issuer: string, credentialType: string, fee: string, currentLedger: number): xrpl.CredentialAccept {
-          return {
-               TransactionType: 'CredentialAccept',
-               Account: wallet.classicAddress,
-               Issuer: issuer,
-               CredentialType: credentialType,
-               Fee: fee,
-               LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-          };
-     }
-
      buildPermissionedDomainSetTransaction(wallet: xrpl.Wallet, issuer: string, fee: string, currentLedger: number): xrpl.PermissionedDomainSet {
           return {
                TransactionType: 'PermissionedDomainSet',
@@ -316,7 +318,7 @@ export class XrplTransactionService {
                     {
                          Credential: {
                               Issuer: issuer,
-                              CredentialType: Buffer.from(this.txUiService.credentialType() || 'defaultCredentialType', 'utf8').toString('hex'),
+                              CredentialType: Buffer.from(this.credentialStore.get('credentialType') || 'defaultCredentialType', 'utf8').toString('hex'),
                          },
                     },
                ],

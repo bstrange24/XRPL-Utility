@@ -29,6 +29,7 @@ import { ToastService } from '../../services/toast/toast.service';
 import { PermissionedDomainOrchestratorService } from '../../services/permissioned-domain/permissioned-domain-orchestrator/permissioned-domain-orchestrator.service';
 import { ActivatedRoute } from '@angular/router';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
+import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 
 @Component({
      selector: 'app-permissioned-domain',
@@ -46,6 +47,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly permissionedDomainUtilService = inject(PermissionedDomainUtilService);
      public readonly permissionedDomainOrchestratorService = inject(PermissionedDomainOrchestratorService);
+     public readonly credentialStore = inject(CredentialStore);
 
      activeTab = signal<'set' | 'delete'>('set');
 
@@ -173,7 +175,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                switch (currentTab) {
                     case 'set':
                          action = 'set';
-                         this.txUiService.subject.set(credentialIssuer);
+                         this.credentialStore.set('subject', credentialIssuer);
                          break;
                     case 'delete':
                          action = 'delete';

@@ -9,6 +9,7 @@ import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction
 import * as xrpl from 'xrpl';
 import { PermissionedDomainUtilService } from '../permissioned-domain-util/permissioned-domain-util.service';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
+import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
 
 export type PermissionDomainTxType = 'set' | 'delete';
 
@@ -61,6 +62,7 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly permissionedDomainUtilService = inject(PermissionedDomainUtilService);
+     public readonly credentialStore = inject(CredentialStore);
 
      async executePermissionDomainTx(type: PermissionDomainTxType, config: PermissionDomainConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
           const { wallet, formValues, extra = {}, preFetchedEnv } = config;
@@ -167,7 +169,7 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
                     ...base,
                     permissionedDomainSet: {
                          subject: formValues.subject,
-                         credentialType: this.txUiService.credentialType(),
+                         credentialType: this.credentialStore.get('credentialType'),
                     },
                };
           }

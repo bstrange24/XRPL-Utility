@@ -2,7 +2,81 @@ import { computed, Injectable, signal, WritableSignal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
-import { CredentialData, CredentialItem, DidData, DidItem, Signer, Toast, ValidationInputs, Wallet } from '../../models/interface-items.model';
+import { DidData, DidItem, Signer, Toast, ValidationInputs, Wallet } from '../../models/interface-items.model';
+
+interface TransactionUiSignals {
+     // Base
+     isSimulateEnabled: boolean;
+     useMultiSign: boolean;
+     isRegularKeyAddress: boolean;
+     regularKeyAddress: string;
+     regularKeySeed: string;
+     multiSignAddress: string;
+     multiSignSeeds: string;
+     suppressIndividualFeedback: string;
+     submitAndWait: boolean;
+
+     // Account
+     signerQuorum: number;
+     masterKeyDisabled: boolean;
+     depositAuthEnabled: boolean;
+     isdepositAuthAddress: boolean;
+     isNFTokenMinterEnabled: boolean;
+     nfTokenMinterAddress: string;
+     isUpdateMetaData: boolean;
+     isHolderConfiguration: boolean;
+     isExchangerConfiguration: boolean;
+     isIssuerConfiguration: boolean;
+     isAuthorizedNFTokenMinter: boolean;
+     depositAuthAddress: string;
+     tickSize: string;
+     transferRate: string;
+     isMessageKey: boolean;
+     domain: string;
+     url: string;
+
+     // Trustlines
+     trustlineLimitField: number;
+     currencyCode: string;
+     currencyIssuer: string;
+     tokenToRemove: string;
+     lastCurrency: string;
+     lastIssuer: string;
+     userAddedissuerFields: string;
+     newCurrency: string;
+     newIssuer: string;
+     issuerToRemove: string;
+     trustlineFlags: number;
+     showEnableTrustline: boolean;
+     currency: string;
+     issuer: string;
+
+     // Creds and P Domains
+     subject: string;
+     credentialID: string;
+     credentialIssuer: string;
+     credentialType: string;
+     domainId: string;
+
+     // Payment and Checks
+     destinationTagField: string;
+     sourceTagField: string;
+     invoiceIdField: string;
+     checkIdField: string;
+     checkCreator: string;
+     amountField: string;
+     destinationAddress: string;
+
+     // Escrows
+     escrowFinishTimeField: string;
+     escrowCancelTimeField: string;
+     escrowOwnerField: string;
+     escrowSequenceNumberField: string;
+     escrowConditionField: string;
+     escrowFulfillmentField: string;
+     finishAfter: number;
+     cancelAfter: number;
+}
 
 export type TxStep = 'idle' | 'preparing' | 'signing' | 'submitting' | 'waiting_validation' | 'waiting_for_wallet_creation' | 'finalizing' | 'success' | 'failed';
 
@@ -15,13 +89,11 @@ export type ButtonLoadingState = {
      deriveWalletFromSecretNumbers: boolean;
 };
 
-type SignalMap = {
+export type SignalMap = {
      [K in keyof TransactionUiService]: TransactionUiService[K] extends (...args: any) => any ? never : TransactionUiService[K] extends () => unknown ? K : never;
 };
 
-type SignalKey = {
-     [K in keyof TransactionUiService]: TransactionUiService[K] extends () => any ? K : never;
-}[keyof TransactionUiService];
+export type SignalKey = keyof TransactionUiSignals;
 
 @Injectable({ providedIn: 'root' })
 export class TransactionUiService {
@@ -103,43 +175,43 @@ export class TransactionUiService {
      enableEscrowCancelAfterExpirationDate = signal<boolean>(false);
 
      // Credentials
-     credentialIDs = signal<string[]>([]);
-     credentialID = signal<string>('');
-     credentialType = signal<string>('');
-     subject = signal<string>('');
-     credential = signal<CredentialData>({
-          version: '1.0',
-          credential_type: 'KYCCredential',
-          issuer: '',
-          subject: {
-               full_name: '',
-               destinationAddress: '',
-               dob: '',
-               country: '',
-               id_type: '',
-               id_number: '',
-               expirationDate: '',
-          },
-          verification: { method: '', verified_at: '', verifier: '' },
-          hash: '',
-          uri: '',
-     });
-     credentialIssuer = signal<string>('');
-     credentialIdSearchQuery = signal<string>('');
-     credentialIdSearchTerm = signal<string>('');
-     existingCredentials = signal<CredentialItem[]>([]);
-     selectedCredentials = signal<CredentialItem | null>(null);
-     subjectCredentials = signal<CredentialItem[]>([]);
-     credentialSubjectExpirationDate = computed(() => this.credential().subject.expirationDate);
-     setCredentialSubjectExpirationDate(value: string) {
-          this.credential.update(c => ({
-               ...c,
-               subject: {
-                    ...c.subject,
-                    expirationDate: value,
-               },
-          }));
-     }
+     // credentialIDs = signal<string[]>([]);
+     // credentialID = signal<string>('');
+     // credentialType = signal<string>('');
+     // subject = signal<string>('');
+     // credential = signal<CredentialData>({
+     //      version: '1.0',
+     //      credential_type: 'KYCCredential',
+     //      issuer: '',
+     //      subject: {
+     //           full_name: '',
+     //           destinationAddress: '',
+     //           dob: '',
+     //           country: '',
+     //           id_type: '',
+     //           id_number: '',
+     //           expirationDate: '',
+     //      },
+     //      verification: { method: '', verified_at: '', verifier: '' },
+     //      hash: '',
+     //      uri: '',
+     // });
+     // credentialIssuer = signal<string>('');
+     // credentialIdSearchQuery = signal<string>('');
+     // credentialIdSearchTerm = signal<string>('');
+     // existingCredentials = signal<CredentialItem[]>([]);
+     // selectedCredentials = signal<CredentialItem | null>(null);
+     // subjectCredentials = signal<CredentialItem[]>([]);
+     // credentialSubjectExpirationDate = computed(() => this.credential().subject.expirationDate);
+     // setCredentialSubjectExpirationDate(value: string) {
+     //      this.credential.update(c => ({
+     //           ...c,
+     //           subject: {
+     //                ...c.subject,
+     //                expirationDate: value,
+     //           },
+     //      }));
+     // }
 
      // DID
      didDetails = signal<DidData>({
@@ -295,12 +367,8 @@ export class TransactionUiService {
           }
      });
 
-     getValues<K extends SignalKey>(
-          keys: readonly K[]
-     ): {
-          [P in K]: ReturnType<this[P]>;
-     } {
-          const result = {} as any;
+     getValues<K extends SignalKey>(keys: readonly K[]): { [P in K]: any } {
+          const result = {} as { [P in K]: any };
 
           for (const key of keys) {
                result[key] = (this as any)[key]();
@@ -309,7 +377,7 @@ export class TransactionUiService {
           return result;
      }
 
-     buildTxKeys<const T extends readonly any[]>(...extra: T) {
+     buildTxKeys(...extra: SignalKey[]) {
           return [...this.baseTxKeys, ...extra] as const;
      }
 
@@ -748,7 +816,7 @@ export class TransactionUiService {
                     destinationTag: this.destinationTagField(),
                     sourceTag: this.sourceTagField(),
                     invoiceId: this.invoiceIdField(),
-                    credentials: this.credentialIDs(),
+                    // credentials: this.credentialIDs(),
                },
                createCheck: {
                     amount: this.amountField(),
@@ -934,10 +1002,10 @@ export class TransactionUiService {
           this.sourceTagField.set('');
           this.invoiceIdField.set('');
           this.domainId.set('');
-          this.credentialIDs.set([]);
+          // this.credentialIDs.set([]);
      }
 
-     clearOptionalExpirationDate() {
-          this.credential().subject.expirationDate = '';
-     }
+     // clearOptionalExpirationDate() {
+     //      this.credential().subject.expirationDate = '';
+     // }
 }

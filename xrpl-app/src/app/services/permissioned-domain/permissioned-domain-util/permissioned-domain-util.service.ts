@@ -11,6 +11,7 @@ import * as xrpl from 'xrpl';
 import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { PermissionDomainTxType } from '../permissioned-domain-orchestrator/permissioned-domain-orchestrator.service';
 import { AppConstants } from '../../../core/app.constants';
+import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
 
 export type PermissionedDomainTxType = 'setPermissionedDomain' | 'deletePermissionedDomain';
 type PermissionedDomainConfigTxDisplayType = 'set' | 'delete';
@@ -27,6 +28,7 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
+     public readonly credentialStore = inject(CredentialStore);
 
      createdDomains = signal<boolean>(false);
      createdPermissionedDomains = signal<any[]>([]);
@@ -212,13 +214,13 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
           if (this.txUiService.isSimulateEnabled()) return;
           this.txUiService.clearAllFields();
           this.txUiService.clearAllOptions();
-          this.txUiService.credentialType.set('');
+          this.credentialStore.set('credentialType', '');
           this.txUiService.domainId.set('');
           this.selectedDomainId.set(null);
      }
 
      resetCredentialIdDropDown() {
-          this.txUiService.credentialType.set('');
+          this.credentialStore.set('credentialType', '');
           this.txUiService.domainId.set('');
           this.selectedDomainId.set(null);
      }

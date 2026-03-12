@@ -307,11 +307,11 @@ export class TxEnvironmentService {
                includeAccountInfo = false,
                includeAccountObject = false,
                includeLedgerIndex = false,
+               includeServerInfo = false,
                includeLedgerInfo = false,
                includePaymentChannelObjects = false,
                includeMptObjects = false,
                includeGatewayBalance = false,
-               includeServerInfo = false,
                includeBlockingObjects = false,
                includeFee = false,
                forceRefresh = false,
@@ -342,10 +342,6 @@ export class TxEnvironmentService {
           if (includeLedgerInfo) {
                tasks.ledgerInfo = this.xrplCache.getLedgerInfo(client, forceRefresh);
           }
-
-          // if (includeLedgerInfo) {
-          //      tasks.ledgerInfo = this.xrplCache.getLedgerInfo(client, forceRefresh, ledgerInfoType);
-          // }
 
           if (includeAccountInfo) {
                tasks.accountInfo = this.xrplCache.getAccountInfo(address, forceRefresh);

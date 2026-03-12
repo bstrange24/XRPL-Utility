@@ -5217,6 +5217,19 @@ button:disabled,
      /* Subtle yellow */
 }
 
+.credential-item.clickable {
+     cursor: pointer;
+}
+
+.credential-item.disabled {
+     cursor: default;
+     opacity: 0.7;
+}
+
+.credential-item.clickable:hover {
+     background: var(--hover-bg);
+}
+
 /* DID List  */
 .info-and-did-card {
      margin: 0.9rem 0 0.9rem 0;

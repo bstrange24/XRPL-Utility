@@ -1,53 +1,143 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { CredentialData, CredentialItem } from '../../../models/interface-items.model';
+import { Injectable, signal, computed, WritableSignal } from '@angular/core';
+import { CredentialItem } from '../../../models/interface-items.model';
+
+export type CredentialField = 'credentialIDs' | 'credentialID' | 'credentialType' | 'subject' | 'credential' | 'uri' | 'expirationDate' | 'credentialIssuer' | 'credentialIdSearchQuery' | 'credentialIdSearchTerm' | 'existingCredentials' | 'selectedCredentials' | 'subjectCredentials';
 
 @Injectable({ providedIn: 'root' })
 export class CredentialStore {
-     credentialID = signal<string>('');
-     credentialType = signal<string>('');
-     credentialIssuer = signal<string>('');
+     private registry: Record<CredentialField, WritableSignal<any>> = {} as any;
+     private initialValues: Record<CredentialField, any> = {} as any;
 
-     credential = signal<CredentialData>({
-          version: '1.0',
-          credential_type: 'KYCCredential',
-          issuer: '',
-          subject: {
-               full_name: '',
-               destinationAddress: '',
-               dob: '',
-               country: '',
-               id_type: '',
-               id_number: '',
-               expirationDate: '',
-          },
-          verification: { method: '', verified_at: '', verifier: '' },
-          hash: '',
-          uri: '',
-     });
-
-     existingCredentials = signal<CredentialItem[]>([]);
-     subjectCredentials = signal<CredentialItem[]>([]);
-     selectedCredentials = signal<CredentialItem | null>(null);
-
-     credentialIdSearchQuery = signal<string>('');
-     credentialIdSearchTerm = signal<string>('');
-
-     credentialSubjectExpirationDate = computed(() => this.credential().subject.expirationDate);
-
-     setCredentialSubjectExpirationDate(value: string) {
-          this.credential.update(c => ({
-               ...c,
-               subject: {
-                    ...c.subject,
-                    expirationDate: value,
-               },
-          }));
+     constructor() {
+          this.initSignals();
      }
 
-     resetSelection() {
-          this.selectedCredentials.set(null);
-          this.credentialID.set('');
-          this.credentialType.set('');
-          this.credentialIssuer.set('');
+     private initSignals() {
+          // Primitive signals
+          this.registry['credentialIDs'] = signal<string[]>([]);
+          this.initialValues['credentialIDs'] = [];
+
+          this.registry['credentialID'] = signal<string>('');
+          this.initialValues['credentialID'] = '';
+
+          this.registry['credentialType'] = signal<string>('');
+          this.initialValues['credentialType'] = '';
+
+          this.registry['subject'] = signal<string>('');
+          this.initialValues['subject'] = '';
+
+          this.registry['credentialIssuer'] = signal<string>('');
+          this.initialValues['credentialIssuer'] = '';
+
+          this.registry['credentialIdSearchQuery'] = signal<string>('');
+          this.initialValues['credentialIdSearchQuery'] = '';
+
+          this.registry['credentialIdSearchTerm'] = signal<string>('');
+          this.initialValues['credentialIdSearchTerm'] = '';
+
+          this.registry['existingCredentials'] = signal<CredentialItem[]>([]);
+          this.initialValues['existingCredentials'] = [];
+
+          this.registry['selectedCredentials'] = signal<CredentialItem | null>(null);
+          this.initialValues['selectedCredentials'] = null;
+
+          this.registry['subjectCredentials'] = signal<CredentialItem[]>([]);
+          this.initialValues['subjectCredentials'] = [];
+
+          this.registry['uri'] = signal<string>('');
+          this.initialValues['uri'] = '';
+
+          this.registry['expirationDate'] = signal<string>('');
+          this.initialValues['expirationDate'] = '';
+
+          // Nested CredentialData signal
+          // const initialCredential: CredentialData = {
+          //      version: '1.0',
+          //      credential_type: 'KYCCredential',
+          //      issuer: '',
+          //      subject: {
+          //           full_name: '',
+          //           destinationAddress: '',
+          //           dob: '',
+          //           country: '',
+          //           id_type: '',
+          //           id_number: '',
+          //           expirationDate: '',
+          //      },
+          //      verification: { method: '', verified_at: '', verifier: '' },
+          //      hash: '',
+          //      uri: '',
+          // };
+          // this.registry['credential'] = signal<CredentialData>(initialCredential);
+          // this.initialValues['credential'] = structuredClone(initialCredential);
+     }
+
+     /** Generic getter */
+     get<K extends CredentialField>(field: K): ReturnType<WritableSignal<any>> {
+          return this.registry[field]();
+     }
+
+     /** Generic setter */
+     set<K extends CredentialField>(field: K, value: any) {
+          this.registry[field].set(value);
+     }
+
+     /** Get the raw signal (for binding) */
+     signal<K extends CredentialField>(field: K): WritableSignal<any> {
+          return this.registry[field];
+     }
+
+     /** Update a nested value */
+     update<K extends CredentialField>(key: K, updater: (current: any) => any) {
+          const currentValue = this.registry[key]();
+          this.registry[key].set(updater(currentValue));
+     }
+
+     /** Reset all fields to initial values */
+     resetAll() {
+          for (const key in this.registry) {
+               const field = key as CredentialField;
+               const value = this.initialValues[field];
+               this.registry[field].set(Array.isArray(value) || typeof value === 'object' ? structuredClone(value) : value);
+          }
+     }
+
+     /** Computed expiration date */
+     credentialSubjectExpirationDate = computed(() => this.registry['expirationDate']());
+
+     setCredentialSubjectExpirationDate(value: string) {
+          this.set('expirationDate', value);
+     }
+
+     /** Convenience: get all values */
+     getAll(): Record<CredentialField, any> {
+          const values: Partial<Record<CredentialField, any>> = {};
+          for (const key in this.registry) {
+               values[key as CredentialField] = this.registry[key as CredentialField]();
+          }
+          return values as Record<CredentialField, any>;
+     }
+
+     /** Clear optional expiration */
+     clearOptionalExpirationDate() {
+          this.set('expirationDate', '');
+     }
+
+     /** Reset selection fields */
+     resetCredentialIdDropDown() {
+          this.set('credentialID', '');
+          this.set('credentialType', '');
+          this.set('credentialIssuer', '');
+          this.set('selectedCredentials', null);
+     }
+
+     resetCredentailFields() {
+          this.resetCredentialIdDropDown();
+          this.clearOptionalExpirationDate();
+          this.set('credentialIDs', '');
+          this.set('subject', '');
+          this.set('credentialIdSearchQuery', '');
+          this.set('credentialIdSearchTerm', '');
+          this.set('uri', '');
      }
 }

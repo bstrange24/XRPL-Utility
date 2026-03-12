@@ -29,6 +29,7 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 
 @Component({
      selector: 'app-send-xrp',
@@ -56,6 +57,7 @@ export class SendXrpComponent extends PerformanceBaseComponent implements OnInit
      public readonly sendXrpTransactionOrchestratorService = inject(SendXrpTransactionOrchestratorService);
      public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly credentialStore = inject(CredentialStore);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -325,6 +327,6 @@ export class SendXrpComponent extends PerformanceBaseComponent implements OnInit
           if (this.txUiService.isSimulateEnabled()) return;
           this.txUiService.clearAllFields();
           this.txUiService.clearAllOptions();
-          this.txUiService.credentialIDs.set([]);
+          this.credentialStore.set('credentialIDs', []);
      }
 }

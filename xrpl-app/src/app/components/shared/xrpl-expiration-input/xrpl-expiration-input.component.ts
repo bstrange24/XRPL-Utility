@@ -1,6 +1,6 @@
-import { Component, Input, Signal, WritableSignal, inject } from '@angular/core';
+import { Component, Input, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UtilsService } from '../../../services/util-service/utils.service';
+import { XrplDateService } from '../../../core/xrpl-date.service';
 
 @Component({
      selector: 'app-xrpl-expiration-input',
@@ -10,7 +10,7 @@ import { UtilsService } from '../../../services/util-service/utils.service';
      styleUrl: './xrpl-expiration-input.component.css',
 })
 export class XrplExpirationInputComponent {
-     private readonly utilsService = inject(UtilsService);
+     private readonly xrplDateService = inject(XrplDateService);
 
      @Input({ required: true }) expirationSignal!: Signal<string>;
      @Input({ required: true }) setExpiration!: (value: string) => void;
@@ -26,20 +26,20 @@ export class XrplExpirationInputComponent {
 
      setNow() {
           const now = new Date();
-          this.setExpiration(this.utilsService.formatDateTimeLocal(now));
+          this.setExpiration(this.xrplDateService.formatDateTimeLocal(now));
      }
 
      addSeconds(sec: number) {
           let current = this.expirationSignal();
 
           if (!current) {
-               current = this.utilsService.formatDateTimeLocal(new Date());
+               current = this.xrplDateService.formatDateTimeLocal(new Date());
           }
 
           const date = new Date(current);
           date.setSeconds(date.getSeconds() + sec);
 
-          this.setExpiration(this.utilsService.formatDateTimeLocal(date));
+          this.setExpiration(this.xrplDateService.formatDateTimeLocal(date));
      }
 
      clear() {
