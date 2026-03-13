@@ -8,10 +8,7 @@ import { CredentialItem } from '../../../models/interface-items.model';
 import * as xrpl from 'xrpl';
 import { CredentialStore } from '../credential-store/credential-store.service';
 import { XrplDateService } from '../../../core/xrpl-date.service';
-
-export type CredentialTxType = 'createCredential' | 'deleteCredentials' | 'acceptCredentials';
-type CredentialConfigTxDisplayType = 'create' | 'accept' | 'verify' | 'delete';
-type IconType = 'ng-icon' | 'lucide-icon';
+import { CredentialTxType } from '../../../components/credentials/constants/credential.constants';
 
 @Injectable({
      providedIn: 'root',
@@ -28,13 +25,6 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      }
 
      private readonly decodeCache = new Map<string, string>();
-
-     readonly issuedByMe = computed(() => this.credentialStore.get('existingCredentials'));
-     readonly issuedToMe = computed(() => this.credentialStore.get('subjectCredentials'));
-     readonly pendingIssued = computed(() => this.issuedByMe().filter((c: CredentialItem) => !this.isCredentialAccepted(c)));
-     readonly acceptedIssued = computed(() => this.issuedByMe().filter((c: CredentialItem) => this.isCredentialAccepted(c)));
-     readonly pendingToAccept = computed(() => this.issuedToMe().filter((c: CredentialItem) => !this.isCredentialAccepted(c)));
-     readonly acceptedByMe = computed(() => this.issuedToMe().filter((c: CredentialItem) => this.isCredentialAccepted(c)));
 
      filteredExisting = computed(() => this.filterCredentials(this.credentialStore.get('existingCredentials'), this.credentialStore.get('credentialIdSearchTerm')));
      filteredSubject = computed(() => this.filterCredentials(this.credentialStore.get('subjectCredentials'), this.credentialStore.get('credentialIdSearchTerm')));
@@ -54,35 +44,6 @@ export class CredentialUtilService extends PerformanceBaseComponent {
                this.credentialStore.resetCredentialIdDropDown();
           }
      }
-
-     readonly credentialStats = computed(() => {
-          const issuedByMe = this.issuedByMe();
-          const issuedToMe = this.issuedToMe();
-
-          const pendingIssued = this.pendingIssued();
-          const acceptedIssued = this.acceptedIssued();
-
-          const pendingToAccept = this.pendingToAccept();
-          const acceptedByMe = this.acceptedByMe();
-
-          return {
-               issuedByMe,
-               issuedToMe,
-               pendingIssued,
-               acceptedIssued,
-               pendingToAccept,
-               acceptedByMe,
-
-               counts: {
-                    issued: issuedByMe.length,
-                    received: issuedToMe.length,
-                    pendingIssued: pendingIssued.length,
-                    acceptedIssued: acceptedIssued.length,
-                    pendingToAccept: pendingToAccept.length,
-                    acceptedByMe: acceptedByMe.length,
-               },
-          };
-     });
 
      credentialItems(tab: 'create' | 'accept' | 'delete' | 'verify', walletAddress: string) {
           let list = tab === 'accept' ? this.credentialStore.get('subjectCredentials') : this.credentialStore.get('existingCredentials');
@@ -226,166 +187,6 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
 
           return { success: true, hash };
-     }
-
-     readonly txTypeMap = {
-          create: 'CredentialCreate',
-          accept: 'CredentialAccept',
-          delete: 'CredentialDelete',
-          verify: 'CredentialVerify',
-     } as const;
-
-     readonly tabs: {
-          key: CredentialConfigTxDisplayType;
-          label: string;
-          icon: string;
-          iconType: IconType;
-          color: string;
-          iconSize: string;
-     }[] = [
-          {
-               key: 'create',
-               label: 'Create',
-               icon: 'heroPlusCircle',
-               iconType: 'ng-icon',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'accept',
-               label: 'Accept',
-               icon: 'copy-plus',
-               iconType: 'lucide-icon',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'verify',
-               label: 'Verify',
-               icon: 'shield-ellipsis',
-               iconType: 'lucide-icon',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'delete',
-               label: 'Delete',
-               icon: 'heroTrash',
-               iconType: 'ng-icon',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-     ];
-
-     readonly tabMeta = {
-          create: {
-               icon: 'heroPlusCircle',
-               colorClass: 'blue-button-submenu',
-               title: 'Create Credentials',
-               desc: 'Create Credentials to another XRPL address.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-          accept: {
-               icon: 'heroArrowPath',
-               colorClass: 'green-button-submenu',
-               title: 'Accept Credentials',
-               desc: 'Accept Credentials from another XRPL address.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-          verify: {
-               icon: 'shield-ellipsis',
-               colorClass: 'orange-button-submenu',
-               title: 'Verify Credentials',
-               desc: 'Verify Credentials have been accepted by another XRPL address.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-          delete: {
-               icon: 'heroTrash',
-               colorClass: 'red-button-submenu',
-               title: 'Delete Credentials',
-               desc: 'Delete Credentials to another XRPL address.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-     };
-
-     private buildTxLabel(defaultText: string) {
-          return computed(() => {
-               const step = this.txUiService.currentStep();
-               if (step === 'idle') return defaultText;
-               if (step === 'waiting_validation') return 'Waiting for confirmation...';
-               return this.txUiService.stepMessage();
-          });
-     }
-
-     readonly createCredentialButtonLabel = this.buildTxLabel('Create Credential');
-     readonly acceptCredentialsButtonLabel = this.buildTxLabel('Accept Credential');
-     readonly deleteCredentialsButtonLabel = this.buildTxLabel('Delete Credential');
-     readonly verifyCredentialLabel = this.buildTxLabel('Verify Credential');
-
-     actionButtonLabel(tab: 'create' | 'accept' | 'delete' | 'verify') {
-          switch (tab) {
-               case 'create':
-                    return this.createCredentialButtonLabel();
-               case 'accept':
-                    return this.acceptCredentialsButtonLabel();
-               case 'delete':
-                    return this.deleteCredentialsButtonLabel();
-               case 'verify':
-                    return this.verifyCredentialLabel();
-          }
-     }
-
-     actionButtonClass(tab: 'create' | 'accept' | 'delete' | 'verify') {
-          switch (tab) {
-               case 'create':
-                    return 'btn-primary-blue';
-               case 'accept':
-                    return 'btn-primary-green';
-               case 'delete':
-                    return 'btn-primary-red';
-               case 'verify':
-                    return 'btn-primary-orange';
-          }
-     }
-
-     credentialsToShow(tab: 'create' | 'accept' | 'delete' | 'verify') {
-          const s = this.credentialStats();
-
-          switch (tab) {
-               case 'create':
-                    return [...s.pendingIssued, ...s.acceptedIssued];
-               case 'accept':
-                    return s.pendingToAccept.length ? s.pendingToAccept : s.acceptedByMe;
-               case 'delete':
-                    return s.issuedByMe;
-               case 'verify':
-                    return [...s.pendingToAccept, ...s.acceptedByMe, ...s.pendingIssued, ...s.acceptedIssued];
-          }
-     }
-
-     summaryMessage(tab: 'create' | 'accept' | 'delete' | 'verify') {
-          const s = this.credentialStats();
-
-          switch (tab) {
-               case 'create':
-                    if (s.counts.issued === 0) return 'has not issued any credentials yet.';
-                    return `has issued <strong>${s.counts.issued}</strong> credential${s.counts.issued === 1 ? '' : 's'}.`;
-               case 'accept':
-                    if (s.counts.pendingToAccept === 0) return 'has no pending credentials to accept.';
-                    return `has <strong>${s.counts.pendingToAccept}</strong> credential${s.counts.pendingToAccept === 1 ? '' : 's'} pending acceptance.`;
-               case 'delete':
-                    if (s.counts.issued === 0) return 'has no credentials to delete.';
-                    return `has <strong>${s.counts.issued}</strong> issued credential${s.counts.issued === 1 ? '' : 's'} that can be deleted.`;
-               case 'verify': {
-                    const total = s.counts.issued + s.counts.received;
-                    if (total === 0) return 'is not involved in any credentials.';
-                    return `is involved in <strong>${total}</strong> credential${total === 1 ? '' : 's'} — Received: ${s.counts.received} • Issued: ${s.counts.issued}`;
-               }
-          }
      }
 
      clearInputFields(): void {

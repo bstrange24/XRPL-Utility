@@ -6,13 +6,14 @@
      </div>
 </div>
 
-@let info = infoData();
 <!-- Get active tab -->
-@let tab = activeTab();
+@let info = permissionedDomainViewModelService.infoData();
+<!-- Get active tab -->
+@let tab = permissionedDomainViewModelService.activeTab();
 <!-- Get tab data -->
-@let tabs = permissionedDomainUtilService.tabs;
+@let tabs = menuTabs;
 <!-- Get tab meta data -->
-@let meta = permissionedDomainUtilService.tabMeta[tab];
+@let meta = tabMeta[tab];
 
 <!-- Main content. -->
 <div class="main-container">
@@ -53,7 +54,7 @@
                          <div class="summary-text">
                               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
                               <code>{{ info.walletName }}</code>
-                              <span [innerHTML]="summaryMessage()"></span>
+                              <span [innerHTML]="permissionedDomainViewModelService.summaryMessage()"></span>
                          </div>
 
                          <!-- Expand/Collapse toggle (only when there are domains) -->
@@ -70,7 +71,7 @@
                     <section class="credentials-list-container" [class.expanded]="infoPanelExpanded()" aria-label="Credential list">
                          <ul class="credentials-list">
                               @for (domain of info.permissionedDomainsToShow; track domain.index) {
-                              <li class="credential-item" [class.selected-from-list]="tab !== 'set' && domain.index === permissionedDomainUtilService.selectedDomainId()" [attr.cursor]="tab !== 'set' ? 'pointer' : null" (click)="tab !== 'set' ? selectPermissionedDomainFromList(domain) : null">
+                              <li class="credential-item" [class.selected-from-list]="tab !== 'set' && domain.index === permissionedDomainStoreService.get('selectedDomainId')" [attr.cursor]="tab !== 'set' ? 'pointer' : null" (click)="tab !== 'set' ? selectPermissionedDomainFromList(domain) : null">
                                    <!-- <div class="credential-main-line">{{ domain.Domain || 'Permissioned Domain' }}</div> -->
                                    <div class="credential-meta">
                                         <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer">
@@ -106,15 +107,14 @@
                          <div class="form-group">
                               <label for="issuer">Issuer</label>
                               <p class="form-hint">The credential issuer.</p>
-                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address"> </app-select-search-dropdown>
+                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="handleSearchQueryChange($event)" (valueChange)="handleDestinationChange($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
                          </div>
 
                          <!-- Credential Type-->
                          <div class="form-group">
                               <label for="credentialType">Credential Type</label>
                               <p class="form-hint">A hex-encoded value to identify the type of credential from the issuer.</p>
-                              <!-- <input type="text" [(ngModel)]="credentialStore.credentialType" name="credential_type" /> -->
-                              <!-- <input type="text" [value]="credentialStore.get('credential')?.credential_type" (input)="setCredentialType($event.target.value)" name="credential_type" /> -->
+                              <input type="text" [value]="permissionedDomainStoreService.get('credentialType')" (input)="permissionedDomainUtilService.setCredentialType($event.target.value)" name="credential_type" placeholder="Enter a credential type" />
                          </div>
                     </div>
                     }
@@ -122,7 +122,7 @@
                     <!-- Permissioned Domain Dropdown -->
                     @if (tab === 'delete') {
                     <!-- Dropdown -->
-                    @if (permissionedDomainUtilService.createdPermissionedDomains().length > 0) {
+                    @if (permissionedDomainStoreService.get('createdPermissionedDomains').length > 0) {
                     <div class="form-group">
                          <label for="selectPDtoDelete">Select Permissioned Domain to delete</label>
                          <p class="form-hint">Select an existing permissioined domain attached to the current wallet.</p>
@@ -134,16 +134,17 @@
                          <div class="form-group">
                               <label for="domainId">Domain ID</label>
                               <p class="form-hint">Ledger hash containing the permissioned domain.</p>
-                              <input type="text" [value]="txUiService.domainId()" readonly name="domainId" placeholder="Select a domain above" />
+                              <input type="text" [value]="permissionedDomainStoreService.get('selectedDomainId')" readonly name="domainId" placeholder="Select a domain above" />
                          </div>
                     </div>
                     }}
 
-                    <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+                    <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="permissionedDomainViewModelService.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                     <!-- Action buttons -->
                     <div class="button-row">
                          <button type="button" [class]="info?.actionButtonClass" (click)="performAction()" [disabled]="!canSubmit()">{{ info?.actionButtonLabel }}</button>
+                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit()" (click)="clearInputFields()">Clear Fields</button>
                     </div>
 
                     <!-- Execution time -->

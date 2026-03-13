@@ -10,50 +10,9 @@ import * as xrpl from 'xrpl';
 import { PermissionedDomainUtilService } from '../permissioned-domain-util/permissioned-domain-util.service';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
+import { PERMISSION_DOMAIN_VALIDATION_RULES, PermissionDomainConfig, PermissionDomainTxType } from '../../../components/permissioned-domain/constants/permissioned-domain.constants';
 
-export type PermissionDomainTxType = 'set' | 'delete';
-
-interface PermissionDomainConfig {
-     wallet: Wallet;
-     formValues: {
-          amountField?: string;
-          destinationAddress?: string;
-          nfTokenMinterAddress?: string;
-          setFlags?: any;
-          clearFlags?: any;
-          tickSize?: any;
-          transferRate?: any;
-          publicKey?: string;
-          domain?: string;
-          isMessageKey?: boolean;
-          enableNftMinter?: string;
-          isSimulateEnabled?: boolean;
-          useMultiSign?: boolean;
-          isRegularKeyAddress?: boolean;
-          regularKeyAddress?: string;
-          regularKeySeed?: string;
-          multiSignAddress?: string;
-          multiSignSeeds?: string | string[];
-          suppressIndividualFeedback?: string;
-          [key: string]: any;
-     };
-     extra?: Record<string, any>;
-     preFetchedEnv?: {
-          client: xrpl.Client;
-          accountInfo: any;
-          accountObjects?: any;
-          fee: string;
-          currentLedger: number;
-          destinationAccountInfo?: any;
-          escrowObjects?: any;
-          escrowObjectsBySequenceId?: any;
-          wallet?: any;
-     };
-}
-
-@Injectable({
-     providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class PermissionedDomainOrchestratorService extends PerformanceBaseComponent {
      private readonly TxEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
@@ -65,43 +24,48 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
      public readonly credentialStore = inject(CredentialStore);
 
      async executePermissionDomainTx(type: PermissionDomainTxType, config: PermissionDomainConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
-          const { wallet, formValues, extra = {}, preFetchedEnv } = config;
-          const { isSimulateEnabled = false } = formValues;
+          console.log('config: ', config);
+          const { wallet, simulate = false, multiSign = false, credentialType, credentialIssuer, domainId, subjectDestination, preFetchedEnv, extra = {} } = config;
 
-          let client: xrpl.Client;
           let env: any;
+          let client: xrpl.Client;
           let txHash: string | undefined;
 
           try {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
+               // Use pre-fetched env if provided, otherwise fetch
                if (preFetchedEnv) {
                     env = preFetchedEnv;
-                    client = preFetchedEnv.client;
-
-                    if (!env.accountInfo || !env.fee || !env.currentLedger) {
-                         throw new Error('Pre-fetched environment missing required fields');
-                    }
                } else {
-                    // Normal fetch fallback
-                    const envFlags: any = {
+                    env = await this.TxEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
                          includeFee: true,
-                         includeLedgerIndex: true,
-                    };
-
-                    const env = await this.TxEnvironmentService.prepareTxEnvironment(envFlags);
-                    client = env.client;
-
-                    if (!env.accountInfo || !env.fee || !env.currentLedger) {
-                         throw new Error('Failed to fetch required network data');
-                    }
+                         includeLedgerInfo: true,
+                    });
                }
 
-               const validationRule = this.getValidationRuleName(type);
-               const validationInputs = this.buildValidationInputs(type, wallet, env, formValues, extra);
+               console.log('env: ', env);
+               client = env.client;
+
+               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) {
+                    throw new Error('Required network data missing');
+               }
+
+               // Validation
+               const validationRule = PERMISSION_DOMAIN_VALIDATION_RULES[type];
+               const validationInputs = this.buildValidationInputs(type, wallet, env, {
+                    simulate,
+                    multiSign,
+                    credentialType,
+                    credentialIssuer,
+                    domainId,
+                    subjectDestination,
+                    extra,
+               });
+
                const errors = await this.validator.validate(validationRule, {
                     inputs: validationInputs,
                     client,
@@ -112,11 +76,14 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
                     return { success: false, error: errors.join('\n• '), validationError: true };
                }
 
-               const tx = this.buildModifyAccountTransaction(type, env.wallet, env, formValues, extra);
+               // Build transaction
+               const tx = this.buildPermissionedDomainTransaction(type, env.wallet || wallet, env, config, { simulate, multiSign, credentialType, credentialIssuer, domainId, subjectDestination, extra });
 
-               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues, env, extra);
+               // Optional fields
+               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, credentialType, credentialIssuer, domainId, subjectDestination, extra }, env);
 
-               const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
+               // Execute
+               const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { simulate, multiSign, credentialType, credentialIssuer, domainId, subjectDestination, extra });
 
                if (!execResult.success) {
                     return { success: false, error: execResult.error };
@@ -124,77 +91,60 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
 
                txHash = execResult.hash;
 
-               if (isSimulateEnabled) {
-                    return this.permissionedDomainUtilService.handleSimulationSuccess(type, txHash);
+               if (simulate) {
+                    return this.permissionedDomainUtilService.handleSimulationSuccess(type, { simulate, multiSign, credentialType, credentialIssuer, domainId, subjectDestination, extra }, txHash, extra);
                }
 
-               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash || '', tx.LastLedgerSequence || 0);
-
+               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.permissionedDomainUtilService.buildSuccessMessage(type);
+               const message = this.permissionedDomainUtilService.buildSuccessMessage(type, { simulate, multiSign, credentialType, credentialIssuer, domainId, subjectDestination, extra }, extra);
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
+
                return { success: true, hash: txHash };
           } catch (err: any) {
-               const msg = err.message || 'Unexpected error during modify account transaction';
-               console.error(`[${type}] executeModifyAccountTx failed:`, err);
+               console.error(`[${type}] executePermissionDomainTx failed:`, err);
                this.xrplTransactionService.processTxError(err);
-               return { success: false, error: msg };
+               return { success: false, error: err.message || 'Unexpected error', validationError: false };
           } finally {
                this.txUiService.resetCurrentStepToIdle();
           }
      }
 
-     private getValidationRuleName(type: PermissionDomainTxType): string {
-          const map: Record<PermissionDomainTxType, string> = {
-               set: 'PermissionedDomainSet',
-               delete: 'PermissionedDomainDelete',
-          };
-          return map[type];
-     }
-
-     private buildValidationInputs(type: PermissionDomainTxType, wallet: Wallet, env: any, formValues: any, extra?: any) {
+     private buildValidationInputs(type: PermissionDomainTxType, wallet: Wallet, env: any, values: any) {
           const base = {
                wallet,
-               network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.currentLedger },
+               network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.ledgerInfo.lastIndex },
                regularKey: {
-                    isRegularKey: formValues.isRegularKeyAddress,
-                    address: formValues.regularKeyAddress,
-                    seed: formValues.regularKeySeed,
+                    isRegularKey: values.isRegularKeyAddress,
+                    address: values.regularKeyAddress,
+                    seed: values.regularKeySeed,
                },
           };
 
-          if (type === 'set') {
-               return {
-                    ...base,
-                    permissionedDomainSet: {
-                         subject: formValues.subject,
-                         credentialType: this.credentialStore.get('credentialType'),
-                    },
-               };
+          switch (type) {
+               case 'set':
+                    return { ...base, permissionedDomainSet: { credentialType: values.credentialType, subject: values.credentialIssuer } };
+               case 'delete':
+                    return { ...base, permissonedDomainDelete: { domainId: values.domainId } };
           }
-
-          // delete
-          return {
-               ...base,
-               permissonedDomainDelete: {
-                    domainId: formValues.domainId,
-               },
-          };
      }
 
-     private buildModifyAccountTransaction(type: PermissionDomainTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
-          const { fee, currentLedger } = env;
+     private buildPermissionedDomainTransaction(type: PermissionDomainTxType, wallet: xrpl.Wallet, env: any, config: any, values: any): xrpl.Transaction {
+          const { fee } = env;
 
-          if (type === 'set') {
-               return this.xrplTransactionService.buildPermissionedDomainSetTransaction(wallet, formValues.subject, fee, currentLedger);
+          switch (type) {
+               case 'set':
+                    const txCreate = this.xrplTransactionService.buildPermissionedDomainSetTransaction(wallet, values.credentialIssuer, values.credentialType, fee, env.ledgerInfo.lastIndex);
+                    return txCreate;
+
+               case 'delete':
+                    const txDelete = this.xrplTransactionService.buildPermissionedDomainDeleteTransaction(wallet, values.domainId, fee, env.ledgerInfo.lastIndex);
+                    return txDelete;
           }
-
-          // delete;
-          return this.xrplTransactionService.buildPermissionedDomainDeleteTransaction(wallet, formValues.domainId, fee, currentLedger);
      }
 
-     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: PermissionDomainTxType, formValues: any, env: any, extra: any) {
+     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: PermissionDomainTxType, values: any, env: any) {
           const isTicket = this.txUiService.isTicket();
           if (isTicket) {
                const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
@@ -209,21 +159,21 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
           if (this.txUiService.isMemoEnabled() && memo) this.utilsService.setMemoField(tx, memo);
      }
 
-     private async executeSpecificTx(type: PermissionDomainTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, formValues: any) {
-          let opts = {
-               useMultiSign: formValues.useMultiSign,
-               isRegularKeyAddress: formValues.isRegularKeyAddress,
-               regularKeyAddress: formValues.regularKeyAddress,
-               regularKeySeed: formValues.regularKeySeed,
-               multiSignAddress: formValues.multiSignAddress,
-               multiSignSeeds: formValues.multiSignSeeds,
+     private async executeSpecificTx(type: PermissionDomainTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, values: any) {
+          const opts = {
+               useMultiSign: values.multiSign,
+               isRegularKeyAddress: values.isRegularKeyAddress,
+               regularKeyAddress: values.regularKeyAddress,
+               regularKeySeed: values.regularKeySeed,
+               multiSignAddress: values.multiSignAddress,
+               multiSignSeeds: values.multiSignSeeds,
           };
 
-          if (type === 'set') {
-               return this.executor.permissionedDomainSet?.(tx as xrpl.PermissionedDomainSet, wallet, client, opts);
+          switch (type) {
+               case 'set':
+                    return this.executor.permissionedDomainSet?.(tx as xrpl.PermissionedDomainSet, wallet, client, opts);
+               case 'delete':
+                    return this.executor.permissionedDomainDelete?.(tx as xrpl.PermissionedDomainDelete, wallet, client, opts);
           }
-
-          // delete
-          return this.executor.permissionedDomainDelete?.(tx as xrpl.PermissionedDomainDelete, wallet, client, opts);
      }
 }

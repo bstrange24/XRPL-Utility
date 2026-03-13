@@ -9,13 +9,13 @@ import { WalletManagerService } from '../../wallets/manager/wallet-manager.servi
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import * as xrpl from 'xrpl';
 import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { PermissionDomainTxType } from '../permissioned-domain-orchestrator/permissioned-domain-orchestrator.service';
 import { AppConstants } from '../../../core/app.constants';
-import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
+import { PermissionedDomainStoreService } from '../permissioned-domain-store/permissioned-domain-store.service';
+import { PermissionDomainTxType } from '../../../components/permissioned-domain/constants/permissioned-domain.constants';
 
-export type PermissionedDomainTxType = 'setPermissionedDomain' | 'deletePermissionedDomain';
-type PermissionedDomainConfigTxDisplayType = 'set' | 'delete';
-type IconType = 'ng-icon' | 'lucide-icon';
+// export type PermissionedDomainTxType = 'setPermissionedDomain' | 'deletePermissionedDomain';
+// type PermissionedDomainConfigTxDisplayType = 'set' | 'delete';
+// type IconType = 'ng-icon' | 'lucide-icon';
 
 @Injectable({
      providedIn: 'root',
@@ -28,75 +28,11 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
-     public readonly credentialStore = inject(CredentialStore);
-
-     createdDomains = signal<boolean>(false);
-     createdPermissionedDomains = signal<any[]>([]);
-     selectedDomainId = signal<string | null>(null);
+     public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
 
      constructor() {
           super();
      }
-
-     readonly setPermissionDomainKeySpecificKeys = ['subject', 'credentialType'] as const;
-     readonly deletePermissionDomainSpecificKeys = ['domainId'] as const;
-
-     readonly tabs: {
-          key: PermissionedDomainConfigTxDisplayType;
-          label: string;
-          icon: string;
-          iconType: IconType;
-          color: string;
-          iconSize: string;
-     }[] = [
-          {
-               key: 'set',
-               label: 'Set',
-               icon: 'heroPlusCircle',
-               iconType: 'ng-icon',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'delete',
-               label: 'Delete',
-               icon: 'heroTrash',
-               iconType: 'ng-icon',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-     ];
-
-     readonly tabMeta = {
-          set: {
-               icon: 'heroPlusCircle',
-               colorClass: 'blue-button-submenu',
-               title: 'Set Permissioned Domain',
-               desc: 'Set Permissioned Domain for the selected account.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-          delete: {
-               icon: 'heroTrash',
-               colorClass: 'red-button-submenu',
-               title: 'Delete Permissioned Domain',
-               desc: 'Delete Permissioned Domain for the selected account.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-     };
-
-     private buildTxLabel(defaultText: string) {
-          return computed(() => {
-               const step = this.txUiService.currentStep();
-               if (step === 'idle') return defaultText;
-               if (step === 'waiting_validation') return 'Waiting for confirmation...';
-               return this.txUiService.stepMessage();
-          });
-     }
-
-     readonly setPermissionedDomainButtonLabel = this.buildTxLabel('Set Permissioned Domain');
-     readonly deletePermissionedDomainButtonLabel = this.buildTxLabel('Delete Permissioned Domain');
 
      actionButtonLabel(tab: 'set' | 'delete') {
           switch (tab) {
@@ -116,21 +52,15 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
           }
      }
 
-     resetDomainDropDown() {
-          this.selectedDomainId.set(null);
-          this.txUiService.domainId.set('');
-     }
-
      selectedDomainItem = computed(() => {
-          const id = this.selectedDomainId();
+          const id = this.permissionedDomainStoreService.get('selectedDomainId');
           if (!id) return null;
-          return this.domainItems().find(i => i.id === id) || null;
+          return this.domainItems().find((i: { id: any }) => i.id === id) || null;
      });
 
      onDomainSelected(item: SelectItem | null) {
           const domainId = item?.id || '';
-          this.selectedDomainId.set(domainId);
-          this.txUiService.domainId.set(domainId); // auto-fill the field
+          this.permissionedDomainStoreService.set('selectedDomainId', domainId);
      }
 
      getCreatedPermissionedDomains(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
@@ -165,12 +95,13 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
                     };
                })
                .sort((a, b) => a.index.localeCompare(b.index));
-          this.createdPermissionedDomains.set(mapped);
-          this.utilsService.logObjects('createdPermissionedDomains', this.createdPermissionedDomains());
+          this.permissionedDomainStoreService.set('createdPermissionedDomains', mapped);
+          this.utilsService.logObjects('createdPermissionedDomains', this.permissionedDomainStoreService.get('createdPermissionedDomains'));
      }
 
      domainItems = computed(() => {
-          return this.createdPermissionedDomains().map(domain => ({
+          return this.permissionedDomainStoreService.get('createdPermissionedDomains').map((domain: { index: string; AcceptedCredentials: string | any[] }) => ({
+               // return this.createdPermissionedDomains().map(domain => ({
                id: domain.index,
                display: domain.index.slice(0, 10) + '...' + domain.index.slice(-8),
                secondary: domain.AcceptedCredentials ? `Credentials: ${domain.AcceptedCredentials.length}` : 'No credentials',
@@ -181,20 +112,86 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
           }));
      });
 
-     buildSuccessMessage(type: PermissionDomainTxType): string {
+     onCredentialIdInput(event: Event): void {
+          const value = (event.target as HTMLInputElement).value;
+          this.permissionedDomainStoreService.set('credentialIdSearchQuery', value);
+     }
+
+     setCredentialType(value: string) {
+          this.permissionedDomainStoreService.set('credentialType', value);
+     }
+
+     // readonly tabs: {
+     //      key: PermissionedDomainConfigTxDisplayType;
+     //      label: string;
+     //      icon: string;
+     //      iconType: IconType;
+     //      color: string;
+     //      iconSize: string;
+     // }[] = [
+     //      {
+     //           key: 'set',
+     //           label: 'Set',
+     //           icon: 'heroPlusCircle',
+     //           iconType: 'ng-icon',
+     //           color: '',
+     //           iconSize: AppConstants.TAB_ICON_SIZE,
+     //      },
+     //      {
+     //           key: 'delete',
+     //           label: 'Delete',
+     //           icon: 'heroTrash',
+     //           iconType: 'ng-icon',
+     //           color: '',
+     //           iconSize: AppConstants.TAB_ICON_SIZE,
+     //      },
+     // ];
+
+     // readonly tabMeta = {
+     //      set: {
+     //           icon: 'heroPlusCircle',
+     //           colorClass: 'blue-button-submenu',
+     //           title: 'Set Permissioned Domain',
+     //           desc: 'Set Permissioned Domain for the selected account.',
+     //           color: '',
+     //           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
+     //      },
+     //      delete: {
+     //           icon: 'heroTrash',
+     //           colorClass: 'red-button-submenu',
+     //           title: 'Delete Permissioned Domain',
+     //           desc: 'Delete Permissioned Domain for the selected account.',
+     //           color: '',
+     //           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
+     //      },
+     // };
+
+     private buildTxLabel(defaultText: string) {
+          return computed(() => {
+               const step = this.txUiService.currentStep();
+               if (step === 'idle') return defaultText;
+               if (step === 'waiting_validation') return 'Waiting for confirmation...';
+               return this.txUiService.stepMessage();
+          });
+     }
+
+     readonly setPermissionedDomainButtonLabel = this.buildTxLabel('Set Permissioned Domain');
+     readonly deletePermissionedDomainButtonLabel = this.buildTxLabel('Delete Permissioned Domain');
+
+     buildSuccessMessage(type: PermissionDomainTxType, t?: any, d?: any): string {
           if (type === 'set') {
                return `Successfully Set Permission Domain`;
           }
           return `Successfully Deleted Permission Domain`;
      }
 
-     handleSimulationSuccess(type: PermissionDomainTxType, hash?: string) {
+     handleSimulationSuccess(type: PermissionDomainTxType, hash?: any, h?: any, t?: any, d?: any) {
           let msg: string;
 
           if (type === 'set') {
-               msg = `Simulated Setting Permission Domain`;
+               msg = `Successfully simulated Setting Permission Domain`;
           } else {
-               msg = `Simulated Deleting Permission Domain`;
+               msg = `Successfully simulated Deleting Permission Domain`;
           }
 
           this.txUiService.resetCurrentStepToIdle();
@@ -207,21 +204,13 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
           this.txUiService.clearAllOptions();
           this.txUiService.clearOptionalInputFields();
           this.txUiService.clearAllOptionsAndMessages();
-          this.resetCredentialIdDropDown();
+          this.permissionedDomainStoreService.resetDomainFields();
      }
 
      clearInputFields() {
           if (this.txUiService.isSimulateEnabled()) return;
           this.txUiService.clearAllFields();
           this.txUiService.clearAllOptions();
-          this.credentialStore.set('credentialType', '');
-          this.txUiService.domainId.set('');
-          this.selectedDomainId.set(null);
-     }
-
-     resetCredentialIdDropDown() {
-          this.credentialStore.set('credentialType', '');
-          this.txUiService.domainId.set('');
-          this.selectedDomainId.set(null);
+          this.permissionedDomainStoreService.resetDomainFields();
      }
 }

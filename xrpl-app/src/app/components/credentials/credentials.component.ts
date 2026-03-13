@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
@@ -21,7 +21,7 @@ import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/selec
 import { CredentialItem } from '../../models/interface-items.model';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
-import { CredentialTransactionOrchestratorService, CredentialTxConfig, CredentialTxType } from '../../services/credentials/credential-transaction-orchestrator/credential-transaction-orchestrator.service';
+import { CredentialTransactionOrchestratorService } from '../../services/credentials/credential-transaction-orchestrator/credential-transaction-orchestrator.service';
 import { CredentialUtilService } from '../../services/credentials/credential-util/credential-util.service';
 // import { RequirementsInfoComponent } from '../../components/shared/requirements-info/requirements-info/requirements-info.component';
 import { RequirementsInfoComponent } from './ui-components/credential-requirements-info/requirements-info/requirements-info.component';
@@ -33,6 +33,7 @@ import { XrplExpirationInputComponent } from '../shared/xrpl-expiration-input/xr
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 import { CredentialViewModelService } from '../../services/credentials/credential-view-model/credential-view-model.service';
+import { CredentialTxConfig, CredentialTxType, CREDENTIAL_TAB_META, CREDENTIAL_TABS } from './constants/credential.constants';
 
 @Component({
      selector: 'app-credentials',
@@ -52,6 +53,8 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      public readonly credentialUtilService = inject(CredentialUtilService);
      public readonly credentialStore = inject(CredentialStore);
      public readonly credentialViewModelService = inject(CredentialViewModelService);
+     readonly tabMeta = CREDENTIAL_TAB_META;
+     readonly menuTabs = CREDENTIAL_TABS;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
@@ -216,7 +219,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           // 7. Handle result & side effects
           if (txResult) {
                const successFullTx: boolean = await this.handleTxResult(txResult, envRef.client, envRef.wallet, subjectDestination, this.credentialStore.get('credentialIssuer'), '');
-               if (currentTab === 'delete' && successFullTx) {
+               if (currentTab === 'delete' && successFullTx && !this.txUiService.isSimulateEnabled()) {
                     this.credentialStore.resetCredentialIdDropDown();
                }
           }

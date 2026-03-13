@@ -98,9 +98,8 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
           // Only refresh account info and balances if we are not in simulate mode.
           if (!this.txUiService.isSimulateEnabled()) {
                await this.refreshAfterTx(client, wallet, destination, issuer);
+               this.clearInputFields();
           }
-
-          this.clearInputFields();
 
           return true;
      }

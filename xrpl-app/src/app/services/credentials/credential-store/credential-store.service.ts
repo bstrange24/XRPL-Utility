@@ -1,6 +1,6 @@
 import { Injectable, signal, computed, WritableSignal } from '@angular/core';
 
-export type CredentialField = 'credentialIDs' | 'credentialID' | 'credentialType' | 'subject' | 'credential' | 'uri' | 'expirationDate' | 'credentialIssuer' | 'credentialIdSearchQuery' | 'credentialIdSearchTerm' | 'existingCredentials' | 'selectedCredentials' | 'subjectCredentials';
+export type CredentialField = 'credentialIDs' | 'credentialID' | 'credentialType' | 'subject' | 'credential' | 'uri' | 'expirationDate' | 'credentialIssuer' | 'credentialIdSearchQuery' | 'credentialIdSearchTerm' | 'existingCredentials' | 'selectedCredentials' | 'subjectCredentials' | 'domainId';
 
 @Injectable({ providedIn: 'root' })
 export class CredentialStore {
@@ -19,6 +19,7 @@ export class CredentialStore {
           uri: '',
           expirationDate: '',
           credential: null,
+          domainId: '',
      };
 
      /** Signal registry */

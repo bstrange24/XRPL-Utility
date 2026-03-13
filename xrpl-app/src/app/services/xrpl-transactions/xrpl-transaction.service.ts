@@ -310,15 +310,15 @@ export class XrplTransactionService {
           };
      }
 
-     buildPermissionedDomainSetTransaction(wallet: xrpl.Wallet, issuer: string, fee: string, currentLedger: number): xrpl.PermissionedDomainSet {
+     buildPermissionedDomainSetTransaction(wallet: xrpl.Wallet, credentialIssuer: string, credentialType: string, fee: string, currentLedger: number): xrpl.PermissionedDomainSet {
           return {
                TransactionType: 'PermissionedDomainSet',
                Account: wallet.classicAddress,
                AcceptedCredentials: [
                     {
                          Credential: {
-                              Issuer: issuer,
-                              CredentialType: Buffer.from(this.credentialStore.get('credentialType') || 'defaultCredentialType', 'utf8').toString('hex'),
+                              Issuer: credentialIssuer,
+                              CredentialType: Buffer.from(credentialType, 'utf8').toString('hex'),
                          },
                     },
                ],

@@ -11,31 +11,7 @@ import { PerformanceBaseComponent } from '../../../components/shared/performance
 import { CredentialUtilService } from '../credential-util/credential-util.service';
 import { AppConstants } from '../../../core/app.constants';
 import { XrplDateService } from '../../../core/xrpl-date.service';
-
-export type CredentialTxType = 'createCredential' | 'deleteCredentials' | 'acceptCredentials';
-
-export interface CredentialTxConfig {
-     wallet: Wallet;
-     simulate?: boolean;
-     multiSign?: boolean;
-     credentialType?: string;
-     expiration?: string;
-     uri?: string;
-     subject?: string;
-     credentialID?: string;
-     credentialIssuer?: string;
-     subjectDestination?: string;
-     preFetchedEnv?: {
-          client: xrpl.Client;
-          accountInfo: any;
-          accountObjects?: any;
-          fee: string;
-          currentLedger: number;
-          ledgerInfo: any;
-          wallet?: any;
-     };
-     extra?: Record<string, any>;
-}
+import { CREDENTIAL_VALIDATION_RULES, CredentialTxConfig, CredentialTxType } from '../../../components/credentials/constants/credential.constants';
 
 @Injectable({ providedIn: 'root' })
 export class CredentialTransactionOrchestratorService extends PerformanceBaseComponent {
@@ -121,7 +97,7 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                }
 
                // Validation
-               const validationRule = this.getValidationRuleName(type);
+               const validationRule = CREDENTIAL_VALIDATION_RULES[type];
                const validationInputs = this.buildValidationInputs(type, wallet, env, {
                     simulate,
                     multiSign,
@@ -177,15 +153,6 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
           } finally {
                this.txUiService.resetCurrentStepToIdle();
           }
-     }
-
-     private getValidationRuleName(type: CredentialTxType): string {
-          const map: Record<CredentialTxType, string> = {
-               createCredential: 'CredentialCreate',
-               deleteCredentials: 'CredentialDelete',
-               acceptCredentials: 'CredentialAccept',
-          };
-          return map[type];
      }
 
      private buildValidationInputs(type: CredentialTxType, wallet: Wallet, env: any, values: any) {

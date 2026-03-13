@@ -1,28 +1,27 @@
-import { computed, Injectable, signal, WritableSignal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { CredentialStore } from '../credential-store/credential-store.service';
 import { CredentialUtilService } from '../credential-util/credential-util.service';
 import { CredentialItem } from '../../../models/interface-items.model';
-import { Wallet, WalletManagerService } from '../../wallets/manager/wallet-manager.service';
-
-export interface CredentialItemVm extends CredentialItem {
-     accepted: boolean;
-     selectable: boolean;
-     issuedByMe: boolean;
-}
+import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { CredentialItemVm } from '../../../components/credentials/constants/credential.constants';
 
 @Injectable({
      providedIn: 'root',
 })
 export class CredentialViewModelService {
-     constructor(
-          private credentialStore: CredentialStore,
-          private credentialUtilService: CredentialUtilService,
-          private walletManager: WalletManagerService
-          // private currentWallet: WritableSignal<Wallet | null>
-     ) {}
-
-     /** active tab signal, e.g., 'create' | 'accept' | 'delete' | 'verify' */
+     private credentialStore = inject(CredentialStore);
+     private credentialUtilService = inject(CredentialUtilService);
+     private walletManager = inject(WalletManagerService);
+     public readonly txUiService = inject(TransactionUiService);
      readonly activeTab = signal<'create' | 'accept' | 'delete' | 'verify'>('create');
+
+     readonly issuedByMe = computed(() => this.credentialStore.get('existingCredentials'));
+     readonly issuedToMe = computed(() => this.credentialStore.get('subjectCredentials'));
+     readonly pendingIssued = computed(() => this.issuedByMe().filter((c: CredentialItem) => !this.credentialUtilService.isCredentialAccepted(c)));
+     readonly acceptedIssued = computed(() => this.issuedByMe().filter((c: CredentialItem) => this.credentialUtilService.isCredentialAccepted(c)));
+     readonly pendingToAccept = computed(() => this.issuedToMe().filter((c: CredentialItem) => !this.credentialUtilService.isCredentialAccepted(c)));
+     readonly acceptedByMe = computed(() => this.issuedToMe().filter((c: CredentialItem) => this.credentialUtilService.isCredentialAccepted(c)));
 
      /** Fully reactive credential VM */
      readonly credentialVm = computed<{
@@ -105,10 +104,115 @@ export class CredentialViewModelService {
                walletName: wallet?.name || 'Selected wallet',
                address: wallet?.address ?? '',
                selectedCredentialItem,
-               summaryMessage: this.credentialUtilService.summaryMessage(tab),
-               actionButtonLabel: this.credentialUtilService.actionButtonLabel(tab),
-               actionButtonClass: this.credentialUtilService.actionButtonClass(tab),
+               summaryMessage: this.summaryMessage(tab),
+               actionButtonLabel: this.actionButtonLabel(tab),
+               actionButtonClass: this.actionButtonClass(tab),
                hasCredentials: creds.hasCredentials,
           };
      });
+
+     readonly credentialStats = computed(() => {
+          const issuedByMe = this.issuedByMe();
+          const issuedToMe = this.issuedToMe();
+
+          const pendingIssued = this.pendingIssued();
+          const acceptedIssued = this.acceptedIssued();
+
+          const pendingToAccept = this.pendingToAccept();
+          const acceptedByMe = this.acceptedByMe();
+
+          return {
+               issuedByMe,
+               issuedToMe,
+               pendingIssued,
+               acceptedIssued,
+               pendingToAccept,
+               acceptedByMe,
+
+               counts: {
+                    issued: issuedByMe.length,
+                    received: issuedToMe.length,
+                    pendingIssued: pendingIssued.length,
+                    acceptedIssued: acceptedIssued.length,
+                    pendingToAccept: pendingToAccept.length,
+                    acceptedByMe: acceptedByMe.length,
+               },
+          };
+     });
+
+     readonly createCredentialButtonLabel = this.buildTxLabel('Create Credential');
+     readonly acceptCredentialsButtonLabel = this.buildTxLabel('Accept Credential');
+     readonly deleteCredentialsButtonLabel = this.buildTxLabel('Delete Credential');
+     readonly verifyCredentialLabel = this.buildTxLabel('Verify Credential');
+
+     private buildTxLabel(defaultText: string) {
+          return computed(() => {
+               const step = this.txUiService.currentStep();
+               if (step === 'idle') return defaultText;
+               if (step === 'waiting_validation') return 'Waiting for confirmation...';
+               return this.txUiService.stepMessage();
+          });
+     }
+
+     actionButtonLabel(tab: 'create' | 'accept' | 'delete' | 'verify') {
+          switch (tab) {
+               case 'create':
+                    return this.createCredentialButtonLabel();
+               case 'accept':
+                    return this.acceptCredentialsButtonLabel();
+               case 'delete':
+                    return this.deleteCredentialsButtonLabel();
+               case 'verify':
+                    return this.verifyCredentialLabel();
+          }
+     }
+
+     actionButtonClass(tab: 'create' | 'accept' | 'delete' | 'verify') {
+          switch (tab) {
+               case 'create':
+                    return 'btn-primary-blue';
+               case 'accept':
+                    return 'btn-primary-green';
+               case 'delete':
+                    return 'btn-primary-red';
+               case 'verify':
+                    return 'btn-primary-orange';
+          }
+     }
+
+     credentialsToShow(tab: 'create' | 'accept' | 'delete' | 'verify') {
+          const s = this.credentialStats();
+
+          switch (tab) {
+               case 'create':
+                    return [...s.pendingIssued, ...s.acceptedIssued];
+               case 'accept':
+                    return s.pendingToAccept.length ? s.pendingToAccept : s.acceptedByMe;
+               case 'delete':
+                    return s.issuedByMe;
+               case 'verify':
+                    return [...s.pendingToAccept, ...s.acceptedByMe, ...s.pendingIssued, ...s.acceptedIssued];
+          }
+     }
+
+     summaryMessage(tab: 'create' | 'accept' | 'delete' | 'verify') {
+          const s = this.credentialStats();
+
+          switch (tab) {
+               case 'create':
+                    if (s.counts.issued === 0) return 'has not issued any credentials yet.';
+                    return `has issued <strong>${s.counts.issued}</strong> credential${s.counts.issued === 1 ? '' : 's'}.`;
+               case 'accept':
+                    if (s.counts.pendingToAccept === 0) return 'has no pending credentials to accept.';
+                    return `has <strong>${s.counts.pendingToAccept}</strong> credential${s.counts.pendingToAccept === 1 ? '' : 's'} pending acceptance.`;
+               case 'delete':
+                    if (s.counts.issued === 0) return 'has no credentials to delete.';
+                    return `has <strong>${s.counts.issued}</strong> issued credential${s.counts.issued === 1 ? '' : 's'} that can be deleted.`;
+               case 'verify': {
+                    const total = s.counts.issued + s.counts.received;
+                    if (total === 0) return 'is not involved in any credentials.';
+                    return `is involved in <strong>${total}</strong> credential${total === 1 ? '' : 's'} — Received: ${s.counts.received} • Issued: ${s.counts.issued}`;
+               }
+          }
+     }
 }
