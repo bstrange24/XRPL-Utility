@@ -5,15 +5,7 @@ import didSchema from '../../../components/did/did-schema.json';
 import * as xrpl from 'xrpl';
 import { UtilsService } from '../../util-service/utils.service';
 import { JsonEditorComponent } from '../../../components/json-editor/json-editor.component';
-
-export type DidTab = 'set' | 'delete';
-
-export interface DidInfoData {
-     walletName: string;
-     mode: DidTab;
-     didCount: number;
-     existingDid: any[];
-}
+import { DidInfoData, DidTab } from '../../../components/did/constants/did.constants';
 
 @Injectable({ providedIn: 'root' })
 export class DidViewModelService {

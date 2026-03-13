@@ -1,6 +1,5 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
-
-export type DidField = 'didData' | 'uriData' | 'createdDids' | 'existingDid' | 'didDocumentData';
+import { DidField } from '../../../components/did/constants/did.constants';
 
 @Injectable({
      providedIn: 'root',

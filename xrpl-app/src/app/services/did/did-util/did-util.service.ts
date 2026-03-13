@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { UtilsService } from '../../util-service/utils.service';
 import { CopyUtilService } from '../../copy-util/copy-util.service';
@@ -10,12 +10,7 @@ import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { AppConstants } from '../../../core/app.constants';
 import { DidStoreService } from '../did-store/did-store.service';
-import didSchema from '../../../components/did/did-schema.json';
-import { JsonEditorComponent } from '../../../components/json-editor/json-editor.component';
-
-export type DidTxType = 'setDid' | 'deleteDid';
-type DidConfigTxDisplayType = 'set' | 'delete';
-type IconType = 'ng-icon' | 'lucide-icon';
+import { DidTxType } from '../../../components/did/constants/did.constants';
 
 @Injectable({
      providedIn: 'root',
@@ -100,57 +95,7 @@ export class DidUtilService extends PerformanceBaseComponent {
 
           return { success: true, hash };
      }
-
-     readonly txTypeMap = {
-          set: 'SetDID',
-          delete: 'DeleteDID',
-     } as const;
-
-     readonly tabs: {
-          key: DidConfigTxDisplayType;
-          label: string;
-          icon: string;
-          iconType: IconType;
-          color: string;
-          iconSize: string;
-     }[] = [
-          {
-               key: 'set',
-               label: 'Set',
-               icon: 'heroPlusCircle',
-               iconType: 'ng-icon',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'delete',
-               label: 'Delete',
-               icon: 'heroTrash',
-               iconType: 'ng-icon',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-     ];
-
-     readonly tabMeta = {
-          set: {
-               icon: 'heroPlusCircle',
-               colorClass: 'blue-button-submenu',
-               title: 'Set DID',
-               desc: 'Set DID for the selected account.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-          delete: {
-               icon: 'heroTrash',
-               colorClass: 'red-button-submenu',
-               title: 'Delete DID',
-               desc: 'Delete DID for the selected account.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-     };
-
+     
      private buildTxLabel(defaultText: string) {
           return computed(() => {
                const step = this.txUiService.currentStep();

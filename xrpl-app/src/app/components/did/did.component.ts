@@ -22,7 +22,7 @@ import { JsonEditorComponent } from '../json-editor/json-editor.component';
 import { DidUtilService } from '../../services/did/did-util/did-util.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
-import { DidTransactionOrchestratorService, DidTxConfig, DidTxType } from '../../services/did/did-transaction-orchestrator/did-transaction-orchestrator.service';
+import { DidTransactionOrchestratorService } from '../../services/did/did-transaction-orchestrator/did-transaction-orchestrator.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
@@ -30,6 +30,7 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { ActivatedRoute } from '@angular/router';
 import { DidStoreService } from '../../services/did/did-store/did-store.service';
 import { DidViewModelService } from '../../services/did/did-view-model/did-view-model.service';
+import { DID_TAB_META, DID_TABS, DidTxConfig, DidTxType } from './constants/did.constants';
 
 @Component({
      selector: 'app-did',
@@ -53,6 +54,8 @@ export class DidComponent extends WalletDestinationBase implements OnInit {
      public readonly didUtilService = inject(DidUtilService);
      public readonly didStoreService = inject(DidStoreService);
      public readonly didViewModelService = inject(DidViewModelService);
+     readonly tabMeta = DID_TAB_META;
+     readonly menuTabs = DID_TABS;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);

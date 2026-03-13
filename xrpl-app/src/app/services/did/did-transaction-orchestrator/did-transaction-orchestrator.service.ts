@@ -11,27 +11,7 @@ import { PerformanceBaseComponent } from '../../../components/shared/performance
 import { DidUtilService } from '../did-util/did-util.service';
 import didSchema from '../../../components/did/did-schema.json';
 import { DidStoreService } from '../did-store/did-store.service';
-
-export type DidTxType = 'setDid' | 'deleteDid';
-
-export interface DidTxConfig {
-     wallet: Wallet;
-     simulate?: boolean;
-     multiSign?: boolean;
-     didData?: string;
-     uriData?: string;
-     didDocumentData?: string;
-     preFetchedEnv?: {
-          client: xrpl.Client;
-          accountInfo: any;
-          accountObjects?: any;
-          fee: string;
-          currentLedger: number;
-          ledgerInfo: any;
-          wallet?: any;
-     };
-     extra?: Record<string, any>;
-}
+import { DID_VALIDATION_RULES, DidTxConfig, DidTxType } from '../../../components/did/constants/did.constants';
 
 @Injectable({ providedIn: 'root' })
 export class DidTransactionOrchestratorService extends PerformanceBaseComponent {
@@ -76,7 +56,8 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                }
 
                // Validation
-               const validationRule = this.getValidationRuleName(type);
+               // const validationRule = this.getValidationRuleName(type);
+               const validationRule = DID_VALIDATION_RULES[type];
                const validationInputs = this.buildValidationInputs(type, wallet, env, {
                     simulate,
                     multiSign,
