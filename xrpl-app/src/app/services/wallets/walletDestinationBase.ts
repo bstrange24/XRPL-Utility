@@ -19,6 +19,7 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal<boolean>(false);
      wallets = signal<Wallet[]>([]);
+     isAccountDelete = signal<boolean>(false);
 
      // Derived / computed (wallet-related)
      readonly walletName = computed(() => this.currentWallet()?.name || 'Selected wallet');
@@ -96,7 +97,7 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
           }
 
           // Only refresh account info and balances if we are not in simulate mode.
-          if (!this.txUiService.isSimulateEnabled()) {
+          if (!this.txUiService.isSimulateEnabled() && !this.isAccountDelete()) {
                await this.refreshAfterTx(client, wallet, destination, issuer);
                this.clearInputFields();
           }

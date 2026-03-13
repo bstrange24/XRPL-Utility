@@ -12,9 +12,11 @@ import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
 import { PERMISSION_DOMAIN_VALIDATION_RULES, PermissionDomainConfig, PermissionDomainTxType } from '../../../components/permissioned-domain/constants/permissioned-domain.constants';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+     providedIn: 'root',
+})
 export class PermissionedDomainOrchestratorService extends PerformanceBaseComponent {
-     private readonly TxEnvironmentService = inject(TxEnvironmentService);
+     private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
      private readonly utilsService = inject(UtilsService);
@@ -24,7 +26,6 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
      public readonly credentialStore = inject(CredentialStore);
 
      async executePermissionDomainTx(type: PermissionDomainTxType, config: PermissionDomainConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
-          console.log('config: ', config);
           const { wallet, simulate = false, multiSign = false, credentialType, credentialIssuer, domainId, subjectDestination, preFetchedEnv, extra = {} } = config;
 
           let env: any;
@@ -39,7 +40,7 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                } else {
-                    env = await this.TxEnvironmentService.prepareTxEnvironment({
+                    env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
                          includeFee: true,
@@ -47,7 +48,6 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
                     });
                }
 
-               console.log('env: ', env);
                client = env.client;
 
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) {

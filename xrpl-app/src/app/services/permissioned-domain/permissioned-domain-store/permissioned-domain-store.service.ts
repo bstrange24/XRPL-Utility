@@ -1,7 +1,9 @@
-import { Injectable, signal, computed, WritableSignal } from '@angular/core';
+import { Injectable, signal, WritableSignal } from '@angular/core';
 import { PermissionedDomainField } from '../../../components/permissioned-domain/constants/permissioned-domain.constants';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+     providedIn: 'root',
+})
 export class PermissionedDomainStoreService {
      /** Initial state (single source of truth) */
      private readonly initialState: Record<PermissionedDomainField, any> = {

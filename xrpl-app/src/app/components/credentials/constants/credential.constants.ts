@@ -35,6 +35,7 @@ export const CREDENTIAL_CONFIG_TX_DISPLAY_TYPES = {
      DELETE: 'delete',
 } as const;
 
+export type CredentialField = 'credentialIDs' | 'credentialID' | 'credentialType' | 'subject' | 'credential' | 'uri' | 'expirationDate' | 'credentialIssuer' | 'credentialIdSearchQuery' | 'credentialIdSearchTerm' | 'existingCredentials' | 'selectedCredentials' | 'subjectCredentials' | 'domainId';
 export type CredentialTxType = (typeof CREDENTIAL_TX_TYPES)[keyof typeof CREDENTIAL_TX_TYPES];
 export type CredentialConfigTxDisplayType = (typeof CREDENTIAL_CONFIG_TX_DISPLAY_TYPES)[keyof typeof CREDENTIAL_CONFIG_TX_DISPLAY_TYPES];
 type IconType = 'ng-icon' | 'lucide-icon';

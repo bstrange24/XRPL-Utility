@@ -6,16 +6,20 @@
      </div>
 </div>
 
+<!-- Get view -->
+@let view = deleteAccountViewModelService;
+<!-- Get info data -->
+@let info = view.infoData();
 <!-- Get active tab -->
-@let tab = activeTab();
+@let tab = view.activeTab();
 <!-- Get tab meta data -->
-@let meta = deleteAccountUtilService.tabMeta[tab];
+@let meta = tabMeta[tab];
 
 <!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
 
           <!-- Center form -->
           <div class="form-panel" style="padding-top: 2em">
@@ -31,7 +35,7 @@
                </div>
 
                <!-- Info Message -->
-               @if (infoData(); as info) {
+               @if (info) {
                <div class="info-and-credentials-card" [class.can-delete]="info.canDelete" [class.has-blockers]="info.blockers.length > 0">
                     <!-- Always-visible summary row -->
                     <div class="summary-header">
@@ -61,11 +65,11 @@
                     @if (info.blockers.length > 0 || !info.canDelete || info.balanceWarning) {
                     <section class="credentials-list-container" [class.expanded]="infoPanelExpanded()" aria-label="Credential list">
                          <ul class="credentials-list">
-                              @if(infoData().blockers.length) {
+                              @if(info.blockers.length) {
                               <div class="blockers-section">
                                    <h2 class="blockers-title">Blocking configurations:</h2>
                                    <ul class="blockers-list">
-                                        @for (blocker of infoData().blockers; track blocker.route) {
+                                        @for (blocker of info.blockers; track blocker.route) {
                                         <li class="blocker-item">
                                              <ng-icon name="heroXCircle" size="18" class="blocker-icon"></ng-icon>
                                              <span>{{ blocker.count }} {{ blocker.label }}</span>
@@ -97,33 +101,37 @@
                }
 
                <form #theForm="ngForm" class="main-form">
+                    @if (tab === 'deleteAccount') {
                     <div class="form-row">
-                         <!-- Destination and Destination Tag -->
-                         @if (tab === 'deleteAccount') {
+                         <!-- Destination-->
                          <div class="form-group">
                               <label for="destination">Destination</label>
                               <p class="form-hint">Destination account to send remaining XRP to.</p>
-                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="handleSearchQueryChange($event)" (valueChange)="handleDestinationChange($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
                          </div>
-
-                         <div class="form-group">
-                              <label for="destinationTagField">Destination Tag (optional)</label>
-                              <p class="form-hint">Destination tag needed if sending to an account on an exchange.</p>
-                              <input type="text" placeholder="e.g. 123456" [ngModel]="txUiService.destinationTagField()" (ngModelChange)="txUiService.destinationTagField.set($event)" name="destinationTagField" />
-                         </div>
-                         }
                     </div>
+                    }
 
-                    <app-transaction-options [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+                    <div class="switch-group">
+                         <label class="switch">
+                              <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.target.checked)" name="showOptionalXrp" />
+                              <span class="slider"></span> Include optional fields (Destination Tag, Source Tag)
+                         </label>
+                    </div>
+                    @if (txUiService.wantsOptions()) {
+                    <app-transaction-options-section [activeTab]="tab"></app-transaction-options-section>
+                    }
+
+                    <app-transaction-options [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                     <!-- Action buttons -->
                     <div class="button-row">
-                         @if (!canDelete() || !canSubmit()) {
-                         <button style="width: 425px" class="btn-primary-red" [disabled]="!canSubmit() || deleteBlockers().length > 0" (click)="deleteAccount()">{{ deleteAccountUtilService.deleteWalletButtonLabel() }}</button>
+                         @if (!info.canDelete || canSubmit()) {
+                         <button style="width: 425px" class="btn-primary-red" [disabled]="!canSubmit() || view.deleteBlockers().length > 0" (click)="deleteAccount()">{{ view.deleteWalletButtonLabel() }}</button>
                          } @else {
-                         <button type="button" class="btn-primary-red" (click)="deleteAccount()" [disabled]="!canSubmit()">{{ deleteAccountUtilService.deleteWalletButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-red" (click)="deleteAccount()" [disabled]="!canSubmit()">{{ view.deleteWalletButtonLabel() }}</button>
                          }
-                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit()" (click)="clearFields()">Clear Fields</button>
+                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit()" (click)="clearInputFields()">Clear Fields</button>
                     </div>
 
                     <!-- Execution time -->

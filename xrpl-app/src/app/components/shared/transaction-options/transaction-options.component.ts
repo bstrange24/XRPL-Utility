@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../services/util-service/utils.service';
 import { SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { XrplTxOptionsStore } from '../stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-transaction-options',
@@ -15,6 +16,7 @@ import { SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-
 export class TransactionOptionsComponent {
      public txUiService = inject(TransactionUiService);
      public readonly utilsService = inject(UtilsService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      Array = Array;
 
      @Input() activeTab?: () => string;
@@ -35,7 +37,8 @@ export class TransactionOptionsComponent {
      isRegularKeyAddress = this.txUiService.isRegularKeyAddress;
      isSimulateEnabled = this.txUiService.isSimulateEnabled;
      isTicket = this.txUiService.isTicket;
-     memoField = this.txUiService.memoField;
+     memoField = this.xrplTxOptionsStore.memos();
+     // memoField = this.txUiService.memoField;
      multiSignAddress = this.txUiService.multiSignAddress;
      multiSignSeeds = this.txUiService.multiSignSeeds;
      signerQuorum = this.txUiService.signerQuorum;
@@ -76,7 +79,8 @@ export class TransactionOptionsComponent {
           if (enabled) {
                this.isMemoEnabled.set(enabled);
           } else {
-               this.txUiService.memoField.set('');
+               // this.txUiService.memoField.set('');
+               this.xrplTxOptionsStore.addMemo('');
           }
      }
 
@@ -85,7 +89,8 @@ export class TransactionOptionsComponent {
                .split(',')
                .map(s => s.trim())
                .filter(Boolean);
-          this.txUiService.memoField.set(cleaned.join(', ')); // or set array if you prefer
+          // this.txUiService.memoField.set(cleaned.join(', ')); // or set array if you prefer
+          this.xrplTxOptionsStore.updateMemos(cleaned);
      }
 
      toggleMultiSign() {

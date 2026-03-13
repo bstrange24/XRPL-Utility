@@ -15,7 +15,7 @@ import { CREDENTIAL_VALIDATION_RULES, CredentialTxConfig, CredentialTxType } fro
 
 @Injectable({ providedIn: 'root' })
 export class CredentialTransactionOrchestratorService extends PerformanceBaseComponent {
-     private readonly TxEnvironmentService = inject(TxEnvironmentService);
+     private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
      private readonly utilsService = inject(UtilsService);
@@ -25,7 +25,6 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
      public readonly xrplDateService = inject(XrplDateService);
 
      async executeCredentialTx(type: CredentialTxType, config: CredentialTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
-          console.log('config: ', config);
           const { wallet, simulate = false, multiSign = false, credentialType, expiration, uri, subject, credentialID, credentialIssuer, preFetchedEnv, extra = {} } = config;
 
           let env: any;
@@ -40,7 +39,7 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                } else {
-                    env = await this.TxEnvironmentService.prepareTxEnvironment({
+                    env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
                          includeFee: true,
@@ -48,7 +47,6 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                     });
                }
 
-               console.log('env: ', env);
                client = env.client;
 
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) {

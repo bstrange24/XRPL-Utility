@@ -56,7 +56,7 @@ interface TrustLineTxConfig {
      providedIn: 'root',
 })
 export class TrustlineOrchestratorService extends PerformanceBaseComponent {
-     private readonly TxEnvironmentService = inject(TxEnvironmentService);
+     private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
      private readonly xrplTransactionService = inject(XrplTransactionService);
@@ -99,7 +99,7 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
                          envFlags.includeDestinationAccountInfo = true;
                          envFlags.destinationAddress = formValues.destinationAddress;
                     }
-                    const env = await this.TxEnvironmentService.prepareTxEnvironment(envFlags);
+                    const env = await this.txEnvironmentService.prepareTxEnvironment(envFlags);
                     client = env.client;
                     if (!env.accountInfo || !env.fee || !env.currentLedger) {
                          throw new Error('Failed to fetch required network data');

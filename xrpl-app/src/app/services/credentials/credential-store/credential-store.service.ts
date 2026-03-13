@@ -1,6 +1,5 @@
 import { Injectable, signal, computed, WritableSignal } from '@angular/core';
-
-export type CredentialField = 'credentialIDs' | 'credentialID' | 'credentialType' | 'subject' | 'credential' | 'uri' | 'expirationDate' | 'credentialIssuer' | 'credentialIdSearchQuery' | 'credentialIdSearchTerm' | 'existingCredentials' | 'selectedCredentials' | 'subjectCredentials' | 'domainId';
+import { CredentialField } from '../../../components/credentials/constants/credential.constants';
 
 @Injectable({ providedIn: 'root' })
 export class CredentialStore {

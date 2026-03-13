@@ -57,7 +57,7 @@ interface AccountConfig {
      providedIn: 'root',
 })
 export class AccountConfiguratorOrchestratorService extends PerformanceBaseComponent {
-     private readonly TxEnvironmentService = inject(TxEnvironmentService);
+     private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
      private readonly toastService = inject(ToastService);
@@ -94,7 +94,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                          includeLedgerIndex: true,
                     };
 
-                    const env = await this.TxEnvironmentService.prepareTxEnvironment(envFlags);
+                    const env = await this.txEnvironmentService.prepareTxEnvironment(envFlags);
                     client = env.client;
 
                     if (!env.accountInfo || !env.fee || !env.currentLedger) {
@@ -177,7 +177,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     fee = preFetchedEnv.fee;
                     currentLedger = preFetchedEnv.currentLedger;
                } else {
-                    env = await this.TxEnvironmentService.prepareTxEnvironment({
+                    env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
                          includeFee: true,
@@ -350,7 +350,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                          includeLedgerIndex: true,
                     };
 
-                    const env = await this.TxEnvironmentService.prepareTxEnvironment(envFlags);
+                    const env = await this.txEnvironmentService.prepareTxEnvironment(envFlags);
                     client = env.client;
                     currentLedger = env.currentLedger!;
 

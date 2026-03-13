@@ -1,4 +1,4 @@
-import { computed, Injectable, signal, WritableSignal } from '@angular/core';
+import { computed, inject, Injectable, signal, WritableSignal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
@@ -97,11 +97,13 @@ export type SignalKey = keyof TransactionUiSignals;
 
 @Injectable({ providedIn: 'root' })
 export class TransactionUiService {
-     constructor(
-          private readonly sanitizer: DomSanitizer,
-          private readonly xrplService: XrplService
-          // private readonly utilsService: UtilsService
-     ) {}
+     public readonly sanitizer = inject(DomSanitizer);
+     public readonly xrplService = inject(XrplService);
+     // constructor(
+     //      private readonly sanitizer: DomSanitizer,
+     //      private readonly xrplService: XrplService
+     //      // private readonly utilsService: UtilsService
+     // ) {}
 
      readonly baseTxKeys = ['isSimulateEnabled', 'useMultiSign', 'isRegularKeyAddress', 'regularKeyAddress', 'regularKeySeed', 'multiSignAddress', 'multiSignSeeds'] as const;
      txHash: string | null = null;
@@ -484,6 +486,13 @@ export class TransactionUiService {
 
      toggleShowEnableTrustline(enabled: boolean) {
           this.showEnableTrustline.set(enabled);
+     }
+
+     toggleOptions(enabled: boolean): void {
+          this.wantsOptions.set(enabled);
+          if (!enabled) {
+               this.clearOptionalInputFields();
+          }
      }
 
      // Called when user toggles the simulate slider

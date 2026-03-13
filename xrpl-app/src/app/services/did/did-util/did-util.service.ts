@@ -95,7 +95,7 @@ export class DidUtilService extends PerformanceBaseComponent {
 
           return { success: true, hash };
      }
-     
+
      private buildTxLabel(defaultText: string) {
           return computed(() => {
                const step = this.txUiService.currentStep();

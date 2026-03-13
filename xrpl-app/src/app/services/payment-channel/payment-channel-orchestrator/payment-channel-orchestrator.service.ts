@@ -48,7 +48,7 @@ interface PaymentChannelConfig {
      providedIn: 'root',
 })
 export class PaymentChannelOrchestratorService extends PerformanceBaseComponent {
-     private readonly TxEnvironmentService = inject(TxEnvironmentService);
+     private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
      private readonly xrplTransactionService = inject(XrplTransactionService);
@@ -90,7 +90,7 @@ export class PaymentChannelOrchestratorService extends PerformanceBaseComponent 
                          flags.destinationAddress = formValues.destinationAddress;
                     }
 
-                    env = await this.TxEnvironmentService.prepareTxEnvironment(flags);
+                    env = await this.txEnvironmentService.prepareTxEnvironment(flags);
                     client = env.client;
 
                     if (!env.accountInfo || !env.fee || !env.currentLedger) {

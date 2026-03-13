@@ -13,10 +13,6 @@ import { AppConstants } from '../../../core/app.constants';
 import { PermissionedDomainStoreService } from '../permissioned-domain-store/permissioned-domain-store.service';
 import { PermissionDomainTxType } from '../../../components/permissioned-domain/constants/permissioned-domain.constants';
 
-// export type PermissionedDomainTxType = 'setPermissionedDomain' | 'deletePermissionedDomain';
-// type PermissionedDomainConfigTxDisplayType = 'set' | 'delete';
-// type IconType = 'ng-icon' | 'lucide-icon';
-
 @Injectable({
      providedIn: 'root',
 })
@@ -120,51 +116,6 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
      setCredentialType(value: string) {
           this.permissionedDomainStoreService.set('credentialType', value);
      }
-
-     // readonly tabs: {
-     //      key: PermissionedDomainConfigTxDisplayType;
-     //      label: string;
-     //      icon: string;
-     //      iconType: IconType;
-     //      color: string;
-     //      iconSize: string;
-     // }[] = [
-     //      {
-     //           key: 'set',
-     //           label: 'Set',
-     //           icon: 'heroPlusCircle',
-     //           iconType: 'ng-icon',
-     //           color: '',
-     //           iconSize: AppConstants.TAB_ICON_SIZE,
-     //      },
-     //      {
-     //           key: 'delete',
-     //           label: 'Delete',
-     //           icon: 'heroTrash',
-     //           iconType: 'ng-icon',
-     //           color: '',
-     //           iconSize: AppConstants.TAB_ICON_SIZE,
-     //      },
-     // ];
-
-     // readonly tabMeta = {
-     //      set: {
-     //           icon: 'heroPlusCircle',
-     //           colorClass: 'blue-button-submenu',
-     //           title: 'Set Permissioned Domain',
-     //           desc: 'Set Permissioned Domain for the selected account.',
-     //           color: '',
-     //           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-     //      },
-     //      delete: {
-     //           icon: 'heroTrash',
-     //           colorClass: 'red-button-submenu',
-     //           title: 'Delete Permissioned Domain',
-     //           desc: 'Delete Permissioned Domain for the selected account.',
-     //           color: '',
-     //           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-     //      },
-     // };
 
      private buildTxLabel(defaultText: string) {
           return computed(() => {

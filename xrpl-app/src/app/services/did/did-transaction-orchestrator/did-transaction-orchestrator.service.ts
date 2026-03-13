@@ -15,7 +15,7 @@ import { DID_VALIDATION_RULES, DidTxConfig, DidTxType } from '../../../component
 
 @Injectable({ providedIn: 'root' })
 export class DidTransactionOrchestratorService extends PerformanceBaseComponent {
-     private readonly TxEnvironmentService = inject(TxEnvironmentService);
+     private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
      private readonly utilsService = inject(UtilsService);
@@ -25,7 +25,6 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
      public readonly didStoreService = inject(DidStoreService);
 
      async executeDidTx(type: DidTxType, config: DidTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
-          console.log('config: ', config);
           const { wallet, simulate = false, multiSign = false, didData, uriData, didDocumentData, preFetchedEnv, extra = {} } = config;
 
           let env: any;
@@ -40,7 +39,7 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                if (preFetchedEnv) {
                     env = preFetchedEnv;
                } else {
-                    env = await this.TxEnvironmentService.prepareTxEnvironment({
+                    env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
                          includeFee: true,
@@ -48,7 +47,6 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                     });
                }
 
-               console.log('env: ', env);
                client = env.client;
 
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) {

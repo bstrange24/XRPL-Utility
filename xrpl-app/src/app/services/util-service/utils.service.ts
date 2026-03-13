@@ -2154,7 +2154,7 @@ export class UtilsService {
           }
      }
 
-     setSourceTagField(tx: any, sourceTagField: string) {
+     setSourceTagField(tx: any, sourceTagField: any) {
           tx.SourceTag = Number(sourceTagField);
      }
 
@@ -2198,6 +2198,28 @@ export class UtilsService {
                return;
           }
           tx.Sequence = Number(ticketSequence);
+     }
+
+     addMemoField(tx: any, memoField: string | string[]) {
+          const memoArray = Array.isArray(memoField)
+               ? memoField
+               : (memoField || '')
+                      .split(',')
+                      .map(s => s.trim())
+                      .filter(Boolean);
+
+          if (memoArray.length > 0) {
+               tx.Memos = memoArray
+                    .filter(memo => memo && memo.trim() !== '') // Filter out empty strings
+                    .map(memo => ({
+                         Memo: {
+                              MemoData: Buffer.from(memo, 'utf8').toString('hex'),
+                              MemoType: Buffer.from('text/plain', 'utf8').toString('hex'),
+                         },
+                    }));
+          } else {
+               delete tx.Memos;
+          }
      }
 
      setMemoField(tx: any, memoField: string) {

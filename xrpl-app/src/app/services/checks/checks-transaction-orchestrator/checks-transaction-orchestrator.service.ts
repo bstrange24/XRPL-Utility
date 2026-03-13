@@ -52,7 +52,7 @@ interface CheckTxConfig {
 
 @Injectable({ providedIn: 'root' })
 export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
-     private readonly TxEnvironmentService = inject(TxEnvironmentService);
+     private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
      private readonly xrplTransactionService = inject(XrplTransactionService);
@@ -97,7 +97,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                          envFlags.destinationAddress = formValues.destinationAddress;
                     }
 
-                    const env = await this.TxEnvironmentService.prepareTxEnvironment(envFlags);
+                    const env = await this.txEnvironmentService.prepareTxEnvironment(envFlags);
                     client = env.client;
 
                     if (!env.accountInfo || !env.fee || !env.currentLedger) {

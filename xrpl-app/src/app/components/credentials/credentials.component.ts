@@ -34,11 +34,12 @@ import { XrplDateService } from '../../core/xrpl-date.service';
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 import { CredentialViewModelService } from '../../services/credentials/credential-view-model/credential-view-model.service';
 import { CredentialTxConfig, CredentialTxType, CREDENTIAL_TAB_META, CREDENTIAL_TABS } from './constants/credential.constants';
+import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
 
 @Component({
      selector: 'app-credentials',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, XrplExpirationInputComponent, RequirementsInfoComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, XrplExpirationInputComponent, RequirementsInfoComponent, TransactionOptionsSectionComponent],
      templateUrl: './credentials.component.html',
      styleUrl: './credentials.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

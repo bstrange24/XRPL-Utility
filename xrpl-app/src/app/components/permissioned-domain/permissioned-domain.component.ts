@@ -34,11 +34,12 @@ import { PermissionedDomainViewModelService } from '../../services/permissioned-
 import { CredentialUtilService } from '../../services/credentials/credential-util/credential-util.service';
 import { PermissionedDomainStoreService } from '../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 import { PERMISSION_DOMAIN_TAB_META, PERMISSION_DOMAIN_TABS, PermissionDomainConfig, PermissionDomainTxType } from './constants/permissioned-domain.constants';
+import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
 
 @Component({
      selector: 'app-permissioned-domain',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, RequirementsInfoComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, RequirementsInfoComponent, TransactionOptionsSectionComponent],
      templateUrl: './permissioned-domain.component.html',
      styleUrl: './permissioned-domain.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,7 +66,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      }
 
      ngOnInit(): void {
-          this.applyTabFromQueryParam(this.route, ['set', 'delete'] as const, tab => this.setTab(tab));
+          this.applyTabFromQueryParam(this.route, ['delete'] as const, tab => this.setTab(tab));
           this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
      }

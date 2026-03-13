@@ -80,6 +80,7 @@ npm i @ng-icons/core @ng-icons/heroicons
 npm install --save-dev @types/blueimp-md5
 npm install five-bells-condition@5.0.1
 npm install @ng-icons/core @ng-icons/feather-icons
+npm install @ngrx/signals@19 --legacy-peer-deps
 
 Maybe
 npm install ang-jsoneditor jsoneditor
