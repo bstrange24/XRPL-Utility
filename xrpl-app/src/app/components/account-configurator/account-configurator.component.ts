@@ -28,10 +28,12 @@ import { AccountConfiguratorOrchestratorService } from '../../services/account-c
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { animation, toastAnimation } from '../../services/animations/animations.service';
-import { AccountConfiguratorRequirementsInfoComponent } from './ui-components/account-configurator-requirements-info/account-configurator-requirements-info/account-configurator-requirements-info.component';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
+import { AccountConfiguratorRequirementsInfoComponent } from './ui-components/account-configurator-requirements-info/account-configurator-requirements-info.component';
+import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 
 @Component({
      selector: 'app-account-configurator',
@@ -42,67 +44,59 @@ import { WarningMessageComponent } from '../shared/ui-components/warning-message
      styleUrl: './account-configurator.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountConfiguratorComponent extends PerformanceBaseComponent implements OnInit {
+export class AccountConfiguratorComponent extends WalletDestinationBase implements OnInit {
      public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
-     public readonly txUiService = inject(TransactionUiService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public copyUtilService = inject(CopyUtilService);
-     public readonly toastService = inject(ToastService);
-     public readonly transactionDropdownService = inject(TransactionDropdownService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactions = inject(XrplTransactionService);
-     private readonly walletManager = inject(WalletManagerService);
-     public readonly txEnvironmentService = inject(TxEnvironmentService);
      public accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      public readonly accountConfiguratorOrchestratorService = inject(AccountConfiguratorOrchestratorService);
-     public readonly acccountDataService = inject(AcccountDataService);
      public readonly storageService = inject(StorageService);
-     public readonly route = inject(ActivatedRoute);
 
      activeTab = signal<'modifyAccountFlags' | 'modifyMetaData' | 'modifyDepositAuth' | 'modifyMultiSigners' | 'modifyRegularKey'>('modifyAccountFlags');
-     currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal<boolean>(false);
+     // currentWallet = signal<Wallet>({} as Wallet);
+     // infoPanelExpanded = signal<boolean>(false);
      accountInfo = signal<any>(null);
-     wallets = signal<Wallet[]>([]);
+     // wallets = signal<Wallet[]>([]);
      configurationType = signal<'holder' | 'exchanger' | 'issuer' | null>(null);
 
-     readonly currentAddress = computed(() => this.currentWallet().address);
-     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
-     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-     readonly canSubmit = computed(() => this.isIdle() && this.hasWallets());
-     readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
+     // readonly currentAddress = computed(() => this.currentWallet().address);
+     // readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
+     // readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
+     // readonly canSubmit = computed(() => this.isIdle() && this.hasWallets());
+     // readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
 
-     // Has wallets → warning handling
-     private readonly _hasWalletsEffect = effect(() => {
-          console.log('_hasWalletsEffect');
-          if (this.walletManager.hasWallets()) {
-               this.txUiService.clearWarning?.();
-          } else {
-               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-               this.txUiService.setError('');
-               this.txUiService.setInfoMessage('');
-          }
-     });
+     // // Has wallets → warning handling
+     // private readonly _hasWalletsEffect = effect(() => {
+     //      console.log('_hasWalletsEffect');
+     //      if (this.walletManager.hasWallets()) {
+     //           this.txUiService.clearWarning?.();
+     //      } else {
+     //           this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
+     //           this.txUiService.setError('');
+     //           this.txUiService.setInfoMessage('');
+     //      }
+     // });
 
-     // Effect 2: Wallets list sync
-     private readonly _walletsSyncEffect = effect(() => {
-          console.log('_walletsSyncEffect');
-          this.wallets.set(this.walletManager.wallets());
-     });
+     // // Effect 2: Wallets list sync
+     // private readonly _walletsSyncEffect = effect(() => {
+     //      console.log('_walletsSyncEffect');
+     //      this.wallets.set(this.walletManager.wallets());
+     // });
 
-     // Effect 3: Selected index change → clear + refresh checks
-     private readonly _selectedIndexEffect = effect(() => {
-          console.log('_selectedIndexEffect');
-          // Reading the signal is enough to trigger the effect
-          this.walletManager.selectedIndex();
+     // // Effect 3: Selected index change → clear + refresh checks
+     // private readonly _selectedIndexEffect = effect(() => {
+     //      console.log('_selectedIndexEffect');
+     //      // Reading the signal is enough to trigger the effect
+     //      this.walletManager.selectedIndex();
 
-          this.txUiService.clearAllOptionsAndMessages();
+     //      this.txUiService.clearAllOptionsAndMessages();
 
-          // Fire-and-forget refresh
-          void this.getAccountDetails(false);
-     });
+     //      // Fire-and-forget refresh
+     //      void this.getAccountDetails(false);
+     // });
 
      readonly infoData = computed(() => {
           if (!this.currentWallet().address) return null;
@@ -152,32 +146,23 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
           };
      });
 
-     constructor() {
-          super();
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
-          // This is from the Delte Account page.
-          const tab = this.route.snapshot.queryParamMap.get('tab');
-          if (tab) {
-               const allowedTabs = ['modifyAccountFlags', 'modifyMetaData', 'modifyDepositAuth', 'modifyMultiSigners', 'modifyRegularKey'] as const;
-               type TabType = (typeof allowedTabs)[number];
-               if (tab && allowedTabs.includes(tab as TabType)) {
-                    // Type assertion is safe because we checked includes
-                    this.setTab(tab as TabType);
-               }
-          }
+          this.applyTabFromQueryParam(this.route, ['modifyAccountFlags', 'modifyMetaData', 'modifyDepositAuth', 'modifyMultiSigners', 'modifyRegularKey'] as const, tab => this.setTab(tab));
           this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
           this.txUiService.clearAllOptions();
      }
 
-     onWalletSelected(wallet: Wallet): void {
-          this.selectWallet(wallet);
+     protected async onSelectedWalletIndexChange(): Promise<void> {
+          await this.getAccountDetails(true);
      }
 
-     private selectWallet(wallet: Wallet): void {
+     selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
@@ -186,14 +171,6 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
 
      trackByAddress(index: number, item: DropdownItem): string {
           return item.address;
-     }
-
-     trackByWalletAddress(index: number, wallet: any): string {
-          return wallet.address;
-     }
-
-     toggleInfoPanel() {
-          this.infoPanelExpanded.update(expanded => !expanded);
      }
 
      private ensureWalletSelected(): boolean {
@@ -234,7 +211,7 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
                this.txUiService.clearAllOptionsAndMessages();
                this.configurationType.set(null);
 
-               if (!this.ensureWalletSelected()) return;
+               if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
@@ -643,27 +620,27 @@ export class AccountConfiguratorComponent extends PerformanceBaseComponent imple
           });
      }
 
-     private async handleTxResult(result: { success: boolean; error?: string; validationError?: boolean }, env: any, errorMessage: string): Promise<boolean> {
-          if (!result.success && result.validationError) {
-               this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
-               return false;
-          }
+     // private async handleTxResult(result: { success: boolean; error?: string; validationError?: boolean }, env: any, errorMessage: string): Promise<boolean> {
+     //      if (!result.success && result.validationError) {
+     //           this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
+     //           return false;
+     //      }
 
-          await this.refreshAfterTx(env.wallet);
-          return true;
-     }
+     //      await this.refreshAfterTx(env.wallet);
+     //      return true;
+     // }
 
-     private async refreshAfterTx(wallet: xrpl.Wallet): Promise<void> {
-          const env = await this.txEnvironmentService.prepareTxEnvironment({
-               includeAccountInfo: true,
-               includeAccountObject: true,
-               forceRefresh: true,
-          });
-          this.accountInfo.set(env.accountInfo);
-          this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-          this.acccountDataService.refreshUiStateAccountConfigure(wallet, env);
-          this.txUiService.clearAllOptions();
-     }
+     // private async refreshAfterTx(wallet: xrpl.Wallet): Promise<void> {
+     //      const env = await this.txEnvironmentService.prepareTxEnvironment({
+     //           includeAccountInfo: true,
+     //           includeAccountObject: true,
+     //           forceRefresh: true,
+     //      });
+     //      this.accountInfo.set(env.accountInfo);
+     //      this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+     //      this.acccountDataService.refreshUiStateAccountConfigure(wallet, env);
+     //      this.txUiService.clearAllOptions();
+     // }
 
      copyAndToast(text: string, label: string = 'Content') {
           this.copyUtilService.copyAndToast(text, label);
