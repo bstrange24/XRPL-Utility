@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { AppConstants } from '../../core/app.constants';
@@ -6,18 +6,27 @@ import { ToastService } from '../toast/toast.service';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { PaymentChannelUtilService } from '../payment-channel/payment-channel-util/payment-channel-util.service';
 import { CredentialStore } from '../credentials/credential-store/credential-store.service';
+import { Wallet } from '../wallets/manager/wallet-manager.service';
+import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
+import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
 
 @Injectable({
      providedIn: 'root',
 })
-export class XrplTransactionService {
-     constructor(
-          private readonly utilsService: UtilsService,
-          private readonly toastService: ToastService,
-          private readonly txUiService: TransactionUiService,
-          private readonly paymentChannelUtilService: PaymentChannelUtilService,
-          private readonly credentialStore: CredentialStore
-     ) {}
+export class XrplTransactionService extends PerformanceBaseComponent {
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     private readonly utilsService = inject(UtilsService);
+     private readonly toastService = inject(ToastService);
+     private readonly txUiService = inject(TransactionUiService);
+     private readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
+     private readonly credentialStore = inject(CredentialStore);
+     // constructor(
+     //      private readonly utilsService: UtilsService,
+     //      private readonly toastService: ToastService,
+     //      private readonly txUiService: TransactionUiService,
+     //      private readonly paymentChannelUtilService: PaymentChannelUtilService,
+     //      private readonly credentialStore: CredentialStore
+     // ) {}
 
      // HELPER: Sign transaction (handles both single and multi-sign)
      async signTransaction(client: any, wallet: xrpl.Wallet, tx: any, useRegularKeyWalletSignTx: boolean, regularKeyWalletSignTx: any, fee: string, useMultiSign: boolean, multiSignAddress: any, multiSignSeeds: any): Promise<{ tx_blob: string; hash: string } | null> {
@@ -577,5 +586,29 @@ export class XrplTransactionService {
                paymentType = 'IOU';
           }
           return { amountToCash, paymentType, currency };
+     }
+
+     async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, type: any, values: any, env: any) {
+          const isTicket = this.txUiService.isTicket();
+          if (isTicket) {
+               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               if (ticket) {
+                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
+                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
+                    this.utilsService.setTicketSequence(tx, ticket, true);
+               }
+          }
+
+          const destinationTag = this.xrplTxOptionsStore.destinationTag();
+          if (destinationTag) this.utilsService.setDestinationTag(tx, destinationTag);
+
+          const sourceTag = this.xrplTxOptionsStore.sourceTag();
+          if (sourceTag) this.utilsService.setSourceTagField(tx, sourceTag);
+
+          const memo = this.xrplTxOptionsStore.memos();
+          if (this.txUiService.isMemoEnabled() && memo) this.utilsService.addMemoField(tx, memo);
+
+          const invoiceId = this.xrplTxOptionsStore.invoiceId();
+          if (invoiceId) this.utilsService.setInvoiceIdField(tx, invoiceId);
      }
 }

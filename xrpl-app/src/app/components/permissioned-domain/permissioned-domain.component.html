@@ -6,14 +6,11 @@
      </div>
 </div>
 
+@let view = permissionedDomainViewModelService;
+<!-- Get infoData -->
+@let info = view.infoData();
 <!-- Get active tab -->
-@let info = permissionedDomainViewModelService.infoData();
-<!-- Get active tab -->
-@let tab = permissionedDomainViewModelService.activeTab();
-<!-- Get tab data -->
-@let tabs = menuTabs;
-<!-- Get tab meta data -->
-@let meta = tabMeta[tab];
+@let tab = view.activeTab();
 
 <!-- Main content. -->
 <div class="main-container">
@@ -24,6 +21,7 @@
           <!-- Center form -->
           <div class="form-panel">
                <!-- Menu / Tabs -->
+               @let tabs = menuTabs;
                <div class="menu-bar">
                     @for (item of tabs; track item.key) {
                     <button class="menu-btn" [class.active]="tab === item.key" (click)="setTab(item.key)">
@@ -36,6 +34,8 @@
                     }
                </div>
 
+               <!-- Get tab meta data -->
+               @let meta = tabMeta[tab];
                <div class="submenu-info-text">
                     <div [class]="meta.colorClass">
                          <ng-icon [name]="meta.icon" [size]="meta.iconSize" [color]="meta.color"></ng-icon>
@@ -54,7 +54,7 @@
                          <div class="summary-text">
                               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
                               <code>{{ info.walletName }}</code>
-                              <span [innerHTML]="permissionedDomainViewModelService.summaryMessage()"></span>
+                              <span [innerHTML]="view.summaryMessage()"></span>
                          </div>
 
                          <!-- Expand/Collapse toggle (only when there are domains) -->
@@ -149,11 +149,11 @@
                     <app-transaction-options-section [activeTab]="tab"></app-transaction-options-section>
                     }
 
-                    <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="permissionedDomainViewModelService.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+                    <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
 
                     <!-- Action buttons -->
                     <div class="button-row">
-                         <button type="button" [class]="info?.actionButtonClass" (click)="performAction()" [disabled]="!canSubmit()">{{ info?.actionButtonLabel }}</button>
+                         <button type="button" [class]="view.infoData()?.actionButtonClass" (click)="performAction()" [disabled]="!canSubmit()">{{ view.infoData()?.actionButtonLabel }}</button>
                          <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit()" (click)="clearInputFields()">Clear Fields</button>
                     </div>
 

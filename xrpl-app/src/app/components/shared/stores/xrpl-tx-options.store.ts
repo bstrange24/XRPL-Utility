@@ -1,8 +1,6 @@
 import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
 
 export interface XrplTxOptionsState {
-     destination: string;
-     destinationSearchQuery: string;
      destinationTag: string | null;
      sourceTag: string | null;
      invoiceId: string;
@@ -15,8 +13,6 @@ export interface XrplTxOptionsState {
 }
 
 const initialState: XrplTxOptionsState = {
-     destination: '',
-     destinationSearchQuery: '',
      destinationTag: null,
      sourceTag: '',
      invoiceId: '',
@@ -34,14 +30,6 @@ export const XrplTxOptionsStore = signalStore(
      withState(initialState),
 
      withMethods(store => ({
-          setDestination(destination: string) {
-               patchState(store, { destination });
-          },
-
-          setDestinationSearchQuery(destinationSearchQuery: string) {
-               patchState(store, { destinationSearchQuery });
-          },
-
           setDestinationTag(destinationTag: string | null) {
                patchState(store, { destinationTag });
           },

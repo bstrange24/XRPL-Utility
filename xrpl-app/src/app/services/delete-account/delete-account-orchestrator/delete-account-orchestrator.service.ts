@@ -2,7 +2,6 @@ import { inject, Injectable } from '@angular/core';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
 import { ValidationService } from '../../validation/transaction-validation-rule.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
@@ -20,7 +19,6 @@ export class DeleteAccountOrchestratorService extends PerformanceBaseComponent {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
-     private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly deleteAccountUtilService = inject(DeleteAccountUtilService);
@@ -79,7 +77,7 @@ export class DeleteAccountOrchestratorService extends PerformanceBaseComponent {
                const tx = this.buildDeleteAccountTransaction(type, env.wallet || wallet, env, config, { simulate, multiSign, destination, destinationTag, extra });
 
                // Optional fields
-               await this.applyOptionalFields(client, tx, wallet, type, { simulate, multiSign, destination, destinationTag, extra }, env);
+               await this.xrplTransactionService.applyOptionalFields(client, tx, wallet, type, { simulate, multiSign, destination, destinationTag, extra }, env);
 
                // Execute
                const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { simulate, multiSign, destination, destinationTag, extra });
@@ -126,30 +124,6 @@ export class DeleteAccountOrchestratorService extends PerformanceBaseComponent {
 
      private buildDeleteAccountTransaction(type: AccountDeleteTxType, wallet: xrpl.Wallet, env: any, config: any, values: any): xrpl.Transaction {
           return this.xrplTransactionService.buildAccountDeleteTransaction(wallet, values.destination, env.accountInfo, env.ledgerInfo.lastIndex);
-     }
-
-     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, type: AccountDeleteTxType, values: any, env: any) {
-          const isTicket = this.txUiService.isTicket();
-          if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
-               if (ticket) {
-                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
-                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
-                    this.utilsService.setTicketSequence(tx, ticket, true);
-               }
-          }
-
-          const destinationTag = this.xrplTxOptionsStore.destinationTag();
-          if (destinationTag) this.utilsService.setDestinationTag(tx, destinationTag);
-
-          const sourceTag = this.xrplTxOptionsStore.sourceTag();
-          if (sourceTag) this.utilsService.setSourceTagField(tx, sourceTag);
-
-          const memo = this.xrplTxOptionsStore.memos();
-          if (this.txUiService.isMemoEnabled() && memo) this.utilsService.addMemoField(tx, memo);
-
-          const invoiceId = this.xrplTxOptionsStore.invoiceId();
-          if (invoiceId) this.utilsService.setInvoiceIdField(tx, invoiceId);
      }
 
      private async executeSpecificTx(type: AccountDeleteTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, values: any) {

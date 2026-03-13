@@ -108,4 +108,15 @@ export class DeleteAccountViewModelService {
      }
 
      readonly deleteWalletButtonLabel = this.buildTxLabel('Delete Wallet');
+
+     readonly summaryMessage = computed(() => {
+          const info = this.infoData();
+          if (info.canDelete) {
+               return `<span> wallet <strong>can be deleted</strong> — no blockers found.</span>`;
+          } else if (info.blockers.length === 0) {
+               return `<span> wallet is ready for deletion (after final checks).</span>`;
+          } else {
+               return `<span> wallet has <strong>${info.blockers.length}</strong> configuration blocker${info.blockers.length === 1 ? '' : 's'} preventing deletion.</span>`;
+          }
+     });
 }

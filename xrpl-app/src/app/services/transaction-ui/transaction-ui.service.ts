@@ -99,11 +99,6 @@ export type SignalKey = keyof TransactionUiSignals;
 export class TransactionUiService {
      public readonly sanitizer = inject(DomSanitizer);
      public readonly xrplService = inject(XrplService);
-     // constructor(
-     //      private readonly sanitizer: DomSanitizer,
-     //      private readonly xrplService: XrplService
-     //      // private readonly utilsService: UtilsService
-     // ) {}
 
      readonly baseTxKeys = ['isSimulateEnabled', 'useMultiSign', 'isRegularKeyAddress', 'regularKeyAddress', 'regularKeySeed', 'multiSignAddress', 'multiSignSeeds'] as const;
      txHash: string | null = null;
@@ -175,80 +170,6 @@ export class TransactionUiService {
      enableExpirationDate = signal<boolean>(false);
      enableEscrowFinishAfterExpirationDate = signal<boolean>(false);
      enableEscrowCancelAfterExpirationDate = signal<boolean>(false);
-
-     // Credentials
-     // credentialIDs = signal<string[]>([]);
-     // credentialID = signal<string>('');
-     // credentialType = signal<string>('');
-     // subject = signal<string>('');
-     // credential = signal<CredentialData>({
-     //      version: '1.0',
-     //      credential_type: 'KYCCredential',
-     //      issuer: '',
-     //      subject: {
-     //           full_name: '',
-     //           destinationAddress: '',
-     //           dob: '',
-     //           country: '',
-     //           id_type: '',
-     //           id_number: '',
-     //           expirationDate: '',
-     //      },
-     //      verification: { method: '', verified_at: '', verifier: '' },
-     //      hash: '',
-     //      uri: '',
-     // });
-     // credentialIssuer = signal<string>('');
-     // credentialIdSearchQuery = signal<string>('');
-     // credentialIdSearchTerm = signal<string>('');
-     // existingCredentials = signal<CredentialItem[]>([]);
-     // selectedCredentials = signal<CredentialItem | null>(null);
-     // subjectCredentials = signal<CredentialItem[]>([]);
-     // credentialSubjectExpirationDate = computed(() => this.credential().subject.expirationDate);
-     // setCredentialSubjectExpirationDate(value: string) {
-     //      this.credential.update(c => ({
-     //           ...c,
-     //           subject: {
-     //                ...c.subject,
-     //                expirationDate: value,
-     //           },
-     //      }));
-     // }
-
-     // DID
-     //      didDetails = signal<DidData>({
-     //           id: '',
-     //           verificationMethod: {
-     //                id: '',
-     //                type: '',
-     //                controller: '',
-     //                publicKeyBase58: '',
-     //           },
-     //           authentication: {
-     //                auth: '',
-     //           },
-     //           service: {
-     //                serviceId: '',
-     //                serviceType: '',
-     //                serviceEndpoint: '',
-     //           },
-     //           hash: '',
-     //           uri: `{"ipfs":"//bafybeiexamplehash"}`,
-     //           document: `{"did:example":"123#public-key-0"}`,
-     //           data: `{
-     //     "@context": "https://www.w3.org/ns/did/v1",
-     //     "id": "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc",
-     //     "authentication": [
-     //       "did:xrpl:test:rJNo2iPnuDmXqqw31cobafG37k1GaMZ3Vc#keys-1"
-     //     ]
-     //   }`,
-     //           destinationAddress: '',
-     //      });
-     //      didData = signal<string>('');
-     //      uriData = signal<string>('');
-     //      didDocumentData = signal<string>('');
-     //      createdDids = signal<boolean>(false);
-     //      existingDid = signal<DidItem[]>([]);
 
      // Account config
      memoField = signal<string>('');

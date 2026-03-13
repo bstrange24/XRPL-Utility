@@ -42,14 +42,7 @@
                          <div class="summary-text">
                               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
                               <code>{{ info.walletName }}</code>
-
-                              @if (info.canDelete) {
-                              <span> wallet <strong>can be deleted</strong> — no blockers found.</span>
-                              } @else if (info.blockers.length === 0) {
-                              <span> wallet is ready for deletion (after final checks).</span>
-                              } @else {
-                              <span> wallet has <strong>{{ info.blockers.length }}</strong> configuration blocker{{ info.blockers.length === 1 ? '' : 's' }} preventing deletion.</span>
-                              }
+                              <span [innerHTML]="deleteAccountViewModelService.summaryMessage()"></span>
                          </div>
 
                          <!-- Expand/Collapse toggle (always shown if there's meaningful content) -->

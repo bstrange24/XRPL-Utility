@@ -137,7 +137,7 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
           if (!this.walletManagerService.ensureWalletSelected()) return;
 
           // 2. Early credentialIssuer resolution
-          this.selectedDestinationAddress.set(this.xrplTxOptionsStore.destination());
+          this.selectedDestinationAddress.set(this.selectedDestinationAddress());
           destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
           const walletVm = this.walletManager.walletVm();
 
@@ -215,13 +215,12 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
 
      handleSearchQueryChange(query: string) {
           this.destinationSearchQuery.set(query);
-          this.xrplTxOptionsStore.setDestinationSearchQuery(query);
      }
 
      handleDestinationChange(item: SelectItem | null) {
           const addr = item?.id || '';
           this.selectedDestinationAddress.set(addr);
-          this.xrplTxOptionsStore.setDestination(addr);
+          // this.xrplTxOptionsStore.setDestination(addr);
      }
 
      deleteWalletAfterDeleteTx(index: number) {
