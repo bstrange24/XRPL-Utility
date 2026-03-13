@@ -1,0 +1,75 @@
+@if (info() && info()!.walletName) {
+<div class="info-and-credentials-card" [class.has-did]="hasDid()">
+     <!-- Always-visible summary row -->
+     <div class="summary-header">
+          <div class="summary-text">
+               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" />
+               <code>{{ info()!.walletName }}</code>
+
+               @switch (info()!.mode) { @case ('set') { @if (info()!.didCount === 0) {
+               <span> has not created a DID yet.</span>
+               } @else {
+               <span> has a DID set. Only <strong>1</strong> DID can exist per account.</span>
+               } } @case ('delete') { @if (info()!.didCount === 0) {
+               <span> has no DID to delete.</span>
+               } @else {
+               <span> has <strong>1</strong> DID that can be deleted.</span>
+               } } }
+          </div>
+
+          <!-- Expand/Collapse toggle -->
+          @if (hasDid()) {
+          <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel.emit()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle DID details">
+               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} DID</span>
+               <ng-icon name="featherChevronDown" size="16" stroke="currentColor" strokeWidth="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
+          </button>
+          }
+     </div>
+
+     <!-- Collapsible DID details -->
+     @if (hasDid()) {
+     <section class="credentials-list-container" [class.expanded]="infoPanelExpanded()" aria-label="DID details">
+          <ul class="credentials-list" style="max-height: 5000px">
+               <app-tooltip-link [href]="explorerUrl() + 'entry/' + getDid()!.index" tooltipText="View DID entry on XRPL Explorer">
+                    <div class="credential-main-line" style="margin-bottom: 11px">
+                         Index:
+                         <span class="issuer-hint">{{ getDid()!.index }}</span>
+                    </div>
+               </app-tooltip-link>
+
+               @if (getDid()!.URI && getDid()!.URI !== 'N/A') {
+               <div class="credential-main-line" style="display: flow">
+                    URI:
+                    <div></div>
+                    <pre class="json-pretty issuer-hint">{{ utilsService.parseUiJson(getDid()!.URI!) | json }}</pre>
+               </div>
+               }
+
+               <div class="credential-main-line" style="display: flow">
+                    Data:
+                    <div></div>
+                    <pre class="json-pretty issuer-hint">{{ utilsService.parseUiJson(getDid()!.Data!) | json }}</pre>
+               </div>
+
+               <div class="credential-main-line" style="display: flow">
+                    DIDDocument:
+                    <div></div>
+                    <pre class="json-pretty issuer-hint">{{ utilsService.parseUiJson(getDid()!.DIDDocument!) | json }}</pre>
+               </div>
+
+               <!-- Copy actions -->
+               <div class="did-copy-actions" (mouseenter)="$event.stopPropagation()" (mouseleave)="$event.stopPropagation()" (mousemove)="$event.stopPropagation()">
+                    @if (getDid()!.DIDDocument && getDid()!.DIDDocument !== 'N/A') {
+                    <button type="button" class="copy-link btn btn-sm" (click)="copyAndToast(getDid()!.DIDDocument!, 'DID Document')">Copy full DID Document (JSON)</button>
+                    } @if (getDid()!.Data && getDid()!.Data !== 'N/A') {
+                    <button type="button" class="copy-link btn btn-sm" (click)="copyAndToast(getDid()!.Data!, 'DID Data')">Copy Data field (JSON)</button>
+                    } @if (getDid()!.URI && getDid()!.URI !== 'N/A') {
+                    <button type="button" class="copy-link btn btn-sm" (click)="copyAndToast(getDid()!.URI!, 'URI Data')">Copy URI Field</button>
+                    }
+                    <button type="button" class="copy-link btn btn-sm" (click)="copyAndToast(getDid()!.index, 'Index')">Copy Index</button>
+               </div>
+          </ul>
+     </section>
+     }
+</div>
+}

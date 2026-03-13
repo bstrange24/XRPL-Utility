@@ -9,8 +9,8 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
      providedIn: 'root',
 })
 export class DeleteAccountViewModelService {
-     private walletManager = inject(WalletManagerService);
-     private deleteAccountStoreService = inject(DeleteAccountStoreService);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly deleteAccountStoreService = inject(DeleteAccountStoreService);
      public readonly txUiService = inject(TransactionUiService);
      readonly activeTab = signal<AccountDeleteTxType>('deleteAccount');
 

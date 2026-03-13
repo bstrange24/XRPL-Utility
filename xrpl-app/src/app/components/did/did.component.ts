@@ -2,7 +2,6 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../services/util-service/utils.service';
@@ -12,12 +11,11 @@ import { TransactionOptionsComponent } from '../shared/transaction-options/trans
 import { NavbarComponent } from '../navbar/navbar.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { AppConstants } from '../../core/app.constants';
+import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { JsonEditorComponent } from '../json-editor/json-editor.component';
 import { DidUtilService } from '../../services/did/did-util/did-util.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
@@ -31,11 +29,15 @@ import { ActivatedRoute } from '@angular/router';
 import { DidStoreService } from '../../services/did/did-store/did-store.service';
 import { DidViewModelService } from '../../services/did/did-view-model/did-view-model.service';
 import { DID_TAB_META, DID_TABS, DidTxConfig, DidTxType } from './constants/did.constants';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
+import { DidSummaryComponent } from './ui-components/summary/did-summary.component';
+import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
 
 @Component({
      selector: 'app-did',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, JsonEditorComponent, RequirementsInfoComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, JsonEditorComponent, RequirementsInfoComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DidSummaryComponent],
      templateUrl: './did.component.html',
      styleUrl: './did.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,8 +56,8 @@ export class DidComponent extends WalletDestinationBase implements OnInit {
      public readonly didUtilService = inject(DidUtilService);
      public readonly didStoreService = inject(DidStoreService);
      public readonly didViewModelService = inject(DidViewModelService);
-     readonly tabMeta = DID_TAB_META;
-     readonly menuTabs = DID_TABS;
+     readonly menuTabs: TabConfig[] = DID_TABS;
+     readonly tabMeta: Record<string, TabMetaInfo> = DID_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
@@ -100,11 +102,14 @@ export class DidComponent extends WalletDestinationBase implements OnInit {
           this.copyUtilService.copyAndToast(text, label);
      }
 
-     async setTab(tab: 'set' | 'delete'): Promise<void> {
-          this.didViewModelService.activeTab.set(tab);
-          this.didUtilService.populateDidDefaultData();
-          this.txUiService.clearAllOptionsAndMessages();
-          if (this.hasWallets()) await this.getDidForAccount();
+     async setTab(tab: string): Promise<void> {
+          const validTabs = ['set', 'delete'] as const;
+          if (validTabs.includes(tab as any)) {
+               this.didViewModelService.activeTab.set(tab as 'set' | 'delete');
+               this.didUtilService.populateDidDefaultData();
+               this.txUiService.clearAllOptionsAndMessages();
+               if (this.hasWallets()) await this.getDidForAccount();
+          }
      }
 
      async getDidForAccount(forceRefresh = false): Promise<void> {

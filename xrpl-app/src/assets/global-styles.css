@@ -3401,10 +3401,10 @@ ticket-fields .form-group {
      cursor: pointer !important;
 }
 
-.executionTimeDisplay {
+/* .executionTimeDisplay {
      display: flex;
      align-items: center;
-}
+} */
 
 /* ==============================================
 Dark Mode

@@ -1,0 +1,31 @@
+<div class="form-panel-header">
+     <!-- or your wrapper class -->
+
+     <!-- Tabs -->
+     @if (tabs().length > 0) {
+     <div class="menu-bar">
+          @for (tab of tabs(); track tab.key) {
+          <button class="menu-btn" [class.active]="active() === tab.key" (click)="activeChange.emit(tab.key)" type="button">
+               @if (tab.iconType === 'ng-icon') {
+               <ng-icon [name]="tab.icon" [size]="tab.iconSize ?? '20'" />
+               } @else if (tab.iconType === 'lucide-icon') {
+               <lucide-icon [name]="tab.icon" [size]="tab.iconSize ?? '20'" style="padding-top: 5px" />
+               } {{ tab.label }}
+          </button>
+          }
+     </div>
+     }
+
+     <!-- Metadata / Submenu info -->
+     @if (currentMeta()) {
+     <div class="submenu-info-text">
+          <div [class]="currentMeta()!.colorClass">
+               <ng-icon [name]="currentMeta()!.icon" [size]="currentMeta()!.iconSize ?? '32'" [color]="currentMeta()!.color" />
+          </div>
+          <div>
+               <h2 class="submenu-info-main-text">{{ currentMeta()!.title }}</h2>
+               <p class="submenu-info-secondary-text">{{ currentMeta()!.desc }}</p>
+          </div>
+     </div>
+     }
+</div>

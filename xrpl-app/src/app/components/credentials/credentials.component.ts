@@ -2,17 +2,15 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import * as xrpl from 'xrpl';
-import { AppConstants } from '../../core/app.constants';
+import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { ToastService } from '../../services/toast/toast.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
@@ -24,7 +22,6 @@ import { TxEnvironmentService } from '../../services/transaction-environment/tx-
 import { CredentialTransactionOrchestratorService } from '../../services/credentials/credential-transaction-orchestrator/credential-transaction-orchestrator.service';
 import { CredentialUtilService } from '../../services/credentials/credential-util/credential-util.service';
 // import { RequirementsInfoComponent } from '../../components/shared/requirements-info/requirements-info/requirements-info.component';
-import { RequirementsInfoComponent } from './ui-components/credential-requirements-info/requirements-info/requirements-info.component';
 import { ActivatedRoute } from '@angular/router';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -33,13 +30,18 @@ import { XrplExpirationInputComponent } from '../shared/xrpl-expiration-input/xr
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 import { CredentialViewModelService } from '../../services/credentials/credential-view-model/credential-view-model.service';
-import { CredentialTxConfig, CredentialTxType, CREDENTIAL_TAB_META, CREDENTIAL_TABS } from './constants/credential.constants';
+import { CredentialTxConfig, CredentialTxType, CREDENTIAL_TAB_META, CREDENTIAL_TABS, CredentialItemVm } from './constants/credential.constants';
 import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
+import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
+import { RequirementsInfoComponent } from './ui-components/credential-requirements-info/requirements-info.component';
+import { CredentialsWalletCredentialsSummaryComponent } from './ui-components/summary/credentials-wallet-credentials-summary.component';
 
 @Component({
      selector: 'app-credentials',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, TooltipLinkComponent, SelectSearchDropdownComponent, XrplExpirationInputComponent, RequirementsInfoComponent, TransactionOptionsSectionComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, XrplExpirationInputComponent, RequirementsInfoComponent, TransactionOptionsSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CredentialsWalletCredentialsSummaryComponent],
      templateUrl: './credentials.component.html',
      styleUrl: './credentials.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,8 +56,8 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      public readonly credentialUtilService = inject(CredentialUtilService);
      public readonly credentialStore = inject(CredentialStore);
      public readonly credentialViewModelService = inject(CredentialViewModelService);
-     readonly tabMeta = CREDENTIAL_TAB_META;
-     readonly menuTabs = CREDENTIAL_TABS;
+     readonly menuTabs: TabConfig[] = CREDENTIAL_TABS;
+     readonly tabMeta: Record<string, TabMetaInfo> = CREDENTIAL_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
@@ -95,15 +97,19 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           return cred.index;
      }
 
-     async setTab(tab: 'create' | 'accept' | 'delete' | 'verify'): Promise<void> {
-          this.credentialViewModelService.activeTab.set(tab);
-          this.destinationSearchQuery.set('');
+     async setTab(tab: string): Promise<void> {
+          const validTabs = ['create', 'accept', 'delete', 'verify'] as const;
+          if (validTabs.includes(tab as any)) {
+               // this.credentialViewModelService.activeTab.set(tab);
+               this.credentialViewModelService.activeTab.set(tab as 'create' | 'accept' | 'delete' | 'verify');
+               this.destinationSearchQuery.set('');
 
-          this.credentialStore.resetCredentialIdDropDown();
-          this.txUiService.clearAllOptionsAndMessages();
-          this.credentialStore.clearOptionalExpirationDate();
+               this.credentialStore.resetCredentialIdDropDown();
+               this.txUiService.clearAllOptionsAndMessages();
+               this.credentialStore.clearOptionalExpirationDate();
 
-          if (this.hasWallets()) await this.getCredentialsForAccount();
+               if (this.hasWallets()) await this.getCredentialsForAccount();
+          }
      }
 
      async getCredentialsForAccount(forceRefresh = false): Promise<void> {
@@ -337,6 +343,10 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           const addr = item?.id || '';
           this.selectedDestinationAddress.set(addr);
           this.credentialStore.set('subject', addr);
+     }
+
+     onCredentialSelected(cred: CredentialItemVm) {
+          this.selectCredential(cred, 'list');
      }
 
      selectCredential(item: SelectItem | CredentialItem | null, source: 'dropdown' | 'list' = 'list') {

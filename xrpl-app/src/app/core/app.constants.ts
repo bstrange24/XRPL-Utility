@@ -1,6 +1,23 @@
 import { ECDSA, TrustSetFlags } from 'xrpl';
 import * as xrpl from 'xrpl';
 
+export interface TabConfig {
+     key: string;
+     label: string;
+     icon: string;
+     iconType: 'ng-icon' | 'lucide-icon';
+     iconSize?: string;
+}
+
+export interface TabMetaInfo {
+     icon: string;
+     colorClass: string;
+     title: string;
+     desc: string;
+     color?: string;
+     iconSize?: string;
+}
+
 export const AppConstants = {
      // XRPL Network Settings
      NETWORKS: {

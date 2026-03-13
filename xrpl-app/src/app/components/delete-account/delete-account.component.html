@@ -13,7 +13,6 @@
 <!-- Get active tab -->
 @let tab = view.activeTab();
 <!-- Get tab meta data -->
-@let meta = tabMeta[tab];
 
 <!-- Main content. -->
 <div class="main-container">
@@ -23,74 +22,14 @@
 
           <!-- Center form -->
           <div class="form-panel" style="padding-top: 2em">
-               <!-- Delete Menu -->
-               <div class="submenu-info-text">
-                    <div [class]="meta.colorClass">
-                         <ng-icon [name]="meta.icon" [size]="meta.iconSize" [color]="meta.color"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">{{ meta.title }}</h2>
-                         <p class="submenu-info-secondary-text">{{ meta.desc }}</p>
-                    </div>
-               </div>
+               <app-tab-menu-with-info [tabs]="[]" [active]="view.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
                <!-- Info Message -->
-               @if (info) {
-               <div class="info-and-credentials-card" [class.can-delete]="info.canDelete" [class.has-blockers]="info.blockers.length > 0">
-                    <!-- Always-visible summary row -->
-                    <div class="summary-header">
-                         <div class="summary-text">
-                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                              <code>{{ info.walletName }}</code>
-                              <span [innerHTML]="deleteAccountViewModelService.summaryMessage()"></span>
-                         </div>
-
-                         <!-- Expand/Collapse toggle (always shown if there's meaningful content) -->
-                         @if (info.blockers.length > 0 || !info.canDelete || info.balanceWarning) {
-                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle account deletion details">
-                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} Blocking Objects</span>
-                              <ng-icon name="featherChevronDown" size="16" stroke="currentColor" strokeWidth="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'"> </ng-icon>
-                         </button>
-                         }
-                    </div>
-
-                    <!-- Collapsible detailed content -->
-                    @if (info.blockers.length > 0 || !info.canDelete || info.balanceWarning) {
-                    <section class="credentials-list-container" [class.expanded]="infoPanelExpanded()" aria-label="Credential list">
-                         <ul class="credentials-list">
-                              @if(info.blockers.length) {
-                              <div class="blockers-section">
-                                   <h2 class="blockers-title">Blocking configurations:</h2>
-                                   <ul class="blockers-list">
-                                        @for (blocker of info.blockers; track blocker.route) {
-                                        <li class="blocker-item">
-                                             <ng-icon name="heroXCircle" size="18" class="blocker-icon"></ng-icon>
-                                             <span>{{ blocker.count }} {{ blocker.label }}</span>
-                                             @if(blocker.route && blocker.route !== '#') {
-                                             <a class="resolve-link" [routerLink]="blocker.route" [queryParams]="blocker.tab ? { tab: blocker.tab } : {}"> Go to {{ blocker.label }} </a>
-                                             }
-                                        </li>
-                                        }
-                                   </ul>
-                              </div>
-                              }
-
-                              <!-- Balance warning -->
-                              @if (info.balanceWarning) {
-                              <div class="balance-warning"><strong>Warning:</strong> {{ info.balanceWarning }}</div>
-                              }
-                         </ul>
-                    </section>
-                    }
-               </div>
-               }
+               <app-delete-account-summary [info]="view.infoData()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"></app-delete-account-summary>
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage() }}</div>
-               </div>
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
                }
 
                <form #theForm="ngForm" class="main-form">
@@ -100,7 +39,7 @@
                          <div class="form-group">
                               <label for="destination">Destination</label>
                               <p class="form-hint">Destination account to send remaining XRP to.</p>
-                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="handleSearchQueryChange($event)" (valueChange)="handleDestinationChange($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
+                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="handleSearchQueryChange($event)" (valueChange)="handleDestinationChange($event)" placeholder="Enter or select destination address"></app-select-search-dropdown>
                          </div>
                     </div>
                     }
@@ -115,7 +54,7 @@
                     <app-transaction-options-section [activeTab]="tab"></app-transaction-options-section>
                     }
 
-                    <app-transaction-options [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+                    <app-transaction-options [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled"></app-transaction-options>
 
                     <!-- Action buttons -->
                     <div class="button-row">
@@ -128,9 +67,9 @@
                     </div>
 
                     <!-- Execution time -->
-                    <div class="executionTimeDisplay" aria-live="polite">
-                         <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
-                    </div>
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+
+                    <!-- Transaction Preview -->
                     <app-transaction-preview></app-transaction-preview>
                </form>
           </div>

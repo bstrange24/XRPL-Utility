@@ -87,10 +87,7 @@
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage() }}</div>
-               </div>
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
                }
 
                <form #theForm="ngForm" class="main-form">
@@ -363,9 +360,9 @@
                     }
 
                     <!-- Execution time -->
-                    <div class="executionTimeDisplay" aria-live="polite">
-                         <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
-                    </div>
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+
+                    <!-- Transaction Preview -->
                     <app-transaction-preview></app-transaction-preview>
                </form>
           </div>

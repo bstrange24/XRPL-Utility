@@ -8,9 +8,9 @@ import { PermissionedDomainInfo, PermissionedDomainTab } from '../../../componen
      providedIn: 'root',
 })
 export class PermissionedDomainViewModelService {
-     private walletManager = inject(WalletManagerService);
-     private store = inject(PermissionedDomainStoreService);
-     private util = inject(PermissionedDomainUtilService);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
+     private readonly permissionedDomainUtilService = inject(PermissionedDomainUtilService);
 
      readonly activeTab = signal<PermissionedDomainTab>('set');
 
@@ -19,15 +19,15 @@ export class PermissionedDomainViewModelService {
           if (!wallet?.address) return null;
 
           const tab = this.activeTab();
-          const domains = this.store.get('createdPermissionedDomains') ?? [];
+          const domains = this.permissionedDomainStoreService.get('createdPermissionedDomains') ?? [];
 
           return {
                walletName: wallet.name || 'Selected wallet',
                mode: tab,
                permissionedDomainCount: domains.length,
                permissionedDomainsToShow: domains,
-               actionButtonLabel: this.util.actionButtonLabel(tab),
-               actionButtonClass: this.util.actionButtonClass(tab),
+               actionButtonLabel: this.permissionedDomainUtilService.actionButtonLabel(tab),
+               actionButtonClass: this.permissionedDomainUtilService.actionButtonClass(tab),
           };
      });
 

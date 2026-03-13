@@ -2,7 +2,6 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
@@ -14,7 +13,7 @@ import { TransactionOptionsComponent } from '../shared/transaction-options/trans
 import { NavbarComponent } from '../navbar/navbar.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { AppConstants } from '../../core/app.constants';
+import { AppConstants, TabMetaInfo } from '../../core/app.constants';
 import * as xrpl from 'xrpl';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
@@ -25,7 +24,6 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { DeleteAccountOrchestratorService } from '../../services/delete-account/delete-account-orchestrator/delete-account-orchestrator.service';
-import { DeleteAccountRequirementsInfoComponent } from './delete-account-requirements-info/delete-account-requirements-info/delete-account-requirements-info.component';
 import { DeleteAccountUtilService } from '../../services/delete-account/delete-account-util/delete-account-util.service';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
@@ -34,11 +32,16 @@ import { DeleteAccountStoreService } from '../../services/delete-account/delete-
 import { AccountDeleteConfig, AccountDeleteTxType, DELETE_ACCOUNT_TAB_META } from './constants/delete-account.constants';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
+import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
+import { DeleteAccountRequirementsInfoComponent } from './ui-components/delete-account-requirements-info/delete-account-requirements-info.component';
+import { DeleteAccountSummaryComponent } from './ui-components/summary/delete-account-summary.component';
 
 @Component({
      selector: 'app-delete-account',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, DeleteAccountRequirementsInfoComponent, RouterModule, TransactionOptionsSectionComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, DeleteAccountRequirementsInfoComponent, RouterModule, TransactionOptionsSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DeleteAccountSummaryComponent],
      templateUrl: './delete-account.component.html',
      styleUrl: './delete-account.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,7 +58,7 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
      public readonly deleteAccountStoreService = inject(DeleteAccountStoreService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
-     readonly tabMeta = DELETE_ACCOUNT_TAB_META;
+     readonly tabMeta: Record<string, TabMetaInfo> = DELETE_ACCOUNT_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
@@ -86,13 +89,16 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
           return item.address;
      }
 
-     async setTab(tab: 'deleteAccount'): Promise<void> {
-          this.deleteAccountViewModelService.activeTab.set(tab);
-          this.destinationSearchQuery.set('');
+     async setTab(tab: string): Promise<void> {
+          const validTabs = ['deleteAccount'] as const;
+          if (validTabs.includes(tab as any)) {
+               this.deleteAccountViewModelService.activeTab.set(tab as 'deleteAccount');
+               this.destinationSearchQuery.set('');
 
-          this.txUiService.clearAllOptionsAndMessages();
+               this.txUiService.clearAllOptionsAndMessages();
 
-          if (this.hasWallets()) await this.getAccountDetails(true);
+               if (this.hasWallets()) await this.getAccountDetails(true);
+          }
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {

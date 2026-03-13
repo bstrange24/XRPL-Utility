@@ -1,7 +1,13 @@
-@let tab = activeTab();
-
+@let tab = activeTab(); @if (tab === 'sendXrp' || tab === 'create' || tab === 'cash' || tab === 'set') {
+<div class="switch-group">
+     <label class="switch">
+          <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.target.checked)" name="showOptionalXrp" />
+          <span class="slider"></span> Include optional fields (Destination Tag, Source Tag)
+     </label>
+</div>
+} @if(txUiService.wantsOptions()) {
 <!-- Determine what options to display based on tab -->
-@if (tab === 'sendXrp' || tab === 'create' || tab === 'cash' || tab === 'cancel' || tab === 'set' || tab === 'delete' || tab === 'accept' || tab === 'verify') {
+@if (tab === 'sendXrp' || tab === 'create' || tab === 'cash' || tab === 'set') {
 <!-- Destination Tag & Source Tag -->
 <div class="form-row">
      <div class="form-group">
@@ -61,4 +67,4 @@
           <input type="text" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setSourceTag($event)" />
      </div>
 </div>
-}
+} }

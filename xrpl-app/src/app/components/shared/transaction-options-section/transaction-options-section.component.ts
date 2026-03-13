@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, Input, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
@@ -20,4 +20,5 @@ export class TransactionOptionsSectionComponent {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      activeTab = input.required<'sendXrp' | 'create' | 'cash' | 'cancel' | 'deleteAccount' | 'set' | 'delete' | 'create' | 'accept' | 'delete' | 'verify'>();
+     @Input() wantsOptions: boolean = this.txUiService.wantsOptions();
 }
