@@ -5,8 +5,8 @@ import { UtilsService } from '../../util-service/utils.service';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
 import { ToastService } from '../../toast/toast.service';
-import { AccountConfigTxType } from '../account-configurator-orchestrator/account-configurator-orchestrator.service';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
+import { AccountConfigTxType } from '../../../components/account-configurator/constants/account-configurator-constants';
 
 export interface XrplAccountFlags {
      asfRequireDest: boolean;

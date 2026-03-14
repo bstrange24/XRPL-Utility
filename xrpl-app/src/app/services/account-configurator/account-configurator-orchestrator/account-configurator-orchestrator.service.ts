@@ -12,46 +12,7 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { AccountConfiguratorUtilService } from '../account-configurator-util/account-configurator-util.service';
 import { AppConstants } from '../../../core/app.constants';
-
-export type AccountConfigTxType = 'modifyAccountFlags' | 'modifyMetaData' | 'updateMetaData' | 'modifyDepositAuth' | 'modifyMultiSigners' | 'modifyRegularKey' | 'modifyAccountSetFlags';
-
-interface AccountConfig {
-     wallet: Wallet;
-     formValues: {
-          amountField?: string;
-          destinationAddress?: string;
-          nfTokenMinterAddress?: string;
-          setFlags?: any;
-          clearFlags?: any;
-          tickSize?: any;
-          transferRate?: any;
-          publicKey?: string;
-          domain?: string;
-          isMessageKey?: boolean;
-          enableNftMinter?: string;
-          isSimulateEnabled?: boolean;
-          useMultiSign?: boolean;
-          isRegularKeyAddress?: boolean;
-          regularKeyAddress?: string;
-          regularKeySeed?: string;
-          multiSignAddress?: string;
-          multiSignSeeds?: string | string[];
-          suppressIndividualFeedback?: string;
-          [key: string]: any;
-     };
-     extra?: Record<string, any>;
-     preFetchedEnv?: {
-          client: xrpl.Client;
-          accountInfo: any;
-          accountObjects?: any;
-          fee: string;
-          currentLedger: number;
-          destinationAccountInfo?: any;
-          escrowObjects?: any;
-          escrowObjectsBySequenceId?: any;
-          wallet?: any;
-     };
-}
+import { AccountConfig, AccountConfigTxType } from '../../../components/account-configurator/constants/account-configurator-constants';
 
 @Injectable({
      providedIn: 'root',
@@ -148,7 +109,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
      }
 
      async executeAccountSetFlagsTx(
-          type: 'modifyAccountSetFlags',
+          type: AccountConfigTxType,
           config: AccountConfig
      ): Promise<{
           success: boolean;

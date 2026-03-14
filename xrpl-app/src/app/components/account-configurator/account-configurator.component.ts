@@ -34,6 +34,9 @@ import { WarningMessageComponent } from '../shared/ui-components/warning-message
 import { AccountConfiguratorRequirementsInfoComponent } from './ui-components/account-configurator-requirements-info/account-configurator-requirements-info.component';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
+import { AccountConfig, AccountConfigTxType } from './constants/account-configurator-constants';
+import { SelectItem } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { AccountConfiguratorViewModelService } from '../../services/account-configurator/account-configurator-view-model/ccount-configurator-view-model.service';
 
 @Component({
      selector: 'app-account-configurator',
@@ -54,6 +57,8 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
      public accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      public readonly accountConfiguratorOrchestratorService = inject(AccountConfiguratorOrchestratorService);
      public readonly storageService = inject(StorageService);
+     public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService)
+     
 
      activeTab = signal<'modifyAccountFlags' | 'modifyMetaData' | 'modifyDepositAuth' | 'modifyMultiSigners' | 'modifyRegularKey'>('modifyAccountFlags');
      // currentWallet = signal<Wallet>({} as Wallet);
@@ -181,12 +186,15 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           return true;
      }
 
-     async setTab(tab: 'modifyAccountFlags' | 'modifyMetaData' | 'modifyDepositAuth' | 'modifyMultiSigners' | 'modifyRegularKey'): Promise<void> {
-          this.activeTab.set(tab);
+     async setTab(tab: string): Promise<void> {
+          const validTabs = ['modifyAccountFlags', 'modifyMetaData' , 'modifyDepositAuth' , 'modifyMultiSigners' , 'modifyRegularKey'] as const;
+          if (validTabs.includes(tab as any)) {
+          this.activeTab.set(tab as 'modifyAccountFlags' | 'modifyMetaData' | 'modifyDepositAuth' | 'modifyMultiSigners' | 'modifyRegularKey');
 
-          if (this.hasWallets()) {
+          if (this.hasWallets()) 
                await this.getAccountDetails(false);
           }
+          
      }
 
      onConfigurationChange() {
@@ -243,6 +251,120 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                }
           });
      }
+
+      async performAction(): Promise<void> {
+               const currentTab = this.accountConfiguratorViewModelService.activeTab();
+               let txResult: { success: boolean; error?: string } | null = null;
+               let envRef: any = null;
+     
+               // 1. Common reset & guard clauses
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
+     
+               if (!this.walletManagerService.ensureWalletSelected()) return;
+     
+               // 2. Early subject resolution
+               // this.selectedDestinationAddress.set(this.credentialStore.get('subject'));
+               // const subjectDestination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+               const walletVm = this.walletManager.walletVm();
+     
+               // 3. Map tab → action type
+               let action: AccountConfigTxType;
+               // switch (currentTab) {
+               //      case 'modifyAccountFlags':
+               //           action = 'modifyAccountFlags';
+               //           break;
+               //      case 'modifyMetaData':
+               //           action = 'modifyMetaData';
+               //           break;
+               //      case 'modifyDepositAuth':
+               //           action = 'modifyDepositAuth';
+               //           return;
+               //      case 'modifyMultiSigners':
+               //           action = 'modifyMultiSigners';
+               //           return;
+               //      case 'modifyRegularKey':
+               //           action = 'modifyRegularKey';
+               //           return;
+               //      default:
+               //           this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
+               //           return;
+               // }
+     
+               // 4. Fetch environment once for this transaction
+               await this.withPerf('performAction', async () => {
+                    try {
+                         envRef = await this.txEnvironmentService.prepareTxEnvironment({
+                              includeAccountInfo: true,
+                              includeAccountObject: true,
+                              includeFee: true,
+                              includeLedgerInfo: true,
+                         });
+                    } catch (err: any) {
+                         console.error(err);
+                         this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+                         return;
+                    }
+     
+                    // 5. Build the orchestrator config
+                    const config: AccountConfig = {
+                         wallet: walletVm.wallet!,
+                         simulate: this.txUiService.isSimulateEnabled(),
+                         multiSign: this.txUiService.useMultiSign(),
+                         amountField: '',
+                         destinationAddress: '',
+                         nfTokenMinterAddress: '',
+                         setFlags: '',
+                         clearFlags: '',
+                         tickSize: '',
+                         transferRate: '',
+                         publicKey: '',
+                         domain: '',
+                         isMessageKey: true,
+                         enableNftMinter: '',
+                         preFetchedEnv: envRef,
+                    };
+     
+                    // 6. Execute
+                    try {
+                         switch (currentTab) {
+                              case 'modifyAccountFlags':
+                                   txResult = await this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx('modifyAccountFlags', config);
+                                   break;
+                              case 'modifyMetaData':
+                                   txResult = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMetaData' as AccountConfigTxType, config);
+                                   break;
+                              // case 'updateMetaData':
+                                   // txResult = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('updateMetaData', config);
+                                   // break;
+                              case 'modifyDepositAuth':
+                                   txResult = await this.accountConfiguratorOrchestratorService.executeDepositAuthTx('modifyDepositAuth', config);
+                                   break;
+                              case 'modifyMultiSigners':
+                                   txResult = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMultiSigners', config);
+                                   break;
+                              case 'modifyRegularKey':
+                                   txResult = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyRegularKey' as AccountConfigTxType, config);
+                                   break;
+                              
+                         }
+                         
+                    } catch (err: any) {
+                         console.error(`Error in performAction:`, err);
+                         this.toastService.error(err.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    }
+               });
+     
+               // 7. Handle result & side effects
+               if (txResult) {
+                    const successFullTx: boolean = await this.handleTxResult(txResult, envRef.client, envRef.wallet, '', '', '');
+                    // if (currentTab === 'delete' && successFullTx && !this.txUiService.isSimulateEnabled()) {
+                         // this.credentialStore.resetCredentialIdDropDown();
+                    // }
+               }
+     
+               this.txUiService.resetCurrentStepToIdle();
+          }
 
      async modifyAccountFlags() {
           await this.withPerf('modifyAccountFlags', async () => {
@@ -620,6 +742,27 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           });
      }
 
+     protected refreshAccountObject(env: any): void {
+          // this.credentialStore.set('existingCredentials', this.credentialUtilService.parseIssuedCredentials(env.accountObjects, env.wallet.classicAddress));
+          // this.credentialStore.set('subjectCredentials', this.credentialUtilService.parseSubjectCredentials(env.accountObjects, env.wallet.classicAddress));
+     }
+
+     handleSearchQueryChange(query: string) {
+               this.destinationSearchQuery.set(query);
+               // this.credentialStore.set('credentialIdSearchQuery', query);
+          }
+     
+          handleDestinationChange(item: SelectItem | null) {
+               const addr = item?.id || '';
+               this.selectedDestinationAddress.set(addr);
+               // this.credentialStore.set('subject', addr);
+          }
+
+          protected clearInputFields(): void {
+          // this.credentialUtilService.clearInputFields();
+          this.selectedDestinationAddress.set('');
+          this.destinationSearchQuery.set('');
+     }
      // private async handleTxResult(result: { success: boolean; error?: string; validationError?: boolean }, env: any, errorMessage: string): Promise<boolean> {
      //      if (!result.success && result.validationError) {
      //           this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
