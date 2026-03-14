@@ -1,4 +1,4 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../util-service/utils.service';
@@ -6,37 +6,22 @@ import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
 import { ToastService } from '../../toast/toast.service';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
-import { AccountConfigTxType } from '../../../components/account-configurator/constants/account-configurator-constants';
-
-export interface XrplAccountFlags {
-     asfRequireDest: boolean;
-     asfRequireAuth: boolean;
-     asfDisallowXRP: boolean;
-     asfDisableMaster: boolean;
-     asfNoFreeze: boolean;
-     asfGlobalFreeze: boolean;
-     asfDefaultRipple: boolean;
-     asfDepositAuth: boolean;
-     asfAuthorizedNFTokenMinter: boolean;
-     asfDisallowIncomingNFTokenOffer: boolean;
-     asfDisallowIncomingCheck: boolean;
-     asfDisallowIncomingPayChan: boolean;
-     asfDisallowIncomingTrustline: boolean;
-     asfAllowTrustLineClawback: boolean;
-     asfAllowTrustLineLocking: boolean;
-}
-
-type AccountConfigTxDisplayType = 'modifyAccountFlags' | 'modifyMetaData' | 'modifyDepositAuth' | 'modifyMultiSigners' | 'modifyRegularKey';
+// import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS, AccountConfigTxType, XRPL_ACCOUNT_FLAGS_CONFIG, XrplAccountFlags } from '../../../components/account-configurator/constants/account-configurator-constants';
+import { AccountConfiguratorStoreService } from '../account-configurator-store/Account-configurator-store.service';
+import { XRPL_ACCOUNT_FLAGS_CONFIG } from '../../../components/account-configurator/constants/account-configurator.flags';
+import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS } from '../../../components/account-configurator/constants/account-configurator.ui';
+import { AccountConfigAction, XrplAccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
 
 @Injectable({
      providedIn: 'root',
 })
 export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
-     constructor(
-          public readonly txUiService: TransactionUiService,
-          public readonly utilsService: UtilsService,
-          private readonly toastService: ToastService
-     ) {
+     public readonly txUiService = inject(TransactionUiService);
+     public readonly utilsService = inject(UtilsService);
+     public readonly toastService = inject(ToastService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+
+     constructor() {
           super();
      }
 
@@ -46,8 +31,13 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      readonly modifyRegularKeySpecificKeys = ['regularKeyAddress', 'regularKeySeed'] as const;
      readonly modifyMultiSignSpecificKeys = ['signerQuorum'] as const;
      readonly modifyDepositAuthSpecificKeys = [] as const;
+     readonly accountFlagsConfig = XRPL_ACCOUNT_FLAGS_CONFIG;
+     readonly accountConfigTabs = ACCOUNT_CONFIG_TABS;
+     readonly accountConfigTabsMeta = ACCOUNT_CONFIG_TAB_META;
 
-     hasSignerList = signal<boolean>(false);
+     // accountInfo = signal<any>(null);
+     // configurationType = signal<'holder' | 'exchanger' | 'issuer' | null>(null);
+     // hasSignerList = signal<boolean>(false);
      readonly FLAG_VALUES = xrpl.AccountSetAsfFlags;
      flags: XrplAccountFlags = {
           asfRequireDest: false,
@@ -66,170 +56,22 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           asfAllowTrustLineClawback: false,
           asfAllowTrustLineLocking: false,
      };
-     accountFlagsConfig = [
-          {
-               key: 'asfRequireDest',
-               title: 'Require Destination Tag',
-               desc: 'Require a destination tag to send transactions to this account.',
-          },
-          {
-               key: 'asfRequireAuth',
-               title: 'Require Trust Line Auth',
-               desc: 'Require authorization for users to hold balances issued by this address can only be enabled if the address has no trust lines connected to it.',
-          },
-          {
-               key: 'asfDisallowXRP',
-               title: 'Disallow XRP',
-               desc: 'XRP should not be sent to this account.',
-          },
-          {
-               key: 'asfDisableMaster',
-               title: 'Disable Master Key',
-               desc: 'Disallow use of the master key pair. Can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.',
-          },
-          {
-               key: 'asfNoFreeze',
-               title: 'No Freeze',
-               desc: 'Permanently give up the ability to freeze individual trust lines or disable Global Freeze. This flag can never be disabled after being enabled.',
-          },
-          {
-               key: 'asfGlobalFreeze',
-               title: 'Global Freeze',
-               desc: 'Freeze all assets issued by this account.',
-          },
-          {
-               key: 'asfDefaultRipple',
-               title: 'Default Ripple',
-               desc: "Enable rippling on this account's trust lines by default.",
-          },
-          {
-               key: 'asfDepositAuth',
-               title: 'Deposit Authorization',
-               desc: 'Enable Deposit Authorization on this account.',
-          },
-          {
-               key: 'asfAuthorizedNFTokenMinter',
-               title: 'Authorized NFToken Minter',
-               desc: 'Allow another account to mint and burn tokens on behalf of this account.',
-          },
-          {
-               key: 'asfDisallowIncomingNFTokenOffer',
-               title: 'Disallow Incoming NFToken Offer',
-               desc: 'Disallow other accounts from creating incoming NFTOffers.',
-          },
-          {
-               key: 'asfDisallowIncomingCheck',
-               title: 'Disallow Incoming Check',
-               desc: 'Disallow other accounts from creating incoming Checks.',
-          },
-          {
-               key: 'asfDisallowIncomingPayChan',
-               title: 'Disallow Incoming Payment Channel',
-               desc: 'Disallow other accounts from creating incoming PayChannels.',
-          },
-          {
-               key: 'asfDisallowIncomingTrustline',
-               title: 'Disallow Incoming Trustline',
-               desc: 'Disallow other accounts from creating incoming Trustlines.',
-          },
-          {
-               key: 'asfAllowTrustLineClawback',
-               title: 'Allow TrustLine Clawback',
-               desc: 'Permanently gain the ability to claw back issued IOUs.',
-          },
-          {
-               key: 'asfAllowTrustLineLocking',
-               title: 'Allow TrustLine Locking',
-               desc: 'Issuers allow their IOUs to be used as escrow amounts.',
-          },
-     ] as const;
 
-     readonly tabs: {
-          key: AccountConfigTxDisplayType;
-          label: string;
-          icon: string;
-          color: string;
-          iconSize: string;
-     }[] = [
-          {
-               key: 'modifyAccountFlags',
-               label: 'Account Flags',
-               icon: 'heroArrowPath',
-               color: 'green',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'modifyMetaData',
-               label: 'Meta Data',
-               icon: 'heroArrowPath',
-               color: 'green',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'modifyDepositAuth',
-               label: 'Deposit Auth',
-               icon: 'heroArrowPath',
-               color: 'green',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'modifyMultiSigners',
-               label: 'Multi-Sign',
-               icon: 'heroPlusCircle',
-               color: 'green',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'modifyRegularKey',
-               label: 'Regular Key',
-               icon: 'heroPlusCircle',
-               color: 'green',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-     ];
+     onConfigurationChange() {
+          this.resetFlags();
 
-     readonly tabMeta = {
-          modifyAccountFlags: {
-               icon: 'heroArrowPath',
-               colorClass: 'white-button-submenu',
-               title: 'Modify Account Flags',
-               desc: 'Set or Clear account level flags.',
-               color: 'green',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-          modifyMetaData: {
-               icon: 'heroArrowPath',
-               colorClass: 'white-button-submenu',
-               title: 'Modify Account Meta Data',
-               desc: 'Modify the account Meta Data.',
-               color: 'green',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-          modifyDepositAuth: {
-               icon: 'heroArrowPath',
-               colorClass: 'white-button-submenu',
-               title: 'Modify Account Deposit Auth',
-               desc: 'Modify the account Deposit Authorization Addresses.',
-               color: 'green',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-          modifyMultiSigners: {
-               icon: 'heroPlusCircle',
-               colorClass: 'blue-button-submenu',
-               title: 'Modify Multi Sign',
-               desc: 'Modify Multi Signers for signing transactions.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-          modifyRegularKey: {
-               icon: 'heroPlusCircle',
-               colorClass: 'blue-button-submenu',
-               title: 'Modify Regular Key Address',
-               desc: 'Modify Regular Key address for signing transactions.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-     };
+          const type = this.accountConfiguratorStoreService.get('configurationType') || '';
+          const configActions: Record<string, () => void> = {
+               holder: () => this.setHolder(),
+               exchanger: () => this.setExchanger(),
+               issuer: () => this.setIssuer(),
+          };
+
+          configActions[type]?.();
+          this.updateFlagTotal();
+
+          console.log('Configuration changed to:', this.accountConfiguratorStoreService.get('configurationType'));
+     }
 
      private buildTxLabel(defaultText: string) {
           return computed(() => {
@@ -251,7 +93,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      readonly setNftMinterButtonLabel = this.buildTxLabel('Set NFT Minter');
      readonly removeNftMinterButtonLabel = this.buildTxLabel('Remove NFT Minter');
 
-     buildSuccessMessage(type: AccountConfigTxType, formValues: any, extra: any): string {
+     buildSuccessMessage(type: AccountConfigAction, formValues: any, extra: any): string {
           if (type === 'modifyMetaData') {
                if (extra?.enableNftMinter === 'Y') {
                     return `Successfully Set NFT Minter ${formValues.nfTokenMinterAddress ? formValues.nfTokenMinterAddress : ''}`;
@@ -273,7 +115,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           return `Successfully Cancelled Time Based Escrow ${formValues.escrowSequenceNumberField}`;
      }
 
-     handleSimulationSuccess(type: AccountConfigTxType, formValues: any, hash?: string, extra?: any) {
+     handleSimulationSuccess(type: AccountConfigAction, formValues: any, hash?: string, extra?: any) {
           let msg: string;
 
           if (type === 'modifyMetaData') {
@@ -296,26 +138,42 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      }
 
      validateQuorum() {
-          const totalWeight = this.txUiService.signers().reduce((sum: any, s: { SignerWeight: any }) => sum + (s.SignerWeight || 0), 0);
-          if (this.txUiService.signerQuorum() > totalWeight) {
-               this.txUiService.signerQuorum.set(Math.floor(totalWeight));
+          const totalWeight = this.accountConfiguratorStoreService.get('signers').reduce((sum: any, s: { SignerWeight: any }) => sum + (s.SignerWeight || 0), 0);
+          const quorum = this.accountConfiguratorStoreService.get('signerQuorum');
+          if (quorum > totalWeight) {
+               this.accountConfiguratorStoreService.set('signerQuorum', Math.floor(totalWeight));
+          }
+     }
+
+     validateQuorum1() {
+          const totalWeight = this.accountConfiguratorStoreService.get('signers').reduce((sum: any, s: { SignerWeight: any }) => sum + (s.SignerWeight || 0), 0);
+          if (this.accountConfiguratorStoreService.get('signerQuorum') > totalWeight) {
+               this.accountConfiguratorStoreService.set('signerQuorum', Math.floor(totalWeight));
           }
      }
 
      addSigner() {
-          this.txUiService.addSignersSignal({ Account: '', seed: '', SignerWeight: 1 });
+          this.accountConfiguratorStoreService.addSigner({
+               Account: '',
+               seed: '',
+               SignerWeight: 1,
+          });
      }
 
      removeSigner(index: number) {
-          this.txUiService.removeSignerSignal(index);
+          this.accountConfiguratorStoreService.removeSigner(index);
      }
 
      addDepositAuthAddresses() {
-          this.txUiService.addDepositAuthAddressesSignal({ Account: '', seed: '', SignerWeight: 1 });
+          this.accountConfiguratorStoreService.addDepositAuthAddress({
+               Account: '',
+               seed: '',
+               SignerWeight: 1,
+          });
      }
 
      removeDepositAuthAddresses(index: number) {
-          this.txUiService.removeDepositAuthAddressesSignal(index);
+          this.accountConfiguratorStoreService.removeDepositAuthAddress(index);
      }
 
      onNoFreezeChange() {
@@ -331,21 +189,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      }
 
      hasFieldsToUpdate(env: PrepareTxEnvironmentResult): boolean {
-          return !!(this.txUiService.tickSize() || this.txUiService.transferRate() || (this.txUiService.isMessageKey() && env.wallet.publicKey) || (this.txUiService.domain() && this.txUiService.domain().trim() !== ''));
-     }
-
-     async setTxOptionalFields(client: xrpl.Client, accountTx: any, wallet: xrpl.Wallet, accountInfo: any) {
-          if (this.txUiService.isTicket()) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
-               if (ticket) {
-                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
-                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
-                    this.utilsService.setTicketSequence(accountTx, ticket, true);
-               }
-          }
-          if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
-               this.utilsService.setMemoField(accountTx, this.txUiService.memoField());
-          }
+          return !!(this.accountConfiguratorStoreService.get('tickSize') || this.accountConfiguratorStoreService.get('transferRate') || (this.accountConfiguratorStoreService.get('isMessageKey') && env.wallet.publicKey) || (this.accountConfiguratorStoreService.get('domain') && this.accountConfiguratorStoreService.get('domain').trim() !== ''));
      }
 
      formatSignerEntries(signerEntries: { Account: string; SignerWeight: number; seed: string }[]) {
@@ -366,10 +210,10 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      }
 
      createSignerEntries() {
-          return this.txUiService
-               .signers()
-               .filter(s => s.Account && s.SignerWeight > 0)
-               .map(s => ({
+          return this.accountConfiguratorStoreService
+               .get('signers')
+               .filter((s: { Account: any; SignerWeight: number }) => s.Account && s.SignerWeight > 0)
+               .map((s: { Account: any; SignerWeight: any; seed: any }) => ({
                     Account: s.Account,
                     SignerWeight: Number(s.SignerWeight),
                     seed: s.seed,
@@ -377,26 +221,26 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      }
 
      createDepsoitAuthEntries() {
-          return this.txUiService
-               .depositAuthAddresses()
-               .filter(s => s.account)
-               .map(s => ({
+          return this.accountConfiguratorStoreService
+               .get('depositAuthAddresses')
+               .filter((s: { account: any }) => s.account)
+               .map((s: { account: any }) => ({
                     Account: s.account,
                }));
      }
 
      clearUiIAccountMetaData() {
-          this.txUiService.tickSize.set('');
-          this.txUiService.transferRate.set('');
-          this.txUiService.domain.set('');
-          this.txUiService.isMessageKey.set(false);
+          this.accountConfiguratorStoreService.set('tickSize', '');
+          this.accountConfiguratorStoreService.set('transferRate', '');
+          this.accountConfiguratorStoreService.set('domain', '');
+          this.accountConfiguratorStoreService.set('isMessageKey', false);
      }
 
      toggleMessageKey() {
-          if (this.txUiService.isMessageKey()) {
-               this.txUiService.isMessageKey.set(false);
+          if (this.accountConfiguratorStoreService.get('isMessageKey')) {
+               this.accountConfiguratorStoreService.set('isMessageKey', false);
           } else {
-               this.txUiService.isMessageKey.set(true);
+               this.accountConfiguratorStoreService.set('isMessageKey', true);
           }
      }
 
@@ -490,6 +334,10 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                     sum |= 1 << this.FLAG_VALUES[key];
                }
           });
+
+          // this.accountConfiguratorStoreService.set('isMessageKey', false);
+          // this.accountConfiguratorStoreService.get('isMessageKey')
+
           this.txUiService.totalFlagsValue.set(sum);
           this.txUiService.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
      }

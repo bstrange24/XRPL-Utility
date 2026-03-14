@@ -7,11 +7,11 @@
 </div>
 
 <!-- Get active tab -->
-@let tab = activeTab();
+@let tab = accountConfiguratorViewModelService.activeTab();
 <!-- Get tab data -->
-@let tabs = accountConfiguratorUtilService.tabs;
+@let tabs = accountConfiguratorUtilService.accountConfigTabs;
 <!-- Get tab meta data -->
-@let meta = accountConfiguratorUtilService.tabMeta[tab];
+@let meta = accountConfiguratorUtilService.accountConfigTabsMeta;
 
 <!-- Main content. -->
 <div class="main-container">
@@ -22,7 +22,8 @@
           <!-- Center form -->
           <div class="form-panel">
                <!-- Menu / Tabs -->
-               <div class="menu-bar">
+               <app-tab-menu-with-info [tabs]="tabs" [active]="accountConfiguratorViewModelService.activeTab()" [metaMap]="meta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+               <!-- <div class="menu-bar">
                     @for (item of tabs; track item.key) {
                     <button class="menu-btn" [class.active]="tab === item.key" (click)="setTab(item.key)">
                          <ng-icon [name]="item.icon" [size]="item.iconSize" class="text-red-600"></ng-icon>
@@ -39,10 +40,10 @@
                          <h2 class="submenu-info-main-text">{{ meta.title }}</h2>
                          <p class="submenu-info-secondary-text">{{ meta.desc }}</p>
                     </div>
-               </div>
+               </div> -->
 
                <!-- Info Message -->
-               @if (infoData(); as info) {
+               @if (accountConfiguratorViewModelService.infoData(); as info) {
                <div class="info-and-credentials-card" [class.has-config]="info.hasSpecialConfig">
                     <!-- Always-visible summary row -->
                     <div class="summary-header">
@@ -96,15 +97,18 @@
                     <div class="flags-wrapper">
                          <!-- Configuration template -->
                          <div style="padding-bottom: 0.3em">
+                              <!-- Replace the entire radio group -->
                               <span class="token-flags-title">
                                    <label for="isHolderConfiguration">Configuration Templates:</label>
                               </span>
                               <span class="token-flags-title">
-                                   <input type="radio" id="isHolderConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="holder" />
+                                   <input type="radio" id="isHolderConfiguration" [checked]="accountConfiguratorStoreService.get('configurationType') === 'holder'" (change)="accountConfiguratorStoreService.set('configurationType', 'holder'); accountConfiguratorUtilService.onConfigurationChange();" name="configurationType" value="holder" />
                                    <label for="isHolderConfiguration">Holder</label>
-                                   <input type="radio" id="isExchangerConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="exchanger" />
+
+                                   <input type="radio" id="isExchangerConfiguration" [checked]="accountConfiguratorStoreService.get('configurationType') === 'exchanger'" (change)="accountConfiguratorStoreService.set('configurationType', 'exchanger'); accountConfiguratorUtilService.onConfigurationChange();" name="configurationType" value="exchanger" />
                                    <label for="isExchangerConfiguration">Exchanger</label>
-                                   <input type="radio" id="isIssuerConfiguration" [(ngModel)]="configurationType" (ngModelChange)="onConfigurationChange()" name="configurationType" value="issuer" />
+
+                                   <input type="radio" id="isIssuerConfiguration" [checked]="accountConfiguratorStoreService.get('configurationType') === 'issuer'" (change)="accountConfiguratorStoreService.set('configurationType', 'issuer'); accountConfiguratorUtilService.onConfigurationChange();" name="configurationType" value="issuer" />
                                    <label for="isIssuerConfiguration">Issuer</label>
                               </span>
                          </div>
@@ -117,26 +121,21 @@
 
                          <div class="form-row-account-flags">
                               @for (flag of accountConfiguratorUtilService.accountFlagsConfig; track flag.key) {
-                              <button type="button" class="flag-item-account-flags" [class.enabled]="accountConfiguratorUtilService.flags[flag.key]" (click)="accountConfiguratorUtilService.toggleFlag(flag.key)">
+                              <button type="button" class="flag-item-account-flags" [class.enabled]="accountConfiguratorUtilService.flags[flag.key]" (click)="accountConfiguratorUtilService.toggleFlag(flag.key)" name="accountFlags">
                                    <div class="flag-header-account">
-                                        <input type="checkbox" [id]="flag.key" [name]="flag.key" [checked]="accountConfiguratorUtilService.flags[flag.key]" class="flag-checkbox" />
-                                        <!-- <ng-icon name="heroCheckCircle" size="18" class="flag-icon" stroke="currentColor"></ng-icon> -->
-                                        <!-- <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                             <path d="M9 12l2 2 4-4" />
-                                             <circle cx="12" cy="12" r="10" />
-                                        </svg> -->
+                                        <input type="checkbox" [id]="flag.key" [name]="flag.key" [checked]="accountConfiguratorUtilService.flags[flag.key]" class="flag-checkbox" name="checkbox" />
                                         <span class="flag-title-account-flags">{{ flag.title }}</span>
                                    </div>
 
-                                   <div class="flag-value">{{ accountConfiguratorUtilService.FLAG_VALUES[flag.key] }} {{ flag.key }}</div>
-                                   <div class="flag-desc">{{ flag.desc }}</div>
+                                   <div class="flag-value" name="flag-value">{{ accountConfiguratorUtilService.FLAG_VALUES[flag.key] }} {{ flag.key }}</div>
+                                   <div class="flag-desc" name="flag-desc">{{ flag.desc }}</div>
                               </button>
                               }
                               <div class="flag-item-account-flags">
                                    <!-- Total Flag value -->
                                    <div class="flags-total">
-                                        <span class="total-label">Total Flags Value:</span>
-                                        <span class="total-value">{{ txUiService.totalFlagsValue() }} ({{ txUiService.totalFlagsHex() }})</span>
+                                        <span class="total-label" name="total-flag-value">Total Flags Value:</span>
+                                        <span class="total-value" name="flag-value">{{ txUiService.totalFlagsValue() }} ({{ txUiService.totalFlagsHex() }})</span>
                                    </div>
                               </div>
                          </div>
@@ -149,12 +148,12 @@
                     <div class="multisign-section">
                          <div class="section-header">
                               <ng-icon name="heroUserGroup" size="20" class="text-red-600"></ng-icon>
-                              <span class="section-title">Deposit Authorization Configuration</span>
+                              <span class="section-title" name="depositAuthConfig">Deposit Authorization Configuration</span>
                          </div>
 
                          <!-- Signers list -->
                          <div class="signers-list">
-                              @for (depositAuthAddress of txUiService.depositAuthAddresses(); track i + ':' + (depositAuthAddress.account ?? i); let i = $index) {
+                              @for (depositAuthAddress of accountConfiguratorStoreService.get('depositAuthAddresses'); track i + ':' + (depositAuthAddress.account ?? i); let i = $index) {
                               <fieldset class="signer-fieldset-dep-auth">
                                    <legend class="signer-legend">Deposit Auth Address {{ i + 1 }}</legend>
 
@@ -162,12 +161,12 @@
                                         <div class="form-group">
                                              <label for="depositAuthField{{ i }}">Account</label>
                                              <p class="form-hint">Addresses used for deposit authorization.</p>
-                                             <input type="text" id="depositAuthField{{ i }}" [(ngModel)]="depositAuthAddress.account" name="depositAuthField{{ i }}" placeholder="r..." class="input-monospace" />
+                                             <input type="text" name="depositAuthField" id="depositAuthField{{ i }}" [ngModel]="depositAuthAddress.account" (ngModelChange)="accountConfiguratorStoreService.updateDepositAuthAddress(i, 'account', $event)" name="depositAuthField{{ i }}" placeholder="r..." class="input-monospace" />
                                         </div>
 
                                         <div class="form-group remove-group-dep-auth">
-                                             @if (txUiService.depositAuthAddresses().length > 1) {
-                                             <button type="button" (click)="accountConfiguratorUtilService.removeDepositAuthAddresses(i)" class="btn-danger btn-sm" title="Remove this deposit auth address">
+                                             @if (accountConfiguratorStoreService.get('depositAuthAddresses').length > 1) {
+                                             <button type="button" name="depositAuthFieldButton" (click)="accountConfiguratorUtilService.removeDepositAuthAddresses(i)" class="btn-danger btn-sm" title="Remove this deposit auth address">
                                                   <lucide-icon name="trash-2" size="16"></lucide-icon>
                                              </button>
                                              }
@@ -180,7 +179,7 @@
                          <!-- Add Signer -->
                          <div class="form-row actions-row">
                               <div class="form-group">
-                                   <button type="button" (click)="accountConfiguratorUtilService.addDepositAuthAddresses()" class="btn-primary-blue">Add Signer</button>
+                                   <button type="button" name="addDepositAuthAddressButton" (click)="accountConfiguratorUtilService.addDepositAuthAddresses()" class="btn-primary-blue">Add Signer</button>
                               </div>
                          </div>
                     </div>
@@ -192,7 +191,7 @@
                          <div class="form-group">
                               <label for="setNftMinterAddress">Set NFT Minter Address</label>
                               <p class="form-hint">Authorizes another account to mint NFTs for this account.</p>
-                              <input type="text" class="input-monospace" [(ngModel)]="txUiService.nfTokenMinterAddress" name="nfTokenMinterAddress" />
+                              <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.get('nfTokenMinterAddress')" (ngModelChange)="accountConfiguratorStoreService.set('nfTokenMinterAddress', $event)" name="nfTokenMinterAddress" />
                          </div>
                     </div>
 
@@ -205,17 +204,17 @@
                     <div class="form-row">
                          <div class="form-group">
                               <label for="tranferRate">Transfer Rate</label>
+                              <!-- note: typo in label, should be transferRate -->
                               <p class="form-hint">Transfer fee for issued currencies (0% = no fee).</p>
-
                               <div class="input-group">
-                                   <input type="text" class="form-control" [(ngModel)]="txUiService.transferRate" name="transferRate" placeholder="e.g. 1.5" />
+                                   <input type="text" class="form-control" [ngModel]="accountConfiguratorStoreService.get('transferRate')" (ngModelChange)="accountConfiguratorStoreService.set('transferRate', $event)" name="transferRate" placeholder="e.g. 1.5" />
                               </div>
                          </div>
 
                          <div class="form-group">
                               <label for="tickSize">Tick Size</label>
                               <p class="form-hint">Decimal precision used when trading issued currencies (3–15).</p>
-                              <input type="text" class="form-control" [(ngModel)]="txUiService.tickSize" name="tickSize" />
+                              <input type="text" class="form-control" [ngModel]="accountConfiguratorStoreService.get('tickSize')" (ngModelChange)="accountConfiguratorStoreService.set('tickSize', $event)" name="tickSize" />
                          </div>
                     </div>
 
@@ -223,19 +222,14 @@
                          <div class="form-group">
                               <label for="domain">Domain</label>
                               <p class="form-hint">Domain name for this account.</p>
-                              <input type="text" [(ngModel)]="txUiService.domain" name="domain" />
+                              <input type="text" [ngModel]="accountConfiguratorStoreService.get('domain')" (ngModelChange)="accountConfiguratorStoreService.set('domain', $event)" name="domain" />
                          </div>
 
                          <div class="form-group-account-flags">
                               <!-- isMessageKey -->
-                              <button type="button" class="flag-item-account-flags" [class.enabled]="txUiService.isMessageKey()" (click)="accountConfiguratorUtilService.toggleMessageKey()">
+                              <button type="button" class="flag-item-account-flags" [class.enabled]="accountConfiguratorStoreService.get('isMessageKey')" (click)="accountConfiguratorUtilService.toggleMessageKey()">
                                    <div class="flag-header-account">
-                                        <input type="checkbox" id="isMessageKey" name="isMessageKey" [checked]="txUiService.isMessageKey()" class="flag-checkbox" style="padding: 0px" />
-                                        <!-- <ng-icon name="heroCheckCircle" size="18" class="flag-icon" stroke="currentColor"></ng-icon> -->
-                                        <!-- <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                             <path d="M9 12l2 2 4-4" />
-                                             <circle cx="12" cy="12" r="10" />
-                                        </svg> -->
+                                        <input type="checkbox" id="isMessageKey" name="isMessageKey" [checked]="accountConfiguratorStoreService.get('isMessageKey')" class="flag-checkbox" style="padding: 0px" />
                                         <span class="flag-title-account-flags">Save Message Key</span>
                                    </div>
                                    <div class="flag-desc">Public key for sending encrypted messages to this account.</div>
@@ -254,7 +248,7 @@
 
                          <!-- Signers list -->
                          <div class="signers-list">
-                              @for (signer of txUiService.signers(); track $index; let i = $index) {
+                              @for (signer of accountConfiguratorStoreService.get('signers'); track $index; let i = $index) {
                               <fieldset class="signer-fieldset">
                                    <legend class="signer-legend">Signer {{ i + 1 }}</legend>
 
@@ -262,23 +256,23 @@
                                         <div class="form-group">
                                              <label for="signerAccountField{{ i }}">Account</label>
                                              <p class="form-hint">Addresses used for multi signing.</p>
-                                             <input type="text" id="signerAccountField{{ i }}" [(ngModel)]="signer.Account" name="signerAccountField{{ i }}" placeholder="r..." class="input-monospace" />
+                                             <input type="text" id="signerAccountField{{ i }}" [ngModel]="signer.Account" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'Account', $event)" name="signerAccountField{{ i }}" placeholder="r..." class="input-monospace" />
                                         </div>
 
                                         <div class="form-group">
                                              <label for="signerSeedField{{ i }}">Seed</label>
-                                             <p class="form-hint">Seed of the correspinging addresses.</p>
-                                             <input type="text" id="signerSeedField{{ i }}" [(ngModel)]="signer.seed" name="signerSeedField{{ i }}" placeholder="s..." class="input-monospace" />
+                                             <p class="form-hint">Seed of the corresponding addresses.</p>
+                                             <input type="text" id="signerSeedField{{ i }}" [ngModel]="signer.seed" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'seed', $event)" name="signerSeedField{{ i }}" placeholder="s..." class="input-monospace" />
                                         </div>
 
                                         <div class="form-group weight-group">
                                              <label for="signerWeightField{{ i }}">Weight</label>
                                              <p class="form-hint">Sign Wgt.</p>
-                                             <input type="number" id="signerWeightField{{ i }}" [(ngModel)]="signer.SignerWeight" name="signerWeightField{{ i }}" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" class="input-number" />
+                                             <input type="number" id="signerWeightField{{ i }}" [ngModel]="signer.SignerWeight" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'SignerWeight', $event)" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" class="input-number" />
                                         </div>
 
                                         <div class="form-group remove-group">
-                                             @if (txUiService.signers().length > 1) {
+                                             @if (accountConfiguratorStoreService.get('signers').length > 1) {
                                              <button type="button" (click)="accountConfiguratorUtilService.removeSigner(i)" class="btn-danger btn-sm" title="Remove this signer">
                                                   <lucide-icon name="trash-2" size="16"></lucide-icon>
                                              </button>
@@ -298,8 +292,7 @@
                               <div class="form-group">
                                    <label for="signerQuorumField">Signer Quorum</label>
                                    <p class="form-hint">A target number for the signer weights.</p>
-
-                                   <input type="number" id="signerQuorumField" [(ngModel)]="txUiService.signerQuorum" (ngModelChange)="accountConfiguratorUtilService.validateQuorum()" (keydown)="accountConfiguratorUtilService.preventNegative($event)" name="signerQuorumField" min="1" class="input-number" />
+                                   <input type="number" id="signerQuorumField" [ngModel]="accountConfiguratorStoreService.get('signerQuorum')" (ngModelChange)="accountConfiguratorStoreService.set('signerQuorum', $event); accountConfiguratorUtilService.validateQuorum()" (keydown)="accountConfiguratorUtilService.preventNegative($event)" name="signerQuorumField" min="1" class="input-number" />
                               </div>
                          </div>
                     </div>
@@ -318,20 +311,20 @@
                                    <div class="form-group">
                                         <label for="regularKeyAddress">Account</label>
                                         <p class="form-hint">The regular key pair to be assigned to the account.</p>
-                                        <input type="text" class="input-monospace" [(ngModel)]="txUiService.regularKeyAddress" name="regularKeyAddress" placeholder="No Regular Key configured for account" />
+                                        <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.get('regularKeyAddress')" (ngModelChange)="accountConfiguratorStoreService.set('regularKeyAddress', $event)" name="regularKeyAddress" placeholder="No Regular Key configured for account" />
                                    </div>
 
                                    <div class="form-group">
                                         <label for="regularKeySeed">Seed</label>
                                         <p class="form-hint">The seed for the regular key account.</p>
-                                        <input type="text" class="input-monospace" [(ngModel)]="txUiService.regularKeySeed" name="regularKeySeed" />
+                                        <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.get('regularKeySeed')" (ngModelChange)="accountConfiguratorStoreService.set('regularKeySeed', $event)" name="regularKeySeed" />
                                    </div>
                               </div>
                          </div>
                     </div>
                     }
 
-                    <app-transaction-options [showWhenTab]="['modifyMultiSigners', 'modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+                    <app-transaction-options [showWhenTab]="['modifyMultiSigners', 'modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled"></app-transaction-options>
 
                     <!-- Action buttons -->
                     @if(tab === 'modifyMultiSigners') {
@@ -355,7 +348,7 @@
                     </div>
                     } @else if(tab === 'modifyAccountFlags') {
                     <div class="button-row">
-                         <button type="button" (click)="modifyAccountFlags()" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.modifyAccountFlagsButtonLabel() }}</button>
+                         <button type="button" (click)="performAction()" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.modifyAccountFlagsButtonLabel() }}</button>
                     </div>
                     }
 
@@ -367,6 +360,6 @@
                </form>
           </div>
 
-          <app-account-configurator-requirements-info [activeTab]="activeTab()"></app-account-configurator-requirements-info>
+          <app-account-configurator-requirements-info [activeTab]="tab"></app-account-configurator-requirements-info>
      </div>
 </div>

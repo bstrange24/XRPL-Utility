@@ -529,3 +529,9 @@ export interface ValidationInputs {
           sequenceId?: string;
      };
 }
+
+export interface UiSignerEntry {
+     Account: string;
+     seed?: string; // optional — needed for local multi-signing
+     SignerWeight?: number; // optional — required for SignerListSet, ignored for DepositPreauth
+}

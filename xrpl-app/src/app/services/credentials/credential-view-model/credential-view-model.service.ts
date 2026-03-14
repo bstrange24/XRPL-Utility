@@ -24,12 +24,7 @@ export class CredentialViewModelService {
      readonly acceptedByMe = computed(() => this.issuedToMe().filter((c: CredentialItem) => this.credentialUtilService.isCredentialAccepted(c)));
 
      /** Fully reactive credential VM */
-     readonly credentialVm = computed<{
-          list: CredentialItemVm[];
-          dropdown: { id: string; display: string; secondary: string }[];
-          stats: any;
-          hasCredentials: boolean;
-     }>(() => {
+     readonly credentialVm = computed<{ list: CredentialItemVm[]; dropdown: { id: string; display: string; secondary: string }[]; stats: any; hasCredentials: boolean }>(() => {
           const wallet = this.walletManager.getSelectedWallet();
           const tab = this.activeTab(); // <-- make sure tab is read inside computed
 
