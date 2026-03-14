@@ -149,11 +149,50 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
 
           const walletVm = this.walletManager.walletVm();
 
+          try {
+               envRef = await this.txEnvironmentService.prepareTxEnvironment({
+                    includeAccountInfo: true,
+                    includeAccountObject: true,
+                    includeFee: true,
+                    includeLedgerInfo: true,
+               });
+          } catch (err: any) {
+               console.error(err);
+               this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+               return;
+          }
+
           // 3. Map tab → action type
           let action: AccountConfigAction = currentTab;
           switch (currentTab) {
                case 'modifyAccountFlags':
                     action = 'modifyAccountFlags';
+                    const { setFlags, clearFlags } = this.utilsService.getFlagUpdates(envRef.accountInfo.result.account_flags);
+
+                    if (setFlags.length === 0 && clearFlags.length === 0) {
+                         this.toastService.info('No flag changes detected', AppConstants.TOAST.INFO);
+                         return;
+                    }
+
+                    const operations: Array<{ operation: 'SetFlag' | 'ClearFlag'; flagValue: string; flagName: string }> = [];
+
+                    setFlags.forEach(f => {
+                         operations.push({
+                              operation: 'SetFlag',
+                              flagValue: f,
+                              flagName: this.utilsService.getFlagName(f),
+                         });
+                    });
+
+                    clearFlags.forEach(f => {
+                         operations.push({
+                              operation: 'ClearFlag',
+                              flagValue: f,
+                              flagName: this.utilsService.getFlagName(f),
+                         });
+                    });
+                    this.accountConfiguratorStoreService.set('setFlags',setFlags)
+                    this.accountConfiguratorStoreService.set('setFlags',clearFlags)
                     break;
                case 'modifyDepositAuth':
                     action = 'modifyDepositAuth';
@@ -172,42 +211,27 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                     return;
           }
 
-          // 4. Fetch environment once for this transaction
-          await this.withPerf('performAction', async () => {
-               try {
-                    envRef = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerInfo: true,
-                    });
-               } catch (err: any) {
-                    console.error(err);
-                    this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
-                    return;
-               }
 
                // 5. Build the orchestrator config
                const config: AccountConfig = {
                     wallet: walletVm.wallet!,
                     simulate: this.txUiService.isSimulateEnabled(),
                     multiSign: this.txUiService.useMultiSign(),
-                    amountField: '',
-                    destinationAddress: '',
-                    nfTokenMinterAddress: '',
-                    setFlags: {},
-                    clearFlags: {},
-                    tickSize: 0,
-                    transferRate: 0,
-                    publicKey: '',
-                    domain: '',
-                    isMessageKey: true,
-                    enableNftMinter: '',
+                    amountField: this.accountConfiguratorStoreService.get('amountField'),
+                    nfTokenMinterAddress: this.accountConfiguratorStoreService.get('nfTokenMinterAddress'),
+                    setFlags: this.accountConfiguratorStoreService.get('setFlags'),
+                    clearFlags: this.accountConfiguratorStoreService.get('clearFlags'),
+                    tickSize: this.accountConfiguratorStoreService.get('tickSize'),
+                    transferRate: this.accountConfiguratorStoreService.get('transferRate'),
+                    publicKey: this.accountConfiguratorStoreService.get('publicKey'),
+                    domain: this.accountConfiguratorStoreService.get('domain'),
+                    isMessageKey: this.accountConfiguratorStoreService.get('isMessageKey'),
+                    enableNftMinter: this.accountConfiguratorStoreService.get('enableNftMinter'),
                     preFetchedEnv: envRef,
                };
 
+               await this.withPerf('performAction', async () => {
                // 6. Execute
-               //  'modifyAccountSetFlags' | 'modifyAccountFlags' | 'updateMetaData' | 'modifyDepositAuth' | 'modifyMetaData' | 'modifyMultiSigners' | 'modifyRegularKey';
                try {
                     switch (currentTab) {
                          case 'modifyAccountFlags':
