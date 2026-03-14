@@ -6,7 +6,6 @@ import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
 import { ToastService } from '../../toast/toast.service';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
-// import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS, AccountConfigTxType, XRPL_ACCOUNT_FLAGS_CONFIG, XrplAccountFlags } from '../../../components/account-configurator/constants/account-configurator-constants';
 import { AccountConfiguratorStoreService } from '../account-configurator-store/Account-configurator-store.service';
 import { XRPL_ACCOUNT_FLAGS_CONFIG } from '../../../components/account-configurator/constants/account-configurator.flags';
 import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS } from '../../../components/account-configurator/constants/account-configurator.ui';
@@ -35,9 +34,6 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      readonly accountConfigTabs = ACCOUNT_CONFIG_TABS;
      readonly accountConfigTabsMeta = ACCOUNT_CONFIG_TAB_META;
 
-     // accountInfo = signal<any>(null);
-     // configurationType = signal<'holder' | 'exchanger' | 'issuer' | null>(null);
-     // hasSignerList = signal<boolean>(false);
      readonly FLAG_VALUES = xrpl.AccountSetAsfFlags;
      flags: XrplAccountFlags = {
           asfRequireDest: false,
@@ -334,9 +330,6 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                     sum |= 1 << this.FLAG_VALUES[key];
                }
           });
-
-          // this.accountConfiguratorStoreService.set('isMessageKey', false);
-          // this.accountConfiguratorStoreService.get('isMessageKey')
 
           this.txUiService.totalFlagsValue.set(sum);
           this.txUiService.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));

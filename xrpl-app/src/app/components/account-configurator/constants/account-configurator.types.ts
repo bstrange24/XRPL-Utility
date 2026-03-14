@@ -91,6 +91,49 @@ export interface AccountConfig {
      preFetchedEnv?: PrefetchedLedgerEnvironment;
 }
 
+export type AccountConfiguratorField =
+     | 'accountInfo'
+     | 'amountField'
+     | 'setFlags'
+     | 'clearFlags'
+     | 'nfTokenMinterAddress'
+     | 'tickSize'
+     | 'transferRate'
+     | 'publicKey'
+     | 'domain'
+     | 'isMessageKey'
+     | 'enableNftMinter'
+     | 'multiSignAddress'
+     | 'multiSignSeeds'
+     | 'signerQuorum'
+     | 'regularKeyAddress'
+     | 'regularKeySeed'
+     | 'suppressIndividualFeedback'
+     | 'isRegularKeyAddress'
+     | 'regularKeySigningEnabled'
+     | 'multiSigningEnabled'
+     | 'signers'
+     | 'depositAuthAddresses'
+     | 'walletTicketCount'
+     | 'isSimulateEnabled'
+     | 'masterKeyDisabled'
+     | 'depositAuthEnabled'
+     | 'isdepositAuthAddress'
+     | 'isNFTokenMinterEnabled'
+     | 'isUpdateMetaData'
+     | 'isHolderConfiguration'
+     | 'isExchangerConfiguration'
+     | 'isIssuerConfiguration'
+     | 'isAuthorizedNFTokenMinter'
+     | 'depositAuthAddress'
+     | 'url'
+     | 'isMemoEnabled'
+     | 'memoField'
+     | 'useMultiSign'
+     | 'configurationType'
+     | 'hasSignerList';
+
+     
 export interface AccountConfiguratorState {
      accountInfo: any;
      configurationType: 'holder' | 'exchanger' | 'issuer' | null;

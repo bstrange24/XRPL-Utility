@@ -1,16 +1,13 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
-import { Signer, UiSignerEntry } from '../../../models/interface-items.model';
-import { AccountConfiguratorState } from '../../../components/account-configurator/constants/account-configurator.types';
+import { UiSignerEntry } from '../../../models/interface-items.model';
+import { AccountConfiguratorField } from '../../../components/account-configurator/constants/account-configurator.types';
 
 @Injectable({
      providedIn: 'root',
 })
-// accountInfo = signal<any>(null);
-// configurationType = signal<'holder' | 'exchanger' | 'issuer' | null>(null);
-// hasSignerList = signal<boolean>(false);
 export class AccountConfiguratorStoreService {
      /** Initial state (single source of truth) */
-     private readonly initialState: Record<AccountConfiguratorState, any> = {
+     private readonly initialState: Record<AccountConfiguratorField, any> = {
           // Common / shared fields (still used here for reset)
           accountInfo: '',
           configurationType: '',
