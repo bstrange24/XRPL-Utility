@@ -8,8 +8,10 @@ import { ToastService } from '../../toast/toast.service';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
 import { XRPL_ACCOUNT_FLAGS_CONFIG } from '../../../components/account-configurator/constants/account-configurator.flags';
 import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS } from '../../../components/account-configurator/constants/account-configurator.ui';
-import { AccountConfigAction, XrplAccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
+import { AccountConfig, AccountConfigAction, XrplAccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
 import { AccountConfiguratorStoreService } from '../account-configurator-store/account-configurator-store.service';
+import { StorageService } from '../../local-storage/storage.service';
+import { AccountConfiguratorOrchestratorService } from '../account-configurator-orchestrator/account-configurator-orchestrator.service';
 
 @Injectable({
      providedIn: 'root',
@@ -19,6 +21,8 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      public readonly utilsService = inject(UtilsService);
      public readonly toastService = inject(ToastService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly storageService = inject(StorageService);
+     public readonly accountConfiguratorOrchestratorService = inject(AccountConfiguratorOrchestratorService);
 
      constructor() {
           super();
@@ -88,6 +92,142 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      readonly modifyAccountFlagsButtonLabel = this.buildTxLabel('Modify Account Flags');
      readonly setNftMinterButtonLabel = this.buildTxLabel('Set NFT Minter');
      readonly removeNftMinterButtonLabel = this.buildTxLabel('Remove NFT Minter');
+
+     readonly actionHandlers: Record<string, (config: AccountConfig, enabled: string) => Promise<any>> = {
+          modifyAccountFlags: (config, enabled) => this.handleModifyAccountFlags(config),
+          modifyDepositAuth: (config, enabled) => this.handleModifyDepositAuth(config, enabled),
+          modifyMetaData: (config, enabled) => this.handleModifyMetaData(config, enabled),
+          modifyMultiSigners: (config, enabled) => this.handleModifyMultiSigners(config, enabled),
+          modifyRegularKey: (config, enabled) => this.handleModifyRegularKey(config, enabled),
+     };
+
+     async handleModifyAccountFlags(config: AccountConfig) {
+          const { setFlags, clearFlags } = this.utilsService.getFlagUpdates(config.preFetchedEnv?.accountInfo.result.account_flags);
+
+          if (setFlags.length === 0 && clearFlags.length === 0) {
+               this.toastService.info('No flag changes detected', AppConstants.TOAST.INFO);
+               return;
+          }
+
+          const operations = [
+               ...setFlags.map(f => ({
+                    operation: 'SetFlag',
+                    flagValue: f,
+                    flagName: this.utilsService.getFlagName(f),
+               })),
+               ...clearFlags.map(f => ({
+                    operation: 'ClearFlag',
+                    flagValue: f,
+                    flagName: this.utilsService.getFlagName(f),
+               })),
+          ];
+
+          this.accountConfiguratorStoreService.set('operations', operations);
+          this.accountConfiguratorStoreService.set('setFlags', setFlags);
+          this.accountConfiguratorStoreService.set('clearFlags', clearFlags);
+          // config.setFlags = setFlags;
+          // config.clearFlags = clearFlags;
+          // config.operations = operations;
+
+          return this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx('modifyAccountFlags', config);
+     }
+
+     async handleModifyDepositAuth(config: AccountConfig, enabled: string) {
+          const entries = this.createDepsoitAuthEntries();
+          const formatted = this.formatDepositAuthEntries(entries);
+
+          if (!formatted.length) {
+               this.toastService.error('Deposit Auth address list is empty', AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          config.depsositAuthEntries = entries;
+          config.formattedDepsositAuthEntries = formatted;
+          config.authorizeFlag = enabled;
+
+          return this.accountConfiguratorOrchestratorService.executeDepositAuthTx('modifyDepositAuth', config);
+     }
+
+     private async handleModifyMetaData(config: AccountConfig, enabled: string): Promise<{ success: boolean; error?: string } | null> {
+          try {
+               // Enable or disable NFT minter
+               if (enabled === 'Y' || enabled === 'N') {
+                    config.enableNftMinter = enabled;
+
+                    return await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMetaData', config);
+               }
+
+               // Otherwise update metadata fields
+               return await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('updateMetaData', config);
+          } catch (err: any) {
+               console.error('Error modifying metadata', err);
+
+               this.toastService.error(err.message || 'Failed to modify metadata', AppConstants.TOAST.ERROR);
+
+               return null;
+          }
+     }
+
+     async handleModifyMultiSigners(config: AccountConfig, enabled: string) {
+          const signerEntries = this.createSignerEntries();
+          const formatted = this.formatSignerEntries(signerEntries);
+
+          if (!formatted.length) {
+               this.toastService.error('Multi Signer list is empty', AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          config.signerEntries = signerEntries;
+          config.formattedSignerEntries = formatted;
+          config.enableMultiSignFlag = enabled;
+
+          return this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMultiSigners', config);
+     }
+
+     private async handleModifyRegularKey(config: AccountConfig, enabled: string): Promise<{ success: boolean; error?: string } | null> {
+          try {
+               config.enableRegularKeyFlag = enabled;
+
+               return await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyRegularKey', config);
+          } catch (err: any) {
+               console.error('Error modifying regular key', err);
+
+               this.toastService.error(err.message || 'Failed to modify regular key', AppConstants.TOAST.ERROR);
+
+               return null;
+          }
+     }
+
+     handlePostSuccess(tab: string, config: AccountConfig, envRef: any) {
+          switch (tab) {
+               case 'modifyMultiSigners':
+                    if (config.enableMultiSignFlag === 'Y') {
+                         this.storageService.set(envRef.wallet.classicAddress + 'signerEntries', config.signerEntries);
+                    } else {
+                         this.storageService.removeValue(envRef.wallet.classicAddress + 'signerEntries');
+                         this.accountConfiguratorStoreService.set('signerQuorum', 0);
+                    }
+
+                    break;
+
+               case 'modifyRegularKey':
+                    const regularKey = envRef.wallet.classicAddress + 'regularKey';
+                    const regularKeySeed = envRef.wallet.classicAddress + 'regularKeySeed';
+
+                    if (config.enableRegularKeyFlag === 'Y') {
+                         this.storageService.set(regularKey, config.regularKeyAddress);
+                         this.storageService.set(regularKeySeed, this.txUiService.regularKeySeed());
+                    } else {
+                         this.accountConfiguratorStoreService.set('regularKeyAddress', '');
+                         this.accountConfiguratorStoreService.set('regularKeySeed', '');
+
+                         this.storageService.removeValue(regularKey);
+                         this.storageService.removeValue(regularKeySeed);
+                    }
+
+                    break;
+          }
+     }
 
      buildSuccessMessage(type: AccountConfigAction, formValues: any, extra: any): string {
           if (type === 'modifyMetaData') {

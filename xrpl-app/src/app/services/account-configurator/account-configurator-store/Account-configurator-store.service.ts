@@ -22,7 +22,7 @@ export class AccountConfiguratorStoreService {
           amountField: '',
           nfTokenMinterAddress: '',
           authorizeFlag: '',
-          enableMultiSignFlag: '', 
+          enableMultiSignFlag: '',
           enableRegularKeyFlag: '',
           enableNftMinter: '', // 'Y' | 'N' or ''
           tickSize: '',
