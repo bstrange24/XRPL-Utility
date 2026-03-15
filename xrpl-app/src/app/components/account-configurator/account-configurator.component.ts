@@ -92,7 +92,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           const validTabs = ['modifyAccountFlags', 'modifyDepositAuth', 'modifyMetaData', 'modifyMultiSigners', 'modifyRegularKey'] as const;
           if (validTabs.includes(tab as any)) {
                this.accountConfiguratorViewModelService.activeTab.set(tab as 'modifyAccountFlags' | 'modifyDepositAuth' | 'modifyMetaData' | 'modifyMultiSigners' | 'modifyRegularKey');
-               if (this.hasWallets()) await this.getAccountDetails(false);
+               if (this.hasWallets()) await this.getAccountDetails(true);
           }
      }
 
@@ -228,7 +228,6 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                wallet: walletVm.wallet!,
                simulate: this.txUiService.isSimulateEnabled(),
                multiSign: this.txUiService.useMultiSign(),
-               depositAuthAddresses: this.accountConfiguratorStoreService.get('depositAuthAddresses'),
                amountField: this.accountConfiguratorStoreService.get('amountField'),
                nfTokenMinterAddress: this.accountConfiguratorStoreService.get('nfTokenMinterAddress'),
                setFlags: this.accountConfiguratorStoreService.get('setFlags'),
@@ -238,16 +237,26 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                publicKey: this.accountConfiguratorStoreService.get('publicKey'),
                domain: this.accountConfiguratorStoreService.get('domain'),
                isMessageKey: this.accountConfiguratorStoreService.get('isMessageKey'),
-               operations: this.accountConfiguratorStoreService.get('operations'),
+               depositAuthAddresses: this.accountConfiguratorStoreService.get('depositAuthAddresses'),
                signerQuorum: this.accountConfiguratorStoreService.get('signerQuorum'),
                regularKeyAddress: this.accountConfiguratorStoreService.get('regularKeyAddress'),
                regularKeySeed: this.accountConfiguratorStoreService.get('regularKeySeed'),
+               isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
                depsositAuthEntries: this.accountConfiguratorStoreService.get('depsositAuthEntries'),
                formattedDepsositAuthEntries: this.accountConfiguratorStoreService.get('formattedDepsositAuthEntries'),
                signerEntries: this.accountConfiguratorStoreService.get('signerEntries'),
                formattedSignerEntries: this.accountConfiguratorStoreService.get('formattedSignerEntries'),
+               multiSignAddress: this.accountConfiguratorStoreService.get('multiSignAddress'),
+               multiSignSeeds: this.accountConfiguratorStoreService.get('multiSignSeeds'),
+               authorizeFlag: this.accountConfiguratorStoreService.get('authorizeFlag'),
+               enableRegularKeyFlag: this.accountConfiguratorStoreService.get('enableRegularKeyFlag'), 
+               enableMultiSignFlag: this.accountConfiguratorStoreService.get('enableMultiSignFlag'),
+               enableNftMinter: this.accountConfiguratorStoreService.get('enableNftMinter'),
+               operations: this.accountConfiguratorStoreService.get('operations'),
                preFetchedEnv: envRef,
           };
+
+          console.log('config here: ', config);
 
           await this.withPerf('performAction', async () => {
                try {

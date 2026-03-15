@@ -20,13 +20,6 @@ export class XrplTransactionService extends PerformanceBaseComponent {
      private readonly txUiService = inject(TransactionUiService);
      private readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
      private readonly credentialStore = inject(CredentialStore);
-     // constructor(
-     //      private readonly utilsService: UtilsService,
-     //      private readonly toastService: ToastService,
-     //      private readonly txUiService: TransactionUiService,
-     //      private readonly paymentChannelUtilService: PaymentChannelUtilService,
-     //      private readonly credentialStore: CredentialStore
-     // ) {}
 
      // HELPER: Sign transaction (handles both single and multi-sign)
      async signTransaction(client: any, wallet: xrpl.Wallet, tx: any, useRegularKeyWalletSignTx: boolean, regularKeyWalletSignTx: any, fee: string, useMultiSign: boolean, multiSignAddress: any, multiSignSeeds: any): Promise<{ tx_blob: string; hash: string } | null> {

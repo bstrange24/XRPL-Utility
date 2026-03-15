@@ -61,48 +61,39 @@ export interface PrefetchedLedgerEnvironment {
  */
 export interface AccountConfig {
      wallet: Wallet;
-
      simulate?: boolean;
-     multiSign?: boolean;
-
-     operations?: any;
+     amountField?: string;
+     nfTokenMinterAddress?: string;
      setFlags?: Partial<XrplAccountFlags>;
      clearFlags?: Partial<XrplAccountFlags>;
      tickSize?: number;
      transferRate?: number;
-
-     amountField?: string;
-     destinationAddress?: string;
-     nfTokenMinterAddress?: string;
-     regularKeyAddress?: string;
-     regularKeySeed?: string;
-     signerQuorum?: number;
-     SignerWeight?: number;
-     signerEntries: any;
-     formattedSignerEntries: any;
-     enableMultiSignFlag?: string;
-     authorizeFlag?: string;
-
-     enableRegularKeyFlag?: string;
-     depositAuthAddresses?: any;
-     depsositAuthEntries?: any;
-     formattedDepsositAuthEntries?: any;
-     // setFlags?: Partial<XrplAccountFlags>;
-     // clearFlags?: Partial<XrplAccountFlags>;
-
-     // tickSize?: number;
-     // transferRate?: number;
-
      publicKey?: string;
      domain?: string;
-
      isMessageKey?: boolean;
+     depositAuthAddresses?: any;
+     signerQuorum?: number;
+     regularKeyAddress?: string;
+     regularKeySeed?: string;
+     isRegularKeyAddress?:any;
+     depsositAuthEntries?: any;
+     formattedDepsositAuthEntries?: any;
+     signerEntries: any;
+     formattedSignerEntries: any;
+     multiSignAddress?:any;
+     multiSignSeeds?:any;
+     authorizeFlag?: string;
+     enableRegularKeyFlag?: string;
+     enableMultiSignFlag?: string;
      enableNftMinter?: string;
+     multiSign?: boolean;
+     destinationAddress?: string;
+     SignerWeight?: number;
+     useMultiSign?:any;
      suppressIndividualFeedback?: string;
-
-     extra?: Record<string, unknown>;
-
+     operations?: any;
      preFetchedEnv?: PrefetchedLedgerEnvironment;
+     extra?: Record<string, unknown>;
 }
 
 export type AccountConfiguratorField =
@@ -144,6 +135,9 @@ export type AccountConfiguratorField =
      | 'depositAuthAddress'
      | 'url'
      | 'isMemoEnabled'
+     | 'authorizeFlag'
+     | 'enableMultiSignFlag'
+     | 'enableRegularKeyFlag'
      | 'memoField'
      | 'useMultiSign'
      | 'configurationType'
@@ -157,6 +151,7 @@ export interface AccountConfiguratorState {
      accountInfo: any;
      configurationType: 'holder' | 'exchanger' | 'issuer' | null;
 
+     authorizeFlag:any;
      memoField: string;
      isMemoEnabled: boolean;
 

@@ -8,7 +8,6 @@ import { AccountConfiguratorField } from '../../../components/account-configurat
 export class AccountConfiguratorStoreService {
      /** Initial state (single source of truth) */
      private readonly initialState: Record<AccountConfiguratorField, any> = {
-          // Common / shared fields (still used here for reset)
           accountInfo: '',
           configurationType: '',
           memoField: '',
@@ -20,52 +19,43 @@ export class AccountConfiguratorStoreService {
           multiSigningEnabled: false,
           hasSignerList: false,
           operations: '',
-
-          // Account config specific
           amountField: '',
           nfTokenMinterAddress: '',
+          authorizeFlag: '',
+          enableMultiSignFlag: '', 
+          enableRegularKeyFlag: '',
           enableNftMinter: '', // 'Y' | 'N' or ''
           tickSize: '',
           transferRate: '',
           domain: '',
           isMessageKey: false,
           publicKey: '',
-
           regularKeyAddress: '',
           regularKeySeed: '',
           isRegularKeyAddress: false,
           regularKeySigningEnabled: false,
-
           signerQuorum: 0,
           SignerWeight: 0,
           signers: [{ Account: '', seed: '', SignerWeight: 1 }] as UiSignerEntry[],
           depositAuthAddresses: [{ Account: '', seed: '', SignerWeight: 1 }] as UiSignerEntry[],
-
           masterKeyDisabled: false,
           depositAuthEnabled: false,
           isdepositAuthAddress: false,
           depositAuthAddress: '',
           depsositAuthEntries: '',
           formattedDepsositAuthEntries: '',
-
           signerEntries: '',
           formattedSignerEntries: '',
-
           isNFTokenMinterEnabled: false,
           isAuthorizedNFTokenMinter: false,
-
           isUpdateMetaData: false,
           isHolderConfiguration: false,
           isExchangerConfiguration: false,
           isIssuerConfiguration: false,
-
           setFlags: [] as number[],
           clearFlags: [] as number[],
-
           walletTicketCount: 0,
           url: '',
-
-          // You can keep suppressIndividualFeedback if really needed
           suppressIndividualFeedback: '',
      };
 
