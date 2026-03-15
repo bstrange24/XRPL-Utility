@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../util-service/utils.service';
@@ -8,7 +8,7 @@ import { ToastService } from '../../toast/toast.service';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
 import { XRPL_ACCOUNT_FLAGS_CONFIG } from '../../../components/account-configurator/constants/account-configurator.flags';
 import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS } from '../../../components/account-configurator/constants/account-configurator.ui';
-import { AccountConfig, AccountConfigAction, XrplAccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
+import { AccountConfig, XrplAccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
 import { AccountConfiguratorStoreService } from '../account-configurator-store/account-configurator-store.service';
 import { StorageService } from '../../local-storage/storage.service';
 import { AccountConfiguratorOrchestratorService } from '../account-configurator-orchestrator/account-configurator-orchestrator.service';
@@ -109,25 +109,26 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                return;
           }
 
-          const operations = [
-               ...setFlags.map(f => ({
-                    operation: 'SetFlag',
-                    flagValue: f,
-                    flagName: this.utilsService.getFlagName(f),
-               })),
-               ...clearFlags.map(f => ({
-                    operation: 'ClearFlag',
-                    flagValue: f,
-                    flagName: this.utilsService.getFlagName(f),
-               })),
-          ];
+          const operations: Array<{ operation: 'SetFlag' | 'ClearFlag'; flagValue: string; flagName: string }> = [];
 
-          this.accountConfiguratorStoreService.set('operations', operations);
-          this.accountConfiguratorStoreService.set('setFlags', setFlags);
-          this.accountConfiguratorStoreService.set('clearFlags', clearFlags);
-          // config.setFlags = setFlags;
-          // config.clearFlags = clearFlags;
-          // config.operations = operations;
+          setFlags.forEach(f => {
+                         operations.push({
+                              operation: 'SetFlag',
+                              flagValue: f,
+                              flagName: this.utilsService.getFlagName(f),
+                         });
+                    });
+
+                    clearFlags.forEach(f => {
+                         operations.push({
+                              operation: 'ClearFlag',
+                              flagValue: f,
+                              flagName: this.utilsService.getFlagName(f),
+                         });
+                    });
+          config.setFlags = setFlags;
+          config.clearFlags = clearFlags;
+          config.operations = operations;
 
           return this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx('modifyAccountFlags', config);
      }
@@ -227,65 +228,6 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
 
                     break;
           }
-     }
-
-     buildSuccessMessage(type: AccountConfigAction, formValues: any, extra: any): string {
-          if (type === 'modifyMetaData') {
-               if (extra.enableNftMinter === 'Y') {
-                    return `Successfully Set NFT Minter ${formValues.nfTokenMinterAddress ? formValues.nfTokenMinterAddress : ''}`;
-               } else {
-                    return `Successfully Remove NFT Minter`;
-               }
-          }
-          if (type === 'modifyRegularKey') {
-               if (extra.enableRegularKeyFlag === 'Y') {
-                    return `Successfully Set Regular Key ${formValues.regularKeyAddress}`;
-               } else {
-                    return `Successfully Remove Regular Key ${formValues.regularKeyAddress ? formValues.regularKeyAddress : ''}`;
-               }
-          }
-
-          if (type === 'modifyMultiSigners') {
-               if (extra.enableMultiSignFlag === 'Y') {
-                    return `Successfully Set Multi Sign`;
-               } else {
-                    return `Successfully Removed Multi Sign`;
-               }
-          }
-
-          if (type === 'updateMetaData') {
-               return `Successfully Updated Account Meta Data`;
-          }
-
-          return `Successfully Cancelled Time Based Escrow ${formValues.escrowSequenceNumberField}`;
-     }
-
-     handleSimulationSuccess(type: AccountConfigAction, config: any, hash?: string, extra?: any) {
-          let msg: string;
-
-          if (type === 'modifyMetaData') {
-               const address = config.nfTokenMinterAddress ?? '';
-               msg = config.enableNftMinter === 'Y' ? `Simulated Setting NFT Minter ${address}` : `Simulated Removing NFT Minter ${address}`;
-          } else if (type === 'modifyRegularKey') {
-               if (config.enableRegularKeyFlag === 'Y') {
-                    msg = `Successfully Simulated Setting Regular Key ${config.regularKeyAddress}`;
-               } else {
-                    msg = `Successfully Simulated Removing Regular Key ${config.regularKeyAddress ? config.regularKeyAddress : ''}`;
-               }
-          } else if (type === 'modifyMultiSigners') {
-               if (config.enableMultiSignFlag === 'Y') {
-                    msg = `Successfully Simulated Setting Multi Sign`;
-               } else {
-                    msg = `Successfully Simulated Removing Multi Sign`;
-               }
-          } else {
-               msg = `Simulated Updating Account Meta Data`;
-          }
-
-          this.txUiService.resetCurrentStepToIdle();
-          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
-
-          return { success: true, hash };
      }
 
      validateQuorum() {

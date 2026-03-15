@@ -18,6 +18,8 @@ export interface TabMetaInfo {
      iconSize?: string;
 }
 
+export type IconType = 'ng-icon' | 'lucide-icon';
+
 export const AppConstants = {
      // XRPL Network Settings
      NETWORKS: {

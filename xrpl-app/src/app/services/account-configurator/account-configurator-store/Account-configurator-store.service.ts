@@ -24,7 +24,7 @@ export class AccountConfiguratorStoreService {
           authorizeFlag: '',
           enableMultiSignFlag: '',
           enableRegularKeyFlag: '',
-          enableNftMinter: '', // 'Y' | 'N' or ''
+          enableNftMinter: '',
           tickSize: '',
           transferRate: '',
           domain: '',
@@ -150,11 +150,6 @@ export class AccountConfiguratorStoreService {
                copy[index] = { ...copy[index], [field]: value };
                return copy;
           });
-     }
-
-     /** Clear expiration */
-     clearOptionalExpirationDate() {
-          // this.set('expirationDate', '');
      }
 
      /** Reset dropdown-related fields */

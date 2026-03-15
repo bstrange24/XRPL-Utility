@@ -17,8 +17,6 @@ export const ACCOUNT_CONFIG_ACTIONS = {
 
 export type AccountConfigAction = (typeof ACCOUNT_CONFIG_ACTIONS)[keyof typeof ACCOUNT_CONFIG_ACTIONS];
 
-export type IconType = 'ng-icon' | 'lucide-icon';
-
 /**
  * XRPL Account Flags
  */
@@ -64,8 +62,8 @@ export interface AccountConfig {
      simulate?: boolean;
      amountField?: string;
      nfTokenMinterAddress?: string;
-     setFlags?: Partial<XrplAccountFlags>;
-     clearFlags?: Partial<XrplAccountFlags>;
+     setFlags?: number[];
+     clearFlags?: number[];
      tickSize?: number;
      transferRate?: number;
      publicKey?: string;

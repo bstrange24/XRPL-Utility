@@ -10,15 +10,11 @@ import { percentToTransferRate } from 'xrpl';
 import { UtilsService } from '../../util-service/utils.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
-import { AccountConfiguratorUtilService } from '../account-configurator-util/account-configurator-util.service';
 import { AppConstants } from '../../../core/app.constants';
-// import { ACCOUNT_CONFIGURATOR_VALIDATION_RULES, AccountConfig, AccountConfigAction } from '../../../components/account-configurator/constants/account-configurator-constants';
 import { XrplDateService } from '../../../core/xrpl-date.service';
-import { AccountConfig, AccountConfigAction, PrefetchedLedgerEnvironment } from '../../../components/account-configurator/constants/account-configurator.types';
+import { AccountConfig, AccountConfigAction } from '../../../components/account-configurator/constants/account-configurator.types';
 import { ACCOUNT_CONFIG_VALIDATION_RULES } from '../../../components/account-configurator/constants/account-config.constants';
-import { UiSignerEntry } from '../../../models/interface-items.model';
 import { AccountConfiguratorStoreService } from '../account-configurator-store/account-configurator-store.service';
-import { add } from 'lodash';
 
 @Injectable({
      providedIn: 'root',
@@ -31,7 +27,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
      private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
-     public readonly accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly xrplDateService = inject(XrplDateService);
 
@@ -228,7 +223,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                txHash = execResult.hash;
 
                if (simulate) {
-                    return this.accountConfiguratorUtilService.handleSimulationSuccess(
+                    return this.handleSimulationSuccess(
                          type,
                          { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra },
                          txHash,
@@ -239,7 +234,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.accountConfiguratorUtilService.buildSuccessMessage(type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra }, extra);
+               const message = this.buildSuccessMessage(type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra }, extra);
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
@@ -903,5 +898,64 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                case 'updateMetaData':
                     return this.executor.updateMetaData?.(tx as xrpl.AccountSet, wallet, client, opts);
           }
+     }
+
+     buildSuccessMessage(type: AccountConfigAction, config: any, extra: any): string {
+          if (type === 'modifyMetaData') {
+               if (extra.enableNftMinter === 'Y') {
+                    return `Successfully Set NFT Minter ${config.nfTokenMinterAddress ? config.nfTokenMinterAddress : ''}`;
+               } else {
+                    return `Successfully Remove NFT Minter`;
+               }
+          }
+          if (type === 'modifyRegularKey') {
+               if (extra.enableRegularKeyFlag === 'Y') {
+                    return `Successfully Set Regular Key ${config.regularKeyAddress}`;
+               } else {
+                    return `Successfully Remove Regular Key ${config.regularKeyAddress ? config.regularKeyAddress : ''}`;
+               }
+          }
+
+          if (type === 'modifyMultiSigners') {
+               if (extra.enableMultiSignFlag === 'Y') {
+                    return `Successfully Set Multi Sign`;
+               } else {
+                    return `Successfully Removed Multi Sign`;
+               }
+          }
+
+          if (type === 'updateMetaData') {
+               return `Successfully Updated Account Meta Data`;
+          }
+
+          return `Successfully Cancelled Time Based Escrow ${config.escrowSequenceNumberField}`;
+     }
+
+     handleSimulationSuccess(type: AccountConfigAction, config: any, hash?: string, extra?: any) {
+          let msg: string;
+
+          if (type === 'modifyMetaData') {
+               const address = config.nfTokenMinterAddress ?? '';
+               msg = config.enableNftMinter === 'Y' ? `Simulated Setting NFT Minter ${address}` : `Simulated Removing NFT Minter ${address}`;
+          } else if (type === 'modifyRegularKey') {
+               if (config.enableRegularKeyFlag === 'Y') {
+                    msg = `Successfully Simulated Setting Regular Key ${config.regularKeyAddress}`;
+               } else {
+                    msg = `Successfully Simulated Removing Regular Key ${config.regularKeyAddress ? config.regularKeyAddress : ''}`;
+               }
+          } else if (type === 'modifyMultiSigners') {
+               if (config.enableMultiSignFlag === 'Y') {
+                    msg = `Successfully Simulated Setting Multi Sign`;
+               } else {
+                    msg = `Successfully Simulated Removing Multi Sign`;
+               }
+          } else {
+               msg = `Simulated Updating Account Meta Data`;
+          }
+
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+
+          return { success: true, hash };
      }
 }

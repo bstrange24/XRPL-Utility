@@ -1,5 +1,5 @@
-import { AppConstants } from '../../../core/app.constants';
-import { AccountConfigAction, IconType } from './account-configurator.types';
+import { AppConstants, IconType } from '../../../core/app.constants';
+import { AccountConfigAction } from './account-configurator.types';
 
 export const ACCOUNT_CONFIG_TABS: {
      key: AccountConfigAction;

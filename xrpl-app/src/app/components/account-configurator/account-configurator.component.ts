@@ -174,7 +174,10 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                return;
           }
 
-          const txResult = await handler(config, enabled);
+          let txResult;
+          await this.withPerf('performAction', async () => {
+               txResult = await handler(config, enabled);
+          });
 
           if (txResult) {
                const successFullTx = await this.handleTxResult(txResult, envRef.client, envRef.wallet, '', '', '');
