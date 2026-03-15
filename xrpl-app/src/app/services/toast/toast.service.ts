@@ -55,7 +55,7 @@ export class ToastService {
                const linksHtml = results
                     .map(r => {
                          const link = `${explorerBaseUrl}${r.hash}`;
-                         return `Deposit Auth <code>${r.depostiAuthAddress.SignerEntry.Account}</code><br>View Tx in Explorer: <a href="${link}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-200">${r.hash}</a>`;
+                         return `Deposit Auth <code>${r.depostiAuthAddress.account}</code><br>View Tx in Explorer: <a href="${link}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-200">${r.hash}</a>`;
                     })
                     .join('<br>');
 

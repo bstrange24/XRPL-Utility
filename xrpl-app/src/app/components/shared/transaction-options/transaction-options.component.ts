@@ -1,10 +1,12 @@
-import { Component, computed, inject, Input, signal } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../services/util-service/utils.service';
 import { SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { XrplTxOptionsStore } from '../stores/xrpl-tx-options.store';
+import { AccountConfiguratorStoreService } from '../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 
 @Component({
      selector: 'app-transaction-options',
@@ -14,40 +16,64 @@ import { XrplTxOptionsStore } from '../stores/xrpl-tx-options.store';
      styleUrl: './transaction-options.component.css',
 })
 export class TransactionOptionsComponent {
-     public txUiService = inject(TransactionUiService);
-     public readonly utilsService = inject(UtilsService);
-     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     txUiService = inject(TransactionUiService);
+     utilsService = inject(UtilsService);
+     xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+
      Array = Array;
 
-     @Input() activeTab?: () => string;
-     @Input() showWhenTab: string | string[] = '*'; // '*' = always show
-     @Input() multiSigningEnabled = signal<boolean>(false);
-     @Input() regularKeySigningEnabled = signal<boolean>(false);
-     @Input() showMemo = true;
-     @Input() showMultiSign = true;
-     @Input() showRegularKey = true;
-     @Input() showTicket = true;
-     @Input() showSimulate = true;
-     @Input() showEnableTrustline = signal<boolean>(false);
+     /* -------------------- SIGNAL INPUTS -------------------- */
+     activeTab = input<() => string>();
+     showWhenTab = input<string | string[]>('*');
 
-     isShowEnableTrustline = this.txUiService.showEnableTrustline;
-     // missingTrustlineInfo = this.txUiService.missingTrustlineInfo;
+     multiSigningEnabled = input.required<boolean>();
+     regularKeySigningEnabled = input.required<boolean>();
+
+     showMemo = input(true);
+     showMultiSign = input(true);
+     showRegularKey = input(true);
+     showTicket = input(true);
+     showSimulate = input(true);
+
+     showEnableTrustline = input<boolean>(false);
+
+     /* -------------------- SIGNAL STATE -------------------- */
      isMemoEnabled = this.txUiService.isMemoEnabled;
      useMultiSign = this.txUiService.useMultiSign;
-     isRegularKeyAddress = this.txUiService.isRegularKeyAddress;
      isSimulateEnabled = this.txUiService.isSimulateEnabled;
      isTicket = this.txUiService.isTicket;
-     memoField = this.xrplTxOptionsStore.memos();
-     // memoField = this.txUiService.memoField;
-     multiSignAddress = this.txUiService.multiSignAddress;
-     multiSignSeeds = this.txUiService.multiSignSeeds;
-     signerQuorum = this.txUiService.signerQuorum;
-     regularKeyAddress = this.txUiService.regularKeyAddress;
-     regularKeySeed = this.txUiService.regularKeySeed;
+
+     isShowEnableTrustline = this.txUiService.showEnableTrustline;
+
+     memoField = this.xrplTxOptionsStore.memos;
+
+     multiSignAddress = this.accountConfiguratorStoreService.signal('multiSignAddress');
+     multiSignSeeds = this.accountConfiguratorStoreService.signal('multiSignSeeds');
+     signerQuorum = this.accountConfiguratorStoreService.signal('signerQuorum');
+
+     isRegularKeyAddress = this.accountConfiguratorStoreService.signal('isRegularKeyAddress');
+     regularKeyAddress = this.accountConfiguratorStoreService.signal('regularKeyAddress');
+     regularKeySeed = this.accountConfiguratorStoreService.signal('regularKeySeed');
+
      selectedSingleTicket = this.txUiService.selectedSingleTicket;
      selectedTickets = this.txUiService.selectedTickets;
      multiSelectMode = this.txUiService.multiSelectMode;
      ticketArray = this.txUiService.ticketArray;
+
+     /* -------------------- COMPUTED -------------------- */
+     showPanel = computed(() => {
+          const tab = this.activeTab()?.() ?? '';
+          const allowed = this.showWhenTab();
+
+          if (allowed === '*') return true;
+
+          if (Array.isArray(allowed)) {
+               return allowed.includes(tab);
+          }
+
+          return allowed === tab;
+     });
 
      ticketItems = computed(() => {
           return this.ticketArray().map(ticket => ({
@@ -66,20 +92,19 @@ export class TransactionOptionsComponent {
           return this.ticketItems().find(i => i.id === selected) || null;
      });
 
-     // Simulate toggle uses service directly
-     toggleSimulate(event: boolean) {
-          this.txUiService.toggleSimulate(event);
+     /* -------------------- ACTIONS -------------------- */
+     toggleSimulate(value: boolean) {
+          this.txUiService.toggleSimulate(value);
      }
 
-     toggleShowEnableTrustline(event: boolean) {
-          this.txUiService.toggleShowEnableTrustline(event);
+     toggleShowEnableTrustline(value: boolean) {
+          this.txUiService.toggleShowEnableTrustline(value);
      }
 
      onMemoToggled(enabled: boolean) {
-          if (enabled) {
-               this.isMemoEnabled.set(enabled);
-          } else {
-               // this.txUiService.memoField.set('');
+          this.isMemoEnabled.set(enabled);
+
+          if (!enabled) {
                this.xrplTxOptionsStore.addMemo('');
           }
      }
@@ -87,38 +112,39 @@ export class TransactionOptionsComponent {
      onMemoInput(value: string) {
           const cleaned = value
                .split(',')
-               .map(s => s.trim())
+               .map(v => v.trim())
                .filter(Boolean);
-          // this.txUiService.memoField.set(cleaned.join(', ')); // or set array if you prefer
+
           this.xrplTxOptionsStore.updateMemos(cleaned);
      }
 
-     toggleMultiSign() {
-          this.utilsService.toggleMultiSign(this.useMultiSign(), this.txUiService.signers(), this.txUiService.currentWallet()?.classicAddress || '');
-          this.multiSignAddress.set(
-               this.txUiService
-                    .signers()
-                    .map((e: any) => e.Account)
-                    .join(',\n')
-          );
-          this.multiSignSeeds.set(
-               this.txUiService
-                    .signers()
-                    .map((e: any) => e.seed)
-                    .join(',\n')
-          );
-          this.signerQuorum.set(this.txUiService.signerQuorum());
-     }
-
      onMultiSignToggled(enabled: boolean) {
-          if (enabled) {
-               this.isRegularKeyAddress.set(false);
-          }
+          this.useMultiSign.set(enabled);
+
+          if (!enabled) return;
+
+          this.utilsService.toggleMultiSign(this.useMultiSign(), this.accountConfiguratorStoreService.get('signers'), this.txUiService.currentWallet()?.classicAddress || '');
+
+          this.accountConfiguratorStoreService.set(
+               'multiSignAddress',
+               this.accountConfiguratorStoreService
+                    .get('signers')
+                    .map((s: { Account: any }) => s.Account)
+                    .join(',\n')
+          );
+
+          this.accountConfiguratorStoreService.set(
+               'multiSignSeeds',
+               this.accountConfiguratorStoreService
+                    .get('signers')
+                    .map((s: { seed: any }) => s.seed)
+                    .join(',\n')
+          );
+
+          this.accountConfiguratorStoreService.set('signerQuorum', this.accountConfiguratorStoreService.get('signerQuorum'));
      }
 
      onRegularKeyToggled(enabled: boolean) {
-          if (enabled) {
-               this.useMultiSign.set(false);
-          }
+          this.isRegularKeyAddress.set(enabled);
      }
 }

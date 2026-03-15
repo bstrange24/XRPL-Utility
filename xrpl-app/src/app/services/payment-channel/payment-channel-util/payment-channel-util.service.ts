@@ -8,6 +8,7 @@ import { UtilsService } from '../../util-service/utils.service';
 import BigNumber from 'bignumber.js';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { AppConstants } from '../../../core/app.constants';
+import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
 
 type PaymentChannelTxType = 'create' | 'fund' | 'claim' | 'renew' | 'close';
 
@@ -17,6 +18,7 @@ type PaymentChannelTxType = 'create' | 'fund' | 'claim' | 'renew' | 'close';
 export class PaymentChannelUtilService extends PerformanceBaseComponent {
      public readonly txUiService = inject(TransactionUiService);
      public readonly utilsService = inject(UtilsService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
 
      walletPaymentChannelCount = signal<number>(0);
      existingPaymentChannels = signal<any[]>([]);
@@ -80,7 +82,8 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
           const amount = this.txUiService.amountField();
           const isSimulate = this.txUiService.isSimulateEnabled();
           const useMultiSign = this.txUiService.useMultiSign();
-          const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
+          const isRegularKeyAddress = this.accountConfiguratorStoreService.get('isRegularKeyAddress');
+          // const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
           const regularKeyAddress = this.txUiService.regularKeyAddress();
           const regularKeySeed = this.txUiService.regularKeySeed();
           const multiSignAddress = this.txUiService.multiSignAddress();

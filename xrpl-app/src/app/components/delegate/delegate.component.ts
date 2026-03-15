@@ -28,6 +28,7 @@ import { TransactionOptionsComponent } from '../shared/transaction-options/trans
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
+import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 
 interface XRPLPermissionEntry {
      Permission: {
@@ -77,6 +78,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
@@ -382,7 +384,8 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
 
                     const result = await this.txExecutor.delegateActions(delegateSetTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),

@@ -31,6 +31,7 @@ import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
+import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 
 interface AccountFlags {
      asfRequireDest: boolean;
@@ -96,6 +97,7 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
@@ -520,7 +522,8 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
 
                     const result = await this.txExecutor.mintNft(nFTokenMintTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
@@ -690,7 +693,8 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
 
                     const result = await this.txExecutor.burnNft(nFTokenBurnTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
@@ -850,7 +854,8 @@ export class CreateNftComponent extends PerformanceBaseComponent implements OnIn
 
                     const result = await this.txExecutor.updateNftMetaData(nFTokenModifyTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),

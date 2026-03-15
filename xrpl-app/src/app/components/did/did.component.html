@@ -121,7 +121,7 @@
 
                     <!-- Only show buttons and sliders if there is no DID set or we are on the delete DID tab -->
                     @if ((tab === 'set' && didStoreService.get('existingDid').length <= 0) || tab === 'delete') {
-                    <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="didViewModelService.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" />
+                    <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="didViewModelService.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled()" [regularKeySigningEnabled]="didStoreService.signal('regularKeySigningEnabled')()" />
 
                     <!-- Action buttons -->
                     <div class="button-row">

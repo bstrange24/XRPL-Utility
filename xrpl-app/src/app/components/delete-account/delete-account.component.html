@@ -54,7 +54,7 @@
                     <app-transaction-options-section [activeTab]="tab"></app-transaction-options-section>
                     }
 
-                    <app-transaction-options [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled"></app-transaction-options>
+                    <app-transaction-options [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled()" [regularKeySigningEnabled]="deleteAccountStoreService.signal('regularKeySigningEnabled')()"></app-transaction-options>
 
                     <!-- Action buttons -->
                     <div class="button-row">

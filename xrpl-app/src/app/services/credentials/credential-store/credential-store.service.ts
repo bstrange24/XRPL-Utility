@@ -19,6 +19,7 @@ export class CredentialStore {
           expirationDate: '',
           credential: null,
           domainId: '',
+          regularKeySigningEnabled: false,
      };
 
      /** Signal registry */

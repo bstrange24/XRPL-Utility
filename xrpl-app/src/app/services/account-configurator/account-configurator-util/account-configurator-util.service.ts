@@ -6,10 +6,10 @@ import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
 import { ToastService } from '../../toast/toast.service';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
-import { AccountConfiguratorStoreService } from '../account-configurator-store/Account-configurator-store.service';
 import { XRPL_ACCOUNT_FLAGS_CONFIG } from '../../../components/account-configurator/constants/account-configurator.flags';
 import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS } from '../../../components/account-configurator/constants/account-configurator.ui';
 import { AccountConfigAction, XrplAccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
+import { AccountConfiguratorStoreService } from '../account-configurator-store/account-configurator-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -91,19 +91,28 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
 
      buildSuccessMessage(type: AccountConfigAction, formValues: any, extra: any): string {
           if (type === 'modifyMetaData') {
-               if (extra?.enableNftMinter === 'Y') {
+               if (extra.enableNftMinter === 'Y') {
                     return `Successfully Set NFT Minter ${formValues.nfTokenMinterAddress ? formValues.nfTokenMinterAddress : ''}`;
                } else {
                     return `Successfully Remove NFT Minter`;
                }
           }
           if (type === 'modifyRegularKey') {
-               if (extra?.enableRegularKeyFlag === 'Y') {
+               if (extra.enableRegularKeyFlag === 'Y') {
                     return `Successfully Set Regular Key ${formValues.regularKeyAddress}`;
                } else {
                     return `Successfully Remove Regular Key ${formValues.regularKeyAddress ? formValues.regularKeyAddress : ''}`;
                }
           }
+
+          if (type === 'modifyMultiSigners') {
+               if (extra.enableMultiSignFlag === 'Y') {
+                    return `Successfully Set Multi Sign`;
+               } else {
+                    return `Successfully Removed Multi Sign`;
+               }
+          }
+
           if (type === 'updateMetaData') {
                return `Successfully Updated Account Meta Data`;
           }
@@ -111,17 +120,23 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           return `Successfully Cancelled Time Based Escrow ${formValues.escrowSequenceNumberField}`;
      }
 
-     handleSimulationSuccess(type: AccountConfigAction, formValues: any, hash?: string, extra?: any) {
+     handleSimulationSuccess(type: AccountConfigAction, config: any, hash?: string, extra?: any) {
           let msg: string;
 
           if (type === 'modifyMetaData') {
-               const address = formValues.nfTokenMinterAddress ?? '';
-               msg = extra?.enableNftMinter === 'Y' ? `Simulated Setting NFT Minter ${address}` : `Simulated Removing NFT Minter ${address}`;
+               const address = config.nfTokenMinterAddress ?? '';
+               msg = config.enableNftMinter === 'Y' ? `Simulated Setting NFT Minter ${address}` : `Simulated Removing NFT Minter ${address}`;
           } else if (type === 'modifyRegularKey') {
-               if (extra?.enableRegularKeyFlag === 'Y') {
-                    msg = `Simulated Setting Regular Key ${formValues.regularKeyAddress}`;
+               if (config.enableRegularKeyFlag === 'Y') {
+                    msg = `Successfully Simulated Setting Regular Key ${config.regularKeyAddress}`;
                } else {
-                    msg = `Simulated Removing Regular Key ${formValues.regularKeyAddress ? formValues.regularKeyAddress : ''}`;
+                    msg = `Successfully Simulated Removing Regular Key ${config.regularKeyAddress ? config.regularKeyAddress : ''}`;
+               }
+          } else if (type === 'modifyMultiSigners') {
+               if (config.enableMultiSignFlag === 'Y') {
+                    msg = `Successfully Simulated Setting Multi Sign`;
+               } else {
+                    msg = `Successfully Simulated Removing Multi Sign`;
                }
           } else {
                msg = `Simulated Updating Account Meta Data`;
@@ -137,7 +152,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           const totalWeight = this.accountConfiguratorStoreService.get('signers').reduce((sum: any, s: { SignerWeight: any }) => sum + (s.SignerWeight || 0), 0);
           const quorum = this.accountConfiguratorStoreService.get('signerQuorum');
           if (quorum > totalWeight) {
-               this.accountConfiguratorStoreService.set('signerQuorum', Math.floor(totalWeight));
+               this.accountConfiguratorStoreService.set('signerQuorum', Math.floor(quorum));
           }
      }
 
@@ -163,7 +178,6 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      addDepositAuthAddresses() {
           this.accountConfiguratorStoreService.addDepositAuthAddress({
                Account: '',
-               seed: '',
                SignerWeight: 1,
           });
      }

@@ -71,7 +71,7 @@
 
                     <app-transaction-options-section [activeTab]="tab"></app-transaction-options-section>
 
-                    <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled"></app-transaction-options>
+                    <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled()" [regularKeySigningEnabled]="permissionedDomainStoreService.signal('regularKeySigningEnabled')()"></app-transaction-options>
 
                     <!-- Action buttons -->
                     <div class="button-row">

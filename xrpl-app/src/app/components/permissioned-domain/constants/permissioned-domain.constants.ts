@@ -4,7 +4,7 @@ import { AppConstants } from '../../../core/app.constants';
 
 // Core types
 export type PermissionDomainTxType = 'set' | 'delete';
-export type PermissionedDomainField = 'createdPermissionedDomains' | 'createdDomains' | 'selectedDomainId' | 'credentialType' | 'credentialIssuer' | 'subject' | 'credentialIdSearchQuery';
+export type PermissionedDomainField = 'createdPermissionedDomains' | 'createdDomains' | 'selectedDomainId' | 'credentialType' | 'credentialIssuer' | 'subject' | 'credentialIdSearchQuery' | 'regularKeySigningEnabled';
 
 export type PermissionedDomainTab = 'set' | 'delete';
 export type PermissionedDomainTxTypeFull = 'setPermissionedDomain' | 'deletePermissionedDomain';

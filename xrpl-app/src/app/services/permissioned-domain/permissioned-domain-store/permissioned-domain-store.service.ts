@@ -14,6 +14,7 @@ export class PermissionedDomainStoreService {
           credentialIssuer: '',
           subject: '',
           credentialIdSearchQuery: '',
+          regularKeySigningEnabled: false,
      };
 
      /** Signal registry */

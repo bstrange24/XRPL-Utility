@@ -1,4 +1,4 @@
-import { Injectable, ElementRef, ViewChild, WritableSignal, Signal } from '@angular/core';
+import { Injectable, ElementRef, ViewChild, WritableSignal, Signal, inject } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { walletFromSecretNumbers, Wallet } from 'xrpl';
 import { XrplService } from '../xrpl-services/xrpl.service';
@@ -13,6 +13,7 @@ import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { MPToken, RippleState } from '../../models/interface-items.model';
 import * as bip39 from 'bip39';
 import { XrplDateService } from '../../core/xrpl-date.service';
+import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -28,6 +29,7 @@ type InputType = 'seed' | 'mnemonic' | 'secret_numbers' | 'unknown';
      providedIn: 'root',
 })
 export class UtilsService {
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      result: string = '';
      isError: boolean = false;
@@ -1181,8 +1183,14 @@ export class UtilsService {
 
      setRegularKeyProperties(regularKey: string | undefined, account: string): any {
           if (regularKey) {
+               let regularKeySeed;
                const regularKeyAddress = regularKey;
-               const regularKeySeed = this.storageService.get(`${account}regularKeySeed`) || '';
+               if (this.accountConfiguratorStoreService.get('regularKeySeed')) {
+                    regularKeySeed = this.accountConfiguratorStoreService.get('regularKeySeed');
+                    this.storageService.set(`${account}regularKeySeed`, regularKeySeed);
+               } else {
+                    regularKeySeed = this.storageService.get(`${account}regularKeySeed`);
+               }
                const isRegularKeyAddress = true;
                return { regularKeyAddress, regularKeySeed, isRegularKeyAddress };
           }

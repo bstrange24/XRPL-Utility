@@ -35,6 +35,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
+import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 
 interface XRPLCurrency {
      currency: string;
@@ -109,6 +110,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly offerCurrency = inject(OfferCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
@@ -617,7 +619,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     const result = await this.txExecutor.createAMM(ammCreateTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
@@ -716,7 +719,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     const result = await this.txExecutor.depositToAMM(ammDepositTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
@@ -852,7 +856,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     const result = await this.txExecutor.withdrawlFromAMM(ammWithdrawTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
@@ -936,7 +941,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     const result = await this.txExecutor.clawbackFromAMM(ammClawbackTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
@@ -987,7 +993,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     const result = await this.txExecutor.swapViaAMM(swapPaymentTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
@@ -1034,7 +1041,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     const result = await this.txExecutor.deleteAMM(deleteAmmTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),

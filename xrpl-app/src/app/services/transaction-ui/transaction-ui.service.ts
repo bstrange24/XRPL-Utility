@@ -180,7 +180,7 @@ export class TransactionUiService {
      regularKeySeed = signal<string>('');
      isMemoEnabled = signal<boolean>(false);
      useMultiSign = signal<boolean>(false);
-     isRegularKeyAddress = signal<boolean>(false);
+     // isRegularKeyAddress = signal<boolean>(false);
      regularKeySigningEnabled = signal<boolean>(false);
      multiSigningEnabled = signal<boolean>(false);
      signers: WritableSignal<Signer[]> = signal<Signer[]>([{ Account: '', seed: '', SignerWeight: 1 }]);
@@ -825,11 +825,11 @@ export class TransactionUiService {
                     signers: this.signers(),
                },
 
-               regularKey: {
-                    isRegularKey: this.isRegularKeyAddress(),
-                    address: this.isRegularKeyAddress() ? this.regularKeyAddress() : undefined,
-                    seed: this.isRegularKeyAddress() ? this.regularKeySeed() : undefined,
-               },
+               // regularKey: {
+               //      isRegularKey: this.isRegularKeyAddress(),
+               //      address: this.isRegularKeyAddress() ? this.regularKeyAddress() : undefined,
+               //      seed: this.isRegularKeyAddress() ? this.regularKeySeed() : undefined,
+               // },
 
                ticket: {
                     enabled: this.isTicket(),
@@ -904,7 +904,7 @@ export class TransactionUiService {
           this.showEnableTrustline.set(false);
           this.isMemoEnabled.set(false);
           this.useMultiSign.set(false);
-          this.isRegularKeyAddress.set(false);
+          // this.isRegularKeyAddress.set(false);
           this.isTicket.set(false);
           this.isSimulateEnabled.set(false);
           this.memoField.set('');

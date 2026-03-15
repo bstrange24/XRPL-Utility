@@ -1,11 +1,13 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
 
 @Injectable({
      providedIn: 'root',
 })
 export class TicketsUtilService {
      public readonly txUiService = inject(TransactionUiService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
 
      readonly createButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
@@ -25,7 +27,8 @@ export class TicketsUtilService {
           const amount = this.txUiService.amountField();
           const isSimulate = this.txUiService.isSimulateEnabled();
           const useMultiSign = this.txUiService.useMultiSign();
-          const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
+          // const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
+          const isRegularKeyAddress = this.accountConfiguratorStoreService.get('isRegularKeyAddress');
           const regularKeyAddress = this.txUiService.regularKeyAddress();
           const regularKeySeed = this.txUiService.regularKeySeed();
           const multiSignAddress = this.txUiService.multiSignAddress();

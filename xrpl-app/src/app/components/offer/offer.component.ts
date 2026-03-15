@@ -35,6 +35,7 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
+import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 
 interface XRPLCurrency {
      currency: string;
@@ -162,6 +163,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      public readonly offerCurrency = inject(OfferCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
      public readonly route = inject(ActivatedRoute);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      private cdr: ChangeDetectorRef;
 
      private offerOverlayRef: OverlayRef | null = null;
@@ -1163,7 +1165,8 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
                     const result = await this.txExecutor.createOffer(offerCreateTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
@@ -1235,7 +1238,8 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
                          const result = await this.txExecutor.offerCancel(offerCancelTx, wallet, client, {
                               useMultiSign: this.txUiService.useMultiSign(),
-                              isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                              isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                              // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                               regularKeyAddress: this.txUiService.regularKeyAddress(),
                               regularKeySeed: this.txUiService.regularKeySeed(),
                               multiSignAddress: this.txUiService.multiSignAddress(),

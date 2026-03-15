@@ -5,6 +5,7 @@ import * as xrpl from 'xrpl';
 import didSchema from '../../components/did/did-schema.json';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { percentToTransferRate } from 'xrpl';
+import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 
 export interface ValidationContext {
      inputs: Record<string, any>;
@@ -35,11 +36,11 @@ export interface TransactionValidationRule {
 export class ValidationService {
      private readonly rules = new Map<string, TransactionValidationRule>();
      public readonly txUiService = inject(TransactionUiService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly xrplService = inject(XrplService);
+     public readonly utilsService = inject(UtilsService);
 
-     constructor(
-          private readonly xrplService: XrplService,
-          private readonly utilsService: UtilsService
-     ) {
+     constructor() {
           this.registerBuiltInRules();
      }
 
@@ -1350,20 +1351,20 @@ export class ValidationService {
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    // ctx => {
-                    //      // Validate each address
-                    //      for (const authorizedAddress of ctx.inputs['modifyDepositAuth'].depsositAuthEntries) {
-                    //           // Check for existing preauthorization
-                    //           const alreadyAuthorized = ctx.inputs['network']['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.Account);
-                    //           if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'Y' && alreadyAuthorized) {
-                    //                return `Preauthorization already exists for ${authorizedAddress.Account} (tecDUPLICATE).\nUse Unauthorize to remove.`;
-                    //           }
-                    //           if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'N' && !alreadyAuthorized) {
-                    //                return `No preauthorization exists for ${authorizedAddress.Account}`;
-                    //           }
-                    //      }
-                    //      return null;
-                    // },
+                    ctx => {
+                         // Validate each address
+                         for (const authorizedAddress of ctx.inputs['modifyDepositAuth'].depsositAuthEntries) {
+                              // Check for existing preauthorization
+                              const alreadyAuthorized = ctx.inputs['network']['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.Account);
+                              if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'Y' && alreadyAuthorized) {
+                                   return `Preauthorization already exists for ${authorizedAddress.Account} (tecDUPLICATE).\nUse Unauthorize to remove.`;
+                              }
+                              if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'N' && !alreadyAuthorized) {
+                                   return `No preauthorization exists for ${authorizedAddress.Account}`;
+                              }
+                         }
+                         return null;
+                    },
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1394,16 +1395,16 @@ export class ValidationService {
                               return `Multi signers list cannot be empty.`;
                          }
 
-                         for (const authorizedAddress of ctx.inputs['modifyDepositAuth'].depsositAuthEntries) {
-                              // Check for existing preauthorization
-                              const alreadyAuthorized = ctx.inputs['network']['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.Account);
-                              if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'Y' && alreadyAuthorized) {
-                                   return `Preauthorization already exists for ${authorizedAddress.Account} (tecDUPLICATE).\nUse Unauthorize to remove.`;
-                              }
-                              if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'N' && !alreadyAuthorized) {
-                                   return `No preauthorization exists for ${authorizedAddress.Account}`;
-                              }
-                         }
+                         // for (const authorizedAddress of ctx.inputs['modifyDepositAuth'].formattedSignerEntries) {
+                         //      // Check for existing preauthorization
+                         //      const alreadyAuthorized = ctx.inputs['network']['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.Account);
+                         //      if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'Y' && alreadyAuthorized) {
+                         //           return `Preauthorization already exists for ${authorizedAddress.Account} (tecDUPLICATE).\nUse Unauthorize to remove.`;
+                         //      }
+                         //      if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'N' && !alreadyAuthorized) {
+                         //           return `No preauthorization exists for ${authorizedAddress.Account}`;
+                         //      }
+                         // }
                          return null;
                     },
 
@@ -1431,7 +1432,7 @@ export class ValidationService {
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     ctx => {
-                         if (this.txUiService.regularKeyAddress() === '' || this.txUiService.regularKeyAddress() === 'No RegularKey configured for account' || this.txUiService.regularKeySeed() === '') {
+                         if (this.accountConfiguratorStoreService.get('regularKeyAddress') === '' || this.accountConfiguratorStoreService.get('regularKeyAddress') === 'No RegularKey configured for account' || this.accountConfiguratorStoreService.get('regularKeySeed') === '') {
                               return `Regular Key address and seed must be present`;
                          }
                          return null;

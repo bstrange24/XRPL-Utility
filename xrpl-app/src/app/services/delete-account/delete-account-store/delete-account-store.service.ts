@@ -13,6 +13,7 @@ export class DeleteAccountStoreService {
           blockingObjects: [],
           savedTxJson: [],
           savedTxResult: [],
+          regularKeySigningEnabled: false,
      };
 
      /** Signal registry */

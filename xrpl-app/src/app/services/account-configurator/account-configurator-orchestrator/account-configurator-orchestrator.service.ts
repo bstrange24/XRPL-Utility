@@ -14,8 +14,11 @@ import { AccountConfiguratorUtilService } from '../account-configurator-util/acc
 import { AppConstants } from '../../../core/app.constants';
 // import { ACCOUNT_CONFIGURATOR_VALIDATION_RULES, AccountConfig, AccountConfigAction } from '../../../components/account-configurator/constants/account-configurator-constants';
 import { XrplDateService } from '../../../core/xrpl-date.service';
-import { AccountConfig, AccountConfigAction } from '../../../components/account-configurator/constants/account-configurator.types';
+import { AccountConfig, AccountConfigAction, PrefetchedLedgerEnvironment } from '../../../components/account-configurator/constants/account-configurator.types';
 import { ACCOUNT_CONFIG_VALIDATION_RULES } from '../../../components/account-configurator/constants/account-config.constants';
+import { UiSignerEntry } from '../../../models/interface-items.model';
+import { AccountConfiguratorStoreService } from '../account-configurator-store/account-configurator-store.service';
+import { add } from 'lodash';
 
 @Injectable({
      providedIn: 'root',
@@ -29,10 +32,11 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly xrplDateService = inject(XrplDateService);
 
      async executeModifyAccountTx(type: AccountConfigAction, config: AccountConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
-          const { wallet, simulate = false, multiSign = false, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, suppressIndividualFeedback, preFetchedEnv, extra = {} } = config;
+          const { wallet, simulate = false, multiSign = false, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, authorizeFlag, depositAuthAddresses, enableRegularKeyFlag, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableMultiSignFlag, enableNftMinter, suppressIndividualFeedback, preFetchedEnv, extra = {} } = config;
 
           let env: any;
           let client: xrpl.Client;
@@ -75,6 +79,16 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     domain,
                     isMessageKey,
                     enableNftMinter,
+                    authorizeFlag,
+                    depositAuthAddresses,
+                    enableRegularKeyFlag,
+                    signerQuorum,
+                    depsositAuthEntries,
+                    formattedDepsositAuthEntries,
+                    signerEntries,
+                    formattedSignerEntries,
+                    regularKeyAddress,
+                    enableMultiSignFlag,
                     suppressIndividualFeedback,
                     extra,
                });
@@ -90,13 +104,14 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                }
 
                // Build transaction
-               const tx = this.buildModifyAccountTransaction(type, env.wallet || wallet, env, config, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, suppressIndividualFeedback, extra });
+               // const tx = this.buildModifyAccountTransaction(type, env.wallet || wallet, env, config, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra });
+               const tx = this.buildModifyAccountTransaction(type, env.wallet || wallet, env, config, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra });
 
                // Optional fields
-               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, suppressIndividualFeedback, extra }, env);
+               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, enableRegularKeyFlag, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableMultiSignFlag, suppressIndividualFeedback, extra }, env);
 
                // Execute
-               const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, suppressIndividualFeedback, extra });
+               const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra });
 
                if (!execResult.success) {
                     return { success: false, error: execResult.error };
@@ -105,13 +120,18 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                txHash = execResult.hash;
 
                if (simulate) {
-                    return this.accountConfiguratorUtilService.handleSimulationSuccess(type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, suppressIndividualFeedback, extra }, txHash, extra);
+                    return this.accountConfiguratorUtilService.handleSimulationSuccess(
+                         type,
+                         { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra },
+                         txHash,
+                         extra
+                    );
                }
 
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.accountConfiguratorUtilService.buildSuccessMessage(type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, suppressIndividualFeedback, extra }, extra);
+               const message = this.accountConfiguratorUtilService.buildSuccessMessage(type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra }, extra);
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
@@ -125,10 +145,11 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
      }
 
      async executeAccountSetFlagsTx(type: AccountConfigAction, config: AccountConfig): Promise<{ success: boolean; modifyCount?: number; validationError?: boolean; results?: Array<{ flagName: string; hash?: string; success: boolean; error?: string }>; error?: string }> {
-          const { wallet, simulate = false, multiSign = false, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, suppressIndividualFeedback, preFetchedEnv, extra = {} } = config;
+          const { wallet, simulate = false, multiSign = false, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, operations, preFetchedEnv, extra = {} } = config;
 
           let env: any;
           let client: xrpl.Client;
+          let fee: string;
           let txHash: string | undefined;
           let currentLedger: number;
           const results: Array<{ flagName: string; hash?: string; success: boolean; error?: string }> = [];
@@ -140,6 +161,9 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                // Use pre-fetched env if provided, otherwise fetch
                if (preFetchedEnv) {
                     env = preFetchedEnv;
+                    client = preFetchedEnv.client;
+                    fee = preFetchedEnv.fee;
+                    currentLedger = preFetchedEnv.currentLedger;
                } else {
                     env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
@@ -147,6 +171,9 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                          includeFee: true,
                          includeLedgerInfo: true,
                     });
+                    client = env.client;
+                    fee = env.fee!;
+                    currentLedger = env.currentLedger!;
                }
 
                client = env.client;
@@ -183,21 +210,21 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     return { success: false, error: errors.join('\n• '), validationError: true };
                }
 
-               const operations = extra['operations'] as Array<{
+               const ops = operations as Array<{
                     operation: 'SetFlag' | 'ClearFlag';
                     flagValue: string;
                     flagName: string;
                }>;
 
-               for (const op of operations) {
+               for (const op of ops) {
                     // Build transaction
-                    const tx = this.buildModifyAccountTransaction(type, env.wallet || wallet, env, config, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, suppressIndividualFeedback, extra });
+                    const tx = this.buildModifyAccountTransaction(type, env.wallet || wallet, env, config, { simulate, multiSign, setFlags, clearFlags, suppressIndividualFeedback, extra, ...extra, flagValue: op.flagValue, operation: op.operation });
 
                     // Optional fields
-                    await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, suppressIndividualFeedback, extra }, env);
+                    await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra }, env);
 
                     // Execute
-                    const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, suppressIndividualFeedback, extra });
+                    const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra });
 
                     const resultEntry = {
                          flagName: op.flagName,
@@ -285,143 +312,200 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
           }
      }
 
-     // async executeDepositAuthTx(
-     //      type: AccountConfigAction,
-     //      config: AccountConfig
-     // ): Promise<{
-     //      success: boolean;
-     //      modifyCount?: number;
-     //      validationError?: boolean;
-     //      deletedHashes?: { depostiAuthAddress: string; hash: string }[];
-     //      error?: string;
-     // }> {
-     //      const { wallet, formValues, extra = {}, preFetchedEnv } = config;
-     //      const { isSimulateEnabled = false } = formValues;
+     async executeDepositAuthTx(type: AccountConfigAction, config: AccountConfig): Promise<{ success: boolean; modifyCount?: number; validationError?: boolean; deletedHashes?: { depostiAuthAddress: string; hash: string }[]; error?: string }> {
+          const { wallet, simulate = false, multiSign = false, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, authorizeFlag, depositAuthAddresses, signerQuorum, signerEntries, formattedSignerEntries, regularKeyAddress, depsositAuthEntries, formattedDepsositAuthEntries, enableRegularKeyFlag, enableMultiSignFlag, enableNftMinter, suppressIndividualFeedback, preFetchedEnv, extra = {} } = config;
 
-     //      let client: xrpl.Client;
-     //      let env: any;
-     //      let currentLedger: number;
-     //      let modifiedResults: { depostiAuthAddress: string; hash: string }[] = [];
-     //      let successCount = 0;
+          let env: any;
+          let client: xrpl.Client;
+          let fee: string;
+          let txHash: string | undefined;
+          let currentLedger: number;
+          let modifiedResults: { depostiAuthAddress: string; hash: string }[] = [];
+          let successCount = 0;
 
-     //      const failedResults: Array<{
-     //           address: string;
-     //           hash: string;
-     //           error: string;
-     //      }> = [];
+          const failedResults: Array<{
+               address: string;
+               hash: string;
+               error: string;
+          }> = [];
 
-     //      try {
-     //           this.txUiService.resetCurrentStepToIdle();
-     //           this.txUiService.clearAllOptionsAndMessages();
+          try {
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
-     //           if (preFetchedEnv) {
-     //                env = preFetchedEnv;
-     //                client = preFetchedEnv.client;
-     //                currentLedger = preFetchedEnv.currentLedger;
+               // Use pre-fetched env if provided, otherwise fetch
+               if (preFetchedEnv) {
+                    env = preFetchedEnv;
+                    client = preFetchedEnv.client;
+                    fee = preFetchedEnv.fee;
+                    currentLedger = preFetchedEnv.currentLedger;
+               } else {
+                    env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeFee: true,
+                         includeLedgerInfo: true,
+                    });
+                    client = env.client;
+                    fee = env.fee!;
+                    currentLedger = env.currentLedger!;
+               }
 
-     //                if (!env.accountInfo || !env.fee || !env.currentLedger) {
-     //                     throw new Error('Pre-fetched environment missing required fields');
-     //                }
-     //           } else {
-     //                // Normal fetch fallback
-     //                const envFlags: any = {
-     //                     includeAccountInfo: true,
-     //                     includeAccountObject: true,
-     //                     includeFee: true,
-     //                     includeLedgerIndex: true,
-     //                };
+               client = env.client;
 
-     //                const env = await this.txEnvironmentService.prepareTxEnvironment(envFlags);
-     //                client = env.client;
-     //                currentLedger = env.currentLedger!;
+               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) {
+                    throw new Error('Required network data missing');
+               }
 
-     //                if (!env.accountInfo || !env.fee || !env.currentLedger) {
-     //                     throw new Error('Pre-fetched environment missing required fields');
-     //                }
-     //           }
+               const validationRule = ACCOUNT_CONFIG_VALIDATION_RULES[type];
+               const validationInputs = this.buildValidationInputs(type, wallet, env, {
+                    simulate,
+                    multiSign,
+                    amountField,
+                    nfTokenMinterAddress,
+                    setFlags,
+                    clearFlags,
+                    tickSize,
+                    transferRate,
+                    publicKey,
+                    domain,
+                    isMessageKey,
+                    enableNftMinter,
+                    suppressIndividualFeedback,
+                    extra,
+               });
 
-     //           const validationRule = this.getValidationRuleName(type);
-     //           const validationInputs = this.buildValidationInputs(type, wallet, env, formValues, extra);
-     //           const errors = await this.validator.validate(validationRule, {
-     //                inputs: validationInputs,
-     //                client,
-     //                accountInfo: env.accountInfo,
-     //           });
+               const errors = await this.validator.validate(validationRule, {
+                    inputs: validationInputs,
+                    client,
+                    accountInfo: env.accountInfo,
+               });
 
-     //           if (errors.length > 0) {
-     //                return { success: false, error: errors.join('\n• '), validationError: true };
-     //           }
+               if (errors.length > 0) {
+                    return { success: false, error: errors.join('\n• '), validationError: true };
+               }
 
-     //           for (const depostiAuthAddress of extra['formattedDepsositAuthEntries']) {
-     //                const address = depostiAuthAddress.SignerEntry.Account;
-     //                const tx = this.buildModifyAccountTransaction(type, env.wallet, env, formValues, extra, address);
+               for (const depostiAuthAddress of depositAuthAddresses) {
+                    const address = depostiAuthAddress.account;
+                    config.destinationAddress = address;
+                    const tx = this.buildModifyAccountTransaction(type, env.wallet || wallet, env, config, {
+                         simulate,
+                         multiSign,
+                         amountField,
+                         nfTokenMinterAddress,
+                         setFlags,
+                         clearFlags,
+                         tickSize,
+                         transferRate,
+                         publicKey,
+                         domain,
+                         isMessageKey,
+                         enableNftMinter,
+                         authorizeFlag,
+                         depositAuthAddresses,
+                         enableRegularKeyFlag,
+                         signerQuorum,
+                         depsositAuthEntries,
+                         formattedDepsositAuthEntries,
+                         signerEntries,
+                         formattedSignerEntries,
+                         regularKeyAddress,
+                         enableMultiSignFlag,
+                         suppressIndividualFeedback,
+                         extra,
+                    });
 
-     //                await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues, env);
+                    await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, enableRegularKeyFlag, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableMultiSignFlag, suppressIndividualFeedback, extra }, env);
 
-     //                const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
+                    const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, {
+                         simulate,
+                         multiSign,
+                         amountField,
+                         nfTokenMinterAddress,
+                         setFlags,
+                         clearFlags,
+                         tickSize,
+                         transferRate,
+                         publicKey,
+                         domain,
+                         isMessageKey,
+                         enableNftMinter,
+                         authorizeFlag,
+                         depositAuthAddresses,
+                         enableRegularKeyFlag,
+                         enableMultiSignFlag,
+                         signerQuorum,
+                         depsositAuthEntries,
+                         formattedDepsositAuthEntries,
+                         signerEntries,
+                         formattedSignerEntries,
+                         regularKeyAddress,
+                         suppressIndividualFeedback,
+                         extra,
+                    });
 
-     //                if (!execResult.success) {
-     //                     failedResults.push({
-     //                          address,
-     //                          hash: execResult.hash!,
-     //                          error: execResult.error || 'Unknown error',
-     //                     });
-     //                     continue;
-     //                }
+                    if (!execResult.success) {
+                         failedResults.push({
+                              address,
+                              hash: execResult.hash!,
+                              error: execResult.error || 'Unknown error',
+                         });
+                         continue;
+                    }
 
-     //                successCount++;
-     //                if (execResult.hash) {
-     //                     modifiedResults.push({ depostiAuthAddress, hash: execResult.hash });
-     //                }
-     //           }
+                    successCount++;
+                    if (execResult.hash) {
+                         modifiedResults.push({ depostiAuthAddress, hash: execResult.hash });
+                    }
+               }
 
-     //           if (isSimulateEnabled) {
-     //                let msg = `Simulated deposit auth of ${successCount} accounts successfully!`;
-     //                if (failedResults.length > 0) {
-     //                     msg += ` (${failedResults.length} failed)`;
-     //                }
-     //                this.toastService.success(msg, AppConstants.TOAST.SUCCESS);
-     //                return { success: successCount > 0, modifyCount: successCount, deletedHashes: modifiedResults };
-     //           }
+               if (simulate) {
+                    let msg = `Simulated deposit auth of ${successCount} accounts successfully!`;
+                    if (failedResults.length > 0) {
+                         msg += ` (${failedResults.length} failed)`;
+                    }
+                    this.toastService.success(msg, AppConstants.TOAST.SUCCESS);
+                    return { success: successCount > 0, modifyCount: successCount, deletedHashes: modifiedResults };
+               }
 
-     //           const lastLedger = currentLedger + AppConstants.LAST_LEDGER_ADD_TIME;
+               const lastLedger = currentLedger + AppConstants.LAST_LEDGER_ADD_TIME;
 
-     //           for (const { hash, depostiAuthAddress } of modifiedResults) {
-     //                try {
-     //                     const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, hash, lastLedger);
-     //                     this.txUiService.addTxResultSignal(finalResult);
-     //                } catch (waitError: any) {
-     //                     console.warn(`Confirmation wait failed for deposit auth ${depostiAuthAddress} (${hash.slice(0, 8)}...):`, waitError);
-     //                     // continue — don't fail whole batch
-     //                }
-     //           }
+               for (const { hash, depostiAuthAddress } of modifiedResults) {
+                    try {
+                         const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, hash, lastLedger);
+                         this.txUiService.addTxResultSignal(finalResult);
+                    } catch (waitError: any) {
+                         console.warn(`Confirmation wait failed for deposit auth ${depostiAuthAddress} (${hash.slice(0, 8)}...):`, waitError);
+                         // continue — don't fail whole batch
+                    }
+               }
 
-     //           if (successCount > 0) {
-     //                const msg = `${successCount} deposit auth(s) modified successfully!`;
-     //                this.toastService.successMultipleHashesWithDepositAuth(msg, modifiedResults, this.txUiService.explorerUrl() + 'tx/', AppConstants.TOAST.SUCCESS);
-     //                this.txUiService.currentStep.set('success');
-     //           }
+               if (successCount > 0) {
+                    const msg = `${successCount} deposit auth(s) modified successfully!`;
+                    this.toastService.successMultipleHashesWithDepositAuth(msg, modifiedResults, this.txUiService.explorerUrl() + 'tx/', AppConstants.TOAST.SUCCESS);
+                    this.txUiService.currentStep.set('success');
+               }
 
-     //           // Failures in one combined toast
-     //           if (failedResults.length > 0) {
-     //                const txMessage = 'deposit auth update';
-     //                this.toastService.buildMultiErrorMessage(failedResults, txMessage, `${this.txUiService.explorerUrl()}tx/`);
-     //           }
+               // Failures in one combined toast
+               if (failedResults.length > 0) {
+                    const txMessage = 'deposit auth update';
+                    this.toastService.buildMultiErrorMessage(failedResults, txMessage, `${this.txUiService.explorerUrl()}tx/`);
+               }
 
-     //           return {
-     //                success: successCount > 0 || failedResults.length === 0,
-     //                modifyCount: successCount,
-     //                deletedHashes: modifiedResults,
-     //           };
-     //      } catch (err: any) {
-     //           const msg = err.message || 'Unexpected error during modify account transaction';
-     //           console.error(`[${type}] executeModifyAccountTx failed:`, err);
-     //           this.xrplTransactionService.processTxError(err);
-     //           return { success: false, error: msg };
-     //      } finally {
-     //           this.txUiService.resetCurrentStepToIdle();
-     //      }
-     // }
+               return {
+                    success: successCount > 0 || failedResults.length === 0,
+                    modifyCount: successCount,
+                    deletedHashes: modifiedResults,
+               };
+          } catch (err: any) {
+               const msg = err.message || 'Unexpected error during modify account transaction';
+               console.error(`[${type}] executeModifyAccountTx failed:`, err);
+               this.xrplTransactionService.processTxError(err);
+               return { success: false, error: msg };
+          } finally {
+               this.txUiService.resetCurrentStepToIdle();
+          }
+     }
 
      private buildValidationInputs(type: AccountConfigAction, wallet: Wallet, env: any, values: any) {
           const base = {
@@ -451,47 +535,47 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
           }
      }
 
-     private buildModifyAccountTransaction(type: AccountConfigAction, wallet: xrpl.Wallet, env: any, formValues: any, extra: any, depostiAuthAddress?: string): xrpl.Transaction {
-          const { fee, currentLedger } = env;
+     private buildModifyAccountTransaction(type: AccountConfigAction, wallet: xrpl.Wallet, env: any, config: any, extra: any): xrpl.Transaction {
+          const { fee, ledgerInfo } = env;
           let tx: any;
           switch (type) {
                case 'modifyAccountSetFlags':
                case 'modifyAccountFlags':
-                    const flagValue = extra.flagValue; // number | string
+                    const flagValue = extra.flagValue;
                     const operation = extra.operation; // 'SetFlag' | 'ClearFlag'
-                    tx = this.xrplTransactionService.buildModifyAccountSetTransaction(wallet, env.fee, env.currentLedger);
+                    tx = this.xrplTransactionService.buildModifyAccountSetTransaction(wallet, fee, ledgerInfo.lastIndex);
                     if (operation === 'SetFlag') {
-                         tx.SetFlag = Number(flagValue); // must be number
+                         tx.SetFlag = Number(flagValue);
                     } else {
                          tx.ClearFlag = Number(flagValue);
                     }
                     return tx;
                case 'modifyDepositAuth':
-                    return this.xrplTransactionService.buildModifyDepositAuthTransaction(wallet, extra.authorizeFlag, depostiAuthAddress, fee, currentLedger);
+                    return this.xrplTransactionService.buildModifyDepositAuthTransaction(wallet, extra.authorizeFlag, config.destinationAddress, fee, ledgerInfo.lastIndex);
                case 'modifyMultiSigners':
-                    tx = this.xrplTransactionService.buildModifyMultiSignTransaction(wallet, fee, currentLedger);
+                    tx = this.xrplTransactionService.buildModifyMultiSignTransaction(wallet, fee, ledgerInfo.lastIndex);
                     if (extra.enableMultiSignFlag === 'Y') {
                          tx.SignerEntries = extra.formattedSignerEntries;
-                         tx.SignerQuorum = Number(this.txUiService.signerQuorum());
+                         tx.SignerQuorum = Number(config.signerQuorum);
                     }
                     return tx;
                case 'modifyRegularKey':
-                    tx = this.xrplTransactionService.buildModifySetRegularKeyTransaction(wallet, fee, currentLedger);
+                    tx = this.xrplTransactionService.buildModifySetRegularKeyTransaction(wallet, fee, ledgerInfo.lastIndex);
                     if (extra.enableRegularKeyFlag === 'Y') {
-                         tx.RegularKey = this.txUiService.regularKeyAddress();
+                         tx.RegularKey = config.regularKeyAddress;
                     }
                     return tx;
                case 'modifyMetaData':
-                    tx = this.xrplTransactionService.buildModifyAccountSetTransaction(wallet, fee, currentLedger);
+                    tx = this.xrplTransactionService.buildModifyAccountSetTransaction(wallet, fee, ledgerInfo.lastIndex);
                     if (extra.enableNftMinter === 'Y') {
-                         tx.NFTokenMinter = this.txUiService.nfTokenMinterAddress();
+                         tx.NFTokenMinter = config.nfTokenMinterAddress;
                          tx.SetFlag = xrpl.AccountSetAsfFlags.asfAuthorizedNFTokenMinter;
                     } else {
                          tx.ClearFlag = xrpl.AccountSetAsfFlags.asfAuthorizedNFTokenMinter;
                     }
                     return tx;
                case 'updateMetaData':
-                    return this.xrplTransactionService.buildModifyAccountSetTransaction(wallet, fee, currentLedger);
+                    return this.xrplTransactionService.buildModifyAccountSetTransaction(wallet, fee, ledgerInfo.lastIndex);
           }
      }
 

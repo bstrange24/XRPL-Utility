@@ -51,8 +51,9 @@ export interface PrefetchedLedgerEnvironment {
      accountObjects?: xrpl.AccountObjectsResponse;
      destinationAccountInfo?: xrpl.AccountInfoResponse;
      fee: string;
+     ledgerInfo: any;
      currentLedger: number;
-     wallet?: xrpl.Wallet;
+     wallet?: Wallet;
 }
 
 /**
@@ -64,6 +65,7 @@ export interface AccountConfig {
      simulate?: boolean;
      multiSign?: boolean;
 
+     operations?: any;
      setFlags?: Partial<XrplAccountFlags>;
      clearFlags?: Partial<XrplAccountFlags>;
      tickSize?: number;
@@ -72,7 +74,19 @@ export interface AccountConfig {
      amountField?: string;
      destinationAddress?: string;
      nfTokenMinterAddress?: string;
+     regularKeyAddress?: string;
+     regularKeySeed?: string;
+     signerQuorum?: number;
+     SignerWeight?: number;
+     signerEntries: any;
+     formattedSignerEntries: any;
+     enableMultiSignFlag?: string;
+     authorizeFlag?: string;
 
+     enableRegularKeyFlag?: string;
+     depositAuthAddresses?: any;
+     depsositAuthEntries?: any;
+     formattedDepsositAuthEntries?: any;
      // setFlags?: Partial<XrplAccountFlags>;
      // clearFlags?: Partial<XrplAccountFlags>;
 
@@ -93,6 +107,7 @@ export interface AccountConfig {
 
 export type AccountConfiguratorField =
      | 'accountInfo'
+     | 'operations'
      | 'amountField'
      | 'setFlags'
      | 'clearFlags'
@@ -106,6 +121,7 @@ export type AccountConfiguratorField =
      | 'multiSignAddress'
      | 'multiSignSeeds'
      | 'signerQuorum'
+     | 'SignerWeight'
      | 'regularKeyAddress'
      | 'regularKeySeed'
      | 'suppressIndividualFeedback'
@@ -131,9 +147,12 @@ export type AccountConfiguratorField =
      | 'memoField'
      | 'useMultiSign'
      | 'configurationType'
-     | 'hasSignerList';
+     | 'hasSignerList'
+     | 'depsositAuthEntries'
+     | 'formattedDepsositAuthEntries'
+     | 'signerEntries'
+     | 'formattedSignerEntries';
 
-     
 export interface AccountConfiguratorState {
      accountInfo: any;
      configurationType: 'holder' | 'exchanger' | 'issuer' | null;
@@ -166,7 +185,10 @@ export interface AccountConfiguratorState {
      isRegularKeyAddress: boolean;
      regularKeySigningEnabled: boolean;
 
+     signerEntries: any;
+     formattedSignerEntries: any;
      signerQuorum: number;
+     SignerWeight: number;
 
      signers: UiSignerEntry[];
      depositAuthAddresses: UiSignerEntry[];

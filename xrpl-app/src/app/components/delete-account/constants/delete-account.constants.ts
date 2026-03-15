@@ -3,7 +3,7 @@ import { Wallet } from '../../../services/wallets/manager/wallet-manager.service
 import * as xrpl from 'xrpl';
 
 export type AccountDeleteTxType = 'deleteAccount';
-export type DeleteAccountField = 'accountInfo' | 'accountObjects' | 'serverInfo' | 'blockingObjects' | 'savedTxJson' | 'savedTxResult';
+export type DeleteAccountField = 'accountInfo' | 'accountObjects' | 'serverInfo' | 'blockingObjects' | 'savedTxJson' | 'savedTxResult' | 'regularKeySigningEnabled';
 
 export interface AccountDeleteConfig {
      wallet: Wallet;

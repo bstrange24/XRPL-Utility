@@ -12,6 +12,8 @@
 @let tabs = accountConfiguratorUtilService.accountConfigTabs;
 <!-- Get tab meta data -->
 @let meta = accountConfiguratorUtilService.accountConfigTabsMeta;
+<!-- Get info data -->
+@let info = accountConfiguratorViewModelService.infoData();
 
 <!-- Main content. -->
 <div class="main-container">
@@ -23,27 +25,9 @@
           <div class="form-panel">
                <!-- Menu / Tabs -->
                <app-tab-menu-with-info [tabs]="tabs" [active]="accountConfiguratorViewModelService.activeTab()" [metaMap]="meta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
-               <!-- <div class="menu-bar">
-                    @for (item of tabs; track item.key) {
-                    <button class="menu-btn" [class.active]="tab === item.key" (click)="setTab(item.key)">
-                         <ng-icon [name]="item.icon" [size]="item.iconSize" class="text-red-600"></ng-icon>
-                         {{ item.label }}
-                    </button>
-                    }
-               </div>
-
-               <div class="submenu-info-text">
-                    <div [class]="meta.colorClass">
-                         <ng-icon [name]="meta.icon" [size]="meta.iconSize" [color]="meta.color"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">{{ meta.title }}</h2>
-                         <p class="submenu-info-secondary-text">{{ meta.desc }}</p>
-                    </div>
-               </div> -->
 
                <!-- Info Message -->
-               @if (accountConfiguratorViewModelService.infoData(); as info) {
+               @if (info) {
                <div class="info-and-credentials-card" [class.has-config]="info.hasSpecialConfig">
                     <!-- Always-visible summary row -->
                     <div class="summary-header">
@@ -151,7 +135,7 @@
                               <span class="section-title" name="depositAuthConfig">Deposit Authorization Configuration</span>
                          </div>
 
-                         <!-- Signers list -->
+                         <!-- Deposit Auth list -->
                          <div class="signers-list">
                               @for (depositAuthAddress of accountConfiguratorStoreService.get('depositAuthAddresses'); track i + ':' + (depositAuthAddress.account ?? i); let i = $index) {
                               <fieldset class="signer-fieldset-dep-auth">
@@ -176,7 +160,7 @@
                               }
                          </div>
 
-                         <!-- Add Signer -->
+                         <!-- Add Deposit Auth Signer -->
                          <div class="form-row actions-row">
                               <div class="form-group">
                                    <button type="button" name="addDepositAuthAddressButton" (click)="accountConfiguratorUtilService.addDepositAuthAddresses()" class="btn-primary-blue">Add Signer</button>
@@ -196,8 +180,8 @@
                     </div>
 
                     <div class="button-row">
-                         <button type="button" class="btn-primary-blue" (click)="setNftMinterAddress('Y')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setNftMinterButtonLabel() }}</button>
-                         <button type="button" class="btn-primary-red" (click)="setNftMinterAddress('N')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeNftMinterButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-blue" (click)="performAction('Y')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setNftMinterButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-red" (click)="performAction('N')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeNftMinterButtonLabel() }}</button>
                     </div>
 
                     <!-- Transfer Rate, tick -->
@@ -268,7 +252,7 @@
                                         <div class="form-group weight-group">
                                              <label for="signerWeightField{{ i }}">Weight</label>
                                              <p class="form-hint">Sign Wgt.</p>
-                                             <input type="number" id="signerWeightField{{ i }}" [ngModel]="signer.SignerWeight" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'SignerWeight', $event)" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" class="input-number" />
+                                             <input type="number" name="signerWeightField{{ i }}" id="signerWeightField{{ i }}" [ngModel]="signer.SignerWeight" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'SignerWeight', $event)" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" class="input-number" />
                                         </div>
 
                                         <div class="form-group remove-group">
@@ -324,31 +308,31 @@
                     </div>
                     }
 
-                    <app-transaction-options [showWhenTab]="['modifyMultiSigners', 'modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled"></app-transaction-options>
+                    <app-transaction-options [showWhenTab]="['modifyMultiSigners','modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.get('multiSigningEnabled')" [regularKeySigningEnabled]="accountConfiguratorStoreService.get('regularKeySigningEnabled')"> </app-transaction-options>
 
                     <!-- Action buttons -->
                     @if(tab === 'modifyMultiSigners') {
                     <div class="button-row" style="margin-top: 0">
-                         <button type="button" class="btn-primary-blue" (click)="setMultiSign('Y')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
-                         <button type="button" class="btn-primary-red" (click)="setMultiSign('N')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-blue" (click)="performAction('Y')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-red" (click)="performAction('N')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
                     </div>
                     } @else if(tab === 'modifyRegularKey') {
                     <div class="button-row">
-                         <button type="button" (click)="setRegularKey('Y')" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setRegularKeyButtonLabel() }}</button>
-                         <button type="button" (click)="setRegularKey('N')" class="btn-primary-red" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeRegularKeyButtonLabel() }}</button>
+                         <button type="button" (click)="performAction('Y')" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setRegularKeyButtonLabel() }}</button>
+                         <button type="button" (click)="performAction('N')" class="btn-primary-red" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeRegularKeyButtonLabel() }}</button>
                     </div>
                     } @else if(tab === 'modifyMetaData') {
                     <div class="button-row">
-                         <button type="button" (click)="updateMetaData()" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.modifyAccountMetaDataButtonLabel() }}</button>
+                         <button type="button" (click)="performAction('')" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.modifyAccountMetaDataButtonLabel() }}</button>
                     </div>
                     } @else if(tab === 'modifyDepositAuth') {
                     <div class="button-row">
-                         <button type="button" (click)="setDepositAuthAccounts('Y')" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
-                         <button type="button" (click)="setDepositAuthAccounts('N')" class="btn-primary-red" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
+                         <button type="button" (click)="performAction('Y')" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
+                         <button type="button" (click)="performAction('N')" class="btn-primary-red" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
                     </div>
                     } @else if(tab === 'modifyAccountFlags') {
                     <div class="button-row">
-                         <button type="button" (click)="performAction()" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.modifyAccountFlagsButtonLabel() }}</button>
+                         <button type="button" (click)="performAction('')" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.modifyAccountFlagsButtonLabel() }}</button>
                     </div>
                     }
 

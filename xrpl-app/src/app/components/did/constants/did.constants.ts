@@ -4,7 +4,7 @@ import * as xrpl from 'xrpl';
 
 export type DidTxType = 'setDid' | 'deleteDid';
 export type DidTab = 'set' | 'delete';
-export type DidField = 'didData' | 'uriData' | 'createdDids' | 'existingDid' | 'didDocumentData';
+export type DidField = 'didData' | 'uriData' | 'createdDids' | 'existingDid' | 'didDocumentData' | 'regularKeySigningEnabled';
 
 export interface DidInfoData {
      walletName: string;

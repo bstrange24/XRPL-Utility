@@ -13,6 +13,7 @@ import { AppConstants } from '../../../core/app.constants';
 import { MptUtilService } from '../mpt-util/mpt-util.service';
 import { MPTAmount } from '../../../models/interface-items.model';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
 
 type MptTxType = 'create' | 'authorize' | 'unauthorize' | 'send' | 'lock' | 'unlock' | 'clawback' | 'destroy';
 
@@ -66,6 +67,7 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
      private readonly txUiService = inject(TransactionUiService);
      private readonly optionalFields = inject(TransactionOptionalFieldsService);
      public readonly mptUtilService = inject(MptUtilService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
 
      async executeMptTx(type: MptTxType, config: MptTxConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
           const { wallet, formValues, extra = {}, preFetchedEnv } = config;
@@ -402,7 +404,8 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
           if (type === 'lock' || type === 'unlock') {
                return this.executor.mptLockUnlock(tx as xrpl.MPTokenIssuanceSet, wallet, client, {
                     useMultiSign: this.txUiService.useMultiSign(),
-                    isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                    isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                    // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                     regularKeyAddress: this.txUiService.regularKeyAddress(),
                     regularKeySeed: this.txUiService.regularKeySeed(),
                     multiSignAddress: this.txUiService.multiSignAddress(),
@@ -413,7 +416,8 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
           if (type === 'clawback') {
                return this.executor.mptClawback(tx as xrpl.Clawback, wallet, client, {
                     useMultiSign: this.txUiService.useMultiSign(),
-                    isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                    isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                    // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                     regularKeyAddress: this.txUiService.regularKeyAddress(),
                     regularKeySeed: this.txUiService.regularKeySeed(),
                     multiSignAddress: this.txUiService.multiSignAddress(),

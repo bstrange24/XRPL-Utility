@@ -19,6 +19,7 @@ export class AccountConfiguratorStoreService {
           multiSignSeeds: '',
           multiSigningEnabled: false,
           hasSignerList: false,
+          operations: '',
 
           // Account config specific
           amountField: '',
@@ -36,6 +37,7 @@ export class AccountConfiguratorStoreService {
           regularKeySigningEnabled: false,
 
           signerQuorum: 0,
+          SignerWeight: 0,
           signers: [{ Account: '', seed: '', SignerWeight: 1 }] as UiSignerEntry[],
           depositAuthAddresses: [{ Account: '', seed: '', SignerWeight: 1 }] as UiSignerEntry[],
 
@@ -43,6 +45,11 @@ export class AccountConfiguratorStoreService {
           depositAuthEnabled: false,
           isdepositAuthAddress: false,
           depositAuthAddress: '',
+          depsositAuthEntries: '',
+          formattedDepsositAuthEntries: '',
+
+          signerEntries: '',
+          formattedSignerEntries: '',
 
           isNFTokenMinterEnabled: false,
           isAuthorizedNFTokenMinter: false,

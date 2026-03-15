@@ -11,6 +11,7 @@ import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-
 import * as xrpl from 'xrpl';
 import { TrustlineCurrencyService } from '../trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
+import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -26,6 +27,7 @@ export class AcccountDataService extends PerformanceBaseComponent {
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactions = inject(XrplTransactionService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
 
      hasSignerList = signal<boolean>(false);
 
@@ -34,44 +36,23 @@ export class AcccountDataService extends PerformanceBaseComponent {
 
           const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
           const hasSignerList = signerAccounts?.length > 0;
-          this.txUiService.signerQuorum.set(signerQuorum);
+          this.accountConfiguratorStoreService.set('signerQuorum', signerQuorum);
 
           const checkForMultiSigner = signerAccounts?.length > 0;
           checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
-
-          this.txUiService.multiSigningEnabled.set(hasSignerList);
+          this.accountConfiguratorStoreService.set('multiSigningEnabled', hasSignerList);
           if (hasSignerList) {
                const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.txUiService.signers.set(entries);
+               this.accountConfiguratorStoreService.set('signers', entries);
           }
 
           this.setRegularKeyProperties(accountInfo);
      }
 
      public refreshUiStateAccountConfigure(wallet: xrpl.Wallet, env: any): void {
-          // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(env.accountObjects));
-
-          // const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(env.accountObjects);
-          // const hasSignerList = signerAccounts?.length > 0;
-          // this.hasSignerList.set(hasSignerList);
-          // this.txUiService.signerQuorum.set(signerQuorum);
-
-          // const checkForMultiSigner = signerAccounts?.length > 0;
-          // checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
-
-          // this.txUiService.multiSigningEnabled.set(hasSignerList);
-
-          // if (hasSignerList) {
-          //      const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-          //      this.txUiService.signers.set(entries);
-          // }
-
           this.setRegularKeyProperties(env.accountInfo);
-
           this.setDepositAuth(env);
-
           this.setNfTokenMinter(env);
-
           this.refreshUiAccountMetaData(env.accountInfo?.result?.account_data);
      }
 
@@ -88,77 +69,81 @@ export class AcccountDataService extends PerformanceBaseComponent {
 
      setRegularKeyProperties(accountInfo: any) {
           const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
+          this.accountConfiguratorStoreService.set('regularKeySigningEnabled', hasRegularKey);
           const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
-          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
-          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
+          console.log('rkProps: ', rkProps);
+          this.accountConfiguratorStoreService.set('regularKeyAddress', rkProps.regularKeyAddress);
+          this.accountConfiguratorStoreService.set('regularKeySeed', rkProps.regularKeySeed);
      }
 
      public setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
           const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-          this.txUiService.signers.set(signerEntries);
-          this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
-          this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
+          this.accountConfiguratorStoreService.set('signers', signerEntries);
+          this.accountConfiguratorStoreService.set('multiSignAddress', signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
+          this.accountConfiguratorStoreService.set('multiSignSeeds', signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
      }
 
      public clearMultiSignersConfiguration(): void {
-          this.txUiService.signerQuorum.set(0);
-          this.txUiService.signers.set([{ Account: '', seed: '', SignerWeight: 1 }]);
-          this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
-          this.txUiService.multiSignSeeds.set('');
+          this.accountConfiguratorStoreService.set('signerQuorum', 0);
+          this.accountConfiguratorStoreService.set('signers', [{ Account: '', seed: '', SignerWeight: 1 }]);
+          this.accountConfiguratorStoreService.set('multiSignAddress', 'No Multi-Sign address configured for account');
+          this.accountConfiguratorStoreService.set('multiSignSeeds', '');
           this.storageService.removeValue('signerEntries');
      }
 
      setDepositAuthProperties(hasPreAuthAccounts: boolean, preAuthAccounts: string[]): void {
           if (hasPreAuthAccounts) {
-               this.txUiService.depositAuthAddresses.set(preAuthAccounts.map(a => ({ account: a })));
-               this.txUiService.isdepositAuthAddress.set(true);
-               this.txUiService.depositAuthEnabled.set(true);
+               this.accountConfiguratorStoreService.set(
+                    'depositAuthAddresses',
+                    preAuthAccounts.map(a => ({ account: a }))
+               );
+               this.accountConfiguratorStoreService.set('isdepositAuthAddress', true);
+               this.accountConfiguratorStoreService.set('depositAuthEnabled', true);
                return;
           }
-          this.txUiService.depositAuthAddresses.set([{ account: '' }]);
-          this.txUiService.isdepositAuthAddress.set(false);
-          this.txUiService.depositAuthEnabled.set(false);
+
+          this.accountConfiguratorStoreService.set('depositAuthAddresses', [{ account: '' }]);
+          this.accountConfiguratorStoreService.set('isdepositAuthAddress', false);
+          this.accountConfiguratorStoreService.set('depositAuthEnabled', false);
           this.storageService.removeValue('depositAuthEntries');
      }
 
      setNfTokenMinterProperties(nftTokenMinter: string | undefined): void {
           if (nftTokenMinter) {
-               this.txUiService.isAuthorizedNFTokenMinter.set(false); // stays false until verified externally
-               this.txUiService.isNFTokenMinterEnabled.set(true);
-               this.txUiService.nfTokenMinterAddress.set(nftTokenMinter);
+               this.accountConfiguratorStoreService.set('isAuthorizedNFTokenMinter', false);
+               this.accountConfiguratorStoreService.set('isNFTokenMinterEnabled', true);
+               this.accountConfiguratorStoreService.set('nfTokenMinterAddress', nftTokenMinter);
           } else {
-               this.txUiService.isAuthorizedNFTokenMinter.set(false);
-               this.txUiService.isNFTokenMinterEnabled.set(false);
-               this.txUiService.nfTokenMinterAddress.set('');
+               this.accountConfiguratorStoreService.set('isAuthorizedNFTokenMinter', false);
+               this.accountConfiguratorStoreService.set('isNFTokenMinterEnabled', false);
+               this.accountConfiguratorStoreService.set('nfTokenMinterAddress', '');
           }
      }
 
      refreshUiAccountMetaData(accountData: any): void {
           this.clearUiIAccountMetaData();
           const { TickSize, TransferRate, Domain, MessageKey } = accountData;
-
           const hasMetaData = TickSize || TransferRate || Domain || MessageKey;
           if (hasMetaData) {
-               this.txUiService.isUpdateMetaData.set(true);
+               this.accountConfiguratorStoreService.set('isUpdateMetaData', true);
                this.refreshUiIAccountMetaData(accountData);
           } else {
-               this.txUiService.isUpdateMetaData.set(false);
+               this.accountConfiguratorStoreService.set('isUpdateMetaData', false);
           }
      }
 
      async refreshUiIAccountMetaData(accountInfo: any) {
           const { TickSize, TransferRate, Domain, MessageKey } = accountInfo;
-          this.txUiService.tickSize.set(TickSize || '');
-          this.txUiService.transferRate.set(TransferRate ? ((TransferRate / 1_000_000_000 - 1) * 100).toFixed(3) : '');
-          this.txUiService.domain.set(Domain ? this.utilsService.decodeHex(Domain) : '');
-          this.txUiService.isMessageKey.set(!!MessageKey);
+          this.accountConfiguratorStoreService.set('tickSize', TickSize || '');
+          this.accountConfiguratorStoreService.set('transferRate', TransferRate ? ((TransferRate / 1_000_000_000 - 1) * 100).toFixed(3) : '');
+          this.accountConfiguratorStoreService.set('domain', Domain ? this.utilsService.decodeHex(Domain) : '');
+          this.accountConfiguratorStoreService.set('isMessageKey', !!MessageKey);
      }
 
      clearUiIAccountMetaData() {
-          this.txUiService.tickSize.set('');
-          this.txUiService.transferRate.set('');
-          this.txUiService.domain.set('');
-          this.txUiService.isMessageKey.set(false);
+          this.accountConfiguratorStoreService.set('tickSize', '');
+          this.accountConfiguratorStoreService.set('transferRate', '');
+          this.accountConfiguratorStoreService.set('domain', '');
+          this.accountConfiguratorStoreService.set('isMessageKey', false);
      }
 }

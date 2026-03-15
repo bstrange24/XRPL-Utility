@@ -12,6 +12,7 @@ export class DidStoreService {
           didDocumentData: '',
           createdDids: false,
           existingDid: [],
+          regularKeySigningEnabled: false,
      };
 
      /** Signal registry */

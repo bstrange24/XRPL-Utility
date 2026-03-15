@@ -38,6 +38,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
+import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 
 interface AccountFlags {
      isClawback: boolean;
@@ -78,6 +79,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
@@ -655,7 +657,8 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
 
                     const result = await this.txExecutor.createFirewall(mPTokenIssuanceCreateTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
@@ -714,7 +717,8 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
 
                     const result = await this.txExecutor.modifyFirewall(mPTokenAuthorizeTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
@@ -799,7 +803,8 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
 
                     const result = await this.txExecutor.authorizeFlag(sendMptPaymentTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),
@@ -856,7 +861,8 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
 
                     const result = await this.txExecutor.deleteFirewall(mPTokenIssuanceDestroyTx, wallet, client, {
                          useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
                          multiSignAddress: this.txUiService.multiSignAddress(),

@@ -9,3 +9,5 @@ export const ACCOUNT_CONFIG_VALIDATION_RULES: Readonly<Record<AccountConfigActio
      modifyMultiSigners: 'SetMultiSign',
      modifyRegularKey: 'SetRegularKey',
 };
+
+export type ACCOUNT_ACTIONS = 'modifyAccountFlags' | 'modifyAccountSetFlags' | 'modifyMetaData' | 'updateMetaData' | 'modifyDepositAuth' | 'modifyMultiSigners' | 'modifyRegularKey';

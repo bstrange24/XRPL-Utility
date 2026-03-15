@@ -32,10 +32,9 @@ import { WarningMessageComponent } from '../shared/ui-components/warning-message
 import { AccountConfiguratorRequirementsInfoComponent } from './ui-components/account-configurator-requirements-info/account-configurator-requirements-info.component';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-// import { AccountConfig, AccountConfigTxType, XrplAccountFlags } from './constants/account-configurator-constants';
 import { SelectItem } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { AccountConfiguratorViewModelService } from '../../services/account-configurator/account-configurator-view-model/ccount-configurator-view-model.service';
-import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/Account-configurator-store.service';
+import { AccountConfiguratorViewModelService } from '../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
+import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
 import { AccountConfig, AccountConfigAction, XrplAccountFlags } from './constants/account-configurator.types';
 
@@ -63,6 +62,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
+          this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
@@ -136,14 +136,11 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           });
      }
 
-     async performAction(): Promise<void> {
+     async performAction(enabled: string): Promise<void> {
           const currentTab = this.accountConfiguratorViewModelService.activeTab();
           let txResult: { success: boolean; error?: string } | null = null;
           let envRef: any = null;
-
-          // 1. Common reset & guard clauses
-          this.txUiService.resetCurrentStepToIdle();
-          this.txUiService.clearAllOptionsAndMessages();
+          let signerEntries: any = null;
 
           if (!this.walletManagerService.ensureWalletSelected()) return;
 
@@ -162,7 +159,6 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                return;
           }
 
-          // 3. Map tab → action type
           let action: AccountConfigAction = currentTab;
           switch (currentTab) {
                case 'modifyAccountFlags':
@@ -191,64 +187,95 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                               flagName: this.utilsService.getFlagName(f),
                          });
                     });
-                    this.accountConfiguratorStoreService.set('setFlags',setFlags)
-                    this.accountConfiguratorStoreService.set('setFlags',clearFlags)
+                    this.accountConfiguratorStoreService.set('operations', operations);
+                    this.accountConfiguratorStoreService.set('setFlags', setFlags);
+                    this.accountConfiguratorStoreService.set('clearFlags', clearFlags);
                     break;
                case 'modifyDepositAuth':
                     action = 'modifyDepositAuth';
-                    return;
+                    let depsositAuthEntries = this.accountConfiguratorUtilService.createDepsoitAuthEntries();
+                    const formattedDepsositAuthEntries = this.accountConfiguratorUtilService.formatDepositAuthEntries(depsositAuthEntries);
+                    if (!formattedDepsositAuthEntries.length) {
+                         this.toastService.error('Deposit Auth address list is empty', AppConstants.TOAST.ERROR);
+                         return;
+                    }
+                    this.accountConfiguratorStoreService.set('depsositAuthEntries', depsositAuthEntries);
+                    this.accountConfiguratorStoreService.set('formattedDepsositAuthEntries', formattedDepsositAuthEntries);
+                    break;
                case 'modifyMetaData':
                     action = 'modifyMetaData';
                     break;
                case 'modifyMultiSigners':
                     action = 'modifyMultiSigners';
-                    return;
+                    signerEntries = this.accountConfiguratorUtilService.createSignerEntries();
+                    const formattedSignerEntries = this.accountConfiguratorUtilService.formatSignerEntries(signerEntries);
+                    if (!formattedSignerEntries.length) {
+                         this.toastService.error('Multi Signer list is empty', AppConstants.TOAST.ERROR);
+                         return;
+                    }
+                    this.accountConfiguratorStoreService.set('signerEntries', signerEntries);
+                    this.accountConfiguratorStoreService.set('formattedSignerEntries', formattedSignerEntries);
+                    break;
                case 'modifyRegularKey':
                     action = 'modifyRegularKey';
-                    return;
+                    break;
                default:
                     this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
                     return;
           }
 
+          const config: AccountConfig = {
+               wallet: walletVm.wallet!,
+               simulate: this.txUiService.isSimulateEnabled(),
+               multiSign: this.txUiService.useMultiSign(),
+               depositAuthAddresses: this.accountConfiguratorStoreService.get('depositAuthAddresses'),
+               amountField: this.accountConfiguratorStoreService.get('amountField'),
+               nfTokenMinterAddress: this.accountConfiguratorStoreService.get('nfTokenMinterAddress'),
+               setFlags: this.accountConfiguratorStoreService.get('setFlags'),
+               clearFlags: this.accountConfiguratorStoreService.get('clearFlags'),
+               tickSize: this.accountConfiguratorStoreService.get('tickSize'),
+               transferRate: this.accountConfiguratorStoreService.get('transferRate'),
+               publicKey: this.accountConfiguratorStoreService.get('publicKey'),
+               domain: this.accountConfiguratorStoreService.get('domain'),
+               isMessageKey: this.accountConfiguratorStoreService.get('isMessageKey'),
+               operations: this.accountConfiguratorStoreService.get('operations'),
+               signerQuorum: this.accountConfiguratorStoreService.get('signerQuorum'),
+               regularKeyAddress: this.accountConfiguratorStoreService.get('regularKeyAddress'),
+               regularKeySeed: this.accountConfiguratorStoreService.get('regularKeySeed'),
+               depsositAuthEntries: this.accountConfiguratorStoreService.get('depsositAuthEntries'),
+               formattedDepsositAuthEntries: this.accountConfiguratorStoreService.get('formattedDepsositAuthEntries'),
+               signerEntries: this.accountConfiguratorStoreService.get('signerEntries'),
+               formattedSignerEntries: this.accountConfiguratorStoreService.get('formattedSignerEntries'),
+               preFetchedEnv: envRef,
+          };
 
-               // 5. Build the orchestrator config
-               const config: AccountConfig = {
-                    wallet: walletVm.wallet!,
-                    simulate: this.txUiService.isSimulateEnabled(),
-                    multiSign: this.txUiService.useMultiSign(),
-                    amountField: this.accountConfiguratorStoreService.get('amountField'),
-                    nfTokenMinterAddress: this.accountConfiguratorStoreService.get('nfTokenMinterAddress'),
-                    setFlags: this.accountConfiguratorStoreService.get('setFlags'),
-                    clearFlags: this.accountConfiguratorStoreService.get('clearFlags'),
-                    tickSize: this.accountConfiguratorStoreService.get('tickSize'),
-                    transferRate: this.accountConfiguratorStoreService.get('transferRate'),
-                    publicKey: this.accountConfiguratorStoreService.get('publicKey'),
-                    domain: this.accountConfiguratorStoreService.get('domain'),
-                    isMessageKey: this.accountConfiguratorStoreService.get('isMessageKey'),
-                    enableNftMinter: this.accountConfiguratorStoreService.get('enableNftMinter'),
-                    preFetchedEnv: envRef,
-               };
-
-               await this.withPerf('performAction', async () => {
-               // 6. Execute
+          await this.withPerf('performAction', async () => {
                try {
                     switch (currentTab) {
                          case 'modifyAccountFlags':
-                              txResult = await this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx(action, config);
+                              txResult = await this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx('modifyAccountFlags', config);
                               break;
-                         //      case 'modifyDepositAuth':
-                         //           txResult = await this.accountConfiguratorOrchestratorService.executeDepositAuthTx('modifyDepositAuth', config);
-                         //           break;
-                         //      case 'modifyMetaData':
-                         //           txResult = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx(action as AccountConfigTxType, config);
-                         //           break;
-                         //      case 'modifyMultiSigners':
-                         //           txResult = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx(action as AccountConfigTxType, config);
-                         //           break;
-                         //      case 'modifyRegularKey':
-                         //           txResult = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx(action as AccountConfigTxType, config);
-                         //           break;
+                         case 'modifyMetaData':
+                              if (enabled === 'Y' || enabled === 'N') {
+                                   config.enableNftMinter = enabled;
+                                   txResult = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMetaData', config);
+                              } else {
+                                   txResult = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('updateMetaData', config);
+                              }
+                              break;
+                         case 'modifyRegularKey':
+                              config.enableRegularKeyFlag = enabled;
+                              txResult = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyRegularKey', config);
+                              break;
+                         case 'modifyMultiSigners':
+                              config.enableMultiSignFlag = enabled;
+                              txResult = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMultiSigners', config);
+                              break;
+                         case 'modifyDepositAuth':
+                              config.authorizeFlag = enabled;
+                              txResult = await this.accountConfiguratorOrchestratorService.executeDepositAuthTx('modifyDepositAuth', config);
+
+                              break;
                     }
                } catch (err: any) {
                     console.error(`Error in ${action}`, err);
@@ -256,395 +283,277 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                }
           });
 
-          // 7. Handle result & side effects
           if (txResult) {
                const successFullTx: boolean = await this.handleTxResult(txResult, envRef.client, envRef.wallet, '', '', '');
-               // if (currentTab === 'delete' && successFullTx && !this.txUiService.isSimulateEnabled()) {
-               // this.credentialStore.resetCredentialIdDropDown();
-               // }
+               if (successFullTx && !this.txUiService.isSimulateEnabled()) {
+                    // this.acccountDataService.refreshUiStateAccountConfigure(envRef.wallet, envRef);
+                    switch (currentTab) {
+                         case 'modifyMultiSigners':
+                              if (config.enableMultiSignFlag === 'Y') {
+                                   this.storageService.set(envRef.wallet.classicAddress + 'signerEntries', signerEntries);
+                              } else {
+                                   this.storageService.removeValue(envRef.wallet.classicAddress + 'signerEntries');
+                                   this.accountConfiguratorStoreService.set('signerQuorum', 0);
+                              }
+                              break;
+                         case 'modifyRegularKey':
+                              const regularKeysAccount = envRef.wallet.classicAddress + 'regularKey';
+                              const regularKeySeedAccount = envRef.wallet.classicAddress + 'regularKeySeed';
+                              if (config.enableRegularKeyFlag === 'Y') {
+                                   this.storageService.set(regularKeysAccount, this.accountConfiguratorStoreService.get('regularKeyAddress'));
+                                   this.storageService.set(regularKeySeedAccount, this.txUiService.regularKeySeed());
+                              } else {
+                                   this.accountConfiguratorStoreService.set('regularKeyAddress', '');
+                                   this.accountConfiguratorStoreService.set('regularKeySeed', '');
+                                   this.storageService.removeValue(regularKeysAccount);
+                                   this.storageService.removeValue(regularKeySeedAccount);
+                              }
+                              break;
+                    }
+               }
           }
 
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     async modifyAccountFlags() {
-          await this.withPerf('modifyAccountFlags', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
+     // async setMultiSign(enableMultiSignFlag: 'Y' | 'N') {
+     //      await this.withPerf('enableMultiSignFlag', async () => {
+     //           this.txUiService.resetCurrentStepToIdle();
+     //           this.txUiService.clearAllOptionsAndMessages();
 
-               if (!this.walletManagerService.ensureWalletSelected()) return;
+     //           if (!this.walletManagerService.ensureWalletSelected()) return;
 
-               try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                         includeServerInfo: true,
-                    });
+     //           try {
+     //                console.info(`enableMultiSignFlag:`, enableMultiSignFlag);
+     //                const env = await this.txEnvironmentService.prepareTxEnvironment({
+     //                     includeAccountInfo: true,
+     //                     includeAccountObject: true,
+     //                     includeFee: true,
+     //                     includeLedgerIndex: true,
+     //                });
 
-                    if (!env.accountInfo) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
+     //                if (!env.accountInfo || !env.accountObjects) {
+     //                     this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+     //                     return;
+     //                }
 
-                    const { setFlags, clearFlags } = this.utilsService.getFlagUpdates(env.accountInfo.result.account_flags);
+     //                // Create array of signer accounts and their weights
+     //                let signerEntries = this.accountConfiguratorUtilService.createSignerEntries();
 
-                    if (setFlags.length === 0 && clearFlags.length === 0) {
-                         this.toastService.info('No flag changes detected', AppConstants.TOAST.INFO);
-                         return;
-                    }
+     //                // Format SignerEntries for XRPL transaction
+     //                const formattedSignerEntries = this.accountConfiguratorUtilService.formatSignerEntries(signerEntries);
+     //                if (!formattedSignerEntries.length) {
+     //                     this.toastService.error('Multi Signer list is empty', AppConstants.TOAST.ERROR);
+     //                     return;
+     //                }
 
-                    const operations: Array<{ operation: 'SetFlag' | 'ClearFlag'; flagValue: string; flagName: string }> = [];
+     //                const formValues = {
+     //                     ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyMultiSignSpecificKeys)),
+     //                };
 
-                    setFlags.forEach(f => {
-                         operations.push({
-                              operation: 'SetFlag',
-                              flagValue: f,
-                              flagName: this.utilsService.getFlagName(f),
-                         });
-                    });
+     //                // const result = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMultiSigners', {
+     //                //      wallet: this.currentWallet(),
+     //                //      formValues,
+     //                //      extra: { formattedSignerEntries: formattedSignerEntries, enableMultiSignFlag: enableMultiSignFlag },
+     //                //      preFetchedEnv: {
+     //                //           client: env.client,
+     //                //           accountInfo: env.accountInfo,
+     //                //           accountObjects: env.accountObjects,
+     //                //           fee: env.fee!,
+     //                //           currentLedger: env.currentLedger!,
+     //                //           wallet: env.wallet,
+     //                //      },
+     //                // });
 
-                    clearFlags.forEach(f => {
-                         operations.push({
-                              operation: 'ClearFlag',
-                              flagValue: f,
-                              flagName: this.utilsService.getFlagName(f),
-                         });
-                    });
+     //                // if (enableMultiSignFlag === 'Y') {
+     //                //      this.storageService.set(env.wallet.classicAddress + 'signerEntries', signerEntries);
+     //                // } else {
+     //                //      this.storageService.removeValue(env.wallet.classicAddress + 'signerEntries');
+     //                //      this.txUiService.signerQuorum.set(0);
+     //                // }
 
-                    const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyAccountFlagsSpecificKeys)),
-                    };
+     //                // if (!this.txUiService.isSimulateEnabled()) {
+     //                //      await this.handleTxResult(result, env, 'Multi-sign failed');
+     //                // }
+     //           } catch (error: any) {
+     //                console.error('Error in setMultiSign:', error);
+     //                this.toastService.error(error.message || 'Failed to set multi-sign', AppConstants.TOAST.ERROR);
+     //           } finally {
+     //                this.txUiService.resetCurrentStepToIdle();
+     //           }
+     //      });
+     // }
 
-                    // const result = await this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx('modifyAccountSetFlags', {
-                    //      wallet: this.currentWallet(),
-                    //      formValues,
-                    //      extra: {
-                    //           operations,
-                    //           setFlags,
-                    //           clearFlags,
-                    //      },
-                    //      preFetchedEnv: {
-                    //           client: env.client,
-                    //           accountInfo: env.accountInfo,
-                    //           fee: env.fee!,
-                    //           currentLedger: env.currentLedger!,
-                    //           wallet: env.wallet,
-                    //      },
-                    // });
+     // async setRegularKey(enableRegularKeyFlag: 'Y' | 'N') {
+     //      await this.withPerf('setRegularKey', async () => {
+     //           this.txUiService.resetCurrentStepToIdle();
+     //           this.txUiService.clearAllOptionsAndMessages();
 
-                    // if (!this.txUiService.isSimulateEnabled()) {
-                    //      await this.handleTxResult(result, env, 'Account Flag modification failed');
-                    // }
-               } catch (error: any) {
-                    console.error('Error in modifyAccountFlags:', error);
-                    this.toastService.error(error.message || 'Failed to update account flags', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
+     //           if (!this.walletManagerService.ensureWalletSelected()) return;
 
-     async setDepositAuthAccounts(authorizeFlag: 'Y' | 'N'): Promise<void> {
-          await this.withPerf('setDepositAuthAccounts', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
+     //           try {
+     //                const env = await this.txEnvironmentService.prepareTxEnvironment({
+     //                     includeAccountInfo: true,
+     //                     includeAccountObject: true,
+     //                     includeFee: true,
+     //                     includeLedgerIndex: true,
+     //                });
 
-               if (!this.walletManagerService.ensureWalletSelected()) return;
+     //                if (!env.accountInfo || !env.accountObjects) {
+     //                     this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+     //                     return;
+     //                }
 
-               // Split and validate deposit auth addresses
-               let depsositAuthEntries = this.accountConfiguratorUtilService.createDepsoitAuthEntries();
-               const formattedDepsositAuthEntries = this.accountConfiguratorUtilService.formatDepositAuthEntries(depsositAuthEntries);
-               if (!formattedDepsositAuthEntries.length) {
-                    this.toastService.error('Deposit Auth address list is empty', AppConstants.TOAST.ERROR);
-                    return;
-               }
+     //                const formValues = {
+     //                     ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyRegularKeySpecificKeys)),
+     //                };
 
-               try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                    });
+     //                // const result = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyRegularKey', {
+     //                //      wallet: this.currentWallet(),
+     //                //      formValues,
+     //                //      extra: { enableRegularKeyFlag: enableRegularKeyFlag },
+     //                //      preFetchedEnv: {
+     //                //           client: env.client,
+     //                //           accountInfo: env.accountInfo,
+     //                //           accountObjects: env.accountObjects,
+     //                //           fee: env.fee!,
+     //                //           currentLedger: env.currentLedger!,
+     //                //           wallet: env.wallet,
+     //                //      },
+     //                // });
 
-                    if (!env.accountInfo || !env.accountObjects) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
+     //                // if (!this.txUiService.isSimulateEnabled()) {
+     //                //      const regularKeysAccount = env.wallet.classicAddress + 'regularKey';
+     //                //      const regularKeySeedAccount = env.wallet.classicAddress + 'regularKeySeed';
+     //                //      if (enableRegularKeyFlag === 'Y') {
+     //                //           this.storageService.set(regularKeysAccount, this.txUiService.regularKeyAddress());
+     //                //           this.storageService.set(regularKeySeedAccount, this.txUiService.regularKeySeed());
+     //                //      } else {
+     //                //           this.storageService.removeValue(regularKeysAccount);
+     //                //           this.storageService.removeValue(regularKeySeedAccount);
+     //                //      }
+     //                // }
 
-                    const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyDepositAuthSpecificKeys)),
-                    };
+     //                // if (!this.txUiService.isSimulateEnabled()) {
+     //                //      await this.handleTxResult(result, env, 'Set Regular Key failed');
+     //                // }
+     //           } catch (error: any) {
+     //                console.error('Error in setRegularKey:', error);
+     //                this.toastService.error(error.message || 'Failed to set regular key', AppConstants.TOAST.ERROR);
+     //           } finally {
+     //                this.txUiService.resetCurrentStepToIdle();
+     //           }
+     //      });
+     // }
 
-                    // const result = await this.accountConfiguratorOrchestratorService.executeDepositAuthTx('modifyDepositAuth', {
-                    //      wallet: this.currentWallet(),
-                    //      formValues,
-                    //      extra: {
-                    //           depsositAuthEntries: depsositAuthEntries,
-                    //           formattedDepsositAuthEntries: formattedDepsositAuthEntries,
-                    //           authorizeFlag: authorizeFlag,
-                    //      },
-                    //      preFetchedEnv: {
-                    //           client: env.client,
-                    //           accountInfo: env.accountInfo,
-                    //           accountObjects: env.accountObjects,
-                    //           fee: env.fee!,
-                    //           currentLedger: env.currentLedger!,
-                    //           wallet: env.wallet,
-                    //      },
-                    // });
+     // async updateMetaData() {
+     //      await this.withPerf('updateMetaData', async () => {
+     //           this.txUiService.resetCurrentStepToIdle();
+     //           this.txUiService.clearAllOptionsAndMessages();
 
-                    // if (!this.txUiService.isSimulateEnabled()) {
-                    //      await this.handleTxResult(result, env, 'setDepositAuthAccounts');
-                    // }
-               } catch (error: any) {
-                    console.error('Error in setDepositAuthAccounts:', error);
-                    this.toastService.error(error.message || 'Failed to set deposit authorization', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
+     //           if (!this.walletManagerService.ensureWalletSelected()) return;
 
-     async setMultiSign(enableMultiSignFlag: 'Y' | 'N') {
-          await this.withPerf('enableMultiSignFlag', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
+     //           try {
+     //                const env = await this.txEnvironmentService.prepareTxEnvironment({
+     //                     includeAccountInfo: true,
+     //                     includeAccountObject: true,
+     //                     includeFee: true,
+     //                     includeLedgerIndex: true,
+     //                });
 
-               if (!this.walletManagerService.ensureWalletSelected()) return;
+     //                if (!env.accountInfo) {
+     //                     this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+     //                     return;
+     //                }
 
-               try {
-                    console.info(`enableMultiSignFlag:`, enableMultiSignFlag);
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                    });
+     //                const formValues = {
+     //                     ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.updateMetaDataSpecificKeys)),
+     //                };
 
-                    if (!env.accountInfo || !env.accountObjects) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
+     //                if (!this.accountConfiguratorUtilService.hasFieldsToUpdate(env)) {
+     //                     this.toastService.warn('No meta data fields selected for modification.');
+     //                     return;
+     //                }
 
-                    // Create array of signer accounts and their weights
-                    let signerEntries = this.accountConfiguratorUtilService.createSignerEntries();
+     //                // const result = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('updateMetaData', {
+     //                //      wallet: this.currentWallet(),
+     //                //      formValues,
+     //                //      extra: {},
+     //                //      preFetchedEnv: {
+     //                //           client: env.client,
+     //                //           accountInfo: env.accountInfo,
+     //                //           accountObjects: env.accountObjects,
+     //                //           fee: env.fee!,
+     //                //           currentLedger: env.currentLedger!,
+     //                //           wallet: env.wallet,
+     //                //      },
+     //                // });
 
-                    // Format SignerEntries for XRPL transaction
-                    const formattedSignerEntries = this.accountConfiguratorUtilService.formatSignerEntries(signerEntries);
-                    if (!formattedSignerEntries.length) {
-                         this.toastService.error('Multi Signer list is empty', AppConstants.TOAST.ERROR);
-                         return;
-                    }
+     //                // if (!this.txUiService.isSimulateEnabled()) {
+     //                //      await this.handleTxResult(result, env, 'Failed update account meta data');
+     //                // }
+     //           } catch (error: any) {
+     //                console.error('Error in updateMetaData:', error);
+     //                this.toastService.error(error.message || 'Failed to update meta data', AppConstants.TOAST.ERROR);
+     //           } finally {
+     //                this.txUiService.resetCurrentStepToIdle();
+     //           }
+     //      });
+     // }
 
-                    const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyMultiSignSpecificKeys)),
-                    };
+     // async setNftMinterAddress(enableNftMinter: 'Y' | 'N') {
+     //      await this.withPerf('setNftMinterAddress', async () => {
+     //           this.txUiService.resetCurrentStepToIdle();
+     //           this.txUiService.clearAllOptionsAndMessages();
 
-                    // const result = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMultiSigners', {
-                    //      wallet: this.currentWallet(),
-                    //      formValues,
-                    //      extra: { formattedSignerEntries: formattedSignerEntries, enableMultiSignFlag: enableMultiSignFlag },
-                    //      preFetchedEnv: {
-                    //           client: env.client,
-                    //           accountInfo: env.accountInfo,
-                    //           accountObjects: env.accountObjects,
-                    //           fee: env.fee!,
-                    //           currentLedger: env.currentLedger!,
-                    //           wallet: env.wallet,
-                    //      },
-                    // });
+     //           if (!this.walletManagerService.ensureWalletSelected()) return;
 
-                    // if (enableMultiSignFlag === 'Y') {
-                    //      this.storageService.set(env.wallet.classicAddress + 'signerEntries', signerEntries);
-                    // } else {
-                    //      this.storageService.removeValue(env.wallet.classicAddress + 'signerEntries');
-                    //      this.txUiService.signerQuorum.set(0);
-                    // }
+     //           try {
+     //                const env = await this.txEnvironmentService.prepareTxEnvironment({
+     //                     includeAccountInfo: true,
+     //                     includeAccountObject: true,
+     //                     includeFee: true,
+     //                     includeLedgerIndex: true,
+     //                });
 
-                    // if (!this.txUiService.isSimulateEnabled()) {
-                    //      await this.handleTxResult(result, env, 'Multi-sign failed');
-                    // }
-               } catch (error: any) {
-                    console.error('Error in setMultiSign:', error);
-                    this.toastService.error(error.message || 'Failed to set multi-sign', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
+     //                if (!env.accountInfo || !env.accountObjects) {
+     //                     this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
+     //                     return;
+     //                }
 
-     async setRegularKey(enableRegularKeyFlag: 'Y' | 'N') {
-          await this.withPerf('setRegularKey', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
+     //                const formValues = {
+     //                     ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyNftMinterSpecificKeys)),
+     //                     nfTokenMinterAddress: this.txUiService.nfTokenMinterAddress(),
+     //                };
 
-               if (!this.walletManagerService.ensureWalletSelected()) return;
+     //                // const result = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMetaData', {
+     //                //      wallet: this.currentWallet(),
+     //                //      formValues,
+     //                //      extra: { enableNftMinter: enableNftMinter },
+     //                //      preFetchedEnv: {
+     //                //           client: env.client,
+     //                //           accountInfo: env.accountInfo,
+     //                //           accountObjects: env.accountObjects,
+     //                //           fee: env.fee!,
+     //                //           currentLedger: env.currentLedger!,
+     //                //           wallet: env.wallet,
+     //                //      },
+     //                // });
 
-               try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                    });
-
-                    if (!env.accountInfo || !env.accountObjects) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-
-                    const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyRegularKeySpecificKeys)),
-                    };
-
-                    // const result = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyRegularKey', {
-                    //      wallet: this.currentWallet(),
-                    //      formValues,
-                    //      extra: { enableRegularKeyFlag: enableRegularKeyFlag },
-                    //      preFetchedEnv: {
-                    //           client: env.client,
-                    //           accountInfo: env.accountInfo,
-                    //           accountObjects: env.accountObjects,
-                    //           fee: env.fee!,
-                    //           currentLedger: env.currentLedger!,
-                    //           wallet: env.wallet,
-                    //      },
-                    // });
-
-                    // if (!this.txUiService.isSimulateEnabled()) {
-                    //      const regularKeysAccount = env.wallet.classicAddress + 'regularKey';
-                    //      const regularKeySeedAccount = env.wallet.classicAddress + 'regularKeySeed';
-                    //      if (enableRegularKeyFlag === 'Y') {
-                    //           this.storageService.set(regularKeysAccount, this.txUiService.regularKeyAddress());
-                    //           this.storageService.set(regularKeySeedAccount, this.txUiService.regularKeySeed());
-                    //      } else {
-                    //           this.storageService.removeValue(regularKeysAccount);
-                    //           this.storageService.removeValue(regularKeySeedAccount);
-                    //      }
-                    // }
-
-                    // if (!this.txUiService.isSimulateEnabled()) {
-                    //      await this.handleTxResult(result, env, 'Set Regular Key failed');
-                    // }
-               } catch (error: any) {
-                    console.error('Error in setRegularKey:', error);
-                    this.toastService.error(error.message || 'Failed to set regular key', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
-     async updateMetaData() {
-          await this.withPerf('updateMetaData', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
-
-               if (!this.walletManagerService.ensureWalletSelected()) return;
-
-               try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                    });
-
-                    if (!env.accountInfo) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-
-                    const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.updateMetaDataSpecificKeys)),
-                    };
-
-                    if (!this.accountConfiguratorUtilService.hasFieldsToUpdate(env)) {
-                         this.toastService.warn('No meta data fields selected for modification.');
-                         return;
-                    }
-
-                    // const result = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('updateMetaData', {
-                    //      wallet: this.currentWallet(),
-                    //      formValues,
-                    //      extra: {},
-                    //      preFetchedEnv: {
-                    //           client: env.client,
-                    //           accountInfo: env.accountInfo,
-                    //           accountObjects: env.accountObjects,
-                    //           fee: env.fee!,
-                    //           currentLedger: env.currentLedger!,
-                    //           wallet: env.wallet,
-                    //      },
-                    // });
-
-                    // if (!this.txUiService.isSimulateEnabled()) {
-                    //      await this.handleTxResult(result, env, 'Failed update account meta data');
-                    // }
-               } catch (error: any) {
-                    console.error('Error in updateMetaData:', error);
-                    this.toastService.error(error.message || 'Failed to update meta data', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
-     async setNftMinterAddress(enableNftMinter: 'Y' | 'N') {
-          await this.withPerf('setNftMinterAddress', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
-
-               if (!this.walletManagerService.ensureWalletSelected()) return;
-
-               try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                    });
-
-                    if (!env.accountInfo || !env.accountObjects) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-
-                    const formValues = {
-                         ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.accountConfiguratorUtilService.modifyNftMinterSpecificKeys)),
-                         nfTokenMinterAddress: this.txUiService.nfTokenMinterAddress(),
-                    };
-
-                    // const result = await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMetaData', {
-                    //      wallet: this.currentWallet(),
-                    //      formValues,
-                    //      extra: { enableNftMinter: enableNftMinter },
-                    //      preFetchedEnv: {
-                    //           client: env.client,
-                    //           accountInfo: env.accountInfo,
-                    //           accountObjects: env.accountObjects,
-                    //           fee: env.fee!,
-                    //           currentLedger: env.currentLedger!,
-                    //           wallet: env.wallet,
-                    //      },
-                    // });
-
-                    // if (!this.txUiService.isSimulateEnabled()) {
-                    //      await this.handleTxResult(result, env, 'Failed modify NFT Minter address');
-                    // }
-               } catch (error: any) {
-                    console.error('Error in setNftMinterAddress:', error);
-                    this.toastService.error(error.message || 'Failed to update NFT minter address', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
+     //                // if (!this.txUiService.isSimulateEnabled()) {
+     //                //      await this.handleTxResult(result, env, 'Failed modify NFT Minter address');
+     //                // }
+     //           } catch (error: any) {
+     //                console.error('Error in setNftMinterAddress:', error);
+     //                this.toastService.error(error.message || 'Failed to update NFT minter address', AppConstants.TOAST.ERROR);
+     //           } finally {
+     //                this.txUiService.resetCurrentStepToIdle();
+     //           }
+     //      });
+     // }
 
      protected refreshAccountObject(env: any): void {
-          this.accountConfiguratorStoreService.set('accountInfo', env.accountInfo);
+          this.accountConfiguratorViewModelService.accountInfo.set(env.accountInfo);
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
           this.acccountDataService.refreshUiStateAccountConfigure(env.wallet, env);
      }

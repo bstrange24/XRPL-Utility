@@ -535,3 +535,7 @@ export interface UiSignerEntry {
      seed?: string; // optional — needed for local multi-signing
      SignerWeight?: number; // optional — required for SignerListSet, ignored for DepositPreauth
 }
+
+export interface DepositAuthEntry {
+     account: string;
+}
