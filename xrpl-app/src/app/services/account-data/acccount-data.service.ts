@@ -42,8 +42,14 @@ export class AcccountDataService extends PerformanceBaseComponent {
           checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
           this.accountConfiguratorStoreService.set('multiSigningEnabled', hasSignerList);
           if (hasSignerList) {
+               console.log('hasSignerList: ', hasSignerList);
                const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.accountConfiguratorStoreService.set('signers', entries);
+               console.log('entries: ', entries);
+               if (entries.length > 0) this.accountConfiguratorStoreService.set('signers', entries);
+               else this.accountConfiguratorStoreService.set('signers', [{ Account: '', seed: '', SignerWeight: 1 }]);
+          } else {
+               this.accountConfiguratorStoreService.set('signers', [{ Account: '', seed: '', SignerWeight: 1 }]);
+               console.log('hasSignerList CRAPPPPPPY: ');
           }
 
           this.setRegularKeyProperties(accountInfo);
@@ -71,20 +77,20 @@ export class AcccountDataService extends PerformanceBaseComponent {
           const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
           this.accountConfiguratorStoreService.set('regularKeySigningEnabled', hasRegularKey);
           const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
-          console.log('rkProps: ', rkProps);
           this.accountConfiguratorStoreService.set('regularKeyAddress', rkProps.regularKeyAddress);
           this.accountConfiguratorStoreService.set('regularKeySeed', rkProps.regularKeySeed);
      }
 
      public setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
           const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+          console.log('setupMultiSignersConfiguration hasSignerList: ', signerEntries);
           this.accountConfiguratorStoreService.set('signers', signerEntries);
           this.accountConfiguratorStoreService.set('multiSignAddress', signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
           this.accountConfiguratorStoreService.set('multiSignSeeds', signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
      }
 
      public clearMultiSignersConfiguration(): void {
-          this.accountConfiguratorStoreService.set('signerQuorum', 0);
+          this.accountConfiguratorStoreService.set('signerQuorum', 1);
           this.accountConfiguratorStoreService.set('signers', [{ Account: '', seed: '', SignerWeight: 1 }]);
           this.accountConfiguratorStoreService.set('multiSignAddress', 'No Multi-Sign address configured for account');
           this.accountConfiguratorStoreService.set('multiSignSeeds', '');

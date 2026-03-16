@@ -93,8 +93,24 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      readonly setNftMinterButtonLabel = this.buildTxLabel('Set NFT Minter');
      readonly removeNftMinterButtonLabel = this.buildTxLabel('Remove NFT Minter');
 
+     setAccountFlags(currentTab: string, env: PrepareTxEnvironmentResult) {
+          if (currentTab === 'modifyAccountFlags') {
+               AppConstants.FLAGS.forEach(flag => {
+                    const flagKey = AppConstants.FLAGMAP[flag.name as keyof typeof AppConstants.FLAGMAP];
+                    if (flagKey) {
+                         if (env?.accountInfo) {
+                              const isEnabled = !!this.accountConfiguratorStoreService.get('accountInfo').result.account_flags?.[flagKey as keyof typeof env.accountInfo.result.account_flags];
+                              const flagName = flag.name as keyof XrplAccountFlags;
+                              this.flags[flagName] = isEnabled;
+                         }
+                    }
+               });
+               this.updateFlagTotal();
+          }
+     }
+
      readonly actionHandlers: Record<string, (config: AccountConfig, enabled: string) => Promise<any>> = {
-          modifyAccountFlags: (config, enabled) => this.handleModifyAccountFlags(config),
+          modifyAccountFlags: config => this.handleModifyAccountFlags(config),
           modifyDepositAuth: (config, enabled) => this.handleModifyDepositAuth(config, enabled),
           modifyMetaData: (config, enabled) => this.handleModifyMetaData(config, enabled),
           modifyMultiSigners: (config, enabled) => this.handleModifyMultiSigners(config, enabled),
@@ -112,20 +128,20 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           const operations: Array<{ operation: 'SetFlag' | 'ClearFlag'; flagValue: string; flagName: string }> = [];
 
           setFlags.forEach(f => {
-                         operations.push({
-                              operation: 'SetFlag',
-                              flagValue: f,
-                              flagName: this.utilsService.getFlagName(f),
-                         });
-                    });
+               operations.push({
+                    operation: 'SetFlag',
+                    flagValue: f,
+                    flagName: this.utilsService.getFlagName(f),
+               });
+          });
 
-                    clearFlags.forEach(f => {
-                         operations.push({
-                              operation: 'ClearFlag',
-                              flagValue: f,
-                              flagName: this.utilsService.getFlagName(f),
-                         });
-                    });
+          clearFlags.forEach(f => {
+               operations.push({
+                    operation: 'ClearFlag',
+                    flagValue: f,
+                    flagName: this.utilsService.getFlagName(f),
+               });
+          });
           config.setFlags = setFlags;
           config.clearFlags = clearFlags;
           config.operations = operations;
@@ -204,20 +220,22 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                case 'modifyMultiSigners':
                     if (config.enableMultiSignFlag === 'Y') {
                          this.storageService.set(envRef.wallet.classicAddress + 'signerEntries', config.signerEntries);
+                         this.accountConfiguratorStoreService.set('signers', config.signerEntries);
+                         this.accountConfiguratorStoreService.set('multiSignAddress', config.signerEntries.map((e: any) => e.Account).join(',\n'));
+                         this.accountConfiguratorStoreService.set('multiSignSeeds', config.signerEntries.map((e: any) => e.seed).join(',\n'));
+                         this.accountConfiguratorStoreService.set('multiSigningEnabled', true);
                     } else {
                          this.storageService.removeValue(envRef.wallet.classicAddress + 'signerEntries');
-                         this.accountConfiguratorStoreService.set('signerQuorum', 0);
+                         this.accountConfiguratorStoreService.set('signerQuorum', 1);
                     }
-
                     break;
-
-               case 'modifyRegularKey':
+               case 'modifyRegularKey': {
                     const regularKey = envRef.wallet.classicAddress + 'regularKey';
                     const regularKeySeed = envRef.wallet.classicAddress + 'regularKeySeed';
 
                     if (config.enableRegularKeyFlag === 'Y') {
                          this.storageService.set(regularKey, config.regularKeyAddress);
-                         this.storageService.set(regularKeySeed, this.txUiService.regularKeySeed());
+                         this.storageService.set(regularKeySeed, config.regularKeySeed);
                     } else {
                          this.accountConfiguratorStoreService.set('regularKeyAddress', '');
                          this.accountConfiguratorStoreService.set('regularKeySeed', '');
@@ -225,8 +243,8 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                          this.storageService.removeValue(regularKey);
                          this.storageService.removeValue(regularKeySeed);
                     }
-
                     break;
+               }
           }
      }
 

@@ -31,7 +31,7 @@ export class AccountConfiguratorStoreService {
           isMessageKey: false,
           publicKey: '',
           regularKeyAddress: '',
-          regularKeySeed: '',
+          regularKeySeed: 'JOE',
           isRegularKeyAddress: false,
           regularKeySigningEnabled: false,
           signerQuorum: 0,
@@ -60,7 +60,7 @@ export class AccountConfiguratorStoreService {
      };
 
      /** Signal registry */
-     private registry: Record<AccountConfiguratorField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
+     private readonly registry: Record<AccountConfiguratorField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
           (acc, key) => {
                const field = key as AccountConfiguratorField;
                acc[field] = signal(structuredClone(this.initialState[field]));
@@ -120,7 +120,6 @@ export class AccountConfiguratorStoreService {
           this.set('signers', [{ Account: '', seed: '', SignerWeight: 1 }]);
      }
 
-     // ────────────────────────────────────────────────────────────────
      // Convenience methods for deposit authorization addresses
      addDepositAuthAddress(entry: UiSignerEntry) {
           this.update('depositAuthAddresses', (current: UiSignerEntry[]) => [...current, entry]);
@@ -150,24 +149,5 @@ export class AccountConfiguratorStoreService {
                copy[index] = { ...copy[index], [field]: value };
                return copy;
           });
-     }
-
-     /** Reset dropdown-related fields */
-     resetCredentialIdDropDown() {
-          // this.set('credentialID', '');
-          // this.set('credentialType', '');
-          // this.set('credentialIssuer', '');
-          // this.set('selectedCredentials', null);
-     }
-
-     /** Reset form fields */
-     resetCredentailFields() {
-          // this.resetCredentialIdDropDown();
-          // this.clearOptionalExpirationDate();
-          // this.set('credentialIDs', []);
-          // this.set('subject', '');
-          // this.set('credentialIdSearchQuery', '');
-          // this.set('credentialIdSearchTerm', '');
-          // this.set('uri', '');
      }
 }

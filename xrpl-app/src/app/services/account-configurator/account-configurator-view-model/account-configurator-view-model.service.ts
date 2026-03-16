@@ -1,19 +1,17 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { AccountConfiguratorStoreService } from '../account-configurator-store/account-configurator-store.service';
-import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
-import { AccountConfiguratorUtilService } from '../account-configurator-util/account-configurator-util.service';
 import { ACCOUNT_CONFIG_ACTIONS, AccountConfigAction } from '../../../components/account-configurator/constants/account-configurator.types';
+import { StorageService } from '../../local-storage/storage.service';
 
 @Injectable({
      providedIn: 'root',
 })
 export class AccountConfiguratorViewModelService {
      private accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
-     private accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      private walletManager = inject(WalletManagerService);
-     public readonly txUiService = inject(TransactionUiService);
-     // readonly activeTab = signal<'modifyAccountFlags' | 'modifyDepositAuth' | 'modifyMetaData' | 'modifyMultiSigners' | 'modifyRegularKey'>('modifyAccountFlags');
+     public readonly storageService = inject(StorageService);
+
      readonly activeTab = signal<AccountConfigAction>(ACCOUNT_CONFIG_ACTIONS.MODIFY_ACCOUNT_FLAGS);
      accountInfo = signal<any>(null);
 
@@ -32,19 +30,21 @@ export class AccountConfiguratorViewModelService {
           const hasRegularKey = !!this.accountInfo()?.result?.account_data?.RegularKey;
           const masterKeyDisabled = accountFlags?.disableMasterKey;
 
+          const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+
           if (masterKeyDisabled) {
-               if (this.accountConfiguratorStoreService.get('hasSignerList')) messageParts.push('Multi-signing enabled');
-               if (hasRegularKey) messageParts.push('Regular Key configured');
+               if (entries.length > 0) messageParts.push('Multi-signing enabled');
+               if (hasRegularKey) messageParts.push(`Regular Key configured`);
                messageParts.push('Master key permanently disabled');
           } else {
-               if (this.accountConfiguratorStoreService.get('hasSignerList')) messageParts.push('Multi-signing configured');
-               if (hasRegularKey) messageParts.push('Regular Key configured');
+               if (entries.length > 0) messageParts.push('Multi-signing configured');
+               if (hasRegularKey) messageParts.push(`Regular Key configured`);
                messageParts.push('Master key enabled');
           }
 
           // === Deposit Auth ===
-          if (this.txUiService.depositAuthEnabled()) {
-               const preauthCount = this.txUiService.depositAuthAddresses().filter(a => a.account).length;
+          if (this.accountConfiguratorStoreService.get('depositAuthEnabled')) {
+               const preauthCount = this.accountConfiguratorStoreService.get('depositAuthAddresses').filter((a: { account: any }) => a.account).length;
                if (preauthCount > 0) {
                     messageParts.push(`Deposit Authorization enabled (${preauthCount} preauthorized account${preauthCount > 1 ? 's' : ''})`);
                } else {
@@ -52,16 +52,31 @@ export class AccountConfiguratorViewModelService {
                }
           }
 
+          const accountSetFeatures: string[] = [];
+          if (this.accountConfiguratorStoreService.get('tickSize')) accountSetFeatures.push('Tick Size');
+          if (this.accountConfiguratorStoreService.get('transferRate')) accountSetFeatures.push('Transfer Rate');
+          if (this.accountConfiguratorStoreService.get('domain')) accountSetFeatures.push('Domain');
+          if (this.accountConfiguratorStoreService.get('isMessageKey')) accountSetFeatures.push('Message Key');
+          if (this.accountConfiguratorStoreService.get('isNFTokenMinterEnabled')) accountSetFeatures.push('NFT Minter');
+          if (accountSetFeatures.length) {
+               messageParts.push(`Account settings configured: ${accountSetFeatures.join(', ')}`);
+          }
+
           // === Irreversible flags ===
           const irreversible: string[] = [];
           if (accountFlags?.noFreeze) irreversible.push('No Freeze');
           if (accountFlags?.allowTrustLineClawback) irreversible.push('Clawback');
 
+          const irreversibleMessage = irreversible.length ? `Irreversible flags enabled: ${irreversible.join(', ')}` : null;
+          const totalItems = messageParts.length + irreversible.length;
+          const summaryMessage = totalItems === 0 ? 'wallet has no special account configuration. All flags are in default state.' : `wallet has special account configuration (${totalItems} item${totalItems > 1 ? 's' : ''}).`;
+
           return {
                walletName,
-               hasSpecialConfig: messageParts.length > 0 || irreversible.length > 0,
+               summaryMessage,
+               hasSpecialConfig: totalItems > 0,
                configItems: messageParts,
-               irreversibleFlags: irreversible,
+               irreversibleMessage,
                hasIrreversible: irreversible.length > 0,
           };
      });

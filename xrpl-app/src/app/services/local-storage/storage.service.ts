@@ -67,7 +67,7 @@ export class StorageService {
           localStorage.removeItem(id);
      }
 
-     claerValues() {
+     clearValues() {
           localStorage.clear();
      }
 

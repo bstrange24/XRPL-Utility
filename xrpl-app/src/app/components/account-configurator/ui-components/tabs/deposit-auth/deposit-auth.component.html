@@ -1,0 +1,44 @@
+<!-- Deposit Auth Address -->
+<div class="multisign-section">
+     <div class="section-header">
+          <ng-icon name="heroUserGroup" size="20" class="text-red-600"></ng-icon>
+          <span class="section-title" name="depositAuthConfig">Deposit Authorization Configuration</span>
+     </div>
+
+     <!-- Deposit Auth list -->
+     <div class="signers-list">
+          @for (depositAuthAddress of accountConfiguratorStoreService.get('depositAuthAddresses'); track i + ':' + (depositAuthAddress.account ?? i); let i = $index) {
+          <fieldset class="signer-fieldset-dep-auth">
+               <legend class="signer-legend">Deposit Auth Address {{ i + 1 }}</legend>
+
+               <div class="form-row">
+                    <div class="form-group">
+                         <label for="depositAuthField{{ i }}">Account</label>
+                         <p class="form-hint">Addresses used for deposit authorization.</p>
+                         <input type="text" name="depositAuthField" id="depositAuthField{{ i }}" [ngModel]="depositAuthAddress.account" (ngModelChange)="accountConfiguratorStoreService.updateDepositAuthAddress(i, 'account', $event)" name="depositAuthField{{ i }}" placeholder="r..." class="input-monospace" />
+                    </div>
+
+                    <div class="form-group remove-group-dep-auth">
+                         @if (accountConfiguratorStoreService.get('depositAuthAddresses').length > 1) {
+                         <button type="button" name="depositAuthFieldButton" (click)="accountConfiguratorUtilService.removeDepositAuthAddresses(i)" class="btn-danger btn-sm" title="Remove this deposit auth address">
+                              <lucide-icon name="trash-2" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
+               </div>
+          </fieldset>
+          }
+     </div>
+
+     <!-- Add Deposit Auth Signer -->
+     <div class="form-row actions-row">
+          <div class="form-group">
+               <button type="button" name="addDepositAuthAddressButton" (click)="accountConfiguratorUtilService.addDepositAuthAddresses()" class="btn-primary-blue">Add Signer</button>
+          </div>
+     </div>
+</div>
+
+<div class="button-row">
+     <button type="button" class="btn-primary-blue" (click)="performAction.emit('Y')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
+     <button type="button" class="btn-primary-red" (click)="performAction.emit('N')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
+</div>

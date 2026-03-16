@@ -1,0 +1,27 @@
+<div class="multisign-section">
+     <div class="section-header">
+          <ng-icon name="heroKey" size="20" class="text-red-600"></ng-icon>
+          <span class="section-title">Regular Key Configuration</span>
+     </div>
+
+     <div class="signers-list">
+          <div class="form-row">
+               <div class="form-group">
+                    <label for="regularKeyAddress">Account</label>
+                    <p class="form-hint">The regular key pair to be assigned to the account.</p>
+                    <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.get('regularKeyAddress')" (ngModelChange)="accountConfiguratorStoreService.set('regularKeyAddress', $event)" name="regularKeyAddress" placeholder="No Regular Key configured for account" />
+               </div>
+
+               <div class="form-group">
+                    <label for="regularKeySeed">Seed</label>
+                    <p class="form-hint">The seed for the regular key account.</p>
+                    <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.get('regularKeySeed')" (ngModelChange)="accountConfiguratorStoreService.set('regularKeySeed', $event)" name="regularKeySeed" />
+               </div>
+          </div>
+     </div>
+</div>
+
+<div class="button-row">
+     <button type="button" class="btn-primary-blue" (click)="performAction.emit('Y')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setRegularKeyButtonLabel() }}</button>
+     <button type="button" class="btn-primary-red" (click)="performAction.emit('N')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeRegularKeyButtonLabel() }}</button>
+</div>

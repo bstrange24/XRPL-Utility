@@ -8,13 +8,13 @@ import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.
 import { CredentialItemVm } from '../../constants/credential.constants';
 
 @Component({
-     selector: 'app-credentials-wallet-credentials-summary',
+     selector: 'app-credentials-summary',
      standalone: true,
      imports: [NgIcon, LucideAngularModule, TooltipLinkComponent],
-     templateUrl: './credentials-wallet-credentials-summary.component.html',
-     styleUrl: './credentials-wallet-credentials-summary.component.css',
+     templateUrl: './credentials-summary.component.html',
+     styleUrl: './credentials-summary.component.css',
 })
-export class CredentialsWalletCredentialsSummaryComponent {
+export class CredentialsSummaryComponent {
      public copyUtilService = inject(CopyUtilService);
      private txUiService = inject(TransactionUiService);
      public credentialUtilService = inject(CredentialUtilService);

@@ -1,0 +1,47 @@
+<div class="flags-wrapper">
+     <!-- Configuration template -->
+     <div style="padding-bottom: 0.3em">
+          <span class="token-flags-title">
+               <label for="isHolderConfiguration">Configuration Templates:</label>
+          </span>
+          <span class="token-flags-title">
+               <input type="radio" id="isHolderConfiguration" [checked]="configurationType() === 'holder'" (change)="accountConfiguratorStoreService.set('configurationType', 'holder'); accountConfiguratorUtilService.onConfigurationChange()" name="configurationType" value="holder" />
+               <label for="isHolderConfiguration">Holder</label>
+
+               <input type="radio" id="isExchangerConfiguration" [checked]="configurationType() === 'exchanger'" (change)="accountConfiguratorStoreService.set('configurationType', 'exchanger'); accountConfiguratorUtilService.onConfigurationChange()" name="configurationType" value="exchanger" />
+               <label for="isExchangerConfiguration">Exchanger</label>
+
+               <input type="radio" id="isIssuerConfiguration" [checked]="configurationType() === 'issuer'" (change)="accountConfiguratorStoreService.set('configurationType', 'issuer'); accountConfiguratorUtilService.onConfigurationChange()" name="configurationType" value="issuer" />
+               <label for="isIssuerConfiguration">Issuer</label>
+          </span>
+     </div>
+
+     <!-- Flags header -->
+     <div class="token-flags-header">
+          <lucide-icon name="flag" size="20"></lucide-icon>
+          <span class="token-flags-title">Account Flags</span>
+     </div>
+
+     <div class="form-row-account-flags">
+          @for (flag of accountConfiguratorUtilService.accountFlagsConfig; track flag.key) {
+          <button type="button" class="flag-item-account-flags" [class.enabled]="accountConfiguratorUtilService.flags[flag.key]" (click)="accountConfiguratorUtilService.toggleFlag(flag.key)" name="accountFlags">
+               <div class="flag-header-account">
+                    <input type="checkbox" [id]="flag.key" [name]="flag.key" [checked]="accountConfiguratorUtilService.flags[flag.key]" class="flag-checkbox" />
+                    <span class="flag-title-account-flags">{{ flag.title }}</span>
+               </div>
+               <div class="flag-value">{{ accountConfiguratorUtilService.FLAG_VALUES[flag.key] }} {{ flag.key }}</div>
+               <div class="flag-desc">{{ flag.desc }}</div>
+          </button>
+          }
+          <div class="flag-item-account-flags">
+               <div class="flags-total">
+                    <span class="total-label">Total Flags Value:</span>
+                    <span class="total-value">{{ txUiService.totalFlagsValue() }} ({{ txUiService.totalFlagsHex() }})</span>
+               </div>
+          </div>
+     </div>
+</div>
+
+<div class="button-row">
+     <button type="button" class="btn-primary-blue" (click)="performAction.emit('')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.modifyAccountFlagsButtonLabel() }}</button>
+</div>

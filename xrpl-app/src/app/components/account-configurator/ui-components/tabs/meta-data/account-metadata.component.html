@@ -1,0 +1,53 @@
+<div class="form-row">
+     <div class="form-group">
+          <label for="setNftMinterAddress">Set NFT Minter Address</label>
+          <p class="form-hint">Authorizes another account to mint NFTs for this account.</p>
+          <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.get('nfTokenMinterAddress')" (ngModelChange)="accountConfiguratorStoreService.set('nfTokenMinterAddress', $event)" name="nfTokenMinterAddress" />
+     </div>
+</div>
+
+<div class="button-row">
+     <button type="button" class="btn-primary-blue" (click)="performAction.emit('Y')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setNftMinterButtonLabel() }}</button>
+     <button type="button" class="btn-primary-red" (click)="performAction.emit('N')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeNftMinterButtonLabel() }}</button>
+</div>
+
+<!-- Transfer Rate, tick -->
+<div class="form-row">
+     <div class="form-group">
+          <label for="tranferRate">Transfer Rate</label>
+          <!-- note: typo in label, should be transferRate -->
+          <p class="form-hint">Transfer fee for issued currencies (0% = no fee).</p>
+          <div class="input-group">
+               <input type="text" class="form-control" [ngModel]="accountConfiguratorStoreService.get('transferRate')" (ngModelChange)="accountConfiguratorStoreService.set('transferRate', $event)" name="transferRate" placeholder="e.g. 1.5" />
+          </div>
+     </div>
+
+     <div class="form-group">
+          <label for="tickSize">Tick Size</label>
+          <p class="form-hint">Decimal precision used when trading issued currencies (3–15).</p>
+          <input type="text" class="form-control" [ngModel]="accountConfiguratorStoreService.get('tickSize')" (ngModelChange)="accountConfiguratorStoreService.set('tickSize', $event)" name="tickSize" />
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <label for="domain">Domain</label>
+          <p class="form-hint">Domain name for this account.</p>
+          <input type="text" [ngModel]="accountConfiguratorStoreService.get('domain')" (ngModelChange)="accountConfiguratorStoreService.set('domain', $event)" name="domain" />
+     </div>
+
+     <div class="form-group-account-flags">
+          <!-- isMessageKey -->
+          <button type="button" class="flag-item-account-flags" [class.enabled]="accountConfiguratorStoreService.get('isMessageKey')" (click)="accountConfiguratorUtilService.toggleMessageKey()">
+               <div class="flag-header-account">
+                    <input type="checkbox" id="isMessageKey" name="isMessageKey" [checked]="accountConfiguratorStoreService.get('isMessageKey')" class="flag-checkbox" style="padding: 0px" />
+                    <span class="flag-title-account-flags">Save Message Key</span>
+               </div>
+               <div class="flag-desc">Public key for sending encrypted messages to this account.</div>
+          </button>
+     </div>
+</div>
+
+<div class="button-row">
+     <button type="button" (click)="performAction.emit('')" class="btn-primary-blue" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.modifyAccountMetaDataButtonLabel() }}</button>
+</div>

@@ -1438,6 +1438,14 @@ export class ValidationService {
                          return null;
                     },
 
+                    ctx => {
+                         if (this.accountConfiguratorStoreService.get('regularKeyAddress') === '') {
+                              //  || (ctx.accountInfo?.result.) {
+                              return `Regular Key address and seed must be present`;
+                         }
+                         return null;
+                    },
+
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
 

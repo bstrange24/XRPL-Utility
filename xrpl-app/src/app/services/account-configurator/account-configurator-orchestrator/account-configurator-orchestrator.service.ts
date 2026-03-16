@@ -13,7 +13,7 @@ import { PerformanceBaseComponent } from '../../../components/shared/performance
 import { AppConstants } from '../../../core/app.constants';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { AccountConfig, AccountConfigAction } from '../../../components/account-configurator/constants/account-configurator.types';
-import { ACCOUNT_CONFIG_VALIDATION_RULES } from '../../../components/account-configurator/constants/account-config.constants';
+import { ACCOUNT_CONFIG_VALIDATION_RULES } from '../../../components/account-configurator/constants/account-configurator.constants';
 import { AccountConfiguratorStoreService } from '../account-configurator-store/account-configurator-store.service';
 
 @Injectable({
@@ -31,41 +31,41 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
      public readonly xrplDateService = inject(XrplDateService);
 
      async executeModifyAccountTx(type: AccountConfigAction, config: AccountConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
-          const { 
-               wallet, 
-               simulate = false, 
-               amountField, 
+          const {
+               wallet,
+               simulate = false,
+               amountField,
                nfTokenMinterAddress,
-               setFlags, 
+               setFlags,
                clearFlags,
-               tickSize, 
-               transferRate, 
-               publicKey, 
-               domain, 
+               tickSize,
+               transferRate,
+               publicKey,
+               domain,
                isMessageKey,
-               depositAuthAddresses, 
-               signerQuorum, 
-               regularKeyAddress, 
+               depositAuthAddresses,
+               signerQuorum,
+               regularKeyAddress,
                regularKeySeed,
                isRegularKeyAddress,
-               depsositAuthEntries, 
-               formattedDepsositAuthEntries, 
-               signerEntries, 
-               formattedSignerEntries, 
-               multiSignAddress, 
-               multiSignSeeds, 
-               authorizeFlag, 
-               enableRegularKeyFlag, 
+               depsositAuthEntries,
+               formattedDepsositAuthEntries,
+               signerEntries,
+               formattedSignerEntries,
+               multiSignAddress,
+               multiSignSeeds,
+               authorizeFlag,
+               enableRegularKeyFlag,
                enableMultiSignFlag,
-               enableNftMinter, 
+               enableNftMinter,
                multiSign,
                destinationAddress,
                SignerWeight,
                useMultiSign,
-               suppressIndividualFeedback, 
+               suppressIndividualFeedback,
                operations,
-               preFetchedEnv, 
-               extra = {} 
+               preFetchedEnv,
+               extra = {},
           } = config;
 
           let env: any;
@@ -94,39 +94,38 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     throw new Error('Required network data missing');
                }
 
-               // const validationRule = this.getValidationRuleName(type);
                const validationRule = ACCOUNT_CONFIG_VALIDATION_RULES[type];
                const validationInputs = this.buildValidationInputs(type, wallet, env, {
                     simulate,
-                    amountField, 
+                    amountField,
                     nfTokenMinterAddress,
-                    setFlags, 
+                    setFlags,
                     clearFlags,
-                    tickSize, 
-                    transferRate, 
-                    publicKey, 
-                    domain, 
+                    tickSize,
+                    transferRate,
+                    publicKey,
+                    domain,
                     isMessageKey,
-                    depositAuthAddresses, 
-                    signerQuorum, 
-                    regularKeyAddress, 
+                    depositAuthAddresses,
+                    signerQuorum,
+                    regularKeyAddress,
                     regularKeySeed,
                     isRegularKeyAddress,
-                    depsositAuthEntries, 
-                    formattedDepsositAuthEntries, 
-                    signerEntries, 
-                    formattedSignerEntries, 
-                    multiSignAddress, 
-                    multiSignSeeds, 
-                    authorizeFlag, 
-                    enableRegularKeyFlag, 
+                    depsositAuthEntries,
+                    formattedDepsositAuthEntries,
+                    signerEntries,
+                    formattedSignerEntries,
+                    multiSignAddress,
+                    multiSignSeeds,
+                    authorizeFlag,
+                    enableRegularKeyFlag,
                     enableMultiSignFlag,
-                    enableNftMinter, 
+                    enableNftMinter,
                     multiSign,
                     destinationAddress,
                     SignerWeight,
                     useMultiSign,
-                    suppressIndividualFeedback, 
+                    suppressIndividualFeedback,
                     operations,
                     extra,
                });
@@ -142,77 +141,85 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                }
 
                // Build transaction
-               const tx = this.buildModifyAccountTransaction(type, env.wallet || wallet, env, config, { 
-                    simulate, 
-                    amountField, 
+               const tx = this.buildModifyAccountTransaction(type, env.wallet || wallet, env, config, {
+                    simulate,
+                    amountField,
                     nfTokenMinterAddress,
-                    setFlags, 
+                    setFlags,
                     clearFlags,
-                    tickSize, 
-                    transferRate, 
-                    publicKey, 
-                    domain, 
+                    tickSize,
+                    transferRate,
+                    publicKey,
+                    domain,
                     isMessageKey,
-                    depositAuthAddresses, 
-                    signerQuorum, 
-                    regularKeyAddress, 
+                    depositAuthAddresses,
+                    signerQuorum,
+                    regularKeyAddress,
                     regularKeySeed,
                     isRegularKeyAddress,
-                    depsositAuthEntries, 
-                    formattedDepsositAuthEntries, 
-                    signerEntries, 
-                    formattedSignerEntries, 
-                    multiSignAddress, 
-                    multiSignSeeds, 
-                    authorizeFlag, 
-                    enableRegularKeyFlag, 
+                    depsositAuthEntries,
+                    formattedDepsositAuthEntries,
+                    signerEntries,
+                    formattedSignerEntries,
+                    multiSignAddress,
+                    multiSignSeeds,
+                    authorizeFlag,
+                    enableRegularKeyFlag,
                     enableMultiSignFlag,
-                    enableNftMinter, 
+                    enableNftMinter,
                     multiSign,
                     destinationAddress,
                     SignerWeight,
                     useMultiSign,
                     suppressIndividualFeedback,
-                    operations, 
-                    extra 
+                    operations,
+                    extra,
                });
 
                // Optional fields
-               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, enableRegularKeyFlag, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableMultiSignFlag, multiSignAddress, multiSignSeeds, suppressIndividualFeedback, extra }, env);
+               await this.applyOptionalFields(
+                    client,
+                    tx,
+                    wallet,
+                    env.accountInfo,
+                    type,
+                    { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, enableRegularKeyFlag, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableMultiSignFlag, multiSignAddress, multiSignSeeds, suppressIndividualFeedback, extra },
+                    env
+               );
 
                // Execute
-               const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { 
+               const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, {
                     simulate,
-                    amountField, 
+                    amountField,
                     nfTokenMinterAddress,
-                    setFlags, 
+                    setFlags,
                     clearFlags,
-                    tickSize, 
-                    transferRate, 
-                    publicKey, 
-                    domain, 
+                    tickSize,
+                    transferRate,
+                    publicKey,
+                    domain,
                     isMessageKey,
-                    depositAuthAddresses, 
-                    signerQuorum, 
-                    regularKeyAddress, 
+                    depositAuthAddresses,
+                    signerQuorum,
+                    regularKeyAddress,
                     regularKeySeed,
                     isRegularKeyAddress,
-                    depsositAuthEntries, 
-                    formattedDepsositAuthEntries, 
-                    signerEntries, 
-                    formattedSignerEntries, 
-                    multiSignAddress, 
-                    multiSignSeeds, 
-                    authorizeFlag, 
-                    enableRegularKeyFlag, 
+                    depsositAuthEntries,
+                    formattedDepsositAuthEntries,
+                    signerEntries,
+                    formattedSignerEntries,
+                    multiSignAddress,
+                    multiSignSeeds,
+                    authorizeFlag,
+                    enableRegularKeyFlag,
                     enableMultiSignFlag,
-                    enableNftMinter, 
+                    enableNftMinter,
                     multiSign,
                     destinationAddress,
                     SignerWeight,
                     useMultiSign,
                     suppressIndividualFeedback,
-                    operations, 
+                    operations,
                     extra,
                });
 
@@ -223,12 +230,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                txHash = execResult.hash;
 
                if (simulate) {
-                    return this.handleSimulationSuccess(
-                         type,
-                         { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra },
-                         txHash,
-                         extra
-                    );
+                    return this.handleSimulationSuccess(type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra }, txHash, extra);
                }
 
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
@@ -248,41 +250,41 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
      }
 
      async executeAccountSetFlagsTx(type: AccountConfigAction, config: AccountConfig): Promise<{ success: boolean; modifyCount?: number; validationError?: boolean; results?: Array<{ flagName: string; hash?: string; success: boolean; error?: string }>; error?: string }> {
-          const { 
-               wallet, 
-               simulate = false, 
-               amountField, 
+          const {
+               wallet,
+               simulate = false,
+               amountField,
                nfTokenMinterAddress,
-               setFlags, 
+               setFlags,
                clearFlags,
-               tickSize, 
-               transferRate, 
-               publicKey, 
-               domain, 
+               tickSize,
+               transferRate,
+               publicKey,
+               domain,
                isMessageKey,
-               depositAuthAddresses, 
-               signerQuorum, 
-               regularKeyAddress, 
+               depositAuthAddresses,
+               signerQuorum,
+               regularKeyAddress,
                regularKeySeed,
                isRegularKeyAddress,
-               depsositAuthEntries, 
-               formattedDepsositAuthEntries, 
-               signerEntries, 
-               formattedSignerEntries, 
-               multiSignAddress, 
-               multiSignSeeds, 
-               authorizeFlag, 
-               enableRegularKeyFlag, 
+               depsositAuthEntries,
+               formattedDepsositAuthEntries,
+               signerEntries,
+               formattedSignerEntries,
+               multiSignAddress,
+               multiSignSeeds,
+               authorizeFlag,
+               enableRegularKeyFlag,
                enableMultiSignFlag,
-               enableNftMinter, 
+               enableNftMinter,
                multiSign,
                destinationAddress,
                SignerWeight,
                useMultiSign,
-               suppressIndividualFeedback, 
+               suppressIndividualFeedback,
                operations,
-               preFetchedEnv, 
-               extra = {} 
+               preFetchedEnv,
+               extra = {},
           } = config;
 
           let env: any;
@@ -299,9 +301,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                // Use pre-fetched env if provided, otherwise fetch
                if (preFetchedEnv) {
                     env = preFetchedEnv;
-                    client = preFetchedEnv.client;
-                    fee = preFetchedEnv.fee;
-                    currentLedger = preFetchedEnv.currentLedger;
                } else {
                     env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
@@ -309,9 +308,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                          includeFee: true,
                          includeLedgerInfo: true,
                     });
-                    client = env.client;
-                    fee = env.fee!;
-                    currentLedger = env.currentLedger!;
                }
 
                client = env.client;
@@ -322,37 +318,37 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
 
                const validationRule = ACCOUNT_CONFIG_VALIDATION_RULES[type];
                const validationInputs = this.buildValidationInputs(type, wallet, env, {
-                   simulate,
-                    amountField, 
+                    simulate,
+                    amountField,
                     nfTokenMinterAddress,
-                    setFlags, 
+                    setFlags,
                     clearFlags,
-                    tickSize, 
-                    transferRate, 
-                    publicKey, 
-                    domain, 
+                    tickSize,
+                    transferRate,
+                    publicKey,
+                    domain,
                     isMessageKey,
-                    depositAuthAddresses, 
-                    signerQuorum, 
-                    regularKeyAddress, 
+                    depositAuthAddresses,
+                    signerQuorum,
+                    regularKeyAddress,
                     regularKeySeed,
                     isRegularKeyAddress,
-                    depsositAuthEntries, 
-                    formattedDepsositAuthEntries, 
-                    signerEntries, 
-                    formattedSignerEntries, 
-                    multiSignAddress, 
-                    multiSignSeeds, 
-                    authorizeFlag, 
-                    enableRegularKeyFlag, 
+                    depsositAuthEntries,
+                    formattedDepsositAuthEntries,
+                    signerEntries,
+                    formattedSignerEntries,
+                    multiSignAddress,
+                    multiSignSeeds,
+                    authorizeFlag,
+                    enableRegularKeyFlag,
                     enableMultiSignFlag,
-                    enableNftMinter, 
+                    enableNftMinter,
                     multiSign,
                     destinationAddress,
                     SignerWeight,
                     useMultiSign,
                     suppressIndividualFeedback,
-                    operations, 
+                    operations,
                     extra,
                });
 
@@ -380,39 +376,39 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra }, env);
 
                     // Execute
-                    const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { 
+                    const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, {
                          simulate,
-                    amountField, 
-                    nfTokenMinterAddress,
-                    setFlags, 
-                    clearFlags,
-                    tickSize, 
-                    transferRate, 
-                    publicKey, 
-                    domain, 
-                    isMessageKey,
-                    depositAuthAddresses, 
-                    signerQuorum, 
-                    regularKeyAddress, 
-                    regularKeySeed,
-                    isRegularKeyAddress,
-                    depsositAuthEntries, 
-                    formattedDepsositAuthEntries, 
-                    signerEntries, 
-                    formattedSignerEntries, 
-                    multiSignAddress, 
-                    multiSignSeeds, 
-                    authorizeFlag, 
-                    enableRegularKeyFlag, 
-                    enableMultiSignFlag,
-                    enableNftMinter, 
-                    multiSign,
-                    destinationAddress,
-                    SignerWeight,
-                    useMultiSign,
-                    suppressIndividualFeedback,
-                    operations, 
-                    extra,
+                         amountField,
+                         nfTokenMinterAddress,
+                         setFlags,
+                         clearFlags,
+                         tickSize,
+                         transferRate,
+                         publicKey,
+                         domain,
+                         isMessageKey,
+                         depositAuthAddresses,
+                         signerQuorum,
+                         regularKeyAddress,
+                         regularKeySeed,
+                         isRegularKeyAddress,
+                         depsositAuthEntries,
+                         formattedDepsositAuthEntries,
+                         signerEntries,
+                         formattedSignerEntries,
+                         multiSignAddress,
+                         multiSignSeeds,
+                         authorizeFlag,
+                         enableRegularKeyFlag,
+                         enableMultiSignFlag,
+                         enableNftMinter,
+                         multiSign,
+                         destinationAddress,
+                         SignerWeight,
+                         useMultiSign,
+                         suppressIndividualFeedback,
+                         operations,
+                         extra,
                     });
 
                     const resultEntry = {
@@ -502,41 +498,41 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
      }
 
      async executeDepositAuthTx(type: AccountConfigAction, config: AccountConfig): Promise<{ success: boolean; modifyCount?: number; validationError?: boolean; deletedHashes?: { depostiAuthAddress: string; hash: string }[]; error?: string }> {
-          const { 
-                wallet, 
-               simulate = false, 
-               amountField, 
+          const {
+               wallet,
+               simulate = false,
+               amountField,
                nfTokenMinterAddress,
-               setFlags, 
+               setFlags,
                clearFlags,
-               tickSize, 
-               transferRate, 
-               publicKey, 
-               domain, 
+               tickSize,
+               transferRate,
+               publicKey,
+               domain,
                isMessageKey,
-               depositAuthAddresses, 
-               signerQuorum, 
-               regularKeyAddress, 
+               depositAuthAddresses,
+               signerQuorum,
+               regularKeyAddress,
                regularKeySeed,
                isRegularKeyAddress,
-               depsositAuthEntries, 
-               formattedDepsositAuthEntries, 
-               signerEntries, 
-               formattedSignerEntries, 
-               multiSignAddress, 
-               multiSignSeeds, 
-               authorizeFlag, 
-               enableRegularKeyFlag, 
+               depsositAuthEntries,
+               formattedDepsositAuthEntries,
+               signerEntries,
+               formattedSignerEntries,
+               multiSignAddress,
+               multiSignSeeds,
+               authorizeFlag,
+               enableRegularKeyFlag,
                enableMultiSignFlag,
-               enableNftMinter, 
+               enableNftMinter,
                multiSign,
                destinationAddress,
                SignerWeight,
                useMultiSign,
-               suppressIndividualFeedback, 
+               suppressIndividualFeedback,
                operations,
-               preFetchedEnv, 
-               extra = {} 
+               preFetchedEnv,
+               extra = {},
           } = config;
 
           let env: any;
@@ -560,9 +556,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                // Use pre-fetched env if provided, otherwise fetch
                if (preFetchedEnv) {
                     env = preFetchedEnv;
-                    client = preFetchedEnv.client;
-                    fee = preFetchedEnv.fee;
-                    currentLedger = preFetchedEnv.currentLedger;
+                    currentLedger = env.ledgerInfo.lastLedger;
                } else {
                     env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
@@ -570,9 +564,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                          includeFee: true,
                          includeLedgerInfo: true,
                     });
-                    client = env.client;
-                    fee = env.fee!;
-                    currentLedger = env.currentLedger!;
+                    currentLedger = env.ledgerInfo.lastLedger;
                }
 
                client = env.client;
@@ -584,36 +576,36 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                const validationRule = ACCOUNT_CONFIG_VALIDATION_RULES[type];
                const validationInputs = this.buildValidationInputs(type, wallet, env, {
                     simulate,
-                    amountField, 
+                    amountField,
                     nfTokenMinterAddress,
-                    setFlags, 
+                    setFlags,
                     clearFlags,
-                    tickSize, 
-                    transferRate, 
-                    publicKey, 
-                    domain, 
+                    tickSize,
+                    transferRate,
+                    publicKey,
+                    domain,
                     isMessageKey,
-                    depositAuthAddresses, 
-                    signerQuorum, 
-                    regularKeyAddress, 
+                    depositAuthAddresses,
+                    signerQuorum,
+                    regularKeyAddress,
                     regularKeySeed,
                     isRegularKeyAddress,
-                    depsositAuthEntries, 
-                    formattedDepsositAuthEntries, 
-                    signerEntries, 
-                    formattedSignerEntries, 
-                    multiSignAddress, 
-                    multiSignSeeds, 
-                    authorizeFlag, 
-                    enableRegularKeyFlag, 
+                    depsositAuthEntries,
+                    formattedDepsositAuthEntries,
+                    signerEntries,
+                    formattedSignerEntries,
+                    multiSignAddress,
+                    multiSignSeeds,
+                    authorizeFlag,
+                    enableRegularKeyFlag,
                     enableMultiSignFlag,
-                    enableNftMinter, 
+                    enableNftMinter,
                     multiSign,
                     destinationAddress,
                     SignerWeight,
                     useMultiSign,
                     suppressIndividualFeedback,
-                    operations, 
+                    operations,
                     extra,
                });
 
@@ -632,74 +624,74 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     config.destinationAddress = address;
                     const tx = this.buildModifyAccountTransaction(type, env.wallet || wallet, env, config, {
                          simulate,
-                    amountField, 
-                    nfTokenMinterAddress,
-                    setFlags, 
-                    clearFlags,
-                    tickSize, 
-                    transferRate, 
-                    publicKey, 
-                    domain, 
-                    isMessageKey,
-                    depositAuthAddresses, 
-                    signerQuorum, 
-                    regularKeyAddress, 
-                    regularKeySeed,
-                    isRegularKeyAddress,
-                    depsositAuthEntries, 
-                    formattedDepsositAuthEntries, 
-                    signerEntries, 
-                    formattedSignerEntries, 
-                    multiSignAddress, 
-                    multiSignSeeds, 
-                    authorizeFlag, 
-                    enableRegularKeyFlag, 
-                    enableMultiSignFlag,
-                    enableNftMinter, 
-                    multiSign,
-                    destinationAddress,
-                    SignerWeight,
-                    useMultiSign,
-                    suppressIndividualFeedback,
-                    operations, 
-                    extra,
+                         amountField,
+                         nfTokenMinterAddress,
+                         setFlags,
+                         clearFlags,
+                         tickSize,
+                         transferRate,
+                         publicKey,
+                         domain,
+                         isMessageKey,
+                         depositAuthAddresses,
+                         signerQuorum,
+                         regularKeyAddress,
+                         regularKeySeed,
+                         isRegularKeyAddress,
+                         depsositAuthEntries,
+                         formattedDepsositAuthEntries,
+                         signerEntries,
+                         formattedSignerEntries,
+                         multiSignAddress,
+                         multiSignSeeds,
+                         authorizeFlag,
+                         enableRegularKeyFlag,
+                         enableMultiSignFlag,
+                         enableNftMinter,
+                         multiSign,
+                         destinationAddress,
+                         SignerWeight,
+                         useMultiSign,
+                         suppressIndividualFeedback,
+                         operations,
+                         extra,
                     });
 
                     await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, enableRegularKeyFlag, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableMultiSignFlag, suppressIndividualFeedback, extra }, env);
 
                     const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, {
-                        simulate,
-                    amountField, 
-                    nfTokenMinterAddress,
-                    setFlags, 
-                    clearFlags,
-                    tickSize, 
-                    transferRate, 
-                    publicKey, 
-                    domain, 
-                    isMessageKey,
-                    depositAuthAddresses, 
-                    signerQuorum, 
-                    regularKeyAddress, 
-                    regularKeySeed,
-                    isRegularKeyAddress,
-                    depsositAuthEntries, 
-                    formattedDepsositAuthEntries, 
-                    signerEntries, 
-                    formattedSignerEntries, 
-                    multiSignAddress, 
-                    multiSignSeeds, 
-                    authorizeFlag, 
-                    enableRegularKeyFlag, 
-                    enableMultiSignFlag,
-                    enableNftMinter, 
-                    multiSign,
-                    destinationAddress,
-                    SignerWeight,
-                    useMultiSign,
-                    suppressIndividualFeedback,
-                    operations, 
-                    extra,
+                         simulate,
+                         amountField,
+                         nfTokenMinterAddress,
+                         setFlags,
+                         clearFlags,
+                         tickSize,
+                         transferRate,
+                         publicKey,
+                         domain,
+                         isMessageKey,
+                         depositAuthAddresses,
+                         signerQuorum,
+                         regularKeyAddress,
+                         regularKeySeed,
+                         isRegularKeyAddress,
+                         depsositAuthEntries,
+                         formattedDepsositAuthEntries,
+                         signerEntries,
+                         formattedSignerEntries,
+                         multiSignAddress,
+                         multiSignSeeds,
+                         authorizeFlag,
+                         enableRegularKeyFlag,
+                         enableMultiSignFlag,
+                         enableNftMinter,
+                         multiSign,
+                         destinationAddress,
+                         SignerWeight,
+                         useMultiSign,
+                         suppressIndividualFeedback,
+                         operations,
+                         extra,
                     });
 
                     if (!execResult.success) {
@@ -798,7 +790,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
           let tx: any;
           switch (type) {
                case 'modifyAccountSetFlags':
-               case 'modifyAccountFlags':
+               case 'modifyAccountFlags': {
                     const flagValue = extra.flagValue;
                     const operation = extra.operation; // 'SetFlag' | 'ClearFlag'
                     tx = this.xrplTransactionService.buildModifyAccountSetTransaction(wallet, fee, ledgerInfo.lastIndex);
@@ -808,6 +800,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                          tx.ClearFlag = Number(flagValue);
                     }
                     return tx;
+               }
                case 'modifyDepositAuth':
                     return this.xrplTransactionService.buildModifyDepositAuthTransaction(wallet, extra.authorizeFlag, config.destinationAddress, fee, ledgerInfo.lastIndex);
                case 'modifyMultiSigners':
@@ -902,14 +895,14 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
 
      buildSuccessMessage(type: AccountConfigAction, config: any, extra: any): string {
           if (type === 'modifyMetaData') {
-               if (extra.enableNftMinter === 'Y') {
+               if (config.enableNftMinter === 'Y') {
                     return `Successfully Set NFT Minter ${config.nfTokenMinterAddress ? config.nfTokenMinterAddress : ''}`;
                } else {
                     return `Successfully Remove NFT Minter`;
                }
           }
           if (type === 'modifyRegularKey') {
-               if (extra.enableRegularKeyFlag === 'Y') {
+               if (config.enableRegularKeyFlag === 'Y') {
                     return `Successfully Set Regular Key ${config.regularKeyAddress}`;
                } else {
                     return `Successfully Remove Regular Key ${config.regularKeyAddress ? config.regularKeyAddress : ''}`;
@@ -917,7 +910,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
           }
 
           if (type === 'modifyMultiSigners') {
-               if (extra.enableMultiSignFlag === 'Y') {
+               if (config.enableMultiSignFlag === 'Y') {
                     return `Successfully Set Multi Sign`;
                } else {
                     return `Successfully Removed Multi Sign`;

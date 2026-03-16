@@ -1186,7 +1186,7 @@ export class UtilsService {
                let regularKeySeed;
                const regularKeyAddress = regularKey;
                if (this.accountConfiguratorStoreService.get('regularKeySeed')) {
-                    regularKeySeed = this.accountConfiguratorStoreService.get('regularKeySeed');
+                    regularKeySeed = this.storageService.get(`${account}regularKeySeed`) ? this.storageService.get(`${account}regularKeySeed`) : this.accountConfiguratorStoreService.get('regularKeySeed');
                     this.storageService.set(`${account}regularKeySeed`, regularKeySeed);
                } else {
                     regularKeySeed = this.storageService.get(`${account}regularKeySeed`);

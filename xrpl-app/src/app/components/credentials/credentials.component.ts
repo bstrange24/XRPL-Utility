@@ -36,12 +36,12 @@ import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
 import { RequirementsInfoComponent } from './ui-components/credential-requirements-info/requirements-info.component';
-import { CredentialsWalletCredentialsSummaryComponent } from './ui-components/summary/credentials-wallet-credentials-summary.component';
+import { CredentialsSummaryComponent } from './ui-components/summary/credentials-summary.component';
 
 @Component({
      selector: 'app-credentials',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, XrplExpirationInputComponent, RequirementsInfoComponent, TransactionOptionsSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CredentialsWalletCredentialsSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, XrplExpirationInputComponent, RequirementsInfoComponent, TransactionOptionsSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CredentialsSummaryComponent],
      templateUrl: './credentials.component.html',
      styleUrl: './credentials.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
