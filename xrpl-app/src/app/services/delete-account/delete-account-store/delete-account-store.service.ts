@@ -1,5 +1,5 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
-import { DeleteAccountField } from '../../../components/delete-account/constants/delete-account.constants';
+import { DeleteAccountField } from '../../../components/delete-account/constants/delete-account.types';
 
 @Injectable({
      providedIn: 'root',
@@ -17,7 +17,7 @@ export class DeleteAccountStoreService {
      };
 
      /** Signal registry */
-     private registry: Record<DeleteAccountField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
+     private readonly registry: Record<DeleteAccountField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
           (acc, key) => {
                const field = key as DeleteAccountField;
                acc[field] = signal(structuredClone(this.initialState[field]));

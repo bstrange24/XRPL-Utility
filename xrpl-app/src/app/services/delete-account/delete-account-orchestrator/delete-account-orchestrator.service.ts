@@ -7,10 +7,13 @@ import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import * as xrpl from 'xrpl';
-import { AccountDeleteTxType, AccountDeleteConfig, ACCOUNT_DELETE_TX_TYPES } from '../../../components/delete-account/constants/delete-account.constants';
+import { ACCOUNT_DELETE_TX_TYPES } from '../../../components/delete-account/constants/delete-account.constants';
 import { DeleteAccountUtilService } from '../delete-account-util/delete-account-util.service';
 import { DeleteAccountStoreService } from '../delete-account-store/delete-account-store.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
+import { AppConstants } from '../../../core/app.constants';
+import { ToastService } from '../../toast/toast.service';
+import { AccountDeleteConfig, AccountDeleteTxType } from '../../../components/delete-account/constants/delete-account.types';
 
 @Injectable({
      providedIn: 'root',
@@ -24,6 +27,7 @@ export class DeleteAccountOrchestratorService extends PerformanceBaseComponent {
      public readonly deleteAccountUtilService = inject(DeleteAccountUtilService);
      public readonly deleteAccountStoreService = inject(DeleteAccountStoreService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly toastService = inject(ToastService);
 
      async executeDeleteAccountTx(type: AccountDeleteTxType, config: AccountDeleteConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
           const { wallet, simulate = false, multiSign = false, destination, destinationTag, preFetchedEnv, extra = {} } = config;
@@ -89,13 +93,13 @@ export class DeleteAccountOrchestratorService extends PerformanceBaseComponent {
                txHash = execResult.hash;
 
                if (simulate) {
-                    return this.deleteAccountUtilService.handleSimulationSuccess(type, { simulate, multiSign, destination, destinationTag, extra }, txHash, extra);
+                    return this.handleSimulationSuccess(txHash);
                }
 
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.deleteAccountUtilService.buildSuccessMessage(type, { simulate, multiSign, destination, destinationTag, extra }, extra);
+               const message = this.buildSuccessMessage();
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
@@ -137,5 +141,18 @@ export class DeleteAccountOrchestratorService extends PerformanceBaseComponent {
           };
 
           return this.executor.accountDelete?.(tx as xrpl.AccountDelete, wallet, client, opts);
+     }
+
+     buildSuccessMessage(): string {
+          return `Successfully Deleted Account`;
+     }
+
+     handleSimulationSuccess(hash?: any) {
+          let msg = `Successfully simulated Deleting Account`;
+
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+
+          return { success: true, hash };
      }
 }

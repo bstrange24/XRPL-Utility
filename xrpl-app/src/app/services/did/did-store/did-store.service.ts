@@ -1,5 +1,5 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
-import { DidField } from '../../../components/did/constants/did.constants';
+import { DidField } from '../../../components/did/constants/did.types';
 
 @Injectable({
      providedIn: 'root',
@@ -16,7 +16,7 @@ export class DidStoreService {
      };
 
      /** Signal registry */
-     private registry: Record<DidField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
+     private readonly registry: Record<DidField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
           (acc, key) => {
                const field = key as DidField;
                acc[field] = signal(structuredClone(this.initialState[field]));

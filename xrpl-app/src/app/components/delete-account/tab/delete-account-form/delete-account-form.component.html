@@ -1,0 +1,32 @@
+<div class="form-row">
+     <!-- Destination -->
+     <div class="form-group">
+          <label for="destination">Destination</label>
+          <p class="form-hint">Destination account to send remaining XRP to.</p>
+          <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
+     </div>
+</div>
+
+<div class="switch-group">
+     <label class="switch">
+          <input type="checkbox" [checked]="wantsOptions()" (change)="toggleOptions.emit($event.target.checked)" name="showOptionalXrp" />
+          <span class="slider"></span> Include optional fields (Destination Tag, Source Tag)
+     </label>
+</div>
+
+<!-- Optional fields section -->
+@if (wantsOptions()) {
+<!-- Fix #1: Cast or narrow the type to match the expected union -->
+<app-transaction-options-section [activeTab]="'deleteAccount'"></app-transaction-options-section>
+}
+
+<!-- Action buttons -->
+<div class="button-row">
+     @if (!info().canDelete || canSubmit()) {
+     <button style="width: 425px" class="btn-primary-red" [disabled]="!canSubmit() || view().deleteBlockers().length > 0" (click)="performAction.emit()">{{ view().deleteWalletButtonLabel() }}</button>
+     } @else {
+     <button type="button" class="btn-primary-red" (click)="performAction.emit()" [disabled]="!canSubmit()">{{ view().deleteWalletButtonLabel() }}</button>
+     }
+
+     <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit()" (click)="clearFields.emit()">Clear Fields</button>
+</div>

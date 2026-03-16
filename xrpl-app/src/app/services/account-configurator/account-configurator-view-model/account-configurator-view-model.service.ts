@@ -8,8 +8,8 @@ import { StorageService } from '../../local-storage/storage.service';
      providedIn: 'root',
 })
 export class AccountConfiguratorViewModelService {
-     private accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
-     private walletManager = inject(WalletManagerService);
+     private readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     private readonly walletManager = inject(WalletManagerService);
      public readonly storageService = inject(StorageService);
 
      readonly activeTab = signal<AccountConfigAction>(ACCOUNT_CONFIG_ACTIONS.MODIFY_ACCOUNT_FLAGS);

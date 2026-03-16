@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, WritableSignal } from '@angular/core';
-import { CredentialField } from '../../../components/credentials/constants/credential.constants';
+import { CredentialField } from '../../../components/credentials/constants/credential.types';
 
 @Injectable({ providedIn: 'root' })
 export class CredentialStore {
@@ -23,7 +23,7 @@ export class CredentialStore {
      };
 
      /** Signal registry */
-     private registry: Record<CredentialField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
+     private readonly registry: Record<CredentialField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
           (acc, key) => {
                const field = key as CredentialField;
                acc[field] = signal(structuredClone(this.initialState[field]));

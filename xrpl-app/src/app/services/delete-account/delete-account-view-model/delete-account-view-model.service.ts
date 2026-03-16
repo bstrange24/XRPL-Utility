@@ -1,9 +1,10 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { Blocker, BLOCKER_MAP, AccountDeleteTxType } from '../../../components/delete-account/constants/delete-account.constants';
 import * as xrpl from 'xrpl';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { DeleteAccountStoreService } from '../delete-account-store/delete-account-store.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { AccountDeleteTxType, Blocker } from '../../../components/delete-account/constants/delete-account.types';
+import { BLOCKER_MAP } from '../../../components/delete-account/constants/delete-account.ui';
 
 @Injectable({
      providedIn: 'root',
@@ -92,7 +93,7 @@ export class DeleteAccountViewModelService {
      readonly infoData = computed(() => ({
           walletName: this.walletManager.getSelectedWallet()?.name || 'Selected wallet',
           canDelete: this.canDelete(),
-          blockers: this.blockersList() as Blocker[],
+          blockers: this.blockersList(),
           balanceWarning: this.balanceWarning(),
      }));
 

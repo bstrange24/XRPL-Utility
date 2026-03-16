@@ -11,7 +11,10 @@ import { PerformanceBaseComponent } from '../../../components/shared/performance
 import { DidUtilService } from '../did-util/did-util.service';
 import didSchema from '../../../components/did/did-schema.json';
 import { DidStoreService } from '../did-store/did-store.service';
-import { DID_VALIDATION_RULES, DidTxConfig, DidTxType } from '../../../components/did/constants/did.constants';
+import { DID_VALIDATION_RULES } from '../../../components/did/constants/did.constants';
+import { DidTxConfig, DidTxType } from '../../../components/did/constants/did.types';
+import { AppConstants } from '../../../core/app.constants';
+import { ToastService } from '../../toast/toast.service';
 
 @Injectable({ providedIn: 'root' })
 export class DidTransactionOrchestratorService extends PerformanceBaseComponent {
@@ -23,6 +26,7 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly didUtilService = inject(DidUtilService);
      public readonly didStoreService = inject(DidStoreService);
+     public readonly toastService = inject(ToastService);
 
      async executeDidTx(type: DidTxType, config: DidTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
           const { wallet, simulate = false, multiSign = false, didData, uriData, didDocumentData, preFetchedEnv, extra = {} } = config;
@@ -54,7 +58,6 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                }
 
                // Validation
-               // const validationRule = this.getValidationRuleName(type);
                const validationRule = DID_VALIDATION_RULES[type];
                const validationInputs = this.buildValidationInputs(type, wallet, env, {
                     simulate,
@@ -91,13 +94,13 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                txHash = execResult.hash;
 
                if (simulate) {
-                    return this.didUtilService.handleSimulationSuccess(type, { simulate, multiSign, didData, uriData, didDocumentData, extra }, txHash, extra);
+                    return this.handleSimulationSuccess(type, txHash);
                }
 
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.didUtilService.buildSuccessMessage(type, { simulate, multiSign, didData, uriData, didDocumentData, extra }, extra);
+               const message = this.buildSuccessMessage(type);
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
@@ -108,14 +111,6 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
           } finally {
                this.txUiService.resetCurrentStepToIdle();
           }
-     }
-
-     private getValidationRuleName(type: DidTxType): string {
-          const map: Record<DidTxType, string> = {
-               setDid: 'DIDSet',
-               deleteDid: 'DIDdelete',
-          };
-          return map[type];
      }
 
      private buildValidationInputs(type: DidTxType, wallet: Wallet, env: any, values: any) {
@@ -141,7 +136,7 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
           const { fee } = env;
 
           switch (type) {
-               case 'setDid':
+               case 'setDid': {
                     const txSetDid = this.xrplTransactionService.buildSetDidTransaction(wallet, fee, env.ledgerInfo.lastIndex);
                     if (this.didStoreService.get('didDocumentData')) txSetDid.DIDDocument = this.utilsService.jsonToHex(this.didStoreService.get('didDocumentData'));
                     if (this.didStoreService.get('uriData')) txSetDid.URI = this.utilsService.jsonToHex(this.didStoreService.get('uriData'));
@@ -151,9 +146,11 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                          txSetDid.Data = result.hexData;
                     }
                     return txSetDid;
-               case 'deleteDid':
+               }
+               case 'deleteDid': {
                     const txDeleteDid = this.xrplTransactionService.buildDeleteDidTransaction(wallet, fee, env.ledgerInfo.lastIndex);
                     return txDeleteDid;
+               }
           }
      }
 
@@ -188,5 +185,23 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                case 'deleteDid':
                     return this.executor.deleteDid?.(tx as xrpl.DIDDelete, wallet, client, opts);
           }
+     }
+
+     buildSuccessMessage(type: DidTxType): string {
+          if (type === 'setDid') return `Successfully Set DID`;
+
+          return `Successfully Deleted DID`;
+     }
+
+     handleSimulationSuccess(type: DidTxType, hash?: string) {
+          let msg: string;
+
+          if (type === 'setDid') msg = `Successfully simulated setting the DID`;
+          else msg = `Successfully simulated deleting the DID`;
+
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+
+          return { success: true, hash };
      }
 }

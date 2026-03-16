@@ -31,47 +31,15 @@
                }
 
                <form #theForm="ngForm" class="main-form">
-                    @if (tab === 'set') {
-                    <div class="form-row">
-                         <!-- Credential Issuer -->
-                         <div class="form-group">
-                              <label for="issuer">Issuer</label>
-                              <p class="form-hint">The credential issuer.</p>
-                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="handleSearchQueryChange($event)" (valueChange)="handleDestinationChange($event)" placeholder="Enter or select destination address"></app-select-search-dropdown>
-                         </div>
-
-                         <!-- Credential Type-->
-                         <div class="form-group">
-                              <label for="credentialType">Credential Type</label>
-                              <p class="form-hint">A hex-encoded value to identify the type of credential from the issuer.</p>
-                              <input type="text" [value]="permissionedDomainStoreService.get('credentialType')" (input)="permissionedDomainUtilService.setCredentialType($event.target.value)" name="credential_type" placeholder="Enter a credential type" />
-                         </div>
-                    </div>
-                    }
-
-                    <!-- Permissioned Domain Dropdown -->
-                    @if (tab === 'delete') {
-                    <!-- Dropdown -->
-                    @if (permissionedDomainStoreService.get('createdPermissionedDomains').length > 0) {
-                    <div class="form-group">
-                         <label for="selectPDtoDelete">Select Permissioned Domain to delete</label>
-                         <p class="form-hint">Select an existing permissioined domain attached to the current wallet.</p>
-                         <app-select-search-dropdown [items]="permissionedDomainUtilService.domainItems()" [value]="permissionedDomainUtilService.selectedDomainItem()" (valueChange)="permissionedDomainUtilService.onDomainSelected($event)" placeholder="Search by Domain ID..." emptyMessage="No domains found"></app-select-search-dropdown>
-                    </div>
-
-                    <!-- Domain ID Field -->
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label for="domainId">Domain ID</label>
-                              <p class="form-hint">Ledger hash containing the permissioned domain.</p>
-                              <input type="text" [value]="permissionedDomainStoreService.get('selectedDomainId')" readonly name="domainId" placeholder="Select a domain above" />
-                         </div>
-                    </div>
-                    }}
+                    @switch (tab) { @case ('setDomain') {
+                    <app-permission-domain-set-form [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" />
+                    } @case ('deleteDomain') {
+                    <app-permission-domain-delete-form [view]="view" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (onDomainSelected)="permissionedDomainUtilService.onDomainSelected($event)" />
+                    } }
 
                     <app-transaction-options-section [activeTab]="tab"></app-transaction-options-section>
 
-                    <app-transaction-options [showWhenTab]="['set', 'delete']" [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled()" [regularKeySigningEnabled]="permissionedDomainStoreService.signal('regularKeySigningEnabled')()"></app-transaction-options>
+                    <app-transaction-options [showWhenTab]="['setDomain', 'deleteDomain']" [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled()" [regularKeySigningEnabled]="permissionedDomainStoreService.signal('regularKeySigningEnabled')()"></app-transaction-options>
 
                     <!-- Action buttons -->
                     <div class="button-row">

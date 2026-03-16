@@ -8,9 +8,7 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
-import { AppConstants } from '../../../core/app.constants';
 import { DidStoreService } from '../did-store/did-store.service';
-import { DidTxType } from '../../../components/did/constants/did.constants';
 
 @Injectable({
      providedIn: 'root',
@@ -76,24 +74,6 @@ export class DidUtilService extends PerformanceBaseComponent {
           );
           this.didStoreService.set('uriData', `{"ipfs":"//bafybeiexamplehash"}`);
           this.didStoreService.set('didDocumentData', `{"did:example":"123#public-key-0"}`);
-     }
-
-     buildSuccessMessage(type: DidTxType, formValues: any, extra: any): string {
-          if (type === 'setDid') return `Successfully Set DID`;
-
-          return `Successfully Deleted DID`;
-     }
-
-     handleSimulationSuccess(type: DidTxType, formValues: any, hash?: string, extra?: any) {
-          let msg: string;
-
-          if (type === 'setDid') msg = `Successfully simulated setting the DID`;
-          else msg = `Successfully simulated deleting the DID`;
-
-          this.txUiService.resetCurrentStepToIdle();
-          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
-
-          return { success: true, hash };
      }
 
      private buildTxLabel(defaultText: string) {

@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -28,21 +28,24 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { ActivatedRoute } from '@angular/router';
 import { DidStoreService } from '../../services/did/did-store/did-store.service';
 import { DidViewModelService } from '../../services/did/did-view-model/did-view-model.service';
-import { DID_TAB_META, DID_TABS, DidTxConfig, DidTxType } from './constants/did.constants';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
 import { DidSummaryComponent } from './ui-components/summary/did-summary.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
+import { DID_TAB_META, DID_TABS } from './constants/did.ui';
+import { DidTxConfig, DidTxType } from './constants/did.types';
+import { DidDeleteComponent } from './tab/did-delete/did-delete.component';
+import { DidSetComponent } from './tab/did-set/did-set.component';
 
 @Component({
      selector: 'app-did',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, JsonEditorComponent, RequirementsInfoComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DidSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, RequirementsInfoComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DidSummaryComponent, DidDeleteComponent, DidSetComponent],
      templateUrl: './did.component.html',
      styleUrl: './did.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DidComponent extends WalletDestinationBase implements OnInit {
+export class DidComponent extends WalletDestinationBase implements OnInit, AfterViewInit {
      @ViewChild('didDocumentEditor') didDocumentEditor!: JsonEditorComponent;
      @ViewChild('uriEditor') uriEditor!: JsonEditorComponent;
      @ViewChild('didDataEditor') didDataEditor!: JsonEditorComponent;
@@ -135,32 +138,28 @@ export class DidComponent extends WalletDestinationBase implements OnInit {
      }
 
      async performAction(): Promise<void> {
-          // Declare variables we need after the timed block
-          let txResult: { success: boolean; error?: string } | null = null;
-          let envRef: any = null;
-          let currentTab = this.didViewModelService.activeTab();
-
-          // 1. Common reset & guard clauses
-          this.txUiService.resetCurrentStepToIdle();
-          this.txUiService.clearAllOptionsAndMessages();
+          const tab = this.didViewModelService.activeTab();
+          let txResult: { success: boolean; hash?: string; error?: string; validationError?: boolean } | null = null;
 
           if (!this.walletManagerService.ensureWalletSelected()) return;
 
-          // 2. Map tab → action type
-          let action: 'setDid' | 'deleteDid';
-          switch (currentTab) {
-               case 'set':
-                    action = 'setDid';
-                    break;
-               case 'delete':
-                    action = 'deleteDid';
-                    break;
-               default:
-                    this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
-                    return;
+          const walletVm = this.walletManager.walletVm();
+          if (!walletVm?.wallet) return;
+
+          // 2. Map tab to action
+          const actionMap: Record<'set' | 'delete', DidTxType> = {
+               set: 'setDid',
+               delete: 'deleteDid',
+          };
+
+          const txType = actionMap[tab];
+          if (!txType) {
+               this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
+               return;
           }
 
-          // 3. Fetch environment once for this transaction
+          // 3. Prepare environment once
+          let envRef: any = null;
           try {
                envRef = await this.txEnvironmentService.prepareTxEnvironment({
                     includeAccountInfo: true,
@@ -168,48 +167,39 @@ export class DidComponent extends WalletDestinationBase implements OnInit {
                     includeFee: true,
                     includeLedgerInfo: true,
                });
-
-               if (currentTab === 'delete') {
-                    const didFound = envRef.accountObjects.result.account_objects.find((line: any) => {
-                         return line.LedgerEntryType === 'DID';
-                    });
-
-                    if (!didFound) {
-                         this.toastService.error('Account has no DID set.', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-               }
           } catch (err: any) {
-               console.error(err);
+               console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
 
+          // 4. Build the orchestrator config
           await this.withPerf('performAction', async () => {
-               // 4. Build the orchestrator config
                const config: DidTxConfig = {
-                    wallet: this.currentWallet(),
+                    wallet: walletVm.wallet,
                     simulate: this.txUiService.isSimulateEnabled(),
                     multiSign: this.txUiService.useMultiSign(),
+                    preFetchedEnv: envRef,
                     didData: this.didStoreService.get('didData'),
                     uriData: this.didStoreService.get('uriData'),
                     didDocumentData: this.didStoreService.get('didDocumentData'),
-                    preFetchedEnv: envRef,
+                    extra: {},
                };
 
-               // 5. Execute
+               // 5. Execute via orchestrator
                try {
-                    txResult = await this.didTransactionOrchestratorService.executeDidTx(action as DidTxType, config);
+                    txResult = await this.didTransactionOrchestratorService.executeDidTx(txType, config);
                } catch (err: any) {
-                    console.error(`Error in ${action}:`, err);
+                    console.error(`[${tab}] execution failed:`, err);
                     this.toastService.error(err.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    return;
                }
           });
 
-          // 7. Handle result & side effects
-          if (txResult) {
-               await this.handleTxResult(txResult, envRef.client, envRef.wallet, '');
-          }
+          if (!txResult) return;
+
+          // 6. Handle result + side effects
+          await this.handleTxResult(txResult, envRef.client, envRef.wallet, '');
 
           this.txUiService.resetCurrentStepToIdle();
      }

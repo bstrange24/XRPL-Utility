@@ -5,17 +5,17 @@ import didSchema from '../../../components/did/did-schema.json';
 import * as xrpl from 'xrpl';
 import { UtilsService } from '../../util-service/utils.service';
 import { JsonEditorComponent } from '../../../components/json-editor/json-editor.component';
-import { DidInfoData, DidTab } from '../../../components/did/constants/did.constants';
+import { DidInfoData, DidTab } from '../../../components/did/constants/did.types';
 
 @Injectable({ providedIn: 'root' })
 export class DidViewModelService {
      activeTab = signal<DidTab>('set');
-     private didDataEditor = signal<JsonEditorComponent | null>(null);
+     private readonly didDataEditor = signal<JsonEditorComponent | null>(null);
 
      constructor(
-          private didStore: DidStoreService,
-          private walletManager: WalletManagerService,
-          private utilsService: UtilsService
+          private readonly didStore: DidStoreService,
+          private readonly walletManager: WalletManagerService,
+          private readonly utilsService: UtilsService
      ) {}
 
      // Current wallet

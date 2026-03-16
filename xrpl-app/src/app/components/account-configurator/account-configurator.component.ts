@@ -126,10 +126,12 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
      }
 
      async performAction(enabled: string): Promise<void> {
+          const currentTab = this.accountConfiguratorViewModelService.activeTab();
+
           if (!this.walletManagerService.ensureWalletSelected()) return;
 
           const walletVm = this.walletManager.walletVm();
-          const currentTab = this.accountConfiguratorViewModelService.activeTab();
+          if (!walletVm?.wallet) throw new Error('Unable to get selected wallet.');
 
           let envRef: any = null;
 
@@ -150,10 +152,11 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
 
           const config: AccountConfig = {
                ...storeState,
-               wallet: walletVm.wallet!,
+               wallet: walletVm.wallet,
                simulate: this.txUiService.isSimulateEnabled(),
                multiSign: this.txUiService.useMultiSign(),
                preFetchedEnv: envRef,
+               extra: {},
           };
 
           const handler = this.accountConfiguratorUtilService.actionHandlers[currentTab];
@@ -163,10 +166,18 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                return;
           }
 
-          let txResult;
+          let txResult: { success: boolean; hash?: string; error?: string } | null = null;
           await this.withPerf('performAction', async () => {
-               txResult = await handler(config, enabled);
+               try {
+                    txResult = await handler(config, enabled);
+               } catch (error: any) {
+                    console.error(`[${currentTab}] execution failed:`, currentTab);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    return;
+               }
           });
+
+          if (!txResult) throw new Error('Unable error when submitting transaction.');
 
           if (txResult) {
                this.isAccountConfig.set(true);

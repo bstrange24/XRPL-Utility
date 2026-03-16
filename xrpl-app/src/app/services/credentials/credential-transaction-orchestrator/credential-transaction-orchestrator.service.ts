@@ -11,7 +11,9 @@ import { PerformanceBaseComponent } from '../../../components/shared/performance
 import { CredentialUtilService } from '../credential-util/credential-util.service';
 import { AppConstants } from '../../../core/app.constants';
 import { XrplDateService } from '../../../core/xrpl-date.service';
-import { CREDENTIAL_VALIDATION_RULES, CredentialTxConfig, CredentialTxType } from '../../../components/credentials/constants/credential.constants';
+import { CREDENTIAL_VALIDATION_RULES, CredentialTxType } from '../../../components/credentials/constants/credential.constants';
+import { CredentialTxConfig } from '../../../components/credentials/constants/credential.types';
+import { ToastService } from '../../toast/toast.service';
 
 @Injectable({ providedIn: 'root' })
 export class CredentialTransactionOrchestratorService extends PerformanceBaseComponent {
@@ -23,9 +25,10 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly credentialUtilService = inject(CredentialUtilService);
      public readonly xrplDateService = inject(XrplDateService);
+     private readonly toastService = inject(ToastService);
 
-     async executeCredentialTx(type: CredentialTxType, config: CredentialTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
-          const { wallet, simulate = false, multiSign = false, credentialType, expiration, uri, subject, credentialID, credentialIssuer, preFetchedEnv, extra = {} } = config;
+     async executeCredentialTx(type: CredentialTxType, config: CredentialTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
+          const { wallet, simulate = false, multiSign = false, credentialType, expirationDate, uri, subject, credentialID, credentialIssuer, preFetchedEnv, extra = {} } = config;
 
           let env: any;
           let client: xrpl.Client;
@@ -53,54 +56,13 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                     throw new Error('Required network data missing');
                }
 
-               if (type === 'acceptCredentials' || type === 'deleteCredentials') {
-                    const credentialID = config.credentialID;
-                    if (!credentialID) {
-                         return { success: false, error: 'Credential ID cannot be blank.', validationError: true };
-                    }
-
-                    const accountObjects = preFetchedEnv?.accountObjects?.result?.account_objects || [];
-                    const credentialFound = accountObjects.find((line: any) => line.LedgerEntryType === 'Credential' && line.index === credentialID);
-
-                    if (!credentialFound) {
-                         return { success: false, error: 'Credential not found.', validationError: true };
-                    }
-
-                    if (type === 'acceptCredentials') {
-                         if ((credentialFound as any)?.Flags === AppConstants.LSF_ACCEPTED) {
-                              return { success: false, error: 'Credential has already been accepted.', validationError: true };
-                         }
-
-                         if (this.utilsService.isRippleExpired((credentialFound as any)?.Expiration)) {
-                              return { success: false, error: 'Credential has expired.', validationError: true };
-                         }
-
-                         // Override subject & issuer from on-chain data
-                         config.subject = credentialFound.Subject;
-                         config.credentialIssuer = credentialFound.Issuer;
-                         config.credentialType = credentialFound.CredentialType;
-                    } else if (type === 'deleteCredentials') {
-                         // override extra/credentialType if needed
-                         config.credentialType = credentialFound.CredentialType;
-                         config.subject = credentialFound.Subject;
-                    }
-               }
-
-               if (type === 'createCredential' && expiration) {
-                    const rippleTime = this.xrplDateService.toRippleTime(expiration);
-                    if (rippleTime === undefined) {
-                         return { success: false, error: 'Invalid expiration date format', validationError: true };
-                    }
-                    config.expiration = rippleTime.toString(); // Store as string for tx building
-               }
-
                // Validation
                const validationRule = CREDENTIAL_VALIDATION_RULES[type];
                const validationInputs = this.buildValidationInputs(type, wallet, env, {
                     simulate,
                     multiSign,
                     credentialType,
-                    expiration,
+                    expirationDate,
                     subject,
                     credentialID,
                     credentialIssuer,
@@ -118,14 +80,16 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                     return { success: false, error: errors.join('\n• '), validationError: true };
                }
 
+               const preparedConfig = await this.prepareCredentialConfig(type, config, env);
+
                // Build transaction
-               const tx = this.buildCredentialTransaction(type, env.wallet || wallet, env, config, { simulate, multiSign, credentialType, expiration, subject, credentialID, credentialIssuer, uri, extra });
+               const tx = this.buildCredentialTransaction(type, env.wallet || wallet, env, preparedConfig, config, { simulate, multiSign, credentialType, expirationDate, subject, credentialID, credentialIssuer, uri, extra });
 
                // Optional fields
-               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, credentialType, expiration, subject, credentialID, credentialIssuer, uri, extra }, env);
+               await this.applyOptionalFields(client, tx, wallet, type, { simulate, multiSign, credentialType, expirationDate, subject, credentialID, credentialIssuer, uri, extra });
 
                // Execute
-               const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { simulate, multiSign, credentialType, expiration, subject, credentialID, credentialIssuer, uri, extra });
+               const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { simulate, multiSign, credentialType, expirationDate, subject, credentialID, credentialIssuer, uri, extra });
 
                if (!execResult.success) {
                     return { success: false, error: execResult.error };
@@ -134,13 +98,13 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                txHash = execResult.hash;
 
                if (simulate) {
-                    return this.credentialUtilService.handleSimulationSuccess(type, { simulate, multiSign, credentialType, expiration, subject, credentialID, credentialIssuer, uri, extra }, txHash, extra);
+                    return this.handleSimulationSuccess(type, txHash);
                }
 
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.credentialUtilService.buildSuccessMessage(type, { simulate, multiSign, credentialType, expiration, subject, credentialID, credentialIssuer, uri, extra }, extra);
+               const message = this.buildSuccessMessage(type, { simulate, multiSign, credentialType, expirationDate, subject, credentialID, credentialIssuer, uri, extra } as CredentialTxConfig);
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
@@ -166,7 +130,7 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
 
           switch (type) {
                case 'createCredential':
-                    return { ...base, createCredential: { credentialType: values.credentialType, expirationRipple: values.expiration, subject: values.subject } };
+                    return { ...base, createCredential: { credentialType: values.credentialType, expirationRipple: values.expirationDate, subject: values.subject } };
                case 'deleteCredentials':
                     return { ...base, deleteCredentials: { credentialType: values.credentialType, subject: values.subject, credentialID: values.credentialID } };
                case 'acceptCredentials':
@@ -174,26 +138,28 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
           }
      }
 
-     private buildCredentialTransaction(type: CredentialTxType, wallet: xrpl.Wallet, env: any, config: any, values: any): xrpl.Transaction {
+     private buildCredentialTransaction(type: CredentialTxType, wallet: xrpl.Wallet, env: any, preparedConfig: any, config: any, values: any): xrpl.Transaction {
           const { fee } = env;
           switch (type) {
-               case 'createCredential':
+               case 'createCredential': {
                     const txCreate = this.xrplTransactionService.buildCreateCredentialTransaction(wallet, values.subject, values.credentialType, fee, env.ledgerInfo.lastIndex);
-                    if (values.expiration && config.expiration) txCreate.Expiration = Number.parseInt(config.expiration);
+                    if (preparedConfig.expirationDate && config.expirationDate) txCreate.Expiration = Number.parseInt(preparedConfig.expirationDate);
                     return txCreate;
+               }
 
-               case 'deleteCredentials':
+               case 'deleteCredentials': {
                     const txDelete = this.xrplTransactionService.buildDeleteCredentialTransaction(wallet, values.subject, values.credentialType, fee, env.ledgerInfo.lastIndex);
-                    if (values.credentialIssuer) txDelete.Issuer = values.credentialIssuer;
-                    if (values.subject) txDelete.Subject = values.subject;
+                    if (preparedConfig.credentialIssuer) txDelete.Issuer = preparedConfig.credentialIssuer;
+                    if (preparedConfig.subject) txDelete.Subject = preparedConfig.subject;
                     return txDelete;
+               }
 
                case 'acceptCredentials':
                     return this.xrplTransactionService.buildAcceptCredentialTransaction(wallet, values.credentialIssuer, values.credentialType, fee, env.ledgerInfo.lastIndex);
           }
      }
 
-     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: CredentialTxType, values: any, env: any) {
+     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, type: CredentialTxType, values: any) {
           if (type === 'createCredential' && values.uri) this.utilsService.setURI(tx, values.uri);
 
           const isTicket = this.txUiService.isTicket();
@@ -228,5 +194,52 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                case 'acceptCredentials':
                     return this.executor.acceptCredential?.(tx as xrpl.CredentialAccept, wallet, client, opts);
           }
+     }
+
+     buildSuccessMessage(type: CredentialTxType, config: CredentialTxConfig): string {
+          const subjectShort = config.subject ? `${config.subject.slice(0, 8)}…` : '';
+          switch (type) {
+               case 'createCredential':
+                    return `Successfully Create Credential for ${subjectShort}`;
+               case 'acceptCredentials':
+                    return `Successfully Accepted Credential`;
+               case 'deleteCredentials':
+                    return `Successfully Deleted Credential`;
+               default:
+                    return 'Operation completed';
+          }
+     }
+
+     handleSimulationSuccess(type: CredentialTxType, hash?: string) {
+          let msg: string;
+
+          if (type === 'createCredential') msg = `Successfully simulated creating the Credential.`;
+          else if (type === 'deleteCredentials') msg = `Successfully simulated deleting the Credential.`;
+          else msg = `Successfully simulated accepting the Credential.`;
+
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+
+          return { success: true, hash };
+     }
+
+     private async prepareCredentialConfig(type: CredentialTxType, config: CredentialTxConfig, env: any): Promise<CredentialTxConfig> {
+          const mutable = { ...config };
+
+          if ((type === 'acceptCredentials' || type === 'deleteCredentials') && mutable.credentialID) {
+               const cred = env.accountObjects?.result?.account_objects?.find((o: any) => o.LedgerEntryType === 'Credential' && o.index === mutable.credentialID);
+               if (cred) {
+                    mutable.subject = cred.Subject;
+                    mutable.credentialIssuer = cred.Issuer;
+                    mutable.credentialType = cred.CredentialType;
+               }
+          }
+
+          if (type === 'createCredential' && mutable.expirationDate) {
+               const rt = this.xrplDateService.toRippleTime(mutable.expirationDate);
+               if (rt !== undefined) mutable.expirationDate = rt.toString();
+          }
+
+          return mutable;
      }
 }

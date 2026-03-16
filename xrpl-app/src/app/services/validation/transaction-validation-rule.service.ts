@@ -6,6 +6,8 @@ import didSchema from '../../components/did/did-schema.json';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { percentToTransferRate } from 'xrpl';
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
+import { XrplDateService } from '../../core/xrpl-date.service';
+import { AppConstants } from '../../core/app.constants';
 
 export interface ValidationContext {
      inputs: Record<string, any>;
@@ -39,6 +41,7 @@ export class ValidationService {
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly xrplService = inject(XrplService);
      public readonly utilsService = inject(UtilsService);
+     public readonly xrplDateService = inject(XrplDateService);
 
      constructor() {
           this.registerBuiltInRules();
@@ -272,6 +275,79 @@ export class ValidationService {
                }
 
                return null;
+          };
+     }
+
+     private credentialExists(): ValidatorFn {
+          return ctx => {
+               const credentialID = this.getValueByPath(ctx.inputs, 'credentialID');
+               if (!credentialID) return null; // let requiredFields handle missing
+
+               const objects = ctx.accountObjects?.result?.account_objects || [];
+               const found = objects.find((obj: any) => obj.LedgerEntryType === 'Credential' && obj.index === credentialID);
+
+               return found ? null : 'Credential not found on the ledger';
+          };
+     }
+
+     private credentialNotAlreadyAccepted(): ValidatorFn {
+          return ctx => {
+               const credentialID = this.getValueByPath(ctx.inputs, 'credentialID');
+               if (!credentialID) return null;
+
+               const objects = ctx.accountObjects?.result?.account_objects || [];
+               const cred = objects.find((obj: any) => obj.LedgerEntryType === 'Credential' && obj.index === credentialID);
+
+               if (!cred) return null; // existence checked separately
+
+               if (cred.Flags === AppConstants.LSF_ACCEPTED) {
+                    return 'This credential has already been accepted';
+               }
+
+               return null;
+          };
+     }
+
+     private credentialNotExpired(): ValidatorFn {
+          return ctx => {
+               const credentialID = this.getValueByPath(ctx.inputs, 'credentialID');
+               if (!credentialID) return null;
+
+               const objects = ctx.accountObjects?.result?.account_objects || [];
+               const cred = objects.find((obj: any) => obj.LedgerEntryType === 'Credential' && obj.index === credentialID);
+
+               if (!cred?.Expiration) return null;
+
+               if (this.utilsService.isRippleExpired(cred.Expiration)) {
+                    return 'This credential has expired';
+               }
+
+               return null;
+          };
+     }
+
+     private validExpirationDateForCreate(): ValidatorFn {
+          return ctx => {
+               const expiration = this.getValueByPath(ctx.inputs, 'createCredential.expirationRipple');
+               if (!expiration) return null; // optional field
+
+               const rippleTime = this.xrplDateService.toRippleTime(expiration);
+               if (Number.isNaN(rippleTime) || rippleTime! <= 0) {
+                    return 'Invalid expiration date format';
+               }
+
+               return null;
+          };
+     }
+
+     private didExistsForDelete(): ValidatorFn {
+          return ctx => {
+               if (ctx.inputs?.['transactionType'] !== 'deleteDid') return null;
+
+               const objects = ctx.accountObjects?.result?.account_objects || [];
+               const hasDid = objects.some((obj: any) => obj.LedgerEntryType === 'DID');
+
+               return hasDid ? null : 'No DID found on this account to delete';
           };
      }
 
@@ -843,6 +919,8 @@ export class ValidationService {
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
+                    this.didExistsForDelete(),
+
                     // Master key disabled → must use alt signing
                     this.masterKeyDisabledRequiresAltSigning(),
 
@@ -880,6 +958,7 @@ export class ValidationService {
 
                     // Destination address valid
                     this.isValidAddress('credentials.subject'),
+                    this.validExpirationDateForCreate(),
                ],
           });
 
@@ -905,6 +984,8 @@ export class ValidationService {
                     this.multiSign(),
 
                     this.isValidAddress('deleteCredentials.subject'),
+
+                    this.credentialExists(),
                ],
           });
 
@@ -929,6 +1010,9 @@ export class ValidationService {
                     this.multiSign(),
 
                     this.isValidAddress('acceptCredentials.Issuer'),
+                    this.credentialExists(),
+                    this.credentialNotAlreadyAccepted(),
+                    this.credentialNotExpired(),
                ],
           });
 

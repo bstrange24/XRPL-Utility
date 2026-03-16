@@ -1,0 +1,15 @@
+<div class="form-row">
+     <!-- Credential Issuer -->
+     <div class="form-group">
+          <label for="issuer">Issuer</label>
+          <p class="form-hint">The credential issuer.</p>
+          <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
+     </div>
+
+     <!-- Credential Type -->
+     <div class="form-group">
+          <label for="credentialType">Credential Type</label>
+          <p class="form-hint">A hex-encoded value to identify the type of credential from the issuer.</p>
+          <input type="text" [value]="permissionedDomainStoreService.get('credentialType')" (input)="permissionedDomainUtilService.setCredentialType($event.target.value)" name="credential_type" placeholder="Enter a credential type" />
+     </div>
+</div>

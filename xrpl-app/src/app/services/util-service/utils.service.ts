@@ -2274,6 +2274,11 @@ export class UtilsService {
           tx.DomainID = domainId;
      }
 
+     toDomainId(domain: string): string {
+          const hex = Buffer.from(domain, 'utf8').toString('hex').toUpperCase();
+          return hex.padEnd(64, '0');
+     }
+
      setCredentialIDsField(tx: any, credentials: string[]) {
           tx.CredentialIDs = credentials;
      }

@@ -5,7 +5,7 @@ import { CopyUtilService } from '../../../../services/copy-util/copy-util.servic
 import { CredentialUtilService } from '../../../../services/credentials/credential-util/credential-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
-import { CredentialItemVm } from '../../constants/credential.constants';
+import { CredentialActionTypes, CredentialItemVm } from '../../constants/credential.types';
 
 @Component({
      selector: 'app-credentials-summary',
@@ -16,7 +16,7 @@ import { CredentialItemVm } from '../../constants/credential.constants';
 })
 export class CredentialsSummaryComponent {
      public copyUtilService = inject(CopyUtilService);
-     private txUiService = inject(TransactionUiService);
+     private readonly txUiService = inject(TransactionUiService);
      public credentialUtilService = inject(CredentialUtilService);
 
      // Inputs from parent (credentials page)
@@ -24,7 +24,7 @@ export class CredentialsSummaryComponent {
      view = input.required<{ walletName: string; summaryMessage: string }>();
      creds = input.required<{ list: CredentialItemVm[] }>();
      credsLength = input.required<number>();
-     tab = input.required<'create' | 'accept' | 'delete' | 'verify'>();
+     tab = input.required<CredentialActionTypes>();
 
      infoPanelExpanded = input.required<boolean>();
      toggleInfoPanel = output<void>();

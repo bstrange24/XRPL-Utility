@@ -15,33 +15,36 @@ import { TransactionOptionsComponent } from '../shared/transaction-options/trans
 import { NavbarComponent } from '../navbar/navbar.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { CredentialItem } from '../../models/interface-items.model';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { CredentialTransactionOrchestratorService } from '../../services/credentials/credential-transaction-orchestrator/credential-transaction-orchestrator.service';
 import { CredentialUtilService } from '../../services/credentials/credential-util/credential-util.service';
-// import { RequirementsInfoComponent } from '../../components/shared/requirements-info/requirements-info/requirements-info.component';
 import { ActivatedRoute } from '@angular/router';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
-import { XrplExpirationInputComponent } from '../shared/xrpl-expiration-input/xrpl-expiration-input.component';
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 import { CredentialViewModelService } from '../../services/credentials/credential-view-model/credential-view-model.service';
-import { CredentialTxConfig, CredentialTxType, CREDENTIAL_TAB_META, CREDENTIAL_TABS, CredentialItemVm } from './constants/credential.constants';
 import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
 import { RequirementsInfoComponent } from './ui-components/credential-requirements-info/requirements-info.component';
 import { CredentialsSummaryComponent } from './ui-components/summary/credentials-summary.component';
+import { CredentialDeleteComponent } from './tab/credential-delete/credential-delete.component';
+import { CredentialVerifyComponent } from './tab/credential-verify/credential-verify.component';
+import { CredentialCreateComponent } from './tab/credential-create/credential-create.component';
+import { CredentialAcceptComponent } from './tab/credential-accept/credential-accept.component';
+import { CREDENTIAL_TAB_META, CREDENTIAL_TABS } from './constants/credential.ui';
+import { CredentialActionTypes, CredentialItemVm, CredentialTxConfig } from './constants/credential.types';
 
 @Component({
      selector: 'app-credentials',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, XrplExpirationInputComponent, RequirementsInfoComponent, TransactionOptionsSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CredentialsSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, RequirementsInfoComponent, TransactionOptionsSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CredentialsSummaryComponent, CredentialDeleteComponent, CredentialVerifyComponent, CredentialCreateComponent, CredentialAcceptComponent],
      templateUrl: './credentials.component.html',
      styleUrl: './credentials.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -100,8 +103,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      async setTab(tab: string): Promise<void> {
           const validTabs = ['create', 'accept', 'delete', 'verify'] as const;
           if (validTabs.includes(tab as any)) {
-               // this.credentialViewModelService.activeTab.set(tab);
-               this.credentialViewModelService.activeTab.set(tab as 'create' | 'accept' | 'delete' | 'verify');
+               this.credentialViewModelService.activeTab.set(tab as CredentialActionTypes);
                this.destinationSearchQuery.set('');
 
                this.credentialStore.resetCredentialIdDropDown();
@@ -137,93 +139,78 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
      async performAction(): Promise<void> {
           const currentTab = this.credentialViewModelService.activeTab();
-          let txResult: { success: boolean; error?: string } | null = null;
-          let envRef: any = null;
-
-          // 1. Common reset & guard clauses
-          this.txUiService.resetCurrentStepToIdle();
-          this.txUiService.clearAllOptionsAndMessages();
 
           if (!this.walletManagerService.ensureWalletSelected()) return;
 
-          // 2. Early subject resolution
-          this.selectedDestinationAddress.set(this.credentialStore.get('subject'));
-          const subjectDestination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
           const walletVm = this.walletManager.walletVm();
+          if (!walletVm?.wallet) throw new Error('Unable to get selected wallet.');
 
-          // 3. Map tab → action type
-          let action: CredentialTxType | 'verifyCredential';
-          switch (currentTab) {
-               case 'create':
-                    action = 'createCredential';
-                    if (!subjectDestination || !xrpl.isValidAddress(subjectDestination)) {
-                         this.toastService.error('Please enter a valid destination address.', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-                    break;
-               case 'accept':
-                    action = 'acceptCredentials';
-                    if (!this.credentialStore.get('credentialID')) {
-                         this.toastService.error('No credential selected.', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-                    break;
-               case 'delete':
-                    action = 'deleteCredentials';
-                    if (!this.credentialStore.get('credentialID')) {
-                         this.toastService.error('No credential selected.', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-                    break;
-               case 'verify':
-                    action = 'verifyCredential';
-                    await this.handleVerifyCredential();
-                    return;
-               default:
-                    this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
-                    return;
-          }
-
-          // 4. Fetch environment once for this transaction
-          await this.withPerf('performAction', async () => {
-               try {
-                    envRef = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerInfo: true,
-                         ...(currentTab === 'create' ? { destinationAddress: subjectDestination } : {}),
-                    });
-               } catch (err: any) {
-                    console.error(err);
-                    this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+          // 2. Early input resolution & basic validation
+          let subjectDestination: string | undefined;
+          if (currentTab === 'create') {
+               this.selectedDestinationAddress.set(this.credentialStore.get('subject'));
+               subjectDestination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+               if (!subjectDestination || !xrpl.isValidAddress(subjectDestination)) {
+                    this.toastService.error('Please enter a valid destination address.', AppConstants.TOAST.ERROR);
                     return;
                }
+          }
 
-               // 5. Build the orchestrator config
-               const config: CredentialTxConfig = {
-                    wallet: walletVm.wallet!,
-                    simulate: this.txUiService.isSimulateEnabled(),
-                    multiSign: this.txUiService.useMultiSign(),
-                    subject: this.credentialStore.get('subject'),
-                    credentialType: this.credentialStore.get('credentialType'),
-                    credentialID: this.credentialStore.get('credentialID'),
-                    credentialIssuer: this.credentialStore.get('credentialIssuer'),
-                    expiration: this.credentialStore.get('expirationDate'),
-                    uri: this.credentialStore.get('uri'),
-                    preFetchedEnv: envRef,
-               };
+          if ((currentTab === 'accept' || currentTab === 'delete') && !this.credentialStore.get('credentialID')) {
+               this.toastService.error('No credential selected.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
-               // 6. Execute
+          if (currentTab === 'verify') {
+               await this.handleVerifyCredential();
+               return;
+          }
+
+          // 3. Prepare environment once
+          let envRef: any = null;
+          try {
+               envRef = await this.txEnvironmentService.prepareTxEnvironment({
+                    includeAccountInfo: true,
+                    includeAccountObject: true,
+                    includeFee: true,
+                    includeLedgerInfo: true,
+                    ...(currentTab === 'create' ? { destinationAddress: subjectDestination } : {}),
+               });
+          } catch (err: any) {
+               console.error('prepareTxEnvironment failed:', err);
+               this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          const storeState = this.credentialStore.getAll();
+
+          // 4. Build rich config object
+          const config: CredentialTxConfig = {
+               ...storeState,
+               wallet: walletVm.wallet,
+               simulate: this.txUiService.isSimulateEnabled(),
+               multiSign: this.txUiService.useMultiSign(),
+               preFetchedEnv: envRef,
+               extra: {},
+          };
+
+          // 5. Action map → execute
+          const actionMap: Record<CredentialActionTypes, () => Promise<{ success: boolean; hash?: string; error?: string } | null>> = this.actionHandlers(config);
+
+          let txResult: { success: boolean; hash?: string; error?: string } | null = null;
+
+          await this.withPerf('performAction', async () => {
                try {
-                    txResult = await this.credentialTransactionOrchestratorService.executeCredentialTx(action as CredentialTxType, config);
-               } catch (err: any) {
-                    console.error(`Error in ${action}:`, err);
-                    this.toastService.error(err.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    txResult = await actionMap[currentTab]();
+               } catch (error: any) {
+                    console.error(`[${currentTab}] execution failed:`, error);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    return;
                }
           });
 
-          // 7. Handle result & side effects
+          if (!txResult) throw new Error('Unable error when submitting transaction.');
+
           if (txResult) {
                const successFullTx: boolean = await this.handleTxResult(txResult, envRef.client, envRef.wallet, subjectDestination, this.credentialStore.get('credentialIssuer'), '');
                if (currentTab === 'delete' && successFullTx && !this.txUiService.isSimulateEnabled()) {
@@ -232,6 +219,15 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           }
 
           this.txUiService.resetCurrentStepToIdle();
+     }
+
+     private actionHandlers(config: CredentialTxConfig): Record<CredentialActionTypes, () => Promise<{ success: boolean; hash?: string; error?: string } | null>> {
+          return {
+               create: () => this.credentialTransactionOrchestratorService.executeCredentialTx('createCredential', config),
+               accept: () => this.credentialTransactionOrchestratorService.executeCredentialTx('acceptCredentials', config),
+               delete: () => this.credentialTransactionOrchestratorService.executeCredentialTx('deleteCredentials', config),
+               verify: async () => null,
+          };
      }
 
      private async handleVerifyCredential(): Promise<boolean> {
@@ -350,50 +346,12 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      }
 
      selectCredential(item: SelectItem | CredentialItem | null, source: 'dropdown' | 'list' = 'list') {
-          if (!item) {
-               this.credentialUtilService.applySelectedCredential(null);
-               return;
-          }
-
-          let cred: CredentialItem | undefined;
-
-          if (source === 'dropdown') {
-               // Type guard: make sure item is a SelectItem
-               if ('id' in item) {
-                    const allCreds = [...this.credentialStore.get('existingCredentials'), ...this.credentialStore.get('subjectCredentials')];
-                    cred = allCreds.find(c => c.index === item.id);
-                    if (!cred) return; // no match
-               } else {
-                    console.warn('Dropdown emitted a CredentialItem instead of SelectItem');
-                    cred = item as CredentialItem; // fallback
-               }
-          } else {
-               // List click always passes CredentialItem
-               cred = item as CredentialItem;
-          }
-
           const activeTab = this.credentialViewModelService.activeTab();
           const walletAddress = this.walletManager.walletVm()?.address;
 
-          const isWalletSubject = walletAddress && cred.Subject === walletAddress;
-          const isWalletIssuer = walletAddress && cred.Issuer === walletAddress;
+          this.credentialUtilService.selectCredential(item, activeTab, walletAddress, source);
 
-          // Verify tab rules
-          if (activeTab === 'verify') {
-               if (isWalletIssuer) {
-                    this.credentialUtilService.applySelectedCredential(cred);
-               } else if (isWalletSubject) {
-                    this.credentialUtilService.applySelectedCredential(null);
-                    this.toastService.info('You cannot verify credentials you are the subject of. Verification is typically performed by the issuer or a third party.', AppConstants.TOAST.INFO);
-                    return;
-               } else {
-                    this.credentialUtilService.applySelectedCredential(cred);
-               }
-          } else {
-               this.credentialUtilService.applySelectedCredential(cred);
-          }
-
-          // Collapse panel if clicked from list
+          // Only UI-specific behavior stays here
           if (source === 'list' && activeTab !== 'create') {
                this.infoPanelExpanded.set(false);
           }

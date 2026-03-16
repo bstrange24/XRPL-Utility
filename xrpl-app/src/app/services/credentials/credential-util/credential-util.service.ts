@@ -8,7 +8,8 @@ import { CredentialItem } from '../../../models/interface-items.model';
 import * as xrpl from 'xrpl';
 import { CredentialStore } from '../credential-store/credential-store.service';
 import { XrplDateService } from '../../../core/xrpl-date.service';
-import { CredentialTxType } from '../../../components/credentials/constants/credential.constants';
+import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { CredentialActionTypes } from '../../../components/credentials/constants/credential.types';
 
 @Injectable({
      providedIn: 'root',
@@ -139,6 +140,47 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           return false;
      }
 
+     selectCredential(item: SelectItem | CredentialItem | null, activeTab: CredentialActionTypes, walletAddress: string | undefined, source: 'dropdown' | 'list' = 'list'): void {
+          if (!item) {
+               this.applySelectedCredential(null);
+               return;
+          }
+
+          // Normalize input to CredentialItem
+          let cred: CredentialItem | undefined;
+
+          if (source === 'dropdown' && 'id' in item) {
+               const allCreds = [...this.credentialStore.get('existingCredentials'), ...this.credentialStore.get('subjectCredentials')];
+               cred = allCreds.find(c => c.index === item.id);
+               if (!cred) return;
+          } else {
+               cred = item as CredentialItem;
+          }
+
+          if (!cred) return;
+
+          const isWalletSubject = walletAddress && cred.Subject === walletAddress;
+          const isWalletIssuer = walletAddress && cred.Issuer === walletAddress;
+
+          // Tab-specific business rules
+          if (activeTab === 'verify') {
+               if (isWalletIssuer) {
+                    this.applySelectedCredential(cred);
+               } else if (isWalletSubject) {
+                    this.applySelectedCredential(null);
+                    this.toastService.info('You cannot verify credentials you are the subject of. Verification is typically performed by the issuer or a third party.', AppConstants.TOAST.INFO);
+                    return;
+               } else {
+                    this.applySelectedCredential(cred);
+               }
+          } else {
+               this.applySelectedCredential(cred);
+          }
+
+          // Apply selection
+          this.applySelectedCredential(cred);
+     }
+
      private decodeutf8Hex(hex: string | undefined): string {
           if (!hex) return 'N/A';
           if (this.decodeCache.has(hex)) return this.decodeCache.get(hex)!;
@@ -168,25 +210,6 @@ export class CredentialUtilService extends PerformanceBaseComponent {
 
      setCredentialUri(value: string) {
           this.credentialStore.set('uri', value);
-     }
-
-     buildSuccessMessage(type: CredentialTxType, formValues: any, extra: any): string {
-          if (type === 'createCredential') return `Successfully Create Credential`;
-          if (type === 'deleteCredentials') return `Successfully Deleted Credential`;
-          return `Successfully Accepted Credential`;
-     }
-
-     handleSimulationSuccess(type: CredentialTxType, formValues: any, hash?: string, extra?: any) {
-          let msg: string;
-
-          if (type === 'createCredential') msg = `Successfully simulated creating the Credential.`;
-          else if (type === 'deleteCredentials') msg = `Successfully simulated deleting the Credential.`;
-          else msg = `Successfully simulated accepting the Credential.`;
-
-          this.txUiService.resetCurrentStepToIdle();
-          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
-
-          return { success: true, hash };
      }
 
      clearInputFields(): void {

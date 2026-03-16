@@ -865,7 +865,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
      }
 
      private async executeSpecificTx(type: AccountConfigAction, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, values: any) {
-          console.log('values: ', values);
           const opts = {
                useMultiSign: values.multiSign,
                isRegularKeyAddress: values.isRegularKeyAddress,
@@ -874,7 +873,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                multiSignAddress: values.multiSignAddress,
                multiSignSeeds: values.multiSignSeeds,
           };
-          console.log('opts: ', opts);
 
           switch (type) {
                case 'modifyAccountSetFlags':

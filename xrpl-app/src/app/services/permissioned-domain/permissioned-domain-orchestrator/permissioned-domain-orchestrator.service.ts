@@ -10,7 +10,11 @@ import * as xrpl from 'xrpl';
 import { PermissionedDomainUtilService } from '../permissioned-domain-util/permissioned-domain-util.service';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
-import { PERMISSION_DOMAIN_VALIDATION_RULES, PermissionDomainConfig, PermissionDomainTxType } from '../../../components/permissioned-domain/constants/permissioned-domain.constants';
+import { PERMISSION_DOMAIN_VALIDATION_RULES } from '../../../components/permissioned-domain/constants/permissioned-domain.constants';
+import { PermissionDomainConfig, PermissionDomainTxType } from '../../../components/permissioned-domain/constants/permissioned-domain.types';
+import { AppConstants } from '../../../core/app.constants';
+import { ToastService } from '../../toast/toast.service';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
 @Injectable({
      providedIn: 'root',
@@ -24,6 +28,8 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly permissionedDomainUtilService = inject(PermissionedDomainUtilService);
      public readonly credentialStore = inject(CredentialStore);
+     public readonly toastService = inject(ToastService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      async executePermissionDomainTx(type: PermissionDomainTxType, config: PermissionDomainConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
           const { wallet, simulate = false, multiSign = false, credentialType, credentialIssuer, domainId, subjectDestination, preFetchedEnv, extra = {} } = config;
@@ -92,13 +98,13 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
                txHash = execResult.hash;
 
                if (simulate) {
-                    return this.permissionedDomainUtilService.handleSimulationSuccess(type, { simulate, multiSign, credentialType, credentialIssuer, domainId, subjectDestination, extra }, txHash, extra);
+                    return this.handleSimulationSuccess(type, txHash);
                }
 
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.permissionedDomainUtilService.buildSuccessMessage(type, { simulate, multiSign, credentialType, credentialIssuer, domainId, subjectDestination, extra }, extra);
+               const message = this.buildSuccessMessage(type);
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
@@ -123,9 +129,9 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
           };
 
           switch (type) {
-               case 'set':
+               case 'setDomain':
                     return { ...base, permissionedDomainSet: { credentialType: values.credentialType, subject: values.credentialIssuer } };
-               case 'delete':
+               case 'deleteDomain':
                     return { ...base, permissonedDomainDelete: { domainId: values.domainId } };
           }
      }
@@ -134,13 +140,15 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
           const { fee } = env;
 
           switch (type) {
-               case 'set':
+               case 'setDomain': {
                     const txCreate = this.xrplTransactionService.buildPermissionedDomainSetTransaction(wallet, values.credentialIssuer, values.credentialType, fee, env.ledgerInfo.lastIndex);
                     return txCreate;
+               }
 
-               case 'delete':
+               case 'deleteDomain': {
                     const txDelete = this.xrplTransactionService.buildPermissionedDomainDeleteTransaction(wallet, values.domainId, fee, env.ledgerInfo.lastIndex);
                     return txDelete;
+               }
           }
      }
 
@@ -157,6 +165,12 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
 
           const memo = this.txUiService.memoField();
           if (this.txUiService.isMemoEnabled() && memo) this.utilsService.setMemoField(tx, memo);
+
+          if (this.txUiService.wantsOptions()) {
+               const domainId = this.xrplTxOptionsStore.domainId();
+               const domainID = this.utilsService.toDomainId(domainId);
+               if (domainId) this.utilsService.setDomainId(tx, domainID);
+          }
      }
 
      private async executeSpecificTx(type: PermissionDomainTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, values: any) {
@@ -170,10 +184,32 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
           };
 
           switch (type) {
-               case 'set':
+               case 'setDomain':
                     return this.executor.permissionedDomainSet?.(tx as xrpl.PermissionedDomainSet, wallet, client, opts);
-               case 'delete':
+               case 'deleteDomain':
                     return this.executor.permissionedDomainDelete?.(tx as xrpl.PermissionedDomainDelete, wallet, client, opts);
           }
+     }
+
+     buildSuccessMessage(type: PermissionDomainTxType): string {
+          if (type === 'setDomain') {
+               return `Successfully Set Permission Domain`;
+          }
+          return `Successfully Deleted Permission Domain`;
+     }
+
+     handleSimulationSuccess(type: PermissionDomainTxType, hash?: any) {
+          let msg: string;
+
+          if (type === 'setDomain') {
+               msg = `Successfully simulated Setting Permission Domain`;
+          } else {
+               msg = `Successfully simulated Deleting Permission Domain`;
+          }
+
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+
+          return { success: true, hash };
      }
 }

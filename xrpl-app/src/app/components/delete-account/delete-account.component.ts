@@ -17,7 +17,7 @@ import { AppConstants, TabMetaInfo } from '../../core/app.constants';
 import * as xrpl from 'xrpl';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { ToastService } from '../../services/toast/toast.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
@@ -29,19 +29,20 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { DeleteAccountViewModelService } from '../../services/delete-account/delete-account-view-model/delete-account-view-model.service';
 import { DeleteAccountStoreService } from '../../services/delete-account/delete-account-store/delete-account-store.service';
-import { AccountDeleteConfig, AccountDeleteTxType, DELETE_ACCOUNT_TAB_META } from './constants/delete-account.constants';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
-import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
 import { DeleteAccountRequirementsInfoComponent } from './ui-components/delete-account-requirements-info/delete-account-requirements-info.component';
 import { DeleteAccountSummaryComponent } from './ui-components/summary/delete-account-summary.component';
+import { DeleteAccountFormComponent } from './tab/delete-account-form/delete-account-form.component';
+import { DELETE_ACCOUNT_TAB_META } from './constants/delete-account.ui';
+import { AccountDeleteConfig } from './constants/delete-account.types';
 
 @Component({
      selector: 'app-delete-account',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SelectSearchDropdownComponent, DeleteAccountRequirementsInfoComponent, RouterModule, TransactionOptionsSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DeleteAccountSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, DeleteAccountRequirementsInfoComponent, RouterModule, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DeleteAccountSummaryComponent, DeleteAccountFormComponent],
      templateUrl: './delete-account.component.html',
      styleUrl: './delete-account.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -129,82 +130,73 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
      }
 
      async deleteAccount(): Promise<void> {
-          const currentTab = this.deleteAccountViewModelService.activeTab();
-          let txResult: { success: boolean; error?: string } | null = null;
-          let envRef: any = null;
-          let destinationAddress: string | null = null;
-
-          // 1. Common reset & guard clauses
-          this.txUiService.resetCurrentStepToIdle();
-          this.txUiService.clearAllOptionsAndMessages();
+          // 1. Guards & resets
           this.deleteAccountStoreService.set('savedTxJson', []);
           this.deleteAccountStoreService.set('savedTxResult', []);
 
           if (!this.walletManagerService.ensureWalletSelected()) return;
 
-          // 2. Early credentialIssuer resolution
-          this.selectedDestinationAddress.set(this.selectedDestinationAddress());
-          destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
           const walletVm = this.walletManager.walletVm();
+          if (!walletVm?.wallet) return;
 
-          // 3. Map tab → action type
-          let action: 'deleteAccount';
-          switch (currentTab) {
-               case 'deleteAccount':
-                    action = 'deleteAccount';
-                    break;
-               default:
-                    this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
-                    return;
-          }
-
-          // Early validation / guard
-          if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
-               this.toastService.error('Please enter a valid issuer address.', AppConstants.TOAST.ERROR);
+          // 2. Early destination resolution + basic guard
+          const destination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+          if (!destination || !xrpl.isValidAddress(destination)) {
+               this.toastService.error('Please enter a valid destination address.', AppConstants.TOAST.ERROR);
                return;
           }
 
+          // 3. Prepare environment once
+          let envRef: any = null;
+          try {
+               envRef = await this.txEnvironmentService.prepareTxEnvironment({
+                    includeAccountInfo: true,
+                    includeAccountObject: true,
+                    includeFee: true,
+                    includeLedgerInfo: true,
+                    includeServerInfo: true,
+                    includeBlockingObjects: true,
+                    destinationAddress: destination,
+               });
+          } catch (err: any) {
+               console.error('prepareTxEnvironment failed:', err);
+               this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          // 4. Build rich config
+          const config: AccountDeleteConfig = {
+               wallet: walletVm.wallet,
+               simulate: this.txUiService.isSimulateEnabled(),
+               multiSign: this.txUiService.useMultiSign(),
+               preFetchedEnv: envRef,
+               destination,
+               destinationTag: this.xrplTxOptionsStore.destinationTag(),
+               extra: {},
+          };
+
+          // 5. Execute via orchestrator
+          let txResult: { success: boolean; hash?: string; error?: string; validationError?: boolean } | null = null;
+
           await this.withPerf('performAction', async () => {
                try {
-                    envRef = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerInfo: true,
-                         destinationAddress: destinationAddress,
-                    });
+                    txResult = await this.deleteAccountOrchestratorService.executeDeleteAccountTx('deleteAccount', config);
                } catch (err: any) {
-                    console.error(err);
-                    this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
-                    return;
-               }
-
-               // 5. Build the orchestrator config
-               const config: AccountDeleteConfig = {
-                    wallet: walletVm.wallet!,
-                    simulate: this.txUiService.isSimulateEnabled(),
-                    multiSign: this.txUiService.useMultiSign(),
-                    destination: destinationAddress,
-                    destinationTag: this.xrplTxOptionsStore.destinationTag(),
-                    preFetchedEnv: envRef,
-               };
-
-               // 6. Execute
-               try {
-                    txResult = await this.deleteAccountOrchestratorService.executeDeleteAccountTx(action as AccountDeleteTxType, config);
-               } catch (err: any) {
-                    console.error(`Error in ${action}:`, err);
+                    console.error('[deleteAccount] execution failed:', err);
                     this.toastService.error(err.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    return;
                }
           });
 
-          // 7. Handle result & side effects
+          if (!txResult) return;
+
+          // 6. Handle result + side effects
           if (txResult) {
                this.isAccountDelete.set(true);
-               const successFullTx: boolean = await this.handleTxResult(txResult, envRef.client, envRef.wallet, destinationAddress, '', '');
+               const successFullTx: boolean = await this.handleTxResult(txResult, envRef.client, envRef.wallet, destination, '', '');
                if (successFullTx && !this.txUiService.isSimulateEnabled()) {
                     this.deleteWalletAfterDeleteTx(this.walletManagerService.getSelectedIndex());
-                    this.refreshAfterTx(envRef.client, envRef.wallet, destinationAddress, '');
+                    this.refreshAfterTx(envRef.client, envRef.wallet, destination, '');
                }
                this.isAccountDelete.set(false);
           }
@@ -226,7 +218,6 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
      handleDestinationChange(item: SelectItem | null) {
           const addr = item?.id || '';
           this.selectedDestinationAddress.set(addr);
-          // this.xrplTxOptionsStore.setDestination(addr);
      }
 
      deleteWalletAfterDeleteTx(index: number) {

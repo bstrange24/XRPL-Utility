@@ -1,5 +1,5 @@
 import { Injectable, signal, WritableSignal } from '@angular/core';
-import { PermissionedDomainField } from '../../../components/permissioned-domain/constants/permissioned-domain.constants';
+import { PermissionedDomainField } from '../../../components/permissioned-domain/constants/permissioned-domain.types';
 
 @Injectable({
      providedIn: 'root',
@@ -18,7 +18,7 @@ export class PermissionedDomainStoreService {
      };
 
      /** Signal registry */
-     private registry: Record<PermissionedDomainField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
+     private readonly registry: Record<PermissionedDomainField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
           (acc, key) => {
                const field = key as PermissionedDomainField;
                acc[field] = signal(structuredClone(this.initialState[field]));

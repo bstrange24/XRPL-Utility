@@ -19,6 +19,6 @@ export class TransactionOptionsSectionComponent {
      public readonly credentialStore = inject(CredentialStore);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
-     activeTab = input.required<'sendXrp' | 'create' | 'cash' | 'cancel' | 'deleteAccount' | 'set' | 'delete' | 'create' | 'accept' | 'delete' | 'verify'>();
+     activeTab = input.required<'sendXrp' | 'create' | 'cash' | 'cancel' | 'deleteAccount' | 'set' | 'delete' | 'create' | 'accept' | 'verify' | 'setDomain' | 'deleteDomain'>();
      @Input() wantsOptions: boolean = this.txUiService.wantsOptions();
 }

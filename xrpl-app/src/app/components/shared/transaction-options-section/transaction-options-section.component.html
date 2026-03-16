@@ -1,4 +1,4 @@
-@let tab = activeTab(); @if (tab === 'sendXrp' || tab === 'create' || tab === 'cash' || tab === 'set') {
+@let tab = activeTab(); @if (tab === 'sendXrp' || tab === 'create' || tab === 'cash' || tab === 'setDomain') {
 <div class="switch-group">
      <label class="switch">
           <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.target.checked)" name="showOptionalXrp" />
@@ -7,7 +7,21 @@
 </div>
 } @if(txUiService.wantsOptions()) {
 <!-- Determine what options to display based on tab -->
-@if (tab === 'sendXrp' || tab === 'create' || tab === 'cash' || tab === 'set') {
+<!-- Domain ID and Credential ID -->
+@if (tab === 'setDomain') {
+<div class="form-row">
+     <div class="form-group">
+          <label for="domainIdField">Domain ID</label>
+          <p class="form-hint">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
+          <textarea name="domainId" class="memo-input auto-expand-textarea" rows="2" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="xrplTxOptionsStore.domainId()" (ngModelChange)="xrplTxOptionsStore.setDomainId($event)"></textarea>
+     </div>
+     <div class="form-group">
+          <label for="credentialIDsField">Credential IDs</label>
+          <p class="form-hint">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
+          <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.get('credentialIDs')" (ngModelChange)="this.credentialStore.set('credentialIDs', $event)"></textarea>
+     </div>
+</div>
+} @else if (tab === 'sendXrp' || tab === 'create' || tab === 'cash') {
 <!-- Destination Tag & Source Tag -->
 <div class="form-row">
      <div class="form-group">
@@ -37,7 +51,6 @@
      </div>
 </div>
 
-<!-- Domain ID and Credential ID -->
 <div class="form-row">
      <div class="form-group">
           <label for="domainIdField">Domain ID</label>
@@ -50,6 +63,7 @@
           <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.get('credentialIDs')" (ngModelChange)="this.credentialStore.set('credentialIDs', $event)"></textarea>
      </div>
 </div>
+
 } @else if (tab === 'deleteAccount') {
 <!-- Destination Tag & Source Tag -->
 <div class="form-row">

@@ -4,17 +4,17 @@ import { CredentialUtilService } from '../credential-util/credential-util.servic
 import { CredentialItem } from '../../../models/interface-items.model';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { CredentialItemVm } from '../../../components/credentials/constants/credential.constants';
+import { CredentialActionTypes, CredentialItemVm } from '../../../components/credentials/constants/credential.types';
 
 @Injectable({
      providedIn: 'root',
 })
 export class CredentialViewModelService {
-     private credentialStore = inject(CredentialStore);
-     private credentialUtilService = inject(CredentialUtilService);
-     private walletManager = inject(WalletManagerService);
+     private readonly credentialStore = inject(CredentialStore);
+     private readonly credentialUtilService = inject(CredentialUtilService);
+     private readonly walletManager = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
-     readonly activeTab = signal<'create' | 'accept' | 'delete' | 'verify'>('create');
+     readonly activeTab = signal<CredentialActionTypes>('create');
 
      readonly issuedByMe = computed(() => this.credentialStore.get('existingCredentials'));
      readonly issuedToMe = computed(() => this.credentialStore.get('subjectCredentials'));
@@ -149,7 +149,7 @@ export class CredentialViewModelService {
           });
      }
 
-     actionButtonLabel(tab: 'create' | 'accept' | 'delete' | 'verify') {
+     actionButtonLabel(tab: CredentialActionTypes) {
           switch (tab) {
                case 'create':
                     return this.createCredentialButtonLabel();
@@ -162,7 +162,7 @@ export class CredentialViewModelService {
           }
      }
 
-     actionButtonClass(tab: 'create' | 'accept' | 'delete' | 'verify') {
+     actionButtonClass(tab: CredentialActionTypes) {
           switch (tab) {
                case 'create':
                     return 'btn-primary-blue';
@@ -175,7 +175,7 @@ export class CredentialViewModelService {
           }
      }
 
-     credentialsToShow(tab: 'create' | 'accept' | 'delete' | 'verify') {
+     credentialsToShow(tab: CredentialActionTypes) {
           const s = this.credentialStats();
 
           switch (tab) {
@@ -190,7 +190,7 @@ export class CredentialViewModelService {
           }
      }
 
-     summaryMessage(tab: 'create' | 'accept' | 'delete' | 'verify') {
+     summaryMessage(tab: CredentialActionTypes) {
           const s = this.credentialStats();
 
           switch (tab) {
