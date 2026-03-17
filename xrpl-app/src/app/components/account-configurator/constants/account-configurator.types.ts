@@ -73,13 +73,13 @@ export interface AccountConfig {
      signerQuorum?: number;
      regularKeyAddress?: string;
      regularKeySeed?: string;
-     isRegularKeyAddress?:any;
+     isRegularKeyAddress?: any;
      depsositAuthEntries?: any;
      formattedDepsositAuthEntries?: any;
      signerEntries: any;
      formattedSignerEntries: any;
-     multiSignAddress?:any;
-     multiSignSeeds?:any;
+     multiSignAddress?: any;
+     multiSignSeeds?: any;
      authorizeFlag?: string;
      enableRegularKeyFlag?: string;
      enableMultiSignFlag?: string;
@@ -87,7 +87,7 @@ export interface AccountConfig {
      multiSign?: boolean;
      destinationAddress?: string;
      SignerWeight?: number;
-     useMultiSign?:any;
+     useMultiSign?: any;
      suppressIndividualFeedback?: string;
      operations?: any;
      preFetchedEnv?: PrefetchedLedgerEnvironment;
@@ -149,7 +149,7 @@ export interface AccountConfiguratorState {
      accountInfo: any;
      configurationType: 'holder' | 'exchanger' | 'issuer' | null;
 
-     authorizeFlag:any;
+     authorizeFlag: any;
      memoField: string;
      isMemoEnabled: boolean;
 
@@ -166,8 +166,8 @@ export interface AccountConfiguratorState {
 
      enableNftMinter: string;
 
-     tickSize: number;
-     transferRate: number;
+     tickSize: string;
+     transferRate: string;
 
      domain: string;
      isMessageKey: boolean;

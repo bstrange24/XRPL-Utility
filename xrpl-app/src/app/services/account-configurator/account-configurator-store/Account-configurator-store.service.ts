@@ -70,7 +70,7 @@ export class AccountConfiguratorStoreService {
      );
 
      /** Generic getter */
-     get<K extends AccountConfiguratorField>(field: K) {
+     get<K extends AccountConfiguratorField>(field: K): any {
           return this.registry[field]();
      }
 
