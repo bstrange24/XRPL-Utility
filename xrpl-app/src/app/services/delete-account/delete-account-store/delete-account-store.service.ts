@@ -27,7 +27,7 @@ export class DeleteAccountStoreService {
      );
 
      /** Generic getter */
-     get<K extends DeleteAccountField>(field: K) {
+     get<K extends DeleteAccountField>(field: K): any {
           return this.registry[field]();
      }
 

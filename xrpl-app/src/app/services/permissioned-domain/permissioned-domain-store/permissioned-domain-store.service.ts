@@ -28,7 +28,7 @@ export class PermissionedDomainStoreService {
      );
 
      /** Generic getter */
-     get<K extends PermissionedDomainField>(field: K) {
+     get<K extends PermissionedDomainField>(field: K): any {
           return this.registry[field]();
      }
 

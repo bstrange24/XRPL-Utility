@@ -26,7 +26,7 @@ export class DidStoreService {
      );
 
      /** Generic getter */
-     get<K extends DidField>(field: K) {
+     get<K extends DidField>(field: K): any {
           return this.registry[field]();
      }
 

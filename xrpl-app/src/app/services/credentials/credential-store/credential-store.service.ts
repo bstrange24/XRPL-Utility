@@ -33,7 +33,7 @@ export class CredentialStore {
      );
 
      /** Generic getter */
-     get<K extends CredentialField>(field: K) {
+     get<K extends CredentialField>(field: K): any {
           return this.registry[field]();
      }
 
