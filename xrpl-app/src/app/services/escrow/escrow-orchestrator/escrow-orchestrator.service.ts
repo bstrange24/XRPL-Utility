@@ -11,6 +11,7 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { AppConstants } from '../../../core/app.constants';
 import { EscrowUtilService } from '../escrow-util/escrow-util.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
 type EscrowTxType = 'create' | 'finish' | 'cancel';
 
@@ -60,6 +61,7 @@ export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
      private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly escrowUtilService = inject(EscrowUtilService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      async executeEscrowTx(type: EscrowTxType, config: EscrowConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
           const { wallet, formValues, extra = {}, preFetchedEnv } = config;
@@ -251,9 +253,10 @@ export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
      }
 
      private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: EscrowTxType, formValues: any) {
-          const isTicket = this.txUiService.isTicket();
+          const isTicket = formValues.isTicket;
           if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);

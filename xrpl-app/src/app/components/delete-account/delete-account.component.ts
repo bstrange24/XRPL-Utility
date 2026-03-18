@@ -38,6 +38,7 @@ import { DeleteAccountSummaryComponent } from './ui-components/summary/delete-ac
 import { DeleteAccountFormComponent } from './tab/delete-account-form/delete-account-form.component';
 import { DELETE_ACCOUNT_TAB_META } from './constants/delete-account.ui';
 import { AccountDeleteConfig } from './constants/delete-account.types';
+import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 
 @Component({
      selector: 'app-delete-account',
@@ -57,7 +58,6 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
      public readonly deleteAccountUtilService = inject(DeleteAccountUtilService);
      public readonly deleteAccountViewModelService = inject(DeleteAccountViewModelService);
      public readonly deleteAccountStoreService = inject(DeleteAccountStoreService);
-     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      readonly tabMeta: Record<string, TabMetaInfo> = DELETE_ACCOUNT_TAB_META;
 
@@ -131,8 +131,8 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
 
      async deleteAccount(): Promise<void> {
           // 1. Guards & resets
-          this.deleteAccountStoreService.set('savedTxJson', []);
-          this.deleteAccountStoreService.set('savedTxResult', []);
+          this.deleteAccountStoreService.setField('savedTxJson', []);
+          this.deleteAccountStoreService.setField('savedTxResult', []);
 
           if (!this.walletManagerService.ensureWalletSelected()) return;
 
@@ -167,8 +167,8 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
           // 4. Build rich config
           const config: AccountDeleteConfig = {
                wallet: walletVm.wallet,
-               simulate: this.txUiService.isSimulateEnabled(),
-               multiSign: this.txUiService.useMultiSign(),
+               simulate: this.xrplTxOptionsStore.isSimulateEnabled(),
+               multiSign: this.xrplTxOptionsStore.useMultiSign(),
                preFetchedEnv: envRef,
                destination,
                destinationTag: this.xrplTxOptionsStore.destinationTag(),
@@ -194,7 +194,7 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
           if (txResult) {
                this.isAccountDelete.set(true);
                const successFullTx: boolean = await this.handleTxResult(txResult, envRef.client, envRef.wallet, destination, '', '');
-               if (successFullTx && !this.txUiService.isSimulateEnabled()) {
+               if (successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
                     this.deleteWalletAfterDeleteTx(this.walletManagerService.getSelectedIndex());
                     this.refreshAfterTx(envRef.client, envRef.wallet, destination, '');
                }
@@ -205,10 +205,10 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
      }
 
      protected refreshAccountObject(env: any): void {
-          this.deleteAccountStoreService.set('accountInfo', env.accountInfo);
-          this.deleteAccountStoreService.set('accountObjects', env.accountObjects);
-          this.deleteAccountStoreService.set('serverInfo', env.serverInfo);
-          this.deleteAccountStoreService.set('blockingObjects', env.blockingObjects);
+          this.deleteAccountStoreService.setField('accountInfo', env.accountInfo);
+          this.deleteAccountStoreService.setField('accountObjects', env.accountObjects);
+          this.deleteAccountStoreService.setField('serverInfo', env.serverInfo);
+          this.deleteAccountStoreService.setField('blockingObjects', env.blockingObjects);
      }
 
      handleSearchQueryChange(query: string) {
@@ -221,8 +221,8 @@ export class DeleteAccountComponent extends WalletDestinationBase implements OnI
      }
 
      deleteWalletAfterDeleteTx(index: number) {
-          this.deleteAccountStoreService.set('savedTxJson', this.txUiService.txResultSignal());
-          this.deleteAccountStoreService.set('savedTxResult', this.txUiService.txResultSignal());
+          this.deleteAccountStoreService.setField('savedTxJson', this.txUiService.txResultSignal());
+          this.deleteAccountStoreService.setField('savedTxResult', this.txUiService.txResultSignal());
           this.walletManagerService.deleteWallet(index);
           if (this.walletManagerService.getSelectedIndex() >= this.wallets().length) {
                this.walletManagerService.getSelectedIndex();

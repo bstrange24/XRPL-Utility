@@ -32,6 +32,7 @@ import { TrustlineCurrencyService } from '../../services/trustline-currency/trus
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 interface AccountFlags {
      asfRequireDest: boolean;
@@ -98,6 +99,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
@@ -701,8 +703,8 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     await this.setTxOptionalFields(client, nFTokenAcceptOfferTx, wallet, accountInfo, 'buy');
 
                     const result = await this.txExecutor.createBuyNft(nFTokenAcceptOfferTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                          // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
@@ -711,7 +713,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT buy offer created successfully!' : 'Created NFT buy offer successfully!';
+                    // this.txUiService.successMessage = this.xrplTxOptionsStore.isSimulateEnabled() ? 'Simulated NFT buy offer created successfully!' : 'Created NFT buy offer successfully!';
                     this.onCurrencyChange(this.currencyFieldDropDownValue());
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
@@ -765,8 +767,8 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     await this.setTxOptionalFields(client, nFTokenCreateOfferTx, wallet, accountInfo, 'sell');
 
                     const result = await this.txExecutor.createSellNft(nFTokenCreateOfferTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                          // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
@@ -775,7 +777,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT sell offer created successfully!' : 'Created NFT sell offer successfully!';
+                    // this.txUiService.successMessage = this.xrplTxOptionsStore.isSimulateEnabled() ? 'Simulated NFT sell offer created successfully!' : 'Created NFT sell offer successfully!';
                     this.onCurrencyChange(this.currencyFieldDropDownValue());
                     await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
@@ -839,8 +841,8 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     }
 
                     const result = await this.txExecutor.createNftOffer(nFTokenCreateOfferTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                          // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
@@ -849,7 +851,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT offer created successfully!' : 'Created NFT offer successfully!';
+                    // this.txUiService.successMessage = this.xrplTxOptionsStore.isSimulateEnabled() ? 'Simulated NFT offer created successfully!' : 'Created NFT offer successfully!';
                     this.onCurrencyChange(this.currencyFieldDropDownValue());
                     await this.refreshAfterTx(client, wallet, null, true);
                } catch (error: any) {
@@ -889,8 +891,8 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     await this.setTxOptionalFields(client, nFTokenCancelOfferTx, wallet, accountInfo, 'cancelSellOffer');
 
                     const result = await this.txExecutor.cancelNftOffer(nFTokenCancelOfferTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                          // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
@@ -899,7 +901,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     });
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated NFT offer cancel successfully!' : 'Cancelled NFT offer successfully!';
+                    // this.txUiService.successMessage = this.xrplTxOptionsStore.isSimulateEnabled() ? 'Simulated NFT offer cancel successfully!' : 'Cancelled NFT offer successfully!';
 
                     this.onCurrencyChange(this.currencyFieldDropDownValue());
                     await this.refreshAfterTx(client, wallet, null, false);
@@ -1257,8 +1259,9 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      }
 
      private async setTxOptionalFields(client: xrpl.Client, nftTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string): Promise<string | void> {
-          if (this.txUiService.isTicket()) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+          if (this.xrplTxOptionsStore.isTicket()) {
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);
@@ -1323,7 +1326,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
           this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
           // Update service state
-          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
+          // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
 
           const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
           const hasSignerList = signerAccounts?.length > 0;

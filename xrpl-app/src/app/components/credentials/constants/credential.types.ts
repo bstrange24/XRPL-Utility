@@ -1,26 +1,23 @@
 import { CredentialItem } from '../../../models/interface-items.model';
+import { CredentialState } from '../../../services/credentials/credential-store/credential-store.service';
 import { Wallet } from '../../../services/wallets/manager/wallet-manager.service';
 import * as xrpl from 'xrpl';
+import { XrplTxOptionsState } from '../../shared/stores/xrpl-tx-options.store';
+import { AccountConfiguratorState } from '../../account-configurator/constants/account-configurator.types';
 
 export interface CredentialItemVm extends CredentialItem {
      accepted: boolean;
      selectable: boolean;
      issuedByMe: boolean;
 }
-export type CredentialActionTypes = 'create' | 'accept' | 'delete' | 'verify';
+export type CredentialActionTypes = 'createCredential' | 'acceptCredential' | 'deleteCredential' | 'verifyCredential';
 export type CredentialField = 'credentialIDs' | 'credentialID' | 'credentialType' | 'subject' | 'credential' | 'uri' | 'expirationDate' | 'credentialIssuer' | 'credentialIdSearchQuery' | 'credentialIdSearchTerm' | 'existingCredentials' | 'selectedCredentials' | 'subjectCredentials' | 'domainId' | 'regularKeySigningEnabled';
 
 export interface CredentialTxConfig {
+     credential: CredentialState;
+     account?: AccountConfiguratorState;
+     txOptions?: XrplTxOptionsState;
      wallet: Wallet;
-     simulate?: boolean;
-     multiSign?: boolean;
-     credentialType?: string;
-     expirationDate?: string;
-     uri?: string;
-     subject?: string;
-     credentialID?: string;
-     credentialIssuer?: string;
-     subjectDestination?: string;
      preFetchedEnv?: {
           client: xrpl.Client;
           accountInfo: any;

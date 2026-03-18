@@ -18,7 +18,7 @@ export class AccountFlagsComponent {
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      protected txUiService = inject(TransactionUiService);
 
-     configurationType = this.accountConfiguratorStoreService.signal('configurationType');
+     configurationType = this.accountConfiguratorStoreService.configurationType;
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
 }

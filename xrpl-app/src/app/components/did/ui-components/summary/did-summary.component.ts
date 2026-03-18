@@ -27,7 +27,7 @@ export class DidSummaryComponent {
      info = input.required<
           | {
                  walletName: string;
-                 mode: 'set' | 'delete';
+                 mode: 'setDid' | 'deleteDid';
                  didCount: number;
                  existingDid: ExistingDid[];
             }
@@ -42,7 +42,7 @@ export class DidSummaryComponent {
 
      // Injected services
      public copyUtilService = inject(CopyUtilService);
-     private txUiService = inject(TransactionUiService);
+     private readonly txUiService = inject(TransactionUiService);
      public utilsService = inject(UtilsService);
 
      // Helpers

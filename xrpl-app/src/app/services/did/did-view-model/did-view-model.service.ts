@@ -1,4 +1,4 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { DidStoreService } from '../did-store/did-store.service';
 import didSchema from '../../../components/did/did-schema.json';
@@ -9,14 +9,14 @@ import { DidInfoData, DidTab } from '../../../components/did/constants/did.types
 
 @Injectable({ providedIn: 'root' })
 export class DidViewModelService {
-     activeTab = signal<DidTab>('set');
+     activeTab = signal<DidTab>('setDid');
      private readonly didDataEditor = signal<JsonEditorComponent | null>(null);
 
-     constructor(
-          private readonly didStore: DidStoreService,
-          private readonly walletManager: WalletManagerService,
-          private readonly utilsService: UtilsService
-     ) {}
+     public readonly didStore = inject(DidStoreService);
+     public readonly walletManager = inject(WalletManagerService);
+     public readonly utilsService = inject(UtilsService);
+
+     constructor() {}
 
      // Current wallet
      currentWallet = computed(() => this.walletManager.walletVm());
@@ -26,7 +26,7 @@ export class DidViewModelService {
           const wallet = this.currentWallet();
           if (!wallet?.address) return null;
 
-          const dids = this.didStore.get('existingDid');
+          const dids = this.didStore.existingDid();
           return {
                walletName: wallet.name || 'Selected wallet',
                mode: this.activeTab(),
@@ -38,25 +38,25 @@ export class DidViewModelService {
      // Button labels and classes
      actionButtonLabel = computed(() => {
           switch (this.activeTab()) {
-               case 'set':
+               case 'setDid':
                     return 'Set DID';
-               case 'delete':
+               case 'deleteDid':
                     return 'Delete DID';
           }
      });
 
      actionButtonClass = computed(() => {
           switch (this.activeTab()) {
-               case 'set':
+               case 'setDid':
                     return 'btn-primary-blue';
-               case 'delete':
+               case 'deleteDid':
                     return 'btn-primary-red';
           }
      });
 
      // Byte length computations
      didDataByteLength = computed(() => {
-          const meta = this.didStore.get('didData').trim();
+          const meta = this.didStore.didData().trim();
           if (!meta) return 0;
 
           try {
@@ -70,7 +70,7 @@ export class DidViewModelService {
      });
 
      uriDataByteLength = computed(() => {
-          const meta = this.didStore.get('uriData').trim();
+          const meta = this.didStore.uriData().trim();
           if (!meta) return 0;
 
           try {
@@ -84,7 +84,7 @@ export class DidViewModelService {
      });
 
      didDocumentDataByteLength = computed(() => {
-          const meta = this.didStore.get('didDocumentData').trim();
+          const meta = this.didStore.didDocumentData().trim();
           if (!meta) return 0;
 
           try {
@@ -117,7 +117,7 @@ export class DidViewModelService {
      });
 
      validDidSchema = computed(() => {
-          const didData = this.didStore.get('didData');
+          const didData = this.didStore.didData();
           if (!didData.trim() || this.hasJsonSyntaxError()) return false;
 
           const result = this.utilsService.validateAndConvertDidJson(didData, didSchema);

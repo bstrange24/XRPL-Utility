@@ -5,13 +5,13 @@
                <label for="isHolderConfiguration">Configuration Templates:</label>
           </span>
           <span class="token-flags-title">
-               <input type="radio" id="isHolderConfiguration" [checked]="configurationType() === 'holder'" (change)="accountConfiguratorStoreService.set('configurationType', 'holder'); accountConfiguratorUtilService.onConfigurationChange()" name="configurationType" value="holder" />
+               <input type="radio" id="isHolderConfiguration" [checked]="configurationType() === 'holder'" (change)="accountConfiguratorStoreService.setField('configurationType', 'holder'); accountConfiguratorUtilService.onConfigurationChange()" name="configurationType" value="holder" />
                <label for="isHolderConfiguration">Holder</label>
 
-               <input type="radio" id="isExchangerConfiguration" [checked]="configurationType() === 'exchanger'" (change)="accountConfiguratorStoreService.set('configurationType', 'exchanger'); accountConfiguratorUtilService.onConfigurationChange()" name="configurationType" value="exchanger" />
+               <input type="radio" id="isExchangerConfiguration" [checked]="configurationType() === 'exchanger'" (change)="accountConfiguratorStoreService.setField('configurationType', 'exchanger'); accountConfiguratorUtilService.onConfigurationChange()" name="configurationType" value="exchanger" />
                <label for="isExchangerConfiguration">Exchanger</label>
 
-               <input type="radio" id="isIssuerConfiguration" [checked]="configurationType() === 'issuer'" (change)="accountConfiguratorStoreService.set('configurationType', 'issuer'); accountConfiguratorUtilService.onConfigurationChange()" name="configurationType" value="issuer" />
+               <input type="radio" id="isIssuerConfiguration" [checked]="configurationType() === 'issuer'" (change)="accountConfiguratorStoreService.setField('configurationType', 'issuer'); accountConfiguratorUtilService.onConfigurationChange()" name="configurationType" value="issuer" />
                <label for="isIssuerConfiguration">Issuer</label>
           </span>
      </div>

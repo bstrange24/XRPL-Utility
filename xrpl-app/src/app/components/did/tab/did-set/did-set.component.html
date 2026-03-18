@@ -14,7 +14,7 @@
                     }
                </div>
           </label>
-          <app-json-editor [value]="didStoreService.get('didDocumentData')" (valueChange)="didUtilService.onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
+          <app-json-editor [value]="didStoreService.didDocumentData()" (valueChange)="didUtilService.onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
           <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('document')">Clear</button>
 
           @if (validDidSchema() && !hasJsonSyntaxError()) {
@@ -42,7 +42,7 @@
                     }
                </div>
           </label>
-          <app-json-editor [value]="didStoreService.get('uriData')" (valueChange)="didUtilService.onUriDataChange($event)" #uriEditor> </app-json-editor>
+          <app-json-editor [value]="didStoreService.uriData()" (valueChange)="didUtilService.onUriDataChange($event)" #uriEditor> </app-json-editor>
           <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('uri')">Clear</button>
 
           @if (validDidSchema() && !hasJsonSyntaxError()) {
@@ -79,7 +79,7 @@
                     }
                </div>
           </label>
-          <app-json-editor [value]="didStoreService.get('didData')" (valueChange)="didUtilService.onDidDataChange($event)" #didDataEditor> </app-json-editor>
+          <app-json-editor [value]="didStoreService.didData()" (valueChange)="didUtilService.onDidDataChange($event)" #didDataEditor> </app-json-editor>
           <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('data')">Clear</button>
 
           @if (validDidSchema() && !hasJsonSyntaxError()) {

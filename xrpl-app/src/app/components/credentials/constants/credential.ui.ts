@@ -13,7 +13,7 @@ export const CREDENTIAL_TABS: {
      iconSize: string;
 }[] = [
      {
-          key: 'create',
+          key: 'createCredential',
           label: 'Create',
           icon: 'heroPlusCircle',
           iconType: 'ng-icon',
@@ -21,7 +21,7 @@ export const CREDENTIAL_TABS: {
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
-          key: 'accept',
+          key: 'acceptCredential',
           label: 'Accept',
           icon: 'copy-plus',
           iconType: 'lucide-icon',
@@ -29,7 +29,7 @@ export const CREDENTIAL_TABS: {
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
-          key: 'verify',
+          key: 'verifyCredential',
           label: 'Verify',
           icon: 'shield-ellipsis',
           iconType: 'lucide-icon',
@@ -37,7 +37,7 @@ export const CREDENTIAL_TABS: {
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
-          key: 'delete',
+          key: 'deleteCredential',
           label: 'Delete',
           icon: 'heroTrash',
           iconType: 'ng-icon',
@@ -58,7 +58,7 @@ export const CREDENTIAL_TAB_META: Record<
           iconSize: string;
      }
 > = {
-     create: {
+     createCredential: {
           icon: 'heroPlusCircle',
           colorClass: 'blue-button-submenu',
           title: 'Create Credentials',
@@ -66,7 +66,7 @@ export const CREDENTIAL_TAB_META: Record<
           color: '',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
-     accept: {
+     acceptCredential: {
           icon: 'heroArrowPath',
           colorClass: 'green-button-submenu',
           title: 'Accept Credentials',
@@ -74,7 +74,7 @@ export const CREDENTIAL_TAB_META: Record<
           color: '',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
-     verify: {
+     verifyCredential: {
           icon: 'shield-ellipsis',
           colorClass: 'orange-button-submenu',
           title: 'Verify Credentials',
@@ -82,7 +82,7 @@ export const CREDENTIAL_TAB_META: Record<
           color: '',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
-     delete: {
+     deleteCredential: {
           icon: 'heroTrash',
           colorClass: 'red-button-submenu',
           title: 'Delete Credentials',

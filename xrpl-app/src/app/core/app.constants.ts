@@ -71,6 +71,8 @@ export const AppConstants = {
      },
 
      CREDENTIAL_REGEX: /^[0-9A-F]{2,128}$/,
+     INSUFFICIENT_XRP_BALANCE: 'Insufficient XRP to complete transaction',
+     INSUFFICIENT_IOU_BALANCE: 'Insufficent IOU balance for this transaction',
      LSF_ACCEPTED: 0x00010000,
      SKIP_THRESHOLD_MS: 60 * 1000,
      RIPPLE_EPOCH: Date.UTC(2000, 0, 1, 0, 0, 0),

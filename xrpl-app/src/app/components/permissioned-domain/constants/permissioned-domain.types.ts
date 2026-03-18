@@ -2,12 +2,12 @@ import * as xrpl from 'xrpl';
 import { Wallet } from '../../../services/wallets/manager/wallet-manager.service';
 
 // Core types
-export type PermissionDomainTxType = 'setDomain' | 'deleteDomain';
+export type PermissionDomainTxType = 'setPermissionedDomain' | 'deletePermissionedDomain';
 export type PermissionedDomainField = 'createdPermissionedDomains' | 'createdDomains' | 'selectedDomainId' | 'credentialType' | 'credentialIssuer' | 'subject' | 'credentialIdSearchQuery' | 'regularKeySigningEnabled';
 
-export type PermissionedDomainTab = 'setDomain' | 'deleteDomain';
+export type PermissionedDomainTab = 'setPermissionedDomain' | 'deletePermissionedDomain';
 export type PermissionedDomainTxTypeFull = 'setPermissionedDomain' | 'deletePermissionedDomain';
-export type PermissionedDomainConfigTxDisplayType = 'setDomain' | 'deleteDomain';
+export type PermissionedDomainConfigTxDisplayType = 'setPermissionedDomain' | 'deletePermissionedDomain';
 export type IconType = 'ng-icon' | 'lucide-icon';
 
 export interface PermissionDomainConfig {

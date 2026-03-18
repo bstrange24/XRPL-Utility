@@ -14,10 +14,10 @@ export class CredentialViewModelService {
      private readonly credentialUtilService = inject(CredentialUtilService);
      private readonly walletManager = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
-     readonly activeTab = signal<CredentialActionTypes>('create');
+     readonly activeTab = signal<CredentialActionTypes>('createCredential');
 
-     readonly issuedByMe = computed(() => this.credentialStore.get('existingCredentials'));
-     readonly issuedToMe = computed(() => this.credentialStore.get('subjectCredentials'));
+     readonly issuedByMe = computed(() => this.credentialStore.existingCredentials());
+     readonly issuedToMe = computed(() => this.credentialStore.subjectCredentials());
      readonly pendingIssued = computed(() => this.issuedByMe().filter((c: CredentialItem) => !this.credentialUtilService.isCredentialAccepted(c)));
      readonly acceptedIssued = computed(() => this.issuedByMe().filter((c: CredentialItem) => this.credentialUtilService.isCredentialAccepted(c)));
      readonly pendingToAccept = computed(() => this.issuedToMe().filter((c: CredentialItem) => !this.credentialUtilService.isCredentialAccepted(c)));
@@ -30,15 +30,15 @@ export class CredentialViewModelService {
 
           if (!wallet) return { list: [], dropdown: [], stats: {}, hasCredentials: false };
 
-          const issued = this.credentialStore.get('existingCredentials') ?? [];
-          const received = this.credentialStore.get('subjectCredentials') ?? [];
+          const issued = this.credentialStore.existingCredentials() ?? [];
+          const received = this.credentialStore.subjectCredentials() ?? [];
 
           // normalize function
           const normalize = (c: CredentialItem, issuedByMe: boolean): CredentialItemVm => ({
                ...c,
                accepted: typeof c.Flags === 'number' ? (c.Flags & 65536) !== 0 : c.Flags === 'Credential accepted',
                issuedByMe,
-               selectable: tab !== 'create' && (tab !== 'verify' || issuedByMe),
+               selectable: tab !== 'createCredential' && (tab !== 'verifyCredential' || issuedByMe),
           });
 
           const pendingIssued: CredentialItemVm[] = [];
@@ -51,14 +51,14 @@ export class CredentialViewModelService {
 
           let list: CredentialItemVm[] = [];
           switch (tab) {
-               case 'create':
-               case 'delete':
+               case 'createCredential':
+               case 'deleteCredential':
                     list = [...pendingIssued, ...acceptedIssued];
                     break;
-               case 'accept':
+               case 'acceptCredential':
                     list = pendingReceived.length ? pendingReceived : acceptedReceived;
                     break;
-               case 'verify':
+               case 'verifyCredential':
                     list = [...pendingIssued, ...acceptedIssued, ...pendingReceived, ...acceptedReceived];
                     break;
           }
@@ -90,7 +90,7 @@ export class CredentialViewModelService {
           const wallet = this.walletManager.getSelectedWallet();
           const creds = this.credentialVm(); // <-- must read here, so vm re-runs on tab change
 
-          const selectedId = this.credentialStore.get('credentialID');
+          const selectedId = this.credentialStore.credentialID();
           const selectedCredentialItem = selectedId ? (creds.dropdown.find(i => i.id === selectedId) ?? null) : null;
 
           return {
@@ -151,26 +151,26 @@ export class CredentialViewModelService {
 
      actionButtonLabel(tab: CredentialActionTypes) {
           switch (tab) {
-               case 'create':
+               case 'createCredential':
                     return this.createCredentialButtonLabel();
-               case 'accept':
+               case 'acceptCredential':
                     return this.acceptCredentialsButtonLabel();
-               case 'delete':
+               case 'deleteCredential':
                     return this.deleteCredentialsButtonLabel();
-               case 'verify':
+               case 'verifyCredential':
                     return this.verifyCredentialLabel();
           }
      }
 
      actionButtonClass(tab: CredentialActionTypes) {
           switch (tab) {
-               case 'create':
+               case 'createCredential':
                     return 'btn-primary-blue';
-               case 'accept':
+               case 'acceptCredential':
                     return 'btn-primary-green';
-               case 'delete':
+               case 'deleteCredential':
                     return 'btn-primary-red';
-               case 'verify':
+               case 'verifyCredential':
                     return 'btn-primary-orange';
           }
      }
@@ -179,13 +179,13 @@ export class CredentialViewModelService {
           const s = this.credentialStats();
 
           switch (tab) {
-               case 'create':
+               case 'createCredential':
                     return [...s.pendingIssued, ...s.acceptedIssued];
-               case 'accept':
+               case 'acceptCredential':
                     return s.pendingToAccept.length ? s.pendingToAccept : s.acceptedByMe;
-               case 'delete':
+               case 'deleteCredential':
                     return s.issuedByMe;
-               case 'verify':
+               case 'verifyCredential':
                     return [...s.pendingToAccept, ...s.acceptedByMe, ...s.pendingIssued, ...s.acceptedIssued];
           }
      }
@@ -194,16 +194,16 @@ export class CredentialViewModelService {
           const s = this.credentialStats();
 
           switch (tab) {
-               case 'create':
+               case 'createCredential':
                     if (s.counts.issued === 0) return 'has not issued any credentials yet.';
                     return `has issued <strong>${s.counts.issued}</strong> credential${s.counts.issued === 1 ? '' : 's'}.`;
-               case 'accept':
+               case 'acceptCredential':
                     if (s.counts.pendingToAccept === 0) return 'has no pending credentials to accept.';
                     return `has <strong>${s.counts.pendingToAccept}</strong> credential${s.counts.pendingToAccept === 1 ? '' : 's'} pending acceptance.`;
-               case 'delete':
+               case 'deleteCredential':
                     if (s.counts.issued === 0) return 'has no credentials to delete.';
                     return `has <strong>${s.counts.issued}</strong> issued credential${s.counts.issued === 1 ? '' : 's'} that can be deleted.`;
-               case 'verify': {
+               case 'verifyCredential': {
                     const total = s.counts.issued + s.counts.received;
                     if (total === 0) return 'is not involved in any credentials.';
                     return `is involved in <strong>${total}</strong> credential${total === 1 ? '' : 's'} — Received: ${s.counts.received} • Issued: ${s.counts.issued}`;

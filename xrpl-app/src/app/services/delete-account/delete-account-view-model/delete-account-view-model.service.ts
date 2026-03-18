@@ -16,7 +16,7 @@ export class DeleteAccountViewModelService {
      readonly activeTab = signal<AccountDeleteTxType>('deleteAccount');
 
      readonly accountObjectCounts = computed(() => {
-          const blockingObjects = this.deleteAccountStoreService.get('blockingObjects')?.result?.account_objects ?? [];
+          const blockingObjects = this.deleteAccountStoreService.blockingObjects()?.result?.account_objects ?? [];
           const counts: Record<string, number> = {};
           for (const obj of blockingObjects) {
                const type = obj.LedgerEntryType;
@@ -36,7 +36,7 @@ export class DeleteAccountViewModelService {
      });
 
      readonly blockersFromAccountData = computed(() => {
-          const acc = this.deleteAccountStoreService.get('accountInfo')?.result?.account_data;
+          const acc = this.deleteAccountStoreService.accountInfo()?.result?.account_data;
           if (!acc) return [];
           const arr: { label: string; count: number; route: string; tab?: string }[] = [];
 
@@ -50,8 +50,8 @@ export class DeleteAccountViewModelService {
      });
 
      readonly ledgerWaitBlocker = computed(() => {
-          const acc = this.deleteAccountStoreService.get('accountInfo')?.result?.account_data;
-          const srv = this.deleteAccountStoreService.get('serverInfo')?.result?.info?.validated_ledger;
+          const acc = this.deleteAccountStoreService.accountInfo()?.result?.account_data;
+          const srv = this.deleteAccountStoreService.serverInfo()?.result?.info?.validated_ledger;
           if (!acc || !srv) return [];
           const lastTxLedger = Number(acc.PreviousTxnLgrSeq ?? 0);
           const currentLedger = Number(srv?.seq ?? 0);
@@ -71,8 +71,8 @@ export class DeleteAccountViewModelService {
      readonly blockersList = computed<Blocker[]>(() => [...this.blockersFromObjects(), ...this.blockersFromAccountData(), ...this.ledgerWaitBlocker()]);
 
      readonly balanceWarning = computed(() => {
-          const acc = this.deleteAccountStoreService.get('accountInfo')?.result?.account_data;
-          const srv = this.deleteAccountStoreService.get('serverInfo')?.result?.info?.validated_ledger;
+          const acc = this.deleteAccountStoreService.accountInfo()?.result?.account_data;
+          const srv = this.deleteAccountStoreService.serverInfo()?.result?.info?.validated_ledger;
           if (!acc || !srv) return null;
 
           const balanceXrp = Number(xrpl.dropsToXrp(String(acc.Balance)));

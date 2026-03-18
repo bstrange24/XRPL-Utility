@@ -60,7 +60,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      onConfigurationChange() {
           this.resetFlags();
 
-          const type = this.accountConfiguratorStoreService.get('configurationType') || '';
+          const type = this.accountConfiguratorStoreService.configurationType() || '';
           const configActions: Record<string, () => void> = {
                holder: () => this.setHolder(),
                exchanger: () => this.setExchanger(),
@@ -70,7 +70,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           configActions[type]?.();
           this.updateFlagTotal();
 
-          console.log('Configuration changed to:', this.accountConfiguratorStoreService.get('configurationType'));
+          console.log('Configuration changed to:', this.accountConfiguratorStoreService.configurationType());
      }
 
      private buildTxLabel(defaultText: string) {
@@ -99,7 +99,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                     const flagKey = AppConstants.FLAGMAP[flag.name as keyof typeof AppConstants.FLAGMAP];
                     if (flagKey) {
                          if (env?.accountInfo) {
-                              const isEnabled = !!this.accountConfiguratorStoreService.get('accountInfo').result.account_flags?.[flagKey as keyof typeof env.accountInfo.result.account_flags];
+                              const isEnabled = !!this.accountConfiguratorStoreService.accountInfo()?.result.account_flags?.[flagKey as keyof typeof env.accountInfo.result.account_flags];
                               const flagName = flag.name as keyof XrplAccountFlags;
                               this.flags[flagName] = isEnabled;
                          }
@@ -216,17 +216,18 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      }
 
      handlePostSuccess(tab: string, config: AccountConfig, envRef: any) {
+          const store = this.accountConfiguratorStoreService;
           switch (tab) {
                case 'modifyMultiSigners':
                     if (config.enableMultiSignFlag === 'Y') {
                          this.storageService.set(envRef.wallet.classicAddress + 'signerEntries', config.signerEntries);
-                         this.accountConfiguratorStoreService.set('signers', config.signerEntries);
-                         this.accountConfiguratorStoreService.set('multiSignAddress', config.signerEntries.map((e: any) => e.Account).join(',\n'));
-                         this.accountConfiguratorStoreService.set('multiSignSeeds', config.signerEntries.map((e: any) => e.seed).join(',\n'));
-                         this.accountConfiguratorStoreService.set('multiSigningEnabled', true);
+                         store.setField('signers', config.signerEntries);
+                         store.setField('multiSignAddress', config.signerEntries.map((e: any) => e.Account).join(',\n'));
+                         store.setField('multiSignSeeds', config.signerEntries.map((e: any) => e.seed).join(',\n'));
+                         store.setField('multiSigningEnabled', true);
                     } else {
                          this.storageService.removeValue(envRef.wallet.classicAddress + 'signerEntries');
-                         this.accountConfiguratorStoreService.set('signerQuorum', 1);
+                         store.setField('signerQuorum', 1);
                     }
                     break;
                case 'modifyRegularKey': {
@@ -237,8 +238,8 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                          this.storageService.set(regularKey, config.regularKeyAddress);
                          this.storageService.set(regularKeySeed, config.regularKeySeed);
                     } else {
-                         this.accountConfiguratorStoreService.set('regularKeyAddress', '');
-                         this.accountConfiguratorStoreService.set('regularKeySeed', '');
+                         store.setField('regularKeyAddress', '');
+                         store.setField('regularKeySeed', '');
 
                          this.storageService.removeValue(regularKey);
                          this.storageService.removeValue(regularKeySeed);
@@ -249,22 +250,25 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      }
 
      validateQuorum() {
-          const totalWeight = this.accountConfiguratorStoreService.get('signers').reduce((sum: any, s: { SignerWeight: any }) => sum + (s.SignerWeight || 0), 0);
-          const quorum = this.accountConfiguratorStoreService.get('signerQuorum');
+          const totalWeight = this.accountConfiguratorStoreService.signers().reduce((sum: any, s: { SignerWeight: any }) => sum + (s.SignerWeight || 0), 0);
+          const quorum = this.accountConfiguratorStoreService.signerQuorum();
           if (quorum > totalWeight) {
-               this.accountConfiguratorStoreService.set('signerQuorum', Math.floor(quorum));
+               const store = this.accountConfiguratorStoreService;
+               store.setField('signerQuorum', Math.floor(quorum));
           }
      }
 
      validateQuorum1() {
-          const totalWeight = this.accountConfiguratorStoreService.get('signers').reduce((sum: any, s: { SignerWeight: any }) => sum + (s.SignerWeight || 0), 0);
-          if (this.accountConfiguratorStoreService.get('signerQuorum') > totalWeight) {
-               this.accountConfiguratorStoreService.set('signerQuorum', Math.floor(totalWeight));
+          const totalWeight = this.accountConfiguratorStoreService.signers().reduce((sum: any, s: { SignerWeight: any }) => sum + (s.SignerWeight || 0), 0);
+          if (this.accountConfiguratorStoreService.signerQuorum() > totalWeight) {
+               const store = this.accountConfiguratorStoreService;
+               store.setField('signerQuorum', Math.floor(totalWeight));
           }
      }
 
      addSigner() {
-          this.accountConfiguratorStoreService.addSigner({
+          const store = this.accountConfiguratorStoreService;
+          store.addSigner({
                Account: '',
                seed: '',
                SignerWeight: 1,
@@ -272,18 +276,21 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      }
 
      removeSigner(index: number) {
-          this.accountConfiguratorStoreService.removeSigner(index);
+          const store = this.accountConfiguratorStoreService;
+          store.removeSigner(index);
      }
 
      addDepositAuthAddresses() {
-          this.accountConfiguratorStoreService.addDepositAuthAddress({
+          const store = this.accountConfiguratorStoreService;
+          store.addDepositAuthAddress({
                Account: '',
                SignerWeight: 1,
           });
      }
 
      removeDepositAuthAddresses(index: number) {
-          this.accountConfiguratorStoreService.removeDepositAuthAddress(index);
+          const store = this.accountConfiguratorStoreService;
+          store.removeDepositAuthAddress(index);
      }
 
      onNoFreezeChange() {
@@ -299,7 +306,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      }
 
      hasFieldsToUpdate(env: PrepareTxEnvironmentResult): boolean {
-          return !!(this.accountConfiguratorStoreService.get('tickSize') || this.accountConfiguratorStoreService.get('transferRate') || (this.accountConfiguratorStoreService.get('isMessageKey') && env.wallet.publicKey) || (this.accountConfiguratorStoreService.get('domain') && this.accountConfiguratorStoreService.get('domain').trim() !== ''));
+          return !!(this.accountConfiguratorStoreService.tickSize() || this.accountConfiguratorStoreService.transferRate() || (this.accountConfiguratorStoreService.isMessageKey() && env.wallet.publicKey) || (this.accountConfiguratorStoreService.domain() && this.accountConfiguratorStoreService.domain().trim() !== ''));
      }
 
      formatSignerEntries(signerEntries: { Account: string; SignerWeight: number; seed: string }[]) {
@@ -321,7 +328,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
 
      createSignerEntries() {
           return this.accountConfiguratorStoreService
-               .get('signers')
+               .signers()
                .filter((s: { Account: any; SignerWeight: number }) => s.Account && s.SignerWeight > 0)
                .map((s: { Account: any; SignerWeight: any; seed: any }) => ({
                     Account: s.Account,
@@ -332,7 +339,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
 
      createDepsoitAuthEntries() {
           return this.accountConfiguratorStoreService
-               .get('depositAuthAddresses')
+               .depositAuthAddresses()
                .filter((s: { account: any }) => s.account)
                .map((s: { account: any }) => ({
                     Account: s.account,
@@ -340,17 +347,19 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      }
 
      clearUiIAccountMetaData() {
-          this.accountConfiguratorStoreService.set('tickSize', '');
-          this.accountConfiguratorStoreService.set('transferRate', '');
-          this.accountConfiguratorStoreService.set('domain', '');
-          this.accountConfiguratorStoreService.set('isMessageKey', false);
+          const store = this.accountConfiguratorStoreService;
+          store.setField('tickSize', '');
+          store.setField('transferRate', '');
+          store.setField('domain', '');
+          store.setField('isMessageKey', false);
      }
 
      toggleMessageKey() {
-          if (this.accountConfiguratorStoreService.get('isMessageKey')) {
-               this.accountConfiguratorStoreService.set('isMessageKey', false);
+          const store = this.accountConfiguratorStoreService;
+          if (this.accountConfiguratorStoreService.isMessageKey()) {
+               store.setField('isMessageKey', false);
           } else {
-               this.accountConfiguratorStoreService.set('isMessageKey', true);
+               store.setField('isMessageKey', true);
           }
      }
 

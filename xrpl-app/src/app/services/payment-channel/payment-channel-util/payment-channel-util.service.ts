@@ -9,6 +9,7 @@ import BigNumber from 'bignumber.js';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { AppConstants } from '../../../core/app.constants';
 import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
 type PaymentChannelTxType = 'create' | 'fund' | 'claim' | 'renew' | 'close';
 
@@ -19,6 +20,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
      public readonly txUiService = inject(TransactionUiService);
      public readonly utilsService = inject(UtilsService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      walletPaymentChannelCount = signal<number>(0);
      existingPaymentChannels = signal<any[]>([]);
@@ -80,9 +82,9 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
 
      getTransactionValues() {
           const amount = this.txUiService.amountField();
-          const isSimulate = this.txUiService.isSimulateEnabled();
-          const useMultiSign = this.txUiService.useMultiSign();
-          const isRegularKeyAddress = this.accountConfiguratorStoreService.get('isRegularKeyAddress');
+          const isSimulate = this.xrplTxOptionsStore.isSimulateEnabled();
+          const useMultiSign = this.xrplTxOptionsStore.useMultiSign();
+          const isRegularKeyAddress = this.accountConfiguratorStoreService.isRegularKeyAddress();
           // const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
           const regularKeyAddress = this.txUiService.regularKeyAddress();
           const regularKeySeed = this.txUiService.regularKeySeed();
@@ -92,7 +94,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
           const settleDelay = this.txUiService.settleDelayField();
           const channelClaimSignatureField = this.txUiService.channelClaimSignatureField();
           const publicKeyField = this.txUiService.publicKeyField();
-          const isTicket = this.txUiService.isTicket();
+          const isTicket = this.xrplTxOptionsStore.isTicket();
           const memo = this.txUiService.memoField();
           const isMemoEnabled = this.txUiService.isMemoEnabled();
           const destinationTag = this.txUiService.destinationTagField();

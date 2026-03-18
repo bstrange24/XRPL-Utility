@@ -8,5 +8,5 @@ import { NgIcon } from '@ng-icons/core';
      styleUrl: './requirements-info.component.css',
 })
 export class RequirementsInfoComponent {
-     activeTab = input.required<'set' | 'delete'>();
+     activeTab = input.required<'setDid' | 'deleteDid'>();
 }

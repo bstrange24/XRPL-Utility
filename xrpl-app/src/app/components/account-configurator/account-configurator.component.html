@@ -58,7 +58,7 @@
                     <app-regular-key [canSubmit]="canSubmit()" (performAction)="performAction($event)"></app-regular-key>
                     }
 
-                    <app-transaction-options [showWhenTab]="['modifyMultiSigners','modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.get('multiSigningEnabled')" [regularKeySigningEnabled]="accountConfiguratorStoreService.get('regularKeySigningEnabled')"> </app-transaction-options>
+                    <app-transaction-options [showWhenTab]="['modifyMultiSigners','modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
                     <!-- Execution time -->
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>

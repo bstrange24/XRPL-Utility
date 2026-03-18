@@ -35,6 +35,7 @@ import { DropdownItem } from '../../models/dropdown-item.model';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { XrplDateService } from '../../core/xrpl-date.service';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-account',
@@ -68,6 +69,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      private readonly walletManager = inject(WalletManagerService);
      public readonly route = inject(ActivatedRoute);
      public readonly xrplDateService = inject(XrplDateService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -411,7 +413,7 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
                     }
 
                     await this.refreshAfterTx(env.client, env.wallet, this.selectedDestinationAddress().trim(), true);
-                    if (!this.txUiService.isSimulateEnabled()) this.paymentChannelUtilService.resetChannelIdSelection();
+                    if (!this.xrplTxOptionsStore.isSimulateEnabled()) this.paymentChannelUtilService.resetChannelIdSelection();
                } catch (error: any) {
                     console.error('Error in handlePaymentChannelAction:', error);
                     this.toastService.error(`${error.message || 'Transaction failed'}`);

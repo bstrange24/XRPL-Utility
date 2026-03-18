@@ -1,27 +1,63 @@
 import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
 
+export interface XrplMemo {
+     Memo: {
+          MemoData?: string;
+          MemoType?: string;
+          MemoFormat?: string;
+     };
+}
+
 export interface XrplTxOptionsState {
+     // Options
      destinationTag: string | null;
      sourceTag: string | null;
      invoiceId: string;
-     ticket: string;
-     domainId: string;
      isMemoEnabled: boolean;
-     memos: any[];
-     lastLedgerSequence: number | null;
-     fee: string | null;
+     memos: any;
+     isSimulateEnabled: boolean;
+     showEnableTrustline: boolean;
+
+     // Tickets
+     ticketSequence: string;
+     isTicket: boolean;
+     ticketArray: string[];
+     selectedTickets: string[];
+     ticketCountField: string;
+     selectedTicketSequences: string[];
+     walletTicketCount: number;
+     selectedSingleTicket: string;
+     multiSelectMode: boolean;
+
+     // Signing
+     useMultiSign: boolean;
+     isRegularKeyAddress: boolean;
 }
 
 const initialState: XrplTxOptionsState = {
+     // Options
      destinationTag: null,
      sourceTag: '',
      invoiceId: '',
-     domainId: '',
-     ticket: '',
      isMemoEnabled: false,
      memos: [],
-     lastLedgerSequence: null,
-     fee: null,
+     isSimulateEnabled: false,
+     showEnableTrustline: false,
+
+     // Tickets
+     ticketSequence: '',
+     isTicket: false,
+     selectedSingleTicket: '',
+     selectedTickets: [],
+     ticketArray: [],
+     ticketCountField: '',
+     selectedTicketSequences: [],
+     walletTicketCount: 0,
+     multiSelectMode: false,
+
+     // Signing
+     useMultiSign: false,
+     isRegularKeyAddress: false,
 };
 
 export const XrplTxOptionsStore = signalStore(
@@ -30,26 +66,18 @@ export const XrplTxOptionsStore = signalStore(
      withState(initialState),
 
      withMethods(store => ({
-          setDestinationTag(destinationTag: string | null) {
-               patchState(store, { destinationTag });
+          // Generic
+          setField<K extends keyof XrplTxOptionsState>(field: K, value: XrplTxOptionsState[K]) {
+               patchState(store, { [field]: value });
           },
 
-          setInvoiceId(invoiceId: string) {
-               patchState(store, { invoiceId });
+          updateField<K extends keyof XrplTxOptionsState>(field: K, updater: (current: XrplTxOptionsState[K]) => XrplTxOptionsState[K]) {
+               patchState(store, state => ({
+                    [field]: updater(state[field]),
+               }));
           },
 
-          setDomainId(domainId: string) {
-               patchState(store, { domainId });
-          },
-
-          setSourceTag(sourceTag: string) {
-               patchState(store, { sourceTag });
-          },
-
-          setTicket(ticket: string) {
-               patchState(store, { ticket });
-          },
-
+          // Memos
           setIsMemoEnabled(enabled: boolean) {
                patchState(store, { isMemoEnabled: enabled });
           },
@@ -63,12 +91,35 @@ export const XrplTxOptionsStore = signalStore(
                patchState(store, { memos });
           },
 
+          toggleMemo(enabled: boolean) {
+               patchState(store, { isMemoEnabled: enabled });
+
+               if (!enabled) {
+                    patchState(store, { memos: [] });
+               }
+          },
+
           clearMemos() {
                patchState(store, { memos: [] });
           },
 
           reset() {
                patchState(store, initialState);
+          },
+
+          /** Snapshot */
+          getAll(): XrplTxOptionsState {
+               const snapshot: any = {};
+               for (const [key, value] of Object.entries(store)) {
+                    if (typeof value === 'function') {
+                         try {
+                              snapshot[key] = value();
+                         } catch {
+                              // ignore non-signal functions (methods)
+                         }
+                    }
+               }
+               return snapshot as XrplTxOptionsState;
           },
      }))
 );

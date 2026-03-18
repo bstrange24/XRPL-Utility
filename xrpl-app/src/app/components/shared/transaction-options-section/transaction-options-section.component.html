@@ -1,4 +1,4 @@
-@let tab = activeTab(); @if (tab === 'sendXrp' || tab === 'create' || tab === 'cash' || tab === 'setDomain') {
+@let tab = activeTab(); @if (tab === 'sendXrp' || tab === 'createCredential' || tab === 'cashCheck' || tab === 'setPermissionedDomain') {
 <div class="switch-group">
      <label class="switch">
           <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.target.checked)" name="showOptionalXrp" />
@@ -8,34 +8,34 @@
 } @if(txUiService.wantsOptions()) {
 <!-- Determine what options to display based on tab -->
 <!-- Domain ID and Credential ID -->
-@if (tab === 'setDomain') {
+@if (tab === 'setPermissionedDomain') {
 <div class="form-row">
      <div class="form-group">
           <label for="domainIdField">Domain ID</label>
           <p class="form-hint">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
-          <textarea name="domainId" class="memo-input auto-expand-textarea" rows="2" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="xrplTxOptionsStore.domainId()" (ngModelChange)="xrplTxOptionsStore.setDomainId($event)"></textarea>
+          <textarea name="domainId" class="memo-input auto-expand-textarea" rows="2" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId',$event) "></textarea>
      </div>
      <div class="form-group">
           <label for="credentialIDsField">Credential IDs</label>
           <p class="form-hint">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
-          <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.get('credentialIDs')" (ngModelChange)="this.credentialStore.set('credentialIDs', $event)"></textarea>
+          <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.credentialIDs()" (ngModelChange)="this.credentialStore.setField('credentialIDs', $event)"></textarea>
      </div>
 </div>
-} @else if (tab === 'sendXrp' || tab === 'create' || tab === 'cash') {
+} @else if (tab === 'sendXrp' || tab === 'createCredential' || tab === 'cashCheck') {
 <!-- Destination Tag & Source Tag -->
 <div class="form-row">
      <div class="form-group">
           <label for="destinationTag">Destination Tag</label>
           <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
 
-          <input type="text" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setDestinationTag($event)" />
+          <input type="text" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" />
      </div>
 
      <div class="form-group">
           <label for="sourceTag">Source Tag</label>
           <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
 
-          <input type="text" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setSourceTag($event)" />
+          <input type="text" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" />
      </div>
 </div>
 
@@ -47,7 +47,7 @@
                64-character hexadecimal string (e.g. sha256 hash).
                <a href="https://xrpl.org/docs/references/protocol/transactions/types/payment#invoiceid" target="_blank" class="external-link"> Learn more </a>
           </p>
-          <input type="text" placeholder="64 hex chars (optional)" [ngModel]="xrplTxOptionsStore.invoiceId()" (ngModelChange)="xrplTxOptionsStore.setInvoiceId($event)" maxlength="64" pattern="[0-9a-fA-F]{0,64}" />
+          <input type="text" placeholder="64 hex chars (optional)" [ngModel]="xrplTxOptionsStore.invoiceId()" (ngModelChange)="xrplTxOptionsStore.setField('invoiceId', $event)" maxlength="64" pattern="[0-9a-fA-F]{0,64}" />
      </div>
 </div>
 
@@ -55,12 +55,12 @@
      <div class="form-group">
           <label for="domainIdField">Domain ID</label>
           <p class="form-hint">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
-          <textarea name="domainId" class="memo-input auto-expand-textarea" rows="2" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="xrplTxOptionsStore.domainId()" (ngModelChange)="xrplTxOptionsStore.setDomainId($event)"></textarea>
+          <textarea name="domainId" class="memo-input auto-expand-textarea" rows="2" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', ($event))"></textarea>
      </div>
      <div class="form-group">
           <label for="credentialIDsField">Credential IDs</label>
           <p class="form-hint">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
-          <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.get('credentialIDs')" (ngModelChange)="this.credentialStore.set('credentialIDs', $event)"></textarea>
+          <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.credentialIDs()" (ngModelChange)="this.credentialStore.setField('credentialIDs', $event)"></textarea>
      </div>
 </div>
 
@@ -71,14 +71,14 @@
           <label for="destinationTag">Destination Tag</label>
           <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
 
-          <input type="text" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setDestinationTag($event)" />
+          <input type="text" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', ($event))" />
      </div>
 
      <div class="form-group">
           <label for="sourceTag">Source Tag</label>
           <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
 
-          <input type="text" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setSourceTag($event)" />
+          <input type="text" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', ($event))" />
      </div>
 </div>
 } }

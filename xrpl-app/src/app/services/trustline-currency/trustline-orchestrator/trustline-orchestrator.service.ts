@@ -11,6 +11,7 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { AppConstants } from '../../../core/app.constants';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
 type TrustLineTxType = 'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'clawbackTokens';
 
@@ -64,6 +65,7 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
      private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
      private readonly optionalFields = inject(TransactionOptionalFieldsService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      async executeTrustlineTx(type: TrustLineTxType, config: TrustLineTxConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
           const { wallet, formValues, extra = {}, preFetchedEnv } = config;
@@ -257,9 +259,10 @@ export class TrustlineOrchestratorService extends PerformanceBaseComponent {
                this.setCreateTxOptionalFields(trustlineTx, extra);
           }
 
-          const isTicket = this.txUiService.isTicket();
+          const isTicket = extra.isTicket;
           if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);

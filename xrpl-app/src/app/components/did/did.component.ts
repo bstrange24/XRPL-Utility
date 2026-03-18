@@ -36,6 +36,7 @@ import { DID_TAB_META, DID_TABS } from './constants/did.ui';
 import { DidTxConfig, DidTxType } from './constants/did.types';
 import { DidDeleteComponent } from './tab/did-delete/did-delete.component';
 import { DidSetComponent } from './tab/did-set/did-set.component';
+import { DID_TAB } from './constants/did.constants';
 
 @Component({
      selector: 'app-did',
@@ -69,8 +70,8 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      }
 
      ngOnInit(): void {
-          this.didViewModelService.activeTab.set('set');
-          this.applyTabFromQueryParam(this.route, ['set', 'delete'] as const, tab => this.setTab(tab));
+          this.didViewModelService.activeTab.set('setDid');
+          this.applyTabFromQueryParam(this.route, DID_TAB, tab => this.setTab(tab));
           this.didUtilService.populateDidDefaultData();
           this.txUiService.clearAllOptions();
      }
@@ -106,9 +107,8 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      }
 
      async setTab(tab: string): Promise<void> {
-          const validTabs = ['set', 'delete'] as const;
-          if (validTabs.includes(tab as any)) {
-               this.didViewModelService.activeTab.set(tab as 'set' | 'delete');
+          if (DID_TAB.includes(tab as any)) {
+               this.didViewModelService.activeTab.set(tab as DidTxType);
                this.didUtilService.populateDidDefaultData();
                this.txUiService.clearAllOptionsAndMessages();
                if (this.hasWallets()) await this.getDidForAccount();
@@ -120,11 +120,11 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               if (!this.walletManagerService.ensureWalletSelected()) return;
+               if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
 
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
-                    if (!env) return;
+                    if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
@@ -138,34 +138,19 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      }
 
      async performAction(): Promise<void> {
-          const tab = this.didViewModelService.activeTab();
-          let txResult: { success: boolean; hash?: string; error?: string; validationError?: boolean } | null = null;
+          const currentTab = this.didViewModelService.activeTab();
 
-          if (!this.walletManagerService.ensureWalletSelected()) return;
+          const wallet = this.walletManager.walletVm()?.wallet;
+          if (!wallet || !this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
 
-          const walletVm = this.walletManager.walletVm();
-          if (!walletVm?.wallet) return;
-
-          // 2. Map tab to action
-          const actionMap: Record<'set' | 'delete', DidTxType> = {
-               set: 'setDid',
-               delete: 'deleteDid',
-          };
-
-          const txType = actionMap[tab];
-          if (!txType) {
-               this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
-               return;
-          }
-
-          // 3. Prepare environment once
-          let envRef: any = null;
+          let env: any = null;
           try {
-               envRef = await this.txEnvironmentService.prepareTxEnvironment({
+               env = await this.txEnvironmentService.prepareTxEnvironment({
                     includeAccountInfo: true,
                     includeAccountObject: true,
                     includeFee: true,
                     includeLedgerInfo: true,
+                    includeServerInfo: true,
                });
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
@@ -173,33 +158,38 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
                return;
           }
 
-          // 4. Build the orchestrator config
-          await this.withPerf('performAction', async () => {
-               const config: DidTxConfig = {
-                    wallet: walletVm.wallet,
-                    simulate: this.txUiService.isSimulateEnabled(),
-                    multiSign: this.txUiService.useMultiSign(),
-                    preFetchedEnv: envRef,
-                    didData: this.didStoreService.get('didData'),
-                    uriData: this.didStoreService.get('uriData'),
-                    didDocumentData: this.didStoreService.get('didDocumentData'),
-                    extra: {},
-               };
+          if (!env) throw new Error('Unable to get environment.');
 
-               // 5. Execute via orchestrator
+          const didState = this.didStoreService.getAll();
+          const accountState = this.accountConfiguratorStoreService.getAll();
+          const txOptionsState = this.xrplTxOptionsStore.getAll();
+
+          const config: DidTxConfig = {
+               did: didState,
+               account: accountState,
+               txOptions: txOptionsState,
+               wallet: wallet,
+               preFetchedEnv: env,
+               extra: {},
+          };
+
+          let txResult: { success: boolean; hash?: string; error?: string } | null = null;
+
+          await this.withPerf('performAction', async () => {
                try {
-                    txResult = await this.didTransactionOrchestratorService.executeDidTx(txType, config);
-               } catch (err: any) {
-                    console.error(`[${tab}] execution failed:`, err);
-                    this.toastService.error(err.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    txResult = await this.didTransactionOrchestratorService.executeDidTx(currentTab, config);
+               } catch (error: any) {
+                    console.error(`[${currentTab}] execution failed:`, error);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
                     return;
                }
           });
 
-          if (!txResult) return;
+          if (!txResult) {
+               throw new Error('Unable error when submitting transaction.');
+          }
 
-          // 6. Handle result + side effects
-          await this.handleTxResult(txResult, envRef.client, envRef.wallet, '');
+          await this.handleTxResult(txResult, env.client, env.wallet, '');
 
           this.txUiService.resetCurrentStepToIdle();
      }

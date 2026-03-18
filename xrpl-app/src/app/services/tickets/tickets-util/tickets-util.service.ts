@@ -1,6 +1,7 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
 @Injectable({
      providedIn: 'root',
@@ -8,6 +9,7 @@ import { AccountConfiguratorStoreService } from '../../account-configurator/acco
 export class TicketsUtilService {
      public readonly txUiService = inject(TransactionUiService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      readonly createButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
@@ -25,10 +27,10 @@ export class TicketsUtilService {
 
      getTransactionValues() {
           const amount = this.txUiService.amountField();
-          const isSimulate = this.txUiService.isSimulateEnabled();
-          const useMultiSign = this.txUiService.useMultiSign();
+          const isSimulate = this.xrplTxOptionsStore.isSimulateEnabled();
+          const useMultiSign = this.xrplTxOptionsStore.useMultiSign();
           // const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
-          const isRegularKeyAddress = this.accountConfiguratorStoreService.get('isRegularKeyAddress');
+          const isRegularKeyAddress = this.accountConfiguratorStoreService.isRegularKeyAddress();
           const regularKeyAddress = this.txUiService.regularKeyAddress();
           const regularKeySeed = this.txUiService.regularKeySeed();
           const multiSignAddress = this.txUiService.multiSignAddress();

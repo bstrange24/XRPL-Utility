@@ -34,7 +34,7 @@ export class PermissionedDomainsSummaryComponent {
           | undefined
      >();
 
-     tab = input.required<'setDomain' | 'deleteDomain'>();
+     tab = input.required<'setPermissionedDomain' | 'deletePermissionedDomain'>();
 
      summaryMessage = input.required<string>();
      infoPanelExpanded = input.required<boolean>();
@@ -52,15 +52,15 @@ export class PermissionedDomainsSummaryComponent {
      explorerUrl = this.txUiService.explorerUrl;
 
      isSelected(domainIndex: string): boolean {
-          return this.tab() !== 'setDomain' && domainIndex === this.permissionedDomainStoreService.get('selectedDomainId');
+          return this.tab() !== 'setPermissionedDomain' && domainIndex === this.permissionedDomainStoreService.selectedDomainId();
      }
 
      selectDomain(domain: PermissionedDomainItem) {
-          if (this.tab() === 'setDomain') return;
-          this.permissionedDomainStoreService.set('selectedDomainId', domain.index);
+          if (this.tab() === 'setPermissionedDomain') return;
+          this.permissionedDomainStoreService.setField('selectedDomainId', domain.index);
      }
 
      getCursorStyle(): string | null {
-          return this.tab() === 'setDomain' ? null : 'pointer';
+          return this.tab() === 'setPermissionedDomain' ? null : 'pointer';
      }
 }

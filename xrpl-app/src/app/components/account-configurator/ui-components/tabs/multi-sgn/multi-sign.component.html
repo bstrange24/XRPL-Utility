@@ -6,7 +6,7 @@
 
      <!-- Signers list -->
      <div class="signers-list">
-          @for (signer of accountConfiguratorStoreService.get('signers'); track $index; let i = $index) {
+          @for (signer of accountConfiguratorStoreService.signers(); track $index; let i = $index) {
           <fieldset class="signer-fieldset">
                <legend class="signer-legend">Signer {{ i + 1 }}</legend>
 
@@ -30,7 +30,7 @@
                     </div>
 
                     <div class="form-group remove-group">
-                         @if (accountConfiguratorStoreService.get('signers').length > 1) {
+                         @if (accountConfiguratorStoreService.signers().length > 1) {
                          <button type="button" (click)="accountConfiguratorUtilService.removeSigner(i)" class="btn-danger btn-sm" title="Remove this signer">
                               <lucide-icon name="trash-2" size="16"></lucide-icon>
                          </button>
@@ -50,7 +50,7 @@
           <div class="form-group">
                <label for="signerQuorumField">Signer Quorum</label>
                <p class="form-hint">A target number for the signer weights.</p>
-               <input type="number" id="signerQuorumField" [ngModel]="accountConfiguratorStoreService.get('signerQuorum')" (ngModelChange)="accountConfiguratorStoreService.set('signerQuorum', $event); accountConfiguratorUtilService.validateQuorum()" (keydown)="accountConfiguratorUtilService.preventNegative($event)" name="signerQuorumField" min="1" class="input-number" />
+               <input type="number" id="signerQuorumField" [ngModel]="accountConfiguratorStoreService.signerQuorum()" (ngModelChange)="accountConfiguratorStoreService.setField('signerQuorum', $event); accountConfiguratorUtilService.validateQuorum()" (keydown)="accountConfiguratorUtilService.preventNegative($event)" name="signerQuorumField" min="1" class="input-number" />
           </div>
      </div>
 </div>

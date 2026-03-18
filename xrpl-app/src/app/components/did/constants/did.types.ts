@@ -1,8 +1,11 @@
+import { DidState } from '../../../services/did/did-store/did-store.service';
 import { Wallet } from '../../../services/wallets/manager/wallet-manager.service';
 import * as xrpl from 'xrpl';
+import { AccountConfiguratorState } from '../../account-configurator/constants/account-configurator.types';
+import { XrplTxOptionsState } from '../../shared/stores/xrpl-tx-options.store';
 
 export type DidTxType = 'setDid' | 'deleteDid';
-export type DidTab = 'set' | 'delete';
+export type DidTab = 'setDid' | 'deleteDid';
 export type DidField = 'didData' | 'uriData' | 'createdDids' | 'existingDid' | 'didDocumentData' | 'regularKeySigningEnabled';
 
 export interface DidInfoData {
@@ -13,12 +16,10 @@ export interface DidInfoData {
 }
 
 export interface DidTxConfig {
+     did: DidState;
+     account?: AccountConfiguratorState;
+     txOptions?: XrplTxOptionsState;
      wallet: Wallet;
-     simulate?: boolean;
-     multiSign?: boolean;
-     didData?: string;
-     uriData?: string;
-     didDocumentData?: string;
      preFetchedEnv?: {
           client: xrpl.Client;
           accountInfo: any;

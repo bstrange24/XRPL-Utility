@@ -1,153 +1,143 @@
-import { Injectable, signal, WritableSignal } from '@angular/core';
+import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
 import { UiSignerEntry } from '../../../models/interface-items.model';
-import { AccountConfiguratorField } from '../../../components/account-configurator/constants/account-configurator.types';
+import { AccountConfiguratorState } from '../../../components/account-configurator/constants/account-configurator.types';
 
-@Injectable({
-     providedIn: 'root',
-})
-export class AccountConfiguratorStoreService {
-     /** Initial state (single source of truth) */
-     private readonly initialState: Record<AccountConfiguratorField, any> = {
-          accountInfo: '',
-          configurationType: '',
-          memoField: '',
-          isMemoEnabled: false,
-          isSimulateEnabled: false,
-          useMultiSign: false,
-          multiSignAddress: '',
-          multiSignSeeds: '',
-          multiSigningEnabled: false,
-          hasSignerList: false,
-          operations: '',
-          amountField: '',
-          nfTokenMinterAddress: '',
-          authorizeFlag: '',
-          enableMultiSignFlag: '',
-          enableRegularKeyFlag: '',
-          enableNftMinter: '',
-          tickSize: '',
-          transferRate: '',
-          domain: '',
-          isMessageKey: false,
-          publicKey: '',
-          regularKeyAddress: '',
-          regularKeySeed: 'JOE',
-          isRegularKeyAddress: false,
-          regularKeySigningEnabled: false,
-          signerQuorum: 0,
-          SignerWeight: 0,
-          signers: [{ Account: '', seed: '', SignerWeight: 1 }] as UiSignerEntry[],
-          depositAuthAddresses: [{ Account: '', seed: '', SignerWeight: 1 }] as UiSignerEntry[],
-          masterKeyDisabled: false,
-          depositAuthEnabled: false,
-          isdepositAuthAddress: false,
-          depositAuthAddress: '',
-          depsositAuthEntries: '',
-          formattedDepsositAuthEntries: '',
-          signerEntries: '',
-          formattedSignerEntries: '',
-          isNFTokenMinterEnabled: false,
-          isAuthorizedNFTokenMinter: false,
-          isUpdateMetaData: false,
-          isHolderConfiguration: false,
-          isExchangerConfiguration: false,
-          isIssuerConfiguration: false,
-          setFlags: [] as number[],
-          clearFlags: [] as number[],
-          walletTicketCount: 0,
-          url: '',
-          suppressIndividualFeedback: '',
-     };
+// Initial state — copy from your old one, but now strongly typed
+const initialState: AccountConfiguratorState = {
+     accountInfo: '',
+     configurationType: null,
+     memoField: '',
+     isMemoEnabled: false,
+     isSimulateEnabled: false,
+     useMultiSign: false,
+     multiSignAddress: '',
+     multiSignSeeds: '',
+     multiSigningEnabled: false,
+     hasSignerList: false,
+     operations: '',
+     amountField: '',
+     nfTokenMinterAddress: '',
+     authorizeFlag: '',
+     enableMultiSignFlag: '',
+     enableRegularKeyFlag: '',
+     enableNftMinter: '',
+     tickSize: '',
+     transferRate: '',
+     domain: '',
+     isMessageKey: false,
+     publicKey: '',
+     regularKeyAddress: '',
+     regularKeySeed: '',
+     isRegularKeyAddress: false,
+     regularKeySigningEnabled: false,
+     signerQuorum: 0,
+     SignerWeight: 0,
+     signers: [{ Account: '', seed: '', SignerWeight: 1 }],
+     depositAuthAddresses: [{ Account: '', seed: '', SignerWeight: 1 }],
+     masterKeyDisabled: false,
+     depositAuthEnabled: false,
+     isdepositAuthAddress: false,
+     depositAuthAddress: '',
+     depsositAuthEntries: '',
+     formattedDepsositAuthEntries: '',
+     signerEntries: '',
+     formattedSignerEntries: '',
+     isNFTokenMinterEnabled: false,
+     isAuthorizedNFTokenMinter: false,
+     isUpdateMetaData: false,
+     isHolderConfiguration: false,
+     isExchangerConfiguration: false,
+     isIssuerConfiguration: false,
+     setFlags: [],
+     clearFlags: [],
+     walletTicketCount: 0,
+     url: '',
+     suppressIndividualFeedback: '',
+};
 
-     /** Signal registry */
-     private readonly registry: Record<AccountConfiguratorField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
-          (acc, key) => {
-               const field = key as AccountConfiguratorField;
-               acc[field] = signal(structuredClone(this.initialState[field]));
-               return acc;
+export const AccountConfiguratorStoreService = signalStore(
+     { providedIn: 'root' },
+
+     withState(initialState),
+
+     // Methods (your convenience + generics)
+     withMethods(store => ({
+          // Generic setter
+          setField<K extends keyof AccountConfiguratorState>(field: K, value: AccountConfiguratorState[K]) {
+               patchState(store, { [field]: value });
           },
-          {} as Record<AccountConfiguratorField, WritableSignal<any>>
-     );
 
-     /** Generic getter */
-     get<K extends AccountConfiguratorField>(field: K): any {
-          return this.registry[field]();
-     }
+          // Generic updater
+          updateField<K extends keyof AccountConfiguratorState>(field: K, updater: (current: AccountConfiguratorState[K]) => AccountConfiguratorState[K]) {
+               patchState(store, state => ({ [field]: updater(state[field]) }));
+          },
 
-     /** Generic setter */
-     set<K extends AccountConfiguratorField>(field: K, value: any) {
-          this.registry[field].set(value);
-     }
+          getAll(): AccountConfiguratorState {
+               const snapshot: any = {};
 
-     /** Get raw signal (for template binding) */
-     signal<K extends AccountConfiguratorField>(field: K): WritableSignal<any> {
-          return this.registry[field];
-     }
+               for (const [key, value] of Object.entries(store)) {
+                    if (typeof value === 'function') {
+                         try {
+                              snapshot[key] = value();
+                         } catch {
+                              // ignore non-signal functions (methods)
+                         }
+                    }
+               }
 
-     /** Update existing value */
-     update<K extends AccountConfiguratorField>(field: K, updater: (current: any) => any) {
-          const current = this.registry[field]();
-          this.registry[field].set(updater(current));
-     }
+               return snapshot as AccountConfiguratorState;
+          },
 
-     /** Reset entire store */
-     resetAll() {
-          for (const key of Object.keys(this.registry) as AccountConfiguratorField[]) {
-               const value = this.initialState[key];
-               this.registry[key].set(Array.isArray(value) || typeof value === 'object' ? structuredClone(value) : value);
-          }
-     }
+          resetAll() {
+               patchState(store, structuredClone(initialState));
+          },
 
-     /** Return full state snapshot */
-     getAll(): Record<AccountConfiguratorField, any> {
-          const values: Partial<Record<AccountConfiguratorField, any>> = {};
-          for (const key of Object.keys(this.registry) as AccountConfiguratorField[]) {
-               values[key] = this.registry[key]();
-          }
-          return values as Record<AccountConfiguratorField, any>;
-     }
+          addSigner(signer: UiSignerEntry) {
+               patchState(store, state => ({ signers: [...state.signers, signer] }));
+          },
 
-     // Convenience methods for signers (multi-sign list)
-     addSigner(signer: UiSignerEntry) {
-          this.update('signers', (current: UiSignerEntry[]) => [...current, signer]);
-     }
+          removeSigner(index: number) {
+               patchState(store, state => ({
+                    signers: state.signers.filter((_: any, i: number) => i !== index),
+               }));
+          },
 
-     removeSigner(index: number) {
-          this.update('signers', (current: UiSignerEntry[]) => current.filter((_, i) => i !== index));
-     }
+          clearSigners() {
+               patchState(store, { signers: [{ Account: '', seed: '', SignerWeight: 1 }] });
+          },
 
-     clearSigners() {
-          this.set('signers', [{ Account: '', seed: '', SignerWeight: 1 }]);
-     }
+          addDepositAuthAddress(entry: UiSignerEntry) {
+               patchState(store, state => ({
+                    depositAuthAddresses: [...state.depositAuthAddresses, entry],
+               }));
+          },
 
-     // Convenience methods for deposit authorization addresses
-     addDepositAuthAddress(entry: UiSignerEntry) {
-          this.update('depositAuthAddresses', (current: UiSignerEntry[]) => [...current, entry]);
-     }
+          removeDepositAuthAddress(index: number) {
+               patchState(store, state => ({
+                    depositAuthAddresses: state.depositAuthAddresses.filter((_: any, i: number) => i !== index),
+               }));
+          },
 
-     removeDepositAuthAddress(index: number) {
-          this.update('depositAuthAddresses', (current: UiSignerEntry[]) => current.filter((_, i) => i !== index));
-     }
+          clearDepositAuthAddresses() {
+               patchState(store, {
+                    depositAuthAddresses: [{ Account: '', seed: '', SignerWeight: 1 }],
+               });
+          },
 
-     clearDepositAuthAddresses() {
-          this.set('depositAuthAddresses', [{ account: '' }]);
-     }
+          updateSigner(index: number, field: keyof UiSignerEntry, value: string | number) {
+               patchState(store, state => {
+                    const signers = [...state.signers];
+                    signers[index] = { ...signers[index], [field]: value };
+                    return { signers };
+               });
+          },
 
-     // in AccountConfiguratorStoreService
-     updateSigner(index: number, field: keyof UiSignerEntry, value: any) {
-          this.update('signers', (current: UiSignerEntry[]) => {
-               const copy = [...current];
-               copy[index] = { ...copy[index], [field]: value };
-               return copy;
-          });
-     }
-
-     updateDepositAuthAddress(index: number, field: 'account', value: string) {
-          // only 'account' for now
-          this.update('depositAuthAddresses', (current: any[]) => {
-               const copy = [...current];
-               copy[index] = { ...copy[index], [field]: value };
-               return copy;
-          });
-     }
-}
+          updateDepositAuthAddress(index: number, field: 'account', value: string) {
+               patchState(store, state => {
+                    const addresses = [...state.depositAuthAddresses];
+                    addresses[index] = { ...addresses[index], [field]: value };
+                    return { depositAuthAddresses: addresses };
+               });
+          },
+     }))
+);

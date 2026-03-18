@@ -1,3 +1,6 @@
+export const CREDENTIAL_TAB = ['createCredential', 'acceptCredential', 'deleteCredential', 'verifyCredential'] as const;
+export type CredentialTab = (typeof CREDENTIAL_TAB)[number];
+
 export const CREDENTIAL_TX_TYPE_MAP = {
      create: 'CredentialCreate',
      accept: 'CredentialAccept',
@@ -12,10 +15,10 @@ export const CREDENTIAL_TX_TYPES = {
 } as const;
 
 export const CREDENTIAL_CONFIG_TX_DISPLAY_TYPES = {
-     CREATE: 'create',
-     ACCEPT: 'accept',
-     VERIFY: 'verify',
-     DELETE: 'delete',
+     CREATE: 'createCredential',
+     ACCEPT: 'acceptCredential',
+     VERIFY: 'verifyCredential',
+     DELETE: 'deleteCredential',
 } as const;
 
 export type CredentialTxType = (typeof CREDENTIAL_TX_TYPES)[keyof typeof CREDENTIAL_TX_TYPES];

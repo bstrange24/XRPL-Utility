@@ -11,6 +11,7 @@ import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/
 import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { PermissionedDomainStoreService } from '../permissioned-domain-store/permissioned-domain-store.service';
 import { PermissionedDomainViewModelService } from '../permissioned-domain-view-model/permissioned-domain-view-model.service';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
 @Injectable({
      providedIn: 'root',
@@ -25,6 +26,7 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      public readonly permissionedDomainViewModelService = inject(PermissionedDomainViewModelService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      constructor() {
           super();
@@ -32,16 +34,16 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
 
      onDomainSelected(item: SelectItem | null) {
           const domainId = item?.id || '';
-          this.permissionedDomainStoreService.set('selectedDomainId', domainId);
+          this.permissionedDomainStoreService.setField('selectedDomainId', domainId);
      }
 
      onCredentialIdInput(event: Event): void {
           const value = (event.target as HTMLInputElement).value;
-          this.permissionedDomainStoreService.set('credentialIdSearchQuery', value);
+          this.permissionedDomainStoreService.setField('credentialIdSearchQuery', value);
      }
 
      setCredentialType(value: string) {
-          this.permissionedDomainStoreService.set('credentialType', value);
+          this.permissionedDomainStoreService.setField('credentialType', value);
      }
 
      clearFields() {
@@ -52,7 +54,7 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
      }
 
      clearInputFields() {
-          if (this.txUiService.isSimulateEnabled()) return;
+          if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.txUiService.clearAllFields();
           this.txUiService.clearAllOptions();
           this.permissionedDomainStoreService.resetDomainFields();

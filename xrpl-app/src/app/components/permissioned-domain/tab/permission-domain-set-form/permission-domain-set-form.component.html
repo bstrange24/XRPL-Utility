@@ -10,6 +10,6 @@
      <div class="form-group">
           <label for="credentialType">Credential Type</label>
           <p class="form-hint">A hex-encoded value to identify the type of credential from the issuer.</p>
-          <input type="text" [value]="permissionedDomainStoreService.get('credentialType')" (input)="permissionedDomainUtilService.setCredentialType($event.target.value)" name="credential_type" placeholder="Enter a credential type" />
+          <input type="text" [value]="permissionedDomainStoreService.credentialType()" (input)="permissionedDomainUtilService.setCredentialType($event.target.value)" name="credential_type" placeholder="Enter a credential type" />
      </div>
 </div>

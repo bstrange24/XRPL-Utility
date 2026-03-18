@@ -28,6 +28,7 @@ import { TransactionPreviewComponent } from '../transaction-preview/transaction-
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-set-hook',
@@ -53,6 +54,7 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
@@ -317,8 +319,9 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
      }
 
      private async setTxOptionalFields(client: xrpl.Client, tx: xrpl.Payment, wallet: xrpl.Wallet, accountInfo: any) {
-          if (this.txUiService.isTicket()) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+          if (this.xrplTxOptionsStore.isTicket()) {
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);
@@ -377,7 +380,7 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
           this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
           // Update service state
-          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
+          // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
 
           const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
           const hasSignerList = signerAccounts?.length > 0;

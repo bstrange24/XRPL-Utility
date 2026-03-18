@@ -260,7 +260,8 @@ export class PaymentChannelOrchestratorService extends PerformanceBaseComponent 
 
      private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, formValues: any) {
           if (formValues.isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);

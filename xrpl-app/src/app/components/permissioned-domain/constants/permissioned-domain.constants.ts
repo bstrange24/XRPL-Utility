@@ -2,8 +2,8 @@ import { PermissionDomainTxType, PermissionedDomainTab, PermissionedDomainTxType
 
 // Transaction types
 export const PERMISSION_DOMAIN_TX_TYPES = {
-     SET: 'setDomain',
-     DELETE: 'deleteDomain',
+     SET: 'setPermissionedDomain',
+     DELETE: 'deletePermissionedDomain',
 } as const;
 
 // Full transaction types (for XRPL transactions)
@@ -14,8 +14,8 @@ export const PERMISSION_DOMAIN_TX_TYPES_FULL = {
 
 // Display types
 export const PERMISSION_DOMAIN_CONFIG_TX_DISPLAY_TYPES = {
-     SET: 'setDomain',
-     DELETE: 'deleteDomain',
+     SET: 'setPermissionedDomain',
+     DELETE: 'deletePermissionedDomain',
 } as const;
 
 // Validation rule names

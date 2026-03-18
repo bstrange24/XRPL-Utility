@@ -5,6 +5,7 @@ import { TransactionUiService } from '../../../services/transaction-ui/transacti
 import { UtilsService } from '../../../services/util-service/utils.service';
 import { CredentialStore } from '../../../services/credentials/credential-store/credential-store.service';
 import { XrplTxOptionsStore } from '../stores/xrpl-tx-options.store';
+import { PermissionedDomainStoreService } from '../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 
 @Component({
      selector: 'app-transaction-options-section',
@@ -18,7 +19,8 @@ export class TransactionOptionsSectionComponent {
      public readonly utilsService = inject(UtilsService);
      public readonly credentialStore = inject(CredentialStore);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
 
-     activeTab = input.required<'sendXrp' | 'create' | 'cash' | 'cancel' | 'deleteAccount' | 'set' | 'delete' | 'create' | 'accept' | 'verify' | 'setDomain' | 'deleteDomain'>();
+     activeTab = input.required<'sendXrp' | 'createCredential' | 'acceptCredential' | 'deleteCredential' | 'verifyCredential' | 'cashCheck' | 'cancelCheck' | 'createCheck' | 'deleteAccount' | 'set' | 'delete' | 'accept' | 'verify' | 'setPermissionedDomain' | 'deletePermissionedDomain'>();
      @Input() wantsOptions: boolean = this.txUiService.wantsOptions();
 }

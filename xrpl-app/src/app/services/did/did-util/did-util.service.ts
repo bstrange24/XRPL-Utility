@@ -39,30 +39,30 @@ export class DidUtilService extends PerformanceBaseComponent {
                     };
                })
                .sort((a, b) => a.index.localeCompare(b.index));
-          this.didStoreService.set('existingDid', mapped);
+          this.didStoreService.setField('existingDid', mapped);
           this.utilsService.logObjects('existingDid', mapped);
      }
 
      onDidDataChange(newValue: string) {
-          this.didStoreService.set('didData', newValue);
+          this.didStoreService.setField('didData', newValue);
      }
 
      onUriDataChange(newValue: string) {
-          this.didStoreService.set('uriData', newValue);
+          this.didStoreService.setField('uriData', newValue);
      }
 
      onDidDocumentDataChange(newValue: string) {
-          this.didStoreService.set('didDocumentData', newValue);
+          this.didStoreService.setField('didDocumentData', newValue);
      }
 
      clearJsonField(field: 'document' | 'uri' | 'data') {
-          if (field === 'document') this.didStoreService.set('didDocumentData', '');
-          if (field === 'uri') this.didStoreService.set('uriData', '');
-          if (field === 'data') this.didStoreService.set('didData', '');
+          if (field === 'document') this.didStoreService.setField('didDocumentData', '');
+          if (field === 'uri') this.didStoreService.setField('uriData', '');
+          if (field === 'data') this.didStoreService.setField('didData', '');
      }
 
      populateDidDefaultData() {
-          this.didStoreService.set(
+          this.didStoreService.setField(
                'didData',
                `{
   "@context": "https://www.w3.org/ns/did/v1",
@@ -72,8 +72,8 @@ export class DidUtilService extends PerformanceBaseComponent {
   ]
 }`
           );
-          this.didStoreService.set('uriData', `{"ipfs":"//bafybeiexamplehash"}`);
-          this.didStoreService.set('didDocumentData', `{"did:example":"123#public-key-0"}`);
+          this.didStoreService.setField('uriData', `{"ipfs":"//bafybeiexamplehash"}`);
+          this.didStoreService.setField('didDocumentData', `{"did:example":"123#public-key-0"}`);
      }
 
      private buildTxLabel(defaultText: string) {

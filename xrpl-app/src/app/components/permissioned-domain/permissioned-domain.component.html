@@ -31,15 +31,15 @@
                }
 
                <form #theForm="ngForm" class="main-form">
-                    @switch (tab) { @case ('setDomain') {
+                    @switch (tab) { @case ('setPermissionedDomain') {
                     <app-permission-domain-set-form [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" />
-                    } @case ('deleteDomain') {
+                    } @case ('deletePermissionedDomain') {
                     <app-permission-domain-delete-form [view]="view" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (onDomainSelected)="permissionedDomainUtilService.onDomainSelected($event)" />
                     } }
 
                     <app-transaction-options-section [activeTab]="tab"></app-transaction-options-section>
 
-                    <app-transaction-options [showWhenTab]="['setDomain', 'deleteDomain']" [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled()" [regularKeySigningEnabled]="permissionedDomainStoreService.signal('regularKeySigningEnabled')()"></app-transaction-options>
+                    <app-transaction-options [showWhenTab]="['setPermissionedDomain', 'deletePermissionedDomain']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"></app-transaction-options>
 
                     <!-- Action buttons -->
                     <div class="button-row">

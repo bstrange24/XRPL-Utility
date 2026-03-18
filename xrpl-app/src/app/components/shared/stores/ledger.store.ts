@@ -6,6 +6,8 @@ export interface LedgerState {
      baseFee: string;
      reserveBase: string;
      reserveIncrement: string;
+     lastLedgerSequence: number | null;
+     fee: string | null;
 }
 
 const initialState: LedgerState = {
@@ -14,6 +16,8 @@ const initialState: LedgerState = {
      baseFee: '12',
      reserveBase: '10',
      reserveIncrement: '2',
+     lastLedgerSequence: 0,
+     fee: '12',
 };
 
 export const LedgerStore = signalStore(
@@ -22,23 +26,52 @@ export const LedgerStore = signalStore(
      withState(initialState),
 
      withMethods(store => ({
-          updateServerInfo(info: any) {
-               patchState(store, {
-                    validatedLedger: info.validated_ledger.seq,
-               });
+          /** Generic setter */
+          setField<K extends keyof LedgerState>(field: K, value: LedgerState[K]) {
+               patchState(store, { [field]: value });
           },
 
-          updateFee(fee: any) {
-               patchState(store, {
-                    baseFee: fee.drops.base_fee,
-               });
+          // Generic updater
+          updateField<K extends keyof LedgerState>(field: K, updater: (current: LedgerState[K]) => LedgerState[K]) {
+               patchState(store, state => ({ [field]: updater(state[field]) }));
           },
 
-          updateReserve(reserveBase: string, reserveIncrement: string) {
-               patchState(store, {
-                    reserveBase,
-                    reserveIncrement,
-               });
+          resetAll() {
+               patchState(store, structuredClone(initialState));
+          },
+
+          // updateServerInfo(info: any) {
+          //      patchState(store, {
+          //           validatedLedger: info.validated_ledger.seq,
+          //      });
+          // },
+
+          // updateFee(fee: any) {
+          //      patchState(store, {
+          //           baseFee: fee.drops.base_fee,
+          //      });
+          // },
+
+          // updateReserve(reserveBase: string, reserveIncrement: string) {
+          //      patchState(store, {
+          //           reserveBase,
+          //           reserveIncrement,
+          //      });
+          // },
+
+          /** Snapshot */
+          getAll(): LedgerState {
+               const snapshot: any = {};
+               for (const [key, value] of Object.entries(store)) {
+                    if (typeof value === 'function') {
+                         try {
+                              snapshot[key] = value();
+                         } catch {
+                              // ignore non-signal functions (methods)
+                         }
+                    }
+               }
+               return snapshot as LedgerState;
           },
      }))
 );

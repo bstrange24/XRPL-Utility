@@ -454,9 +454,10 @@ export class SignTransactionUtilService {
      };
 
      private async applyTicket(tx: any, client: xrpl.Client, wallet: xrpl.Wallet): Promise<void> {
-          const isTicket = this.txUiService.isTicket();
+          const isTicket = false;
           if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);

@@ -11,6 +11,7 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { AppConstants } from '../../../core/app.constants';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
 interface XrpPaymentConfig {
      wallet: Wallet;
@@ -49,6 +50,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly credentialStore = inject(CredentialStore);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      async executeXrpPayment(config: XrpPaymentConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
           const { wallet, formValues, preFetchedEnv } = config;
@@ -160,9 +162,10 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
      }
 
      private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Payment, wallet: Wallet, accountInfo: any, formValues: any) {
-          const isTicket = this.txUiService.isTicket();
+          const isTicket = formValues.isTicket;
           if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);

@@ -39,12 +39,11 @@ export class AccountConfiguratorViewModelService {
           } else {
                if (entries.length > 0) messageParts.push('Multi-signing configured');
                if (hasRegularKey) messageParts.push(`Regular Key configured`);
-               messageParts.push('Master key enabled');
           }
 
           // === Deposit Auth ===
-          if (this.accountConfiguratorStoreService.get('depositAuthEnabled')) {
-               const preauthCount = this.accountConfiguratorStoreService.get('depositAuthAddresses').filter((a: { account: any }) => a.account).length;
+          if (this.accountConfiguratorStoreService.depositAuthEnabled()) {
+               const preauthCount = this.accountConfiguratorStoreService.depositAuthAddresses().filter((a: { account: any }) => a.account).length;
                if (preauthCount > 0) {
                     messageParts.push(`Deposit Authorization enabled (${preauthCount} preauthorized account${preauthCount > 1 ? 's' : ''})`);
                } else {
@@ -53,11 +52,11 @@ export class AccountConfiguratorViewModelService {
           }
 
           const accountSetFeatures: string[] = [];
-          if (this.accountConfiguratorStoreService.get('tickSize')) accountSetFeatures.push('Tick Size');
-          if (this.accountConfiguratorStoreService.get('transferRate')) accountSetFeatures.push('Transfer Rate');
-          if (this.accountConfiguratorStoreService.get('domain')) accountSetFeatures.push('Domain');
-          if (this.accountConfiguratorStoreService.get('isMessageKey')) accountSetFeatures.push('Message Key');
-          if (this.accountConfiguratorStoreService.get('isNFTokenMinterEnabled')) accountSetFeatures.push('NFT Minter');
+          if (this.accountConfiguratorStoreService.tickSize()) accountSetFeatures.push('Tick Size');
+          if (this.accountConfiguratorStoreService.transferRate()) accountSetFeatures.push('Transfer Rate');
+          if (this.accountConfiguratorStoreService.domain()) accountSetFeatures.push('Domain');
+          if (this.accountConfiguratorStoreService.isMessageKey()) accountSetFeatures.push('Message Key');
+          if (this.accountConfiguratorStoreService.isNFTokenMinterEnabled()) accountSetFeatures.push('NFT Minter');
           if (accountSetFeatures.length) {
                messageParts.push(`Account settings configured: ${accountSetFeatures.join(', ')}`);
           }
@@ -69,7 +68,8 @@ export class AccountConfiguratorViewModelService {
 
           const irreversibleMessage = irreversible.length ? `Irreversible flags enabled: ${irreversible.join(', ')}` : null;
           const totalItems = messageParts.length + irreversible.length;
-          const summaryMessage = totalItems === 0 ? 'wallet has no special account configuration. All flags are in default state.' : `wallet has special account configuration (${totalItems} item${totalItems > 1 ? 's' : ''}).`;
+          const pluralSuffix = totalItems > 1 ? 's' : '';
+          const summaryMessage = totalItems === 0 ? 'wallet has no special account configuration. All flags are in default state.' : `wallet has special account configuration (${totalItems} item${pluralSuffix}).`;
 
           return {
                walletName,

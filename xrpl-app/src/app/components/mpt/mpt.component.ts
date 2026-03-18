@@ -36,6 +36,7 @@ import { TrustlineCurrencyService } from '../../services/trustline-currency/trus
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-mpt',
@@ -71,6 +72,7 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
      public readonly mptOrchestratorServiceService = inject(MptOrchestratorServiceService);
      private readonly walletManager = inject(WalletManagerService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
@@ -724,9 +726,9 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
           const tokenCountField = this.txUiService.tokenCountField();
           const assetScaleField = this.txUiService.assetScaleField();
           const transferFeeField = this.txUiService.transferFeeField();
-          const isSimulate = this.txUiService.isSimulateEnabled();
-          const useMultiSign = this.txUiService.useMultiSign();
-          const isRegularKeyAddress = this.accountConfiguratorStoreService.get('isRegularKeyAddress');
+          const isSimulate = this.xrplTxOptionsStore.isSimulateEnabled();
+          const useMultiSign = this.xrplTxOptionsStore.useMultiSign();
+          const isRegularKeyAddress = this.accountConfiguratorStoreService.isRegularKeyAddress();
           // const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
           const regularKeyAddress = this.txUiService.regularKeyAddress();
           const regularKeySeed = this.txUiService.regularKeySeed();

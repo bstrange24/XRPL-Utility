@@ -1,104 +1,115 @@
-import { Injectable, signal, computed, WritableSignal } from '@angular/core';
-import { CredentialField } from '../../../components/credentials/constants/credential.types';
+import { computed } from '@angular/core';
+import { signalStore, withState, withMethods, withComputed, patchState } from '@ngrx/signals';
 
-@Injectable({ providedIn: 'root' })
-export class CredentialStore {
-     /** Initial state (single source of truth) */
-     private readonly initialState: Record<CredentialField, any> = {
-          credentialIDs: [],
-          credentialID: '',
-          credentialType: '',
-          subject: '',
-          credentialIssuer: '',
-          credentialIdSearchQuery: '',
-          credentialIdSearchTerm: '',
-          existingCredentials: [],
-          selectedCredentials: null,
-          subjectCredentials: [],
-          uri: '',
-          expirationDate: '',
-          credential: null,
-          domainId: '',
-          regularKeySigningEnabled: false,
-     };
-
-     /** Signal registry */
-     private readonly registry: Record<CredentialField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
-          (acc, key) => {
-               const field = key as CredentialField;
-               acc[field] = signal(structuredClone(this.initialState[field]));
-               return acc;
-          },
-          {} as Record<CredentialField, WritableSignal<any>>
-     );
-
-     /** Generic getter */
-     get<K extends CredentialField>(field: K): any {
-          return this.registry[field]();
-     }
-
-     /** Generic setter */
-     set<K extends CredentialField>(field: K, value: any) {
-          this.registry[field].set(value);
-     }
-
-     /** Get raw signal (for template binding) */
-     signal<K extends CredentialField>(field: K): WritableSignal<any> {
-          return this.registry[field];
-     }
-
-     /** Update existing value */
-     update<K extends CredentialField>(field: K, updater: (current: any) => any) {
-          const current = this.registry[field]();
-          this.registry[field].set(updater(current));
-     }
-
-     /** Reset entire store */
-     resetAll() {
-          for (const key of Object.keys(this.registry) as CredentialField[]) {
-               const value = this.initialState[key];
-               this.registry[key].set(Array.isArray(value) || typeof value === 'object' ? structuredClone(value) : value);
-          }
-     }
-
-     /** Computed expiration date */
-     credentialSubjectExpirationDate = computed(() => this.registry['expirationDate']());
-
-     setCredentialSubjectExpirationDate(value: string) {
-          this.set('expirationDate', value);
-     }
-
-     /** Return full state snapshot */
-     getAll(): Record<CredentialField, any> {
-          const values: Partial<Record<CredentialField, any>> = {};
-          for (const key of Object.keys(this.registry) as CredentialField[]) {
-               values[key] = this.registry[key]();
-          }
-          return values as Record<CredentialField, any>;
-     }
-
-     /** Clear expiration */
-     clearOptionalExpirationDate() {
-          this.set('expirationDate', '');
-     }
-
-     /** Reset dropdown-related fields */
-     resetCredentialIdDropDown() {
-          this.set('credentialID', '');
-          this.set('credentialType', '');
-          this.set('credentialIssuer', '');
-          this.set('selectedCredentials', null);
-     }
-
-     /** Reset form fields */
-     resetCredentailFields() {
-          this.resetCredentialIdDropDown();
-          this.clearOptionalExpirationDate();
-
-          this.set('credentialIDs', []);
-          this.set('subject', '');
-          this.set('credentialIdSearchQuery', '');
-          this.set('credentialIdSearchTerm', '');
-          this.set('uri', '');
-     }
+export interface CredentialState {
+     credentialIDs: string[];
+     credentialID: string;
+     credentialType: string;
+     subject: string;
+     credentialIssuer: string;
+     credentialIdSearchQuery: string;
+     credentialIdSearchTerm: string;
+     existingCredentials: any[];
+     selectedCredentials: any;
+     subjectCredentials: any[];
+     uri: string;
+     expirationDate: string;
+     credential: any;
+     domainId: string;
 }
+
+const initialState: CredentialState = {
+     credentialIDs: [],
+     credentialID: '',
+     credentialType: '',
+     subject: '',
+     credentialIssuer: '',
+     credentialIdSearchQuery: '',
+     credentialIdSearchTerm: '',
+     existingCredentials: [],
+     selectedCredentials: null,
+     subjectCredentials: [],
+     uri: '',
+     expirationDate: '',
+     credential: null,
+     domainId: '',
+};
+
+export const CredentialStore = signalStore(
+     { providedIn: 'root' },
+
+     withState(initialState),
+
+     withComputed(store => ({
+          credentialSubjectExpirationDate: computed(() => store.expirationDate()),
+     })),
+
+     withMethods(store => ({
+          /** Generic setter */
+          setField<K extends keyof CredentialState>(field: K, value: CredentialState[K]) {
+               patchState(store, { [field]: value });
+          },
+
+          setCredentialSubjectExpirationDate(value: string) {
+               patchState(store, { expirationDate: value });
+          },
+
+          /** Generic updater */
+          updateField<K extends keyof CredentialState>(field: K, updater: (current: CredentialState[K]) => CredentialState[K]) {
+               patchState(store, state => ({
+                    [field]: updater(state[field]),
+               }));
+          },
+
+          /** Reset entire store */
+          resetAll() {
+               patchState(store, structuredClone(initialState));
+          },
+
+          /** Clear expiration */
+          clearOptionalExpirationDate() {
+               patchState(store, { expirationDate: '' });
+          },
+
+          /** Reset dropdown-related fields */
+          resetCredentialIdDropDown() {
+               patchState(store, {
+                    credentialID: '',
+                    credentialType: '',
+                    credentialIssuer: '',
+                    selectedCredentials: null,
+               });
+          },
+
+          /** Reset credential form fields */
+          resetCredentailFields() {
+               patchState(store, {
+                    credentialID: '',
+                    credentialType: '',
+                    credentialIssuer: '',
+                    selectedCredentials: null,
+                    expirationDate: '',
+                    credentialIDs: [],
+                    subject: '',
+                    credentialIdSearchQuery: '',
+                    credentialIdSearchTerm: '',
+                    uri: '',
+               });
+          },
+
+          /** Snapshot */
+          getAll(): CredentialState {
+               const snapshot: any = {};
+               for (const [key, value] of Object.entries(store)) {
+                    if (typeof value === 'function') {
+                         try {
+                              snapshot[key] = value();
+                         } catch {
+                              // ignore non-signal functions (methods)
+                         }
+                    }
+               }
+               return snapshot as CredentialState;
+          },
+     }))
+);

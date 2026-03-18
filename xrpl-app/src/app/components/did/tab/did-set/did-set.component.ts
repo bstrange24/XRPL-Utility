@@ -24,7 +24,7 @@ export class DidSetComponent {
      clearFields = output<void>();
 
      // Convenience computed for template
-     hasNoExistingDid = computed(() => this.didStoreService.get('existingDid').length <= 0);
+     hasNoExistingDid = computed(() => this.didStoreService.existingDid().length <= 0);
 
      byteLengthDidDocument = computed(() => this.didViewModelService.didDocumentDataByteLength());
      byteLengthUriData = computed(() => this.didViewModelService.uriDataByteLength());

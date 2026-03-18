@@ -16,14 +16,13 @@ import { AccountConfiguratorStoreService } from '../../../services/account-confi
      styleUrl: './transaction-options.component.css',
 })
 export class TransactionOptionsComponent {
-     txUiService = inject(TransactionUiService);
-     utilsService = inject(UtilsService);
-     xrplTxOptionsStore = inject(XrplTxOptionsStore);
-     accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
-
+     public readonly txUiService = inject(TransactionUiService);
+     public readonly utilsService = inject(UtilsService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      Array = Array;
 
-     /* -------------------- SIGNAL INPUTS -------------------- */
+     // Signals
      activeTab = input<() => string>();
      showWhenTab = input<string | string[]>('*');
 
@@ -35,33 +34,9 @@ export class TransactionOptionsComponent {
      showRegularKey = input(true);
      showTicket = input(true);
      showSimulate = input(true);
-
      showEnableTrustline = input<boolean>(false);
 
-     /* -------------------- SIGNAL STATE -------------------- */
-     isMemoEnabled = this.txUiService.isMemoEnabled;
-     useMultiSign = this.txUiService.useMultiSign;
-     isSimulateEnabled = this.txUiService.isSimulateEnabled;
-     isTicket = this.txUiService.isTicket;
-
-     isShowEnableTrustline = this.txUiService.showEnableTrustline;
-
-     memoField = this.xrplTxOptionsStore.memos;
-
-     multiSignAddress = this.accountConfiguratorStoreService.signal('multiSignAddress');
-     multiSignSeeds = this.accountConfiguratorStoreService.signal('multiSignSeeds');
-     signerQuorum = this.accountConfiguratorStoreService.signal('signerQuorum');
-
-     isRegularKeyAddress = this.accountConfiguratorStoreService.signal('isRegularKeyAddress');
-     regularKeyAddress = this.accountConfiguratorStoreService.signal('regularKeyAddress');
-     regularKeySeed = this.accountConfiguratorStoreService.signal('regularKeySeed');
-
-     selectedSingleTicket = this.txUiService.selectedSingleTicket;
-     selectedTickets = this.txUiService.selectedTickets;
-     multiSelectMode = this.txUiService.multiSelectMode;
-     ticketArray = this.txUiService.ticketArray;
-
-     /* -------------------- COMPUTED -------------------- */
+     // Computed
      showPanel = computed(() => {
           const tab = this.activeTab()?.() ?? '';
           const allowed = this.showWhenTab();
@@ -76,7 +51,7 @@ export class TransactionOptionsComponent {
      });
 
      ticketItems = computed(() => {
-          return this.ticketArray().map(ticket => ({
+          return this.xrplTxOptionsStore.ticketArray().map((ticket: any) => ({
                id: ticket,
                display: `Ticket #${ticket}`,
                secondary: `Sequence: ${ticket}`,
@@ -87,22 +62,23 @@ export class TransactionOptionsComponent {
      });
 
      selectedTicketItem = computed(() => {
-          const selected = this.selectedSingleTicket();
+          const selected = this.xrplTxOptionsStore.selectedSingleTicket();
           if (!selected) return null;
-          return this.ticketItems().find(i => i.id === selected) || null;
+          return this.ticketItems().find((i: { id: string }) => i.id === selected) || null;
      });
 
-     /* -------------------- ACTIONS -------------------- */
+     // Actions
      toggleSimulate(value: boolean) {
-          this.txUiService.toggleSimulate(value);
+          this.xrplTxOptionsStore.setField('isSimulateEnabled', value);
+          this.txUiService.toggleSimulate();
      }
 
      toggleShowEnableTrustline(value: boolean) {
-          this.txUiService.toggleShowEnableTrustline(value);
+          this.xrplTxOptionsStore.setField('showEnableTrustline', value);
      }
 
      onMemoToggled(enabled: boolean) {
-          this.isMemoEnabled.set(enabled);
+          this.xrplTxOptionsStore.setField('isMemoEnabled', enabled);
 
           if (!enabled) {
                this.xrplTxOptionsStore.addMemo('');
@@ -114,37 +90,45 @@ export class TransactionOptionsComponent {
                .split(',')
                .map(v => v.trim())
                .filter(Boolean);
-
           this.xrplTxOptionsStore.updateMemos(cleaned);
      }
 
      onMultiSignToggled(enabled: boolean) {
-          this.useMultiSign.set(enabled);
+          this.xrplTxOptionsStore.setField('useMultiSign', enabled);
+
+          if (this.xrplTxOptionsStore.isRegularKeyAddress()) {
+               this.xrplTxOptionsStore.setField('isRegularKeyAddress', false);
+          }
 
           if (!enabled) return;
 
-          this.utilsService.toggleMultiSign(this.useMultiSign(), this.accountConfiguratorStoreService.get('signers'), this.txUiService.currentWallet()?.classicAddress || '');
+          const store = this.accountConfiguratorStoreService;
+          this.utilsService.toggleMultiSign(this.xrplTxOptionsStore.useMultiSign(), this.accountConfiguratorStoreService.signers(), this.txUiService.currentWallet()?.classicAddress || '');
 
-          this.accountConfiguratorStoreService.set(
+          store.setField(
                'multiSignAddress',
                this.accountConfiguratorStoreService
-                    .get('signers')
+                    .signers()
                     .map((s: { Account: any }) => s.Account)
                     .join(',\n')
           );
 
-          this.accountConfiguratorStoreService.set(
+          store.setField(
                'multiSignSeeds',
                this.accountConfiguratorStoreService
-                    .get('signers')
+                    .signers()
                     .map((s: { seed: any }) => s.seed)
                     .join(',\n')
           );
 
-          this.accountConfiguratorStoreService.set('signerQuorum', this.accountConfiguratorStoreService.get('signerQuorum'));
+          store.setField('signerQuorum', this.accountConfiguratorStoreService.signerQuorum());
      }
 
      onRegularKeyToggled(enabled: boolean) {
-          this.isRegularKeyAddress.set(enabled);
+          if (this.xrplTxOptionsStore.useMultiSign()) {
+               this.xrplTxOptionsStore.setField('useMultiSign', false);
+          }
+
+          this.xrplTxOptionsStore.setField('isRegularKeyAddress', enabled);
      }
 }

@@ -1,6 +1,5 @@
 import * as xrpl from 'xrpl';
 import { Wallet } from '../../../services/wallets/manager/wallet-manager.service';
-import { UiSignerEntry } from '../../../models/interface-items.model';
 
 /**
  * Single source of truth for all account configuration actions
@@ -94,117 +93,56 @@ export interface AccountConfig {
      extra?: Record<string, unknown>;
 }
 
-export type AccountConfiguratorField =
-     | 'accountInfo'
-     | 'operations'
-     | 'amountField'
-     | 'setFlags'
-     | 'clearFlags'
-     | 'nfTokenMinterAddress'
-     | 'tickSize'
-     | 'transferRate'
-     | 'publicKey'
-     | 'domain'
-     | 'isMessageKey'
-     | 'enableNftMinter'
-     | 'multiSignAddress'
-     | 'multiSignSeeds'
-     | 'signerQuorum'
-     | 'SignerWeight'
-     | 'regularKeyAddress'
-     | 'regularKeySeed'
-     | 'suppressIndividualFeedback'
-     | 'isRegularKeyAddress'
-     | 'regularKeySigningEnabled'
-     | 'multiSigningEnabled'
-     | 'signers'
-     | 'depositAuthAddresses'
-     | 'walletTicketCount'
-     | 'isSimulateEnabled'
-     | 'masterKeyDisabled'
-     | 'depositAuthEnabled'
-     | 'isdepositAuthAddress'
-     | 'isNFTokenMinterEnabled'
-     | 'isUpdateMetaData'
-     | 'isHolderConfiguration'
-     | 'isExchangerConfiguration'
-     | 'isIssuerConfiguration'
-     | 'isAuthorizedNFTokenMinter'
-     | 'depositAuthAddress'
-     | 'url'
-     | 'isMemoEnabled'
-     | 'authorizeFlag'
-     | 'enableMultiSignFlag'
-     | 'enableRegularKeyFlag'
-     | 'memoField'
-     | 'useMultiSign'
-     | 'configurationType'
-     | 'hasSignerList'
-     | 'depsositAuthEntries'
-     | 'formattedDepsositAuthEntries'
-     | 'signerEntries'
-     | 'formattedSignerEntries';
-
 export interface AccountConfiguratorState {
      accountInfo: any;
      configurationType: 'holder' | 'exchanger' | 'issuer' | null;
-
-     authorizeFlag: any;
+     authorizeFlag: string;
      memoField: string;
      isMemoEnabled: boolean;
-
      isSimulateEnabled: boolean;
      useMultiSign: boolean;
-
      multiSignAddress: string;
      multiSignSeeds: string;
      multiSigningEnabled: boolean;
+     enableMultiSignFlag: string;
+     enableRegularKeyFlag: string;
      hasSignerList: boolean;
-
+     operations: string;
      amountField: string;
      nfTokenMinterAddress: string;
-
      enableNftMinter: string;
-
      tickSize: string;
      transferRate: string;
-
      domain: string;
      isMessageKey: boolean;
      publicKey: string;
-
      regularKeyAddress: string;
      regularKeySeed: string;
      isRegularKeyAddress: boolean;
      regularKeySigningEnabled: boolean;
-
-     signerEntries: any;
-     formattedSignerEntries: any;
+     signerEntries: string; // was any → refine if possible (e.g. string | object)
+     formattedSignerEntries: string; // same
      signerQuorum: number;
      SignerWeight: number;
-
-     signers: UiSignerEntry[];
-     depositAuthAddresses: UiSignerEntry[];
-
+     signers: any;
+     depositAuthAddresses: any;
      masterKeyDisabled: boolean;
      depositAuthEnabled: boolean;
-
      isdepositAuthAddress: boolean;
      depositAuthAddress: string;
-
+     depsositAuthEntries: string; // typo? consider renaming
+     formattedDepsositAuthEntries: string;
      isNFTokenMinterEnabled: boolean;
      isAuthorizedNFTokenMinter: boolean;
-
      isUpdateMetaData: boolean;
      isHolderConfiguration: boolean;
      isExchangerConfiguration: boolean;
      isIssuerConfiguration: boolean;
-
      setFlags: number[];
      clearFlags: number[];
-
      walletTicketCount: number;
      url: string;
-
      suppressIndividualFeedback: string;
 }
+
+export type AccountConfiguratorField = keyof AccountConfiguratorState;

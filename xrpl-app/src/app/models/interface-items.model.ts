@@ -49,10 +49,10 @@ export interface DidData {
      destinationAddress: string;
 }
 
-export type CheckTxType = 'create' | 'cash' | 'cancel';
+export type CheckTxType = 'createCheck' | 'cashCheck' | 'cancelCheck';
 
 export type CreateCheckItem = {
-     tab: 'create';
+     tab: 'createCheck';
      id: string;
      index: string;
      amount: string;
@@ -64,7 +64,7 @@ export type CreateCheckItem = {
 };
 
 export type CashCheckItem = {
-     tab: 'cash';
+     tab: 'cashCheck';
      id: string;
      index: string;
      amount: string;
@@ -74,7 +74,7 @@ export type CashCheckItem = {
 };
 
 export type CancelCheckItem = {
-     tab: 'cancel';
+     tab: 'cancelCheck';
      id: string;
      index: string;
      amount: string;

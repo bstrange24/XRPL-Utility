@@ -1,4 +1,4 @@
-import { signal, computed, effect } from '@angular/core';
+import { signal, computed, effect, inject } from '@angular/core';
 import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
 import { TransactionDropdownService } from '../transaction-dropdown/transaction-dropdown.service';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
@@ -11,8 +11,12 @@ import { AppConstants } from '../../core/app.constants';
 import { AcccountDataService } from '../account-data/acccount-data.service';
 import * as xrpl from 'xrpl';
 import { ActivatedRoute } from '@angular/router';
+import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
+import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 
 export abstract class WalletDestinationBase extends PerformanceBaseComponent {
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      // Signals
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
@@ -98,7 +102,7 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
           }
 
           // Only refresh account info and balances if we are not in simulate mode, delete account or account config.
-          if (!this.txUiService.isSimulateEnabled() && !this.isAccountDelete() && !this.isAccountConfig()) {
+          if (!this.xrplTxOptionsStore.isSimulateEnabled() && !this.isAccountDelete() && !this.isAccountConfig()) {
                await this.refreshAfterTx(client, wallet, destination, issuer);
                this.clearInputFields();
           }

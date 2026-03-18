@@ -277,9 +277,10 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
      }
 
      private async applyOptionalFields(client: xrpl.Client, tx: any, wallet: Wallet) {
-          const isTicket = this.txUiService.isTicket();
+          const isTicket = false;
           if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);

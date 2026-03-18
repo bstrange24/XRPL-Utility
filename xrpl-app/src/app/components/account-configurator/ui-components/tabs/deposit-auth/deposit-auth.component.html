@@ -7,7 +7,7 @@
 
      <!-- Deposit Auth list -->
      <div class="signers-list">
-          @for (depositAuthAddress of accountConfiguratorStoreService.get('depositAuthAddresses'); track i + ':' + (depositAuthAddress.account ?? i); let i = $index) {
+          @for (depositAuthAddress of accountConfiguratorStoreService.depositAuthAddresses(); track i + ':' + (depositAuthAddress.account ?? i); let i = $index) {
           <fieldset class="signer-fieldset-dep-auth">
                <legend class="signer-legend">Deposit Auth Address {{ i + 1 }}</legend>
 
@@ -19,7 +19,7 @@
                     </div>
 
                     <div class="form-group remove-group-dep-auth">
-                         @if (accountConfiguratorStoreService.get('depositAuthAddresses').length > 1) {
+                         @if (accountConfiguratorStoreService.depositAuthAddresses().length > 1) {
                          <button type="button" name="depositAuthFieldButton" (click)="accountConfiguratorUtilService.removeDepositAuthAddresses(i)" class="btn-danger btn-sm" title="Remove this deposit auth address">
                               <lucide-icon name="trash-2" size="16"></lucide-icon>
                          </button>

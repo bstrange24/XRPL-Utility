@@ -15,6 +15,7 @@ import { PermissionDomainConfig, PermissionDomainTxType } from '../../../compone
 import { AppConstants } from '../../../core/app.constants';
 import { ToastService } from '../../toast/toast.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
+import { PermissionedDomainStoreService } from '../permissioned-domain-store/permissioned-domain-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -27,6 +28,7 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly permissionedDomainUtilService = inject(PermissionedDomainUtilService);
+     public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      public readonly credentialStore = inject(CredentialStore);
      public readonly toastService = inject(ToastService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
@@ -129,9 +131,9 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
           };
 
           switch (type) {
-               case 'setDomain':
+               case 'setPermissionedDomain':
                     return { ...base, permissionedDomainSet: { credentialType: values.credentialType, subject: values.credentialIssuer } };
-               case 'deleteDomain':
+               case 'deletePermissionedDomain':
                     return { ...base, permissonedDomainDelete: { domainId: values.domainId } };
           }
      }
@@ -140,12 +142,12 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
           const { fee } = env;
 
           switch (type) {
-               case 'setDomain': {
+               case 'setPermissionedDomain': {
                     const txCreate = this.xrplTransactionService.buildPermissionedDomainSetTransaction(wallet, values.credentialIssuer, values.credentialType, fee, env.ledgerInfo.lastIndex);
                     return txCreate;
                }
 
-               case 'deleteDomain': {
+               case 'deletePermissionedDomain': {
                     const txDelete = this.xrplTransactionService.buildPermissionedDomainDeleteTransaction(wallet, values.domainId, fee, env.ledgerInfo.lastIndex);
                     return txDelete;
                }
@@ -153,9 +155,10 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
      }
 
      private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: PermissionDomainTxType, values: any, env: any) {
-          const isTicket = this.txUiService.isTicket();
+          const isTicket = values.isTicket;
           if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);
@@ -167,7 +170,7 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
           if (this.txUiService.isMemoEnabled() && memo) this.utilsService.setMemoField(tx, memo);
 
           if (this.txUiService.wantsOptions()) {
-               const domainId = this.xrplTxOptionsStore.domainId();
+               const domainId = this.permissionedDomainStoreService.domainId();
                const domainID = this.utilsService.toDomainId(domainId);
                if (domainId) this.utilsService.setDomainId(tx, domainID);
           }
@@ -184,15 +187,15 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
           };
 
           switch (type) {
-               case 'setDomain':
+               case 'setPermissionedDomain':
                     return this.executor.permissionedDomainSet?.(tx as xrpl.PermissionedDomainSet, wallet, client, opts);
-               case 'deleteDomain':
+               case 'deletePermissionedDomain':
                     return this.executor.permissionedDomainDelete?.(tx as xrpl.PermissionedDomainDelete, wallet, client, opts);
           }
      }
 
      buildSuccessMessage(type: PermissionDomainTxType): string {
-          if (type === 'setDomain') {
+          if (type === 'setPermissionedDomain') {
                return `Successfully Set Permission Domain`;
           }
           return `Successfully Deleted Permission Domain`;
@@ -201,7 +204,7 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
      handleSimulationSuccess(type: PermissionDomainTxType, hash?: any) {
           let msg: string;
 
-          if (type === 'setDomain') {
+          if (type === 'setPermissionedDomain') {
                msg = `Successfully simulated Setting Permission Domain`;
           } else {
                msg = `Successfully simulated Deleting Permission Domain`;

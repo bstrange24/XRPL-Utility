@@ -43,8 +43,8 @@ export class CredentialsSummaryComponent {
           const walletAddress = this.wallet()?.address;
           if (!walletAddress) return false;
 
-          if (this.tab() === 'create') return false;
-          if (this.tab() === 'verify') return cred.Issuer === walletAddress;
+          if (this.tab() === 'createCredential') return false;
+          if (this.tab() === 'verifyCredential') return cred.Issuer === walletAddress;
           return true;
      }
 }

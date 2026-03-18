@@ -1,72 +1,64 @@
-import { Injectable, signal, WritableSignal } from '@angular/core';
-import { DidField } from '../../../components/did/constants/did.types';
+import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
 
-@Injectable({
-     providedIn: 'root',
-})
-export class DidStoreService {
-     /** Initial state (single source of truth) */
-     private readonly initialState: Record<DidField, any> = {
-          didData: '',
-          uriData: '',
-          didDocumentData: '',
-          createdDids: false,
-          existingDid: [],
-          regularKeySigningEnabled: false,
-     };
-
-     /** Signal registry */
-     private readonly registry: Record<DidField, WritableSignal<any>> = Object.keys(this.initialState).reduce(
-          (acc, key) => {
-               const field = key as DidField;
-               acc[field] = signal(structuredClone(this.initialState[field]));
-               return acc;
-          },
-          {} as Record<DidField, WritableSignal<any>>
-     );
-
-     /** Generic getter */
-     get<K extends DidField>(field: K): any {
-          return this.registry[field]();
-     }
-
-     /** Generic setter */
-     set<K extends DidField>(field: K, value: any) {
-          this.registry[field].set(value);
-     }
-
-     /** Get raw signal (for template binding) */
-     signal<K extends DidField>(field: K): WritableSignal<any> {
-          return this.registry[field];
-     }
-
-     /** Update existing value */
-     update<K extends DidField>(field: K, updater: (current: any) => any) {
-          const current = this.registry[field]();
-          this.registry[field].set(updater(current));
-     }
-
-     /** Reset entire store */
-     resetAll() {
-          for (const key of Object.keys(this.registry) as DidField[]) {
-               const value = this.initialState[key];
-               this.registry[key].set(Array.isArray(value) || typeof value === 'object' ? structuredClone(value) : value);
-          }
-     }
-
-     /** Return full state snapshot */
-     getAll(): Record<DidField, any> {
-          const values: Partial<Record<DidField, any>> = {};
-          for (const key of Object.keys(this.registry) as DidField[]) {
-               values[key] = this.registry[key]();
-          }
-          return values as Record<DidField, any>;
-     }
-
-     /** Reset form fields */
-     clearDidFields() {
-          this.set('didData', '');
-          this.set('uriData', '');
-          this.set('didDocumentData', '');
-     }
+export interface DidState {
+     didData: string;
+     uriData: string;
+     didDocumentData: string;
+     createdDids: boolean;
+     existingDid: any[];
+     regularKeySigningEnabled: boolean;
 }
+
+const initialState: DidState = {
+     didData: '',
+     uriData: '',
+     didDocumentData: '',
+     createdDids: false,
+     existingDid: [],
+     regularKeySigningEnabled: false,
+};
+
+export const DidStoreService = signalStore(
+     { providedIn: 'root' },
+
+     withState(initialState),
+
+     withMethods(store => ({
+          setField<K extends keyof DidState>(field: K, value: DidState[K]) {
+               patchState(store, { [field]: value });
+          },
+
+          updateField<K extends keyof DidState>(field: K, updater: (current: DidState[K]) => DidState[K]) {
+               patchState(store, state => ({
+                    [field]: updater(state[field]),
+               }));
+          },
+
+          resetAll() {
+               patchState(store, structuredClone(initialState));
+          },
+
+          clearDidFields() {
+               patchState(store, {
+                    didData: '',
+                    uriData: '',
+                    didDocumentData: '',
+               });
+          },
+
+          /** Snapshot */
+          getAll(): DidState {
+               const snapshot: any = {};
+               for (const [key, value] of Object.entries(store)) {
+                    if (typeof value === 'function') {
+                         try {
+                              snapshot[key] = value();
+                         } catch {
+                              // ignore non-signal functions (methods)
+                         }
+                    }
+               }
+               return snapshot as DidState;
+          },
+     }))
+);

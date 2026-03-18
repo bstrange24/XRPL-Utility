@@ -67,11 +67,11 @@ export const PERMISSION_DOMAIN_ACTION_CONFIG: Record<
           buttonClass: string;
      }
 > = {
-     setDomain: {
+     setPermissionedDomain: {
           buttonLabel: 'Set Domain',
           buttonClass: 'btn-primary',
      },
-     deleteDomain: {
+     deletePermissionedDomain: {
           buttonLabel: 'Delete Domain',
           buttonClass: 'btn-danger',
      },

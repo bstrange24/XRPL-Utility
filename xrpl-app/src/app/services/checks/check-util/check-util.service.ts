@@ -14,8 +14,9 @@ import { AppConstants } from '../../../core/app.constants';
 import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { XrplDateService } from '../../../core/xrpl-date.service';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
-type CheckConfigTxDisplayType = 'create' | 'cash' | 'cancel';
+type CheckConfigTxDisplayType = 'createCheck' | 'cashCheck' | 'cancelCheck';
 type IconType = 'ng-icon' | 'lucide-icon';
 
 @Injectable({
@@ -32,6 +33,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactions = inject(XrplTransactionService);
      public readonly xrplDateService = inject(XrplDateService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      readonly tabs: {
           key: CheckConfigTxDisplayType;
@@ -42,7 +44,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
           iconSize: string;
      }[] = [
           {
-               key: 'create',
+               key: 'createCheck',
                label: 'Create',
                icon: 'heroPlusCircle',
                iconType: 'ng-icon',
@@ -50,7 +52,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
                iconSize: AppConstants.TAB_ICON_SIZE,
           },
           {
-               key: 'cash',
+               key: 'cashCheck',
                label: 'Cash',
                icon: 'heroCurrencyDollar',
                iconType: 'ng-icon',
@@ -58,7 +60,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
                iconSize: AppConstants.TAB_ICON_SIZE,
           },
           {
-               key: 'cancel',
+               key: 'cancelCheck',
                label: 'Cancel',
                icon: 'heroTrash',
                iconType: 'ng-icon',
@@ -68,7 +70,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
      ];
 
      readonly tabMeta = {
-          create: {
+          createCheck: {
                icon: 'heroPlusCircle',
                colorClass: 'blue-button-submenu',
                title: 'Create Check',
@@ -76,7 +78,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
                color: '',
                iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
           },
-          cash: {
+          cashCheck: {
                icon: 'heroArrowPath',
                colorClass: 'green-button-submenu',
                title: 'Cash Check',
@@ -84,7 +86,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
                color: '',
                iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
           },
-          cancel: {
+          cancelCheck: {
                icon: 'shield-ellipsis',
                colorClass: 'red-button-submenu',
                title: 'Cancel Check',
@@ -228,16 +230,16 @@ export class CheckUtilService extends PerformanceBaseComponent {
           return items.find((item: { id: string }) => item.id === id) ?? null;
      }
 
-     mapCheckItems(checks: Signal<any[]>, mode: Signal<'cash' | 'cancel' | 'create'>, formatAmount: (amount: any) => string): Signal<SelectItem[]> {
+     mapCheckItems(checks: Signal<any[]>, mode: Signal<'cashCheck' | 'cancelCheck' | 'createCheck'>, formatAmount: (amount: any) => string): Signal<SelectItem[]> {
           return computed(() => {
                const list = checks();
                const currentMode = mode();
 
                return list.map(check => {
-                    const addr = currentMode === 'cash' ? check.sender : check.destination;
+                    const addr = currentMode === 'cashCheck' ? check.sender : check.destination;
                     const short = addr ? `${addr.slice(0, 8)}...${addr.slice(-6)}` : 'Unknown';
                     const amount = formatAmount(check.sendMax);
-                    const arrow = currentMode === 'cash' ? '←' : '→';
+                    const arrow = currentMode === 'cashCheck' ? '←' : '→';
 
                     return {
                          id: check.id,
@@ -282,7 +284,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
                this.txUiService.currencyCode.set(parts[1] || '');
                this.txUiService.currencyIssuer.set(item.issuer || '');
                if (parts[1] === AppConstants.XRP_CURRENCY) {
-                    this.txUiService.showEnableTrustline.set(false);
+                    this.xrplTxOptionsStore.setField('showEnableTrustline', false);
                }
           }
      }
@@ -315,9 +317,9 @@ export class CheckUtilService extends PerformanceBaseComponent {
      handleSimulationSuccess(type: CheckTxType, formValues: any, hash?: string) {
           let msg: string;
 
-          if (type === 'create') {
+          if (type === 'createCheck') {
                msg = `Simulated Sending Check of ${formValues.amountField} ${formValues.currency || 'XRP'}`;
-          } else if (type === 'cash') {
+          } else if (type === 'cashCheck') {
                msg = `Simulated Cashing Check of ${formValues.amountField} ${formValues.currencyCode || 'XRP'}`;
           } else {
                msg = `Simulated Cancelling Check ${formValues.checkIdField}`;
@@ -330,10 +332,10 @@ export class CheckUtilService extends PerformanceBaseComponent {
      }
 
      buildSuccessMessage(type: CheckTxType, formValues: any): string {
-          if (type === 'create') {
+          if (type === 'createCheck') {
                return `Successfully Sent Check of ${formValues.amountField} ${formValues.currency || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
           }
-          if (type === 'cash') {
+          if (type === 'cashCheck') {
                return `Successfully Cashed Check of ${formValues.amountField} ${formValues.currencyCode || 'XRP'}`;
           }
           return `Successfully Cancelled Check ${formValues.checkIdField}`;

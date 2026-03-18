@@ -39,6 +39,7 @@ import { CheckCashItemComponent } from './ui-components/check-cash-item/check-ca
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { XrplDateService } from '../../core/xrpl-date.service';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-checks',
@@ -74,6 +75,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      private readonly walletManager = inject(WalletManagerService);
      public readonly route = inject(ActivatedRoute);
      public readonly xrplDateService = inject(XrplDateService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -82,7 +84,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      wallets = signal<Wallet[]>([]);
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal<boolean>(false);
-     activeTab = signal<'create' | 'cash' | 'cancel'>('create');
+     activeTab = signal<'createCheck' | 'cashCheck' | 'cancelCheck'>('createCheck');
 
      currencyItems = this.trustlineCurrencyService.currencyItems;
      issuerItems = this.trustlineCurrencyService.issuerItems;
@@ -153,7 +155,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      checkItems = computed(() => {
           const mode = this.activeTab();
-          const checks = mode === 'cash' ? this.cashableChecks : this.cancellableChecks;
+          const checks = mode === 'cashCheck' ? this.cashableChecks : this.cancellableChecks;
           const modeSignal = this.activeTab;
           return this.checkUtilService.mapCheckItems(checks, modeSignal, amt => this.utilsService.formatIOUXrpAmountOutstanding(amt))();
      });
@@ -198,9 +200,9 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      readonly checkCount = computed(() => {
           const tab = this.activeTab();
-          if (tab === 'create') return this.existingChecks().length;
-          if (tab === 'cash') return this.cashableChecks().length;
-          if (tab === 'cancel') return this.cancellableChecks().length;
+          if (tab === 'createCheck') return this.existingChecks().length;
+          if (tab === 'cashCheck') return this.cashableChecks().length;
+          if (tab === 'cancelCheck') return this.cancellableChecks().length;
           return 0;
      });
 
@@ -210,10 +212,10 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
           if (!address) return [];
 
-          if (tab === 'create') {
+          if (tab === 'createCheck') {
                // Outgoing checks created by you
                return this.existingChecks().map(c => ({
-                    tab: 'create',
+                    tab: 'createCheck',
                     id: c.id,
                     index: c.id,
                     amount: this.utilsService.formatIOUXrpAmountOutstanding(c.sendMax),
@@ -225,10 +227,10 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                }));
           }
 
-          if (tab === 'cash') {
+          if (tab === 'cashCheck') {
                // Incoming escrows you can cash
                return this.cashableChecks().map(c => ({
-                    tab: 'cash',
+                    tab: 'cashCheck',
                     id: c.id,
                     index: c.id,
                     amount: c.amount,
@@ -238,9 +240,9 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                }));
           }
 
-          if (tab === 'cancel') {
+          if (tab === 'cancelCheck') {
                return this.cancellableChecks().map(c => ({
-                    tab: 'cancel',
+                    tab: 'cancelCheck',
                     id: c.id,
                     index: c.id,
                     amount: c.amount,
@@ -255,7 +257,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      readonly explorerLinks = computed(() => {
           const tab = this.activeTab();
-          if (tab !== 'create') return null;
+          if (tab !== 'createCheck') return null;
 
           const wallet = this.currentWalletData();
           if (!wallet) return null;
@@ -304,7 +306,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      ngOnInit(): void {
           const tab = this.route.snapshot.queryParamMap.get('tab');
           if (tab) {
-               const allowedTabs = ['create', 'cash', 'cancel'] as const;
+               const allowedTabs = ['createCheck', 'cashCheck', 'cancelCheck'] as const;
                type TabType = (typeof allowedTabs)[number];
                if (tab && allowedTabs.includes(tab as TabType)) {
                     // Type assertion is safe because we checked includes
@@ -346,7 +348,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.currentWallet.set(wallet);
           this.trustlineCurrencyService.currentWalletAddress.set(wallet.address);
           this.txUiService.currentWallet.set(wallet);
-          this.txUiService.showEnableTrustline.set(false);
+          this.xrplTxOptionsStore.setField('showEnableTrustline', false);
 
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
@@ -404,13 +406,13 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           else return check?.Account || null;
      }
 
-     async setTab(tab: 'create' | 'cash' | 'cancel'): Promise<void> {
+     async setTab(tab: 'createCheck' | 'cashCheck' | 'cancelCheck'): Promise<void> {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
           this.checkIdSearchQuery.set('');
           this.clearInputFields();
 
-          if (tab === 'create') this.trustlineCurrencyService.resetToDefault();
+          if (tab === 'createCheck') this.trustlineCurrencyService.resetToDefault();
 
           if (this.hasWallets()) {
                await this.getChecks(false);
@@ -485,7 +487,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          return;
                     }
 
-                    const result = await this.checkTransactionOrchestrator.executeCheckTx('create', {
+                    const result = await this.checkTransactionOrchestrator.executeCheckTx('createCheck', {
                          wallet: this.currentWallet(),
                          formValues: {
                               ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.createCheckSpecificKeys)),
@@ -569,7 +571,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                     }
 
                     let trustlinesToCheck: any = env.trustlines;
-                    if (this.txUiService.showEnableTrustline()) {
+                    if (this.xrplTxOptionsStore.showEnableTrustline()) {
                          const currencyCode = this.txUiService.missingTrustlineInfo.currencyCode();
                          const currencyIssuer = this.txUiService.missingTrustlineInfo.issuer();
                          if (!currencyCode || !currencyIssuer) return;
@@ -615,11 +617,10 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          console.log('hasTrustline for', currencyCode, issuer, ':', hasTrustline);
 
                          if (hasTrustline) {
-                              this.txUiService.showEnableTrustline.set(false);
+                              this.xrplTxOptionsStore.setField('showEnableTrustline', false);
                          } else {
                               // Fix: show the slider / section when MISSING
-                              this.txUiService.showEnableTrustline.set(true);
-
+                              this.xrplTxOptionsStore.setField('showEnableTrustline', true);
                               this.txUiService.missingTrustlineInfo.currencyCode.set(currencyCode);
                               this.txUiService.missingTrustlineInfo.issuer.set(issuer);
                               this.txUiService.trustlineLimitField.set(10000000);
@@ -630,7 +631,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          }
                     }
 
-                    const result = await this.checkTransactionOrchestrator.executeCheckTx('cash', {
+                    const result = await this.checkTransactionOrchestrator.executeCheckTx('cashCheck', {
                          wallet: this.currentWallet(),
                          formValues: {
                               ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.cashCheckSpecificKeys)),
@@ -678,7 +679,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          includeChecks: true,
                     });
 
-                    const result = await this.checkTransactionOrchestrator.executeCheckTx('cancel', {
+                    const result = await this.checkTransactionOrchestrator.executeCheckTx('cancelCheck', {
                          wallet: this.currentWallet(),
                          formValues: {
                               ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.cancelCheckSpecificKeys)),
@@ -807,7 +808,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      }
 
      clearInputFields(): void {
-          if (this.txUiService.isSimulateEnabled()) return;
+          if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
 
           this.checkIdSearchQuery.set('');
           this.txUiService.clearAllFields();

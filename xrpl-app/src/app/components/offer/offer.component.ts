@@ -36,6 +36,7 @@ import { TrustlineCurrencyService } from '../../services/trustline-currency/trus
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 interface XRPLCurrency {
      currency: string;
@@ -162,6 +163,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly offerCurrency = inject(OfferCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly route = inject(ActivatedRoute);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      private cdr: ChangeDetectorRef;
@@ -1164,8 +1166,8 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                     await this.setTxOptionalFields(client, offerCreateTx, wallet, accountInfo, 'createOffer');
 
                     const result = await this.txExecutor.createOffer(offerCreateTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                          // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
@@ -1210,7 +1212,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                     let offersSuccessfullyDeleted = 0;
                     // === SHOW ONE SPINNER FOR THE ENTIRE BATCH ===
                     const total = this.offerSequenceField().length;
-                    const isSimulate = this.txUiService.isSimulateEnabled();
+                    const isSimulate = this.xrplTxOptionsStore.isSimulateEnabled();
                     this.txUiService.showSpinnerWithDelay(isSimulate ? `Simulating deletion of ${total} offers(s)...` : `Deleting ${total} offers(s)...`, 200);
 
                     const invalidTickets: string[] = [];
@@ -1237,8 +1239,8 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                          await this.setTxOptionalFields(client, offerCancelTx, wallet, accountInfo, 'cancelOffer');
 
                          const result = await this.txExecutor.offerCancel(offerCancelTx, wallet, client, {
-                              useMultiSign: this.txUiService.useMultiSign(),
-                              isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                              useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                              isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                               // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                               regularKeyAddress: this.txUiService.regularKeyAddress(),
                               regularKeySeed: this.txUiService.regularKeySeed(),
@@ -1274,7 +1276,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
                          this.txUiService.clearWarning(); // nothing missing → hide the panel
                     }
 
-                    if (!this.txUiService.isSimulateEnabled()) {
+                    if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          await this.refreshAfterTx(client, wallet, null, true);
                     }
                     // this.clearAllSelections();
@@ -1937,8 +1939,9 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
      private async setTxOptionalFields(client: xrpl.Client, offerTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (txType === 'createOffer' || txType === 'cancelOffer') {
-               if (this.txUiService.isTicket()) {
-                    const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               if (this.xrplTxOptionsStore.isTicket()) {
+                    // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+                    const ticket = false;
                     if (ticket) {
                          const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                          if (!exists) throw new Error(`Ticket ${ticket} not found`);
@@ -2015,7 +2018,7 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
           // Update service state
-          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
+          // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
 
           const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
           const hasSignerList = signerAccounts?.length > 0;

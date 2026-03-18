@@ -94,6 +94,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     throw new Error('Required network data missing');
                }
 
+               // Validation
                const validationRule = ACCOUNT_CONFIG_VALIDATION_RULES[type];
                const validationInputs = this.buildValidationInputs(type, wallet, env, {
                     simulate,
@@ -230,13 +231,13 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                txHash = execResult.hash;
 
                if (simulate) {
-                    return this.handleSimulationSuccess(type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra }, txHash, extra);
+                    return this.handleSimulationSuccess(type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra }, txHash);
                }
 
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.buildSuccessMessage(type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra }, extra);
+               const message = this.buildSuccessMessage(type, { simulate, multiSign, amountField, nfTokenMinterAddress, setFlags, clearFlags, tickSize, transferRate, publicKey, domain, isMessageKey, enableNftMinter, authorizeFlag, depositAuthAddresses, signerQuorum, depsositAuthEntries, formattedDepsositAuthEntries, signerEntries, formattedSignerEntries, regularKeyAddress, enableRegularKeyFlag, enableMultiSignFlag, suppressIndividualFeedback, extra });
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
@@ -289,9 +290,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
 
           let env: any;
           let client: xrpl.Client;
-          let fee: string;
-          let txHash: string | undefined;
-          let currentLedger: number;
           const results: Array<{ flagName: string; hash?: string; success: boolean; error?: string }> = [];
 
           try {
@@ -537,8 +535,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
 
           let env: any;
           let client: xrpl.Client;
-          let fee: string;
-          let txHash: string | undefined;
           let currentLedger: number;
           let modifiedResults: { depostiAuthAddress: string; hash: string }[] = [];
           let successCount = 0;
@@ -831,9 +827,10 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
      }
 
      private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: AccountConfigAction, values: any, env: any) {
-          const isTicket = this.txUiService.isTicket();
+          const isTicket = values.isTicket;
           if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);
@@ -891,38 +888,25 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
           }
      }
 
-     buildSuccessMessage(type: AccountConfigAction, config: any, extra: any): string {
-          if (type === 'modifyMetaData') {
-               if (config.enableNftMinter === 'Y') {
-                    return `Successfully Set NFT Minter ${config.nfTokenMinterAddress ? config.nfTokenMinterAddress : ''}`;
-               } else {
-                    return `Successfully Remove NFT Minter`;
-               }
+     buildSuccessMessage(type: AccountConfigAction, config: any) {
+          switch (type) {
+               case 'modifyMetaData':
+                    if (config.enableNftMinter === 'Y') return `Successfully Set NFT Minter ${config.nfTokenMinterAddress ? config.nfTokenMinterAddress : ''}`;
+                    else return `Successfully Remove NFT Minter`;
+               case 'modifyRegularKey':
+                    if (config.enableRegularKeyFlag === 'Y') return `Successfully Set Regular Key ${config.regularKeyAddress}`;
+                    else return `Successfully Remove Regular Key ${config.regularKeyAddress ? config.regularKeyAddress : ''}`;
+               case 'modifyMultiSigners':
+                    if (config.enableMultiSignFlag === 'Y') return `Successfully Set Multi Sign`;
+                    else return `Successfully Removed Multi Sign`;
+               case 'updateMetaData':
+                    return `Successfully Updated Account Meta Data`;
+               default:
+                    return 'Operation completed';
           }
-          if (type === 'modifyRegularKey') {
-               if (config.enableRegularKeyFlag === 'Y') {
-                    return `Successfully Set Regular Key ${config.regularKeyAddress}`;
-               } else {
-                    return `Successfully Remove Regular Key ${config.regularKeyAddress ? config.regularKeyAddress : ''}`;
-               }
-          }
-
-          if (type === 'modifyMultiSigners') {
-               if (config.enableMultiSignFlag === 'Y') {
-                    return `Successfully Set Multi Sign`;
-               } else {
-                    return `Successfully Removed Multi Sign`;
-               }
-          }
-
-          if (type === 'updateMetaData') {
-               return `Successfully Updated Account Meta Data`;
-          }
-
-          return `Successfully Cancelled Time Based Escrow ${config.escrowSequenceNumberField}`;
      }
 
-     handleSimulationSuccess(type: AccountConfigAction, config: any, hash?: string, extra?: any) {
+     handleSimulationSuccess(type: AccountConfigAction, config: any, hash?: string) {
           let msg: string;
 
           if (type === 'modifyMetaData') {

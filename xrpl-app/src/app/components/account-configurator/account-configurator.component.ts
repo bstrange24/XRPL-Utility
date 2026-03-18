@@ -34,13 +34,14 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { AccountConfiguratorViewModelService } from '../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
-import { ACCOUNT_CONFIG_ACTIONS, AccountConfig, AccountConfigAction } from './constants/account-configurator.types';
+import { ACCOUNT_CONFIG_ACTIONS, AccountConfigAction } from './constants/account-configurator.types';
 import { AccountConfiguratorSummaryComponent } from './ui-components/summary/account-configurator-summary.component';
 import { DepositAuthComponent } from './ui-components/tabs/deposit-auth/deposit-auth.component';
 import { AccountFlagsComponent } from './ui-components/tabs/flags/account-flags.component';
 import { AccountMetadataComponent } from './ui-components/tabs/meta-data/account-metadata.component';
 import { MultiSignComponent } from './ui-components/tabs/multi-sgn/multi-sign.component';
 import { RegularKeyComponent } from './ui-components/tabs/regular-key/regular-key.component';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-account-configurator',
@@ -62,7 +63,6 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
      public readonly accountConfiguratorOrchestratorService = inject(AccountConfiguratorOrchestratorService);
      public readonly storageService = inject(StorageService);
      public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
-     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
@@ -101,7 +101,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           await this.measure('getAccountDetails', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
-               this.accountConfiguratorStoreService.set('configurationType', null);
+               this.accountConfiguratorStoreService.setField('configurationType', null);
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
 
@@ -110,7 +110,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                     if (!env) return;
 
                     const currentTab = this.accountConfiguratorViewModelService.activeTab();
-                    this.accountConfiguratorStoreService.set('accountInfo', env.accountInfo);
+                    this.accountConfiguratorStoreService.setField('accountInfo', env.accountInfo);
 
                     this.accountConfiguratorUtilService.setAccountFlags(currentTab, env);
 
@@ -150,11 +150,11 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
 
           const storeState = this.accountConfiguratorStoreService.getAll();
 
-          const config: AccountConfig = {
+          const config: any = {
                ...storeState,
                wallet: walletVm.wallet,
-               simulate: this.txUiService.isSimulateEnabled(),
-               multiSign: this.txUiService.useMultiSign(),
+               simulate: this.xrplTxOptionsStore.isSimulateEnabled(),
+               multiSign: this.xrplTxOptionsStore.useMultiSign(),
                preFetchedEnv: envRef,
                extra: {},
           };
@@ -171,7 +171,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                try {
                     txResult = await handler(config, enabled);
                } catch (error: any) {
-                    console.error(`[${currentTab}] execution failed:`, currentTab);
+                    console.error(`[${currentTab}] execution failed:`, error);
                     this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
                     return;
                }
@@ -182,7 +182,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           if (txResult) {
                this.isAccountConfig.set(true);
                const successFullTx = await this.handleTxResult(txResult, envRef.client, envRef.wallet, '', '', '');
-               if (successFullTx && !this.txUiService.isSimulateEnabled()) {
+               if (successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
                     envRef = await this.txEnvironmentService.getValidatedEnvironment(true);
                     this.accountConfiguratorUtilService.handlePostSuccess(currentTab, config, envRef);
                     this.refreshAccountObject(envRef);

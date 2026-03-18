@@ -44,10 +44,6 @@ export class PerformanceBaseComponent {
           const start = `${label}:start`;
           const end = `${label}:end`;
 
-          if (clearExecutionTime) {
-               this.executionTime.set(``);
-          }
-
           performance.mark(start);
 
           try {
@@ -60,7 +56,11 @@ export class PerformanceBaseComponent {
                     const entry = performance.getEntriesByName(label).at(-1);
                     if (entry) {
                          console.debug(`[PERF] ${label}: ${entry.duration.toFixed(2)}ms`);
-                         // this.executionTime.set(`Execution time: ${entry.duration.toFixed(0)} ms`);
+                         if (clearExecutionTime) {
+                              this.executionTime.set(``);
+                         } else {
+                              this.executionTime.set(`Execution time: ${entry.duration.toFixed(0)} ms`);
+                         }
                     }
                }
 

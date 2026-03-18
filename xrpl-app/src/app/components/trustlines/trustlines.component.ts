@@ -33,6 +33,7 @@ import { TrustlineOrchestratorService } from '../../services/trustline-currency/
 import { CurrencyFormSectionComponent } from '../shared/currency-form-section/currency-form-section.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-trustlines',
@@ -64,6 +65,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      public readonly mptUtilService = inject(MptUtilService);
      public readonly trustlineOrchestratorService = inject(TrustlineOrchestratorService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
@@ -978,7 +980,7 @@ export class TrustlinesComponent extends PerformanceBaseComponent implements OnI
      }
 
      clearInputFields(): void {
-          if (this.txUiService.isSimulateEnabled()) return;
+          if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
 
           this.txUiService.newCurrency.set('');
           this.txUiService.newIssuer.set('');

@@ -3,33 +3,38 @@ import * as xrpl from 'xrpl';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
 import { ValidationService } from '../../validation/transaction-validation-rule.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { DidUtilService } from '../did-util/did-util.service';
-import didSchema from '../../../components/did/did-schema.json';
 import { DidStoreService } from '../did-store/did-store.service';
 import { DID_VALIDATION_RULES } from '../../../components/did/constants/did.constants';
 import { DidTxConfig, DidTxType } from '../../../components/did/constants/did.types';
 import { AppConstants } from '../../../core/app.constants';
 import { ToastService } from '../../toast/toast.service';
+import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
+import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { DidTransactionBuilderService } from '../did-transaction-builder/did-transaction-builder.service';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+     providedIn: 'root',
+})
 export class DidTransactionOrchestratorService extends PerformanceBaseComponent {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
-     private readonly utilsService = inject(UtilsService);
+     private readonly toastService = inject(ToastService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly didUtilService = inject(DidUtilService);
      public readonly didStoreService = inject(DidStoreService);
-     public readonly toastService = inject(ToastService);
+     public readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
+     public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
+     public readonly didTransactionBuilderService = inject(DidTransactionBuilderService);
 
-     async executeDidTx(type: DidTxType, config: DidTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
-          const { wallet, simulate = false, multiSign = false, didData, uriData, didDocumentData, preFetchedEnv, extra = {} } = config;
+     async executeDidTx(type: DidTxType, config: DidTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
+          const { did, account, txOptions, preFetchedEnv, wallet } = config;
 
           let env: any;
           let client: xrpl.Client;
@@ -48,56 +53,42 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                          includeAccountObject: true,
                          includeFee: true,
                          includeLedgerInfo: true,
+                         includeServerInfo: true,
                     });
                }
 
                client = env.client;
-
-               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) {
-                    throw new Error('Required network data missing');
-               }
+               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
                // Validation
                const validationRule = DID_VALIDATION_RULES[type];
-               const validationInputs = this.buildValidationInputs(type, wallet, env, {
-                    simulate,
-                    multiSign,
-                    didData,
-                    uriData,
-                    didDocumentData,
-                    extra,
-               });
-
-               const errors = await this.validator.validate(validationRule, {
-                    inputs: validationInputs,
-                    client,
-                    accountInfo: env.accountInfo,
-               });
-
-               if (errors.length > 0) {
-                    return { success: false, error: errors.join('\n• '), validationError: true };
-               }
+               const validationInputs = this.buildValidationInputs(type, wallet, env, did, account, txOptions);
+               const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
+               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
                // Build transaction
-               const tx = this.buildDidTransaction(type, env.wallet || wallet, env, config, { simulate, multiSign, didData, uriData, didDocumentData, extra });
+               let tx: any;
+               if (type === 'setDid') {
+                    tx = this.didTransactionBuilderService.buildDidSetTransaction(env.wallet || wallet, env, did);
+               } else {
+                    tx = this.didTransactionBuilderService.buildDidDeleteTransaction(env.wallet || wallet, env);
+               }
 
                // Optional fields
-               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, { simulate, multiSign, didData, uriData, didDocumentData, extra }, env);
+               await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.did, type, txOptions);
+
+               // Check balances
+               const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
+               if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
                // Execute
-               const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { simulate, multiSign, didData, uriData, didDocumentData, extra });
-
-               if (!execResult.success) {
-                    return { success: false, error: execResult.error };
-               }
-
+               const execResult = await this.executeSpecificTx(type, tx, env, env.wallet || wallet, client, account, txOptions);
+               if (!execResult.success) return { success: false, error: execResult.error };
                txHash = execResult.hash;
 
-               if (simulate) {
-                    return this.handleSimulationSuccess(type, txHash);
-               }
+               if (txOptions?.isSimulateEnabled) return this.handleSimulationSuccess(type, txHash);
 
-               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
+               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 
                const message = this.buildSuccessMessage(type);
@@ -113,77 +104,41 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
           }
      }
 
-     private buildValidationInputs(type: DidTxType, wallet: Wallet, env: any, values: any) {
+     private buildValidationInputs(type: DidTxType, wallet: Wallet, env: any, did: any, account: any, txOptions: any) {
           const base = {
                wallet,
                network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.ledgerInfo.lastIndex },
                regularKey: {
-                    isRegularKey: values.isRegularKeyAddress,
-                    address: values.regularKeyAddress,
-                    seed: values.regularKeySeed,
+                    isRegularKey: txOptions.isRegularKeyAddress,
+                    address: account.regularKeyAddress,
+                    seed: account.regularKeySeed,
                },
           };
 
           switch (type) {
                case 'setDid':
-                    return { ...base, did: { didDocument: values.didDocumentData, didUri: values.uriData, didData: values.didData } };
+                    return { ...base, did: { didDocument: did.didDocumentData, didUri: did.uriData, didData: did.didData } };
                case 'deleteDid':
                     return { ...base };
           }
      }
 
-     private buildDidTransaction(type: DidTxType, wallet: xrpl.Wallet, env: any, config: any, values: any): xrpl.Transaction {
-          const { fee } = env;
-
-          switch (type) {
-               case 'setDid': {
-                    const txSetDid = this.xrplTransactionService.buildSetDidTransaction(wallet, fee, env.ledgerInfo.lastIndex);
-                    if (this.didStoreService.get('didDocumentData')) txSetDid.DIDDocument = this.utilsService.jsonToHex(this.didStoreService.get('didDocumentData'));
-                    if (this.didStoreService.get('uriData')) txSetDid.URI = this.utilsService.jsonToHex(this.didStoreService.get('uriData'));
-                    if (this.didStoreService.get('didData')) {
-                         const result = this.utilsService.validateAndConvertDidJson(this.didStoreService.get('didData'), didSchema);
-                         if (!result.success) throw new Error(result.errors ?? 'Invalid DID data');
-                         txSetDid.Data = result.hexData;
-                    }
-                    return txSetDid;
-               }
-               case 'deleteDid': {
-                    const txDeleteDid = this.xrplTransactionService.buildDeleteDidTransaction(wallet, fee, env.ledgerInfo.lastIndex);
-                    return txDeleteDid;
-               }
-          }
-     }
-
-     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: DidTxType, values: any, env: any) {
-          const isTicket = this.txUiService.isTicket();
-          if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
-               if (ticket) {
-                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
-                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
-                    this.utilsService.setTicketSequence(tx, ticket, true);
-               }
-          }
-
-          const memo = this.txUiService.memoField();
-          if (this.txUiService.isMemoEnabled() && memo) this.utilsService.setMemoField(tx, memo);
-     }
-
-     private async executeSpecificTx(type: DidTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, values: any) {
+     private async executeSpecificTx(type: DidTxType, tx: xrpl.Transaction, env: any, wallet: xrpl.Wallet, client: xrpl.Client, account: any, txOptions: any) {
           const opts = {
-               useMultiSign: values.multiSign,
-               isRegularKeyAddress: values.isRegularKeyAddress,
-               regularKeyAddress: values.regularKeyAddress,
-               regularKeySeed: values.regularKeySeed,
-               multiSignAddress: values.multiSignAddress,
-               multiSignSeeds: values.multiSignSeeds,
+               useMultiSign: txOptions.useMultiSign,
+               isRegularKeyAddress: txOptions.isRegularKeyAddress,
+               isSimulateEnabled: txOptions.isSimulateEnabled,
+               regularKeyAddress: account.regularKeyAddress,
+               regularKeySeed: account.regularKeySeed,
+               multiSignAddress: account.multiSignAddress,
+               multiSignSeeds: account.multiSignSeeds,
           };
 
           switch (type) {
                case 'setDid':
-                    return this.executor.setDid?.(tx as xrpl.DIDSet, wallet, client, opts);
+                    return this.executor.setDid?.(env, tx as xrpl.DIDSet, wallet, client, opts);
                case 'deleteDid':
-                    return this.executor.deleteDid?.(tx as xrpl.DIDDelete, wallet, client, opts);
+                    return this.executor.deleteDid?.(env, tx as xrpl.DIDDelete, wallet, client, opts);
           }
      }
 

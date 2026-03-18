@@ -1,5 +1,6 @@
 import { Component, input } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
+import { CredentialActionTypes } from '../../constants/credential.types';
 
 @Component({
      selector: 'app-requirements-info',
@@ -8,5 +9,5 @@ import { NgIcon } from '@ng-icons/core';
      styleUrl: './requirements-info.component.css',
 })
 export class RequirementsInfoComponent {
-     activeTab = input.required<'create' | 'accept' | 'delete' | 'verify'>();
+     activeTab = input.required<CredentialActionTypes>();
 }

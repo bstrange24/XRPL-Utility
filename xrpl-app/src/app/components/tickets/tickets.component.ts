@@ -29,6 +29,7 @@ import { AcccountDataService } from '../../services/account-data/acccount-data.s
 import { TicketsUtilService } from '../../services/tickets/tickets-util/tickets-util.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-tickets',
@@ -62,6 +63,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      public readonly acccountDataService = inject(AcccountDataService);
      public readonly ticketsUtilService = inject(TicketsUtilService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
@@ -117,7 +119,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           if (!wallet?.address) return null;
 
           const name = wallet.name || 'Selected wallet';
-          const count = this.txUiService.walletTicketCount();
+          const count = this.xrplTxOptionsStore.walletTicketCount();
           const label = this.activeTab() === 'create' ? 'available Tickets for use.' : 'Tickets that can be deleted.';
 
           return `<code>${name}</code> wallet has <strong class="object-count">${count}</strong> ${label}`;
@@ -125,9 +127,9 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
 
      readonly hasWalletsSignal = this.walletManagerService.hasWallets;
 
-     readonly allTicketsSelected = this.ticketsUtilService.getAllTicketsSelected(this.txUiService.ticketArray(), this.txUiService.selectedTicketSequences());
+     readonly allTicketsSelected = this.ticketsUtilService.getAllTicketsSelected(this.xrplTxOptionsStore.ticketArray(), this.xrplTxOptionsStore.selectedTicketSequences());
 
-     readonly hasSelectedTickets = computed(() => this.txUiService.selectedTicketSequences().length > 0);
+     readonly hasSelectedTickets = computed(() => this.xrplTxOptionsStore.selectedTicketSequences().length > 0);
 
      constructor() {
           super();
@@ -196,7 +198,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                     }
 
                     const ticketObjects = env.accountObjects ? this.xrplService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
-                    this.txUiService.walletTicketCount.set(ticketObjects?.result?.account_objects?.length ?? 0);
+                    this.xrplTxOptionsStore.setField('walletTicketCount', ticketObjects?.result?.account_objects?.length ?? 0);
 
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
@@ -227,9 +229,9 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                          throw new Error('Failed to fetch account information');
                     }
 
-                    const ticketCount = this.txUiService.ticketCountField();
-                    if (this.txUiService.walletTicketCount() + Number(ticketCount) > 250) {
-                         throw new Error(`An XRPL can not hold more than 250 Tickets at one time. This account already has ${this.txUiService.walletTicketCount()}`);
+                    const ticketCount = this.xrplTxOptionsStore.ticketCountField();
+                    if (this.xrplTxOptionsStore.walletTicketCount() + Number(ticketCount) > 250) {
+                         throw new Error(`An XRPL can not hold more than 250 Tickets at one time. This account already has ${this.xrplTxOptionsStore.walletTicketCount()}`);
                     }
 
                     const result = await this.ticketsOrchestratorService.executeCreateTickets({
@@ -266,7 +268,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                if (!this.ensureWalletSelected()) return;
 
                try {
-                    const ticketsToDelete = this.txUiService.selectedTicketSequences();
+                    const ticketsToDelete = this.xrplTxOptionsStore.selectedTicketSequences();
                     if (ticketsToDelete.length === 0) {
                          return this.toastService.error('No tickets selected to delete.', AppConstants.TOAST.ERROR);
                     }
@@ -291,7 +293,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                          wallet: this.currentWallet(),
                          formValues: {
                               ...this.ticketsUtilService.getTransactionValues(),
-                              ticketSequences: this.txUiService.selectedTicketSequences(),
+                              // ticketSequences: this.xrplTxOptionsStore.selectedTicketSequences(),
                          },
                          preFetchedEnv: {
                               client: env.client,
@@ -330,7 +332,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
 
           const ticketObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['Ticket']);
-          this.txUiService.walletTicketCount.set(ticketObjects.result.account_objects.length);
+          this.xrplTxOptionsStore.setField('walletTicketCount', ticketObjects?.result?.account_objects?.length ?? 0);
 
           await this.refreshWallets(client, [wallet.classicAddress]);
           this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
@@ -349,25 +351,29 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
 
      toggleSelectAllTickets(): void {
           if (this.allTicketsSelected()) {
-               this.txUiService.selectedTicketSequences.set([]);
+               this.xrplTxOptionsStore.setField('selectedTicketSequences', []); // Empty string[]
           } else {
-               this.txUiService.selectedTicketSequences.set([...this.txUiService.ticketArray()]);
+               this.xrplTxOptionsStore.setField(
+                    'selectedTicketSequences',
+                    [...this.xrplTxOptionsStore.ticketArray()] // ticketArray is string[]
+               );
           }
      }
 
      toggleTicketSelection(seq: string): void {
-          this.txUiService.selectedTicketSequences.update(list => (list.includes(seq) ? list.filter(t => t !== seq) : [...list, seq]));
+          // 👈 Parameter type: string
+          this.xrplTxOptionsStore.updateField('selectedTicketSequences', list => (list.includes(seq) ? list.filter(t => t !== seq) : [...list, seq]));
      }
 
      clearAllSelections(): void {
-          this.txUiService.selectedTicketSequences.set([]);
-          this.txUiService.ticketCountField.set('');
+          this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
+          this.xrplTxOptionsStore.setField('ticketCountField', '');
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      clearFields(): void {
-          this.txUiService.selectedTicketSequences.set([]);
-          this.txUiService.ticketCountField.set('');
+          this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
+          this.xrplTxOptionsStore.setField('ticketCountField', '');
      }
 
      get safeWarningMessage(): string {
@@ -432,10 +438,12 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      }
 
      filteredTickets = computed(() => {
-          const tickets = this.txUiService.ticketArray();
-          const q = this.ticketSearchQuery().trim();
+          const tickets = this.xrplTxOptionsStore.ticketArray(); // string[]
+          const q = this.ticketSearchQuery().trim().toLowerCase();
           if (!q) return tickets;
-          return tickets.filter(t => t.includes(q));
+          return tickets.filter(
+               (ticket: string) => ticket.toLowerCase().includes(q) // String comparison
+          );
      });
 
      onTicketKeyDown(event: KeyboardEvent): void {

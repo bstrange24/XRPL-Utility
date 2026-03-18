@@ -44,7 +44,7 @@
                          (toggleOptions)="txUiService.toggleOptions($event)"
                     />
 
-                    <app-transaction-options [activeTab]="view.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled()" [regularKeySigningEnabled]="deleteAccountStoreService.signal('regularKeySigningEnabled')()"></app-transaction-options>
+                    <app-transaction-options [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"></app-transaction-options>
 
                     <!-- Execution time -->
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>

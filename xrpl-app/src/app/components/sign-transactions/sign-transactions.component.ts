@@ -38,6 +38,7 @@ import { AcccountDataService } from '../../services/account-data/acccount-data.s
 import { SignTransactionUtilService } from '../../services/sign-transactions/sign-transactions-util/sign-transaction-util.service';
 import { SignTransactionsOrchestratorService } from '../../services/sign-transactions/sign-transactions-orchestrator/sign-transactions-orchestrator.service';
 import { JsonEditorComponent } from '../json-editor/json-editor.component';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-sign-transactions',
@@ -71,6 +72,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      private readonly walletManager = inject(WalletManagerService);
      private readonly cdr = inject(ChangeDetectorRef);
      public readonly signTransactionsOrchestratorService = inject(SignTransactionsOrchestratorService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
      readonly jsonEditorError = signal<string>('');
@@ -361,9 +363,9 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                          fee: env.fee,
                          currentLedger: env.currentLedger,
                          selectedTransaction: this.selectedTransaction() as any,
-                         isTicketEnabled: this.txUiService.isTicket(),
+                         isTicketEnabled: this.xrplTxOptionsStore.isTicket(),
                          isMemoEnable: this.txUiService.isMemoEnabled(),
-                         ticketSequence: this.txUiService.selectedSingleTicket(),
+                         ticketSequence: this.xrplTxOptionsStore.selectedSingleTicket(),
                     });
 
                     this.txJson.set(jsonStr);
@@ -479,7 +481,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
 
                     let response: any;
 
-                    if (this.txUiService.isSimulateEnabled()) {
+                    if (this.xrplTxOptionsStore.isSimulateEnabled()) {
                          const txToSign = this.cleanTx(JSON.parse(this.txJson().trim()));
                          console.log('Pre txToSign', txToSign);
                          console.log('currentLedger: ', env.currentLedger);
@@ -498,7 +500,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                          // const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
                          const userMessage = '\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                         console.error(`Transaction ${this.txUiService.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                         console.error(`Transaction ${this.xrplTxOptionsStore.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                          if (response.result) {
                               response.result.errorMessage = userMessage;
                          }
@@ -512,7 +514,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                     this.txUiService.addTxHashSignal(hash);
                     this.txUiService.setSuccess(this.txUiService.result()); // ← Only for single tx
 
-                    if (this.txUiService.isSimulateEnabled()) {
+                    if (this.xrplTxOptionsStore.isSimulateEnabled()) {
                          // this.txUiService.successMessage = 'Simulated transaction successfully!';
                     } else {
                          this.txUiService.currentStep.set('success');
@@ -555,7 +557,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
 
                     let response: any;
 
-                    if (this.txUiService.isSimulateEnabled()) {
+                    if (this.xrplTxOptionsStore.isSimulateEnabled()) {
                          const txToSign = this.cleanTx(JSON.parse(this.txJson().trim()));
                          console.log('Pre txToSign', txToSign);
                          console.log('currentLedger: ', env.currentLedger);
@@ -573,7 +575,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                          // const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
                          const userMessage = '\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 
-                         console.error(`Transaction ${this.txUiService.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
+                         console.error(`Transaction ${this.xrplTxOptionsStore.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
                          (response.result as any).errorMessage = userMessage;
                          this.toastService.error(userMessage, AppConstants.TOAST.ERROR);
                     } else {
@@ -582,7 +584,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
 
                     this.txUiService.addTxHashSignal(response.result.hash ? response.result.hash : response.result.tx_json.hash);
 
-                    if (!this.txUiService.isSimulateEnabled()) {
+                    if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          // this.txUiService.successMessage = 'Transaction completed successfully!';
 
                          await this.refreshAfterTx(env.client, env.wallet, null);
@@ -693,7 +695,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
                editedJson.Amount = xrpl.xrpToDrops(editedJson.Amount);
           }
 
-          if (this.txUiService.isSimulateEnabled()) {
+          if (this.xrplTxOptionsStore.isSimulateEnabled()) {
                delete editedJson.Sequence;
           }
 
@@ -799,7 +801,7 @@ export class SignTransactionsComponent extends PerformanceBaseComponent implemen
      }
 
      clearFields() {
-          if (this.txUiService.isSimulateEnabled()) return;
+          if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.txUiService.clearAllFields();
           this.txUiService.clearAllOptions();
           this.cdr.markForCheck();

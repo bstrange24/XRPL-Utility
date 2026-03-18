@@ -89,7 +89,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                          includeFee: true,
                          includeLedgerIndex: true,
                     };
-                    if (type === 'cash' || type === 'cancel') {
+                    if (type === 'cashCheck' || type === 'cancelCheck') {
                          envFlags.includeChecks = true;
                     }
                     if (formValues.destinationAddress) {
@@ -161,9 +161,9 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
 
      private getValidationRuleName(type: CheckTxType): string {
           const ruleMap: Record<CheckTxType, string> = {
-               create: 'CreateCheck',
-               cash: 'CashCheck',
-               cancel: 'CancelCheck',
+               createCheck: 'CreateCheck',
+               cashCheck: 'CashCheck',
+               cancelCheck: 'CancelCheck',
           };
           return ruleMap[type];
      }
@@ -179,7 +179,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                },
           };
 
-          if (type === 'create') {
+          if (type === 'createCheck') {
                return {
                     ...base,
                     createCheck: {
@@ -189,7 +189,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                };
           }
 
-          if (type === 'cash') {
+          if (type === 'cashCheck') {
                return {
                     ...base,
                     cashCheck: {
@@ -210,7 +210,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
      private buildCheckTransaction(type: CheckTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
           const { fee, currentLedger } = env;
 
-          if (type === 'create') {
+          if (type === 'createCheck') {
                let sendMax = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyCode, formValues.currencyIssuer ?? '', formValues.amountField, false).sendMax;
 
                const tx: xrpl.CheckCreate = this.xrplTransactionService.buildCreateCheckTransaction(wallet, sendMax, formValues.destinationAddress, fee, currentLedger);
@@ -223,7 +223,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                return tx;
           }
 
-          if (type === 'cash') {
+          if (type === 'cashCheck') {
                let amountToCash = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyCode, formValues.currencyIssuer ?? '', formValues.amountField, false).sendMax;
                return this.xrplTransactionService.buildCashCheckTransaction(wallet, amountToCash, formValues.checkIdField, fee, currentLedger);
           }
@@ -233,13 +233,14 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
      }
 
      private async applyOptionalFields(client: xrpl.Client, checkTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string, extra: any) {
-          if (txType === 'create') {
+          if (txType === 'createCheck') {
                this.setCreateTxOptionalFields(checkTx, extra);
           }
 
-          const isTicket = this.txUiService.isTicket();
+          const isTicket = extra.isTicket;
           if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);
@@ -279,7 +280,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
      }
 
      private async executeSpecificTx(type: CheckTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, formValues: any) {
-          if (type === 'create') {
+          if (type === 'createCheck') {
                return this.executor.checkCreate(tx as xrpl.CheckCreate, wallet, client, {
                     destination: formValues.destinationAddress,
                     // paymentType: 'issued', // or determine from currency
@@ -293,7 +294,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                });
           }
 
-          if (type === 'cash') {
+          if (type === 'cashCheck') {
                return this.executor.checkCash(tx as xrpl.CheckCash, wallet, client, {
                     // paymentType: 'issued', // improve later
                     suppressIndividualFeedback: formValues.suppressIndividualFeedback,

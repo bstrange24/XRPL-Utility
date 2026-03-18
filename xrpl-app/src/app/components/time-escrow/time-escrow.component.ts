@@ -37,6 +37,7 @@ import { EscrowFinishItemComponent } from './ui-components/escrow-finish-item/es
 import { EscrowCancelItemComponent } from './ui-components/escrow-cancel-item/escrow-cancel-item.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { XrplDateService } from '../../core/xrpl-date.service';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-time-escrow',
@@ -71,6 +72,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      public readonly timeBasedEscrowOrchestrator = inject(TimeBasedEscrowOrchestrator);
      private readonly walletManager = inject(WalletManagerService);
      public readonly xrplDateService = inject(XrplDateService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -339,7 +341,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
           this.currentWallet.set(wallet);
           this.trustlineCurrencyService.currentWalletAddress.set(wallet.address);
           this.txUiService.currentWallet.set(wallet);
-          this.txUiService.showEnableTrustline.set(false);
+          this.xrplTxOptionsStore.setField('showEnableTrustline', false);
 
           if (this.selectedDestinationAddress() === wallet.address) {
                this.selectedDestinationAddress.set('');
@@ -797,7 +799,7 @@ export class CreateTimeEscrowComponent extends PerformanceBaseComponent implemen
      }
 
      clearInputFields(): void {
-          if (this.txUiService.isSimulateEnabled()) return;
+          if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
 
           this.txUiService.clearAllFields();
           this.txUiService.clearAllOptions();

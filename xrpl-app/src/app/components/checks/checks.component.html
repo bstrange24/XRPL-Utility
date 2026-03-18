@@ -56,7 +56,7 @@
                               @if (info.checkCount === 0) {
                               <span> has no outstanding checks.</span>
                               } @else {
-                              <span> has <strong class="object-count">{{ info.checkCount }}</strong> check{{ info.checkCount === 1 ? '' : 's' }} @switch (tab) { @case ('create') { created. } @case ('cash') { that can be cashed. } @case ('cancel') { that can be cancelled. } } </span>
+                              <span> has <strong class="object-count">{{ info.checkCount }}</strong> check{{ info.checkCount === 1 ? '' : 's' }} @switch (tab) { @case ('createCheck') { created. } @case ('cashCheck') { that can be cashed. } @case ('cancelCheck') { that can be cancelled. } } </span>
                               }
                          </div>
 
@@ -82,15 +82,15 @@
                               <!-- Switch to determine what tab data to show -->
                               @switch (check.tab) {
                               <!-- Show create tab data -->
-                              @case ('create') {
+                              @case ('createCheck') {
                               <app-check-create-item [check]="check" />
                               }
                               <!-- Show cash tab data -->
-                              @case ('cash') {
+                              @case ('cashCheck') {
                               <app-check-cash-item [check]="check" />
                               }
                               <!-- Show cancel tab data -->
-                              @case ('cancel') {
+                              @case ('cancelCheck') {
                               <app-check-cancel-item [check]="check" />
                               } } }
                          </ul>
@@ -109,7 +109,7 @@
 
                <form #theForm="ngForm" class="main-form">
                     <!-- Create -->
-                    @if(tab === 'create') {
+                    @if(tab === 'createCheck') {
                     <!-- Currency + Amount -->
                     <div class="form-row">
                          <div class="form-group">
@@ -207,7 +207,7 @@
                     }
 
                     <!-- Currency + Amount (shared with create) -->
-                    @if (tab === 'cash') {
+                    @if (tab === 'cashCheck') {
                     <div class="form-row">
                          <div class="form-group">
                               <label for="selectCheck">Select Check to cash</label>
@@ -228,7 +228,7 @@
                     </div>
 
                     <!-- Trustline  -->
-                    @if (txUiService.showEnableTrustline()) {
+                    @if (xrplTxOptionsStore.showEnableTrustline()) {
                     <div class="form-row trustline-section">
                          <div class="form-group">
                               <label for="currencyCode">Currency Code</label>
@@ -255,7 +255,7 @@
                     } }
 
                     <!-- Unified Check ID Dropdown - Works for cash & cancel -->
-                    @if (tab === 'cancel') {
+                    @if (tab === 'cancelCheck') {
                     <div class="form-row">
                          <div class="form-group">
                               <label for="selectCheck">Select Check to cancel</label>
@@ -270,15 +270,15 @@
                     <!-- Action buttons -->
                     <div class="button-row">
                          <!-- Create -->
-                         @if (tab === 'create') {
+                         @if (tab === 'createCheck') {
                          <button type="button" class="btn-primary-blue" (click)="createCheck()" [disabled]="!isIdle() || !hasWallets()">{{ checkUtilService.createCheckButtonLabel() }}</button>
                          }
                          <!-- Cash -->
-                         @else if (tab === 'cash') {
+                         @else if (tab === 'cashCheck') {
                          <button type="button" class="btn-primary-green" (click)="cashCheck()" [disabled]="!isIdle() || !hasWallets() || selectedCheckIsExpired()">{{ checkUtilService.cashCheckButtonLabel() }}</button>
                          }
                          <!-- Cancel -->
-                         @else if (tab === 'cancel') {
+                         @else if (tab === 'cancelCheck') {
                          <button type="button" class="btn-primary-red" (click)="cancelCheck()" [disabled]="!isIdle() || !hasWallets()">{{ checkUtilService.cancelCheckButtonLabel() }}</button>
                          }
                          <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>

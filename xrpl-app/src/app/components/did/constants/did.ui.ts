@@ -13,7 +13,7 @@ export const DID_TABS: {
      iconSize: string;
 }[] = [
      {
-          key: 'set',
+          key: 'setDid',
           label: 'Set',
           icon: 'heroPlusCircle',
           iconType: 'ng-icon',
@@ -21,7 +21,7 @@ export const DID_TABS: {
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
-          key: 'delete',
+          key: 'deleteDid',
           label: 'Delete',
           icon: 'heroTrash',
           iconType: 'ng-icon',
@@ -42,7 +42,7 @@ export const DID_TAB_META: Record<
           iconSize: string;
      }
 > = {
-     set: {
+     setDid: {
           icon: 'heroPlusCircle',
           colorClass: 'blue-button-submenu',
           title: 'Set DID',
@@ -50,7 +50,7 @@ export const DID_TAB_META: Record<
           color: '',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
-     delete: {
+     deleteDid: {
           icon: 'heroTrash',
           colorClass: 'red-button-submenu',
           title: 'Delete DID',

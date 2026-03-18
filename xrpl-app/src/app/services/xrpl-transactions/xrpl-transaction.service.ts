@@ -580,28 +580,4 @@ export class XrplTransactionService extends PerformanceBaseComponent {
           }
           return { amountToCash, paymentType, currency };
      }
-
-     async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, type: any, values: any, env: any) {
-          const isTicket = this.txUiService.isTicket();
-          if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
-               if (ticket) {
-                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
-                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
-                    this.utilsService.setTicketSequence(tx, ticket, true);
-               }
-          }
-
-          const destinationTag = this.xrplTxOptionsStore.destinationTag();
-          if (destinationTag) this.utilsService.setDestinationTag(tx, destinationTag);
-
-          const sourceTag = this.xrplTxOptionsStore.sourceTag();
-          if (sourceTag) this.utilsService.setSourceTagField(tx, sourceTag);
-
-          const memo = this.xrplTxOptionsStore.memos();
-          if (this.txUiService.isMemoEnabled() && memo) this.utilsService.addMemoField(tx, memo);
-
-          const invoiceId = this.xrplTxOptionsStore.invoiceId();
-          if (invoiceId) this.utilsService.setInvoiceIdField(tx, invoiceId);
-     }
 }

@@ -13,14 +13,14 @@ export class PermissionedDomainViewModelService {
      private readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      public readonly txUiService = inject(TransactionUiService);
 
-     readonly activeTab = signal<PermissionedDomainTab>('setDomain');
+     readonly activeTab = signal<PermissionedDomainTab>('setPermissionedDomain');
 
      readonly infoData = computed<PermissionedDomainInfo | null>(() => {
           const wallet = this.walletManager.walletVm(); // or currentWallet signal if you have it
           if (!wallet?.address) return null;
 
           const tab = this.activeTab();
-          const domains = this.permissionedDomainStoreService.get('createdPermissionedDomains') ?? [];
+          const domains = this.permissionedDomainStoreService.createdPermissionedDomains() ?? [];
 
           return {
                walletName: wallet.name || 'Selected wallet',
@@ -77,17 +77,17 @@ export class PermissionedDomainViewModelService {
                     };
                })
                .sort((a, b) => a.index.localeCompare(b.index));
-          this.permissionedDomainStoreService.set('createdPermissionedDomains', mapped);
+          this.permissionedDomainStoreService.setField('createdPermissionedDomains', mapped);
      }
 
      selectedDomainItem = computed(() => {
-          const id = this.permissionedDomainStoreService.get('selectedDomainId');
+          const id = this.permissionedDomainStoreService.selectedDomainId();
           if (!id) return null;
           return this.domainItems().find((i: { id: any }) => i.id === id) || null;
      });
 
      domainItems = computed(() => {
-          return this.permissionedDomainStoreService.get('createdPermissionedDomains').map((domain: { index: string; AcceptedCredentials: string | any[] }) => ({
+          return this.permissionedDomainStoreService.createdPermissionedDomains().map((domain: { index: string; AcceptedCredentials: string | any[] }) => ({
                // return this.createdPermissionedDomains().map(domain => ({
                id: domain.index,
                display: domain.index.slice(0, 10) + '...' + domain.index.slice(-8),
@@ -99,20 +99,20 @@ export class PermissionedDomainViewModelService {
           }));
      });
 
-     actionButtonLabel(tab: 'setDomain' | 'deleteDomain') {
+     actionButtonLabel(tab: 'setPermissionedDomain' | 'deletePermissionedDomain') {
           switch (tab) {
-               case 'setDomain':
+               case 'setPermissionedDomain':
                     return this.setPermissionedDomainButtonLabel();
-               case 'deleteDomain':
+               case 'deletePermissionedDomain':
                     return this.deletePermissionedDomainButtonLabel();
           }
      }
 
-     actionButtonClass(tab: 'setDomain' | 'deleteDomain') {
+     actionButtonClass(tab: 'setPermissionedDomain' | 'deletePermissionedDomain') {
           switch (tab) {
-               case 'setDomain':
+               case 'setPermissionedDomain':
                     return 'btn-primary-blue';
-               case 'deleteDomain':
+               case 'deletePermissionedDomain':
                     return 'btn-primary-red';
           }
      }

@@ -148,7 +148,7 @@ export class TransactionUiService {
      newIssuer = signal<string>('');
      issuerToRemove = signal<string>('');
      trustlineFlags = signal<number>(0);
-     showEnableTrustline = signal<boolean>(false);
+     // showEnableTrustline = signal<boolean>(false);
      missingTrustlineInfo = {
           currencyCode: signal<string>(''),
           issuer: signal<string>(''),
@@ -157,13 +157,8 @@ export class TransactionUiService {
      issuer = signal<string>('');
 
      // Tickets
-     ticketCountField = signal<string>('');
-     selectedTicketSequences = signal<string[]>([]);
-     isTicket = signal<boolean>(false);
-     selectedSingleTicket = signal<string>('');
-     selectedTickets = signal<string[]>([]);
-     multiSelectMode = signal<boolean>(false);
-     ticketArray = signal<string[]>([]);
+     // ticketCountField = signal<string>('');
+     // selectedTicketSequences = signal<string[]>([]);
 
      // Expiration Dates
      expirationTimeField = signal<string>('');
@@ -179,14 +174,11 @@ export class TransactionUiService {
      regularKeyAddress = signal<string>('');
      regularKeySeed = signal<string>('');
      isMemoEnabled = signal<boolean>(false);
-     useMultiSign = signal<boolean>(false);
-     // isRegularKeyAddress = signal<boolean>(false);
      regularKeySigningEnabled = signal<boolean>(false);
      multiSigningEnabled = signal<boolean>(false);
      signers: WritableSignal<Signer[]> = signal<Signer[]>([{ Account: '', seed: '', SignerWeight: 1 }]);
      depositAuthAddresses = signal<{ account: string }[]>([{ account: '' }]);
-     walletTicketCount = signal<number>(0);
-     isSimulateEnabled = signal<boolean>(false);
+     // walletTicketCount = signal<number>(0);
      masterKeyDisabled = signal<boolean>(false);
      depositAuthEnabled = signal<boolean>(false);
      isdepositAuthAddress = signal<boolean>(false);
@@ -405,9 +397,9 @@ export class TransactionUiService {
           this.txResult = [...this.txResult, result];
      }
 
-     toggleShowEnableTrustline(enabled: boolean) {
-          this.showEnableTrustline.set(enabled);
-     }
+     // toggleShowEnableTrustline(enabled: boolean) {
+     //      this.showEnableTrustline.set(enabled);
+     // }
 
      toggleOptions(enabled: boolean): void {
           this.wantsOptions.set(enabled);
@@ -417,8 +409,7 @@ export class TransactionUiService {
      }
 
      // Called when user toggles the simulate slider
-     toggleSimulate(enabled: boolean) {
-          this.isSimulateEnabled.set(enabled);
+     toggleSimulate() {
           // Always clear hash when switching modes
           this.txHash = null;
           this.txHashes = [];
@@ -426,8 +417,6 @@ export class TransactionUiService {
           this.txSignal.set([]);
           this.txResultSignal.set([]);
           this.successMessageSignal.set('');
-          // this.successMessage = null;
-          // this.errorMessage = null;
           this.errorMessageSignal.set(null);
           this.clearMessages();
      }
@@ -550,7 +539,8 @@ export class TransactionUiService {
           this.errorMessageSignal.set(null);
 
           // Only set a hash when simulate is OFF
-          this.txHash = this.isSimulateEnabled() ? null : hash || null;
+          // this.txHash = this.isSimulateEnabled() ? null : hash || null;
+          this.txHash = hash || null;
      }
 
      // Called when a real transaction succeeds
@@ -567,7 +557,8 @@ export class TransactionUiService {
           this.errorMessageSignal.set(null);
 
           // Only set a hash when simulate is OFF
-          this.txHash = this.isSimulateEnabled() ? null : hash || null;
+          // this.txHash = this.isSimulateEnabled() ? null : hash || null;
+          this.txHash = hash || null;
      }
 
      setSuccessProperties() {
@@ -595,7 +586,8 @@ export class TransactionUiService {
           // this.successMessage = null;
 
           // Only set a hash if not simulated
-          this.txHash = this.isSimulateEnabled() ? null : hash || null;
+          // this.txHash = this.isSimulateEnabled() ? null : hash || null;
+          this.txHash = hash || null;
      }
 
      private setErrorProperties() {
@@ -759,9 +751,9 @@ export class TransactionUiService {
                cancelCheck: {
                     checkIdField: this.checkIdField(),
                },
-               createTicket: {
-                    ticketCountField: this.ticketCountField(),
-               },
+               // createTicket: {
+               //      ticketCountField: this.ticketCountField(),
+               // },
                createTimeBasedEscrow: {
                     amount: this.amountField(),
                     destination: options?.createTimeBasedEscrow?.destination,
@@ -809,21 +801,21 @@ export class TransactionUiService {
                paymentChannelClose: {
                     channelIDField: options?.paymentChannelClose?.channelIDField,
                },
-               multiSign: {
-                    enabled: this.useMultiSign(),
-                    addresses: this.useMultiSign()
-                         ? this.multiSignAddress()
-                                .split(',')
-                                .map(a => a.trim())
-                         : undefined,
-                    seeds: this.useMultiSign()
-                         ? this.multiSignSeeds()
-                                .split(',')
-                                .map(s => s.trim())
-                         : undefined,
-                    signerQuorum: this.signerQuorum(),
-                    signers: this.signers(),
-               },
+               // multiSign: {
+               //      enabled: this.useMultiSign(),
+               //      addresses: this.useMultiSign()
+               //           ? this.multiSignAddress()
+               //                  .split(',')
+               //                  .map(a => a.trim())
+               //           : undefined,
+               //      seeds: this.useMultiSign()
+               //           ? this.multiSignSeeds()
+               //                  .split(',')
+               //                  .map(s => s.trim())
+               //           : undefined,
+               //      signerQuorum: this.signerQuorum(),
+               //      signers: this.signers(),
+               // },
 
                // regularKey: {
                //      isRegularKey: this.isRegularKeyAddress(),
@@ -831,11 +823,11 @@ export class TransactionUiService {
                //      seed: this.isRegularKeyAddress() ? this.regularKeySeed() : undefined,
                // },
 
-               ticket: {
-                    enabled: this.isTicket(),
-                    singleTicket: this.selectedSingleTicket() || undefined,
-                    selectedTicket: this.selectedTickets().length > 0 ? this.selectedTickets()[0] : undefined,
-               },
+               // ticket: {
+               //      enabled: this.isTicket(),
+               //      singleTicket: this.selectedSingleTicket() || undefined,
+               //      selectedTicket: this.selectedTickets().length > 0 ? this.selectedTickets()[0] : undefined,
+               // },
 
                did: options.did,
 
@@ -873,7 +865,7 @@ export class TransactionUiService {
           this.memoField.set('');
           // this.regularKeyAddress.set('');
           // this.regularKeySeed.set('');
-          this.selectedSingleTicket.set('');
+          // this.selectedSingleTicket.set('');
           this.wantsOptions.set(false);
           this.escrowFinishTimeField.set('');
           this.escrowCancelTimeField.set('');
@@ -896,20 +888,20 @@ export class TransactionUiService {
           this.enableExpirationDate.set(false);
           this.enableEscrowFinishAfterExpirationDate.set(false);
           this.enableEscrowCancelAfterExpirationDate.set(false);
-          this.showEnableTrustline.set(false);
+          // this.showEnableTrustline.set(false);
           this.domainId.set('');
      }
 
      clearAllOptions() {
-          this.showEnableTrustline.set(false);
+          // this.showEnableTrustline.set(false);
           this.isMemoEnabled.set(false);
-          this.useMultiSign.set(false);
+          // this.useMultiSign.set(false);
           // this.isRegularKeyAddress.set(false);
-          this.isTicket.set(false);
-          this.isSimulateEnabled.set(false);
+          // this.isTicket.set(false);
+          // this.isSimulateEnabled.set(false);
           this.memoField.set('');
-          this.selectedSingleTicket.set('');
-          this.selectedTickets.set([]);
+          // this.selectedSingleTicket.set('');
+          // this.selectedTickets.set([]);
      }
 
      clearAllOptionsAndMessages() {

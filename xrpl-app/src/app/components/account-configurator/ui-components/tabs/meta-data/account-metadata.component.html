@@ -2,7 +2,7 @@
      <div class="form-group">
           <label for="setNftMinterAddress">Set NFT Minter Address</label>
           <p class="form-hint">Authorizes another account to mint NFTs for this account.</p>
-          <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.get('nfTokenMinterAddress')" (ngModelChange)="accountConfiguratorStoreService.set('nfTokenMinterAddress', $event)" name="nfTokenMinterAddress" />
+          <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)" name="nfTokenMinterAddress" />
      </div>
 </div>
 
@@ -18,14 +18,14 @@
           <!-- note: typo in label, should be transferRate -->
           <p class="form-hint">Transfer fee for issued currencies (0% = no fee).</p>
           <div class="input-group">
-               <input type="text" class="form-control" [ngModel]="accountConfiguratorStoreService.get('transferRate')" (ngModelChange)="accountConfiguratorStoreService.set('transferRate', $event)" name="transferRate" placeholder="e.g. 1.5" />
+               <input type="text" class="form-control" [ngModel]="accountConfiguratorStoreService.transferRate()" (ngModelChange)="accountConfiguratorStoreService.setField('transferRate', $event)" name="transferRate" placeholder="e.g. 1.5" />
           </div>
      </div>
 
      <div class="form-group">
           <label for="tickSize">Tick Size</label>
           <p class="form-hint">Decimal precision used when trading issued currencies (3–15).</p>
-          <input type="text" class="form-control" [ngModel]="accountConfiguratorStoreService.get('tickSize')" (ngModelChange)="accountConfiguratorStoreService.set('tickSize', $event)" name="tickSize" />
+          <input type="text" class="form-control" [ngModel]="accountConfiguratorStoreService.tickSize()" (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)" name="tickSize" />
      </div>
 </div>
 
@@ -33,14 +33,14 @@
      <div class="form-group">
           <label for="domain">Domain</label>
           <p class="form-hint">Domain name for this account.</p>
-          <input type="text" [ngModel]="accountConfiguratorStoreService.get('domain')" (ngModelChange)="accountConfiguratorStoreService.set('domain', $event)" name="domain" />
+          <input type="text" [ngModel]="accountConfiguratorStoreService.domain()" (ngModelChange)="accountConfiguratorStoreService.setField('domain', $event)" name="domain" />
      </div>
 
      <div class="form-group-account-flags">
           <!-- isMessageKey -->
-          <button type="button" class="flag-item-account-flags" [class.enabled]="accountConfiguratorStoreService.get('isMessageKey')" (click)="accountConfiguratorUtilService.toggleMessageKey()">
+          <button type="button" class="flag-item-account-flags" [class.enabled]="accountConfiguratorStoreService.isMessageKey()" (click)="accountConfiguratorUtilService.toggleMessageKey()">
                <div class="flag-header-account">
-                    <input type="checkbox" id="isMessageKey" name="isMessageKey" [checked]="accountConfiguratorStoreService.get('isMessageKey')" class="flag-checkbox" style="padding: 0px" />
+                    <input type="checkbox" id="isMessageKey" name="isMessageKey" [checked]="accountConfiguratorStoreService.isMessageKey()" class="flag-checkbox" style="padding: 0px" />
                     <span class="flag-title-account-flags">Save Message Key</span>
                </div>
                <div class="flag-desc">Public key for sending encrypted messages to this account.</div>

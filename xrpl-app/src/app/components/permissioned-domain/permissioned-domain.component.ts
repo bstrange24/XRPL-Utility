@@ -40,6 +40,8 @@ import { PERMISSION_DOMAIN_TAB_META, PERMISSION_DOMAIN_TABS } from './constants/
 import { PermissionDomainConfig, PermissionDomainTxType } from './constants/permissioned-domain.types';
 import { PermissionDomainDeleteFormComponent } from './tab/permission-domain-delete-form/permission-domain-delete-form.component';
 import { PermissionDomainSetFormComponent } from './tab/permission-domain-set-form/permission-domain-set-form.component';
+import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-permissioned-domain',
@@ -71,7 +73,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      }
 
      ngOnInit(): void {
-          this.applyTabFromQueryParam(this.route, ['deleteDomain'] as const, tab => this.setTab(tab));
+          this.applyTabFromQueryParam(this.route, ['deletePermissionedDomain'] as const, tab => this.setTab(tab));
           this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
      }
@@ -90,9 +92,9 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      }
 
      async setTab(tab: string): Promise<void> {
-          const validTabs = ['setDomain', 'deleteDomain'] as const;
+          const validTabs = ['setPermissionedDomain', 'deletePermissionedDomain'] as const;
           if (validTabs.includes(tab as any)) {
-               this.permissionedDomainViewModelService.activeTab.set(tab as 'setDomain' | 'deleteDomain');
+               this.permissionedDomainViewModelService.activeTab.set(tab as 'setPermissionedDomain' | 'deletePermissionedDomain');
                this.destinationSearchQuery.set('');
 
                this.permissionedDomainStoreService.resetDomainDropDown();
@@ -136,14 +138,14 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           // 2. Early input resolution + basic guards
           let issuerAddress: string | undefined;
 
-          if (currentTab === 'setDomain') {
+          if (currentTab === 'setPermissionedDomain') {
                issuerAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
 
                if (!issuerAddress || !xrpl.isValidAddress(issuerAddress)) {
                     this.toastService.error('Please enter a valid issuer address.', AppConstants.TOAST.ERROR);
                     return;
                }
-               this.permissionedDomainStoreService.set('credentialIssuer', issuerAddress);
+               this.permissionedDomainStoreService.setField('credentialIssuer', issuerAddress);
           }
 
           // 3. Prepare environment once
@@ -154,7 +156,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                     includeAccountObject: true,
                     includeFee: true,
                     includeLedgerInfo: true,
-                    ...(currentTab === 'setDomain' ? { destinationAddress: issuerAddress } : {}),
+                    ...(currentTab === 'setPermissionedDomain' ? { destinationAddress: issuerAddress } : {}),
                });
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
@@ -163,8 +165,8 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           }
 
           // Quick delete guard (optional — can move to validation later)
-          if (currentTab === 'deleteDomain') {
-               const selectedId = this.permissionedDomainStoreService.get('selectedDomainId');
+          if (currentTab === 'deletePermissionedDomain') {
+               const selectedId = this.permissionedDomainStoreService.selectedDomainId();
                if (!selectedId) {
                     this.toastService.error('No permissioned domain selected to delete.', AppConstants.TOAST.ERROR);
                     return;
@@ -181,19 +183,19 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           // 4. Build rich config
           const config: PermissionDomainConfig = {
                wallet: walletVm.wallet,
-               simulate: this.txUiService.isSimulateEnabled(),
-               multiSign: this.txUiService.useMultiSign(),
+               simulate: this.xrplTxOptionsStore.isSimulateEnabled(),
+               multiSign: this.xrplTxOptionsStore.useMultiSign(),
                preFetchedEnv: envRef,
-               credentialType: this.permissionedDomainStoreService.get('credentialType'),
-               credentialIssuer: this.permissionedDomainStoreService.get('credentialIssuer'),
-               domainId: this.permissionedDomainStoreService.get('selectedDomainId'),
+               credentialType: this.permissionedDomainStoreService.credentialType(),
+               credentialIssuer: this.permissionedDomainStoreService.credentialIssuer(),
+               domainId: this.permissionedDomainStoreService.selectedDomainId(),
                extra: {},
           };
 
           // 5. Execute via orchestrator
-          const actionMap: Record<'setDomain' | 'deleteDomain', PermissionDomainTxType> = {
-               setDomain: 'setDomain',
-               deleteDomain: 'deleteDomain',
+          const actionMap: Record<'setPermissionedDomain' | 'deletePermissionedDomain', PermissionDomainTxType> = {
+               setPermissionedDomain: 'setPermissionedDomain',
+               deletePermissionedDomain: 'deletePermissionedDomain',
           };
 
           const txType = actionMap[currentTab];
@@ -218,8 +220,8 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
           // 6. Handle result + side effects
           if (txResult) {
-               const successFullTx: boolean = await this.handleTxResult(txResult, envRef.client, envRef.wallet, issuerAddress, this.permissionedDomainStoreService.get('credentialIssuer'), '');
-               if (currentTab === 'deleteDomain' && successFullTx && !this.txUiService.isSimulateEnabled()) {
+               const successFullTx: boolean = await this.handleTxResult(txResult, envRef.client, envRef.wallet, issuerAddress, this.permissionedDomainStoreService.credentialIssuer(), '');
+               if (currentTab === 'deletePermissionedDomain' && successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
                     this.permissionedDomainStoreService.resetDomainDropDown();
                }
           }
@@ -233,13 +235,13 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
      handleSearchQueryChange(query: string) {
           this.destinationSearchQuery.set(query);
-          this.permissionedDomainStoreService.set('credentialIdSearchQuery', query);
+          this.permissionedDomainStoreService.setField('credentialIdSearchQuery', query);
      }
 
      handleDestinationChange(item: SelectItem | null) {
           const addr = item?.id || '';
           this.selectedDestinationAddress.set(addr);
-          this.permissionedDomainStoreService.set('subject', addr);
+          this.permissionedDomainStoreService.setField('subject', addr);
      }
 
      selectPermissionedDomainFromList(domain: any) {

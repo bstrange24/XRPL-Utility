@@ -6,11 +6,11 @@
                <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" />
                <code>{{ info()!.walletName }}</code>
 
-               @switch (info()!.mode) { @case ('set') { @if (info()!.didCount === 0) {
+               @switch (info()!.mode) { @case ('setDid') { @if (info()!.didCount === 0) {
                <span> has not created a DID yet.</span>
                } @else {
                <span> has a DID set. Only <strong>1</strong> DID can exist per account.</span>
-               } } @case ('delete') { @if (info()!.didCount === 0) {
+               } } @case ('deleteDid') { @if (info()!.didCount === 0) {
                <span> has no DID to delete.</span>
                } @else {
                <span> has <strong>1</strong> DID that can be deleted.</span>

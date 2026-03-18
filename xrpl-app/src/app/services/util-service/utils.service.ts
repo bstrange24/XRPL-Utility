@@ -1185,8 +1185,8 @@ export class UtilsService {
           if (regularKey) {
                let regularKeySeed;
                const regularKeyAddress = regularKey;
-               if (this.accountConfiguratorStoreService.get('regularKeySeed')) {
-                    regularKeySeed = this.storageService.get(`${account}regularKeySeed`) ? this.storageService.get(`${account}regularKeySeed`) : this.accountConfiguratorStoreService.get('regularKeySeed');
+               if (this.accountConfiguratorStoreService.regularKeySeed()) {
+                    regularKeySeed = this.storageService.get(`${account}regularKeySeed`) ? this.storageService.get(`${account}regularKeySeed`) : this.accountConfiguratorStoreService.regularKeySeed();
                     this.storageService.set(`${account}regularKeySeed`, regularKeySeed);
                } else {
                     regularKeySeed = this.storageService.get(`${account}regularKeySeed`);
@@ -2228,6 +2228,17 @@ export class UtilsService {
           } else {
                delete tx.Memos;
           }
+     }
+
+     setMemoField1(tx: any, memos: string[]) {
+          if (!memos || memos.length === 0) return;
+
+          tx.Memos = memos.map(memo => ({
+               Memo: {
+                    MemoData: Buffer.from(memo, 'utf8').toString('hex'),
+                    MemoType: Buffer.from('text/plain', 'utf8').toString('hex'),
+               },
+          }));
      }
 
      setMemoField(tx: any, memoField: string) {

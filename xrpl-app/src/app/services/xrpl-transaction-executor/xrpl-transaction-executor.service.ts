@@ -1,11 +1,12 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../util-service/utils.service';
 import { XrplCacheService } from '../xrpl-cache/xrpl-cache.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { XrplTransactionService } from '../xrpl-transactions/xrpl-transaction.service';
-import { Wallet } from '../wallets/manager/wallet-manager.service';
+import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
+import { PrepareTxEnvironmentResult } from '../transaction-environment/tx-environment.service';
 
 export interface TxExecutionOptions {
      simulateMessage: string;
@@ -16,23 +17,92 @@ export interface TxExecutionOptions {
 
 @Injectable({ providedIn: 'root' })
 export class XrplTransactionExecutorService {
-     constructor(
-          private readonly xrplTransactions: XrplTransactionService,
-          private readonly utilsService: UtilsService,
-          private readonly txUiService: TransactionUiService,
-          private readonly xrplCache: XrplCacheService,
-          private readonly xrplService: XrplService
-     ) {}
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly xrplTransactions = inject(XrplTransactionService);
+     public readonly utilsService = inject(UtilsService);
+     public readonly txUiService = inject(TransactionUiService);
+     public readonly xrplCache = inject(XrplCacheService);
+     public readonly xrplService = inject(XrplService);
+     constructor() {}
+
+     async executeTx<T extends xrpl.Transaction>(
+          env: any,
+          client: xrpl.Client,
+          wallet: xrpl.Wallet,
+          tx: T,
+          options: TxExecutionOptions & { isSimulateEnabled?: boolean; useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; regularKeyAddress?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean; paymentType?: string; amount?: any; destination?: string; submitAndWait?: boolean }
+     ): Promise<{ success: true; hash: string } | { success: false; hash: string; error: string }> {
+          const { isSimulateEnabled = false, useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', regularKeyAddress = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false, submitAndWait = false } = options;
+
+          if (!isSimulateEnabled) this.txUiService.currentStep.set('preparing');
+
+          this.txUiService.addTxSignal(tx);
+
+          let response: any;
+
+          try {
+               if (isSimulateEnabled) {
+                    response = await this.xrplTransactions.simulateTransaction(client, tx);
+                    this.txUiService.addTxResultSignal(response.result);
+               } else {
+                    const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(useMultiSign, regularKeyAddress, isRegularKeyAddress, regularKeySeed);
+
+                    const signedTx = await this.xrplTransactions.signTransaction(client, wallet, tx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, env.fee, useMultiSign, multiSignAddress, multiSignSeeds);
+
+                    if (!signedTx) {
+                         return { success: false, hash: '', error: 'Failed to sign transaction.' };
+                    }
+
+                    if (submitAndWait) {
+                         response = await this.xrplTransactions.submitTransaction(client, signedTx);
+                    } else {
+                         response = await this.xrplTransactions.submitTransaction1(client, signedTx);
+                    }
+
+                    this.txUiService.currentStep.set('waiting_validation');
+               }
+
+               console.log('response: ', response);
+
+               const isSuccess = this.utilsService.isTxSuccessful(response);
+               if (!isSuccess) {
+                    return this.handleFailedTx<T>(response);
+               }
+
+               // Success for multi-tx: Show multi-tx success message without hash, then add hash signals for each individual tx
+               if (suppressIndividualFeedback) {
+                    this.txUiService.setSuccessMultiTransactions(this.txUiService.result());
+               }
+               const hash = response.result.hash ?? response.result.tx_json?.hash ?? 'unknown';
+
+               // Success for single tx: Show success message with hash immediately, then add hash signal (which won't trigger a new success message since it's the same tx)
+               if (!suppressIndividualFeedback) {
+                    this.txUiService.addTxHashSignal(hash);
+                    this.txUiService.setSuccess(this.txUiService.result()); // ← Only for single tx
+               }
+
+               return { success: true, hash };
+          } catch (err: any) {
+               const msg = err.message || 'Unknown error during transaction';
+               this.txUiService.setError(msg);
+               return { success: false, hash: '', error: msg };
+          } finally {
+               // Only hide spinner if not suppressed (let parent control it)
+               if (!suppressIndividualFeedback) {
+                    this.txUiService.spinner.set(false);
+               }
+          }
+     }
 
      async execute<T extends xrpl.Transaction>(
           client: xrpl.Client,
           wallet: xrpl.Wallet,
           tx: T,
-          options: TxExecutionOptions & { useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; regularKeyAddress?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean; paymentType?: string; amount?: any; destination?: string; submitAndWait?: boolean }
+          options: TxExecutionOptions & { isSimulateEnabled?: boolean; useMultiSign?: boolean; multiSignAddress?: string; multiSignSeeds?: string; regularKeyAddress?: string; isRegularKeyAddress?: boolean; regularKeySeed?: string; suppressIndividualFeedback?: boolean; paymentType?: string; amount?: any; destination?: string; submitAndWait?: boolean }
      ): Promise<{ success: true; hash: string } | { success: false; hash: string; error: string }> {
-          const { simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', regularKeyAddress = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false, paymentType = 'XRP', amount = '0', destination = '', submitAndWait = false } = options;
+          const { isSimulateEnabled = false, simulateMessage, submitMessage, insufficientXrpMessage = 'Insufficient XRP to complete transaction', useMultiSign = false, multiSignAddress = '', multiSignSeeds = '', regularKeyAddress = '', isRegularKeyAddress = false, regularKeySeed = '', suppressIndividualFeedback = false, paymentType = 'XRP', amount = '0', destination = '', submitAndWait = false } = options;
 
-          if (!this.txUiService.isSimulateEnabled()) this.txUiService.currentStep.set('preparing');
+          if (!isSimulateEnabled) this.txUiService.currentStep.set('preparing');
 
           // 1. Get fresh data in parallel
           const [accountInfo, { fee, serverInfo }] = await Promise.all([this.xrplCache.getAccountInfo(wallet.classicAddress, false), this.xrplCache.getFeeAndServerInfo(this.xrplService, { forceRefresh: false })]);
@@ -50,7 +120,7 @@ export class XrplTransactionExecutorService {
           }
 
           // 3. Show spinner
-          this.txUiService.showSpinnerWithDelay(this.txUiService.isSimulateEnabled() ? simulateMessage : submitMessage, 200);
+          this.txUiService.showSpinnerWithDelay(isSimulateEnabled ? simulateMessage : submitMessage, 200);
 
           // 4. Set preview
           this.txUiService.addTxSignal(tx);
@@ -58,7 +128,7 @@ export class XrplTransactionExecutorService {
           let response: any;
 
           try {
-               if (this.txUiService.isSimulateEnabled()) {
+               if (isSimulateEnabled) {
                     response = await this.xrplTransactions.simulateTransaction(client, tx);
                     this.txUiService.addTxResultSignal(response.result);
                } else {
@@ -86,25 +156,7 @@ export class XrplTransactionExecutorService {
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
                if (!isSuccess) {
-                    const resultMsg = this.utilsService.getTransactionResultMessage(response);
-                    // const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-                    const userMessage = '\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-                    const hash = response.result.tx_json.hash ?? response.result.tx_json.hash ?? 'unknown';
-
-                    console.error(`Transaction ${this.txUiService.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-
-                    // Shows the message <app-transaction-preview>
-                    if (response.result) {
-                         response.result.errorMessage = userMessage;
-                    }
-
-                    // Update the signal so preview updates immediately
-                    this.txUiService.addTxResultSignal(response.result);
-
-                    // Show error panel/toast
-                    this.txUiService.setError(userMessage);
-
-                    return { success: false, error: userMessage, hash: hash };
+                    return this.handleFailedTx<T>(response);
                }
 
                // Success for multi-tx: Show multi-tx success message without hash, then add hash signals for each individual tx
@@ -133,6 +185,64 @@ export class XrplTransactionExecutorService {
                }
                // this.txUiService.spinner.set(false);
           }
+     }
+
+     async executeSimulate<T extends xrpl.Transaction>(client: xrpl.Client, wallet: xrpl.Wallet, tx: any, env: PrepareTxEnvironmentResult, txOptions: any): Promise<{ success: boolean; hash?: string; error?: string }> {
+          try {
+               this.txUiService.addTxSignal(tx);
+
+               let response: any;
+
+               if (txOptions.isSimulateEnabled) {
+                    response = await this.xrplTransactions.simulateTransaction(client, tx);
+                    this.txUiService.addTxResultSignal(response.result);
+               }
+
+               const isSuccess = this.utilsService.isTxSuccessful(response);
+               if (!isSuccess) {
+                    return this.handleFailedTx<T>(response);
+               }
+
+               const hash = response.result.hash ?? response.result.tx_json?.hash ?? 'unknown';
+
+               // Success for multi-tx: Show multi-tx success message without hash, then add hash signals for each individual tx
+               if (txOptions.suppressIndividualFeedback) {
+                    this.txUiService.setSuccessMultiTransactions(this.txUiService.result());
+               }
+
+               // Success for single tx:
+               // Show success message with hash immediately, then add hash signal (which won't trigger a new success message since it's the same tx)
+               if (!txOptions.suppressIndividualFeedback) {
+                    this.txUiService.addTxHashSignal(hash);
+                    this.txUiService.setSuccess(this.txUiService.result()); // ← Only for single tx
+               }
+
+               return { success: true, hash };
+          } catch (err: any) {
+               return {
+                    success: false,
+                    error: err.message || 'Execution failed',
+               };
+          }
+     }
+
+     private handleFailedTx<T extends xrpl.Transaction>(response: any) {
+          const resultMsg = this.utilsService.getTransactionResultMessage(response);
+          const userMessage = '\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
+          const hash = response.result.tx_json.hash ?? response.result.tx_json.hash ?? 'unknown';
+
+          console.error(`Transaction failed: ${resultMsg}`, response);
+
+          // Shows the message
+          if (response.result) response.result.errorMessage = userMessage;
+
+          // Update the signal so preview updates immediately
+          this.txUiService.addTxResultSignal(response.result);
+
+          // Show error panel/toast
+          this.txUiService.setError(userMessage);
+
+          return { success: false, error: userMessage, hash: hash };
      }
 
      async ticketCreate(
@@ -269,6 +379,7 @@ export class XrplTransactionExecutorService {
      }
 
      async createCredential(
+          env: any,
           tx: xrpl.CredentialCreate,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -281,7 +392,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating Create Credentials (no changes will be made)...',
                submitMessage: 'Submitting Create Credentials to Ledger...',
                amount: '0',
@@ -290,6 +401,7 @@ export class XrplTransactionExecutorService {
      }
 
      async deleteCredential(
+          env: any,
           tx: xrpl.CredentialDelete,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -302,7 +414,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating Delete Credentials (no changes will be made)...',
                submitMessage: 'Deleting Credential from Ledger...',
                amount: '0',
@@ -311,6 +423,7 @@ export class XrplTransactionExecutorService {
      }
 
      async acceptCredential(
+          env: any,
           tx: xrpl.CredentialAccept,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -323,7 +436,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating Credentials Accept (no changes will be made)...',
                submitMessage: 'Accepting Credential on the XRP Ledger...',
                amount: '0',
@@ -332,6 +445,7 @@ export class XrplTransactionExecutorService {
      }
 
      async setDid(
+          env: any,
           tx: xrpl.DIDSet,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -344,7 +458,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating DID Set (no changes will be made)...',
                submitMessage: 'Setting DID on the XRP Ledger...',
                amount: '0',
@@ -353,6 +467,7 @@ export class XrplTransactionExecutorService {
      }
 
      async deleteDid(
+          env: any,
           tx: xrpl.DIDDelete,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -365,7 +480,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating DID Delete (no changes will be made)...',
                submitMessage: 'Deleting DID on the XRP Ledger...',
                amount: '0',

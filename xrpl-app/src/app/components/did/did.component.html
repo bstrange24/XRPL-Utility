@@ -33,15 +33,15 @@
                }
 
                <form #theForm="ngForm" class="main-form">
-                    @switch (tab) { @case ('set') {
+                    @switch (tab) { @case ('setDid') {
                     <app-did-set [view]="didViewModelService" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" />
-                    } @case ('delete') {
+                    } @case ('deleteDid') {
                     <app-did-delete [view]="didViewModelService" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" />
                     } }
 
                     <!-- Only show buttons and sliders if there is no DID set or we are on the delete DID tab -->
-                    @if ((tab === 'set' && didStoreService.get('existingDid').length <= 0) || tab === 'delete') {
-                    <app-transaction-options [showWhenTab]="['set','delete']" [activeTab]="didViewModelService.activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled()" [regularKeySigningEnabled]="didStoreService.signal('regularKeySigningEnabled')()" />
+                    @if ((tab === 'setDid' && didStoreService.existingDid().length <= 0) || tab === 'deleteDid') {
+                    <app-transaction-options [showWhenTab]="['setDid','deleteDid']" [activeTab]="didViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
                     }
 
                     <!-- Execution time -->

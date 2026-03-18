@@ -10,6 +10,7 @@ import { CredentialStore } from '../credential-store/credential-store.service';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { CredentialActionTypes } from '../../../components/credentials/constants/credential.types';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
 @Injectable({
      providedIn: 'root',
@@ -20,6 +21,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      public readonly toastService = inject(ToastService);
      public readonly credentialStore = inject(CredentialStore);
      public readonly xrplDateService = inject(XrplDateService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      constructor() {
           super();
@@ -27,36 +29,23 @@ export class CredentialUtilService extends PerformanceBaseComponent {
 
      private readonly decodeCache = new Map<string, string>();
 
-     filteredExisting = computed(() => this.filterCredentials(this.credentialStore.get('existingCredentials'), this.credentialStore.get('credentialIdSearchTerm')));
-     filteredSubject = computed(() => this.filterCredentials(this.credentialStore.get('subjectCredentials'), this.credentialStore.get('credentialIdSearchTerm')));
-     selectedCredentialIndex = computed(() => this.credentialStore.get('credentialID'));
+     filteredExisting = computed(() => this.filterCredentials(this.credentialStore.existingCredentials(), this.credentialStore.credentialIdSearchTerm()));
+     filteredSubject = computed(() => this.filterCredentials(this.credentialStore.subjectCredentials(), this.credentialStore.credentialIdSearchTerm()));
+     selectedCredentialIndex = computed(() => this.credentialStore.credentialID());
 
      selectCredentialFromList(cred: CredentialItem, tab: string, walletAddress: string) {
-          this.credentialStore.set('selectedCredentials', cred);
+          this.credentialStore.setField('selectedCredentials', cred);
 
-          const isVerifyTab = tab === 'verify';
+          const isVerifyTab = tab === 'verifyCredential';
           const isSubject = cred.Subject === walletAddress;
 
           if (!isVerifyTab || !isSubject) {
-               this.credentialStore.set('credentialID', cred.index);
-               this.credentialStore.set('credentialType', cred.CredentialType || '');
-               this.credentialStore.set('credentialIssuer', cred.Issuer);
+               this.credentialStore.setField('credentialID', cred.index);
+               this.credentialStore.setField('credentialType', cred.CredentialType || '');
+               this.credentialStore.setField('credentialIssuer', cred.Issuer);
           } else {
                this.credentialStore.resetCredentialIdDropDown();
           }
-     }
-
-     credentialItems(tab: 'create' | 'accept' | 'delete' | 'verify', walletAddress: string) {
-          let list = tab === 'accept' ? this.credentialStore.get('subjectCredentials') : this.credentialStore.get('existingCredentials');
-
-          if (tab === 'verify') list = list.filter((c: { Issuer: string }) => c.Issuer === walletAddress);
-
-          return list.map((cred: CredentialItem) => ({
-               id: cred.index,
-               display: cred.CredentialType || 'Unknown Type',
-               secondary: `${cred.index.slice(0, 12)}...${cred.index.slice(-10)}`,
-               pending: !this.isCredentialAccepted(cred) && tab === 'accept',
-          }));
      }
 
      private parseCredentials(accountObjects: xrpl.AccountObjectsResponse, address: string, role: 'issuer' | 'subject') {
@@ -101,13 +90,16 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      }
 
      private mapCredential(obj: any): CredentialItem {
+          const credentialType = obj.CredentialType;
+          const uri = obj.URI;
+
           return {
                index: obj.index,
-               CredentialType: obj.CredentialType ? this.decodeutf8Hex(obj.CredentialType) : 'Unknown Type',
+               CredentialType: credentialType ? this.decodeutf8Hex(credentialType) : 'Unknown Type',
                Expiration: obj.Expiration ? this.utilsService.fromRippleTime(obj.Expiration).est : 'N/A',
                Issuer: obj.Issuer,
                Subject: obj.Subject,
-               URI: this.decodeutf8Hex(obj.URI),
+               URI: this.decodeutf8Hex(uri),
                Flags: this.getCredentialStatus(obj.Flags),
           };
      }
@@ -118,17 +110,17 @@ export class CredentialUtilService extends PerformanceBaseComponent {
                return;
           }
 
-          this.credentialStore.set('selectedCredentials', cred);
-          this.credentialStore.set('credentialID', cred.index);
-          this.credentialStore.set('credentialIssuer', cred.Issuer);
-          this.credentialStore.set('credentialType', cred.CredentialType || '');
-          this.credentialStore.set('subject', cred.Subject);
+          this.credentialStore.setField('selectedCredentials', cred);
+          this.credentialStore.setField('credentialID', cred.index);
+          this.credentialStore.setField('credentialIssuer', cred.Issuer);
+          this.credentialStore.setField('credentialType', cred.CredentialType || '');
+          this.credentialStore.setField('subject', cred.Subject);
      }
 
      filterCredentials(list: CredentialItem[], term: string): CredentialItem[] {
           if (!term) return list;
           const lower = term.toLowerCase();
-          return list.filter(c => [c.CredentialType, c.Issuer, c.Subject, c.index].some(f => f?.toLowerCase().includes(lower)));
+          return list.filter(c => c.CredentialType?.toLowerCase().includes(lower) || c.Issuer?.toLowerCase().includes(lower) || c.Subject?.toLowerCase().includes(lower) || c.index?.toLowerCase().includes(lower));
      }
 
      isCredentialAccepted(cred: CredentialItem): boolean {
@@ -150,8 +142,9 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           let cred: CredentialItem | undefined;
 
           if (source === 'dropdown' && 'id' in item) {
-               const allCreds = [...this.credentialStore.get('existingCredentials'), ...this.credentialStore.get('subjectCredentials')];
-               cred = allCreds.find(c => c.index === item.id);
+               const existing = this.credentialStore.existingCredentials();
+               const subject = this.credentialStore.subjectCredentials();
+               cred = existing.find(c => c.index === item.id) ?? subject.find(c => c.index === item.id);
                if (!cred) return;
           } else {
                cred = item as CredentialItem;
@@ -163,7 +156,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           const isWalletIssuer = walletAddress && cred.Issuer === walletAddress;
 
           // Tab-specific business rules
-          if (activeTab === 'verify') {
+          if (activeTab === 'verifyCredential') {
                if (isWalletIssuer) {
                     this.applySelectedCredential(cred);
                } else if (isWalletSubject) {
@@ -176,9 +169,6 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           } else {
                this.applySelectedCredential(cred);
           }
-
-          // Apply selection
-          this.applySelectedCredential(cred);
      }
 
      private decodeutf8Hex(hex: string | undefined): string {
@@ -201,19 +191,19 @@ export class CredentialUtilService extends PerformanceBaseComponent {
 
      onCredentialIdInput(event: Event): void {
           const value = (event.target as HTMLInputElement).value;
-          this.credentialStore.set('credentialIdSearchQuery', value);
+          this.credentialStore.setField('credentialIdSearchQuery', value);
      }
 
      setCredentialType(value: string) {
-          this.credentialStore.set('credentialType', value);
+          this.credentialStore.setField('credentialType', value);
      }
 
      setCredentialUri(value: string) {
-          this.credentialStore.set('uri', value);
+          this.credentialStore.setField('uri', value);
      }
 
      clearInputFields(): void {
-          if (this.txUiService.isSimulateEnabled()) return;
+          if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.txUiService.clearAllFields();
           this.txUiService.clearAllOptions();
           this.credentialStore.resetCredentailFields();

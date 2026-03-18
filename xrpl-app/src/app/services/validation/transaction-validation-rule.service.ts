@@ -5,9 +5,9 @@ import * as xrpl from 'xrpl';
 import didSchema from '../../components/did/did-schema.json';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { percentToTransferRate } from 'xrpl';
-import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { AppConstants } from '../../core/app.constants';
+import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 
 export interface ValidationContext {
      inputs: Record<string, any>;
@@ -180,9 +180,7 @@ export class ValidationService {
                if (!dest || !ctx.client) return null;
 
                try {
-                    // const info = await this.xrplService.getAccountInfo(ctx.client, dest as string, 'validated', '');
                     if (ctx.accountInfo.result.account_flags?.requireDestinationTag && !ctx.inputs['destinationTag']) {
-                         // if (info.result.account_flags?.requireDestinationTag && !ctx.inputs['destinationTag']) {
                          return 'Destination account requires a destination tag';
                     }
                } catch (err: any) {
@@ -992,7 +990,7 @@ export class ValidationService {
           // CredentialAccept Actions
           this.registerRule({
                transactionType: 'CredentialAccept',
-               requiredFields: ['acceptCredentials.Issuer', 'acceptCredentials.credentialType'],
+               requiredFields: ['acceptCredentials.credentialID', 'acceptCredentials.credentialIssuer'],
                validators: [
                     this.walletCredentialRequired(),
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
@@ -1009,7 +1007,7 @@ export class ValidationService {
                     // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
 
-                    this.isValidAddress('acceptCredentials.Issuer'),
+                    this.isValidAddress('acceptCredentials.credentialIssuer'),
                     this.credentialExists(),
                     this.credentialNotAlreadyAccepted(),
                     this.credentialNotExpired(),
@@ -1478,17 +1476,6 @@ export class ValidationService {
                          if (ctx.inputs['modifyMultiSigners']['formattedSignerEntries'].length < 1) {
                               return `Multi signers list cannot be empty.`;
                          }
-
-                         // for (const authorizedAddress of ctx.inputs['modifyDepositAuth'].formattedSignerEntries) {
-                         //      // Check for existing preauthorization
-                         //      const alreadyAuthorized = ctx.inputs['network']['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.Account);
-                         //      if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'Y' && alreadyAuthorized) {
-                         //           return `Preauthorization already exists for ${authorizedAddress.Account} (tecDUPLICATE).\nUse Unauthorize to remove.`;
-                         //      }
-                         //      if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'N' && !alreadyAuthorized) {
-                         //           return `No preauthorization exists for ${authorizedAddress.Account}`;
-                         //      }
-                         // }
                          return null;
                     },
 
@@ -1516,14 +1503,14 @@ export class ValidationService {
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     ctx => {
-                         if (this.accountConfiguratorStoreService.get('regularKeyAddress') === '' || this.accountConfiguratorStoreService.get('regularKeyAddress') === 'No RegularKey configured for account' || this.accountConfiguratorStoreService.get('regularKeySeed') === '') {
+                         if (this.accountConfiguratorStoreService.regularKeyAddress() === '' || this.accountConfiguratorStoreService.regularKeyAddress() === 'No RegularKey configured for account' || this.accountConfiguratorStoreService.regularKeySeed() === '') {
                               return `Regular Key address and seed must be present`;
                          }
                          return null;
                     },
 
                     ctx => {
-                         if (this.accountConfiguratorStoreService.get('regularKeyAddress') === '') {
+                         if (this.accountConfiguratorStoreService.regularKeyAddress() === '') {
                               //  || (ctx.accountInfo?.result.) {
                               return `Regular Key address and seed must be present`;
                          }

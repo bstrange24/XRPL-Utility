@@ -36,6 +36,7 @@ import { TrustlineCurrencyService } from '../../services/trustline-currency/trus
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
+import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 
 interface XRPLCurrency {
      currency: string;
@@ -111,6 +112,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
      public readonly offerCurrency = inject(OfferCurrencyService);
      private readonly walletManager = inject(WalletManagerService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
 
@@ -618,8 +620,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     await this.setTxOptionalFields(client, ammCreateTx, wallet, accountInfo, 'createAmm');
 
                     const result = await this.txExecutor.createAMM(ammCreateTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                          // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
@@ -630,7 +632,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Create successfully!' : 'AMM created successfully!';
-                    if (!this.txUiService.isSimulateEnabled()) {
+                    if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
                } catch (error: any) {
@@ -718,8 +720,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     await this.setTxOptionalFields(client, ammDepositTx, wallet, accountInfo, 'depositToAmm');
 
                     const result = await this.txExecutor.depositToAMM(ammDepositTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                          // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
@@ -730,7 +732,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Deposit successfully!' : 'AMM Deposit successfully!';
-                    if (!this.txUiService.isSimulateEnabled()) {
+                    if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
                } catch (error: any) {
@@ -855,8 +857,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     await this.setTxOptionalFields(client, ammWithdrawTx, wallet, accountInfo, 'withdrawlFromAmm');
 
                     const result = await this.txExecutor.withdrawlFromAMM(ammWithdrawTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                          // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
@@ -867,7 +869,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Withdraw successfully!' : 'AMM Withdraw successfully!';
-                    if (!this.txUiService.isSimulateEnabled()) {
+                    if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
@@ -940,8 +942,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     await this.setTxOptionalFields(client, ammClawbackTx, wallet, accountInfo, 'clawbackFromAmm');
 
                     const result = await this.txExecutor.clawbackFromAMM(ammClawbackTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                          // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
@@ -951,7 +953,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Clawback successfully!' : 'AMM Clawback successful!';
-                    if (!this.txUiService.isSimulateEnabled()) {
+                    if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
@@ -992,8 +994,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     await this.setTxOptionalFields(client, swapPaymentTx, wallet, accountInfo, 'swamViaAMM');
 
                     const result = await this.txExecutor.swapViaAMM(swapPaymentTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                          // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
@@ -1003,7 +1005,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Swap via AMM successfully!' : 'Swap via AMM successful!';
-                    if (!this.txUiService.isSimulateEnabled()) {
+                    if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
                          await this.refreshAfterTx(client, wallet, null, false);
                     }
@@ -1040,8 +1042,8 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     await this.setTxOptionalFields(client, deleteAmmTx, wallet, accountInfo, 'deleteAMM');
 
                     const result = await this.txExecutor.deleteAMM(deleteAmmTx, wallet, client, {
-                         useMultiSign: this.txUiService.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                          // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                          regularKeyAddress: this.txUiService.regularKeyAddress(),
                          regularKeySeed: this.txUiService.regularKeySeed(),
@@ -1051,7 +1053,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     if (!result.success) return this.txUiService.setError(`${result.error}`);
 
                     // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM delete successfully!' : 'Deleted AMM successfully!';
-                    if (!this.txUiService.isSimulateEnabled()) {
+                    if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
                          // const currencyChangePromise = Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
                          // const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, asset, asset2, true), currencyChangePromise]);
@@ -1341,8 +1343,9 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
      private async setTxOptionalFields(client: xrpl.Client, ammTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string) {
           if (txType === 'createAmm' || txType === 'swamViaAMM' || txType === 'depositToAmm' || txType === 'withdrawlFromAmm' || txType === 'clawbackFromAmm') {
-               if (this.txUiService.isTicket()) {
-                    const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               if (this.xrplTxOptionsStore.isTicket()) {
+                    // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+                    const ticket = false;
                     if (ticket) {
                          const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                          if (!exists) throw new Error(`Ticket ${ticket} not found`);
@@ -1394,7 +1397,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
           // Update service state
-          this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
+          // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
 
           const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
           const hasSignerList = signerAccounts?.length > 0;

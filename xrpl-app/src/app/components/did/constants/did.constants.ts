@@ -1,6 +1,9 @@
+export const DID_TAB = ['setDid', 'deleteDid'] as const;
+export type DidTab = (typeof DID_TAB)[number];
+
 export const DID_TX_TYPE_MAP = {
-     set: 'SetDID',
-     delete: 'DeleteDID',
+     setDid: 'SetDID',
+     deleteDid: 'DeleteDID',
 } as const;
 
 export const DID_TX_TYPES = {

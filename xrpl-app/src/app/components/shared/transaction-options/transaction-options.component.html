@@ -1,86 +1,89 @@
+<!-- Show Options Panel -->
 @if (showPanel()) {
 <div class="switch-group">
      @if (showMemo()) {
      <label class="switch">
-          <input type="checkbox" [ngModel]="isMemoEnabled()" (ngModelChange)="onMemoToggled($event)" name="isMemoEnabled" />
+          <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isMemoEnabled()" (ngModelChange)="onMemoToggled($event)" name="isMemoEnabled" />
           <span class="slider"></span> Add Memo
      </label>
      } @if (showMultiSign() && multiSigningEnabled()) {
      <label class="switch">
-          <input type="checkbox" [ngModel]="useMultiSign()" (ngModelChange)="onMultiSignToggled($event)" name="useMultiSign" />
+          <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.useMultiSign()" (ngModelChange)="onMultiSignToggled($event)" name="useMultiSign" />
           <span class="slider"></span> Use Multi-Sign
      </label>
      } @if (showRegularKey() && regularKeySigningEnabled()) {
      <label class="switch">
-          <input type="checkbox" [ngModel]="isRegularKeyAddress()" (ngModelChange)="onRegularKeyToggled($event)" name="isRegularKeyAddress" />
+          <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isRegularKeyAddress()" (ngModelChange)="onRegularKeyToggled($event)" name="isRegularKeyAddress" />
           <span class="slider"></span> Use Regular Key
      </label>
-     } @if (showTicket() && ticketArray().length > 0) {
+     } @if (showTicket() && this.xrplTxOptionsStore.ticketArray().length > 0) {
      <label class="switch">
-          <input type="checkbox" [ngModel]="isTicket()" (ngModelChange)="isTicket.set($event)" name="isTicket" />
+          <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isTicket()" (ngModelChange)="this.xrplTxOptionsStore.setField('isTicket', ($event))" name="isTicket" />
           <span class="slider"></span> Use Ticket
      </label>
      } @if (showSimulate()) {
      <label class="switch">
-          <input type="checkbox" [ngModel]="isSimulateEnabled()" (ngModelChange)="toggleSimulate($event)" name="isSimulateEnabled" />
+          <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isSimulateEnabled()" (ngModelChange)="toggleSimulate($event)" name="isSimulateEnabled" />
           <span class="slider"></span> Simulate
      </label>
      }
 </div>
 
-@if (isMemoEnabled()) {
-<textarea class="memo-input auto-expand-textarea" [ngModel]="memoField()" (ngModelChange)="onMemoInput($event)" name="memoField" placeholder="Separate multiple memos with commas" (input)="utilsService.adjustTextareaHeight($event)"></textarea>
-} @if (useMultiSign()) {
+<!-- Show Memo -->
+@if (this.xrplTxOptionsStore.isMemoEnabled()) {
+<textarea class="memo-input auto-expand-textarea" [ngModel]="this.xrplTxOptionsStore.memos().join(', ')" (ngModelChange)="onMemoInput($event)" name="memoField" placeholder="Separate multiple memos with commas" (input)="utilsService.adjustTextareaHeight($event)"></textarea>
+}
 
+<!-- Show Multi Sign -->
+@if (this.xrplTxOptionsStore.useMultiSign()) {
 <div class="multisign-grid">
      <div class="multisign-field">
-          <label>Signers</label>
-          <textarea [ngModel]="multiSignAddress()" readonly rows="2"> </textarea>
+          <label for="signers">Signers</label>
+          <textarea [ngModel]="this.accountConfiguratorStoreService.multiSignAddress()" readonly rows="2"> </textarea>
      </div>
-
      <div class="multisign-field">
-          <label>Seeds</label>
-          <textarea [ngModel]="multiSignSeeds()" readonly rows="2"> </textarea>
+          <label for="seeds">Seeds</label>
+          <textarea [ngModel]="this.accountConfiguratorStoreService.multiSignSeeds()" readonly rows="2"> </textarea>
      </div>
-
      <div class="multisign-field quorum-field">
-          <label>Quorum</label>
-          <input type="text" [ngModel]="signerQuorum()" readonly />
+          <label for="quorum">Quorum</label>
+          <input type="text" [ngModel]="this.accountConfiguratorStoreService.signerQuorum()" readonly />
      </div>
 </div>
+}
 
-} @if (isRegularKeyAddress()) {
-
+<!-- Show Regular Key Address -->
+@if (this.xrplTxOptionsStore.isRegularKeyAddress()) {
 <div class="regular-key-fields">
      <div class="form-row">
           <div class="form-group">
-               <label>Regular Key Address</label>
-               <input type="text" [ngModel]="regularKeyAddress()" readonly />
+               <label for="regularKeyAddress">Regular Key Address</label>
+               <input type="text" [ngModel]="this.accountConfiguratorStoreService.regularKeyAddress()" readonly />
           </div>
-
           <div class="form-group">
-               <label>Regular Key Seed</label>
-               <input type="text" [ngModel]="regularKeySeed()" readonly />
+               <label for="regularKeySeed">Regular Key Seed</label>
+               <input type="text" [ngModel]="this.accountConfiguratorStoreService.regularKeySeed()" readonly />
           </div>
      </div>
 </div>
+}
 
-} @if (isTicket() && showTicket() && ticketArray().length > 0) {
+<!-- Show Tickets -->
+@if (this.xrplTxOptionsStore.isTicket() && showTicket() && this.xrplTxOptionsStore.ticketArray().length > 0) {
 <div class="ticket-fields">
      <div class="form-group">
-          <label>Ticket Sequence</label>
-          @if (multiSelectMode()) {
-          <select [ngModel]="selectedTickets()" (ngModelChange)="selectedTickets.set($event)" multiple>
-               @for (ticket of ticketArray(); track ticket) {
+          <label for="ticketSequence">Ticket Sequence</label>
+          @if (this.xrplTxOptionsStore.multiSelectMode()) {
+          <select [ngModel]="this.xrplTxOptionsStore.selectedTickets()" (ngModelChange)="this.xrplTxOptionsStore.setField('selectedTickets' ,$event)" multiple>
+               @for (ticket of this.xrplTxOptionsStore.ticketArray(); track ticket) {
                <option [value]="ticket">{{ ticket }}</option>
                }
           </select>
           } @else {
-          <app-select-search-dropdown [items]="ticketItems()" [value]="selectedTicketItem()" (valueChange)="selectedSingleTicket.set($event?.id ?? '')" placeholder="Search or select a ticket..." noResultsText="No tickets available"> </app-select-search-dropdown>
-          @if (selectedSingleTicket()) {
-          <div class="selected-ticket-preview">Selected Ticket: <strong>{{ selectedSingleTicket() }}</strong></div>
+          <app-select-search-dropdown [items]="ticketItems()" [value]="selectedTicketItem()" (valueChange)="this.xrplTxOptionsStore.setField('selectedSingleTicket', $event?.id ?? '')" placeholder="Search or select a ticket..." noResultsText="No tickets available"> </app-select-search-dropdown>
+          @if (this.xrplTxOptionsStore.selectedSingleTicket()) {
+          <div class="selected-ticket-preview">Selected Ticket: <strong>{{ this.xrplTxOptionsStore.selectedSingleTicket() }}</strong></div>
           } }
      </div>
 </div>
-
 } }

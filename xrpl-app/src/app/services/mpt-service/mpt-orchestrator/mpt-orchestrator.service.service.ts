@@ -14,6 +14,7 @@ import { MptUtilService } from '../mpt-util/mpt-util.service';
 import { MPTAmount } from '../../../models/interface-items.model';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
 type MptTxType = 'create' | 'authorize' | 'unauthorize' | 'send' | 'lock' | 'unlock' | 'clawback' | 'destroy';
 
@@ -68,6 +69,7 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
      private readonly optionalFields = inject(TransactionOptionalFieldsService);
      public readonly mptUtilService = inject(MptUtilService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      async executeMptTx(type: MptTxType, config: MptTxConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
           const { wallet, formValues, extra = {}, preFetchedEnv } = config;
@@ -308,9 +310,10 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
                this.setCreateTxOptionalFields(mptTx, extra);
           }
 
-          const isTicket = this.txUiService.isTicket();
+          const isTicket = extra.isTicket;
           if (isTicket) {
-               const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
+               const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
                     if (!exists) throw new Error(`Ticket ${ticket} not found`);
@@ -403,8 +406,8 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
 
           if (type === 'lock' || type === 'unlock') {
                return this.executor.mptLockUnlock(tx as xrpl.MPTokenIssuanceSet, wallet, client, {
-                    useMultiSign: this.txUiService.useMultiSign(),
-                    isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                    useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                    isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                     // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                     regularKeyAddress: this.txUiService.regularKeyAddress(),
                     regularKeySeed: this.txUiService.regularKeySeed(),
@@ -415,8 +418,8 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
 
           if (type === 'clawback') {
                return this.executor.mptClawback(tx as xrpl.Clawback, wallet, client, {
-                    useMultiSign: this.txUiService.useMultiSign(),
-                    isRegularKeyAddress: this.accountConfiguratorStoreService.get('isRegularKeyAddress'),
+                    useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                    isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
                     // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
                     regularKeyAddress: this.txUiService.regularKeyAddress(),
                     regularKeySeed: this.txUiService.regularKeySeed(),

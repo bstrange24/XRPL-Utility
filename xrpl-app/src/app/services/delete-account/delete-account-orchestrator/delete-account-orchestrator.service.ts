@@ -14,6 +14,7 @@ import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-op
 import { AppConstants } from '../../../core/app.constants';
 import { ToastService } from '../../toast/toast.service';
 import { AccountDeleteConfig, AccountDeleteTxType } from '../../../components/delete-account/constants/delete-account.types';
+import { UtilsService } from '../../util-service/utils.service';
 
 @Injectable({
      providedIn: 'root',
@@ -28,6 +29,7 @@ export class DeleteAccountOrchestratorService extends PerformanceBaseComponent {
      public readonly deleteAccountStoreService = inject(DeleteAccountStoreService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly toastService = inject(ToastService);
+     private readonly utilsService = inject(UtilsService);
 
      async executeDeleteAccountTx(type: AccountDeleteTxType, config: AccountDeleteConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
           const { wallet, simulate = false, multiSign = false, destination, destinationTag, preFetchedEnv, extra = {} } = config;
@@ -81,7 +83,7 @@ export class DeleteAccountOrchestratorService extends PerformanceBaseComponent {
                const tx = this.buildDeleteAccountTransaction(type, env.wallet || wallet, env, config, { simulate, multiSign, destination, destinationTag, extra });
 
                // Optional fields
-               await this.xrplTransactionService.applyOptionalFields(client, tx, wallet, type, { simulate, multiSign, destination, destinationTag, extra }, env);
+               await this.applyOptionalFields(client, tx, wallet, type, { simulate, multiSign, destination, destinationTag, extra }, env);
 
                // Execute
                const execResult = await this.executeSpecificTx(type, tx, env.wallet || wallet, client, { simulate, multiSign, destination, destinationTag, extra });
@@ -128,6 +130,20 @@ export class DeleteAccountOrchestratorService extends PerformanceBaseComponent {
 
      private buildDeleteAccountTransaction(type: AccountDeleteTxType, wallet: xrpl.Wallet, env: any, config: any, values: any): xrpl.Transaction {
           return this.xrplTransactionService.buildAccountDeleteTransaction(wallet, values.destination, env.accountInfo, env.ledgerInfo.lastIndex);
+     }
+
+     async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, type: any, values: any, env: any) {
+          const destinationTag = this.xrplTxOptionsStore.destinationTag();
+          if (destinationTag) this.utilsService.setDestinationTag(tx, destinationTag);
+
+          const sourceTag = this.xrplTxOptionsStore.sourceTag();
+          if (sourceTag) this.utilsService.setSourceTagField(tx, sourceTag);
+
+          const memo = this.xrplTxOptionsStore.memos();
+          if (this.txUiService.isMemoEnabled() && memo) this.utilsService.addMemoField(tx, memo);
+
+          const invoiceId = this.xrplTxOptionsStore.invoiceId();
+          if (invoiceId) this.utilsService.setInvoiceIdField(tx, invoiceId);
      }
 
      private async executeSpecificTx(type: AccountDeleteTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, values: any) {
