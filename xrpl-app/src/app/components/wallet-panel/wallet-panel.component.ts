@@ -170,6 +170,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      // Called by the all pages except the Wallet Configurator page
      async generateNewAccount() {
           await this.withPerf('generateNewAccount', async () => {
+               console.log('NOT on Wallet Configurator page');
                this.txUiService.clearTxResultsHash();
                this.txUiService.resetCurrentStepToIdle();
 

@@ -13,8 +13,8 @@ import { SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-sear
      styleUrl: './permission-domain-set-form.component.css',
 })
 export class PermissionDomainSetFormComponent {
-     permissionedDomainStoreService = inject(PermissionedDomainStoreService);
-     permissionedDomainUtilService = inject(PermissionedDomainUtilService);
+     public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
+     public readonly permissionedDomainUtilService = inject(PermissionedDomainUtilService);
 
      // Inputs
      view = input.required<any>(); // for actionButtonClass / actionButtonLabel

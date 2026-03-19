@@ -1,0 +1,59 @@
+<div class="banner">
+     <div class="banner-content">
+          <div id="navbar-container">
+               <app-navbar></app-navbar>
+          </div>
+     </div>
+</div>
+
+<!-- Get view -->
+@let view = deleteAccountViewModelService;
+
+<!-- Main content. -->
+<div class="main-container">
+     <div class="content-wrapper">
+          <!-- Left Wallet panel -->
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+
+          <!-- Center form -->
+          <div class="form-panel" style="padding-top: 2em">
+               <app-tab-menu-with-info [tabs]="[]" [active]="view.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+
+               <!-- Info Message -->
+               <app-account-delete-summary [info]="view.infoData()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"></app-account-delete-summary>
+
+               <!-- Warning Message -->
+               @if (txUiService.warningMessage) {
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+               }
+
+               <form #theForm="ngForm" class="main-form">
+                    <app-account-delete-form
+                         [view]="deleteAccountViewModelService"
+                         [info]="view.infoData()"
+                         [destinationItems]="destinationItems()"
+                         [selectedDestinationItem]="selectedDestinationItem()"
+                         [destinationSearchQuery]="destinationSearchQuery()"
+                         [wantsOptions]="txUiService.wantsOptions()"
+                         [canSubmit]="canSubmit()"
+                         [tab]="view.activeTab()"
+                         (performAction)="deleteAccount()"
+                         (clearFields)="clearInputFields()"
+                         (searchQueryChange)="handleSearchQueryChange($event)"
+                         (destinationChange)="handleDestinationChange($event)"
+                         (toggleOptions)="txUiService.toggleOptions($event)"
+                    />
+
+                    <app-transaction-options [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"></app-transaction-options>
+
+                    <!-- Execution time -->
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+
+                    <!-- Transaction Preview -->
+                    <app-transaction-preview></app-transaction-preview>
+               </form>
+          </div>
+
+          <app-account-delete-requirements-info></app-account-delete-requirements-info>
+     </div>
+</div>

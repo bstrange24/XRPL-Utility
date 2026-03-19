@@ -510,6 +510,7 @@ export class XrplTransactionExecutorService {
      }
 
      async accountDelete(
+          env: any,
           tx: xrpl.AccountDelete,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -522,7 +523,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating Account Delete (no changes will be made)...',
                submitMessage: 'Deleting Account on the XRP Ledger...',
                amount: '0',

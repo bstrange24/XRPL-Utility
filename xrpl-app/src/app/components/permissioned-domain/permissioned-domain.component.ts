@@ -37,11 +37,11 @@ import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
 import { PermissionedDomainsSummaryComponent } from './ui-components/summary/permissioned-domains-summary.component';
 import { PERMISSION_DOMAIN_TAB_META, PERMISSION_DOMAIN_TABS } from './constants/permissioned-domain.ui';
-import { PermissionDomainConfig, PermissionDomainTxType } from './constants/permissioned-domain.types';
+import { PermissionDomainConfig } from './constants/permissioned-domain.types';
 import { PermissionDomainDeleteFormComponent } from './tab/permission-domain-delete-form/permission-domain-delete-form.component';
 import { PermissionDomainSetFormComponent } from './tab/permission-domain-set-form/permission-domain-set-form.component';
-import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
-import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
+import { PERMISSION_DOMAIN_TAB, PermissionDomainActionTypes } from './constants/permissioned-domain.constants';
+import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 
 @Component({
      selector: 'app-permissioned-domain',
@@ -63,6 +63,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      public readonly credentialViewModelService = inject(CredentialViewModelService);
      public readonly permissionedDomainViewModelService = inject(PermissionedDomainViewModelService);
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
+     public readonly credentialStore = inject(CredentialStore);
      readonly menuTabs: TabConfig[] = PERMISSION_DOMAIN_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = PERMISSION_DOMAIN_TAB_META;
 
@@ -92,13 +93,9 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      }
 
      async setTab(tab: string): Promise<void> {
-          const validTabs = ['setPermissionedDomain', 'deletePermissionedDomain'] as const;
-          if (validTabs.includes(tab as any)) {
-               this.permissionedDomainViewModelService.activeTab.set(tab as 'setPermissionedDomain' | 'deletePermissionedDomain');
+          if (PERMISSION_DOMAIN_TAB.includes(tab as any)) {
+               this.permissionedDomainViewModelService.activeTab.set(tab as PermissionDomainActionTypes);
                this.destinationSearchQuery.set('');
-
-               this.permissionedDomainStoreService.resetDomainDropDown();
-               this.txUiService.clearAllOptionsAndMessages();
 
                if (this.hasWallets()) await this.getPermissionedDomainForAccount();
           }
@@ -106,14 +103,16 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
      async getPermissionedDomainForAccount(forceRefresh = false): Promise<void> {
           await this.measure('getPermissionedDomainForAccount', true, async () => {
-               this.txUiService.resetCurrentStepToIdle();
+               // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
+               this.xrplTxOptionsStore.reset();
+               this.permissionedDomainStoreService.resetDomainDropDown();
 
-               if (!this.walletManagerService.ensureWalletSelected()) return;
+               if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
 
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
-                    if (!env) return;
+                    if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
@@ -130,12 +129,9 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      async performAction(): Promise<void> {
           const currentTab = this.permissionedDomainViewModelService.activeTab();
 
-          if (!this.walletManagerService.ensureWalletSelected()) return;
+          const wallet = this.walletManager.walletVm()?.wallet;
+          if (!wallet || !this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
 
-          const walletVm = this.walletManager.walletVm();
-          if (!walletVm?.wallet) return;
-
-          // 2. Early input resolution + basic guards
           let issuerAddress: string | undefined;
 
           if (currentTab === 'setPermissionedDomain') {
@@ -148,14 +144,14 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                this.permissionedDomainStoreService.setField('credentialIssuer', issuerAddress);
           }
 
-          // 3. Prepare environment once
-          let envRef: any = null;
+          let env: any = null;
           try {
-               envRef = await this.txEnvironmentService.prepareTxEnvironment({
+               env = await this.txEnvironmentService.prepareTxEnvironment({
                     includeAccountInfo: true,
                     includeAccountObject: true,
                     includeFee: true,
                     includeLedgerInfo: true,
+                    includeServerInfo: true,
                     ...(currentTab === 'setPermissionedDomain' ? { destinationAddress: issuerAddress } : {}),
                });
           } catch (err: any) {
@@ -164,7 +160,8 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                return;
           }
 
-          // Quick delete guard (optional — can move to validation later)
+          if (!env) throw new Error('Unable to get environment.');
+	  
           if (currentTab === 'deletePermissionedDomain') {
                const selectedId = this.permissionedDomainStoreService.selectedDomainId();
                if (!selectedId) {
@@ -172,7 +169,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                     return;
                }
 
-               const found = envRef.accountObjects?.result?.account_objects?.some((obj: any) => obj.LedgerEntryType === 'PermissionedDomain' && obj.index === selectedId);
+               const found = env.accountObjects?.result?.account_objects?.some((obj: any) => obj.LedgerEntryType === 'PermissionedDomain' && obj.index === selectedId);
 
                if (!found) {
                     this.toastService.error(`Permissioned domain with ID ${selectedId} not found.`, AppConstants.TOAST.ERROR);
@@ -180,50 +177,45 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                }
           }
 
-          // 4. Build rich config
+          const permissionedDomainState = this.permissionedDomainStoreService.getAll();
+          const accountState = this.accountConfiguratorStoreService.getAll();
+          const txOptionsState = this.xrplTxOptionsStore.getAll();
+
           const config: PermissionDomainConfig = {
-               wallet: walletVm.wallet,
-               simulate: this.xrplTxOptionsStore.isSimulateEnabled(),
-               multiSign: this.xrplTxOptionsStore.useMultiSign(),
-               preFetchedEnv: envRef,
-               credentialType: this.permissionedDomainStoreService.credentialType(),
-               credentialIssuer: this.permissionedDomainStoreService.credentialIssuer(),
-               domainId: this.permissionedDomainStoreService.selectedDomainId(),
+               permissionedDomain: permissionedDomainState,
+               account: accountState,
+               txOptions: txOptionsState,
+               wallet: wallet,
+               preFetchedEnv: env,
                extra: {},
           };
 
-          // 5. Execute via orchestrator
-          const actionMap: Record<'setPermissionedDomain' | 'deletePermissionedDomain', PermissionDomainTxType> = {
-               setPermissionedDomain: 'setPermissionedDomain',
-               deletePermissionedDomain: 'deletePermissionedDomain',
-          };
-
-          const txType = actionMap[currentTab];
-          if (!txType) {
-               this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
-               return;
-          }
-
-          let txResult: { success: boolean; hash?: string; error?: string; validationError?: boolean } | null = null;
+          let txResult: { success: boolean; hash?: string; error?: string } | null = null;
 
           await this.withPerf('performAction', async () => {
                try {
-                    txResult = await this.permissionedDomainOrchestratorService.executePermissionDomainTx(txType, config);
-               } catch (err: any) {
-                    console.error(`[${currentTab}] execution failed:`, err);
-                    this.toastService.error(err.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    switch (currentTab) {
+                         case 'setPermissionedDomain':
+                              txResult = await this.permissionedDomainOrchestratorService.executePermissionDomainTx('setPermissionedDomain', config);
+                              break;
+                         case 'deletePermissionedDomain':
+                              txResult = await this.permissionedDomainOrchestratorService.executePermissionDomainTx('deletePermissionedDomain', config);
+                              break;
+                    }
+               } catch (error: any) {
+                    console.error(`[${currentTab}] execution failed:`, error);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
                     return;
                }
           });
 
-          if (!txResult) return;
+          if (!txResult) {
+               throw new Error('Unable error when submitting transaction.');
+          }
 
-          // 6. Handle result + side effects
-          if (txResult) {
-               const successFullTx: boolean = await this.handleTxResult(txResult, envRef.client, envRef.wallet, issuerAddress, this.permissionedDomainStoreService.credentialIssuer(), '');
-               if (currentTab === 'deletePermissionedDomain' && successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
-                    this.permissionedDomainStoreService.resetDomainDropDown();
-               }
+          const successFullTx: boolean = await this.handleTxResult(txResult, env.client, env.wallet, issuerAddress, this.permissionedDomainStoreService.credentialIssuer(), '');
+          if (currentTab === 'deletePermissionedDomain' && successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
+               this.permissionedDomainStoreService.resetDomainDropDown();
           }
 
           this.txUiService.resetCurrentStepToIdle();

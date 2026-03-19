@@ -34,7 +34,6 @@ export class AcccountDataService extends PerformanceBaseComponent {
      hasSignerList = signal<boolean>(false);
 
      refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
-          // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
           this.xrplTxOptionsStore.setField('ticketArray', this.utilsService.getAccountTickets(accountObjects));
           const store = this.accountConfiguratorStoreService;
 
@@ -46,9 +45,7 @@ export class AcccountDataService extends PerformanceBaseComponent {
           checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
           store.setField('multiSigningEnabled', hasSignerList);
           if (hasSignerList) {
-               console.log('hasSignerList: ', hasSignerList);
                const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               console.log('entries: ', entries);
                if (entries.length > 0) store.setField('signers', entries);
                else store.setField('signers', [{ Account: '', seed: '', SignerWeight: 1 }]);
           } else {
@@ -87,7 +84,6 @@ export class AcccountDataService extends PerformanceBaseComponent {
 
      public setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
           const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-          console.log('setupMultiSignersConfiguration hasSignerList: ', signerEntries);
           const store = this.accountConfiguratorStoreService;
           store.setField('signers', signerEntries);
           store.setField('multiSignAddress', signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));

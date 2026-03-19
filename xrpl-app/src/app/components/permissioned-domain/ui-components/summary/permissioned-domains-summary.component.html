@@ -22,7 +22,7 @@
      <section class="credentials-list-container" [class.expanded]="infoPanelExpanded()" aria-label="Permissioned domains list">
           <ul class="credentials-list">
                @for (domain of info()!.permissionedDomainsToShow; track domain.index) {
-               <li class="credential-item" [class.selected-from-list]="isSelected(domain.index)" [style.cursor]="getCursorStyle()" (click)="selectDomain(domain)">
+               <li class="credential-item" [class.selected-from-list]="isSelected(domain.index)" (click)="selectDomain(domain)" (keydown.enter)="selectDomain(domain)" (keydown.space)="selectDomain(domain); $event.preventDefault()" [style.cursor]="getCursorStyle()" (click)="selectDomain(domain)">
                     <div class="credential-meta">
                          <app-tooltip-link [href]="explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer">
                               <div>Domain ID: <code>{{ domain.index }}</code></div>

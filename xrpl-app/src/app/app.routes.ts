@@ -8,7 +8,7 @@ import { CreateOfferComponent } from './components/offer/offer.component';
 import { CreateNftComponent } from './components/nft-create/nft-create.component';
 import { CreateAmmComponent } from './components/amm/amm.component';
 import { TrustlinesComponent } from './components/trustlines/trustlines.component';
-import { DeleteAccountComponent } from './components/delete-account/delete-account.component';
+import { AccountDeleteComponent } from './components/account-delete/account-delete.component';
 import { AccountConfiguratorComponent } from './components/account-configurator/account-configurator.component';
 import { CreateCredentialsComponent } from './components/credentials/credentials.component';
 import { DidComponent } from './components/did/did.component';
@@ -27,7 +27,7 @@ export const routes: Routes = [
      { path: '', redirectTo: '/account-configurator', pathMatch: 'full' },
      { path: 'account-balance-changes', component: AccountChangesComponent, data: { title: 'Account Changes' } },
      { path: 'set-hook', component: SetHookComponent, data: { title: 'Set Hook' } },
-     { path: 'delete-account', component: DeleteAccountComponent, data: { title: 'Account Delete' } },
+     { path: 'delete-account', component: AccountDeleteComponent, data: { title: 'Account Delete' } },
      { path: 'account-configurator', component: AccountConfiguratorComponent, data: { title: 'Account Configurator' } },
      { path: 'wallet-configurator', component: WalletConfiguratorComponent, data: { title: 'Wallet Configurator' } },
      { path: 'create-credentials', component: CreateCredentialsComponent, data: { title: 'Account Credentials' } },

@@ -1,5 +1,9 @@
 import { PermissionDomainTxType, PermissionedDomainTab, PermissionedDomainTxTypeFull } from './permissioned-domain.types';
 
+export const PERMISSION_DOMAIN_TAB = ['setPermissionedDomain', 'deletePermissionedDomain'] as const;
+export type PermissionDomainTab = (typeof PERMISSION_DOMAIN_TAB)[number];
+export type PermissionDomainActionTypes = 'setPermissionedDomain' | 'deletePermissionedDomain';
+
 // Transaction types
 export const PERMISSION_DOMAIN_TX_TYPES = {
      SET: 'setPermissionedDomain',

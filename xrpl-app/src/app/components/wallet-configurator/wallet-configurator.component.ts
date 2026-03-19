@@ -173,6 +173,7 @@ export class WalletConfiguratorComponent extends PerformanceBaseComponent implem
           await this.withPerf('generateNewAccount', async () => {
                this.txUiService.clearTxResultsHash();
                this.txUiService.resetCurrentStepToIdle();
+               console.log('ON Wallet Configurator page');
 
                this.txUiService.buttonLoading.update(s => ({
                     ...s,

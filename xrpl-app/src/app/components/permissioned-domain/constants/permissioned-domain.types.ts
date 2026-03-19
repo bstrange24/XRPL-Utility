@@ -1,23 +1,23 @@
 import * as xrpl from 'xrpl';
 import { Wallet } from '../../../services/wallets/manager/wallet-manager.service';
+import { PermissionedDomainState } from '../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
+import { AccountConfiguratorState } from '../../account-configurator/constants/account-configurator.types';
+import { XrplTxOptionsState } from '../../shared/stores/xrpl-tx-options.store';
+import { CredentialState } from '../../../services/credentials/credential-store/credential-store.service';
 
-// Core types
 export type PermissionDomainTxType = 'setPermissionedDomain' | 'deletePermissionedDomain';
 export type PermissionedDomainField = 'createdPermissionedDomains' | 'createdDomains' | 'selectedDomainId' | 'credentialType' | 'credentialIssuer' | 'subject' | 'credentialIdSearchQuery' | 'regularKeySigningEnabled';
-
 export type PermissionedDomainTab = 'setPermissionedDomain' | 'deletePermissionedDomain';
 export type PermissionedDomainTxTypeFull = 'setPermissionedDomain' | 'deletePermissionedDomain';
 export type PermissionedDomainConfigTxDisplayType = 'setPermissionedDomain' | 'deletePermissionedDomain';
 export type IconType = 'ng-icon' | 'lucide-icon';
 
 export interface PermissionDomainConfig {
+     permissionedDomain: PermissionedDomainState;
+     account?: AccountConfiguratorState;
+     txOptions?: XrplTxOptionsState;
+     credential?: CredentialState;
      wallet: Wallet;
-     simulate?: boolean;
-     multiSign?: boolean;
-     credentialType?: string;
-     credentialIssuer?: string;
-     domainId?: string;
-     subjectDestination?: string;
      preFetchedEnv?: {
           client: xrpl.Client;
           accountInfo: any;
