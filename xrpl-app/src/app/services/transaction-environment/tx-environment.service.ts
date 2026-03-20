@@ -4,8 +4,8 @@ import { XrplCacheService } from '../xrpl-cache/xrpl-cache.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { Wallet, WalletManagerService } from '../wallets/manager/wallet-manager.service';
 import { UtilsService } from '../util-service/utils.service';
-import { AppConstants } from '../../core/app.constants';
 import { ToastService } from '../toast/toast.service';
+import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 
 export interface PrepareTxEnvironmentOptions {
      includeTickets?: boolean;
@@ -68,6 +68,7 @@ export class TxEnvironmentService {
      private readonly walletManager = inject(WalletManagerService);
      private readonly utilsService = inject(UtilsService);
      public readonly toastService = inject(ToastService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      private readonly DEFAULT_ENV_CONFIG = { includeAccountInfo: true, includeAccountObject: true } as const;
 
      async prepareTxEnvironment(options: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
@@ -196,7 +197,7 @@ export class TxEnvironmentService {
                     throw new Error('Failed to fetch account information');
                }
 
-               return env as PrepareTxEnvironmentResult;
+               return env;
           } catch (error: any) {
                throw new Error(`Error preparing transaction environment: ${error.message}`);
           }
@@ -221,6 +222,7 @@ export class TxEnvironmentService {
           if (!wallet?.seed && !wallet?.mnemonic && !wallet?.secretNumbers) {
                throw new Error('Selected wallet has no valid signing material.');
           }
+          this.xrplTxOptionsStore.resetOptions();
           return wallet;
      }
 

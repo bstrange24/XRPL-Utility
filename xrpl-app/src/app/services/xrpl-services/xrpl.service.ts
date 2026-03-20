@@ -2,11 +2,10 @@ import { Injectable } from '@angular/core';
 import { Client, GatewayBalancesResponse } from 'xrpl';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
-import { BehaviorSubject, firstValueFrom } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { TokenCacheService } from '../token-cache/token-cache.service';
 import { StorageService } from '../local-storage/storage.service';
-import { EscrowObject } from '../../models/interface-items.model';
 
 interface MptInfoRequest {
      command: 'mpt_info';
@@ -39,12 +38,12 @@ export class XrplService {
      tokens$ = this.tokensSubject.asObservable();
      private readonly proxyServer = 'http://localhost:3000';
      private connectingPromise: Promise<xrpl.Client> | null = null; // ← Prevents double connection attempts
-     // ← NEW: shared connection state
-     private connectionStatus = new BehaviorSubject<'disconnected' | 'connecting' | 'connected'>('disconnected');
+     private readonly connectionStatus = new BehaviorSubject<'disconnected' | 'connecting' | 'connected'>('disconnected');
      public connectionStatus$ = this.connectionStatus.asObservable();
-
-     private connectionMessage = new BehaviorSubject<string>('Disconnected');
+     private readonly connectionMessage = new BehaviorSubject<string>('Disconnected');
      public connectionMessage$ = this.connectionMessage.asObservable();
+     private reconnectAttempts = 0;
+     private reconnectTimeout: any = null;
 
      constructor(
           private readonly storageService: StorageService,
@@ -80,21 +79,49 @@ export class XrplService {
           const maxRetries = 5;
           const baseDelay = 1000;
 
+          // Log which network you're trying to connect to
+          console.log(`Attempting to connect to: ${net}`);
+
           // Update shared status immediately
-          this.setStatus('connecting', 'Connecting...');
+          this.setStatus('connecting', `Connecting to ${this.getNetworkName()}...`);
 
           for (let attempt = 1; attempt <= maxRetries; attempt++) {
-               const client = new xrpl.Client(net);
+               const client = new xrpl.Client(net, {
+                    connectionTimeout: 20000, // 20 seconds
+                    timeout: 20000,
+                    headers: {
+                         'User-Agent': 'Your-App-Name/1.0',
+                    },
+               });
+
+               // Add event listeners for debugging
+               client.on('connected', () => {
+                    console.log(`Connected to ${net}`);
+               });
+
+               client.on('disconnected', code => {
+                    console.warn(`Disconnected from ${net}: Code ${code}`);
+               });
+
+               client.on('error', error => {
+                    console.error(`Client error on ${net}:`, error);
+               });
 
                try {
+                    console.log(`Connection attempt ${attempt}/${maxRetries} to ${net}`);
+
                     // Set a reasonable timeout (xrpl.js default is infinite)
                     const connectPromise = client.connect();
                     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 15_000));
 
                     await Promise.race([connectPromise, timeoutPromise]);
 
-                    // Success! Verify with a lightweight call
-                    await client.request({ command: 'server_info' });
+                    // Verify connection with a lightweight call
+                    const serverInfo = await client.request({ command: 'server_info' });
+                    console.log(`Connected successfully to ${net}`, {
+                         version: serverInfo.result.info?.build_version,
+                         ledger: serverInfo.result.info?.validated_ledger?.seq,
+                    });
 
                     this.client = client;
 
@@ -107,26 +134,67 @@ export class XrplService {
                          console.warn('XRPL client disconnected:', code);
                          this.setStatus('disconnected', 'Connection lost');
                          this.client = null;
+                         // Optionally trigger reconnection
+                         this.scheduleReconnect();
                     });
 
                     return client;
                } catch (error: any) {
-                    console.warn(`XRPL connection attempt ${attempt}/${maxRetries} failed:`, error.message);
+                    console.error(`XRPL connection attempt ${attempt}/${maxRetries} failed:`, {
+                         message: error.message,
+                         net: net,
+                         attempt: attempt,
+                    });
+
+                    // Attempt to close the client if it was partially connected
+                    try {
+                         await client.disconnect();
+                    } catch (disconnectError: any) {
+                         console.error(`Disconnection error: ${disconnectError.message}`);
+                    }
 
                     if (attempt === maxRetries) {
-                         const msg = `Failed to connect after ${maxRetries} attempts`;
+                         const msg = `Failed to connect to ${this.getNetworkName()} after ${maxRetries} attempts`;
                          this.setStatus('disconnected', msg);
                          throw new Error(msg);
                     }
 
-                    // Exponential backoff (1s, 2s, 4s, 8s...)
+                    // Exponential backoff with jitter to avoid thundering herd
                     const delay = baseDelay * Math.pow(2, attempt - 1);
-                    await new Promise(resolve => setTimeout(resolve, delay));
+                    const jitter = Math.random() * 1000;
+                    const totalDelay = delay + jitter;
+
+                    console.log(`Retrying in ${Math.round(totalDelay)}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, totalDelay));
                }
           }
 
           // This should never reach here
           throw new Error('Unexpected connection failure');
+     }
+
+     private scheduleReconnect() {
+          if (this.reconnectTimeout) {
+               clearTimeout(this.reconnectTimeout);
+          }
+
+          // Exponential backoff for reconnection
+          const delay = Math.min(30000, Math.pow(2, this.reconnectAttempts) * 1000);
+          this.reconnectAttempts++;
+
+          console.log(`Scheduling reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+
+          this.reconnectTimeout = setTimeout(async () => {
+               try {
+                    await this.getClient();
+                    this.reconnectAttempts = 0; // Reset on successful reconnect
+               } catch (error) {
+                    console.error('Reconnection failed:', error);
+                    if (this.reconnectAttempts < 10) {
+                         this.scheduleReconnect();
+                    }
+               }
+          }, delay);
      }
 
      async disconnect() {
@@ -151,6 +219,7 @@ export class XrplService {
      getCurrentStatus() {
           return this.connectionStatus.value;
      }
+
      getCurrentMessage() {
           return this.connectionMessage.value;
      }

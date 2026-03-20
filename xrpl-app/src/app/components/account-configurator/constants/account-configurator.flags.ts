@@ -72,7 +72,7 @@ export const XRPL_ACCOUNT_FLAGS_CONFIG: {
      {
           key: 'asfDisableMaster',
           title: 'Disable Master Key',
-          desc: 'Disallow use of the master key pair. Can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.',
+          desc: 'Disallow use of the master key pair.',
      },
      {
           key: 'asfNoFreeze',

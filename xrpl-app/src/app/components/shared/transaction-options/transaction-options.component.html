@@ -39,15 +39,15 @@
 <div class="multisign-grid">
      <div class="multisign-field">
           <label for="signers">Signers</label>
-          <textarea [ngModel]="this.accountConfiguratorStoreService.multiSignAddress()" readonly rows="2"> </textarea>
+          <textarea class="input-monospace" [ngModel]="this.accountConfiguratorStoreService.multiSignAddress()" readonly rows="2"> </textarea>
      </div>
      <div class="multisign-field">
           <label for="seeds">Seeds</label>
-          <textarea [ngModel]="this.accountConfiguratorStoreService.multiSignSeeds()" readonly rows="2"> </textarea>
+          <textarea class="input-monospace" [ngModel]="this.accountConfiguratorStoreService.multiSignSeeds()" readonly rows="2"> </textarea>
      </div>
      <div class="multisign-field quorum-field">
           <label for="quorum">Quorum</label>
-          <input type="text" [ngModel]="this.accountConfiguratorStoreService.signerQuorum()" readonly />
+          <input class="input-monospace" type="text" [ngModel]="this.accountConfiguratorStoreService.signerQuorum()" readonly />
      </div>
 </div>
 }
@@ -58,11 +58,11 @@
      <div class="form-row">
           <div class="form-group">
                <label for="regularKeyAddress">Regular Key Address</label>
-               <input type="text" [ngModel]="this.accountConfiguratorStoreService.regularKeyAddress()" readonly />
+               <input type="text" class="input-monospace" [ngModel]="this.accountConfiguratorStoreService.regularKeyAddress()" readonly />
           </div>
           <div class="form-group">
                <label for="regularKeySeed">Regular Key Seed</label>
-               <input type="text" [ngModel]="this.accountConfiguratorStoreService.regularKeySeed()" readonly />
+               <input type="text" class="input-monospace" [ngModel]="this.accountConfiguratorStoreService.regularKeySeed()" readonly />
           </div>
      </div>
 </div>

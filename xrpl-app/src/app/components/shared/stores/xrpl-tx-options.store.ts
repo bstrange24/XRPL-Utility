@@ -121,5 +121,16 @@ export const XrplTxOptionsStore = signalStore(
                }
                return snapshot as XrplTxOptionsState;
           },
+
+          resetOptions() {
+               patchState(store, {
+                    isMemoEnabled: false,
+                    isSimulateEnabled: false,
+                    useMultiSign: false,
+                    isRegularKeyAddress: false,
+                    isTicket: false,
+                    memos: [],
+               });
+          },
      }))
 );

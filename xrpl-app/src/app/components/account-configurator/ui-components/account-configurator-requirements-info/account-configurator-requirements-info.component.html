@@ -69,7 +69,7 @@
                     <li><strong>asfNoFreeze</strong>: Permanently disables freezing trust lines or global freeze — irreversible; requires master key to set.</li>
                     <li><strong>asfAllowTrustLineClawback</strong>: Permanently enables clawback on issued tokens — irreversible; requires no objects (trust lines, offers, etc.) to set.</li>
                     <li><strong>asfAllowTrustLineLocking</strong>: Permanently allows escrow/locking of issued tokens — irreversible after enabling.</li>
-                    <li><strong>asfDisableMaster</strong>: Disables master key signing — can only be enabled with master key; disable via regular key or multi-sign.</li>
+                    <li><strong>asfDisableMaster</strong>: Disables master key signing —  can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.</li>
                     <li>asfRequireAuth: Can only be enabled if account has <strong>no trust lines</strong> or offers.</li>
                     <li>Always verify requirements and test on devnet — wrong flags can lock you out or limit functionality permanently.</li>
                </ul>
