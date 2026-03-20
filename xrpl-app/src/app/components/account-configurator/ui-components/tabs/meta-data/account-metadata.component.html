@@ -34,8 +34,23 @@
           <label for="domain">Domain</label>
           <p class="form-hint">Domain name for this account.</p>
           <input type="text" [ngModel]="accountConfiguratorStoreService.domain()" (ngModelChange)="accountConfiguratorStoreService.setField('domain', $event)" name="domain" />
-     </div>
 
+          @if (accountConfiguratorStoreService.domain()) {
+          <div class="domain-preview">
+               <small>Will be sent as hex:</small>
+               <code class="hex-preview">{{ domainHex() || '(empty)' }}</code>
+
+               <small>
+                    Length: {{ domainHexLengthBytes() }} bytes @if (isDomainTooLong()) {
+                    <span class="error"> → Too long (max 256 bytes)</span>
+                    }
+               </small>
+          </div>
+          }
+     </div>
+</div>
+
+<div class="form-row">
      <div class="form-group-account-flags">
           <!-- isMessageKey -->
           <button type="button" class="flag-item-account-flags" [class.enabled]="accountConfiguratorStoreService.isMessageKey()" (click)="accountConfiguratorUtilService.toggleMessageKey()">

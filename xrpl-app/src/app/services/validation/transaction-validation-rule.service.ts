@@ -1373,56 +1373,177 @@ export class ValidationService {
                requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
-
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
+                    // At least one field must be changed (otherwise no-op)
                     ctx => {
-                         if (this.txUiService.tickSize()) {
-                              const tickSize = Number.parseInt(this.txUiService.tickSize());
-                              if (tickSize == 0) {
-                                   return null;
-                              }
-
-                              if (tickSize < 3 || tickSize > 15) {
-                                   return 'Invalid tick size. The tick size valid values are 3 to 15 inclusive, or 0 to disable';
-                              }
+                         const { tickSize, transferRate, domain } = ctx.inputs['updateMetaData'] || {};
+                         if ((tickSize === '' || tickSize == null) && (transferRate === '' || transferRate == null) && (domain === '' || domain == null)) {
+                              return 'At least one metadata field (TickSize, TransferRate, or Domain) must be provided to update.';
                          }
                          return null;
                     },
 
+                    // TickSize: 0 (disable) or 3–15
                     ctx => {
-                         if (this.txUiService.transferRate()) {
+                         const tick = ctx.inputs['updateMetaData']?.tickSize;
+                         if (tick == null || tick === '') return null;
+
+                         const value = Number.parseInt(tick, 10);
+                         if (Number.isNaN(value)) {
+                              return 'TickSize must be a valid integer.';
+                         }
+                         if (value !== 0 && (value < 3 || value > 15)) {
+                              return 'TickSize must be 0 (to disable) or between 3 and 15 inclusive.';
+                         }
+                         return null;
+                    },
+
+                    // TransferRate: 0%–100% → 1_000_000_000 to 2_000_000_000 (or 0 to disable)
+                    ctx => {
+                         const rateStr = ctx.inputs['updateMetaData']?.transferRate;
+                         if (rateStr == null || rateStr === '') return null;
+
+                         try {
+                              // Assuming percentToTransferRate is your helper (e.g. "0.5%" → 1000000000 + fee)
+                              const transferRate = percentToTransferRate(rateStr + '%');
+
+                              if (transferRate === 0) return null; // disable is allowed
+
+                              if (transferRate < 1_000_000_000 || transferRate > 2_000_000_000) {
+                                   return 'TransferRate must be between 0% (disable) and 100% inclusive.';
+                              }
+                         } catch (error: any) {
+                              console.error(`Error validating transfer rate: ${error.message}`);
+                              return 'Invalid transfer rate format. Use a percentage (e.g. 0.3% or 100%).';
+                         }
+                         return null;
+                    },
+
+                    // Domain: valid hex or empty (to clear)
+                    // Domain validation – accepts plain text or hex
+                    ctx => {
+                         const domainInput = ctx.inputs['updateMetaData']?.domain?.trim();
+                         if (!domainInput) return null; // empty = clear domain → allowed
+
+                         // Helper: check if input looks like raw hex
+                         const isHex = /^[0-9A-Fa-f]+$/.test(domainInput);
+
+                         let hexValue: string;
+
+                         if (isHex) {
+                              // Treat as hex
+                              hexValue = domainInput.toUpperCase();
+
+                              // Length limit: max 256 bytes = 512 hex chars
+                              if (hexValue.length > 512) {
+                                   return 'Domain hex is too long (maximum 512 hex characters / 256 bytes).';
+                              }
+
+                              // Optional: must be even length (bytes)
+                              if (hexValue.length % 2 !== 0) {
+                                   return 'Domain hex must have an even number of characters.';
+                              }
+
+                              // Try to decode to warn about invalid UTF-8 early
                               try {
-                                   const transferRate = percentToTransferRate(this.txUiService.transferRate() + '%');
-
-                                   if (transferRate === 0) {
-                                        return null;
+                                   const decoded = xrpl.convertHexToString(hexValue);
+                                   if (new TextEncoder().encode(decoded).length > 256) {
+                                        return 'Decoded domain exceeds 256 bytes (XRPL limit).';
                                    }
+                              } catch (error: any) {
+                                   console.error(`Invalid hex domain cannot decode to valid UTF-8 string. Error: ${error.message}`);
+                                   return 'Invalid hex domain: cannot decode to valid UTF-8 string.';
+                              }
+                         } else {
+                              // Treat as plain text → encode to hex
+                              try {
+                                   hexValue = xrpl.convertStringToHex(domainInput);
 
-                                   if (transferRate < 1000000000 || transferRate > 2000000000) {
-                                        return `Invalid transfer rate. Must be between 0% (no fee) and 100% inclusive.`;
+                                   // Check encoded length
+                                   if (hexValue.length > 512) {
+                                        return `Domain is too long after encoding (${domainInput.length} characters → ${hexValue.length / 2} bytes). Maximum is 256 bytes.`;
                                    }
-                              } catch (error) {
-                                   console.error('Error parsing transfer rate:', error);
-                                   return `Invalid transfer rate. Must be between 0% (no fee) and 100% inclusive.`;
+                              } catch (error: any) {
+                                   console.error(`Invalid domain string: cannot encode to valid hex. Error: ${error.message}`);
+                                   return 'Invalid domain string: cannot encode to valid hex.';
                               }
                          }
+
+                         // If we got here → valid in either format
                          return null;
                     },
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
-
-                    // Ticket validation
                     this.ticketValidation(),
-
-                    // Regular Key signing requirements (only if selected and not multi-signing)
                     ...this.regularKeySigningValidation(),
-
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
                ],
           });
+
+          // UpdateMetaData Actions
+          // this.registerRule({
+          //      transactionType: 'UpdateMetaData',
+          //      requiredFields: [],
+          //      validators: [
+          //           this.walletCredentialRequired(),
+
+          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+          //           ctx => {
+          //                if (ctx.inputs['updateMetaData']['tickSize'] === '' && ctx.inputs['updateMetaData']['transferRate'] === '' && ctx.inputs['updateMetaData']['domain'] === '') {
+          //                     return 'Enter meta data values to be modified.';
+          //                }
+          //                return null;
+          //           },
+
+          //           ctx => {
+          //                if (ctx.inputs['updateMetaData']['tickSize']) {
+          //                     const tickSize = Number.parseInt(ctx.inputs['updateMetaData']['tickSize']);
+          //                     if (tickSize == 0) {
+          //                          return null;
+          //                     }
+
+          //                     if (tickSize < 3 || tickSize > 15) {
+          //                          return 'Invalid tick size. The tick size valid values are 3 to 15 inclusive, or 0 to disable';
+          //                     }
+          //                }
+          //                return null;
+          //           },
+
+          //           ctx => {
+          //                if (ctx.inputs['updateMetaData']['transferRate']) {
+          //                     try {
+          //                          const transferRate = percentToTransferRate(ctx.inputs['updateMetaData']['transferRate'] + '%');
+
+          //                          if (transferRate === 0) {
+          //                               return null;
+          //                          }
+
+          //                          if (transferRate < 1000000000 || transferRate > 2000000000) {
+          //                               return `Invalid transfer rate. Must be between 0% (no fee) and 100% inclusive.`;
+          //                          }
+          //                     } catch (error) {
+          //                          console.error('Error parsing transfer rate:', error);
+          //                          return `Invalid transfer rate. Must be between 0% (no fee) and 100% inclusive.`;
+          //                     }
+          //                }
+          //                return null;
+          //           },
+
+          //           // Master key disabled → must use Regular Key or Multi-Sign
+          //           this.masterKeyDisabledRequiresAltSigning(),
+
+          //           // Ticket validation
+          //           this.ticketValidation(),
+
+          //           // Regular Key signing requirements (only if selected and not multi-signing)
+          //           ...this.regularKeySigningValidation(),
+
+          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
+          //           this.multiSign(),
+          //      ],
+          // });
 
           // SetDepositAuthAccounts Actions
           this.registerRule({
@@ -1430,37 +1551,122 @@ export class ValidationService {
                requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
-
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
+                    // List cannot be empty if authorizing
                     ctx => {
-                         // Validate each address
-                         for (const authorizedAddress of ctx.inputs['modifyDepositAuth'].depsositAuthEntries) {
-                              // Check for existing preauthorization
-                              const alreadyAuthorized = ctx.inputs['network']['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.Account);
-                              if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'Y' && alreadyAuthorized) {
-                                   return `Preauthorization already exists for ${authorizedAddress.Account} (tecDUPLICATE).\nUse Unauthorize to remove.`;
+                         const entries = ctx.inputs['modifyDepositAuth']?.depsositAuthEntries || [];
+                         if (entries.length === 0 && ctx.inputs['modifyDepositAuth']?.authorizeFlag === 'Y') {
+                              return 'At least one address must be provided when authorizing.';
+                         }
+                         return null;
+                    },
+
+                    // Validate each address format + no self-authorization
+                    ctx => {
+                         const entries = ctx.inputs['modifyDepositAuth']?.depsositAuthEntries || [];
+                         const selfAddr = ctx.accountInfo?.result?.account_data?.Account;
+
+                         for (const [index, entry] of entries.entries()) {
+                              const addr = entry?.Account?.trim();
+                              if (!addr) {
+                                   return `Deposit auth address #${index + 1}: missing or empty.`;
                               }
-                              if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'N' && !alreadyAuthorized) {
-                                   return `No preauthorization exists for ${authorizedAddress.Account}`;
+
+                              if (!xrpl.isValidClassicAddress(addr)) {
+                                   return `Deposit auth address #${index + 1}: "${addr}" is not a valid XRPL classic address.`;
+                              }
+
+                              if (selfAddr && addr === selfAddr) {
+                                   return `Cannot ${ctx.inputs['modifyDepositAuth'].authorizeFlag === 'Y' ? 'authorize' : 'unauthorize'} the account itself (${addr}).`;
                               }
                          }
                          return null;
                     },
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
+                    // Check for duplicates in the submitted list
+                    ctx => {
+                         const entries = ctx.inputs['modifyDepositAuth']?.depsositAuthEntries || [];
+                         const seen = new Set<string>();
+
+                         for (const [index, entry] of entries.entries()) {
+                              const addr = entry?.Account?.trim();
+                              if (addr && seen.has(addr)) {
+                                   return `Duplicate address detected: ${addr} (appears multiple times in the list).`;
+                              }
+                              if (addr) seen.add(addr);
+                         }
+                         return null;
+                    },
+
+                    // Existing preauth checks (already good, but cleaner)
+                    ctx => {
+                         const entries = ctx.inputs['modifyDepositAuth']?.depsositAuthEntries || [];
+                         const authorize = ctx.inputs['modifyDepositAuth']?.authorizeFlag === 'Y';
+                         const accountObjects = ctx.inputs['network']?.accountObjects?.result?.account_objects || [];
+
+                         for (const entry of entries) {
+                              const addr = entry?.Account?.trim();
+                              if (!addr) continue;
+
+                              const alreadyAuthorized = accountObjects.some((obj: any) => obj.LedgerEntryType === 'DepositPreauth' && obj.Authorize === addr);
+
+                              if (authorize && alreadyAuthorized) {
+                                   return `Address ${addr} is already preauthorized (tecDUPLICATE). Use Unauthorize instead.`;
+                              }
+                              if (!authorize && !alreadyAuthorized) {
+                                   return `No preauthorization exists for ${addr} — nothing to unauthorize.`;
+                              }
+                         }
+                         return null;
+                    },
+
                     this.masterKeyDisabledRequiresAltSigning(),
-
-                    // Ticket validation
                     this.ticketValidation(),
-
-                    // Regular Key signing requirements (only if selected and not multi-signing)
                     ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    // Remove this — multi-sign unrelated
                     this.multiSign(),
                ],
           });
+
+          // SetDepositAuthAccounts Actions
+          // this.registerRule({
+          //      transactionType: 'SetDepositAuthAccounts',
+          //      requiredFields: [],
+          //      validators: [
+          //           this.walletCredentialRequired(),
+
+          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+          //           ctx => {
+          //                // Validate each address
+          //                for (const authorizedAddress of ctx.inputs['modifyDepositAuth'].depsositAuthEntries) {
+          //                     // Check for existing preauthorization
+          //                     const alreadyAuthorized = ctx.inputs['network']['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.Account);
+          //                     if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'Y' && alreadyAuthorized) {
+          //                          return `Preauthorization already exists for ${authorizedAddress.Account} (tecDUPLICATE).\nUse Unauthorize to remove.`;
+          //                     }
+          //                     if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'N' && !alreadyAuthorized) {
+          //                          return `No preauthorization exists for ${authorizedAddress.Account}`;
+          //                     }
+          //                }
+          //                return null;
+          //           },
+
+          //           // Master key disabled → must use Regular Key or Multi-Sign
+          //           this.masterKeyDisabledRequiresAltSigning(),
+
+          //           // Ticket validation
+          //           this.ticketValidation(),
+
+          //           // Regular Key signing requirements (only if selected and not multi-signing)
+          //           ...this.regularKeySigningValidation(),
+
+          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
+          //           this.multiSign(),
+          //      ],
+          // });
 
           // SetMultiSign Actions
           this.registerRule({
@@ -1475,6 +1681,133 @@ export class ValidationService {
                          // Validate each address
                          if (ctx.inputs['modifyMultiSigners']['formattedSignerEntries'].length < 1) {
                               return `Multi signers list cannot be empty.`;
+                         }
+                         return null;
+                    },
+
+                    ctx => {
+                         const entries = ctx.inputs['modifyMultiSigners']['formattedSignerEntries'] || [];
+
+                         if (entries.length === 0) return null; // already checked by "cannot be empty"
+
+                         for (const [index, entry] of entries.entries()) {
+                              const addr = entry?.SignerEntry?.Account?.trim();
+
+                              if (!addr) {
+                                   return `Signer at position ${index + 1}: missing or empty Account address.`;
+                              }
+
+                              // Use xrpl.js official validation
+                              if (!xrpl.isValidClassicAddress(addr)) {
+                                   return `Signer at position ${index + 1}: "${addr}" is not a valid XRPL classic address (checksum failed or malformed).`;
+                              }
+
+                              // Bonus: Prevent adding the account itself as a signer
+                              const selfAddress = ctx.accountInfo?.result?.account_data?.Account;
+                              if (selfAddress && addr === selfAddress) {
+                                   return `Signer at position ${index + 1}: cannot add the account itself (${addr}) as one of its own signers (creates a dangerous loop).`;
+                              }
+                         }
+
+                         return null;
+                    },
+
+                    ctx => {
+                         const entries = ctx.inputs['modifyMultiSigners']['formattedSignerEntries'] || [];
+
+                         const seen = new Map<string, number>(); // address → first occurrence index
+
+                         for (let i = 0; i < entries.length; i++) {
+                              const account = entries[i]?.SignerEntry?.Account?.trim();
+                              if (!account) continue;
+
+                              if (seen.has(account)) {
+                                   const firstIndex = seen.get(account)!;
+                                   return `Duplicate signer address detected: ${account} (appears at signers ${firstIndex + 1} and ${i + 1})`;
+                              }
+                              seen.set(account, i);
+                         }
+
+                         return null;
+                    },
+
+                    ctx => {
+                         const entries = ctx.inputs['modifyMultiSigners']['formattedSignerEntries'] || [];
+                         if (entries.length > 8) {
+                              return `Signer list cannot have more than 8 entries (XRPL maximum is 8). You have ${entries.length}.`;
+                         }
+                         return null;
+                    },
+
+                    // All entries must have exactly the expected shape
+                    ctx => {
+                         const entries = ctx.inputs['modifyMultiSigners']['formattedSignerEntries'] || [];
+                         for (const [i, entry] of entries.entries()) {
+                              if (!entry?.SignerEntry) {
+                                   return `Invalid format at position ${i + 1}: missing SignerEntry object`;
+                              }
+                              if (!entry.SignerEntry.Account || typeof entry.SignerEntry.Account !== 'string') {
+                                   return `Invalid address at position ${i + 1}: missing or invalid Account`;
+                              }
+                              if (!('SignerWeight' in entry.SignerEntry)) {
+                                   return `Missing SignerWeight at position ${i + 1}`;
+                              }
+                         }
+                         return null;
+                    },
+
+                    // All weights must be positive integers
+                    ctx => {
+                         const entries = ctx.inputs['modifyMultiSigners']['formattedSignerEntries'] || [];
+                         for (const [i, entry] of entries.entries()) {
+                              const weight = Number(entry?.SignerEntry?.SignerWeight);
+                              if (!Number.isInteger(weight) || weight <= 0) {
+                                   return `Signer weight at position ${i + 1} must be a positive integer (found: ${entry.SignerEntry.SignerWeight})`;
+                              }
+                         }
+                         return null;
+                    },
+
+                    // Quorum must be > 0 and <= total weight
+                    ctx => {
+                         const entries = ctx.inputs['modifyMultiSigners']['formattedSignerEntries'] || [];
+                         const quorum = Number(ctx.inputs['modifyMultiSigners']['signerQuorum']);
+
+                         if (quorum <= 0) {
+                              return 'Quorum must be greater than 0';
+                         }
+
+                         const totalWeight = entries.reduce((sum: number, e: { SignerEntry: { SignerWeight: any } }) => sum + Number(e?.SignerEntry?.SignerWeight || 0), 0);
+
+                         if (quorum > totalWeight) {
+                              return `Quorum (${quorum}) cannot be higher than total signer weight (${totalWeight})`;
+                         }
+
+                         return null;
+                    },
+
+                    // Warn/recommend quorum ≤ totalWeight / 2 + 1 (soft warning, optional)
+                    ctx => {
+                         const entries = ctx.inputs['modifyMultiSigners']['formattedSignerEntries'] || [];
+                         const quorum = Number(ctx.inputs['modifyMultiSigners']['signerQuorum']);
+                         const total = entries.reduce((sum: number, e: { SignerEntry: { SignerWeight: any } }) => sum + Number(e?.SignerEntry?.SignerWeight || 0), 0);
+
+                         if (quorum > Math.floor(total / 2) + 1) {
+                              return `Warning: Quorum (${quorum}) is high relative to total weight (${total}). This makes it harder to reach agreement. Consider lowering it.`;
+                         }
+                         return null;
+                    },
+
+                    // Cannot add the account itself as a signer (creates dangerous loop)
+                    ctx => {
+                         const entries = ctx.inputs['modifyMultiSigners']['formattedSignerEntries'] || [];
+                         const selfAddress = ctx.accountInfo?.result?.account_data?.Account;
+
+                         if (!selfAddress) return null;
+
+                         const found = entries.some((e: { SignerEntry: { Account: any } }) => e?.SignerEntry?.Account === selfAddress);
+                         if (found) {
+                              return 'The account itself cannot be added as one of its own signers.';
                          }
                          return null;
                     },
@@ -1510,10 +1843,20 @@ export class ValidationService {
                     },
 
                     ctx => {
-                         if (this.accountConfiguratorStoreService.regularKeyAddress() === '') {
-                              //  || (ctx.accountInfo?.result.) {
-                              return `Regular Key address and seed must be present`;
+                         const addr = this.accountConfiguratorStoreService.regularKeyAddress()?.trim();
+                         if (!addr) return null; // empty → handled by earlier required check
+
+                         // Use official XRPL validation
+                         if (!xrpl.isValidAddress(addr)) {
+                              return 'Invalid Regular Key address: not a valid XRPL classic address (checksum failed or malformed).';
                          }
+
+                         // Bonus: prevent self-reference (still good to keep)
+                         const accountAddr = ctx.accountInfo?.result?.account_data?.Account;
+                         if (accountAddr && addr === accountAddr) {
+                              return 'The Regular Key cannot be the same as the account address itself (would create a dangerous loop).';
+                         }
+
                          return null;
                     },
 
@@ -1537,22 +1880,60 @@ export class ValidationService {
                requiredFields: ['modifyMetaData.nfTokenMinterAddress'],
                validators: [
                     this.walletCredentialRequired(),
-
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
+                    // Validate NFTokenMinter address (only required when enabling)
+                    ctx => {
+                         const addr = ctx.inputs['modifyMetaData']?.nfTokenMinterAddress?.trim();
+                         const isEnable = ctx.inputs['modifyMetaData']?.enableNftMinter === 'Y'; // assuming you have this flag
+
+                         if (!isEnable) return null; // removing minter → no address needed
+
+                         if (!addr) {
+                              return 'NFTokenMinter address is required when enabling the authorized minter.';
+                         }
+
+                         if (!xrpl.isValidClassicAddress(addr)) {
+                              return `Invalid NFTokenMinter address: "${addr}" is not a valid XRPL classic address.`;
+                         }
+
+                         const selfAddr = ctx.accountInfo?.result?.account_data?.Account;
+                         if (selfAddr && addr === selfAddr) {
+                              return 'Cannot set the account itself as its own authorized NFToken minter (loop risk).';
+                         }
+
+                         return null;
+                    },
+
                     this.masterKeyDisabledRequiresAltSigning(),
-
-                    // Ticket validation
                     this.ticketValidation(),
-
-                    // Regular Key signing requirements (only if selected and not multi-signing)
                     ...this.regularKeySigningValidation(),
-
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
                ],
           });
+
+          // SetNftMinterAddress Actions
+          // this.registerRule({
+          //      transactionType: 'SetNftMinterAddress',
+          //      requiredFields: ['modifyMetaData.nfTokenMinterAddress'],
+          //      validators: [
+          //           this.walletCredentialRequired(),
+
+          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+          //           // Master key disabled → must use Regular Key or Multi-Sign
+          //           this.masterKeyDisabledRequiresAltSigning(),
+
+          //           // Ticket validation
+          //           this.ticketValidation(),
+
+          //           // Regular Key signing requirements (only if selected and not multi-signing)
+          //           ...this.regularKeySigningValidation(),
+
+          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
+          //           this.multiSign(),
+          //      ],
+          // });
 
           // TrustSet
           this.registerRule({

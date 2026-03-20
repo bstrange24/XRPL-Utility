@@ -4,6 +4,7 @@ import { UtilsService } from '../../services/util-service/utils.service';
 import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { Wallet } from '../wallets/manager/wallet-manager.service';
+import { percentToTransferRate } from 'xrpl';
 
 @Injectable({
      providedIn: 'root',
@@ -28,9 +29,37 @@ export class TransactionOptionalFieldsService extends PerformanceBaseComponent {
                this.utilsService.setDestinationTag(tx, destinationTagField);
           }
 
-          const domainId = config.domainId;
-          if (domainId) {
-               this.utilsService.setDomainId(tx, domainId);
+          if (txType === 'updateMetaData') {
+               if (config.tickSize) {
+                    this.utilsService.setTickSize(tx, Number.parseInt(config.tickSize));
+               }
+
+               if (config.transferRate) {
+                    const transferRate = percentToTransferRate(config.transferRate + '%');
+                    this.utilsService.setTransferRate(tx, transferRate);
+               }
+
+               if (config.isMessageKey && wallet.publicKey) {
+                    this.utilsService.setMessageKey(tx, wallet.publicKey);
+               }
+
+               const domainInput = config.domain?.trim();
+               if (domainInput) {
+                    let domainHex: string;
+
+                    if (/^[0-9A-Fa-f]+$/.test(domainInput)) {
+                         // Already hex
+                         domainHex = domainInput.toUpperCase();
+                    } else {
+                         // Convert string → hex
+                         domainHex = xrpl.convertStringToHex(domainInput);
+                    }
+
+                    this.utilsService.setDomain(tx, domainHex);
+               } else {
+                    // Empty input will clear domain
+                    tx.Domain = '';
+               }
           }
 
           const isTicket = this.xrplTxOptionsStore.isTicket();

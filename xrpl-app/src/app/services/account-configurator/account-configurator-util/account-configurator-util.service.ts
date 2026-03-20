@@ -194,9 +194,10 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                return;
           }
 
-          config.signerEntries = signerEntries;
-          config.formattedSignerEntries = formatted;
-          config.enableMultiSignFlag = enabled;
+          config.account.signerEntries = signerEntries;
+          config.account.formattedSignerEntries = formatted;
+          config.account.enableMultiSignFlag = enabled;
+          console.log('config: ', config.account);
 
           return this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMultiSigners', config);
      }
@@ -217,22 +218,30 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
 
      handlePostSuccess(tab: string, config: AccountConfig, envRef: any) {
           const store = this.accountConfiguratorStoreService;
+          const walletAddress = envRef.wallet.classicAddress;
           switch (tab) {
                case 'modifyMultiSigners':
-                    if (config.enableMultiSignFlag === 'Y') {
-                         this.storageService.set(envRef.wallet.classicAddress + 'signerEntries', config.signerEntries);
-                         store.setField('signers', config.signerEntries);
-                         store.setField('multiSignAddress', config.signerEntries.map((e: any) => e.Account).join(',\n'));
-                         store.setField('multiSignSeeds', config.signerEntries.map((e: any) => e.seed).join(',\n'));
+                    if (config.account.enableMultiSignFlag === 'Y') {
+                         const entries = config.account.signerEntries || [];
+                         this.storageService.set(`${walletAddress}signerEntries`, entries);
+
+                         store.setField('signers', entries);
+                         store.setField('multiSignAddress', entries.map((e: { Account: any }) => e.Account).join(',\n'));
+                         store.setField('multiSignSeeds', entries.map((e: { seed: any }) => e.seed || '').join(',\n'));
                          store.setField('multiSigningEnabled', true);
+                         store.setField('signerQuorum', config.account.signerQuorum || 1);
                     } else {
-                         this.storageService.removeValue(envRef.wallet.classicAddress + 'signerEntries');
+                         this.storageService.removeValue(`${walletAddress}signerEntries`);
+                         store.setField('signers', [{ Account: '', seed: '', SignerWeight: 1 }]);
+                         store.setField('multiSignAddress', '');
+                         store.setField('multiSignSeeds', '');
+                         store.setField('multiSigningEnabled', false);
                          store.setField('signerQuorum', 1);
                     }
                     break;
                case 'modifyRegularKey': {
-                    const regularKey = envRef.wallet.classicAddress + 'regularKey';
-                    const regularKeySeed = envRef.wallet.classicAddress + 'regularKeySeed';
+                    const regularKey = walletAddress + 'regularKey';
+                    const regularKeySeed = walletAddress + 'regularKeySeed';
 
                     if (config.enableRegularKeyFlag === 'Y') {
                          this.storageService.set(regularKey, config.regularKeyAddress);

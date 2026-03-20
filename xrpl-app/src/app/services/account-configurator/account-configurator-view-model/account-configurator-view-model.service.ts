@@ -3,6 +3,7 @@ import { AccountConfiguratorStoreService } from '../account-configurator-store/a
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { ACCOUNT_CONFIG_ACTIONS, AccountConfigAction } from '../../../components/account-configurator/constants/account-configurator.types';
 import { StorageService } from '../../local-storage/storage.service';
+import { FLAG_LABELS } from '../../../components/account-configurator/constants/account-configurator.flags';
 
 @Injectable({
      providedIn: 'root',
@@ -14,6 +15,14 @@ export class AccountConfiguratorViewModelService {
 
      readonly activeTab = signal<AccountConfigAction>(ACCOUNT_CONFIG_ACTIONS.MODIFY_ACCOUNT_FLAGS);
      accountInfo = signal<any>(null);
+     readonly enabledFlagLabels = computed(() => {
+          const accountFlags = this.accountInfo()?.result?.account_flags;
+          if (!accountFlags) return [];
+
+          return Object.entries(accountFlags)
+               .filter(([_, value]) => value === true)
+               .map(([key]) => FLAG_LABELS[key] || key);
+     });
 
      readonly infoData = computed(() => {
           const wallet = this.walletManager.getSelectedWallet();
@@ -52,11 +61,11 @@ export class AccountConfiguratorViewModelService {
           }
 
           const accountSetFeatures: string[] = [];
-          if (this.accountConfiguratorStoreService.tickSize()) accountSetFeatures.push('Tick Size');
-          if (this.accountConfiguratorStoreService.transferRate()) accountSetFeatures.push('Transfer Rate');
-          if (this.accountConfiguratorStoreService.domain()) accountSetFeatures.push('Domain');
+          if (this.accountInfo()?.result?.account_data?.TickSize) accountSetFeatures.push('Tick Size');
+          if (this.accountInfo()?.result?.account_data?.TransferRate) accountSetFeatures.push('Transfer Rate');
+          if (this.accountInfo()?.result?.account_data?.Domain) accountSetFeatures.push('Domain');
           if (this.accountConfiguratorStoreService.isMessageKey()) accountSetFeatures.push('Message Key');
-          if (this.accountConfiguratorStoreService.isNFTokenMinterEnabled()) accountSetFeatures.push('NFT Minter');
+          if (this.accountInfo()?.result?.account_data?.nfTokenMinterAddress) accountSetFeatures.push('NFT Minter');
           if (accountSetFeatures.length) {
                messageParts.push(`Account settings configured: ${accountSetFeatures.join(', ')}`);
           }
@@ -66,18 +75,48 @@ export class AccountConfiguratorViewModelService {
           if (accountFlags?.noFreeze) irreversible.push('No Freeze');
           if (accountFlags?.allowTrustLineClawback) irreversible.push('Clawback');
 
+          if (this.getEnabledFlagsCount() > 0) {
+               const enabledFlagLabels = this.enabledFlagLabels();
+               if (enabledFlagLabels.length > 0) {
+                    messageParts.push(`Account flags configured: ${enabledFlagLabels.join(', ')}`);
+               }
+          }
           const irreversibleMessage = irreversible.length ? `Irreversible flags enabled: ${irreversible.join(', ')}` : null;
           const totalItems = messageParts.length + irreversible.length;
           const pluralSuffix = totalItems > 1 ? 's' : '';
           const summaryMessage = totalItems === 0 ? 'wallet has no special account configuration. All flags are in default state.' : `wallet has special account configuration (${totalItems} item${pluralSuffix}).`;
 
+          const configItemsWithIds = messageParts.map((item, index) => ({
+               id: `${wallet.address}-config-${index}-${item.substring(0, 10)}`,
+               text: item,
+          }));
+
           return {
                walletName,
                summaryMessage,
                hasSpecialConfig: totalItems > 0,
-               configItems: messageParts,
+               configItems: configItemsWithIds,
                irreversibleMessage,
                hasIrreversible: irreversible.length > 0,
           };
      });
+
+     getEnabledFlagsCount(): number {
+          const accountFlags = this.accountInfo()?.result?.account_flags;
+          if (!accountFlags) return 0;
+
+          return Object.values(accountFlags).filter(value => value === true).length;
+     }
+
+     getEnabledFlags(): { label: string }[] {
+          const accountFlags = this.accountInfo()?.result?.account_flags;
+          if (!accountFlags) return [];
+
+          const t = Object.entries(accountFlags)
+               .filter(([_, value]) => value === true)
+               .map(([key]) => ({
+                    label: FLAG_LABELS[key] || key, // Fallback to key if no label found
+               }));
+          return t;
+     }
 }

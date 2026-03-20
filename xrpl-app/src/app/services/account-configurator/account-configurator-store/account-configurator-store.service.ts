@@ -4,6 +4,8 @@ import { AccountConfiguratorState } from '../../../components/account-configurat
 
 // Initial state — copy from your old one, but now strongly typed
 const initialState: AccountConfiguratorState = {
+     txOptions: null,
+     account: null,
      accountInfo: '',
      configurationType: null,
      memoField: '',

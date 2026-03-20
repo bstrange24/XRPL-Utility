@@ -46,17 +46,15 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
                this.txUiService.clearAllOptionsAndMessages();
 
                // Use pre-fetched env if provided, otherwise fetch
-               if (preFetchedEnv) {
-                    env = preFetchedEnv;
-               } else {
-                    env = await this.txEnvironmentService.prepareTxEnvironment({
+               env =
+                    preFetchedEnv ??
+                    (await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
                          includeFee: true,
                          includeLedgerInfo: true,
                          includeServerInfo: true,
-                    });
-               }
+                    }));
 
                client = env.client;
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');

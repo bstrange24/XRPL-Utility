@@ -57,10 +57,14 @@ export interface PrefetchedLedgerEnvironment {
  * Main configuration interface
  */
 export interface AccountConfig {
+     account: any;
+     txOptions: any;
      wallet: Wallet;
      simulate?: boolean;
      amountField?: string;
      nfTokenMinterAddress?: string;
+     flagValue?: any;
+     operation?: any;
      setFlags?: number[];
      clearFlags?: number[];
      tickSize?: number;
@@ -94,6 +98,8 @@ export interface AccountConfig {
 }
 
 export interface AccountConfiguratorState {
+     account: any;
+     txOptions: any;
      accountInfo: any;
      configurationType: 'holder' | 'exchanger' | 'issuer' | null;
      authorizeFlag: string;
@@ -125,8 +131,8 @@ export interface AccountConfiguratorState {
      signerQuorum: number;
      SignerWeight: number;
      signers: any;
-     depositAuthAddresses: any;
      masterKeyDisabled: boolean;
+     depositAuthAddresses: any;
      depositAuthEnabled: boolean;
      isdepositAuthAddress: boolean;
      depositAuthAddress: string;
@@ -140,6 +146,8 @@ export interface AccountConfiguratorState {
      isIssuerConfiguration: boolean;
      setFlags: number[];
      clearFlags: number[];
+     flagValue?: any;
+     operation?: any;
      walletTicketCount: number;
      url: string;
      suppressIndividualFeedback: string;

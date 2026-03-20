@@ -161,7 +161,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           }
 
           if (!env) throw new Error('Unable to get environment.');
-	  
+
           if (currentTab === 'deletePermissionedDomain') {
                const selectedId = this.permissionedDomainStoreService.selectedDomainId();
                if (!selectedId) {
@@ -209,9 +209,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                }
           });
 
-          if (!txResult) {
-               throw new Error('Unable error when submitting transaction.');
-          }
+          if (!txResult) throw new Error('Unable error when submitting transaction.');
 
           const successFullTx: boolean = await this.handleTxResult(txResult, env.client, env.wallet, issuerAddress, this.permissionedDomainStoreService.credentialIssuer(), '');
           if (currentTab === 'deletePermissionedDomain' && successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {

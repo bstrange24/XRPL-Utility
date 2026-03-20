@@ -150,6 +150,25 @@ export class XrplTransactionService extends PerformanceBaseComponent {
           this.txUiService.currentStep.set('failed');
      }
 
+     async runWithConcurrencyLimit<T>(items: T[], limit: number, handler: (item: T, index: number) => Promise<any>): Promise<any[]> {
+          const results: any[] = new Array(items.length);
+          let index = 0;
+
+          const workers = new Array(Math.min(limit, items.length)).fill(0).map(async () => {
+               while (index < items.length) {
+                    const currentIndex = index++;
+                    try {
+                         results[currentIndex] = await handler(items[currentIndex], currentIndex);
+                    } catch (err) {
+                         results[currentIndex] = { success: false, error: err };
+                    }
+               }
+          });
+
+          await Promise.all(workers);
+          return results;
+     }
+
      buildModifyAccountSetTransaction(wallet: xrpl.Wallet, fee: string, currentLedger: number): xrpl.AccountSet {
           return {
                TransactionType: 'AccountSet',

@@ -55,7 +55,7 @@ export class ToastService {
                const linksHtml = results
                     .map(r => {
                          const link = `${explorerBaseUrl}${r.hash}`;
-                         return `Deposit Auth <code>${r.depostiAuthAddress.account}</code><br>View Tx in Explorer: <a href="${link}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-200">${r.hash}</a>`;
+                         return `View Tx in Explorer: <a href="${link}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-200">${r.hash}</a>`;
                     })
                     .join('<br>');
 
@@ -72,7 +72,7 @@ export class ToastService {
                const linksHtml = results
                     .map(r => {
                          const link = `${explorerBaseUrl}${r.hash}`;
-                         return `Account Flag updated successfully<br>View Tx in Explorer: <a href="${link}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-200">${r.hash}</a>`;
+                         return `Account Flag '${r.label}' updated successfully<br>View Tx in Explorer: <a href="${link}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-200">${r.hash}</a>`;
                     })
                     .join('<br>');
                const html = `${message}<br>${linksHtml}`;
@@ -81,13 +81,13 @@ export class ToastService {
           this.show({ message: finalMessage, type: 'success' }, duration);
      }
 
-     errorMultipleHashes(message: string, duration: number, results: { hash: string | undefined; label: string }[], explorerBaseUrl = 'https://livenet.xrpl.org/tx/') {
+     errorMultipleHashes(message: string, duration: number, results: { hash: string | undefined; label: string; error: string | undefined }[], explorerBaseUrl = 'https://livenet.xrpl.org/tx/') {
           let finalMessage: string | SafeHtml = message;
           if (results && results.length > 0) {
                const linksHtml = results
                     .map(r => {
                          const link = `${explorerBaseUrl}${r.hash}`;
-                         return `Account Flag update failed<br>View Tx in Explorer: <a href="${link}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-200">${r.hash}</a>`;
+                         return `Account Flag '${r.label}' update failed ${r.error}<br>View Tx in Explorer: <a href="${link}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-200">${r.hash}</a>`;
                     })
                     .join('<br>');
                const html = `${message}<br>${linksHtml}`;
@@ -102,10 +102,10 @@ export class ToastService {
           const count = failedResults.length;
           const pluralS = count === 1 ? '' : 's';
           const affectedAddresses = failedResults.map(f => `${f.address}`).join('\n');
-          let html = `${count} ${txMessage}${pluralS} failed.<br><br>Affected Address:\n${affectedAddresses}<br>`;
+          let html = `${count} ${txMessage}${pluralS} failed.<br>Affected Address:\n${affectedAddresses}`;
 
           failedResults.forEach((fail, index) => {
-               const explorerLink = fail.hash ? `<br>View Tx in Explorer: <a href="${explorerBaseUrl}${fail.hash}" target="_blank"  rel="noopener noreferrer" class="underline hover:text-blue-200">${fail.hash}</a>` : '(no transaction hash available)';
+               const explorerLink = fail.hash ? `View Tx in Explorer: <a href="${explorerBaseUrl}${fail.hash}" target="_blank"  rel="noopener noreferrer" class="underline hover:text-blue-200">${fail.hash}</a>` : '(no transaction hash available)';
                html += `${fail.error || 'Unknown error'}<br>${explorerLink}`;
           });
           finalMessage = this.sanitizer.bypassSecurityTrustHtml(html);
@@ -117,7 +117,7 @@ export class ToastService {
 
           if (makeHashLink && hash) {
                const link = `${explorerBaseUrl}${hash}`;
-               const html = `${message}View Tx in Explorer: <a href="${link}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-200">${hash}</a>`;
+               const html = `${message}<br>View Tx in Explorer: <a href="${link}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-200">${hash}</a>`;
                finalMessage = this.sanitizer.bypassSecurityTrustHtml(html);
           }
           this.show({ message: finalMessage, type: 'error' }, duration);

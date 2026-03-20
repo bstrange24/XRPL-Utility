@@ -27,6 +27,25 @@ export const XRPL_ACCOUNT_DEFAULT_FLAGS: Readonly<XrplAccountFlags> = {
      asfAllowTrustLineLocking: false,
 };
 
+// Define this in your service or a constants file
+export const FLAG_LABELS: Record<string, string> = {
+     disableMasterKey: 'Disable Master Key',
+     noFreeze: 'Prevent Freezing Trust Lines',
+     allowTrustLineClawback: 'Allow Trust Line Clawback',
+     defaultRipple: 'Enable Rippling',
+     depositAuth: 'Require Deposit Auth',
+     requireDestinationTag: 'Require Destination Tag',
+     requireAuthorization: 'Require Trust Line Auth',
+     disallowIncomingXRP: 'Disallow XRP Payments',
+     globalFreeze: 'Freeze All Trust Lines',
+     disallowIncomingNFTokenOffer: 'Block NFT Offers',
+     disallowIncomingCheck: 'Block Checks',
+     disallowIncomingPayChan: 'Block Payment Channels',
+     disallowIncomingTrustline: 'Block Trust Lines',
+     allowTrustLineLocking: 'Allow Trust Line Locking',
+     // passwordSpent: 'Set Regular Key',
+};
+
 /**
  * UI configuration for displaying flags
  */

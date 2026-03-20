@@ -1278,6 +1278,9 @@ export class UtilsService {
           if (response?.result?.engine_result) {
                return response.result.engine_result;
           }
+          if (response?.result[0].error) {
+               return response?.result[0].error.trim();
+          }
           return 'UNKNOWN';
      }
 
@@ -1322,7 +1325,7 @@ export class UtilsService {
           if (resultMsg === 'tecUNFUNDED_ADD') return 'Insufficient funds to add to balance.';
           if (resultMsg === 'tecUNFUNDED_OFFER') return 'Insufficient funds to place offer.';
           if (resultMsg === 'tecUNFUNDED_PAYMENT') return 'Insufficient balance to complete transaction.';
-          if (resultMsg === 'tecOWNERS') return 'Cannot modify object with existing owners (e.g. disable account with trust lines/offers).';
+          if (resultMsg === 'tecOWNERS') return 'tecOWNERS - Cannot modify object with existing owners (e.g. disable account with trust lines/offers).';
           if (resultMsg === 'tecOVERSIZE') return 'Transaction is too large.';
           if (resultMsg === 'tecCRYPTOCONDITION_ERROR') return 'Cryptocondition validation failed.';
           if (resultMsg === 'tecEXPIRED') return 'Transaction or object has expired.';
@@ -1380,7 +1383,7 @@ export class UtilsService {
           // =============================
           // UNKNOWN / UNSPECIFIED
           // =============================
-          return ` (Code: ${resultMsg})`;
+          return `\nCode: ${resultMsg}`;
      }
 
      async handleMultiSignTransaction({ client, wallet, tx, signerAddresses, signerSeeds, fee }: { client: xrpl.Client; wallet: xrpl.Wallet; tx: xrpl.Transaction; signerAddresses: string[]; signerSeeds: string[]; fee: string }): Promise<{ signedTx: { tx_blob: string; hash: string } | null; signers: xrpl.Signer[] }> {
@@ -2277,7 +2280,8 @@ export class UtilsService {
           if (domain === '') {
                tx.Domain = '';
           } else {
-               tx.Domain = Buffer.from(domain, 'utf8').toString('hex');
+               // tx.Domain = Buffer.from(domain, 'utf8').toString('hex');
+               tx.Domain = domain;
           }
      }
 

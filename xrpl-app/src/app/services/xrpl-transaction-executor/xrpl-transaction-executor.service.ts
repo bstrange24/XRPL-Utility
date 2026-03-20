@@ -1147,6 +1147,7 @@ export class XrplTransactionExecutorService {
      }
 
      async updateAccountFlags(
+          env: any,
           tx: xrpl.AccountSet,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -1159,7 +1160,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating setting account flag (no changes will be made)...',
                submitMessage: 'Setting account flag on the XRP Ledger...',
                amount: '0',
@@ -1168,6 +1169,7 @@ export class XrplTransactionExecutorService {
      }
 
      async setMultiSign(
+          env: any,
           tx: xrpl.SignerListSet,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -1180,7 +1182,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating setting signer (no changes will be made)...',
                submitMessage: 'Setting signer list on the XRP Ledger...',
                amount: '0',
@@ -1189,6 +1191,7 @@ export class XrplTransactionExecutorService {
      }
 
      async setRegularKey(
+          env: any,
           tx: xrpl.SetRegularKey,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -1201,7 +1204,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating setting regular key (no changes will be made)...',
                submitMessage: 'Setting regular key on the XRP Ledger...',
                amount: '0',
@@ -1210,6 +1213,7 @@ export class XrplTransactionExecutorService {
      }
 
      async setDepositAuth(
+          env: any,
           tx: xrpl.DepositPreauth,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -1224,7 +1228,7 @@ export class XrplTransactionExecutorService {
                customSpinnerMessage?: string; // ← NEW: Allow custom message
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating setting deposit authorization (no changes will be made)...',
                submitMessage: 'Setting deposit authorization on the XRP Ledger...',
                amount: '0',
@@ -1234,6 +1238,7 @@ export class XrplTransactionExecutorService {
      }
 
      async setNftMinterAddress(
+          env: any,
           tx: xrpl.AccountSet,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -1247,7 +1252,7 @@ export class XrplTransactionExecutorService {
                suppressIndividualFeedback?: boolean;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating NFT minter address change (no changes will be made)...',
                submitMessage: 'Modifying NFT minter address on the XRP Ledger...',
                amount: '0',
@@ -1256,6 +1261,7 @@ export class XrplTransactionExecutorService {
      }
 
      async updateMetaData(
+          env: any,
           tx: xrpl.AccountSet,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -1268,7 +1274,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating meta data update (no changes will be made)...',
                submitMessage: 'Updated meta data on the XRP Ledger...',
                amount: '0',
