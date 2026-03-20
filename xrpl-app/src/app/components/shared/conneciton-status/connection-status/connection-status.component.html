@@ -1,0 +1,14 @@
+<div class="connection-status-container">
+     <!-- Main connection indicator -->
+     <div class="connection-indicator" [class.connected]="isConnected()" [class.connecting]="isConnecting()" [class.disconnected]="isDisconnected()" [title]="statusMessage()">
+          <div class="status-dot"></div>
+          <span class="status-text">{{ statusText() }}</span>
+     </div>
+
+     <!-- Pending operations indicator -->
+     @if (hasPendingOperations()) {
+     <div class="pending-operations" title="Processing transaction...">
+          <div class="spinner"></div>
+     </div>
+     }
+</div>

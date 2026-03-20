@@ -1,0 +1,73 @@
+<div class="requirements-info">
+     <div class="info-header">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+          <h3>Sending XRP (Direct Payment)</h3>
+     </div>
+
+     <p class="info-subtitle">A direct XRP Payment transfers XRP from one account to another quickly and cheaply. It can also fund a new account if sending enough XRP to meet the base reserve requirement.</p>
+
+     <div class="combinations-grid">
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">💸 Basic XRP Send</span>
+                    <span class="badge required-badge">Most Common</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">Destination</span>
+                         <span class="field-status required">✅ Required</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Amount</span>
+                         <span class="field-status required">✅ Required</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">DestinationTag</span>
+                         <span class="field-status omitted">❌ Optional</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">💸 With Extras</span>
+                    <span class="badge optional-badge">Advanced Options</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">SendMax</span>
+                         <span class="field-status omitted">❌ Not needed for pure XRP</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Paths</span>
+                         <span class="field-status omitted">❌ Not needed for direct XRP</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">LastLedgerSequence</span>
+                         <span class="field-status optional">➕ Recommended (expire safely)</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="important-notes">
+               <h5>📝 Important Notes:</h5>
+               <ul>
+                    <li><strong>Destination</strong> and <strong>Amount</strong> (in drops; 1 XRP = 1,000,000 drops) are required for a basic XRP send.</li>
+                    <li>Use <strong>DestinationTag</strong> when sending to exchanges or hosted wallets (e.g., required by Binance) to identify the recipient.</li>
+                    <li>Common fields like <strong>Fee</strong> and <strong>Sequence</strong> are usually auto-filled by clients/libraries.</li>
+                    <li>Transactions are irreversible — double-check the address and tag before signing.</li>
+                    <li>Sending at least the base reserve (~10 XRP, check current via server_info) to an unfunded address creates a new account.</li>
+                    <li>Fees are very low (typically <0.00002 XRP) and burned — no refunds.</li>
+               </ul>
+               <p></p>
+               <h5 class="warning-title">⚠️ Irreversible & Safety Tips</h5>
+               <p style="color: #92400e">XRP Payments cannot be reversed or canceled once submitted.</p>
+               <ul>
+                    <li>Wrong <strong>Destination</strong> or missing <strong>DestinationTag</strong> can result in permanent loss of funds.</li>
+                    <li>Always verify the recipient address carefully — XRPL addresses are case-sensitive and checksummed.</li>
+                    <li>For time-sensitive sends, include <strong>LastLedgerSequence</strong> to prevent hanging in the queue indefinitely.</li>
+                    <li>If sending to an exchange, confirm their exact tag requirements to avoid crediting issues.</li>
+               </ul>
+          </div>
+     </div>
+</div>

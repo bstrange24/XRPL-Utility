@@ -42,11 +42,13 @@ import { PermissionDomainDeleteFormComponent } from './tab/permission-domain-del
 import { PermissionDomainSetFormComponent } from './tab/permission-domain-set-form/permission-domain-set-form.component';
 import { PERMISSION_DOMAIN_TAB, PermissionDomainActionTypes } from './constants/permissioned-domain.constants';
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionStatusComponent } from '../shared/conneciton-status/connection-status/connection-status.component';
 
 @Component({
      selector: 'app-permissioned-domain',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, RequirementsInfoComponent, TransactionOptionsSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, PermissionedDomainsSummaryComponent, PermissionDomainDeleteFormComponent, PermissionDomainSetFormComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, RequirementsInfoComponent, TransactionOptionsSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, PermissionedDomainsSummaryComponent, PermissionDomainDeleteFormComponent, PermissionDomainSetFormComponent, ConnectionStatusComponent],
      templateUrl: './permissioned-domain.component.html',
      styleUrl: './permissioned-domain.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,6 +66,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      public readonly permissionedDomainViewModelService = inject(PermissionedDomainViewModelService);
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      public readonly credentialStore = inject(CredentialStore);
+     public readonly connectionGuard = inject(ConnectionGuardService);
      readonly menuTabs: TabConfig[] = PERMISSION_DOMAIN_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = PERMISSION_DOMAIN_TAB_META;
 
@@ -106,9 +109,11 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
+               this.txUiService.resetCurrentStepToIdle();
                this.permissionedDomainStoreService.resetDomainDropDown();
 
-               if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+               // if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+               if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
@@ -128,9 +133,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
      async performAction(): Promise<void> {
           const currentTab = this.permissionedDomainViewModelService.activeTab();
-
-          const wallet = this.walletManager.walletVm()?.wallet;
-          if (!wallet || !this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+          const wallet = this.currentWallet();
 
           let issuerAddress: string | undefined;
 
@@ -146,7 +149,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
           let env: any = null;
           try {
-               env = await this.txEnvironmentService.prepareTxEnvironment({
+               env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
                     includeAccountInfo: true,
                     includeAccountObject: true,
                     includeFee: true,

@@ -32,6 +32,7 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
      readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
      readonly canSubmit = computed(() => this.isIdle() && this.hasWallets());
+     // readonly canSubmit = computed(() => this.isIdle());
      readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
 
      // Destinations (initialized in constructor)

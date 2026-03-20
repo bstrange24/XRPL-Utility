@@ -80,7 +80,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      }
 
      canSelectCredential(cred: any): boolean {
-          const wallet = this.walletManager.walletVm()?.wallet;
+          const wallet = this.currentWallet();
           if (!wallet) return false;
 
           const tab = this.credentialViewModelService.activeTab();
@@ -116,6 +116,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
+               this.txUiService.resetCurrentStepToIdle();
                this.credentialStore.resetCredentailFields();
 
                if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
@@ -138,9 +139,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
      async performAction(): Promise<void> {
           const currentTab = this.credentialViewModelService.activeTab();
-
-          const wallet = this.walletManager.walletVm()?.wallet;
-          if (!wallet || !this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+          const wallet = this.currentWallet();
 
           if (currentTab === 'verifyCredential') {
                await this.handleVerifyCredential();
@@ -164,7 +163,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
           let env: any = null;
           try {
-               env = await this.txEnvironmentService.prepareTxEnvironment({
+               env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
                     includeAccountInfo: true,
                     includeAccountObject: true,
                     includeFee: true,
@@ -228,8 +227,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      private async handleVerifyCredential(): Promise<boolean> {
           const env = await this.txEnvironmentService.prepareTxEnvironment({ includeAccountInfo: true, includeLedgerInfo: true });
           const { accountInfo, client, ledgerInfo } = env;
-          const wallet = this.walletManager.walletVm()?.wallet;
-          if (!wallet || !this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+          const wallet = this.currentWallet();
 
           const inputs = this.txUiService.getValidationInputs({
                wallet: wallet,

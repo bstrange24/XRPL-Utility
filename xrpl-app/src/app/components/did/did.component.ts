@@ -117,8 +117,9 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
 
      async getDidForAccount(forceRefresh = false): Promise<void> {
           await this.measure('getDidForAccount', true, async () => {
-               this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
+               this.xrplTxOptionsStore.reset();
+               this.txUiService.resetCurrentStepToIdle();
 
                if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
 
@@ -139,13 +140,11 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
 
      async performAction(): Promise<void> {
           const currentTab = this.didViewModelService.activeTab();
-
-          const wallet = this.walletManager.walletVm()?.wallet;
-          if (!wallet || !this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+          const wallet = this.currentWallet();
 
           let env: any = null;
           try {
-               env = await this.txEnvironmentService.prepareTxEnvironment({
+               env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
                     includeAccountInfo: true,
                     includeAccountObject: true,
                     includeFee: true,

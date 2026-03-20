@@ -197,7 +197,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                          return;
                     }
 
-                    const ticketObjects = env.accountObjects ? this.xrplService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
+                    const ticketObjects = env.accountObjects ? this.utilsService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
                     this.xrplTxOptionsStore.setField('walletTicketCount', ticketObjects?.result?.account_objects?.length ?? 0);
 
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
@@ -331,7 +331,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet): Promise<void> {
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
 
-          const ticketObjects = this.xrplService.filterAccountObjectsByTypes(accountObjects, ['Ticket']);
+          const ticketObjects = this.utilsService.filterAccountObjectsByTypes(accountObjects, ['Ticket']);
           this.xrplTxOptionsStore.setField('walletTicketCount', ticketObjects?.result?.account_objects?.length ?? 0);
 
           await this.refreshWallets(client, [wallet.classicAddress]);

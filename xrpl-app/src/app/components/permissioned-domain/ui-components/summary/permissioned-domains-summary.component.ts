@@ -23,6 +23,11 @@ export interface PermissionedDomainItem {
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionedDomainsSummaryComponent {
+     public copyUtilService = inject(CopyUtilService);
+     private readonly txUiService = inject(TransactionUiService);
+     public utilsService = inject(UtilsService);
+     public permissionedDomainStoreService = inject(PermissionedDomainStoreService);
+
      // Inputs
      info = input.required<
           | {
@@ -41,12 +46,6 @@ export class PermissionedDomainsSummaryComponent {
 
      // Outputs
      toggleInfoPanel = output<void>();
-
-     // Injected services
-     public copyUtilService = inject(CopyUtilService);
-     private readonly txUiService = inject(TransactionUiService);
-     public utilsService = inject(UtilsService);
-     public permissionedDomainStoreService = inject(PermissionedDomainStoreService);
 
      // Helpers
      explorerUrl = this.txUiService.explorerUrl;

@@ -100,7 +100,8 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           await this.measure('getAccountDetails', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
-
+               this.xrplTxOptionsStore.reset();
+               this.txUiService.resetCurrentStepToIdle();
                this.accountConfiguratorStoreService.setField('configurationType', null);
 
                if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
@@ -128,13 +129,11 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
      async performAction(enabled: string): Promise<void> {
           const currentTab = this.accountConfiguratorViewModelService.activeTab();
           this.txUiService.clearAllOptionsAndMessages();
-
-          const wallet = this.walletManager.walletVm()?.wallet;
-          if (!wallet || !this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+          const wallet = this.currentWallet();
 
           let env: any = null;
           try {
-               env = await this.txEnvironmentService.prepareTxEnvironment({
+               env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
                     includeAccountInfo: true,
                     includeAccountObject: true,
                     includeFee: true,

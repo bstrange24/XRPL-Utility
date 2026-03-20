@@ -1,63 +1,47 @@
-import { Injectable } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { Client, GatewayBalancesResponse } from 'xrpl';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
-import { BehaviorSubject } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
-import { TokenCacheService } from '../token-cache/token-cache.service';
 import { StorageService } from '../local-storage/storage.service';
-
-interface MptInfoRequest {
-     command: 'mpt_info';
-     issuance_id: string;
-}
-
-interface MptInfoResponse {
-     result: any; // or define proper structure if known
-}
-
-interface Token {
-     transactionType: string;
-     createdDate: Date;
-     creationAge: string; // Optional field for age of token
-     currency: string;
-     issuer: string;
-     transactionHash: string;
-     timestamp: Date;
-     action: string; // "Buy" or "Sell"
-     amountToken: string; // Token amount (e.g., "100 PHNIX")
-     amountXrp: string; // XRP amount (e.g., "10 XRP")
-}
+import { ConnectionStatus, MptInfoResponse, Token } from '../../models/interface-items.model';
+import { ToastService } from '../toast/toast.service';
 
 @Injectable({
-     providedIn: 'root', // Singleton service
+     providedIn: 'root',
 })
 export class XrplService {
-     private client: Client | null = null;
-     private readonly tokensSubject = new BehaviorSubject<Token[]>([]);
-     tokens$ = this.tokensSubject.asObservable();
-     private readonly proxyServer = 'http://localhost:3000';
-     private connectingPromise: Promise<xrpl.Client> | null = null; // ← Prevents double connection attempts
-     private readonly connectionStatus = new BehaviorSubject<'disconnected' | 'connecting' | 'connected'>('disconnected');
-     public connectionStatus$ = this.connectionStatus.asObservable();
-     private readonly connectionMessage = new BehaviorSubject<string>('Disconnected');
-     public connectionMessage$ = this.connectionMessage.asObservable();
+     private readonly storageService = inject(StorageService);
+     private readonly toastService = inject(ToastService);
+
+     // Private signals (internal state)
+     private readonly client = signal<Client | null>(null);
+     private readonly connectionStatus = signal<ConnectionStatus>('disconnected');
+     private readonly connectionMessage = signal<string>('Disconnected');
+     private readonly tokens = signal<Token[]>([]);
+     private connectingPromise: Promise<xrpl.Client> | null = null;
      private reconnectAttempts = 0;
      private reconnectTimeout: any = null;
 
-     constructor(
-          private readonly storageService: StorageService,
-          private readonly http: HttpClient,
-          private readonly tokenCacheService: TokenCacheService
-     ) {}
+     // Public readonly signals (exposed to components)
+     readonly connectionStatus$ = this.connectionStatus.asReadonly();
+     readonly connectionMessage$ = this.connectionMessage.asReadonly();
+     readonly tokens$ = this.tokens.asReadonly();
+
+     // Computed values
+     readonly isConnected = computed(() => this.connectionStatus() === 'connected');
+     readonly isConnecting = computed(() => this.connectionStatus() === 'connecting');
+     readonly isDisconnected = computed(() => this.connectionStatus() === 'disconnected');
+     readonly tokenCount = computed(() => this.tokens().length);
+     readonly latestTokens = computed(() => this.tokens().slice(0, 10));
 
      async getClient(): Promise<xrpl.Client> {
           // CASE 1: Already connected → return immediately
-          if (this.client?.isConnected()) {
-               return this.client;
+          const currentClient = this.client();
+          if (currentClient?.isConnected()) {
+               return currentClient;
           }
 
-          // CASE 2: Already trying to connect → return the existing promise (avoid duplicate connections)
+          // CASE 2: Already trying to connect → return the existing promise
           if (this.connectingPromise) {
                return this.connectingPromise;
           }
@@ -66,41 +50,40 @@ export class XrplService {
           this.connectingPromise = this.connectWithRetry();
 
           try {
-               this.client = await this.connectingPromise;
-               return this.client;
+               const newClient = await this.connectingPromise;
+               this.client.set(newClient);
+               return newClient;
           } finally {
-               // Always clear the promise when done (success or failure)
                this.connectingPromise = null;
           }
      }
 
      private async connectWithRetry(): Promise<xrpl.Client> {
-          const { net } = this.getNet(); // your method to get wss URL
+          const { net } = this.getNet();
           const maxRetries = 5;
           const baseDelay = 1000;
 
-          // Log which network you're trying to connect to
           console.log(`Attempting to connect to: ${net}`);
-
-          // Update shared status immediately
           this.setStatus('connecting', `Connecting to ${this.getNetworkName()}...`);
 
           for (let attempt = 1; attempt <= maxRetries; attempt++) {
                const client = new xrpl.Client(net, {
-                    connectionTimeout: 20000, // 20 seconds
-                    timeout: 20000,
+                    connectionTimeout: 10000,
+                    timeout: 10000,
                     headers: {
                          'User-Agent': 'Your-App-Name/1.0',
                     },
                });
 
-               // Add event listeners for debugging
                client.on('connected', () => {
                     console.log(`Connected to ${net}`);
                });
 
                client.on('disconnected', code => {
                     console.warn(`Disconnected from ${net}: Code ${code}`);
+                    this.setStatus('disconnected', `Connection lost to ${this.getNetworkName()}`);
+                    this.client.set(null);
+                    this.scheduleReconnect();
                });
 
                client.on('error', error => {
@@ -110,31 +93,29 @@ export class XrplService {
                try {
                     console.log(`Connection attempt ${attempt}/${maxRetries} to ${net}`);
 
-                    // Set a reasonable timeout (xrpl.js default is infinite)
+                    // Update status with retry count
+                    if (attempt > 1) {
+                         this.setStatus('connecting', `Connection attempt ${attempt}/${maxRetries} to ${this.getNetworkName()}...`);
+                    }
+
                     const connectPromise = client.connect();
                     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 15_000));
 
                     await Promise.race([connectPromise, timeoutPromise]);
 
-                    // Verify connection with a lightweight call
                     const serverInfo = await client.request({ command: 'server_info' });
                     console.log(`Connected successfully to ${net}`, {
                          version: serverInfo.result.info?.build_version,
                          ledger: serverInfo.result.info?.validated_ledger?.seq,
                     });
 
-                    this.client = client;
+                    this.client.set(client);
+                    this.setStatus('connected', `Connected to ${this.getNetworkName()}`);
 
-                    // Update global status on success
-                    const networkName = this.getNetworkName();
-                    this.setStatus('connected', `Connected to ${networkName}`);
-
-                    // Optional: auto-reconnect on disconnect
                     client.on('disconnected', code => {
                          console.warn('XRPL client disconnected:', code);
                          this.setStatus('disconnected', 'Connection lost');
-                         this.client = null;
-                         // Optionally trigger reconnection
+                         this.client.set(null);
                          this.scheduleReconnect();
                     });
 
@@ -146,7 +127,11 @@ export class XrplService {
                          attempt: attempt,
                     });
 
-                    // Attempt to close the client if it was partially connected
+                    // Show retry warning toast
+                    if (attempt < maxRetries) {
+                         this.toastService.warn(`Connection attempt ${attempt}/${maxRetries} failed. Retrying...`, AppConstants.TOAST.WARN);
+                    }
+
                     try {
                          await client.disconnect();
                     } catch (disconnectError: any) {
@@ -159,7 +144,6 @@ export class XrplService {
                          throw new Error(msg);
                     }
 
-                    // Exponential backoff with jitter to avoid thundering herd
                     const delay = baseDelay * Math.pow(2, attempt - 1);
                     const jitter = Math.random() * 1000;
                     const totalDelay = delay + jitter;
@@ -169,7 +153,6 @@ export class XrplService {
                }
           }
 
-          // This should never reach here
           throw new Error('Unexpected connection failure');
      }
 
@@ -178,7 +161,6 @@ export class XrplService {
                clearTimeout(this.reconnectTimeout);
           }
 
-          // Exponential backoff for reconnection
           const delay = Math.min(30000, Math.pow(2, this.reconnectAttempts) * 1000);
           this.reconnectAttempts++;
 
@@ -187,7 +169,7 @@ export class XrplService {
           this.reconnectTimeout = setTimeout(async () => {
                try {
                     await this.getClient();
-                    this.reconnectAttempts = 0; // Reset on successful reconnect
+                    this.reconnectAttempts = 0;
                } catch (error) {
                     console.error('Reconnection failed:', error);
                     if (this.reconnectAttempts < 10) {
@@ -197,17 +179,62 @@ export class XrplService {
           }, delay);
      }
 
-     async disconnect() {
-          if (this.client) {
-               await this.client.disconnect();
-               this.client = null;
+     private setStatus(status: ConnectionStatus, message: string) {
+          this.connectionStatus.set(status);
+          this.connectionMessage.set(message);
+
+          // Show toast for connection status changes
+          if (status === 'connected') {
+               this.toastService.success(`${message}`, AppConstants.TOAST.CONNECTION, false);
+          } else if (status === 'disconnected') {
+               // this.toastService.error(`${message}`, 5000, false);
+          } else if (status === 'connecting') {
+               this.toastService.info(`${message}`, AppConstants.TOAST.INFO);
           }
-          this.setStatus('disconnected', 'Disconnected');
      }
 
-     private setStatus(status: 'disconnected' | 'connecting' | 'connected', message: string) {
-          this.connectionStatus.next(status);
-          this.connectionMessage.next(message);
+     async ensureConnection(): Promise<Client> {
+          const client = await this.getClient();
+
+          // Double-check connection is actually working
+          if (!client?.isConnected()) {
+               throw new Error('No active connection to XRPL network. Please wait for connection to establish.');
+          }
+
+          // Optional: Verify with a quick ping
+          try {
+               await client.request({ command: 'ping' });
+               return client;
+          } catch (error: any) {
+               console.error(`Connection is not responding. Please check your network connection: ${error.message}`);
+               throw new Error('Connection is not responding. Please check your network connection.');
+          }
+     }
+
+     isConnectionReady(): boolean {
+          const client = this.client();
+          return client?.isConnected() === true;
+     }
+
+     getConnectionStatus(): { isConnected: boolean; status: ConnectionStatus; message: string } {
+          return {
+               isConnected: this.isConnectionReady(),
+               status: this.connectionStatus(),
+               message: this.connectionMessage(),
+          };
+     }
+
+     async disconnect() {
+          const currentClient = this.client();
+          if (currentClient) {
+               await currentClient.disconnect();
+               this.client.set(null);
+          }
+          this.setStatus('disconnected', 'Disconnected');
+          if (this.reconnectTimeout) {
+               clearTimeout(this.reconnectTimeout);
+               this.reconnectTimeout = null;
+          }
      }
 
      private getNetworkName(): string {
@@ -215,23 +242,16 @@ export class XrplService {
           return net.charAt(0).toUpperCase() + net.slice(1);
      }
 
-     // expose current values synchronously (useful in templates)
-     getCurrentStatus() {
-          return this.connectionStatus.value;
+     getCurrentStatus(): ConnectionStatus {
+          return this.connectionStatus();
      }
 
-     getCurrentMessage() {
-          return this.connectionMessage.value;
+     getCurrentMessage(): string {
+          return this.connectionMessage();
      }
 
      getNet() {
           return this.storageService.getNet();
-     }
-
-     decodeCurrencyCode(hexCode: string) {
-          const buffer = Buffer.from(hexCode, 'hex');
-          const trimmed = buffer.subarray(0, buffer.findIndex(byte => byte === 0) === -1 ? 20 : buffer.findIndex(byte => byte === 0));
-          return new TextDecoder().decode(trimmed);
      }
 
      async getXrplServerInfo(client: Client, ledgerIndex: xrpl.LedgerIndex, type: string) {
@@ -273,271 +293,173 @@ export class XrplService {
           }
      }
 
-     private formatTokenAge(fromDate: Date): string {
-          const now = new Date();
-          const diffMs = now.getTime() - fromDate.getTime();
-
-          const diffMinutes = Math.floor(diffMs / (1000 * 60));
-          const days = Math.floor(diffMinutes / (60 * 24));
-          const hours = Math.floor((diffMinutes % (60 * 24)) / 60);
-          const minutes = diffMinutes % 60;
-
-          const parts: string[] = [];
-          if (days > 0) parts.push(`${days}d `);
-          if (hours > 0 || days > 0) parts.push(`${hours}h `);
-          parts.push(`${minutes}min`);
-
-          return parts.join('');
-     }
-
-     async delay(ms: number) {
-          return new Promise(resolve => setTimeout(resolve, ms));
-     }
-
-     getTokenInfo(currencyHex: string, issuer: string) {
-          const key = `${currencyHex}.${issuer}`;
-          const url = `${this.proxyServer}/api/xpmarket/token/${key}`;
-          return this.http.get<any>(url);
-     }
-
-     async getTokenCreationDateService(currency: string, issuer: string, client: xrpl.Client): Promise<Date> {
-          const key = `${currency}:${issuer}`;
-          const cached = this.tokenCacheService.getDate(key);
-          if (cached) {
-               console.debug(`Token creation date for ${key} found in cache: ${cached}`);
-               return cached;
-          }
-
-          let marker: any = null;
-
-          while (true) {
-               const response = (await client.request({
-                    command: 'account_tx',
-                    account: issuer,
-                    limit: 20,
-                    forward: true,
-                    ...(marker && { marker }),
-               })) as { result: { transactions: any[]; marker?: any } };
-
-               for (const item of response.result.transactions) {
-                    const tx = item.tx_json ?? item.tx;
-                    if (!tx) continue;
-
-                    const isRelevant = (tx.TransactionType === 'TrustSet' && tx.LimitAmount?.currency === currency) || (tx.TransactionType === 'Payment' && typeof tx.Amount === 'object' && tx.Amount?.currency === currency) || (tx.TransactionType === 'OfferCreate' && ((typeof tx.TakerGets === 'object' && tx.TakerGets.currency === currency) || (typeof tx.TakerPays === 'object' && tx.TakerPays.currency === currency)));
-
-                    if (isRelevant && tx.date) {
-                         const date = new Date((tx.date + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000);
-                         this.tokenCacheService.setDate(key, date);
-                         return date;
-                    }
-               }
-
-               if (!response.result.marker) break;
-               marker = response.result.marker;
-
-               await this.delay(150);
-          }
-
-          const fallback = new Date(0);
-          this.tokenCacheService.setDate(key, fallback);
-          return fallback;
-     }
-
-     private isMemeCoin(currency: string, issuer: string): boolean {
-          // Dynamic heuristic: Exclude known fiat/stablecoin currencies
-          let isNonStandard;
-          if (currency.length > 3) {
-               isNonStandard = AppConstants.BLACK_LISTED_MEMES.includes(this.decodeCurrencyCode(currency));
-               if (isNonStandard) console.debug(`Skipping non-meme token: ${this.decodeCurrencyCode(currency)}:${issuer}`);
-          } else {
-               isNonStandard = AppConstants.BLACK_LISTED_MEMES.includes(currency.toUpperCase());
-               if (isNonStandard) console.debug(`Skipping non-meme token: ${currency}:${issuer}`);
-          }
-
-          return isNonStandard;
-     }
-
      async monitorNewTokens() {
-          const client = await this.getClient();
-          try {
-               // await this.delay(2000);
-               // Subscribe to ledger updates
-               await client.request({
-                    command: 'subscribe',
-                    streams: ['ledger'],
-               });
-
-               client.on('ledgerClosed', async ledger => {
-                    try {
-                         // Fetch recent transactions
-                         const response = await client.request({
-                              command: 'ledger',
-                              ledger_index: ledger.ledger_index,
-                              transactions: true,
-                              expand: true,
-                         });
-
-                         // Type assertion for response structure with tx_json
-                         const ledgerData = response as {
-                              result: {
-                                   ledger: {
-                                        transactions?: Array<{
-                                             hash: string; // Transaction hash at top level
-                                             close_time_iso: number; // Closed time in Ripple time
-                                             meta?: { delivered_amount?: string | { currency: string; issuer: string; value: string }; TransactionResult?: string };
-                                             tx_json: {
-                                                  TransactionType: string;
-                                                  LimitAmount?: { currency: string; issuer: string; value: string };
-                                                  Amount?: { currency: string; issuer: string; value: string } | string;
-                                                  SendMax?: { currency: string; issuer: string; value: string } | string;
-                                                  DeliverMax?: { currency: string; issuer: string; value: string } | string;
-                                                  TakerPays?: { currency: string; issuer: string; value: string } | string;
-                                                  TakerGets?: { currency: string; issuer: string; value: string } | string;
-                                             };
-                                        }>;
-                                   };
-                              };
-                         };
-
-                         // Check if transactions exist
-                         if (!ledgerData.result.ledger.transactions || ledgerData.result.ledger.transactions.length === 0) {
-                              console.log('No transactions found in ledger:', ledger.ledger_index);
-                              return;
-                         }
-
-                         const newTokens: Token[] = [];
-                         for (const tx of ledgerData.result.ledger.transactions) {
-                              let currency: string | undefined;
-                              let issuer: string | undefined;
-                              let action: string = 'Unknown';
-                              let amountToken: string = '0';
-                              let amountXrp: string = '0';
-                              const txTimestamp = new Date(); // Convert Ripple time to JS Date
-                              const transactionType = tx.tx_json.TransactionType;
-
-                              if (tx.meta?.TransactionResult !== 'tesSUCCESS') {
-                                   continue; // Skip failed transactions
-                              }
-
-                              if (transactionType === 'TrustSet' && tx.tx_json.LimitAmount) {
-                                   currency = tx.tx_json.LimitAmount.currency;
-                                   issuer = tx.tx_json.LimitAmount.issuer;
-                                   action = 'TrustSet';
-                                   amountToken = tx.tx_json.LimitAmount.value || '0';
-                              } else if (transactionType === 'Payment') {
-                                   // Handle token-based DeliverMax (Buy: receiving token)
-                                   if (typeof tx.tx_json.DeliverMax === 'object' && tx.tx_json.DeliverMax) {
-                                        currency = tx.tx_json.DeliverMax.currency;
-                                        issuer = tx.tx_json.DeliverMax.issuer;
-                                        action = 'Buy';
-                                        amountToken = tx.tx_json.DeliverMax.value;
-                                        amountXrp = typeof tx.tx_json.SendMax === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.SendMax)).toFixed(6) : '0';
-                                   }
-                                   // Handle token-based Amount (Buy: receiving token)
-                                   else if (typeof tx.tx_json.Amount === 'object' && tx.tx_json.Amount) {
-                                        currency = tx.tx_json.Amount.currency;
-                                        issuer = tx.tx_json.Amount.issuer;
-                                        action = 'Buy';
-                                        amountToken = tx.tx_json.Amount.value;
-                                        amountXrp = typeof tx.tx_json.SendMax === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.SendMax)).toFixed(6) : '0';
-                                   }
-                                   // Handle token-based SendMax (Sell: sending token)
-                                   else if (typeof tx.tx_json.SendMax === 'object' && tx.tx_json.SendMax) {
-                                        currency = tx.tx_json.SendMax.currency;
-                                        issuer = tx.tx_json.SendMax.issuer;
-                                        action = 'Sell';
-                                        amountToken = tx.tx_json.SendMax.value;
-                                        const delivered = tx.meta?.delivered_amount;
-
-                                        if (typeof delivered === 'string') {
-                                             // Native XRP payment
-                                             amountXrp = Number(xrpl.dropsToXrp(delivered)).toFixed(6);
-                                        } else if (typeof delivered === 'object') {
-                                             // IOU payment (probably not XRP)
-                                             if (delivered.currency === 'XRP') {
-                                                  amountXrp = Number(xrpl.dropsToXrp(delivered.value)).toFixed(6);
-                                             } else {
-                                                  amountToken = delivered.value;
-                                                  currency = delivered.currency;
-                                                  issuer = delivered.issuer;
-                                             }
-                                        }
-                                   } else {
-                                        // Skip XRP-only payments
-                                        continue;
-                                   }
-                              } else if (transactionType === 'OfferCreate') {
-                                   if (typeof tx.tx_json.TakerGets === 'object' && tx.tx_json.TakerGets) {
-                                        currency = tx.tx_json.TakerGets.currency;
-                                        issuer = tx.tx_json.TakerGets.issuer;
-                                        action = 'Buy';
-                                        amountToken = tx.tx_json.TakerGets.value;
-                                        amountXrp = typeof tx.tx_json.TakerPays === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.TakerPays)).toFixed(6) : '0';
-                                   } else if (typeof tx.tx_json.TakerPays === 'object' && tx.tx_json.TakerPays) {
-                                        currency = tx.tx_json.TakerPays.currency;
-                                        issuer = tx.tx_json.TakerPays.issuer;
-                                        action = 'Sell';
-                                        amountToken = tx.tx_json.TakerPays.value;
-                                        amountXrp = typeof tx.tx_json.TakerGets === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.TakerGets)).toFixed(6) : '0';
-                                   }
-                              }
-
-                              if (currency && issuer && this.isMemeCoin(currency, issuer)) {
-                                   continue; // Skip non-meme tokens
-                              }
-
-                              let skip = false;
-                              if (currency && issuer) {
-                                   let createdDate: Date | null = null;
-                                   try {
-                                        createdDate = await this.getTokenCreationDateService(currency, issuer, client);
-                                        await this.delay(2000); // Delay to avoid rate limiting
-
-                                        const createdLessThanTime = 3000; // 2 hours in minutes
-                                        const isNewToken = createdDate ? Date.now() - createdDate.getTime() < createdLessThanTime * 60 * 1000 : false;
-                                        if (!isNewToken) {
-                                             // Skip this token
-                                             console.debug(`Old tokens skipped: ${currency}:${issuer}`);
-                                             skip = true;
-                                        }
-                                   } catch (error) {
-                                        console.error(`Error fetching token creation date for ${currency}:${issuer}:`, error);
-                                   }
-
-                                   if (skip) continue;
-
-                                   let creationAge = '';
-                                   if (createdDate !== null) {
-                                        creationAge = this.formatTokenAge(createdDate);
-                                   } else {
-                                        createdDate = new Date();
-                                   }
-
-                                   newTokens.push({
-                                        currency,
-                                        issuer,
-                                        transactionHash: tx.hash,
-                                        timestamp: txTimestamp,
-                                        createdDate,
-                                        transactionType,
-                                        creationAge,
-                                        action,
-                                        amountToken,
-                                        amountXrp,
-                                   });
-                              }
-                         }
-
-                         if (newTokens.length > 0) {
-                              this.tokensSubject.next([...this.tokensSubject.value, ...newTokens]);
-                         }
-                    } catch (error) {
-                         console.error('Error processing ledger:', error);
-                    }
-               });
-          } catch (error) {
-               console.error('Error subscribing to ledger:', error);
-          }
+          // const client = await this.getClient();
+          // try {
+          //      // await this.delay(2000);
+          //      // Subscribe to ledger updates
+          //      await client.request({
+          //           command: 'subscribe',
+          //           streams: ['ledger'],
+          //      });
+          //      client.on('ledgerClosed', async ledger => {
+          //           try {
+          //                // Fetch recent transactions
+          //                const response = await client.request({
+          //                     command: 'ledger',
+          //                     ledger_index: ledger.ledger_index,
+          //                     transactions: true,
+          //                     expand: true,
+          //                });
+          //                // Type assertion for response structure with tx_json
+          //                const ledgerData = response as {
+          //                     result: {
+          //                          ledger: {
+          //                               transactions?: Array<{
+          //                                    hash: string; // Transaction hash at top level
+          //                                    close_time_iso: number; // Closed time in Ripple time
+          //                                    meta?: { delivered_amount?: string | { currency: string; issuer: string; value: string }; TransactionResult?: string };
+          //                                    tx_json: {
+          //                                         TransactionType: string;
+          //                                         LimitAmount?: { currency: string; issuer: string; value: string };
+          //                                         Amount?: { currency: string; issuer: string; value: string } | string;
+          //                                         SendMax?: { currency: string; issuer: string; value: string } | string;
+          //                                         DeliverMax?: { currency: string; issuer: string; value: string } | string;
+          //                                         TakerPays?: { currency: string; issuer: string; value: string } | string;
+          //                                         TakerGets?: { currency: string; issuer: string; value: string } | string;
+          //                                    };
+          //                               }>;
+          //                          };
+          //                     };
+          //                };
+          //                // Check if transactions exist
+          //                if (!ledgerData.result.ledger.transactions || ledgerData.result.ledger.transactions.length === 0) {
+          //                     console.log('No transactions found in ledger:', ledger.ledger_index);
+          //                     return;
+          //                }
+          //                const newTokens: Token[] = [];
+          //                for (const tx of ledgerData.result.ledger.transactions) {
+          //                     let currency: string | undefined;
+          //                     let issuer: string | undefined;
+          //                     let action: string = 'Unknown';
+          //                     let amountToken: string = '0';
+          //                     let amountXrp: string = '0';
+          //                     const txTimestamp = new Date(); // Convert Ripple time to JS Date
+          //                     const transactionType = tx.tx_json.TransactionType;
+          //                     if (tx.meta?.TransactionResult !== 'tesSUCCESS') {
+          //                          continue; // Skip failed transactions
+          //                     }
+          //                     if (transactionType === 'TrustSet' && tx.tx_json.LimitAmount) {
+          //                          currency = tx.tx_json.LimitAmount.currency;
+          //                          issuer = tx.tx_json.LimitAmount.issuer;
+          //                          action = 'TrustSet';
+          //                          amountToken = tx.tx_json.LimitAmount.value || '0';
+          //                     } else if (transactionType === 'Payment') {
+          //                          // Handle token-based DeliverMax (Buy: receiving token)
+          //                          if (typeof tx.tx_json.DeliverMax === 'object' && tx.tx_json.DeliverMax) {
+          //                               currency = tx.tx_json.DeliverMax.currency;
+          //                               issuer = tx.tx_json.DeliverMax.issuer;
+          //                               action = 'Buy';
+          //                               amountToken = tx.tx_json.DeliverMax.value;
+          //                               amountXrp = typeof tx.tx_json.SendMax === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.SendMax)).toFixed(6) : '0';
+          //                          }
+          //                          // Handle token-based Amount (Buy: receiving token)
+          //                          else if (typeof tx.tx_json.Amount === 'object' && tx.tx_json.Amount) {
+          //                               currency = tx.tx_json.Amount.currency;
+          //                               issuer = tx.tx_json.Amount.issuer;
+          //                               action = 'Buy';
+          //                               amountToken = tx.tx_json.Amount.value;
+          //                               amountXrp = typeof tx.tx_json.SendMax === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.SendMax)).toFixed(6) : '0';
+          //                          }
+          //                          // Handle token-based SendMax (Sell: sending token)
+          //                          else if (typeof tx.tx_json.SendMax === 'object' && tx.tx_json.SendMax) {
+          //                               currency = tx.tx_json.SendMax.currency;
+          //                               issuer = tx.tx_json.SendMax.issuer;
+          //                               action = 'Sell';
+          //                               amountToken = tx.tx_json.SendMax.value;
+          //                               const delivered = tx.meta?.delivered_amount;
+          //                               if (typeof delivered === 'string') {
+          //                                    // Native XRP payment
+          //                                    amountXrp = Number(xrpl.dropsToXrp(delivered)).toFixed(6);
+          //                               } else if (typeof delivered === 'object') {
+          //                                    // IOU payment (probably not XRP)
+          //                                    if (delivered.currency === 'XRP') {
+          //                                         amountXrp = Number(xrpl.dropsToXrp(delivered.value)).toFixed(6);
+          //                                    } else {
+          //                                         amountToken = delivered.value;
+          //                                         currency = delivered.currency;
+          //                                         issuer = delivered.issuer;
+          //                                    }
+          //                               }
+          //                          } else {
+          //                               // Skip XRP-only payments
+          //                               continue;
+          //                          }
+          //                     } else if (transactionType === 'OfferCreate') {
+          //                          if (typeof tx.tx_json.TakerGets === 'object' && tx.tx_json.TakerGets) {
+          //                               currency = tx.tx_json.TakerGets.currency;
+          //                               issuer = tx.tx_json.TakerGets.issuer;
+          //                               action = 'Buy';
+          //                               amountToken = tx.tx_json.TakerGets.value;
+          //                               amountXrp = typeof tx.tx_json.TakerPays === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.TakerPays)).toFixed(6) : '0';
+          //                          } else if (typeof tx.tx_json.TakerPays === 'object' && tx.tx_json.TakerPays) {
+          //                               currency = tx.tx_json.TakerPays.currency;
+          //                               issuer = tx.tx_json.TakerPays.issuer;
+          //                               action = 'Sell';
+          //                               amountToken = tx.tx_json.TakerPays.value;
+          //                               amountXrp = typeof tx.tx_json.TakerGets === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.TakerGets)).toFixed(6) : '0';
+          //                          }
+          //                     }
+          //                     if (currency && issuer && this.isMemeCoin(currency, issuer)) {
+          //                          continue; // Skip non-meme tokens
+          //                     }
+          //                     let skip = false;
+          //                     if (currency && issuer) {
+          //                          let createdDate: Date | null = null;
+          //                          try {
+          //                               createdDate = await this.getTokenCreationDateService(currency, issuer, client);
+          //                               await this.delay(2000); // Delay to avoid rate limiting
+          //                               const createdLessThanTime = 3000; // 2 hours in minutes
+          //                               const isNewToken = createdDate ? Date.now() - createdDate.getTime() < createdLessThanTime * 60 * 1000 : false;
+          //                               if (!isNewToken) {
+          //                                    // Skip this token
+          //                                    console.debug(`Old tokens skipped: ${currency}:${issuer}`);
+          //                                    skip = true;
+          //                               }
+          //                          } catch (error) {
+          //                               console.error(`Error fetching token creation date for ${currency}:${issuer}:`, error);
+          //                          }
+          //                          if (skip) continue;
+          //                          let creationAge = '';
+          //                          if (createdDate !== null) {
+          //                               creationAge = this.formatTokenAge(createdDate);
+          //                          } else {
+          //                               createdDate = new Date();
+          //                          }
+          //                          newTokens.push({
+          //                               currency,
+          //                               issuer,
+          //                               transactionHash: tx.hash,
+          //                               timestamp: txTimestamp,
+          //                               createdDate,
+          //                               transactionType,
+          //                               creationAge,
+          //                               action,
+          //                               amountToken,
+          //                               amountXrp,
+          //                          });
+          //                     }
+          //                }
+          //                if (newTokens.length > 0) {
+          //                     this.tokensSubject.next([...this.tokensSubject.value, ...newTokens]);
+          //                }
+          //           } catch (error) {
+          //                console.error('Error processing ledger:', error);
+          //           }
+          //      });
+          // } catch (error) {
+          //      console.error('Error subscribing to ledger:', error);
+          // }
      }
 
      async getLastLedgerIndex(client: Client): Promise<number> {
@@ -658,17 +580,6 @@ export class XrplService {
                console.error('Error fetching account info:', error);
                throw new Error(`Failed to fetch account info: ${error.message || 'Unknown error'}`);
           }
-     }
-
-     filterAccountObjectsByTypes(accountObjectsResponse: xrpl.AccountObjectsResponse, types: string[]): xrpl.AccountObjectsResponse {
-          const filtered = (accountObjectsResponse.result.account_objects ?? []).filter((obj: any) => types.includes(obj.LedgerEntryType));
-          return {
-               ...accountObjectsResponse,
-               result: {
-                    ...accountObjectsResponse.result,
-                    account_objects: filtered,
-               },
-          };
      }
 
      async getAMMInfo(client: Client, asset: any, asset2: any, account: string, ledgerIndex: xrpl.LedgerIndex): Promise<any> {
@@ -1146,5 +1057,15 @@ export class XrplService {
                console.error('Error fetching XRP reserve requirements:', error);
                throw new Error(`Failed to fetch XRP reserve requirements: ${error.message || 'Unknown error'}`);
           }
+     }
+
+     async delay(ms: number) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+     }
+
+     decodeCurrencyCode(hexCode: string) {
+          const buffer = Buffer.from(hexCode, 'hex');
+          const trimmed = buffer.subarray(0, buffer.includes(0) ? buffer.indexOf(0) : 20);
+          return new TextDecoder().decode(trimmed);
      }
 }

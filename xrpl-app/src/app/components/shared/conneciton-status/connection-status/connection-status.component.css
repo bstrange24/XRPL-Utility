@@ -1,0 +1,80 @@
+ .connection-status-container {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+ }
+
+ .connection-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+ }
+
+ .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: gray;
+ }
+
+ .connected .status-dot {
+      background-color: #10b981;
+      box-shadow: 0 0 4px #10b981;
+ }
+
+ .connecting .status-dot {
+      background-color: #f59e0b;
+      animation: pulse 1.5s infinite;
+ }
+
+ .disconnected .status-dot {
+      background-color: #ef4444;
+ }
+
+ .connected {
+      background-color: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+ }
+
+ .connecting {
+      background-color: rgba(245, 158, 11, 0.1);
+      color: #f59e0b;
+ }
+
+ .disconnected {
+      background-color: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+ }
+
+ .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+ }
+
+ @keyframes spin {
+      to {
+           transform: rotate(360deg);
+      }
+ }
+
+ @keyframes pulse {
+      0% {
+           opacity: 0.5;
+      }
+
+      50% {
+           opacity: 1;
+      }
+
+      100% {
+           opacity: 0.5;
+      }
+ }

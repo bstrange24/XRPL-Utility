@@ -1,0 +1,25 @@
+<div class="form-row">
+     <!-- Destination -->
+     <div class="form-group">
+          <label for="destination">Destination</label>
+          <p class="form-hint">Destination account to send remaining XRP to.</p>
+          <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
+     </div>
+     <div class="form-group">
+          <label for="amountField">XRP Amount</label>
+          <p class="form-hint">Amount, in XRP, to send to the destination. Use arrows for ±0.000001 precision.</p>
+          <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+     </div>
+</div>
+
+<div class="switch-group">
+     <label class="switch">
+          <input type="checkbox" [checked]="wantsOptions()" (change)="toggleOptions.emit($event.target.checked)" name="showOptionalXrp" />
+          <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
+     </label>
+</div>
+
+<!-- Optional fields section (only shown when toggled) -->
+<!-- @if (wantsOptions()) { -->
+<!-- <app-transaction-options-section [activeTab]="tab"></app-transaction-options-section> -->
+<!-- } -->

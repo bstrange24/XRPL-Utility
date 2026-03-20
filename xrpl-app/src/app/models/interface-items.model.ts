@@ -1,3 +1,5 @@
+export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
+
 export interface CredentialItem {
      index: string;
      CredentialType: string;
@@ -150,6 +152,28 @@ export interface MPTokenHolder {
 export interface MPTAmount {
      mpt_issuance_id: string;
      value: string;
+}
+
+export interface MptInfoRequest {
+     command: 'mpt_info';
+     issuance_id: string;
+}
+
+export interface MptInfoResponse {
+     result: any; // or define proper structure if known
+}
+
+export interface Token {
+     transactionType: string;
+     createdDate: Date;
+     creationAge: string; // Optional field for age of token
+     currency: string;
+     issuer: string;
+     transactionHash: string;
+     timestamp: Date;
+     action: string; // "Buy" or "Sell"
+     amountToken: string; // Token amount (e.g., "100 PHNIX")
+     amountXrp: string; // XRP amount (e.g., "10 XRP")
 }
 
 export type EscrowDisplayItem =

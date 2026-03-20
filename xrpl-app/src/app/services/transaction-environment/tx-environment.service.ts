@@ -71,6 +71,117 @@ export class TxEnvironmentService {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      private readonly DEFAULT_ENV_CONFIG = { includeAccountInfo: true, includeAccountObject: true } as const;
 
+     async prepareTxEnvironmentWithWallet(selectedWallet: Wallet, options: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
+          const {
+               includeTickets = false,
+               includeEscrows = false,
+               includeEscrowBySequenceId = false,
+               includeChecks = false,
+               includeTrustlines = false,
+               includeDestinationAccountInfo = false,
+               includeDestinationAccountObject = false,
+               includeAccountInfo = false,
+               includeAccountObject = false,
+               includeLedgerIndex = false,
+               includeServerInfo = false,
+               includeLedgerInfo = false,
+               includePaymentChannelObjects = false,
+               includeMptObjects = false,
+               includeGatewayBalance = false,
+               includeBlockingObjects = false,
+               includeFee = false,
+               forceRefresh = false,
+               destinationAddress = '',
+               escrowSequenceNumberField = '',
+          } = options;
+
+          const client = await this.xrplCache.getClient(() => this.xrplService.getClient());
+
+          const seed = this.getSeed(selectedWallet);
+          const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(seed, selectedWallet.encryptionAlgorithm as 'ed25519' | 'secp256k1');
+          const address = wallet.classicAddress;
+
+          // Parallel promise collection
+          const tasks: Partial<Record<keyof PrepareTxEnvironmentResult, Promise<any>>> = {};
+
+          if (includeFee) {
+               tasks.fee = this.xrplCache.getFee(this.xrplService, forceRefresh);
+          }
+
+          if (includeLedgerIndex) {
+               tasks.currentLedger = this.xrplCache.getLedgerIndex(client, forceRefresh);
+          }
+
+          if (includeLedgerInfo) {
+               tasks.ledgerInfo = this.xrplCache.getLedgerInfo(client, forceRefresh);
+          }
+
+          if (includeAccountInfo) {
+               tasks.accountInfo = this.xrplCache.getAccountInfo(address, forceRefresh);
+          }
+
+          if (includeAccountObject) {
+               tasks.accountObjects = this.xrplCache.getAccountObjects(client, address, forceRefresh);
+          }
+
+          if (includeTrustlines) {
+               tasks.trustlines = this.xrplCache.getAccountLines(client, address, forceRefresh);
+          }
+
+          if (includeTickets) {
+               tasks.ticketObjects = this.xrplCache.getAccountObjectsWithType(client, address, forceRefresh, 'ticket');
+          }
+
+          if (includeEscrows) {
+               tasks.escrowObjects = this.xrplCache.getAccountObjectsWithType(client, address, forceRefresh, 'escrow');
+          }
+
+          if (includeChecks) {
+               tasks.checkObjects = this.xrplCache.getAccountObjectsWithType(client, address, forceRefresh, 'check');
+          }
+
+          if (includeMptObjects) {
+               tasks.mptObjects = this.xrplCache.getAccountObjectsWithType(client, address, forceRefresh, 'mpt');
+          }
+
+          if (includeServerInfo) {
+               tasks.serverInfo = this.xrplCache.getServerInfo(this.xrplService);
+          }
+
+          if (includeBlockingObjects) {
+               tasks.blockingObjects = this.xrplCache.getBlockingObjects(client, address, forceRefresh, 'blocking_objects');
+          }
+
+          if (includePaymentChannelObjects) {
+               tasks.paymentChannelObjects = this.xrplCache.getAccountObjectsWithType(client, address, forceRefresh, 'payment_channel');
+          }
+
+          if (includeGatewayBalance) {
+               tasks.gatewayBalanceObject = this.xrplCache.getGatewayBalance(client, address, forceRefresh);
+          }
+
+          if (includeEscrowBySequenceId && escrowSequenceNumberField) {
+               tasks.escrowObjectsBySequenceId = this.xrplService.getEscrowBySequence(client, address, Number(escrowSequenceNumberField));
+          }
+
+          if (includeDestinationAccountInfo && destinationAddress) {
+               tasks.destinationAccountInfo = this.xrplCache.getAccountInfo(destinationAddress, forceRefresh);
+          }
+
+          if (includeDestinationAccountObject && destinationAddress) {
+               tasks.destinationAccountObject = this.xrplCache.getAccountObjects(client, destinationAddress, forceRefresh);
+          }
+
+          // Execute all tasks in parallel
+          const resolved = await this.resolveTasks(tasks);
+
+          return {
+               client,
+               wallet,
+               ...resolved,
+          };
+     }
+
      async prepareTxEnvironment(options: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
           const {
                includeTickets = false,

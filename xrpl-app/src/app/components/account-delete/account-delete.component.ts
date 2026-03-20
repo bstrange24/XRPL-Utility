@@ -105,7 +105,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
 
-               if (!this.walletManagerService.ensureWalletSelected()) return;
+               if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
 
                try {
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
@@ -132,10 +132,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
           this.deleteAccountStoreService.setField('savedTxJson', []);
           this.deleteAccountStoreService.setField('savedTxResult', []);
 
-          if (!this.walletManagerService.ensureWalletSelected()) return;
-
-          const wallet = this.walletManager.walletVm()?.wallet;
-          if (!wallet || !this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+          const wallet = this.currentWallet();
 
           const destination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
           if (!destination || !xrpl.isValidAddress(destination)) {
@@ -145,7 +142,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
 
           let env: any = null;
           try {
-               env = await this.txEnvironmentService.prepareTxEnvironment({
+               env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
                     includeAccountInfo: true,
                     includeAccountObject: true,
                     includeFee: true,
@@ -200,6 +197,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
                this.isAccountDelete.set(false);
           }
 
+          this.txUiService.wantsOptions.set(false);
           this.txUiService.resetCurrentStepToIdle();
      }
 

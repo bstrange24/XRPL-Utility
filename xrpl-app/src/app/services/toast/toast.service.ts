@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AppConstants } from '../../core/app.constants';
 
@@ -12,11 +12,11 @@ export interface Toast {
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
+     private readonly sanitizer = inject(DomSanitizer);
      private id = 0;
      toasts = signal<Toast[]>([]);
-     private readonly isShowing = signal<boolean>(false);
 
-     constructor(private readonly sanitizer: DomSanitizer) {}
+     constructor() {}
 
      success(message: string, duration = 4000, makeHashLink = false, hash?: string, explorerBaseUrl = 'https://livenet.xrpl.org/tx/') {
           let finalMessage: string | SafeHtml = message;
