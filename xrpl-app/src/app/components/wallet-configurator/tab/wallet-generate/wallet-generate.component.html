@@ -1,0 +1,23 @@
+@if (walletsViewModelService.activeTab() === 'generate') {
+<div class="button-row" style="margin-top: 0em">
+     <button type="button" class="btn-primary-blue" (click)="walletConfiguratorComponent.generateNewAccount()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromSeed || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromSeed ? 'Processing...' : 'Generate Wallet from Family Seed' }}</button>
+     <button type="button" class="btn-primary-blue" (click)="walletConfiguratorComponent.generateNewWalletFromMnemonic()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromMnemonic || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromMnemonic ? 'Processing...' : 'Generate Wallet from Mnemonic' }}</button>
+     <button type="button" class="btn-primary-blue" (click)="walletConfiguratorComponent.generateNewWalletFromSecretNumbers()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromSecretNumbers || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromSecretNumbers ? 'Processing...' : 'Generate Wallet from Secret Numbers' }}</button>
+</div>
+} @if (walletsViewModelService.activeTab() === 'generate') {
+<div class="switch-group">
+     <label class="switch">
+          <input type="radio" [checked]="walletsStoreService.ed25519_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('ed25519')" />
+          <span class="slider"></span>
+          ED25519
+     </label>
+
+     <label class="switch">
+          <input type="radio" [checked]="walletsStoreService.secp256k1_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('secp256k1')" />
+          <span class="slider"></span>
+          SECP256K1
+     </label>
+</div>
+} @if (walletsViewModelService.activeTab() === 'generate') {
+<div class="info-box" style="margin-top: 16px; margin-bottom: 6px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Generating a Mnemonic or Secret Number wallet will always be SECP256K1 encryption.</div>
+}

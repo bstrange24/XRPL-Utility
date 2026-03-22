@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AppConstants } from '../../core/app.constants';
-import { UtilsService } from '../../services/util-service/utils.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -34,6 +33,7 @@ import { WarningMessageComponent } from '../shared/ui-components/warning-message
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
 import { SendXrpViewModelService } from '../../services/send-xrp/send-xrp-view-model/send-xrp-view-model.service';
 import { SendXrpUtilService } from '../../services/send-xrp/send-xrp-util/send-xrp-util.service';
+import { StorageService } from '../../services/local-storage/storage.service';
 
 @Component({
      selector: 'app-send-xrp',
@@ -44,7 +44,6 @@ import { SendXrpUtilService } from '../../services/send-xrp/send-xrp-util/send-x
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendXrpComponent extends WalletDestinationBase implements OnInit {
-     public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -55,8 +54,8 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
      public readonly sendXrpViewModelService = inject(SendXrpViewModelService);
      public readonly sendXrpUtilService = inject(SendXrpUtilService);
 
-     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
-          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }

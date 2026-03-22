@@ -1,0 +1,32 @@
+@if (walletsViewModelService.activeTab() === 'deriveMnemonic') {
+<div class="form-row">
+     <div class="form-group">
+          <label for="enterMnemonic">Enter Mnemonic</label>
+          @if (walletsStoreService.mnemonicInput().trim().length > 0) {
+          <label for="mnemonic">
+               <span [ngClass]="{ valid: walletsStoreService.mnemonicValid(), invalid: !walletsStoreService.mnemonicValid() }"> {{ walletsUtilService.statusMessage() }}</span>
+          </label>
+          }
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <input type="text" [value]="walletsStoreService.mnemonic()" (input)="walletsStoreService.setField('mnemonic', $event.target.value); walletsUtilService.onMnemonicInput()" name="mnemonic" placeholder="Paste your 24-word mnemonic here..." rows="3" class="mnemonic-textarea" />
+          <small class="helper-text">
+               Example format:
+               <code>joe bill john joe john bill bill joe john bill john joe john joe bill john bill joe joe bill john joe john bill</code>
+          </small>
+     </div>
+</div>
+}
+
+<!-- Derive Mnemonic message -->
+@if (walletsViewModelService.activeTab() === 'deriveMnemonic') {
+<div class="info-box" style="margin-top: 16px; margin-bottom: 6px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Deriving a Mnemonic wallet will always be SECP256K1 encryption.</div>
+} @if (walletsViewModelService.activeTab() === 'deriveMnemonic') {
+<div class="button-row" style="margin-top: 0em">
+     <button type="button" class="btn-primary-blue" (click)="walletConfiguratorComponent.deriveWalletFromMnemonic()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromMnemonic || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
+     <button type="button" class="btn-secondary-clear-fields" (click)="walletConfiguratorComponent.clearFields(true)">Clear Fields</button>
+</div>
+}

@@ -1,5 +1,4 @@
 import { computed, inject, Injectable } from '@angular/core';
-import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { WalletsStoreService } from '../wallets-store/wallets-store.service';
 import { AppConstants } from '../../../core/app.constants';
 import { UtilsService } from '../../util-service/utils.service';
@@ -8,21 +7,20 @@ import * as xrpl from 'xrpl';
 import * as bip39 from 'bip39';
 import { ToastService } from '../../toast/toast.service';
 
-
 @Injectable({
-  providedIn: 'root',
+     providedIn: 'root',
 })
 export class WalletsUtilService {
-       public readonly walletsStoreService = inject(WalletsStoreService);
-            public readonly utilsService = inject(UtilsService);
-                 private readonly storageService = inject(StorageService);
-                 private readonly toastService = inject(ToastService);
-                 
-            
-       
-  
+     public readonly walletsStoreService = inject(WalletsStoreService);
+     public readonly utilsService = inject(UtilsService);
+     private readonly storageService = inject(StorageService);
+     private readonly toastService = inject(ToastService);
 
-  statusMessage = computed(() => {
+     get isAnyButtonLoading(): boolean {
+          return Object.values(this.walletsStoreService.buttonLoading()).includes(true);
+     }
+
+     statusMessage = computed(() => {
           if (this.walletsStoreService.mnemonicValid()) {
                return '✅ Mnemonic Valid';
           }
@@ -50,7 +48,7 @@ export class WalletsUtilService {
           }
 
           if (!bip39.validateMnemonic(this.walletsStoreService.mnemonic())) {
-               this.walletsStoreService.setField('errorMessage','Invalid BIP39 Mnemonic.');
+               this.walletsStoreService.setField('errorMessage', 'Invalid BIP39 Mnemonic.');
           }
 
           this.walletsStoreService.setField('mnemonicValid', this.utilsService.isValidMnemonic(this.walletsStoreService.mnemonic()));
@@ -114,5 +112,4 @@ export class WalletsUtilService {
           const type = this.getEncryptionType();
           this.storageService.setInputValue('encryptionType', type);
      }
-
 }

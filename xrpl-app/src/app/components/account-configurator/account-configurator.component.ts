@@ -5,7 +5,6 @@ import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
-import { UtilsService } from '../../services/util-service/utils.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
@@ -51,7 +50,6 @@ import { RegularKeyComponent } from './ui-components/tabs/regular-key/regular-ke
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountConfiguratorComponent extends WalletDestinationBase implements OnInit {
-     public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -60,11 +58,10 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
      public readonly accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      public readonly accoutDataService = inject(AcccountDataService);
      public readonly accountConfiguratorOrchestratorService = inject(AccountConfiguratorOrchestratorService);
-     public readonly storageService = inject(StorageService);
      public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
 
-     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
-          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.txUiService.clearAllOptionsAndMessages();
      }
 

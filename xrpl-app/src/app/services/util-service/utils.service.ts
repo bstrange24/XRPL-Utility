@@ -791,6 +791,10 @@ export class UtilsService {
      //      writableSignal.set(newDateTime);
      // }
 
+     truncateAddress(address: string): string {
+          return `${address.slice(0, 8)}...${address.slice(-6)}`;
+     }
+
      formatDateTimeLocal(date: Date): string {
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, '0');

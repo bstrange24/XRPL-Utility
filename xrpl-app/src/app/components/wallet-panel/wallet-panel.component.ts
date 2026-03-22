@@ -12,6 +12,7 @@ import { AppConstants } from '../../core/app.constants';
 import { ToastService } from '../../services/toast/toast.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { WalletsStoreService } from '../../services/wallets/wallets-store/wallets-store.service';
 
 @Component({
      selector: 'app-wallet-panel',
@@ -30,6 +31,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      public readonly toastService = inject(ToastService);
      private readonly cdr = inject(ChangeDetectorRef);
      private readonly utilsService = inject(UtilsService);
+     public readonly walletsStoreService = inject(WalletsStoreService);
      readonly editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
 
      @Output() walletSelected = new EventEmitter<Wallet>();
@@ -177,7 +179,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
                try {
                     this.txUiService.currentStep.set('waiting_for_wallet_creation');
 
-                    const newWallet = await this.walletGenerator.generateWallet('familySeed', this.environment(), this.txUiService.encryptionType());
+                    const newWallet = await this.walletGenerator.generateWallet('familySeed', this.environment(), this.walletsStoreService.encryptionType());
 
                     const client = await this.xrplService.getClient();
                     await this.walletDataService.refreshWallets(client, [newWallet.address]);

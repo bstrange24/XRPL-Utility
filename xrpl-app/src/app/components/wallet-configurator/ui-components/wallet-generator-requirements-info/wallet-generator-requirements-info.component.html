@@ -1,0 +1,76 @@
+<div class="requirements-info">
+     <div class="info-header">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+          <h3>XRPL Wallet Configurator</h3>
+     </div>
+
+     <p class="info-subtitle">Generate a fresh XRPL wallet or derive an existing one from a family seed, mnemonic phrase, or secret numbers. Choose between ed25519 (faster, modern default in many libs) or secp256k1 (Bitcoin-compatible, default in rippled & Xaman/Xumm). All operations happen client-side — never share your seed, mnemonic, or numbers.</p>
+
+     <div class="combinations-grid">
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">🆕 Generate New Wallet</span>
+                    <span class="badge required-badge">Random Seed</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">Algorithm</span>
+                         <span class="field-status required">✅ Required (ed25519 or secp256k1)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Output</span>
+                         <span class="field-status optional">➕ Address + Seed (sEd... for ed25519, s... for secp256k1)</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">🔑 Derive Existing Wallet</span>
+                    <span class="badge optional-badge">From Secret Input</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">Family Seed</span>
+                         <span class="field-status optional">➕ s... or sEd... format</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Mnemonic (24 words)</span>
+                         <span class="field-status optional">➕ BIP-39 style (always secp256k1)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Secret Numbers (8×6 digits)</span>
+                         <span class="field-status optional">➕ Always secp256k1 (Xumm-compatible)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Algorithm override</span>
+                         <span class="field-status omitted">❌ Limited (mnemonic/secret nums fixed to secp256k1)</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="important-notes">
+               <h5>📝 Important Notes:</h5>
+               <ul>
+                    <li>All derivation and generation is done **client-side** — your secrets never leave your device or get sent to any server.</li>
+                    <li><strong>ed25519</strong>: Faster signing, shorter keys (prefixed 0xED), default in many JS libs like xrpl.js — seed starts with <code>sEd</code>.</li>
+                    <li><strong>secp256k1</strong>: Bitcoin-style, default in rippled wallet_propose and Xaman/Xumm — seed starts with <code>s</code> (non-ed).</li>
+                    <li>Mnemonics (24 words) and Secret Numbers (8 groups of 6 digits) **always derive secp256k1** keys to match popular wallet standards (e.g., Xumm).</li>
+                    <li>Family seeds can use either algorithm — specify explicitly to avoid address mismatches across tools.</li>
+                    <li>Generated/derived wallets show classic r... address + (for new) the secret seed — **back it up securely offline** (paper, metal, etc.).</li>
+                    <li>Removing custom wallets only clears local dropdown entries — it does **not** affect on-ledger accounts or funds.</li>
+               </ul>
+               <p></p>
+               <h5 class="warning-title">⚠️ Critical Security & Irreversibility Warnings</h5>
+               <p style="color: #92400e">Your seed, mnemonic, or secret numbers grant full control over the account — exposure = permanent fund loss.</p>
+               <ul>
+                    <li><strong>Never share</strong> your seed/mnemonic/secret numbers — scammers impersonate support to steal them.</li>
+                    <li>Once generated or derived, the wallet is **live on the XRPL** if funded — lost secrets mean **permanent loss of access** (no recovery by anyone, including Ripple or this app).</li>
+                    <li>Algorithm mismatch (e.g., deriving secp256k1 seed as ed25519) produces a **different address** — always verify the address matches your expected one before funding or using.</li>
+                    <li>Do **not** generate wallets on untrusted/compromised devices — malware can steal secrets during generation/derivation.</li>
+                    <li>Secret Numbers and Mnemonics are **fixed to secp256k1** — you cannot force ed25519 on them.</li>
+                    <li>Test derivation on devnet/Testnet first if possible; back up secrets immediately and securely — there is **no undo** for lost keys.</li>
+               </ul>
+          </div>
+     </div>
+</div>

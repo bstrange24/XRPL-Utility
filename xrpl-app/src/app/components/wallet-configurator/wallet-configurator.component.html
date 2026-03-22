@@ -9,352 +9,51 @@
 <!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+          <!-- Left Wallet panel -->
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
 
-          <!-- Right form -->
+          <!-- Center form -->
           <div class="form-panel">
-               <!-- Menu bar -->
-               <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'generate'" (click)="setTab('generate')">
-                         <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
-                         Generate New Wallet
-                    </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'deriveSeed'" (click)="setTab('deriveSeed')">
-                         <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
-                         Derive Wallet from Seed
-                    </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'deriveMnemonic'" (click)="setTab('deriveMnemonic')">
-                         <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
-                         Derive Wallet from Mnemonic
-                    </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'deriveSecretNumbers'" (click)="setTab('deriveSecretNumbers')">
-                         <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
-                         Derive Wallet from Secret Numbers
-                    </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'removeCustomWallets'" (click)="setTab('removeCustomWallets')">
-                         <ng-icon name="heroWallet" size="20" class="text-red-600"></ng-icon>
-                         Remove Custom Wallets
-                    </button>
-               </div>
+               <!-- Menu / Tabs -->
+               @let tabs = menuTabs;
+               <app-tab-menu-with-info [tabs]="tabs" [active]="walletsViewModelService.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
-               <!-- Configure Menu -->
-               @if (activeTab() === 'generate') {
-               <div class="submenu-info-text">
-                    <div class="green-button-submenu">
-                         <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">New Wallet Generator</h2>
-                         <p class="submenu-info-secondary-text">Generate a new XRPL Wallet on {{environment()}}</p>
-                    </div>
-               </div>
-               }
-
-               <!-- Derive Seed Menu -->
-               @if (activeTab() === 'deriveSeed') {
-               <div class="submenu-info-text">
-                    <div class="blue-button-submenu">
-                         <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Derive Wallet from Seed</h2>
-                         <p class="submenu-info-secondary-text">Derive an existing XRPL Wallet from a seed on {{environment()}}</p>
-                    </div>
-               </div>
-               }
-
-               <!-- Derive Mnemonic Menu -->
-               @if (activeTab() === 'deriveMnemonic') {
-               <div class="submenu-info-text">
-                    <div class="blue-button-submenu">
-                         <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Derive Wallet from Mnemonic</h2>
-                         <p class="submenu-info-secondary-text">Derive an existing XRPL Wallet from a mnemonic on {{environment()}}</p>
-                    </div>
-               </div>
-               }
-
-               <!-- Derive Secret Numbers Menu -->
-               @if (activeTab() === 'deriveSecretNumbers') {
-               <div class="submenu-info-text">
-                    <div class="blue-button-submenu">
-                         <ng-icon name="heroWallet" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Derive Wallet from Secret Numbers</h2>
-                         <p class="submenu-info-secondary-text">Derive an existing XRPL Wallet from secret numbers on {{environment()}}</p>
-                    </div>
-               </div>
-               }
-
-               <!-- Derive Secret Numbers Menu -->
-               @if (activeTab() === 'removeCustomWallets') {
-               <div class="submenu-info-text">
-                    <div class="red-button-submenu">
-                         <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Remove Custom Wallets</h2>
-                         <p class="submenu-info-secondary-text">Remove custom wallets entered in the destination dropdown menu.</p>
-                    </div>
-               </div>
-               }
-
-               <!-- Dynamic warning panel  -->
+               <!-- Warning Message -->
                @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage() }}</div>
-               </div>
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
                }
 
                <form #theForm="ngForm" class="main-form">
-                    <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab()">
-                              <!-- Derive Seed -->
-                              @if (activeTab() === 'deriveSeed') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="enterSeed">Enter Seed</label>
-                                        @if (txUiService.seedInput().length > 0) {
-                                        <label for="seed">
-                                             <span [ngClass]="{ valid: txUiService.seedValid(), invalid: !txUiService.seedValid() }"> {{ txUiService.seedValid() ? 'Seed Valid ✅' : 'Invalid Seed ❌' }} </span>
-                                        </label>
-                                        }
-                                   </div>
-                              </div>
+                    <!-- Derive Seed -->
+                    <app-wallet-derive-seed></app-wallet-derive-seed>
 
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <input type="text" [value]="txUiService.seed()" (input)="txUiService.seed.set($event.target.value); walletsUtilService.onSeedInput()" name="seed" placeholder="Paste your family seed here..." />
-                                        <small class="helper-text">
-                                             Example format:
-                                             <code>sEddddddddddddddddddddddddda</code>
-                                        </small>
-                                   </div>
-                              </div>
-                              }
+                    <!-- Derive Mnemonic -->
+                    <app-wallet-derive-mnemonic></app-wallet-derive-mnemonic>
 
-                              <!-- Derive Mnemonic -->
-                              @if (activeTab() === 'deriveMnemonic') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="enterMnemonic">Enter Mnemonic</label>
-                                        @if (txUiService.mnemonicInput().trim().length > 0) {
-                                        <label for="mnemonic">
-                                             <span [ngClass]="{ valid: walletsStoreService.mnemonicValid(), invalid: !walletsStoreService.mnemonicValid() }"> {{ walletsUtilService.statusMessage() }}</span>
-                                        </label>
-                                        }
-                                   </div>
-                              </div>
+                    <!-- Derive Secret Numbers -->
+                    <app-wallet-derive-secret-numbers></app-wallet-derive-secret-numbers>
 
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <input type="text" [value]="txUiService.mnemonic()" (input)="txUiService.mnemonic.set($event.target.value); walletsUtilService.onMnemonicInput()" name="mnemonic" placeholder="Paste your 24-word mnemonic here..." rows="3" class="mnemonic-textarea" />
-                                        <small class="helper-text">
-                                             Example format:
-                                             <code>joe bill john joe john bill bill joe john bill john joe john joe bill john bill joe joe bill john joe john bill</code>
-                                        </small>
-                                   </div>
-                              </div>
-                              }
+                    <!-- Remove custom wallets -->
+                    <app-wallet-remove-custom-wallet></app-wallet-remove-custom-wallet>
 
-                              <!-- Derive Secret Numbers -->
-                              @if (activeTab() === 'deriveSecretNumbers') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="enterSecretNumber">Enter Secret Numbers</label>
-                                        @if (txUiService.secretNumberInput().length > 0) {
-                                        <label for="secretNumber">
-                                             <span [ngClass]="{ valid: txUiService.secretNumberValid(), invalid: !txUiService.secretNumberValid() }"> {{ txUiService.secretNumberValid() ? 'Secret Numbers Valid ✅' : 'Invalid Secret Numbers ❌ ' }} </span>
-                                        </label>
-                                        }
-                                   </div>
-                              </div>
+                    <!-- Generate buttons -->
+                    <app-wallet-generate></app-wallet-generate>
 
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <input type="text" [value]="txUiService.secretNumbers()" (input)="txUiService.secretNumbers.set($event.target.value); walletsUtilService.onSecretNumberInput()" name="secretNumbers" placeholder="Paste your secret numbers here..." />
-                                        <small class="helper-text">
-                                             Example format:
-                                             <code>123456, 456789, 123456, 456789, 123456, 456789, 123456, 456789</code>
-                                        </small>
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Remove custom wallets -->
-                              @if (activeTab() === 'removeCustomWallets') {
-                              <!-- Amount and Destination -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="destination">Custom Wallets</label>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (searchQueryChange)="typedDestination.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                   </div>
-                              </div>
-                              }
-
-                              <!-- Action buttons -->
-                              <!-- Generate buttons -->
-                              @if (activeTab() === 'generate') {
-                              <div class="button-row" style="margin-top: 0em">
-                                   <button type="button" class="btn-primary-blue" (click)="generateNewAccount()" [disabled]="txUiService.buttonLoading().generateNewWalletFromSeed || isAnyButtonLoading">{{ txUiService.buttonLoading().generateNewWalletFromSeed ? 'Processing...' : 'Generate Wallet from Family Seed' }}</button>
-                                   <button type="button" class="btn-primary-blue" (click)="generateNewWalletFromMnemonic()" [disabled]="txUiService.buttonLoading().generateNewWalletFromMnemonic || isAnyButtonLoading">{{ txUiService.buttonLoading().generateNewWalletFromMnemonic ? 'Processing...' : 'Generate Wallet from Mnemonic' }}</button>
-                                   <button type="button" class="btn-primary-blue" (click)="generateNewWalletFromSecretNumbers()" [disabled]="txUiService.buttonLoading().generateNewWalletFromSecretNumbers || isAnyButtonLoading">{{ txUiService.buttonLoading().generateNewWalletFromSecretNumbers ? 'Processing...' : 'Generate Wallet from Secret Numbers' }}</button>
-                              </div>
-                              }
-
-                              <!-- Derive Seed button -->
-                              @if (activeTab() === 'deriveSeed') {
-                              <div class="button-row" style="margin-top: 0em">
-                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromFamilySeed()" [disabled]="txUiService.buttonLoading().deriveWalletFromFamilySeed || isAnyButtonLoading">{{ txUiService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
-                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
-                              </div>
-                              }
-
-                              <!-- Derive Mnemonic button -->
-                              @if (activeTab() === 'deriveMnemonic') {
-                              <div class="button-row" style="margin-top: 0em">
-                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromMnemonic()" [disabled]="txUiService.buttonLoading().deriveWalletFromMnemonic || isAnyButtonLoading">{{ txUiService.buttonLoading().deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
-                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
-                              </div>
-                              }
-
-                              <!-- Derive Secret Numbers button -->
-                              @if (activeTab() === 'deriveSecretNumbers') {
-                              <div class="button-row" style="margin-top: 0em">
-                                   <button type="button" class="btn-primary-blue" (click)="deriveWalletFromSecretNumbers()" [disabled]="txUiService.buttonLoading().deriveWalletFromSecretNumbers || isAnyButtonLoading">{{ txUiService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Derive Wallet from Secret Numbers' }}</button>
-                                   <button type="button" class="btn-secondary-clear-fields" (click)="clearFields(true)">Clear Fields</button>
-                              </div>
-                              }
-
-                              <!-- Remove custom wallets button -->
-                              @if (activeTab() === 'removeCustomWallets') {
-                              <div class="button-row" style="margin-top: 0em">
-                                   <button type="button" class="btn-primary-red" (click)="removeCustomWallet()" [disabled]="txUiService.buttonLoading().deriveWalletFromSecretNumbers || isAnyButtonLoading">{{ txUiService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
-                              </div>
-                              }
-                         </div>
+                    <!-- Remove custom wallets button -->
+                    @if (walletsViewModelService.activeTab() === 'removeCustomWallets') {
+                    <div class="button-row" style="margin-top: 0em">
+                         <button type="button" class="btn-primary-red" (click)="removeCustomWallet()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
                     </div>
+                    }
                </form>
 
-               <!-- Switches -->
-               @if (activeTab() === 'generate' || activeTab() === 'deriveSeed') {
-               <div class="switch-group">
-                    <label class="switch">
-                         <input type="radio" [checked]="txUiService.ed25519_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('ed25519')" />
-                         <span class="slider"></span>
-                         ED25519
-                    </label>
-
-                    <label class="switch">
-                         <input type="radio" [checked]="txUiService.secp256k1_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('secp256k1')" />
-                         <span class="slider"></span>
-                         SECP256K1
-                    </label>
-               </div>
-               }
-
-               <!-- Generate message -->
-               @if (activeTab() === 'generate') {
-               <div class="info-box" style="margin-top: 16px; margin-bottom: 6px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Generating a Mnemonic or Secret Number wallet will always be SECP256K1 encryption.</div>
-               }
-
-               <!-- Derive Mnemonic message -->
-               @if (activeTab() === 'deriveMnemonic') {
-               <div class="info-box" style="margin-top: 16px; margin-bottom: 6px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Deriving a Mnemonic wallet will always be SECP256K1 encryption.</div>
-               }
-
-               <!-- Derive Secret Numbers message -->
-               @if (activeTab() === 'deriveSecretNumbers') {
-               <div class="info-box" style="margin-top: 16px; margin-bottom: 6px; font-size: 0.9em; opacity: 0.9; padding-left: 0.5em"><strong>Note:</strong> Deriving a Secret Number wallet will always be SECP256K1 encryption.</div>
-               }
-
                <!-- Execution time -->
-               <div class="executionTimeDisplay">
-                    <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
-               </div>
+               <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+
+               <!-- Transaction Preview -->
                <app-transaction-preview></app-transaction-preview>
           </div>
 
-          <div class="requirements-info">
-               <div class="info-header">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                    <h3>XRPL Wallet Configurator</h3>
-               </div>
-
-               <p class="info-subtitle">Generate a fresh XRPL wallet or derive an existing one from a family seed, mnemonic phrase, or secret numbers. Choose between ed25519 (faster, modern default in many libs) or secp256k1 (Bitcoin-compatible, default in rippled & Xaman/Xumm). All operations happen client-side — never share your seed, mnemonic, or numbers.</p>
-
-               <div class="combinations-grid">
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🆕 Generate New Wallet</span>
-                              <span class="badge required-badge">Random Seed</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">Algorithm</span>
-                                   <span class="field-status required">✅ Required (ed25519 or secp256k1)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Output</span>
-                                   <span class="field-status optional">➕ Address + Seed (sEd... for ed25519, s... for secp256k1)</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🔑 Derive Existing Wallet</span>
-                              <span class="badge optional-badge">From Secret Input</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">Family Seed</span>
-                                   <span class="field-status optional">➕ s... or sEd... format</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Mnemonic (24 words)</span>
-                                   <span class="field-status optional">➕ BIP-39 style (always secp256k1)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Secret Numbers (8×6 digits)</span>
-                                   <span class="field-status optional">➕ Always secp256k1 (Xumm-compatible)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Algorithm override</span>
-                                   <span class="field-status omitted">❌ Limited (mnemonic/secret nums fixed to secp256k1)</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="important-notes">
-                         <h5>📝 Important Notes:</h5>
-                         <ul>
-                              <li>All derivation and generation is done **client-side** — your secrets never leave your device or get sent to any server.</li>
-                              <li><strong>ed25519</strong>: Faster signing, shorter keys (prefixed 0xED), default in many JS libs like xrpl.js — seed starts with <code>sEd</code>.</li>
-                              <li><strong>secp256k1</strong>: Bitcoin-style, default in rippled wallet_propose and Xaman/Xumm — seed starts with <code>s</code> (non-ed).</li>
-                              <li>Mnemonics (24 words) and Secret Numbers (8 groups of 6 digits) **always derive secp256k1** keys to match popular wallet standards (e.g., Xumm).</li>
-                              <li>Family seeds can use either algorithm — specify explicitly to avoid address mismatches across tools.</li>
-                              <li>Generated/derived wallets show classic r... address + (for new) the secret seed — **back it up securely offline** (paper, metal, etc.).</li>
-                              <li>Removing custom wallets only clears local dropdown entries — it does **not** affect on-ledger accounts or funds.</li>
-                         </ul>
-                         <p></p>
-                         <h5 class="warning-title">⚠️ Critical Security & Irreversibility Warnings</h5>
-                         <p style="color: #92400e">Your seed, mnemonic, or secret numbers grant full control over the account — exposure = permanent fund loss.</p>
-                         <ul>
-                              <li><strong>Never share</strong> your seed/mnemonic/secret numbers — scammers impersonate support to steal them.</li>
-                              <li>Once generated or derived, the wallet is **live on the XRPL** if funded — lost secrets mean **permanent loss of access** (no recovery by anyone, including Ripple or this app).</li>
-                              <li>Algorithm mismatch (e.g., deriving secp256k1 seed as ed25519) produces a **different address** — always verify the address matches your expected one before funding or using.</li>
-                              <li>Do **not** generate wallets on untrusted/compromised devices — malware can steal secrets during generation/derivation.</li>
-                              <li>Secret Numbers and Mnemonics are **fixed to secp256k1** — you cannot force ed25519 on them.</li>
-                              <li>Test derivation on devnet/Testnet first if possible; back up secrets immediately and securely — there is **no undo** for lost keys.</li>
-                         </ul>
-                    </div>
-               </div>
-          </div>
+          <app-wallet-generator-requirements-info></app-wallet-generator-requirements-info>
      </div>
 </div>

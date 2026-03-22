@@ -7,7 +7,6 @@ import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../services/util-service/utils.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
@@ -41,6 +40,7 @@ import { PermissionDomainSetFormComponent } from './tab/permission-domain-set-fo
 import { PERMISSION_DOMAIN_TAB, PermissionDomainActionTypes } from './constants/permissioned-domain.constants';
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { StorageService } from '../../services/local-storage/storage.service';
 
 @Component({
      selector: 'app-permissioned-domain',
@@ -51,7 +51,6 @@ import { ConnectionGuardService } from '../../services/connection-guard/connecti
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionedDomainComponent extends WalletDestinationBase implements OnInit {
-     public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -67,8 +66,8 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      readonly menuTabs: TabConfig[] = PERMISSION_DOMAIN_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = PERMISSION_DOMAIN_TAB_META;
 
-     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
-          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }

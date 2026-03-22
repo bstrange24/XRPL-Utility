@@ -4,7 +4,6 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, inject, OnInit, View
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../services/util-service/utils.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
@@ -37,6 +36,7 @@ import { DidTxConfig, DidTxType } from './constants/did.types';
 import { DidDeleteComponent } from './tab/did-delete/did-delete.component';
 import { DidSetComponent } from './tab/did-set/did-set.component';
 import { DID_TAB } from './constants/did.constants';
+import { StorageService } from '../../services/local-storage/storage.service';
 
 @Component({
      selector: 'app-did',
@@ -51,7 +51,6 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      @ViewChild('uriEditor') uriEditor!: JsonEditorComponent;
      @ViewChild('didDataEditor') didDataEditor!: JsonEditorComponent;
 
-     public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -63,8 +62,8 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      readonly menuTabs: TabConfig[] = DID_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = DID_TAB_META;
 
-     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
-          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }

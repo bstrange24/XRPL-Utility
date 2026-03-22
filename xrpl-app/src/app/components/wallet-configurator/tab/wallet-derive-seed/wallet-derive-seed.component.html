@@ -1,0 +1,41 @@
+@if (walletsViewModelService.activeTab() === 'deriveSeed') {
+<div class="form-row">
+     <div class="form-group">
+          <label for="enterSeed">Enter Seed</label>
+          @if (walletsStoreService.seedInput().length > 0) {
+          <label for="seed">
+               <span [ngClass]="{ valid: walletsStoreService.seedValid(), invalid: !walletsStoreService.seedValid() }"> {{ walletsStoreService.seedValid() ? 'Seed Valid ✅' : 'Invalid Seed ❌' }} </span>
+          </label>
+          }
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <input type="text" [value]="walletsStoreService.seed()" (input)="walletsStoreService.setField('seed', $event.target.value); walletsUtilService.onSeedInput()" name="seed" placeholder="Paste your family seed here..." />
+          <small class="helper-text">
+               Example format:
+               <code>sEddddddddddddddddddddddddda</code>
+          </small>
+     </div>
+</div>
+} @if (walletsViewModelService.activeTab() === 'deriveSeed') {
+<div class="switch-group">
+     <label class="switch">
+          <input type="radio" [checked]="walletsStoreService.ed25519_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('ed25519')" />
+          <span class="slider"></span>
+          ED25519
+     </label>
+
+     <label class="switch">
+          <input type="radio" [checked]="walletsStoreService.secp256k1_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('secp256k1')" />
+          <span class="slider"></span>
+          SECP256K1
+     </label>
+</div>
+} @if (walletsViewModelService.activeTab() === 'deriveSeed') {
+<div class="button-row" style="margin-top: 0em">
+     <button type="button" class="btn-primary-blue" (click)="walletConfiguratorComponent.deriveWalletFromFamilySeed()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
+     <button type="button" class="btn-secondary-clear-fields" (click)="walletConfiguratorComponent.clearFields(true)">Clear Fields</button>
+</div>
+}

@@ -13,10 +13,13 @@ import * as xrpl from 'xrpl';
 import { ActivatedRoute } from '@angular/router';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
+import { StorageService } from '../local-storage/storage.service';
+import { UtilsService } from '../util-service/utils.service';
 
 export abstract class WalletDestinationBase extends PerformanceBaseComponent {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly utilsService = inject(UtilsService);
      // Signals
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
@@ -52,7 +55,8 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
           protected readonly copyUtilService: CopyUtilService,
           protected readonly toastService: ToastService,
           protected readonly acccountDataService: AcccountDataService,
-          protected readonly route: ActivatedRoute
+          protected readonly route: ActivatedRoute,
+          protected readonly storageService: StorageService
      ) {
           super();
 
@@ -142,6 +146,40 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
           if (xrpl.isValidAddress(addr) && !this.destinationMap().has(addr)) {
                this.transactionDropdownService.addCustomIfNewAndSelect(destination, this.destinationMap, this.selectedDestinationAddress, this.destinationSearchQuery);
           }
+     }
+
+     // In WalletRemoveCustomWalletComponent
+     readonly selectedCustomItem = computed(() => {
+          const addr = this.selectedDestinationAddress();
+          if (!addr) return null;
+
+          const custom = this.transactionDropdownService.customDestinations().find(d => d.address === addr);
+
+          if (!custom) return null;
+
+          return {
+               id: custom.address,
+               name: custom.name || this.utilsService.truncateAddress(custom.address),
+               address: custom.address,
+               // ...
+          };
+     });
+
+     updateDestinations() {
+          const allItems = [
+               ...this.walletManager.wallets().map(wallet => ({
+                    name: wallet.name ?? this.utilsService.truncateAddress(wallet.address),
+                    address: wallet.address,
+               })),
+               ...this.transactionDropdownService.customDestinations(),
+          ];
+
+          // Deduplicate by address
+          const deduped = Array.from(new Map(allItems.map(item => [item.address, item])).values());
+
+          console.log('deduped: ', deduped);
+
+          this.storageService.set('destinations', deduped);
      }
 
      protected trackByWalletAddress(_index: number, wallet: any) {

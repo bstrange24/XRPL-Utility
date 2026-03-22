@@ -41,6 +41,7 @@ import { CREDENTIAL_TAB_META, CREDENTIAL_TABS } from './constants/credential.ui'
 import { CredentialActionTypes, CredentialItemVm, CredentialTxConfig } from './constants/credential.types';
 import { CredentialTransactionOptionsComponent } from './ui-components/transaction-options/credential-transaction-options/credential-transaction-options.component';
 import { CREDENTIAL_TAB } from './constants/credential.constants';
+import { StorageService } from '../../services/local-storage/storage.service';
 
 @Component({
      selector: 'app-credentials',
@@ -63,8 +64,8 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      readonly menuTabs: TabConfig[] = CREDENTIAL_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = CREDENTIAL_TAB_META;
 
-     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
-          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
@@ -148,11 +149,17 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
           let subjectDestination: string | undefined;
           if (currentTab === 'createCredential') {
-               this.selectedDestinationAddress.set(this.credentialStore.subject());
-               subjectDestination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-               if (!subjectDestination || !xrpl.isValidAddress(subjectDestination)) {
-                    this.toastService.error('Please enter a valid destination address.', AppConstants.TOAST.ERROR);
-                    return;
+               if (this.credentialStore.subject()) {
+                    this.selectedDestinationAddress.set(this.credentialStore.subject());
+               } else {
+                    this.selectedDestinationAddress.set(this.credentialStore.subject());
+                    subjectDestination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+                    if (!subjectDestination || !xrpl.isValidAddress(subjectDestination)) {
+                         this.toastService.error('Please enter a valid destination address.', AppConstants.TOAST.ERROR);
+                         return;
+                    }
+                    this.selectedDestinationAddress.set(subjectDestination);
+                    this.credentialStore.setField('subject', subjectDestination);
                }
           }
 

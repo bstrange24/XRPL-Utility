@@ -234,26 +234,26 @@ export class TransactionUiService {
      holderAccount = signal<string>('');
 
      // Wallets
-     mnemonicInput = signal<string>('');
+     // mnemonicInput = signal<string>('');
      // mnemonicValid = signal<boolean>(false);
-     secretNumberInput = signal<string[]>([]);
-     secretNumberValid = signal<boolean>(false);
-     seedInput = signal<string>('');
-     seedValid = signal<boolean>(false);
-     encryptionType = signal<string>('');
-     seed = signal<string>('');
-     mnemonic = signal<string>('');
-     secretNumbers = signal<string>('');
-     ed25519_encryption_type = signal<boolean>(false);
-     secp256k1_encryption_type = signal<boolean>(true);
-     buttonLoading = signal<ButtonLoadingState>({
-          generateNewWalletFromSeed: false,
-          generateNewWalletFromMnemonic: false,
-          generateNewWalletFromSecretNumbers: false,
-          deriveWalletFromFamilySeed: false,
-          deriveWalletFromMnemonic: false,
-          deriveWalletFromSecretNumbers: false,
-     });
+     // secretNumberInput = signal<string[]>([]);
+     // secretNumberValid = signal<boolean>(false);
+     // seedInput = signal<string>('');
+     // seedValid = signal<boolean>(false);
+     // encryptionType = signal<string>('');
+     // seed = signal<string>('');
+     // mnemonic = signal<string>('');
+     // secretNumbers = signal<string>('');
+     // ed25519_encryption_type = signal<boolean>(false);
+     // secp256k1_encryption_type = signal<boolean>(true);
+     // buttonLoading = signal<ButtonLoadingState>({
+     //      generateNewWalletFromSeed: false,
+     //      generateNewWalletFromMnemonic: false,
+     //      generateNewWalletFromSecretNumbers: false,
+     //      deriveWalletFromFamilySeed: false,
+     //      deriveWalletFromMnemonic: false,
+     //      deriveWalletFromSecretNumbers: false,
+     // });
 
      currentStep = signal<TxStep>('idle');
      detailedStatus = signal<string>('');

@@ -6,7 +6,6 @@ import { LucideAngularModule } from 'lucide-angular';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../services/util-service/utils.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
@@ -37,6 +36,7 @@ import { AccountDeleteRequirementsInfoComponent } from './ui-components/account-
 import { AccountDeleteFormComponent } from './tab/account-delete-form/account-delete-form.component';
 import { AccountDeleteSummaryComponent } from './ui-components/summary/account-delete-summary.component';
 import { AccountDeleteConfig } from './constants/account-delete.types';
+import { StorageService } from '../../services/local-storage/storage.service';
 
 @Component({
      selector: 'app-account-delete',
@@ -47,7 +47,6 @@ import { AccountDeleteConfig } from './constants/account-delete.types';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountDeleteComponent extends WalletDestinationBase implements OnInit {
-     public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -58,8 +57,8 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
      public readonly deleteAccountStoreService = inject(AccountDeleteStoreService);
      readonly tabMeta: Record<string, TabMetaInfo> = ACCOUNT_DELETE_TAB_META;
 
-     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute) {
-          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route);
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
