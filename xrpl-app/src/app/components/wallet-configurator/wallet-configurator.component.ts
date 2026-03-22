@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, computed, signal, ChangeDetectionStrategy, effect } from '@angular/core';
+import { Component, OnInit, inject, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -232,6 +232,38 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
      }
 
      removeCustomWallet(): void {
+          console.log('[REMOVE] Selected address set to1111111111:', this.selectedDestinationAddress());
+  const address = this.selectedDestinationAddress();
+
+  if (!address) {
+    this.toastService.error('Please select a custom wallet first', AppConstants.TOAST.ERROR);
+    return;
+  }
+
+  if (!xrpl.isValidAddress(address)) {
+    this.toastService.error('Invalid address selected', AppConstants.TOAST.ERROR);
+    return;
+  }
+
+  const currentCustoms = this.customDestinations();
+  if (!currentCustoms.some((w) => w.address === address)) {
+    this.toastService.error('Selected wallet not found in custom list', AppConstants.TOAST.ERROR);
+    return;
+  }
+
+  this.customDestinations.update((list) => list.filter((w) => w.address !== address));
+  this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
+
+  this.updateDestinations(); // refresh other dropdowns if they use the same source
+
+  // Reset selection
+  this.selectedDestinationAddress.set('');
+  this.destinationSearchQuery.set('');
+
+  this.toastService.success(`Custom wallet ${address} removed successfully`);
+}
+
+     removeCustomWallet1(): void {
           // this.selectedDestinationAddress.set(this.credentialStore.subject());
           //                     subjectDestination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
           //                     if (!subjectDestination || !xrpl.isValidAddress(subjectDestination)) {

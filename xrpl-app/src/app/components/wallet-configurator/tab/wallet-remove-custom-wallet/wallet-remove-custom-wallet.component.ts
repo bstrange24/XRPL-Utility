@@ -38,15 +38,45 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     readonly customOnlyItems = computed(() => {
-          const customItems = this.transactionDropdownService.customDestinations().map(dest => ({
-               id: dest.address, // usually the value passed back on selection
-               display: dest.name || this.utilsService.truncateAddress(dest.address), // ← this was missing!
-               name: dest.name, // optional, if you need it elsewhere
-               address: dest.address, // optional extra payload
-          }));
-          return customItems;
-     });
+     handleDropdownChange(event: any) {
+  console.log('=== DROPDOWN VALUE CHANGE FIRED ===');
+  console.log('Raw event from dropdown:', event);
+  console.log('event type:', typeof event);
+
+  let selectedId: string = '';
+
+  if (typeof event === 'string') {
+    selectedId = event;
+  } else if (event && typeof event === 'object') {
+    // try common patterns
+    selectedId = 
+      event.id ?? 
+      event.address ?? 
+      event.value ?? 
+      event.key ?? 
+      event.code ?? 
+      (event.address ? event.address : '');
+  }
+
+  console.log('Extracted ID:', selectedId);
+
+  if (selectedId) {
+    this.selectedDestinationAddress.set(selectedId);
+    console.log('Signal updated to:', this.selectedDestinationAddress());
+  } else {
+    console.warn('Could not extract valid ID from event');
+  }
+}
+
+     // readonly customOnlyItems = computed(() => {
+     //      const customItems = this.transactionDropdownService.customDestinations().map(dest => ({
+     //           id: dest.address, // usually the value passed back on selection
+     //           display: dest.name || this.utilsService.truncateAddress(dest.address), // ← this was missing!
+     //           name: dest.name, // optional, if you need it elsewhere
+     //           address: dest.address, // optional extra payload
+     //      }));
+     //      return customItems;
+     // });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {}
 
@@ -57,4 +87,37 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
      protected clearInputFields(): void {
           return;
      }
+
+     onCustomWalletSelected(event: any) {
+    console.log('[REMOVE DROPDOWN] Selection event:', event);
+
+    let address: string | undefined;
+
+    if (typeof event === 'string') {
+      address = event;
+    } else if (event && typeof event === 'object') {
+      address =
+        event.id ??
+        event.address ??
+        event.value ??
+        event.address;
+    }
+
+    if (address && address.trim()) {
+      this.selectedDestinationAddress.set(address.trim());
+      console.log('[REMOVE] Selected address set to:', this.selectedDestinationAddress());
+    } else {
+      console.warn('[REMOVE] No valid address extracted from event');
+    }
+  }
+
+  readonly customOnlyItems = computed(() => {
+    return this.transactionDropdownService.customDestinations().map((dest) => ({
+      id: dest.address,
+      display: dest.name || this.utilsService.truncateAddress(dest.address),
+      name: dest.name,
+      address: dest.address,
+    }));
+  });
+
 }

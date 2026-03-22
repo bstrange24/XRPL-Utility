@@ -1,9 +1,19 @@
 @if (walletsViewModelService.activeTab() === 'removeCustomWallets') {
-<div class="form-row">
-     <div class="form-group">
-          <label for="destination">Custom Wallets</label>
-          <!-- Use customOnlyItems instead of destinationItems() -->
-          <app-select-search-dropdown [items]="customOnlyItems()" [value]="selectedDestinationItem()" (searchQueryChange)="typedDestination.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Select custom wallet to remove" />
-     </div>
-</div>
+  <div class="form-row">
+    <div class="form-group">
+      <label for="destination">Custom Wallets</label>
+      <app-select-search-dropdown
+        [items]="customOnlyItems()"
+        [value]="selectedDestinationItem()"
+        (searchQueryChange)="typedDestination.set($event)"
+        (valueChange)="onCustomWalletSelected($event)"
+        placeholder="Select custom wallet to remove"
+      />
+    </div>
+  </div>
+
+  <!-- Visual feedback during debugging – you can remove later -->
+  <div style="margin: 10px 0; font-size: 0.9em; color: #555;">
+    Selected: <strong>{{ selectedDestinationAddress() || '(none selected)' }}</strong>
+  </div>
 }
