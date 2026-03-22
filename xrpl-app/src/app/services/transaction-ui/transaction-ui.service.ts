@@ -235,7 +235,7 @@ export class TransactionUiService {
 
      // Wallets
      mnemonicInput = signal<string>('');
-     mnemonicValid = signal<boolean>(false);
+     // mnemonicValid = signal<boolean>(false);
      secretNumberInput = signal<string[]>([]);
      secretNumberValid = signal<boolean>(false);
      seedInput = signal<string>('');

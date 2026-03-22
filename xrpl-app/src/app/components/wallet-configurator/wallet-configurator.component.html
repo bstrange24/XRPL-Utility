@@ -129,7 +129,7 @@
 
                               <div class="form-row">
                                    <div class="form-group">
-                                        <input type="text" [value]="txUiService.seed()" (input)="txUiService.seed.set($event.target.value); onSeedInput()" name="seed" placeholder="Paste your family seed here..." />
+                                        <input type="text" [value]="txUiService.seed()" (input)="txUiService.seed.set($event.target.value); walletsUtilService.onSeedInput()" name="seed" placeholder="Paste your family seed here..." />
                                         <small class="helper-text">
                                              Example format:
                                              <code>sEddddddddddddddddddddddddda</code>
@@ -145,7 +145,7 @@
                                         <label for="enterMnemonic">Enter Mnemonic</label>
                                         @if (txUiService.mnemonicInput().trim().length > 0) {
                                         <label for="mnemonic">
-                                             <span [ngClass]="{ valid: txUiService.mnemonicValid(), invalid: !txUiService.mnemonicValid() }"> {{ statusMessage() }}</span>
+                                             <span [ngClass]="{ valid: walletsStoreService.mnemonicValid(), invalid: !walletsStoreService.mnemonicValid() }"> {{ walletsUtilService.statusMessage() }}</span>
                                         </label>
                                         }
                                    </div>
@@ -153,7 +153,7 @@
 
                               <div class="form-row">
                                    <div class="form-group">
-                                        <input type="text" [value]="txUiService.mnemonic()" (input)="txUiService.mnemonic.set($event.target.value); onMnemonicInput()" name="mnemonic" placeholder="Paste your 24-word mnemonic here..." rows="3" class="mnemonic-textarea" />
+                                        <input type="text" [value]="txUiService.mnemonic()" (input)="txUiService.mnemonic.set($event.target.value); walletsUtilService.onMnemonicInput()" name="mnemonic" placeholder="Paste your 24-word mnemonic here..." rows="3" class="mnemonic-textarea" />
                                         <small class="helper-text">
                                              Example format:
                                              <code>joe bill john joe john bill bill joe john bill john joe john joe bill john bill joe joe bill john joe john bill</code>
@@ -177,7 +177,7 @@
 
                               <div class="form-row">
                                    <div class="form-group">
-                                        <input type="text" [value]="txUiService.secretNumbers()" (input)="txUiService.secretNumbers.set($event.target.value); onSecretNumberInput()" name="secretNumbers" placeholder="Paste your secret numbers here..." />
+                                        <input type="text" [value]="txUiService.secretNumbers()" (input)="txUiService.secretNumbers.set($event.target.value); walletsUtilService.onSecretNumberInput()" name="secretNumbers" placeholder="Paste your secret numbers here..." />
                                         <small class="helper-text">
                                              Example format:
                                              <code>123456, 456789, 123456, 456789, 123456, 456789, 123456, 456789</code>
@@ -245,13 +245,13 @@
                @if (activeTab() === 'generate' || activeTab() === 'deriveSeed') {
                <div class="switch-group">
                     <label class="switch">
-                         <input type="radio" [checked]="txUiService.ed25519_encryption_type()" name="encryptionType" (change)="setEncryption('ed25519')" />
+                         <input type="radio" [checked]="txUiService.ed25519_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('ed25519')" />
                          <span class="slider"></span>
                          ED25519
                     </label>
 
                     <label class="switch">
-                         <input type="radio" [checked]="txUiService.secp256k1_encryption_type()" name="encryptionType" (change)="setEncryption('secp256k1')" />
+                         <input type="radio" [checked]="txUiService.secp256k1_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('secp256k1')" />
                          <span class="slider"></span>
                          SECP256K1
                     </label>

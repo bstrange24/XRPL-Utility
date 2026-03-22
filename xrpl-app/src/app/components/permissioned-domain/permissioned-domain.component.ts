@@ -88,6 +88,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
+          this.accountConfiguratorStoreService.resetAll();
 
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
